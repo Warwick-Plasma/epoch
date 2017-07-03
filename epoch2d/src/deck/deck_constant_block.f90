@@ -52,8 +52,7 @@ CONTAINS
 
     DO i = 1, n_deck_constants
       errcode = 0
-      dc = evaluate_at_point(deck_constant_list(i)%execution_stream, &
-          1, 1, errcode)
+      dc = evaluate(deck_constant_list(i)%execution_stream, errcode)
       WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
     ENDDO
 

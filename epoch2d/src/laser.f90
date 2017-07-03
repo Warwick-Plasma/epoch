@@ -177,18 +177,23 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: i, err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
+        parameters%pack_ix = 0
         DO i = 1,ny
+          parameters%pack_iy = i
           laser%phase(i) = &
-              evaluate_at_point(laser%phase_function, 0, i, err)
+              evaluate_with_parameters(laser%phase_function, parameters, err)
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
+        parameters%pack_iy = 0
         DO i = 1,nx
+          parameters%pack_ix = i
           laser%phase(i) = &
-              evaluate_at_point(laser%phase_function, i, 0, err)
+              evaluate_with_parameters(laser%phase_function, parameters, err)
         ENDDO
     END SELECT
 
@@ -200,18 +205,23 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: i, err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
+        parameters%pack_ix = 0
         DO i = 1,ny
+          parameters%pack_iy = i
           laser%profile(i) = &
-              evaluate_at_point(laser%profile_function, 0, i, err)
+              evaluate_with_parameters(laser%profile_function, parameters, err)
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
+        parameters%pack_iy = 0
         DO i = 1,nx
+          parameters%pack_ix = i
           laser%profile(i) = &
-              evaluate_at_point(laser%profile_function, i, 0, err)
+              evaluate_with_parameters(laser%profile_function, parameters, err)
         ENDDO
     END SELECT
 

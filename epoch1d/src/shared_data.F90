@@ -431,6 +431,15 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 
+  ! This type represents parameters given to the parser.
+  ! It can be extended by a developer freely
+  ! It is the responsibility of the developer to ensure that a parameter is
+  ! specified when needed
+
+  TYPE parameter_pack
+    INTEGER :: pack_ix = 1
+  END TYPE parameter_pack
+
   TYPE stack_element
     INTEGER :: ptype
     INTEGER :: value

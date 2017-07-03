@@ -169,6 +169,7 @@ CONTAINS
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: temp_local, drift_local, npart_frac
     REAL(num) :: weight_local
+    TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -196,17 +197,21 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      parameters%pack_ix = nx
       DO i = 1, 3
         DO iy = -2, ny+3
-          temperature(iy,i) = evaluate_at_point( &
-              species_list(ispecies)%temperature_function(i), nx, iy, errcode)
-          drift(iy,i) = evaluate_at_point( &
-              species_list(ispecies)%drift_function(i), nx, iy, errcode)
+          parameters%pack_iy = iy
+          temperature(iy,i) = evaluate_with_parameters( &
+              species_list(ispecies)%temperature_function(i), &
+              parameters, errcode)
+          drift(iy,i) = evaluate_with_parameters( &
+              species_list(ispecies)%drift_function(i), parameters, errcode)
         ENDDO
       ENDDO
       DO iy = -2, ny+3
-        density(iy) = evaluate_at_point( &
-            species_list(ispecies)%density_function, nx, iy, errcode)
+        parameters%pack_iy = iy
+        density(iy) = evaluate_with_parameters( &
+            species_list(ispecies)%density_function, parameters, errcode)
         IF (density(iy) &
                 > species_list(ispecies)%initial_conditions%density_max) THEN
           density(iy) = species_list(ispecies)%initial_conditions%density_max

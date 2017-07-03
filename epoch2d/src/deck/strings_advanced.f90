@@ -110,7 +110,7 @@ CONTAINS
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err == c_err_none) &
-        CALL evaluate_at_point_to_array(output, 0, 0, 2, array, err)
+        CALL evaluate_to_array(output, 2, array, err)
     real1 = array(1)
     real2 = array(2)
     CALL deallocate_stack(output)
@@ -131,7 +131,7 @@ CONTAINS
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err == c_err_none) &
-        CALL evaluate_at_point_to_array(output, 0, 0, ndim, array, err)
+        CALL evaluate_to_array(output, ndim, array, err)
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_vector
@@ -171,7 +171,7 @@ CONTAINS
     CALL tokenize(str_tmp, output, err)
     IF (err == c_err_none) THEN
       NULLIFY(array)
-      CALL evaluate_and_return_all(output, 0, 0, ndim, array, err)
+      CALL evaluate_and_return_all(output, ndim, array, err)
     ENDIF
     CALL deallocate_stack(output)
 
@@ -261,13 +261,17 @@ CONTAINS
     REAL(num), DIMENSION(:,:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix, iy
+    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
 
     DO iy = y1, y2
+      parameters%pack_iy = iy
       DO ix = x1, x2
-        data_out(ix-x1+1, iy-y1+1) = evaluate_at_point(output, ix, iy, err)
+        parameters%pack_ix = ix
+        data_out(ix-x1+1, iy-y1+1) = &
+            evaluate_with_parameters(output, parameters, err)
       ENDDO
     ENDDO
     CALL deallocate_stack(output)

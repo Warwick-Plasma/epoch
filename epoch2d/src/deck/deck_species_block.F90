@@ -306,7 +306,7 @@ CONTAINS
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
-        CALL evaluate_and_return_all(stack, 0, 0, &
+        CALL evaluate_and_return_all(stack, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
         CALL deallocate_stack(stack)
       ENDIF
@@ -836,6 +836,7 @@ CONTAINS
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: stack
     INTEGER :: io, iu, ix, iy
+    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -864,7 +865,7 @@ CONTAINS
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check
-      array(1,1) = evaluate_at_point(stack, 1, 1, errcode)
+      array(1,1) = evaluate(stack, errcode)
       IF (errcode /= c_err_none) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
@@ -877,9 +878,11 @@ CONTAINS
       ENDIF
 
       DO iy = -2, ny+3
-      DO ix = -2, nx+3
-        array(ix,iy) = evaluate_at_point(stack, ix, iy, errcode)
-      ENDDO
+        parameters%pack_iy = iy
+        DO ix = -2, nx+3
+          parameters%pack_ix = ix
+          array(ix,iy) = evaluate_with_parameters(stack, parameters, errcode)
+        ENDDO
       ENDDO
     ENDIF
 

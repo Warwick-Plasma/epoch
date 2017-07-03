@@ -154,9 +154,10 @@ CONTAINS
 
 
 
-  SUBROUTINE do_constant(opcode, simplify, ix, err)
+  SUBROUTINE do_constant(opcode, simplify, parameters, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: err_simplify
@@ -174,19 +175,19 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_x) THEN
-      CALL push_on_eval(x(ix))
+      CALL push_on_eval(x(parameters%pack_ix))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_xb) THEN
-      CALL push_on_eval(xb(ix))
+      CALL push_on_eval(xb(parameters%pack_ix))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_ix) THEN
-      CALL push_on_eval(REAL(ix, num))
+      CALL push_on_eval(REAL(parameters%pack_ix, num))
       err = err_simplify
       RETURN
     ENDIF
@@ -222,13 +223,13 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_r_xy) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(ABS(x(parameters%pack_ix)))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_r_xz) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(ABS(x(parameters%pack_ix)))
       err = err_simplify
       RETURN
     ENDIF
@@ -239,14 +240,14 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_r_xyz) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      CALL push_on_eval(ABS(x(parameters%pack_ix)))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode >= c_const_custom_lowbound) THEN
       ! Check for custom constants
-      val = custom_constant(opcode, ix, err)
+      val = custom_constant(opcode, parameters, err)
       IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN
@@ -550,9 +551,10 @@ CONTAINS
 
 
 
-  SUBROUTINE do_functions(opcode, simplify, ix, err)
+  SUBROUTINE do_functions(opcode, simplify, parameters, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
@@ -560,7 +562,7 @@ CONTAINS
     INTEGER :: count, ipoint, ipoint_val, n, err_simplify
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0, p0, p1, x0, x1
-    INTEGER :: ispec
+    INTEGER :: ix, ispec
 
     err = c_err_none
     err_simplify = c_err_none
@@ -570,6 +572,7 @@ CONTAINS
     IF (opcode == c_func_rho) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%density(ix)
       CALL push_on_eval(val_local)
       err = err_simplify
@@ -579,6 +582,7 @@ CONTAINS
     IF (opcode == c_func_tempx) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 1)
       CALL push_on_eval(val_local)
       err = err_simplify
@@ -588,6 +592,7 @@ CONTAINS
     IF (opcode == c_func_tempy) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 2)
       CALL push_on_eval(val_local)
       err = err_simplify
@@ -597,6 +602,7 @@ CONTAINS
     IF (opcode == c_func_tempz) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 3)
       CALL push_on_eval(val_local)
       err = err_simplify
@@ -606,6 +612,7 @@ CONTAINS
     IF (opcode == c_func_tempx_ev) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 1)
       CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
@@ -615,6 +622,7 @@ CONTAINS
     IF (opcode == c_func_tempy_ev) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 2)
       CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
@@ -624,6 +632,7 @@ CONTAINS
     IF (opcode == c_func_tempz_ev) THEN
       CALL get_values(1, values)
       ispec = NINT(values(1))
+      ix = parameters%pack_ix
       val_local = species_list(ispec)%initial_conditions%temp(ix, 3)
       CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
@@ -632,7 +641,7 @@ CONTAINS
 
     IF (opcode >= c_func_custom_lowbound) THEN
       ! Check for custom functions
-      val = custom_function(opcode, ix, err)
+      val = custom_function(opcode, parameters, err)
       IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN
