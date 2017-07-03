@@ -407,6 +407,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_dir_mod_p) THEN
+      CALL push_on_eval(REAL(c_dir_mod_p, num))
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_dir_en) THEN
       CALL push_on_eval(REAL(c_dir_en, num))
       RETURN
