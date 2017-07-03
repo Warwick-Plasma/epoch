@@ -178,10 +178,11 @@ CONTAINS
       ENDDO
       density = evaluate_at_point( &
           species_list(ispecies)%density_function, nx, errcode)
-      IF (density > initial_conditions(ispecies)%density_max) &
-          density = initial_conditions(ispecies)%density_max
+      IF (density > species_list(ispecies)%initial_conditions%density_max) THEN
+        density = species_list(ispecies)%initial_conditions%density_max
+      ENDIF
 
-      IF (density < initial_conditions(ispecies)%density_min) CYCLE
+      IF (density < species_list(ispecies)%initial_conditions%density_min) CYCLE
 
       DO ipart = n0, npart_per_cell
         ! Place extra particle based on probability

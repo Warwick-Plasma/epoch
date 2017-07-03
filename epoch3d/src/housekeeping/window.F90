@@ -217,15 +217,20 @@ CONTAINS
         DO iy = -2, ny+3
           density(iy,iz) = evaluate_at_point( &
               species_list(ispecies)%density_function, nx, iy, iz, errcode)
-          IF (density(iy,iz) > initial_conditions(ispecies)%density_max) &
-              density(iy,iz) = initial_conditions(ispecies)%density_max
+          IF (density(iy,iz) &
+                  > species_list(ispecies)%initial_conditions%density_max) THEN
+            density(iy,iz) = &
+                species_list(ispecies)%initial_conditions%density_max
+          ENDIF
         ENDDO
       ENDDO
 
       DO iz = 1, nz
         DO iy = 1, ny
-          IF (density(iy,iz) < initial_conditions(ispecies)%density_min) &
-              CYCLE
+          IF (density(iy,iz) &
+                  < species_list(ispecies)%initial_conditions%density_min) THEN
+            CYCLE
+          ENDIF
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
             IF (ipart == 0) THEN

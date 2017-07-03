@@ -560,10 +560,11 @@ CONTAINS
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
-    REAL(num) :: val
+    REAL(num) :: val, val_local
     INTEGER :: count, ipoint, ipoint_val, n, err_simplify
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0, p0, p1, x0, x1
+    INTEGER :: ispec
 
     err = c_err_none
     err_simplify = c_err_none
@@ -572,52 +573,63 @@ CONTAINS
 
     IF (opcode == c_func_rho) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix, iy))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%density(ix, iy)
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempx) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 1))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 1)
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempy) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 2))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 2)
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempz) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 3))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 3)
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempx_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 1))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 1)
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempy_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 2))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 2)
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempz_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 3))
+      ispec = NINT(values(1))
+      val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 3)
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
