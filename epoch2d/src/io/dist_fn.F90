@@ -437,6 +437,7 @@ CONTAINS
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
         particle_data(c_dir_en) = current%particle_energy
+        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
 #else
         particle_data(c_dir_px:c_dir_pz) = 0.0_num
         particle_data(c_dir_en) = 0.0_num

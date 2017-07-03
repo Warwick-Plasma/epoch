@@ -193,6 +193,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_yz_angle = c_ndims + 7
   INTEGER, PARAMETER :: c_dir_zx_angle = c_ndims + 8
   INTEGER, PARAMETER :: c_dir_mod_p = c_ndims + 9
+
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
   INTEGER, PARAMETER :: c_df_maxdirs = c_dir_mod_p
