@@ -436,8 +436,15 @@ MODULE shared_parser_data
   ! It is the responsibility of the developer to ensure that a parameter is
   ! specified when needed
 
+  ! If you set the use_grid_position parameter to .FALSE. then the deck parser
+  ! will evaluate position x, y, z as being at the location pack_pos(1,2,3)
+  ! rather than x(pack%ix), y(pack%iy), z(pack%iz). It is essential that the
+  ! ix, parameters are still set to match, because other functions
+  ! will still use them
   TYPE parameter_pack
+    LOGICAL :: use_grid_position = .TRUE.
     INTEGER :: pack_ix = 1
+    REAL(num) :: pack_pos = 0.0_num
   END TYPE parameter_pack
 
   TYPE stack_element
