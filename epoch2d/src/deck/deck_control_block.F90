@@ -32,7 +32,7 @@ MODULE deck_control_block
 
   INTEGER, PARAMETER :: control_block_elements = 29 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
-  !3rd alias for ionisation
+  ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
   INTEGER, PARAMETER :: ionisation_index = 21
 
@@ -220,8 +220,9 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
-    !Adds 3rd alias just for ionisation s vs z issue
-    IF(str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
+
+    ! Adds 3rd alias just for ionisation s vs z issue
+    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
       elementselected = ionisation_index
     ENDIF
 

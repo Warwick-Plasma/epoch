@@ -301,7 +301,7 @@ CONTAINS
 
     ! Collect ionisation energies for the species
     IF (str_cmp(element, 'ionisation_energies') &
-       .OR. str_cmp(element, 'ionization_energies')) THEN
+        .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)

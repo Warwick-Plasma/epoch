@@ -314,9 +314,9 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ionisation_electron_species') &
+        .OR. str_cmp(element, 'ionization_electron_species') &
         .OR. str_cmp(element, 'electron_species') &
-        .OR. str_cmp(element, 'electron') &
-        .OR. str_cmp(element, 'ionization_electron_species')) THEN
+        .OR. str_cmp(element, 'electron')) THEN
       release_species_list = value
       RETURN
     ENDIF
