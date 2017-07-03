@@ -984,7 +984,7 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_positron
       species_charge_set(species_id) = .TRUE.
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
-      trident_electron_species = species_id
+      trident_positron_species = species_id
 #else
       errcode = c_err_generic_warning
 #endif
