@@ -192,10 +192,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_xy_angle = c_ndims + 6
   INTEGER, PARAMETER :: c_dir_yz_angle = c_ndims + 7
   INTEGER, PARAMETER :: c_dir_zx_angle = c_ndims + 8
+  INTEGER, PARAMETER :: c_dir_mod_p = c_ndims + 9
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = c_dir_zx_angle
+  INTEGER, PARAMETER :: c_df_maxdirs = c_dir_mod_p
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! define flags
@@ -380,6 +381,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
   INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
   INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
+  INTEGER, PARAMETER :: c_const_dir_mod_p = 91
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -1006,7 +1008,7 @@ MODULE shared_data
   END TYPE laser_block
 
   TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
-  INTEGER :: n_laser_x_min, n_laser_x_max
+  INTEGER :: n_laser_x_min = 0, n_laser_x_max = 0
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid

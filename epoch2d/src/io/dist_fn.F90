@@ -241,6 +241,10 @@ CONTAINS
         labels(idim) = 'Pz'
         units(idim)  = 'kg.m/s'
 
+      ELSE IF (direction(idim) == c_dir_mod_p) THEN
+        labels(idim) = '|P|'
+        units(idim)  = 'kg.m/s'
+
       ELSE IF (direction(idim) == c_dir_en) THEN
         labels(idim) = 'en'
         units(idim)  = 'J'
@@ -308,9 +312,11 @@ CONTAINS
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
           particle_data(c_dir_en) = current%particle_energy
+          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
 #else
           particle_data(c_dir_px:c_dir_pz) = 0.0_num
           particle_data(c_dir_en) = 0.0_num
+          particle_data(c_dir_mod_p) = 0.0_num
 #endif
           ! Can't define gamma for photon so one is as good as anything
           particle_data(c_dir_gamma_m1) = 1.0_num
@@ -320,6 +326,7 @@ CONTAINS
           particle_data(c_dir_pz) = pz
           particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
           particle_data(c_dir_gamma_m1) = gamma_rel_m1
+          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
         ENDIF
 
         IF (use_xy_angle) THEN
@@ -430,9 +437,11 @@ CONTAINS
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
         particle_data(c_dir_en) = current%particle_energy
+        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
 #else
         particle_data(c_dir_px:c_dir_pz) = 0.0_num
         particle_data(c_dir_en) = 0.0_num
+        particle_data(c_dir_mod_p) = 0.0_num
 #endif
         ! Can't define gamma for photon so one is as good as anything
         particle_data(c_dir_gamma_m1) = 1.0_num
@@ -442,6 +451,7 @@ CONTAINS
         particle_data(c_dir_pz) = pz
         particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_rel_m1
+        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
       ENDIF
 
       IF (use_xy_angle) THEN

@@ -546,7 +546,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy
-    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
 
     IF (ic_from_restart) RETURN
 
@@ -559,15 +559,29 @@ CONTAINS
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        DO iy = 1, ny
-        DO ix = 1, nx
-          omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy) &
-              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
-          IF (omega2 <= c_tiny) CYCLE
-          omega = SQRT(omega2)
-          IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-        ENDDO ! ix
-        ENDDO ! iy
+        IF (initial_conditions(ispecies)%density_max > 0) THEN
+          DO iy = 1, ny
+          DO ix = 1, nx
+            clipped_dens = MIN(initial_conditions(ispecies)%density(ix,iy), &
+                initial_conditions(ispecies)%density_max)
+            omega2 = fac1 * clipped_dens &
+                + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+        ELSE
+          DO iy = 1, ny
+          DO ix = 1, nx
+            omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy) &
+                + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+        ENDIF
       ENDIF
     ENDDO
 
@@ -956,6 +970,16 @@ CONTAINS
             CALL sdf_read_srl(sdf_handle, file_numbers)
           ENDIF
         ENDIF
+
+        CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
+            block_id, ndims, 'laser_x_min_phase', 'x_min')
+        CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
+            block_id, ndims, 'laser_x_max_phase', 'x_max')
+        CALL read_laser_phases(sdf_handle, n_laser_y_min, laser_y_min, &
+            block_id, ndims, 'laser_y_min_phase', 'y_min')
+        CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
+            block_id, ndims, 'laser_y_max_phase', 'y_max')
+
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1225,6 +1249,40 @@ CONTAINS
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE read_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
+      block_id_in, ndims, block_id_compare, direction_name)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    INTEGER, INTENT(IN) :: laser_count
+    TYPE(laser_block), POINTER :: laser_base_pointer
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
+    CHARACTER(LEN=*), INTENT(IN) :: direction_name
+    REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
+    INTEGER, DIMENSION(4) :: dims
+
+    IF (str_cmp(block_id_in, block_id_compare)) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      IF (ndims /= 1 .OR. dims(1) /= laser_count) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of laser phases on ', TRIM(direction_name), &
+            ' does not match number of lasers.'
+        PRINT*, 'Lasers will be populated in order, but correct operation ', &
+            'is not guaranteed'
+      ENDIF
+
+      ALLOCATE(laser_phases(dims(1)))
+      CALL sdf_read_srl(sdf_handle, laser_phases)
+      CALL setup_laser_phases(laser_base_pointer, laser_phases)
+      DEALLOCATE(laser_phases)
+    ENDIF
+
+  END SUBROUTINE read_laser_phases
 
 
 
