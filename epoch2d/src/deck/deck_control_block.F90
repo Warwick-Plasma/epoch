@@ -181,6 +181,9 @@ CONTAINS
       timer_collect = .TRUE.
     ENDIF
 
+    !use_balance only if threshold is positive
+    IF(dlb_threshold > 0) use_balance = .TRUE.
+
   END SUBROUTINE control_deck_finalise
 
 
@@ -263,7 +266,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
