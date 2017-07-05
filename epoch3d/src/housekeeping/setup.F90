@@ -40,7 +40,7 @@ MODULE setup
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #ifndef NO_IO
-  CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
+  CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
 
 CONTAINS

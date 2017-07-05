@@ -88,7 +88,7 @@ CONTAINS
     LOGICAL, INTENT(IN), OPTIONAL :: force_write
     CHARACTER(LEN=22) :: filename_fmt
     CHARACTER(LEN=5+n_zeros+c_id_length) :: filename
-    CHARACTER(LEN=6+data_dir_max_length+n_zeros+c_id_length) :: full_filename
+    CHARACTER(LEN=c_max_path_length) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type, temp_name
     CHARACTER(LEN=c_id_length) :: temp_block_id
     REAL(num) :: elapsed_time, dr, r0
@@ -811,7 +811,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: listname, filename
     INTEGER, INTENT(IN) :: list_index
-    CHARACTER(LEN=data_dir_max_length+c_id_length+8) :: listfile
+    CHARACTER(LEN=c_max_path_length) :: listfile
     TYPE(string_list), POINTER :: list
     TYPE(string_entry), POINTER :: lcur
     INTEGER :: ierr, i

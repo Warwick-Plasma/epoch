@@ -178,7 +178,7 @@ CONTAINS
 
     INTEGER :: i, io, iu
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     n_io_blocks = block_number
@@ -298,7 +298,7 @@ CONTAINS
 
     INTEGER :: io, iu, mask
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     IF (deck_state == c_ds_first) RETURN
