@@ -33,16 +33,16 @@ MODULE evaluator
 CONTAINS
 
 #ifdef SIMPLIFY_DEBUG
-  SUBROUTINE basic_evaluate(input_stack, ix, iy, err)
+  SUBROUTINE basic_evaluate(input_stack, parameters, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i, n_elements
     REAL(num), ALLOCATABLE :: array(:)
 
     IF (input_stack%should_simplify) THEN
-      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+      CALL basic_evaluate_standard(input_stack, parameters, err)
 
       n_elements = eval_stack_stack_point
       ALLOCATE(array(1:n_elements))
@@ -54,7 +54,7 @@ CONTAINS
 
       CALL simplify_stack(input_stack, err)
 
-      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+      CALL basic_evaluate_standard(input_stack, parameters, err)
 
       ! Check the final answers
       DO i = 1, n_elements
@@ -65,17 +65,17 @@ CONTAINS
 
       DEALLOCATE(array)
     ELSE
-      CALL basic_evaluate_standard(input_stack, ix, iy, err)
+      CALL basic_evaluate_standard(input_stack, parameters, err)
     ENDIF
 
   END SUBROUTINE basic_evaluate
 
 
 
-  SUBROUTINE basic_evaluate_standard(input_stack, ix, iy, err)
+  SUBROUTINE basic_evaluate_standard(input_stack, parameters, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
     TYPE(stack_element) :: block
@@ -92,9 +92,9 @@ CONTAINS
         CALL do_operator(block%value, err)
       ELSE IF (block%ptype == c_pt_constant &
           .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., ix, iy, err)
+        CALL do_constant(block%value, .FALSE., parameters, err)
       ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .FALSE., ix, iy, err)
+        CALL do_functions(block%value, .FALSE., parameters, err)
       ENDIF
 
       IF (err /= c_err_none) THEN
@@ -109,10 +109,10 @@ CONTAINS
 
 
 #else
-  SUBROUTINE basic_evaluate(input_stack, ix, iy, err)
+  SUBROUTINE basic_evaluate(input_stack, parameters, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
     TYPE(stack_element) :: block
@@ -131,9 +131,9 @@ CONTAINS
         CALL do_operator(block%value, err)
       ELSE IF (block%ptype == c_pt_constant &
           .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., ix, iy, err)
+        CALL do_constant(block%value, .FALSE., parameters, err)
       ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .FALSE., ix, iy, err)
+        CALL do_functions(block%value, .FALSE., parameters, err)
       ENDIF
 
       IF (err /= c_err_none) THEN
@@ -175,6 +175,9 @@ CONTAINS
     INTEGER :: i
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: output_stack
+    TYPE(parameter_pack) :: parameters
+
+    parameters%pack_ix = 1
 
     ! Evaluating expressions and push the results onto eval_stack.
     ! When we reach a block which requests a time or space variable,
@@ -206,10 +209,10 @@ CONTAINS
         CALL update_stack_for_block(block, err)
       ELSE IF (block%ptype == c_pt_constant &
           .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .TRUE., 1, 1, err)
+        CALL do_constant(block%value, .TRUE., parameters, err)
         CALL update_stack_for_block(block, err)
       ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .TRUE., 1, 1, err)
+        CALL do_functions(block%value, .TRUE., parameters, err)
         CALL update_stack_for_block(block, err)
       ENDIF
 
@@ -328,17 +331,17 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_at_point_to_array(input_stack, ix, iy, n_elements, &
-      array, err)
+  SUBROUTINE evaluate_with_parameters_to_array(input_stack, parameters, &
+      n_elements, array, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(IN) :: n_elements
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
 
-    CALL basic_evaluate(input_stack, ix, iy, err)
+    CALL basic_evaluate(input_stack, parameters, err)
 
     IF (eval_stack_stack_point /= n_elements) err = IOR(err, c_err_bad_value)
 
@@ -347,15 +350,32 @@ CONTAINS
       array(i) = pop_off_eval()
     ENDDO
 
-  END SUBROUTINE evaluate_at_point_to_array
+  END SUBROUTINE evaluate_with_parameters_to_array
 
 
 
-  SUBROUTINE evaluate_and_return_all(input_stack, ix, iy, n_elements, &
-      array, err)
+  SUBROUTINE evaluate_to_array(input_stack, n_elements, array, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    INTEGER, INTENT(IN) :: n_elements
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(parameter_pack) :: parameters
+
+    parameters%pack_ix = 1
+
+    CALL evaluate_with_parameters_to_array(input_stack, parameters, &
+        n_elements, array, err)
+
+  END SUBROUTINE evaluate_to_array
+
+
+
+  SUBROUTINE evaluate_and_return_all_with_parameters(input_stack, parameters, &
+      n_elements, array, err)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: input_stack
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(OUT) :: n_elements
     REAL(num), DIMENSION(:), POINTER :: array
     INTEGER, INTENT(INOUT) :: err
@@ -363,7 +383,7 @@ CONTAINS
 
     IF (ASSOCIATED(array)) DEALLOCATE(array)
 
-    CALL basic_evaluate(input_stack, ix, iy, err)
+    CALL basic_evaluate(input_stack, parameters, err)
 
     n_elements = eval_stack_stack_point
     ALLOCATE(array(1:n_elements))
@@ -372,6 +392,21 @@ CONTAINS
     DO i = n_elements,1,-1
       array(i) = pop_off_eval()
     ENDDO
+
+  END SUBROUTINE evaluate_and_return_all_with_parameters
+
+
+
+  SUBROUTINE evaluate_and_return_all(input_stack, n_elements, array, err)
+
+    TYPE(primitive_stack), INTENT(INOUT) :: input_stack
+    INTEGER, INTENT(OUT) :: n_elements
+    REAL(num), DIMENSION(:), POINTER :: array
+    INTEGER, INTENT(INOUT) :: err
+    TYPE(parameter_pack) :: parameters
+
+    CALL evaluate_and_return_all_with_parameters(input_stack, parameters, &
+        n_elements, array, err)
 
   END SUBROUTINE evaluate_and_return_all
 
@@ -385,6 +420,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
     TYPE(stack_element) :: block
+    TYPE(parameter_pack) :: parameters
 
     array(1) = 0
     n_elements = 1
@@ -397,7 +433,7 @@ CONTAINS
         array(n_elements) = block%value
       ELSE IF (block%ptype == c_pt_constant &
           .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., 1, 1, err)
+        CALL do_constant(block%value, .FALSE., parameters, err)
         array(1) = array(1) + INT(pop_off_eval())
       ELSE IF (block%ptype /= c_pt_operator) THEN
         err = c_err_bad_value
@@ -414,18 +450,19 @@ CONTAINS
 
 
 
-  FUNCTION evaluate_at_point(input_stack, ix, iy, err)
+  FUNCTION evaluate_with_parameters(input_stack, parameters, err)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(IN) :: ix, iy
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(1) :: array
-    REAL(num) :: evaluate_at_point
+    REAL(num) :: evaluate_with_parameters
 
-    CALL evaluate_at_point_to_array(input_stack, ix, iy, 1, array, err)
-    evaluate_at_point = array(1)
+    CALL evaluate_with_parameters_to_array(input_stack, parameters, 1, &
+        array, err)
+    evaluate_with_parameters = array(1)
 
-  END FUNCTION evaluate_at_point
+  END FUNCTION evaluate_with_parameters
 
 
 
@@ -434,8 +471,9 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(INOUT) :: err
     REAL(num) :: evaluate
+    TYPE(parameter_pack) :: parameters
 
-    evaluate = evaluate_at_point(input_stack, 1, 1, err)
+    evaluate = evaluate_with_parameters(input_stack, parameters, err)
 
   END FUNCTION evaluate
 

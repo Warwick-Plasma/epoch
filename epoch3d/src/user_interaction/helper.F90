@@ -36,28 +36,28 @@ CONTAINS
       ! Set temperature at boundary for thermal bcs.
 
       IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(1,-2:ny+3,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_x_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(1,:,:,:)
       ENDIF
       IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(nx,-2:ny+3,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_x_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(nx,:,:,:)
       ENDIF
       IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,1,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_y_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,1,:,:)
       ENDIF
       IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,ny,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_y_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,ny,:,:)
       ENDIF
       IF (bc_particle(c_bd_z_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,1,1:3)
+        species_list(ispecies)%ext_temp_z_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,:,1,:)
       ENDIF
       IF (bc_particle(c_bd_z_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,nz,1:3)
+        species_list(ispecies)%ext_temp_z_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,:,nz,:)
       ENDIF
     ENDDO
 
@@ -76,23 +76,25 @@ CONTAINS
       species => species_list(ispecies)
 
 #ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL setup_particle_density(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL non_uniform_load_particles(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #endif
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species, &
-          initial_conditions(ispecies)%drift(:,:,:,1))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,1), c_dir_x, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,1))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, species, &
-          initial_conditions(ispecies)%drift(:,:,:,2))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,2), c_dir_y, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,2))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species, &
-          initial_conditions(ispecies)%drift(:,:,:,3))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,3), c_dir_z, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,3))
     ENDDO
 
     IF (rank == 0) THEN
@@ -118,17 +120,19 @@ CONTAINS
 
     INTEGER :: ispecies
 
-    ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)%density(-2:nx+3,-2:ny+3,-2:nz+3))
-      ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,-2:ny+3,-2:nz+3,1:3))
-      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %density(-2:nx+3,-2:ny+3,-2:nz+3))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %temp(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %drift(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
 
-      initial_conditions(ispecies)%density = 1.0_num
-      initial_conditions(ispecies)%temp = 0.0_num
-      initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%density_min = EPSILON(1.0_num)
-      initial_conditions(ispecies)%density_max = HUGE(1.0_num)
+      species_list(ispecies)%initial_conditions%density = 1.0_num
+      species_list(ispecies)%initial_conditions%temp = 0.0_num
+      species_list(ispecies)%initial_conditions%drift = 0.0_num
+      species_list(ispecies)%initial_conditions%density_min = EPSILON(1.0_num)
+      species_list(ispecies)%initial_conditions%density_max = HUGE(1.0_num)
     ENDDO
 
   END SUBROUTINE allocate_ic
@@ -140,11 +144,10 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      DEALLOCATE(initial_conditions(ispecies)%density)
-      DEALLOCATE(initial_conditions(ispecies)%temp)
-      DEALLOCATE(initial_conditions(ispecies)%drift)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%density)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%temp)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%drift)
     ENDDO
-    IF (.NOT. move_window) DEALLOCATE(initial_conditions)
 
   END SUBROUTINE deallocate_ic
 

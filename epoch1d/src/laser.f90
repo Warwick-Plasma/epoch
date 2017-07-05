@@ -151,9 +151,12 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
-    laser%phase = evaluate_at_point(laser%phase_function, 0, err)
+    parameters%pack_ix = 0
+    laser%phase = &
+        evaluate_with_parameters(laser%phase_function, parameters, err)
 
   END SUBROUTINE laser_update_phase
 
@@ -163,9 +166,12 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
-    laser%profile = evaluate_at_point(laser%profile_function, 0, err)
+    parameters%pack_ix = 0
+    laser%profile = &
+        evaluate_with_parameters(laser%profile_function, parameters, err)
 
   END SUBROUTINE laser_update_profile
 

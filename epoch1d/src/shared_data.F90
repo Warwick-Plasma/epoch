@@ -431,6 +431,22 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 
+  ! This type represents parameters given to the parser.
+  ! It can be extended by a developer freely
+  ! It is the responsibility of the developer to ensure that a parameter is
+  ! specified when needed
+
+  ! If you set the use_grid_position parameter to .FALSE. then the deck parser
+  ! will evaluate position x, y, z as being at the location pack_pos(1,2,3)
+  ! rather than x(pack%ix), y(pack%iy), z(pack%iz). It is essential that the
+  ! ix, parameters are still set to match, because other functions
+  ! will still use them
+  TYPE parameter_pack
+    LOGICAL :: use_grid_position = .TRUE.
+    INTEGER :: pack_ix = 1
+    REAL(num) :: pack_pos = 0.0_num
+  END TYPE parameter_pack
+
   TYPE stack_element
     INTEGER :: ptype
     INTEGER :: value
@@ -562,6 +578,16 @@ MODULE shared_data
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
 
+  ! Represents the initial conditions of a species
+  TYPE initial_condition_block
+    REAL(num), DIMENSION(:), POINTER :: density
+    REAL(num), DIMENSION(:,:), POINTER :: temp
+    REAL(num), DIMENSION(:,:), POINTER :: drift
+
+    REAL(num) :: density_min
+    REAL(num) :: density_max
+  END TYPE initial_condition_block
+
   ! Object representing a particle species
   TYPE particle_species
     ! Core properties
@@ -617,27 +643,14 @@ MODULE shared_data
     ! Particle migration
     TYPE(particle_species_migration) :: migrate
 
+    ! Initial conditions
+    TYPE(initial_condition_block) :: initial_conditions
   END TYPE particle_species
-
-  !----------------------------------------------------------------------------
-  ! Initial conditions
-  !----------------------------------------------------------------------------
-  ! Represents the initial conditions of a species
-  TYPE initial_condition_block
-    REAL(num), DIMENSION(:), POINTER :: density
-    REAL(num), DIMENSION(:,:), POINTER :: temp
-    REAL(num), DIMENSION(:,:), POINTER :: drift
-
-    REAL(num) :: density_min
-    REAL(num) :: density_max
-  END TYPE initial_condition_block
-
-  INTEGER :: deck_state
-  TYPE(initial_condition_block), DIMENSION(:), ALLOCATABLE :: initial_conditions
 
   !----------------------------------------------------------------------------
   ! file handling
   !----------------------------------------------------------------------------
+  INTEGER :: deck_state
   INTEGER :: subtype_field, subtype_field_r4
   INTEGER :: subarray_field, subarray_field_r4
   INTEGER :: subarray_field_big, subarray_field_big_r4

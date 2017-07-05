@@ -174,6 +174,7 @@ CONTAINS
     REAL(num), DIMENSION(-1:1) :: gy, gz
     REAL(num) :: temp_local, drift_local, npart_frac
     REAL(num) :: weight_local
+    TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -201,31 +202,40 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      parameters%pack_ix = nx
       DO i = 1, 3
         DO iz = -2, nz+3
+          parameters%pack_iz = iz
           DO iy = -2, ny+3
-            temperature(iy,iz,i) = evaluate_at_point( &
-                species_list(ispecies)%temperature_function(i), nx, &
-                iy, iz, errcode)
-            drift(iy,iz,i) = evaluate_at_point( &
-                species_list(ispecies)%drift_function(i), nx, &
-                iy, iz, errcode)
+            parameters%pack_iy = iy
+            temperature(iy,iz,i) = evaluate_with_parameters( &
+                species_list(ispecies)%temperature_function(i), &
+                parameters, errcode)
+            drift(iy,iz,i) = evaluate_with_parameters( &
+                species_list(ispecies)%drift_function(i), parameters, errcode)
           ENDDO
         ENDDO
       ENDDO
       DO iz = -2, nz+3
+        parameters%pack_iz = iz
         DO iy = -2, ny+3
-          density(iy,iz) = evaluate_at_point( &
-              species_list(ispecies)%density_function, nx, iy, iz, errcode)
-          IF (density(iy,iz) > initial_conditions(ispecies)%density_max) &
-              density(iy,iz) = initial_conditions(ispecies)%density_max
+          parameters%pack_iy = iy
+          density(iy,iz) = evaluate_with_parameters( &
+              species_list(ispecies)%density_function, parameters, errcode)
+          IF (density(iy,iz) &
+                  > species_list(ispecies)%initial_conditions%density_max) THEN
+            density(iy,iz) = &
+                species_list(ispecies)%initial_conditions%density_max
+          ENDIF
         ENDDO
       ENDDO
 
       DO iz = 1, nz
         DO iy = 1, ny
-          IF (density(iy,iz) < initial_conditions(ispecies)%density_min) &
-              CYCLE
+          IF (density(iy,iz) &
+                  < species_list(ispecies)%initial_conditions%density_min) THEN
+            CYCLE
+          ENDIF
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
             IF (ipart == 0) THEN

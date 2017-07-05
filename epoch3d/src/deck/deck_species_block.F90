@@ -306,7 +306,7 @@ CONTAINS
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
-        CALL evaluate_and_return_all(stack, 0, 0, 0, &
+        CALL evaluate_and_return_all(stack, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
         CALL deallocate_stack(stack)
       ENDIF
@@ -523,12 +523,12 @@ CONTAINS
     IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
       dmin = as_real_print(value, element, errcode)
       IF (dmin <= 0.0_num) dmin = EPSILON(1.0_num)
-      initial_conditions(species_id)%density_min = dmin
+      species_list(species_id)%initial_conditions%density_min = dmin
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
-      initial_conditions(species_id)%density_max = &
+      species_list(species_id)%initial_conditions%density_max = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
@@ -546,7 +546,7 @@ CONTAINS
       ENDIF
 
       CALL fill_array(species_list(species_id)%density_function, &
-          initial_conditions(species_id)%density, &
+          species_list(species_id)%initial_conditions%density, &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -554,7 +554,7 @@ CONTAINS
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,:,:,n), &
+          species_list(species_id)%initial_conditions%drift(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -562,7 +562,7 @@ CONTAINS
     IF (str_cmp(element, 'drift_y')) THEN
       n = 2
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,:,:,n), &
+          species_list(species_id)%initial_conditions%drift(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -570,7 +570,7 @@ CONTAINS
     IF (str_cmp(element, 'drift_z')) THEN
       n = 3
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,:,:,n), &
+          species_list(species_id)%initial_conditions%drift(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -583,22 +583,18 @@ CONTAINS
 
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       n = 2
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       n = 3
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
 
       debug_mode = .FALSE.
-      initial_conditions(species_id)%temp(:,:,:,2) = &
-          initial_conditions(species_id)%temp(:,:,:,n)
-      initial_conditions(species_id)%temp(:,:,:,3) = &
-          initial_conditions(species_id)%temp(:,:,:,n)
       RETURN
     ENDIF
 
@@ -608,7 +604,7 @@ CONTAINS
 
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -619,7 +615,7 @@ CONTAINS
 
       n = 2
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -630,7 +626,7 @@ CONTAINS
 
       n = 3
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,:,:,n), &
+          species_list(species_id)%initial_conditions%temp(:,:,:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -840,6 +836,7 @@ CONTAINS
     TYPE(stack_element) :: block
     TYPE(primitive_stack) :: stack
     INTEGER :: io, iu, ix, iy, iz
+    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -868,7 +865,7 @@ CONTAINS
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check
-      array(1,1,1) = evaluate_at_point(stack, 1, 1, 1, errcode)
+      array(1,1,1) = evaluate(stack, errcode)
       IF (errcode /= c_err_none) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
@@ -881,11 +878,15 @@ CONTAINS
       ENDIF
 
       DO iz = -2, nz+3
-      DO iy = -2, ny+3
-      DO ix = -2, nx+3
-        array(ix,iy,iz) = evaluate_at_point(stack, ix, iy, iz, errcode)
-      ENDDO
-      ENDDO
+        parameters%pack_iz = iz
+        DO iy = -2, ny+3
+          parameters%pack_iy = iy
+          DO ix = -2, nx+3
+            parameters%pack_ix = ix
+            array(ix,iy,iz) = evaluate_with_parameters(stack, &
+                parameters, errcode)
+          ENDDO
+        ENDDO
       ENDDO
     ENDIF
 
