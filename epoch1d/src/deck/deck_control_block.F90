@@ -173,7 +173,7 @@ CONTAINS
       timer_collect = .TRUE.
     ENDIF
 
-    !use_balance only if threshold is positive
+    ! use_balance only if threshold is positive
     IF (dlb_threshold > 0) use_balance = .TRUE.
 
   END SUBROUTINE control_deck_finalise
