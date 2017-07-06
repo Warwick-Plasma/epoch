@@ -72,12 +72,14 @@ CONTAINS
         subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
 
         !Check for any spatial restrictions in place
-        subset_list(subset_id)%any_space_restr = subset_list(subset_id)%use_x_min &
-            .OR. subset_list(subset_id)%use_x_max .OR. subset_list(subset_id)%use_y_min &
-            .OR. subset_list(subset_id)%use_y_max
+        subset_list(i)%any_space_restr = subset_list(i)%use_x_min &
+            .OR. subset_list(i)%use_x_max .OR. subset_list(i)%use_y_min &
+            .OR. subset_list(i)%use_y_max
         IF (subset_list(i)%skip .AND. subset_list(i)%any_space_restr) THEN
-          IF (rank == 0) PRINT *, "Skip and spatial restrictions specified: field variables &
-              will not be trimmmed"
+          IF (rank == 0) PRINT *, "Skip and spatial restrictions specified for "// &
+              TRIM(subset_list(i)%name)//": field variables &
+              & will not be trimmmed"
+          subset_list(i)%any_space_restr = .FALSE.
         ENDIF
       ENDDO
     ENDIF

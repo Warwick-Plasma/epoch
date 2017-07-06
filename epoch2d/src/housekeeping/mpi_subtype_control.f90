@@ -97,6 +97,7 @@ CONTAINS
       starts = cell_starts(ranges, global_ranges(sub))
 
       ranges = cell_section_ranges(ranges)
+
       IF (sub%skip) THEN
         DO j = 1, c_ndims
           rd = sub%skip_dir(j)
@@ -679,6 +680,11 @@ CONTAINS
         IF( current_subset%use_y_max ) &
             global_ranges(2,idim) = current_subset%y_max
       ENDIF
+      IF (global_ranges(2,idim) .LT. global_ranges(1,idim)) THEN
+        global_ranges = 0
+        RETURN
+      ENDIF
+
       ! Correct to domain size
       global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min)
       global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max)

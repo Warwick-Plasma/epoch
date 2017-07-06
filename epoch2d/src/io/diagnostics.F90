@@ -47,7 +47,7 @@ MODULE diagnostics
   INTEGER(i8), ALLOCATABLE :: ejected_offset(:)
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
-  LOGICAL :: dump_field_grid
+  LOGICAL :: dump_field_grid, skipped_any_set
   LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   LOGICAL, ALLOCATABLE, SAVE :: prefix_first_call(:)
   INTEGER :: isubset
@@ -110,14 +110,13 @@ CONTAINS
         (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
-    INTEGER :: force_code
 
 
 #ifdef NO_IO
     RETURN
 #endif
 
-    timer_walltime = -1.0_num
+   timer_walltime = -1.0_num
     IF (step /= last_step) THEN
       last_step = step
       IF (rank == 0 .AND. stdout_frequency > 0 &
@@ -137,9 +136,11 @@ CONTAINS
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
         ENDIF
-      ENDIF
+        IF(skipped_any_set) WRITE(*, *) "One or more subset ranges were &
+            & empty: their fields were not output."
+        skipped_any_set = .FALSE.
+     ENDIF
     ENDIF
-
     IF (n_io_blocks <= 0) RETURN
 
     force = .FALSE.
@@ -1225,6 +1226,7 @@ CONTAINS
     TYPE(subset), POINTER :: sub
     INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_sec
     INTEGER, DIMENSION(c_ndims) :: new_dims
+    LOGICAL :: skip_this_set
 
     mask = iomask(id)
     IF (IAND(mask, code) == 0) RETURN
@@ -1278,6 +1280,16 @@ CONTAINS
         !Output every subset. Trust user not to do parts twice
         !Calculate the subsection dimensions and ranges
         ranges = cell_global_ranges(global_ranges(sub))
+        skip_this_set = .FALSE.
+        DO i = 1, c_ndims
+          IF (ranges(2,i) .LE. ranges(1,i)) THEN
+            skip_this_set = .TRUE.
+            skipped_any_set = .TRUE.
+          ENDIF
+        ENDDO
+        IF (skip_this_set) THEN
+          CYCLE
+        ENDIF
         new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_sec = cell_section_ranges(ranges) + 1
@@ -1482,6 +1494,12 @@ CONTAINS
       !Calculate the subsection dimensions and ranges
       IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
         ranges = cell_global_ranges(global_ranges(subset_list(isubset-1)))
+        DO i = 0, c_ndims
+          IF (ranges(2,i) .LT. ranges(1,i)) THEN
+            skipped_any_set = .TRUE.
+            RETURN
+          ENDIF
+        ENDDO
         new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
         ranges = cell_local_ranges(global_ranges(subset_list(isubset-1)))
         ran_no_ng = cell_section_ranges(ranges) + ng + 1
