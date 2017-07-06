@@ -300,7 +300,8 @@ CONTAINS
     ENDIF
 
     ! Collect ionisation energies for the species
-    IF (str_cmp(element, 'ionisation_energies')) THEN
+    IF (str_cmp(element, 'ionisation_energies') &
+        .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
@@ -313,6 +314,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ionisation_electron_species') &
+        .OR. str_cmp(element, 'ionization_electron_species') &
         .OR. str_cmp(element, 'electron_species') &
         .OR. str_cmp(element, 'electron')) THEN
       release_species_list = value
@@ -982,7 +984,7 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_positron
       species_charge_set(species_id) = .TRUE.
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
-      trident_electron_species = species_id
+      trident_positron_species = species_id
 #else
       errcode = c_err_generic_warning
 #endif
