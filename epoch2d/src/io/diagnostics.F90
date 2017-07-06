@@ -1495,7 +1495,7 @@ CONTAINS
       IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
         ranges = cell_global_ranges(global_ranges(subset_list(isubset-1)))
         DO i = 0, c_ndims
-          IF (ranges(2,i) .LT. ranges(1,i)) THEN
+          IF (ranges(2,i) .LE. ranges(1,i)) THEN
             skipped_any_set = .TRUE.
             RETURN
           ENDIF
