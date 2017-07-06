@@ -1282,7 +1282,7 @@ CONTAINS
         ranges = cell_global_ranges(global_ranges(sub))
         skip_this_set = .FALSE.
         DO i = 1, c_ndims
-          IF (ranges(2,i) .LE. ranges(1,i)) THEN
+          IF (ranges(2,i) <= ranges(1,i)) THEN
             skip_this_set = .TRUE.
             skipped_any_set = .TRUE.
           ENDIF
@@ -1494,8 +1494,8 @@ CONTAINS
       !Calculate the subsection dimensions and ranges
       IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
         ranges = cell_global_ranges(global_ranges(subset_list(isubset-1)))
-        DO i = 0, c_ndims
-          IF (ranges(2,i) .LE. ranges(1,i)) THEN
+        DO i = 1, c_ndims
+          IF (ranges(2,i) <= ranges(1,i)) THEN
             skipped_any_set = .TRUE.
             RETURN
           ENDIF

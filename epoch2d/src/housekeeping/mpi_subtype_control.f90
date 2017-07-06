@@ -680,7 +680,7 @@ CONTAINS
         IF( current_subset%use_y_max ) &
             global_ranges(2,idim) = current_subset%y_max
       ENDIF
-      IF (global_ranges(2,idim) .LT. global_ranges(1,idim)) THEN
+      IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
         global_ranges = 0
         RETURN
       ENDIF
