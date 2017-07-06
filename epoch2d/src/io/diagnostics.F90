@@ -1493,7 +1493,7 @@ CONTAINS
       CALL build_species_subset
       !Calculate the subsection dimensions and ranges
       IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
-        ranges = cell_global_ranges(global_ranges(subset_list(isubset-1)))
+        ranges = cell_global_ranges(global_ranges(sub))
         DO i = 1, c_ndims
           IF (ranges(2,i) <= ranges(1,i)) THEN
             skipped_any_set = .TRUE.
@@ -1501,7 +1501,7 @@ CONTAINS
           ENDIF
         ENDDO
         new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
-        ranges = cell_local_ranges(global_ranges(subset_list(isubset-1)))
+        ranges = cell_local_ranges(global_ranges(sub))
         ran_no_ng = cell_section_ranges(ranges) + ng + 1
       ENDIF
     ENDIF
