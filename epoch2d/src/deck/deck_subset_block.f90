@@ -75,6 +75,10 @@ CONTAINS
         subset_list(subset_id)%any_space_restr = subset_list(subset_id)%use_x_min &
             .OR. subset_list(subset_id)%use_x_max .OR. subset_list(subset_id)%use_y_min &
             .OR. subset_list(subset_id)%use_y_max
+        IF (subset_list(i)%skip .AND. subset_list(i)%any_space_restr) THEN
+          IF (rank == 0) PRINT *, "Skip and spatial restrictions specified: field variables &
+              will not be trimmmed"
+        ENDIF
       ENDDO
     ENDIF
 

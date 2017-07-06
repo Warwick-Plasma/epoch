@@ -96,6 +96,7 @@ CONTAINS
           ranges(2,2) - ranges(1,2) /)
       starts = cell_starts(ranges, global_ranges(sub))
 
+      ranges = cell_section_ranges(ranges)
       IF (sub%skip) THEN
         DO j = 1, c_ndims
           rd = sub%skip_dir(j)
@@ -139,6 +140,7 @@ CONTAINS
 
         sub%subarray_r4 = mpitype
       ELSE
+
         mpitype = MPI_DATATYPE_NULL
         IF (proc_outside_range) THEN
           CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
@@ -694,17 +696,19 @@ CONTAINS
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_global_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dir_d
+    REAL(NUM) :: dir_d, lower_posn
     INTEGER :: idim
 
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
+        lower_posn = x_min
       ELSE
         dir_d = dy
+        lower_posn = y_min
       ENDIF
-      cell_global_ranges(1,idim) = ranges(1,idim) / dir_d + 1
-      cell_global_ranges(2,idim) = ranges(2,idim) / dir_d + 1
+      cell_global_ranges(1,idim) = (ranges(1,idim) - lower_posn) / dir_d + 1
+      cell_global_ranges(2,idim) = (ranges(2,idim) - lower_posn) / dir_d + 1
     ENDDO
 
 
@@ -713,10 +717,10 @@ CONTAINS
 
 
   FUNCTION cell_local_ranges(ranges)
-
+  !Location of current processors section of global array
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dir_d
+    REAL(NUM) :: dir_d, lower_posn
     INTEGER :: idim
 
 
@@ -728,11 +732,13 @@ CONTAINS
    DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
+        lower_posn = x_min
       ELSE
         dir_d = dy
+        lower_posn = y_min
       ENDIF
-      cell_local_ranges(1,idim) = ranges(1,idim) / dir_d + 1
-      cell_local_ranges(2,idim) = ranges(2,idim) / dir_d + 1
+      cell_local_ranges(1,idim) = (ranges(1,idim) - lower_posn) / dir_d + 1
+      cell_local_ranges(2,idim) = (ranges(2,idim) - lower_posn) / dir_d + 1
     ENDDO
   END FUNCTION cell_local_ranges
 
@@ -765,16 +771,13 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     REAL(NUM) :: range_global_min
 
-    range_global_min = global_ranges(1,1) / dx
+    range_global_min = (global_ranges(1,1) - x_min)/ dx
 
-    cell_starts(1) = nx_global_min - 2 &
-          + ranges(1,1) - x_min_local / dx - range_global_min
+    cell_starts(1) = ranges(1,1) - range_global_min - 1
+    !-1 because ranges is cell indexed and global_ranges isnt
+    range_global_min = (global_ranges(1,2) - y_min) / dy
 
-    range_global_min = global_ranges(1,2) / dy
-
-    cell_starts(2) = ny_global_min - 2 &
-          + ranges(1,2) - y_min_local / dy - range_global_min
-
+    cell_starts(2) = ranges(1,2) - range_global_min - 1
   END FUNCTION cell_starts
 
 END MODULE mpi_subtype_control
