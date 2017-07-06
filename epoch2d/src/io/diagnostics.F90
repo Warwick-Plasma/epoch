@@ -1229,7 +1229,6 @@ CONTAINS
     LOGICAL :: skip_this_set
 
     mask = iomask(id)
-    IF (IAND(mask, code) == 0) RETURN
     IF (IAND(mask, c_io_never) /= 0) RETURN
 
     ! This is a normal dump and normal output variable
@@ -1365,6 +1364,7 @@ CONTAINS
         DEALLOCATE(reduced)
       ENDIF
     ENDDO
+    IF (IAND(mask, code) == 0) RETURN
 
     IF (restart_id .OR. (.NOT.dump_skipped .AND. unaveraged_id)) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(block_id), &
