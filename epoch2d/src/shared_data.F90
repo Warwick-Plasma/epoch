@@ -627,13 +627,24 @@ MODULE shared_data
     LOGICAL :: use_id_min, use_id_max
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
+    LOGICAL :: time_varying
     REAL(num) :: gamma_min, gamma_max, random_fraction
+    TYPE(primitive_stack) :: gamma_min_exp, gamma_max_exp, random_fraction_exp
     REAL(num) :: x_min, x_max, y_min, y_max
+    TYPE(primitive_stack) :: x_min_exp, x_max_exp
+    TYPE(primitive_stack) :: y_min_exp, y_max_exp
     REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
+    TYPE(primitive_stack) :: px_min_exp, px_max_exp
+    TYPE(primitive_stack) :: py_min_exp, py_max_exp
+    TYPE(primitive_stack) :: pz_min_exp, pz_max_exp
     REAL(num) :: weight_min, weight_max
+    TYPE(primitive_stack) :: weight_min_exp, weight_max_exp
     REAL(num) :: charge_min, charge_max
+    TYPE(primitive_stack) :: charge_min_exp, charge_max_exp
     REAL(num) :: mass_min, mass_max
+    TYPE(primitive_stack) :: mass_min_exp, mass_max_exp
     INTEGER(i8) :: id_min, id_max
+    TYPE(primitive_stack) :: id_min_exp, id_max_exp
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
 

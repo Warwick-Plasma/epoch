@@ -21,6 +21,7 @@ MODULE diagnostics
   USE sdf
   USE deck
   USE dist_fn
+  USE evaluator
   USE epoch_source_info
   USE iterators
   USE probes
@@ -217,6 +218,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
+    INTEGER :: errcode
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
@@ -364,6 +366,32 @@ CONTAINS
       dump_field_grid = .FALSE.
 
       nstep_prev = step
+
+      DO isubset = 1, n_subsets
+        sub => subset_list(isubset)
+        IF (.NOT. sub%time_varying) CYCLE
+        sub%random_fraction = evaluate(sub%random_fraction_exp, errcode)
+        sub%gamma_min = evaluate(sub%gamma_min_exp, errcode)
+        sub%gamma_max = evaluate(sub%gamma_max_exp, errcode)
+        sub%x_min = evaluate(sub%x_min_exp, errcode)
+        sub%x_max = evaluate(sub%x_max_exp, errcode)
+        sub%y_min = evaluate(sub%y_min_exp, errcode)
+        sub%y_max = evaluate(sub%y_max_exp, errcode)
+        sub%px_min = evaluate(sub%px_min_exp, errcode)
+        sub%px_max = evaluate(sub%px_max_exp, errcode)
+        sub%py_min = evaluate(sub%py_min_exp, errcode)
+        sub%py_max = evaluate(sub%py_max_exp, errcode)
+        sub%pz_min = evaluate(sub%pz_min_exp, errcode)
+        sub%pz_max = evaluate(sub%pz_max_exp, errcode)
+        sub%weight_min = evaluate(sub%weight_min_exp, errcode)
+        sub%weight_max = evaluate(sub%weight_max_exp, errcode)
+        sub%charge_min = evaluate(sub%charge_min_exp, errcode)
+        sub%charge_max = evaluate(sub%charge_max_exp, errcode)
+        sub%mass_min = evaluate(sub%mass_min_exp, errcode)
+        sub%mass_max = evaluate(sub%mass_max_exp, errcode)
+        sub%id_min = evaluate(sub%id_min_exp, errcode)
+        sub%id_max = evaluate(sub%id_max_exp, errcode)
+      ENDDO
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
