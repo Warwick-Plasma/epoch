@@ -1427,7 +1427,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
     LOGICAL :: convert, dump_sum, dump_species, dump_skipped
-    LOGICAL :: normal_id, restart_id, unaveraged_id
+    LOGICAL :: normal_id, restart_id, unaveraged_id, dump_part
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
@@ -1476,9 +1476,11 @@ CONTAINS
 
     IF (isubset == 1) THEN
       dump_skipped = .FALSE.
+      dump_part = .FALSE.
     ELSE
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
+      dump_part = sub%any_space_restr
       IF(convert) THEN
         rsubtype  = sub%subtype_r4
         rsubarray = sub%subarray_r4
@@ -1492,7 +1494,7 @@ CONTAINS
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
       !Calculate the subsection dimensions and ranges
-      IF (isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
+      IF (dump_part) THEN
         ranges = cell_global_ranges(global_ranges(sub))
         DO i = 1, c_ndims
           IF (ranges(2,i) <= ranges(1,i)) THEN
@@ -1556,7 +1558,7 @@ CONTAINS
             TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
 
         sub%dump_field_grid = .TRUE.
-      ELSE IF (sub%any_space_restr) THEN
+      ELSE IF (dump_part) THEN
         temp_grid_id = 'grid/' // TRIM(sub%name)
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
@@ -1635,7 +1637,7 @@ CONTAINS
 
         CALL func(array, ispecies)
 
-        IF( isubset /= 1 .AND. subset_list(isubset-1)%any_space_restr) THEN
+        IF (dump_part) THEN
           !1st subset is main dump so there wont be any restrictions
          temp_grid_id = 'grid/' // TRIM(sub%name)
 
