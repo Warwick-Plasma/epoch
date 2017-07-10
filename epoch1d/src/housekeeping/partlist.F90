@@ -498,6 +498,7 @@ CONTAINS
   SUBROUTINE create_particle(new_particle)
 
     TYPE(particle), POINTER :: new_particle
+    INTEGER :: stat
 
     ALLOCATE(new_particle)
     CALL init_particle(new_particle)

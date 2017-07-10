@@ -117,6 +117,8 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
         tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
+!    PRINT *,'SENDRECV 1 OVER ', rank
+
     IF (proc_x_max /= MPI_PROC_NULL) THEN
       n = 1
       DO i = nx_local+1, nx_local+ng
@@ -124,6 +126,7 @@ CONTAINS
         n = n + 1
       ENDDO
     ENDIF
+!    PRINT *,'Copy over ', rank
 
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
         tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)

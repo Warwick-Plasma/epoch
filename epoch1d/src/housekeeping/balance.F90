@@ -124,12 +124,12 @@ CONTAINS
 
       ! Do X array separately because we already have global copies
       DEALLOCATE(x)
-      ALLOCATE(x(-2:nx+3))
-      x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+      ALLOCATE(x(-ng+1:nx+ng))
+      x(-ng+1:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
 
       DEALLOCATE(xb)
-      ALLOCATE(xb(-2:nx+3))
-      xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
+      ALLOCATE(xb(-ng+1:nx+ng))
+      xb(-ng+1:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
       ! Recalculate x_grid_mins/maxs so that rebalancing works next time
       DO iproc = 0, nprocx - 1
@@ -218,7 +218,7 @@ CONTAINS
 
     ! Full domain arrays
 
-    ALLOCATE(temp(-2:nx_new+3))
+    ALLOCATE(temp(-ng+1:nx_new+ng))
 
     ! Current will be recalculated during the particle push, so there
     ! is no need to copy the contents of the old arrays.
@@ -228,13 +228,14 @@ CONTAINS
     ! a different size.
 
     IF (overriding) THEN
-      ALLOCATE(temp2(-2:nx+3))
+      ALLOCATE(temp2(-ng+1:nx+ng))
 
       temp2(0:nx+1) = jx(0:nx+1)
       CALL remap_field(temp2, temp)
       DEALLOCATE(jx)
       ALLOCATE(jx(1-jng:nx_new+jng))
       jx(0:nx_new+1) = temp(0:nx_new+1)
+
 
       temp2(0:nx+1) = jy(0:nx+1)
       CALL remap_field(temp2, temp)
@@ -258,46 +259,48 @@ CONTAINS
       ALLOCATE(jz(1-jng:nx_new+jng))
     ENDIF
 
+    RETURN
+
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
-    ALLOCATE(ex(-2:nx_new+3))
+    ALLOCATE(ex(-ng+1:nx_new+ng))
     ex = temp
 
     CALL remap_field(ey, temp)
     DEALLOCATE(ey)
-    ALLOCATE(ey(-2:nx_new+3))
+    ALLOCATE(ey(-ng+1:nx_new+ng))
     ey = temp
 
     CALL remap_field(ez, temp)
     DEALLOCATE(ez)
-    ALLOCATE(ez(-2:nx_new+3))
+    ALLOCATE(ez(-ng+1:nx_new+ng))
     ez = temp
 
     CALL remap_field(bx, temp)
     DEALLOCATE(bx)
-    ALLOCATE(bx(-2:nx_new+3))
+    ALLOCATE(bx(-ng+1:nx_new+ng))
     bx = temp
 
     CALL remap_field(by, temp)
     DEALLOCATE(by)
-    ALLOCATE(by(-2:nx_new+3))
+    ALLOCATE(by(-ng+1:nx_new+ng))
     by = temp
 
     CALL remap_field(bz, temp)
     DEALLOCATE(bz)
-    ALLOCATE(bz(-2:nx_new+3))
+    ALLOCATE(bz(-ng+1:nx_new+ng))
     bz = temp
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
         CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-2:nx_new+3))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-ng+1:nx_new+ng))
         species_list(ispecies)%migrate%fluid_energy = temp
 
         CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-2:nx_new+3))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-ng+1:nx_new+ng))
         species_list(ispecies)%migrate%fluid_density = temp
       ENDIF
     ENDDO
@@ -305,22 +308,22 @@ CONTAINS
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)
       DEALLOCATE(cpml_psi_eyx)
-      ALLOCATE(cpml_psi_eyx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_eyx(-ng+1:nx_new+ng))
       cpml_psi_eyx = temp
 
       CALL remap_field(cpml_psi_byx, temp)
       DEALLOCATE(cpml_psi_byx)
-      ALLOCATE(cpml_psi_byx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_byx(-ng+1:nx_new+ng))
       cpml_psi_byx = temp
 
       CALL remap_field(cpml_psi_ezx, temp)
       DEALLOCATE(cpml_psi_ezx)
-      ALLOCATE(cpml_psi_ezx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_ezx(-ng+1:nx_new+ng))
       cpml_psi_ezx = temp
 
       CALL remap_field(cpml_psi_bzx, temp)
       DEALLOCATE(cpml_psi_bzx)
-      ALLOCATE(cpml_psi_bzx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_bzx(-ng+1:nx_new+ng))
       cpml_psi_bzx = temp
 
       CALL deallocate_cpml_helpers
@@ -347,7 +350,7 @@ CONTAINS
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
-        ALLOCATE(r4temp_sum(-2:nx_new+3, nspec_local))
+        ALLOCATE(r4temp_sum(-ng+1:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field_r4(&
@@ -357,7 +360,7 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %r4array(-2:nx_new+3, nspec_local))
+            %r4array(-ng+1:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
@@ -365,7 +368,7 @@ CONTAINS
       ELSE
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
-        ALLOCATE(temp_sum(-2:nx_new+3, nspec_local))
+        ALLOCATE(temp_sum(-ng+1:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field(&
@@ -375,13 +378,15 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %array(-2:nx_new+3, nspec_local))
+            %array(-ng+1:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%array = temp_sum
 
         DEALLOCATE(temp_sum)
       ENDIF
     ENDDO
+
+    PRINT *,'Balance Over'
 
   END SUBROUTINE redistribute_fields
 
@@ -395,7 +400,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: n_new, cdim
     INTEGER :: i
 
-    n_new = SHAPE(field_out) - 2 * 3
+    n_new = SHAPE(field_out) - 2 * ng
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
@@ -405,7 +410,6 @@ CONTAINS
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
 
     CALL do_field_mpi_with_lengths(field_out, ng, n_new(1))
-
   END SUBROUTINE remap_field
 
 
@@ -418,7 +422,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: n_new, cdim
     INTEGER :: i
 
-    n_new = SHAPE(field_out) - 2 * 3
+    n_new = SHAPE(field_out) - 2 * ng
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
