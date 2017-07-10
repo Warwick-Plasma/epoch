@@ -1915,7 +1915,7 @@ CONTAINS
         temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
         temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
 
-        CALL func(array, ispecies, fluxdir(idir))
+        CALL func(array, 0, fluxdir(idir))
 
         kk = sub%n_start(3) + 1
         DO k = 1, rnz
