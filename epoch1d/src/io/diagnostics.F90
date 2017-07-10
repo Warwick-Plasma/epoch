@@ -2737,7 +2737,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: stitched_ids(3)
     CHARACTER(LEN=c_id_length) :: time_string
     CHARACTER(LEN=512) :: string_array(6)
-    INTEGER :: n
+    INTEGER :: n, i
 
     n = 0
 
@@ -2770,6 +2770,11 @@ CONTAINS
     string_array(4) = trim_string(epoch_bytes_compile_machine_info)
     string_array(5) = trim_string(epoch_bytes_compiler_info)
     string_array(6) = trim_string(epoch_bytes_compiler_flags)
+
+    ! Prevent truncation warning
+    DO i = 1, 6
+      string_array(i)(h%string_length:512) = ACHAR(0)
+    ENDDO
 
     CALL sdf_write_namevalue(h, stitched_ids(n), &
         'EPOCH repository information', &
