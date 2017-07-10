@@ -692,7 +692,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: name
     INTEGER :: create_species_number_from_name
     INTEGER :: i, io, iu
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     DO i = 1, n_species
       IF (str_cmp(name, species_names(i))) THEN
@@ -704,8 +704,8 @@ CONTAINS
     ! If we're here then then named species doesn't yet exist
 
     ! First issue a warning message if the name overrides a built-in one
-    CALL load_block(name, block)
-    IF (block%ptype /= c_pt_bad .AND. block%ptype /= c_pt_null) THEN
+    CALL load_block(name, iblock)
+    IF (iblock%ptype /= c_pt_bad .AND. iblock%ptype /= c_pt_null) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -833,7 +833,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mult
     CHARACTER(LEN=*), INTENT(IN) :: mult_string, element, value, filename
     LOGICAL, INTENT(IN) :: got_file
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: stack
     INTEGER :: io, iu, ix, iy, iz
     TYPE(parameter_pack) :: parameters
@@ -854,10 +854,10 @@ CONTAINS
 
       CALL load_single_array_from_file(filename, array, offset, errcode)
 
-      CALL load_block(species_list(species_id)%name, block)
-      CALL push_to_stack(stack, block)
-      CALL load_block(element, block)
-      CALL push_to_stack(stack, block)
+      CALL load_block(species_list(species_id)%name, iblock)
+      CALL push_to_stack(stack, iblock)
+      CALL load_block(element, iblock)
+      CALL push_to_stack(stack, iblock)
       IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
       CALL tokenize(value, stack, errcode)

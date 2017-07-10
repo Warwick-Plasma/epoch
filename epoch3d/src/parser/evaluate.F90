@@ -78,27 +78,27 @@ CONTAINS
     TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     CALL eval_reset()
 
     DO i = 1, input_stack%stack_point
-      block = input_stack%entries(i)
-      IF (block%ptype == c_pt_variable) THEN
-        CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype == c_pt_species) THEN
-        CALL do_species(block%value, err)
-      ELSE IF (block%ptype == c_pt_operator) THEN
-        CALL do_operator(block%value, err)
-      ELSE IF (block%ptype == c_pt_constant &
-          .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., parameters, err)
-      ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .FALSE., parameters, err)
+      iblock = input_stack%entries(i)
+      IF (iblock%ptype == c_pt_variable) THEN
+        CALL push_on_eval(iblock%numerical_data)
+      ELSE IF (iblock%ptype == c_pt_species) THEN
+        CALL do_species(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_operator) THEN
+        CALL do_operator(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_constant &
+          .OR. iblock%ptype == c_pt_default_constant) THEN
+        CALL do_constant(iblock%value, .FALSE., parameters, err)
+      ELSE IF (iblock%ptype == c_pt_function) THEN
+        CALL do_functions(iblock%value, .FALSE., parameters, err)
       ENDIF
 
       IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
       ENDIF
@@ -115,29 +115,29 @@ CONTAINS
     TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
 
     CALL eval_reset()
 
     DO i = 1, input_stack%stack_point
-      block = input_stack%entries(i)
-      IF (block%ptype == c_pt_variable) THEN
-        CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype == c_pt_species) THEN
-        CALL do_species(block%value, err)
-      ELSE IF (block%ptype == c_pt_operator) THEN
-        CALL do_operator(block%value, err)
-      ELSE IF (block%ptype == c_pt_constant &
-          .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., parameters, err)
-      ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .FALSE., parameters, err)
+      iblock = input_stack%entries(i)
+      IF (iblock%ptype == c_pt_variable) THEN
+        CALL push_on_eval(iblock%numerical_data)
+      ELSE IF (iblock%ptype == c_pt_species) THEN
+        CALL do_species(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_operator) THEN
+        CALL do_operator(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_constant &
+          .OR. iblock%ptype == c_pt_default_constant) THEN
+        CALL do_constant(iblock%value, .FALSE., parameters, err)
+      ELSE IF (iblock%ptype == c_pt_function) THEN
+        CALL do_functions(iblock%value, .FALSE., parameters, err)
       ENDIF
 
       IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
       ENDIF
@@ -173,7 +173,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: output_stack
     TYPE(parameter_pack) :: parameters
 
@@ -199,25 +199,25 @@ CONTAINS
     sl_size = 0
 
     DO i = 1, input_stack%stack_point
-      block = input_stack%entries(i)
-      IF (block%ptype == c_pt_variable) THEN
-        CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype == c_pt_species) THEN
-        CALL do_species(block%value, err)
-      ELSE IF (block%ptype == c_pt_operator) THEN
-        CALL do_operator(block%value, err)
-        CALL update_stack_for_block(block, err)
-      ELSE IF (block%ptype == c_pt_constant &
-          .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .TRUE., parameters, err)
-        CALL update_stack_for_block(block, err)
-      ELSE IF (block%ptype == c_pt_function) THEN
-        CALL do_functions(block%value, .TRUE., parameters, err)
-        CALL update_stack_for_block(block, err)
+      iblock = input_stack%entries(i)
+      IF (iblock%ptype == c_pt_variable) THEN
+        CALL push_on_eval(iblock%numerical_data)
+      ELSE IF (iblock%ptype == c_pt_species) THEN
+        CALL do_species(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_operator) THEN
+        CALL do_operator(iblock%value, err)
+        CALL update_stack_for_block(iblock, err)
+      ELSE IF (iblock%ptype == c_pt_constant &
+          .OR. iblock%ptype == c_pt_default_constant) THEN
+        CALL do_constant(iblock%value, .TRUE., parameters, err)
+        CALL update_stack_for_block(iblock, err)
+      ELSE IF (iblock%ptype == c_pt_function) THEN
+        CALL do_functions(iblock%value, .TRUE., parameters, err)
+        CALL update_stack_for_block(iblock, err)
       ENDIF
 
       IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
       ENDIF
@@ -297,9 +297,9 @@ CONTAINS
 
 
 
-  SUBROUTINE update_stack_for_block(block, err)
+  SUBROUTINE update_stack_for_block(iblock, err)
 
-    TYPE(stack_element), INTENT(INOUT) :: block
+    TYPE(stack_element), INTENT(INOUT) :: iblock
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: nvalues
 
@@ -309,8 +309,8 @@ CONTAINS
       eval_stack_stack_point = eval_stack_stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
-      CALL push_to_stack(sl_tail%stack, block)
-      IF (block%value == c_const_time) sl_tail%stack%is_time_varying = .TRUE.
+      CALL push_to_stack(sl_tail%stack, iblock)
+      IF (iblock%value == c_const_time) sl_tail%stack%is_time_varying = .TRUE.
       RETURN
     ENDIF
 
@@ -325,7 +325,7 @@ CONTAINS
     CALL update_stack(nvalues)
 
     CALL push_eval_flag()
-    CALL push_to_stack(sl_tail%stack, block)
+    CALL push_to_stack(sl_tail%stack, iblock)
 
   END SUBROUTINE update_stack_for_block
 
@@ -419,28 +419,28 @@ CONTAINS
     INTEGER, INTENT(OUT) :: n_elements
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
     TYPE(parameter_pack) :: parameters
 
     array(1) = 0
     n_elements = 1
 
     DO i = 1, input_stack%stack_point
-      block = input_stack%entries(i)
+      iblock = input_stack%entries(i)
 
-      IF (block%ptype == c_pt_subset) THEN
+      IF (iblock%ptype == c_pt_subset) THEN
         n_elements = n_elements + 1
-        array(n_elements) = block%value
-      ELSE IF (block%ptype == c_pt_constant &
-          .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., parameters, err)
+        array(n_elements) = iblock%value
+      ELSE IF (iblock%ptype == c_pt_constant &
+          .OR. iblock%ptype == c_pt_default_constant) THEN
+        CALL do_constant(iblock%value, .FALSE., parameters, err)
         array(1) = array(1) + INT(pop_off_eval())
-      ELSE IF (block%ptype /= c_pt_operator) THEN
+      ELSE IF (iblock%ptype /= c_pt_operator) THEN
         err = c_err_bad_value
       ENDIF
 
       IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, block%ptype, i, block%value
+        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
       ENDIF

@@ -23,41 +23,41 @@ MODULE dist_fn
 
 CONTAINS
 
-  SUBROUTINE attach_dist_fn(block)
+  SUBROUTINE attach_dist_fn(iblock)
 
-    TYPE(distribution_function_block), POINTER :: block
+    TYPE(distribution_function_block), POINTER :: iblock
     TYPE(distribution_function_block), POINTER :: current
 
     current => dist_fns
     IF (.NOT. ASSOCIATED(current)) THEN
       ! This is the first distribution function to add
-      dist_fns => block
+      dist_fns => iblock
       RETURN
     ENDIF
     DO WHILE(ASSOCIATED(current%next))
       current => current%next
     ENDDO
-    current%next => block
+    current%next => iblock
 
   END SUBROUTINE attach_dist_fn
 
 
 
-  SUBROUTINE init_dist_fn(block)
+  SUBROUTINE init_dist_fn(iblock)
 
-    TYPE(distribution_function_block), POINTER :: block
+    TYPE(distribution_function_block), POINTER :: iblock
 
-    block%name = blank
-    block%ndims = -1
-    block%dumpmask = c_io_always
-    block%directions = 0
-    block%ranges = 1.0_num
-    block%resolution = 1
-    block%restrictions = 0.0_num
-    block%use_restrictions = .FALSE.
-    NULLIFY(block%next)
-    ALLOCATE(block%use_species(n_species))
-    block%use_species = .FALSE.
+    iblock%name = blank
+    iblock%ndims = -1
+    iblock%dumpmask = c_io_always
+    iblock%directions = 0
+    iblock%ranges = 1.0_num
+    iblock%resolution = 1
+    iblock%restrictions = 0.0_num
+    iblock%use_restrictions = .FALSE.
+    NULLIFY(iblock%next)
+    ALLOCATE(iblock%use_species(n_species))
+    iblock%use_species = .FALSE.
 
   END SUBROUTINE init_dist_fn
 
