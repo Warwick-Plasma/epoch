@@ -650,11 +650,11 @@ CONTAINS
     errstring(MPI_ERR_WIN                  ) = 'MPI_ERR_WIN                  '
     errstring(MPI_ERR_LASTCODE             ) = 'MPI_ERR_LASTCODE             '
 
-    PRINT*, "Caught MPI error: ", TRIM(errstring(error_code))
+    PRINT*, 'Caught MPI error: ', TRIM(errstring(error_code))
     IF (comm == MPI_COMM_WORLD) THEN
-      PRINT*, "Communicator MPI_COMM_WORLD"
+      PRINT*, 'Communicator MPI_COMM_WORLD'
     ELSE
-      PRINT*, "Communicator ", comm, "(Not MPI_COMM_WORLD)"
+      PRINT*, 'Communicator ', comm, '(Not MPI_COMM_WORLD)'
     ENDIF
 
     ! Deliberately raise a divide-by-zero error

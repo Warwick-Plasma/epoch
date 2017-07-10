@@ -44,9 +44,9 @@ CONTAINS
     IF (rank /= 0) RETURN
 
     IF (deck_state == c_ds_first) THEN
-      WRITE(du,*) "Constant block values after first pass:"
+      WRITE(du,*) 'Constant block values after first pass:'
     ELSE
-      WRITE(du,*) "Constant block values after second pass:"
+      WRITE(du,*) 'Constant block values after second pass:'
     ENDIF
     WRITE(du,*)
 
