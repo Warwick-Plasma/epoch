@@ -734,8 +734,8 @@ CONTAINS
         dir_d = dz
         lower_posn = z_min
       ENDIF
-      cell_global_ranges(1,idim) = (ranges(1,idim) - lower_posn) / dir_d + 1
-      cell_global_ranges(2,idim) = (ranges(2,idim) - lower_posn) / dir_d + 1
+      cell_global_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
+      cell_global_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
     ENDDO
 
 
@@ -770,8 +770,8 @@ CONTAINS
         dir_d = dz
         lower_posn = z_min
       ENDIF
-      cell_local_ranges(1,idim) = (ranges(1,idim) - lower_posn) / dir_d + 1
-      cell_local_ranges(2,idim) = (ranges(2,idim) - lower_posn) / dir_d + 1
+      cell_local_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
+      cell_local_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
     ENDDO
   END FUNCTION cell_local_ranges
 
@@ -804,17 +804,17 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: cell_starts
     INTEGER, DIMENSION(2, c_ndims) :: ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
-    REAL(NUM) :: range_global_min
+    INTEGER :: range_global_min
 
-    range_global_min = (global_ranges(1,1) - x_min)/ dx
+    range_global_min = NINT((global_ranges(1,1) - x_min) / dx)
 
     cell_starts(1) = ranges(1,1) - range_global_min - 1
     !-1 because ranges is cell indexed and global_ranges isnt
-    range_global_min = (global_ranges(1,2) - y_min) / dy
+    range_global_min = NINT((global_ranges(1,2) - y_min) / dy)
 
     cell_starts(2) = ranges(1,2) - range_global_min - 1
 
-    range_global_min = (global_ranges(1,3) - z_min) / dz
+    range_global_min = NINT((global_ranges(1,3) - z_min) / dz)
 
     cell_starts(3) = ranges(1,3) - range_global_min - 1
 
