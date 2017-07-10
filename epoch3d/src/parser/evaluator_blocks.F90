@@ -632,7 +632,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%density(ix, iy, iz)
       ELSE
 #include "pack_to_grid.inc"
@@ -656,7 +657,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 1)
       ELSE
 #include "pack_to_grid.inc"
@@ -680,7 +682,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 2)
       ELSE
 #include "pack_to_grid.inc"
@@ -704,7 +707,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 3)
       ELSE
 #include "pack_to_grid.inc"
@@ -728,7 +732,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 1)
       ELSE
 #include "pack_to_grid.inc"
@@ -752,7 +757,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 2)
       ELSE
 #include "pack_to_grid.inc"
@@ -776,7 +782,8 @@ CONTAINS
       CALL get_values(1, values)
       ispec = NINT(values(1))
       IF (parameters%use_grid_position) THEN
-        ix = parameters%pack_ix; iy = parameters%pack_iy; iz = parameters%pack_iz
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        iz = parameters%pack_iz
         val_local = species_list(ispec)%initial_conditions%temp(ix, iy, iz, 3)
       ELSE
 #include "pack_to_grid.inc"

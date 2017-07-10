@@ -2004,8 +2004,8 @@ CONTAINS
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
-      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' // &
-          TRIM(species_list(i)%name)
+      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' &
+          // TRIM(species_list(i)%name)
       CALL create_empty_partlist(io_list(i)%attached_list)
 
       IF (.NOT. subset_list(l)%use_species(i)) THEN

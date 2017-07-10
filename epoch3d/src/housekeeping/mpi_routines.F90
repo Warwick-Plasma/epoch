@@ -62,8 +62,8 @@ CONTAINS
         CALL integer_as_string(ng, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
-        PRINT*,'There must be at least ' // TRIM(str) // &
-            ' cells in each direction.'
+        PRINT*,'There must be at least ' // TRIM(str) &
+            // ' cells in each direction.'
       ENDIF
       CALL abort_code(c_err_bad_setup)
     ENDIF

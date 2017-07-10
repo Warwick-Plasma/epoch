@@ -629,8 +629,8 @@ CONTAINS
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
               IF (flip > 1) THEN
-                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) // &
-                    ' = ' // TRIM(deck_values(2)%value(1:pos-1))
+                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) &
+                    // ' = ' // TRIM(deck_values(2)%value(1:pos-1))
               ELSE
                 WRITE(io,*) 'Whilst reading ', &
                     TRIM(deck_values(1)%value(1:pos-1))
