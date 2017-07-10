@@ -94,7 +94,7 @@ CONTAINS
     REAL(num) :: elapsed_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
-    INTEGER, DIMENSION(2, c_ndims) :: ranges
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
@@ -111,12 +111,11 @@ CONTAINS
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
 
-
 #ifdef NO_IO
     RETURN
 #endif
 
-   timer_walltime = -1.0_num
+    timer_walltime = -1.0_num
     IF (step /= last_step) THEN
       last_step = step
       IF (rank == 0 .AND. stdout_frequency > 0 &
@@ -136,11 +135,13 @@ CONTAINS
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
         ENDIF
-        IF(skipped_any_set) WRITE(*, *) "One or more subset ranges were &
-            & empty: their fields were not output."
+        IF (skipped_any_set) &
+            WRITE(*, *) 'One or more subset ranges were empty: their ', &
+                'fields were not output.'
         skipped_any_set = .FALSE.
-     ENDIF
+      ENDIF
     ENDIF
+
     IF (n_io_blocks <= 0) RETURN
 
     force = .FALSE.
@@ -1216,6 +1217,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: reduced
     INTEGER :: io, mask, dumped
     INTEGER :: i, ii, rnx, j, jj, rny
+    INTEGER :: i0, i1, j0, j1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, dump_skipped, restart_id, normal_id, unaveraged_id
@@ -1275,9 +1277,9 @@ CONTAINS
       sub => subset_list(io)
       IF (.NOT. (sub%skip .OR. sub%space_restrictions)) CYCLE
 
-      IF(.NOT. sub%skip) THEN
-        !Output every subset. Trust user not to do parts twice
-        !Calculate the subsection dimensions and ranges
+      IF (.NOT. sub%skip) THEN
+        ! Output every subset. Trust user not to do parts twice
+        ! Calculate the subsection dimensions and ranges
         ranges = cell_global_ranges(global_ranges(sub))
         skip_this_set = .FALSE.
         DO i = 1, c_ndims
@@ -1289,7 +1291,7 @@ CONTAINS
         IF (skip_this_set) THEN
           CYCLE
         ENDIF
-        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
+        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_sec = cell_section_ranges(ranges) + 1
 
@@ -1307,16 +1309,18 @@ CONTAINS
         temp_block_id = TRIM(block_id)// '/c_' // TRIM(sub%name)
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
+        i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
+        j0 = ran_sec(1,2); j1 = ran_sec(2,2) - 1
+
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, &
-            TRIM(temp_grid_id), array(ran_sec(1,1):ran_sec(2,1)-1, &
-            ran_sec(1,2):ran_sec(2,2)-1), rsubtype, rsubarray, convert)
+            TRIM(temp_grid_id), array(i0:i1,j0:j1), &
+            rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
 
       ELSE
-
-       ! This should prevent a reduced variable from being dumped multiple
-       ! times in the same output file
+        ! This should prevent a reduced variable from being dumped multiple
+        ! times in the same output file
         DO i = 1, io - 1
           dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
         ENDDO
@@ -1364,6 +1368,7 @@ CONTAINS
         DEALLOCATE(reduced)
       ENDIF
     ENDDO
+
     IF (IAND(mask, code) == 0) RETURN
 
     IF (restart_id .OR. (.NOT.dump_skipped .AND. unaveraged_id)) THEN
@@ -1423,6 +1428,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, io, mask
     INTEGER :: i, ii, rnx, j, jj, rny
+    INTEGER :: i0, i1, j0, j1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
@@ -1467,7 +1473,6 @@ CONTAINS
       subarray = subarray_field
     ENDIF
 
-
     dims = (/nx_global, ny_global/)
 
     dump_sum = unaveraged_id &
@@ -1490,10 +1495,9 @@ CONTAINS
       ENDIF
     ENDIF
 
-
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
-      !Calculate the subsection dimensions and ranges
+      ! Calculate the subsection dimensions and ranges
       IF (dump_part) THEN
         ranges = cell_global_ranges(global_ranges(sub))
         DO i = 1, c_ndims
@@ -1502,11 +1506,12 @@ CONTAINS
             RETURN
           ENDIF
         ENDDO
-        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2)/)
+        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_no_ng = cell_section_ranges(ranges) + ng + 1
       ENDIF
     ENDIF
+
     IF (dump_sum) THEN
       IF (isubset == 1) THEN
         temp_block_id = TRIM(block_id)
@@ -1561,16 +1566,18 @@ CONTAINS
       ELSE IF (dump_part) THEN
         temp_grid_id = 'grid/' // TRIM(sub%name)
 
+        i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+        j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
+
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-            array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
-            ran_no_ng(1,2):ran_no_ng(2,2)-1), rsubtype, rsubarray, convert)
+            array(i0:i1,j0:j1), rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
       ELSE
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-             subtype, subarray, convert)
-        dump_field_grid = .FALSE.
+            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+            subtype, subarray, convert)
+        dump_field_grid = .TRUE.
       ENDIF
     ENDIF
 
@@ -1636,24 +1643,24 @@ CONTAINS
             'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
 
         CALL func(array, ispecies)
-
         IF (dump_part) THEN
-          !1st subset is main dump so there wont be any restrictions
-         temp_grid_id = 'grid/' // TRIM(sub%name)
+          ! First subset is main dump so there wont be any restrictions
+          temp_grid_id = 'grid/' // TRIM(sub%name)
 
-         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+          j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
+
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-                  array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
-                      ran_no_ng(1,2):ran_no_ng(2,2)-1), &
-                          rsubtype, rsubarray, convert)
+              array(i0:i1,j0:j1), rsubtype, rsubarray, convert)
           sub%dump_field_grid = .TRUE.
         ELSE
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-                  subtype, subarray, convert)
+              subtype, subarray, convert)
           dump_field_grid = .TRUE.
         ENDIF
-     ENDDO
+      ENDDO
     ENDIF
 
     IF (ALLOCATED(reduced)) DEALLOCATE(reduced)

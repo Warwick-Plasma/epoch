@@ -135,8 +135,9 @@ CONTAINS
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
         ENDIF
-        IF(skipped_any_set) WRITE(*, *) "One or more subset ranges were &
-            & empty: their fields were not output."
+        IF (skipped_any_set) &
+            WRITE(*, *) 'One or more subset ranges were empty: their ', &
+                'fields were not output.'
         skipped_any_set = .FALSE.
       ENDIF
     ENDIF
@@ -1257,6 +1258,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: reduced
     INTEGER :: io, mask, dumped
     INTEGER :: i, ii, rnx, j, jj, rny, k, kk, rnz
+    INTEGER :: i0, i1, j0, j1, k0, k1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, dump_skipped, restart_id, normal_id, unaveraged_id
@@ -1317,8 +1319,8 @@ CONTAINS
       IF (.NOT. (sub%skip .OR. sub%space_restrictions)) CYCLE
 
       IF (.NOT. sub%skip) THEN
-        !Output every subset. Trust user not to do parts twice
-        !Calculate the subsection dimensions and ranges
+        ! Output every subset. Trust user not to do parts twice
+        ! Calculate the subsection dimensions and ranges
         ranges = cell_global_ranges(global_ranges(sub))
         skip_this_set = .FALSE.
         DO i = 1, c_ndims
@@ -1330,7 +1332,7 @@ CONTAINS
         IF (skip_this_set) THEN
           CYCLE
         ENDIF
-        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2), &
+        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
             ranges(2,3) - ranges(1,3) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_sec = cell_section_ranges(ranges) + 1
@@ -1349,10 +1351,13 @@ CONTAINS
         temp_block_id = TRIM(block_id)// '/c_' // TRIM(sub%name)
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
+        i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
+        j0 = ran_sec(1,2); j1 = ran_sec(2,2) - 1
+        k0 = ran_sec(1,3); k1 = ran_sec(2,3) - 1
+
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, &
-            TRIM(temp_grid_id), array(ran_sec(1,1):ran_sec(2,1)-1, &
-            ran_sec(1,2):ran_sec(2,2)-1, ran_sec(1,3):ran_sec(2,3)-1), &
+            TRIM(temp_grid_id), array(i0:i1,j0:j1,k0:k1), &
             rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
 
@@ -1471,6 +1476,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, io, mask
     INTEGER :: i, ii, rnx, j, jj, rny, k, kk, rnz
+    INTEGER :: i0, i1, j0, j1, k0, k1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
@@ -1479,7 +1485,7 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) ::ranges, ran_no_ng
+    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_no_ng
     INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
@@ -1539,7 +1545,7 @@ CONTAINS
 
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
-      !Calculate the subsection dimensions and ranges
+      ! Calculate the subsection dimensions and ranges
       IF (dump_part) THEN
         ranges = cell_global_ranges(global_ranges(sub))
         DO i = 1, c_ndims
@@ -1548,8 +1554,8 @@ CONTAINS
             RETURN
           ENDIF
         ENDDO
-        new_dims = (/ranges(2,1)-ranges(1,1), ranges(2,2) - ranges(1,2), &
-            ranges(2,3)-ranges(1,3) /)
+        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
+            ranges(2,3) - ranges(1,3) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_no_ng = cell_section_ranges(ranges) + ng + 1
       ENDIF
@@ -1614,11 +1620,13 @@ CONTAINS
       ELSE IF (dump_part) THEN
         temp_grid_id = 'grid/' // TRIM(sub%name)
 
+        i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+        j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
+        k0 = ran_no_ng(1,3); k1 = ran_no_ng(2,3) - 1
+
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-            array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
-            ran_no_ng(1,2):ran_no_ng(2,2)-1, ran_no_ng(1,3):ran_no_ng(2,3)-1), &
-            rsubtype, rsubarray, convert)
+            array(i0:i1,j0:j1,k0:k1), rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
       ELSE
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
@@ -1696,23 +1704,24 @@ CONTAINS
 
         CALL func(array, ispecies)
         IF (dump_part) THEN
-          !1st subset is main dump so there wont be any restrictions
-         temp_grid_id = 'grid/' // TRIM(sub%name)
+          ! First subset is main dump so there wont be any restrictions
+          temp_grid_id = 'grid/' // TRIM(sub%name)
 
-         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+          j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
+          k0 = ran_no_ng(1,3); k1 = ran_no_ng(2,3) - 1
+
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-                  array(ran_no_ng(1,1):ran_no_ng(2,1)-1, &
-                  ran_no_ng(1,2):ran_no_ng(2,2)-1, &
-                  ran_no_ng(1,3):ran_no_ng(2,3)-1),  &
-                  rsubtype, rsubarray, convert)
+              array(i0:i1,j0:j1,k0:k1), rsubtype, rsubarray, convert)
           sub%dump_field_grid = .TRUE.
         ELSE
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+              subtype, subarray, convert)
           dump_field_grid = .TRUE.
         ENDIF
-     ENDDO
+      ENDDO
     ENDIF
 
     IF (ALLOCATED(reduced)) DEALLOCATE(reduced)

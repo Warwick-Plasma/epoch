@@ -60,7 +60,7 @@ CONTAINS
     INTEGER :: i, j, rd, n_min, n_max, mpitype, npd, npdm, n0
     INTEGER, DIMENSION(c_ndims) :: n_local, n_global, starts
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2, c_ndims) :: ranges
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
     LOGICAL :: proc_outside_range
 
     ! This subroutines creates the MPI types which represent the data for the
@@ -84,13 +84,13 @@ CONTAINS
       sub => subset_list(i)
 
       ranges = cell_global_ranges(global_ranges(sub))
-      sub%n_global = (/ (ranges(2,1) - ranges(1,1))  /)
+      sub%n_global = (/ ranges(2,1) - ranges(1,1) /)
       ranges = cell_local_ranges(global_ranges(sub))
 
-      !These calcs rely on the original domain size, so will be wrong
-      !for skipped sets as yet
+      ! These calculations rely on the original domain size, so will be wrong
+      ! for skipped sets as yet
       proc_outside_range = .FALSE.
-      IF( ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
+      IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
       sub%n_local =  (/ ranges(2,1) - ranges(1,1) /)
       starts = cell_starts(ranges, global_ranges(sub))
 
@@ -182,7 +182,6 @@ CONTAINS
         CALL MPI_TYPE_COMMIT(mpitype, errcode)
 
         sub%subarray_r4 = mpitype
-
       ENDIF
     ENDDO
 
@@ -646,22 +645,25 @@ CONTAINS
 
 
 
-  !Clips range of current subset to domain size and cell edge
+  !----------------------------------------------------------------------------
+  ! Clips range of current subset to domain size and cell edge
+  !----------------------------------------------------------------------------
+
   FUNCTION global_ranges(current_subset)
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
     REAL(num) :: dir_min, dir_max, dir_d
 
-    global_ranges(1,:) = - HUGE(num)
+    global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
 
     dir_min = x_min
     dir_max = x_max
     dir_d = dx
-    IF (current_subset%use_x_min ) &
+    IF (current_subset%use_x_min) &
         global_ranges(1,1) = current_subset%x_min
-    IF (current_subset%use_x_max ) &
+    IF (current_subset%use_x_max) &
         global_ranges(2,1) = current_subset%x_max
 
     IF (global_ranges(2,1) < global_ranges(1,1)) THEN
@@ -693,17 +695,19 @@ CONTAINS
     cell_global_ranges(1,1) = NINT((ranges(1,1) - lower_posn) / dir_d) + 1
     cell_global_ranges(2,1) = NINT((ranges(2,1) - lower_posn) / dir_d) + 1
 
-
   END FUNCTION cell_global_ranges
 
 
 
+  !----------------------------------------------------------------------------
+  ! Location of current processors section of global array
+  !----------------------------------------------------------------------------
+
   FUNCTION cell_local_ranges(ranges)
-  !Location of current processors section of global array
+
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
     REAL(NUM) :: dir_d, lower_posn
-
 
     ranges(1,1) = MAX(ranges(1,1), x_grid_min_local - 0.5_num * dx)
     ranges(2,1) = MIN(ranges(2,1), x_grid_max_local + 0.5_num * dx)
@@ -717,8 +721,13 @@ CONTAINS
 
 
 
+  !----------------------------------------------------------------------------
+  ! Convert from local ranges into global array, to section of local array
+  ! to use
+  !----------------------------------------------------------------------------
+
   FUNCTION cell_section_ranges(ranges)
-  !Convert from local ranges into global array, to section of local array to use
+
     INTEGER, DIMENSION(2,c_ndims) :: cell_section_ranges
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: min_val
@@ -740,10 +749,9 @@ CONTAINS
 
     range_global_min = NINT((global_ranges(1,1) - x_min) / dx)
 
+    ! -1 because ranges is cell indexed and global_ranges isn't
     cell_starts(1) = ranges(1,1) - range_global_min - 1
-    !-1 because ranges is cell indexed and global_ranges isnt
 
   END FUNCTION cell_starts
-
 
 END MODULE mpi_subtype_control

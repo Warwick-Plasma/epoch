@@ -71,14 +71,16 @@ CONTAINS
       DO i = 1, n_subsets
         subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
 
-        !Check for any spatial restrictions in place
+        ! Check for any spatial restrictions in place
         subset_list(i)%space_restrictions = subset_list(i)%use_x_min &
             .OR. subset_list(i)%use_x_max .OR. subset_list(i)%use_y_min &
             .OR. subset_list(i)%use_y_max
         IF (subset_list(i)%skip .AND. subset_list(i)%space_restrictions) THEN
-          IF (rank == 0) PRINT *, "Skip and spatial restrictions specified for "// &
-              TRIM(subset_list(i)%name)//": field variables &
-              & will not be trimmmed"
+          IF (rank == 0) THEN
+            PRINT*, 'Skip and spatial restrictions specified for ', &
+                TRIM(subset_list(i)%name), &
+                ': field variables will not be trimmmed'
+          ENDIF
           subset_list(i)%space_restrictions = .FALSE.
         ENDIF
       ENDDO
@@ -375,7 +377,6 @@ CONTAINS
       subset_list(i)%use_x_max      = .FALSE.
       subset_list(i)%use_y_min      = .FALSE.
       subset_list(i)%use_y_max      = .FALSE.
-      subset_list(i)%space_restrictions= .FALSE.
       subset_list(i)%use_px_min     = .FALSE.
       subset_list(i)%use_px_max     = .FALSE.
       subset_list(i)%use_py_min     = .FALSE.
@@ -392,6 +393,7 @@ CONTAINS
       subset_list(i)%use_id_max     = .FALSE.
       subset_list(i)%skip           = .FALSE.
       subset_list(i)%dump_field_grid = .FALSE.
+      subset_list(i)%space_restrictions = .FALSE.
       subset_list(i)%skip_dir       = 1
       subset_list(i)%random_fraction = 0.0_num
       subset_list(i)%gamma_min  = -HUGE(1.0_num)

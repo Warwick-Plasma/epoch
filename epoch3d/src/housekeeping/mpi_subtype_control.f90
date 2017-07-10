@@ -82,23 +82,19 @@ CONTAINS
 
     DO i = 1, n_subsets
       sub => subset_list(i)
-      sub%n_local = n_local
-      sub%n_global = n_global
 
       ranges = cell_global_ranges(global_ranges(sub))
-      sub%n_global = (/ (ranges(2,1) - ranges(1,1)), &
-          (ranges(2,2) - ranges(1,2)), &
-          (ranges(2,3) - ranges(1,3)) /)
+      sub%n_global = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
+          ranges(2,3) - ranges(1,3) /)
       ranges = cell_local_ranges(global_ranges(sub))
 
-      !These calcs rely on the original domain size, so will be wrong
-      !for skipped sets as yet
+      ! These calculations rely on the original domain size, so will be wrong
+      ! for skipped sets as yet
       proc_outside_range = .FALSE.
-      IF( ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
-      IF( ranges(2,2) - ranges(1,2) <= c_tiny) proc_outside_range = .TRUE.
-      IF( ranges(2,3) - ranges(1,3) <= c_tiny) proc_outside_range = .TRUE.
-      sub%n_local =  (/ ranges(2,1) - ranges(1,1), &
-          ranges(2,2) - ranges(1,2), &
+      IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
+      IF (ranges(2,2) - ranges(1,2) <= c_tiny) proc_outside_range = .TRUE.
+      IF (ranges(2,3) - ranges(1,3) <= c_tiny) proc_outside_range = .TRUE.
+      sub%n_local =  (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
           ranges(2,3) - ranges(1,3) /)
       starts = cell_starts(ranges, global_ranges(sub))
 
@@ -190,7 +186,6 @@ CONTAINS
         CALL MPI_TYPE_COMMIT(mpitype, errcode)
 
         sub%subarray_r4 = mpitype
-
       ENDIF
     ENDDO
 
@@ -661,7 +656,10 @@ CONTAINS
 
 
 
-  !Clips range of current subset to domain size and cell edge
+  !----------------------------------------------------------------------------
+  ! Clips range of current subset to domain size and cell edge
+  !----------------------------------------------------------------------------
+
   FUNCTION global_ranges(current_subset)
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
@@ -669,33 +667,33 @@ CONTAINS
     REAL(num) :: dir_min, dir_max, dir_d
     INTEGER :: idim
 
-    global_ranges(1,:) = - HUGE(num)
+    global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
 
     DO idim = 1, c_ndims
-      IF( idim == 1) THEN
+      IF (idim == 1) THEN
         dir_min = x_min
         dir_max = x_max
         dir_d = dx
-        IF (current_subset%use_x_min ) &
+        IF (current_subset%use_x_min) &
             global_ranges(1,idim) = current_subset%x_min
-        IF (current_subset%use_x_max ) &
+        IF (current_subset%use_x_max) &
             global_ranges(2,idim) = current_subset%x_max
       ELSE IF (idim == 2) THEN
         dir_min = y_min
         dir_max = y_max
         dir_d = dy
-        IF( current_subset%use_y_min ) &
+        IF (current_subset%use_y_min) &
             global_ranges(1,idim) = current_subset%y_min
-        IF( current_subset%use_y_max ) &
+        IF (current_subset%use_y_max) &
             global_ranges(2,idim) = current_subset%y_max
       ELSE
         dir_min = z_min
         dir_max = z_max
         dir_d = dz
-        IF( current_subset%use_z_min ) &
+        IF (current_subset%use_z_min) &
             global_ranges(1,idim) = current_subset%z_min
-        IF( current_subset%use_z_max ) &
+        IF (current_subset%use_z_max) &
             global_ranges(2,idim) = current_subset%z_max
       ENDIF
       IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
@@ -711,7 +709,8 @@ CONTAINS
           + FLOOR((global_ranges(1,idim) - dir_min) / dir_d ) * dir_d
       global_ranges(2,idim) = dir_min &
           + CEILING((global_ranges(2,idim) - dir_min) / dir_d) * dir_d
-   ENDDO
+    ENDDO
+
   END FUNCTION global_ranges
 
 
@@ -734,22 +733,26 @@ CONTAINS
         dir_d = dz
         lower_posn = z_min
       ENDIF
-      cell_global_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
-      cell_global_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
+      cell_global_ranges(1,idim) = &
+          NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
+      cell_global_ranges(2,idim) = &
+          NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
     ENDDO
-
 
   END FUNCTION cell_global_ranges
 
 
 
+  !----------------------------------------------------------------------------
+  ! Location of current processors section of global array
+  !----------------------------------------------------------------------------
+
   FUNCTION cell_local_ranges(ranges)
-  !Location of current processors section of global array
+
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
     REAL(NUM) :: dir_d, lower_posn
     INTEGER :: idim
-
 
     ranges(1,1) = MAX(ranges(1,1), x_grid_min_local - 0.5_num * dx)
     ranges(2,1) = MIN(ranges(2,1), x_grid_max_local + 0.5_num * dx)
@@ -758,8 +761,7 @@ CONTAINS
     ranges(1,3) = MAX(ranges(1,3), z_grid_min_local - 0.5_num * dz)
     ranges(2,3) = MIN(ranges(2,3), z_grid_max_local + 0.5_num * dz)
 
-
-   DO idim = 1, c_ndims
+    DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
         lower_posn = x_min
@@ -770,20 +772,28 @@ CONTAINS
         dir_d = dz
         lower_posn = z_min
       ENDIF
-      cell_local_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
-      cell_local_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
+      cell_local_ranges(1,idim) = &
+          NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
+      cell_local_ranges(2,idim) = &
+          NINT((ranges(2,idim) - lower_posn) / dir_d) + 1
     ENDDO
+
   END FUNCTION cell_local_ranges
 
 
 
+  !----------------------------------------------------------------------------
+  ! Convert from local ranges into global array, to section of local array
+  ! to use
+  !----------------------------------------------------------------------------
+
   FUNCTION cell_section_ranges(ranges)
-  !Convert from local ranges into global array, to section of local array to use
+
     INTEGER, DIMENSION(2,c_ndims) :: cell_section_ranges
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: idim, min_val
 
-   DO idim = 1, c_ndims
+    DO idim = 1, c_ndims
       IF (idim == 1) THEN
         min_val = nx_global_min
       ELSE IF (idim == 2) THEN
@@ -808,8 +818,9 @@ CONTAINS
 
     range_global_min = NINT((global_ranges(1,1) - x_min) / dx)
 
+    ! -1 because ranges is cell indexed and global_ranges isn't
     cell_starts(1) = ranges(1,1) - range_global_min - 1
-    !-1 because ranges is cell indexed and global_ranges isnt
+
     range_global_min = NINT((global_ranges(1,2) - y_min) / dy)
 
     cell_starts(2) = ranges(1,2) - range_global_min - 1
@@ -819,7 +830,5 @@ CONTAINS
     cell_starts(3) = ranges(1,3) - range_global_min - 1
 
   END FUNCTION cell_starts
-
-
 
 END MODULE mpi_subtype_control

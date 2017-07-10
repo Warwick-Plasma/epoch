@@ -777,13 +777,13 @@ MODULE shared_data
     LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
     LOGICAL :: use_x_min, use_x_max
     LOGICAL :: use_px_min, use_px_max
-    LOGICAL :: space_restrictions
     LOGICAL :: use_py_min, use_py_max
     LOGICAL :: use_pz_min, use_pz_max
     LOGICAL :: use_weight_min, use_weight_max
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
     LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max

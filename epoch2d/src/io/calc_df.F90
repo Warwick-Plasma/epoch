@@ -1066,5 +1066,4 @@ CONTAINS
 
   END SUBROUTINE calc_initial_current
 
-
 END MODULE calc_df

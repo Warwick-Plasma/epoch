@@ -788,7 +788,6 @@ MODULE shared_data
     LOGICAL :: use_x_min, use_x_max
     LOGICAL :: use_y_min, use_y_max
     LOGICAL :: use_z_min, use_z_max
-    LOGICAL :: space_restrictions
     LOGICAL :: use_px_min, use_px_max
     LOGICAL :: use_py_min, use_py_max
     LOGICAL :: use_pz_min, use_pz_max
@@ -796,6 +795,7 @@ MODULE shared_data
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
     LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max, y_min, y_max, z_min, z_max
