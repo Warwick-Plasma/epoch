@@ -72,14 +72,14 @@ CONTAINS
         subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
 
         !Check for any spatial restrictions in place
-        subset_list(i)%any_space_restr = subset_list(i)%use_x_min &
+        subset_list(i)%space_restrictions = subset_list(i)%use_x_min &
             .OR. subset_list(i)%use_x_max .OR. subset_list(i)%use_y_min &
             .OR. subset_list(i)%use_y_max
-        IF (subset_list(i)%skip .AND. subset_list(i)%any_space_restr) THEN
+        IF (subset_list(i)%skip .AND. subset_list(i)%space_restrictions) THEN
           IF (rank == 0) PRINT *, "Skip and spatial restrictions specified for "// &
               TRIM(subset_list(i)%name)//": field variables &
               & will not be trimmmed"
-          subset_list(i)%any_space_restr = .FALSE.
+          subset_list(i)%space_restrictions = .FALSE.
         ENDIF
       ENDDO
     ENDIF
@@ -375,7 +375,7 @@ CONTAINS
       subset_list(i)%use_x_max      = .FALSE.
       subset_list(i)%use_y_min      = .FALSE.
       subset_list(i)%use_y_max      = .FALSE.
-      subset_list(i)%any_space_restr= .FALSE.
+      subset_list(i)%space_restrictions= .FALSE.
       subset_list(i)%use_px_min     = .FALSE.
       subset_list(i)%use_px_max     = .FALSE.
       subset_list(i)%use_py_min     = .FALSE.

@@ -1314,7 +1314,7 @@ CONTAINS
       IF (IAND(iodumpmask(io+1,id), code) == 0) CYCLE
 
       sub => subset_list(io)
-      IF (.NOT. (sub%skip .OR. sub%any_space_restr)) CYCLE
+      IF (.NOT. (sub%skip .OR. sub%space_restrictions)) CYCLE
 
       IF (.NOT. sub%skip) THEN
         !Output every subset. Trust user not to do parts twice
@@ -1527,7 +1527,7 @@ CONTAINS
     ELSE
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
-      dump_part = sub%any_space_restr
+      dump_part = sub%space_restrictions
       IF(convert) THEN
         rsubtype  = sub%subtype_r4
         rsubarray = sub%subarray_r4
