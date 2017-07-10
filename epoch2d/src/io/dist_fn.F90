@@ -216,21 +216,24 @@ CONTAINS
               + FLOOR((ranges(1,idim) - x_min_local)/ dx) * dx
           ranges(2,idim) = x_min_local &
               + CEILING((ranges(2,idim) - x_min_local) / dx) * dx
-          global_resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dx
-          range_global_min(idim) = ranges(1,idim) / dx
+
+          global_resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
+          range_global_min(idim) = NINT((ranges(1,idim) - x_min) / dx)
 
           ranges(1,idim) = MAX(ranges(1,idim), x_grid_min_local - 0.5_num * dx)
           ranges(2,idim) = MIN(ranges(2,idim), x_grid_max_local + 0.5_num * dx)
 
           start_local(idim) = nx_global_min &
-              + (ranges(1,idim) - x_min_local) / dx - range_global_min(idim)
+              + NINT((ranges(1,idim) - x_min_local) / dx) &
+              - range_global_min(idim)
 
         ENDIF
         !resolution is the number of pts
         !ranges guaranteed to include integer number of grid cells
-        resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dx
-        IF (resolution(idim) == 0) THEN 
+        resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
+        IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
+          resolution(idim) = 0
         ENDIF
 !        resolution(idim) = (ranges(2,idim) - ranges(1,idim)) &
 !            /(x_grid_max_local - x_grid_min_local) * resolution(idim)
@@ -258,21 +261,24 @@ CONTAINS
               + FLOOR((ranges(1,idim) - y_min_local)/ dy) * dy
           ranges(2,idim) = y_min_local &
               + CEILING((ranges(2,idim) - y_min_local) / dy) * dy
-          global_resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dy
-          range_global_min(idim) = ranges(1,idim) / dy
+
+          global_resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dy)
+          range_global_min(idim) = NINT(ranges(1,idim) / dy)
 
           ranges(1,idim) = MAX(ranges(1,idim), y_grid_min_local - 0.5_num * dy)
           ranges(2,idim) = MIN(ranges(2,idim), y_grid_max_local + 0.5_num * dy)
 
           start_local(idim) = ny_global_min &
-              + (ranges(1,idim) - y_min_local) / dy - range_global_min(idim)
+              + NINT((ranges(1,idim) - y_min_local) / dy) &
+              - range_global_min(idim)
 
         ENDIF
         !resolution is the number of pts
         !ranges guaranteed to include integer number of grid cells
-        resolution(idim) = (ranges(2,idim) - ranges(1,idim)) / dy
-        IF (resolution(idim) == 0) THEN 
+        resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dy)
+        IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
+          resolution(idim) = 0
         ENDIF
 
         dgrid(idim) = dy
