@@ -198,14 +198,15 @@ CONTAINS
     DO idim = 1, curdims
       IF (direction(idim) == c_dir_x) THEN
         use_x = .TRUE.
-        IF(ABS(ranges(1,idim) -ranges(2,idim)) <= c_tiny) THEN
-          !Empty range, use entire domain
+        IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
+          ! If empty range, use whole domain
           ranges(1,idim) = x_grid_min_local - 0.5_num * dx
           ranges(2,idim) = x_grid_max_local + 0.5_num * dx
           global_resolution(idim) = nx_global
           start_local(idim) = nx_global_min
         ELSE
-          !Use the requested range but always ending on a cell boundary
+          ! Else use the range including the requested range, but ending
+          ! on a cell boundary
           ranges(1,idim) = MAX(ranges(1,idim), x_min)
           ranges(2,idim) = MIN(ranges(2,idim), x_max)
           ranges(1,idim) = x_min_local &
@@ -219,10 +220,12 @@ CONTAINS
           ranges(2,idim) = MIN(ranges(2,idim), x_grid_max_local + 0.5_num * dx)
 
           start_local(idim) = nx_global_min &
-              + NINT((ranges(1,idim) - x_min_local) / dx) - range_global_min(idim)
+              + NINT((ranges(1,idim) - x_min_local) / dx) &
+              - range_global_min(idim)
         ENDIF
-        !resolution is the number of pts
-        !ranges guaranteed to include integer number of grid cells
+
+        ! resolution is the number of pts
+        ! ranges guaranteed to include integer number of grid cells
         resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
         IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
@@ -236,7 +239,8 @@ CONTAINS
         CYCLE
 
       ENDIF
-     ! If we're here then this must be a momentum space direction
+
+      ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
       IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
         calc_range(idim) = .TRUE.
@@ -416,7 +420,7 @@ CONTAINS
     IF (.NOT. proc_outside_range) THEN
       ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     ELSE
-      !Allocate dummy
+      ! Dummy array
       ALLOCATE(array(1,1,1))
     ENDIF
     array = 0.0_num
@@ -507,8 +511,7 @@ CONTAINS
         IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
       ENDDO
-
-      IF (.NOT. proc_outside_range)  array(cell(1), cell(2), cell(3)) = &
+      IF (.NOT. proc_outside_range) array(cell(1), cell(2), cell(3)) = &
           array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
     ENDDO out2
 
@@ -599,17 +602,16 @@ CONTAINS
 
     IF (rank_local == 0) THEN
       CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-        mpireal, array_type, errcode)
+          mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ELSE
       CALL MPI_TYPE_FREE(new_type, errcode)
-      CALL MPI_TYPE_CONTIGUOUS(0, &
-         mpireal, new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, new_type, errcode)
       CALL MPI_TYPE_COMMIT(new_type, errcode)
-      CALL MPI_TYPE_CONTIGUOUS(0, &
-         mpireal, array_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ENDIF
+
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &
         c_stagger_vertex, 'grid/' // TRIM(var_name), array, new_type, &

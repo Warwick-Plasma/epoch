@@ -202,21 +202,20 @@ CONTAINS
       IF (direction(idim) == c_dir_x) THEN
         use_x = .TRUE.
         IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
-          !If empty range, use whole domain
+          ! If empty range, use whole domain
           ranges(1,idim) = x_grid_min_local - 0.5_num * dx
           ranges(2,idim) = x_grid_max_local + 0.5_num * dx
           global_resolution(idim) = nx_global
           start_local(idim) = nx_global_min
         ELSE
-          !Else use the range including the requested range, but ending
-              !on a cell boundary
+          ! Else use the range including the requested range, but ending
+          ! on a cell boundary
           ranges(1,idim) = MAX(ranges(1,idim), x_min)
           ranges(2,idim) = MIN(ranges(2,idim), x_max)
           ranges(1,idim) = x_min_local &
-              + FLOOR((ranges(1,idim) - x_min_local)/ dx) * dx
+              + FLOOR((ranges(1,idim) - x_min_local) / dx) * dx
           ranges(2,idim) = x_min_local &
               + CEILING((ranges(2,idim) - x_min_local) / dx) * dx
-
           global_resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
           range_global_min(idim) = NINT((ranges(1,idim) - x_min) / dx)
 
@@ -226,17 +225,15 @@ CONTAINS
           start_local(idim) = nx_global_min &
               + NINT((ranges(1,idim) - x_min_local) / dx) &
               - range_global_min(idim)
-
         ENDIF
-        !resolution is the number of pts
-        !ranges guaranteed to include integer number of grid cells
+
+        ! resolution is the number of pts
+        ! ranges guaranteed to include integer number of grid cells
         resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
         IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
           resolution(idim) = 0
         ENDIF
-!        resolution(idim) = (ranges(2,idim) - ranges(1,idim)) &
-!            /(x_grid_max_local - x_grid_min_local) * resolution(idim)
 
         dgrid(idim) = dx
         labels(idim) = 'X'
@@ -247,23 +244,22 @@ CONTAINS
       ELSE IF (direction(idim) == c_dir_y) THEN
         use_y = .TRUE.
         IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
-          !If empty range, use whole domain
+          ! If empty range, use whole domain
           ranges(1,idim) = y_grid_min_local - 0.5_num * dy
           ranges(2,idim) = y_grid_max_local + 0.5_num * dy
           global_resolution(idim) = ny_global
           start_local(idim) = ny_global_min
         ELSE
-          !Else use the range including the requested range, but ending
-              !on a cell boundary
+          ! Else use the range including the requested range, but ending
+          ! on a cell boundary
           ranges(1,idim) = MAX(ranges(1,idim), y_min)
           ranges(2,idim) = MIN(ranges(2,idim), y_max)
           ranges(1,idim) = y_min_local &
-              + FLOOR((ranges(1,idim) - y_min_local)/ dy) * dy
+              + FLOOR((ranges(1,idim) - y_min_local) / dy) * dy
           ranges(2,idim) = y_min_local &
               + CEILING((ranges(2,idim) - y_min_local) / dy) * dy
-
           global_resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dy)
-          range_global_min(idim) = NINT(ranges(1,idim) / dy)
+          range_global_min(idim) = NINT((ranges(1,idim) - y_min) / dy)
 
           ranges(1,idim) = MAX(ranges(1,idim), y_grid_min_local - 0.5_num * dy)
           ranges(2,idim) = MIN(ranges(2,idim), y_grid_max_local + 0.5_num * dy)
@@ -271,10 +267,10 @@ CONTAINS
           start_local(idim) = ny_global_min &
               + NINT((ranges(1,idim) - y_min_local) / dy) &
               - range_global_min(idim)
-
         ENDIF
-        !resolution is the number of pts
-        !ranges guaranteed to include integer number of grid cells
+
+        ! resolution is the number of pts
+        ! ranges guaranteed to include integer number of grid cells
         resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dy)
         IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
@@ -465,10 +461,11 @@ CONTAINS
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim), num)
     ENDDO
+
     IF (.NOT. proc_outside_range) THEN
       ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     ELSE
-      !Dummy array, has to be allocated and non-zero size
+      ! Dummy array
       ALLOCATE(array(1,1,1))
     ENDIF
     array = 0.0_num
@@ -559,7 +556,6 @@ CONTAINS
         IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
       ENDDO
-     
       IF (.NOT. proc_outside_range) array(cell(1), cell(2), cell(3)) = &
           array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
     ENDDO out2
@@ -574,8 +570,7 @@ CONTAINS
       IF (use_y) color = color + nprocx * y_coords
 
       CALL MPI_COMM_SPLIT(comm, color, rank, comm_new, errcode)
-      IF ( .NOT. proc_outside_range) THEN
-        !Can only be out of range in direction not reduced on
+      IF (.NOT. proc_outside_range) THEN
         ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
       ELSE
         ALLOCATE(array_tmp(1,1,1))
@@ -657,18 +652,15 @@ CONTAINS
           global_resolution, start_local)
     ENDIF
 
-
     IF (rank_local == 0) THEN
       CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
           mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ELSE
       CALL MPI_TYPE_FREE(new_type, errcode)
-      CALL MPI_TYPE_CONTIGUOUS(0, &
-         mpireal, new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, new_type, errcode)
       CALL MPI_TYPE_COMMIT(new_type, errcode)
-      CALL MPI_TYPE_CONTIGUOUS(0, &
-         mpireal, array_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ENDIF
 
