@@ -35,7 +35,7 @@ CONTAINS
     CHARACTER(*), INTENT(OUT) :: str_out
     LOGICAL, INTENT(OUT) :: got_file
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos, delimiter, c
+    INTEGER :: str_len, chr, pos, delimiter, c
 
     str_len = LEN(str_in)
     pos = -1
@@ -47,10 +47,10 @@ CONTAINS
 
     delimiter = c
 
-    DO char = 2, str_len
-      c = ICHAR(str_in(char:char))
+    DO chr = 2, str_len
+      c = ICHAR(str_in(chr:chr))
       IF (c == delimiter) THEN
-        pos = char
+        pos = chr
         EXIT
       ENDIF
     ENDDO
@@ -73,16 +73,16 @@ CONTAINS
     CHARACTER(*), INTENT(OUT) :: str_out
     INTEGER, INTENT(OUT) :: int_out
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos, c
+    INTEGER :: str_len, chr, pos, c
 
     str_len = LEN(str_in)
     pos = -1
 
-    DO char = 1, str_len
-      c = ICHAR(str_in(char:char))
+    DO chr = 1, str_len
+      c = ICHAR(str_in(chr:chr))
       ! ACHAR(48)-ACHAR(57) = '0'-'9'
       IF (c > 47 .AND. c < 58) THEN
-        pos = char
+        pos = chr
         EXIT
       ENDIF
     ENDDO

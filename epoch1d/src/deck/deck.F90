@@ -629,8 +629,8 @@ CONTAINS
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
               IF (flip > 1) THEN
-                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) // &
-                    ' = ' // TRIM(deck_values(2)%value(1:pos-1))
+                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) &
+                    // ' = ' // TRIM(deck_values(2)%value(1:pos-1))
               ELSE
                 WRITE(io,*) 'Whilst reading ', &
                     TRIM(deck_values(1)%value(1:pos-1))
@@ -676,7 +676,7 @@ CONTAINS
            fbuf%md5sum = sdf_md5_append(fbuf%buffer(i)(1:buffer_size))
         ENDDO
         fbuf%md5sum = sdf_md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
-        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append("")
+        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append('')
       ENDIF
     ELSE
       DO

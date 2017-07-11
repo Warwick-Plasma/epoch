@@ -243,9 +243,11 @@ CONTAINS
 
     IF (opcode == c_const_r_xy) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
       ENDIF
       err = err_simplify
       RETURN
@@ -273,9 +275,11 @@ CONTAINS
 
     IF (opcode == c_const_r_xyz) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
       ENDIF
       err = err_simplify
       RETURN

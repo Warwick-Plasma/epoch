@@ -1915,7 +1915,7 @@ CONTAINS
         temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
         temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
 
-        CALL func(array, ispecies, fluxdir(idir))
+        CALL func(array, 0, fluxdir(idir))
 
         kk = sub%n_start(3) + 1
         DO k = 1, rnz
@@ -2073,8 +2073,8 @@ CONTAINS
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
-      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' // &
-          TRIM(species_list(i)%name)
+      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' &
+          // TRIM(species_list(i)%name)
       CALL create_empty_partlist(io_list(i)%attached_list)
 
       IF (.NOT. subset_list(l)%use_species(i)) THEN
@@ -2891,7 +2891,7 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: stitched_ids(3)
     CHARACTER(LEN=c_id_length) :: time_string
     CHARACTER(LEN=512) :: string_array(6)
-    INTEGER :: n
+    INTEGER :: n, i
 
     n = 0
 
@@ -2924,6 +2924,11 @@ CONTAINS
     string_array(4) = trim_string(epoch_bytes_compile_machine_info)
     string_array(5) = trim_string(epoch_bytes_compiler_info)
     string_array(6) = trim_string(epoch_bytes_compiler_flags)
+
+    ! Prevent truncation warning
+    DO i = 1, 6
+      string_array(i)(h%string_length:512) = ACHAR(0)
+    ENDDO
 
     CALL sdf_write_namevalue(h, stitched_ids(n), &
         'EPOCH repository information', &
