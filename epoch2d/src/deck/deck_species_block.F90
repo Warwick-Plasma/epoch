@@ -829,7 +829,7 @@ CONTAINS
       filename, got_file)
 
     TYPE(primitive_stack), INTENT(INOUT) :: output
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(-ng+1:,-ng+1:), INTENT(INOUT) :: array
     REAL(num), INTENT(IN) :: mult
     CHARACTER(LEN=*), INTENT(IN) :: mult_string, element, value, filename
     LOGICAL, INTENT(IN) :: got_file
@@ -877,9 +877,9 @@ CONTAINS
         CALL abort_code(errcode)
       ENDIF
 
-      DO iy = -2, ny+3
+      DO iy = -ng+1, ny+ng
         parameters%pack_iy = iy
-        DO ix = -2, nx+3
+        DO ix = -ng+1, nx+ng
           parameters%pack_ix = ix
           array(ix,iy) = evaluate_with_parameters(stack, parameters, errcode)
         ENDDO

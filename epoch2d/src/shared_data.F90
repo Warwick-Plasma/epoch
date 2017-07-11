@@ -868,7 +868,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = 2 * png
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx, ny
   INTEGER :: nx_global, ny_global
