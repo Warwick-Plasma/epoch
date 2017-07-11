@@ -87,16 +87,16 @@ CONTAINS
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
-    ALLOCATE(idens(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(jdens(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(itemp(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(jtemp(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(log_lambda(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meanx(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meany(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meanz(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(part_count(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(iekbar(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(idens(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(jdens(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(itemp(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(jtemp(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(log_lambda(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meanx(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meany(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meanz(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(part_count(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(iekbar(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -216,20 +216,20 @@ CONTAINS
     ENDDO ! iy
     ENDDO ! iz
 
-    ALLOCATE(idens(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(jdens(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(e_dens(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(itemp(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(jtemp(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(e_temp(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(log_lambda(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(e_log_lambda(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meanx(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meany(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(meanz(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(part_count(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(iekbar(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(e_ekbar(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(idens(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(jdens(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(e_dens(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(itemp(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(jtemp(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(e_temp(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(log_lambda(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(e_log_lambda(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meanx(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meany(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(meanz(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(part_count(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(iekbar(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(e_ekbar(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng))
 
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
@@ -1300,18 +1300,19 @@ CONTAINS
 
   PURE FUNCTION calc_coulomb_log(ekbar1, temp2, dens1, dens2, q1, q2, m1)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: ekbar1, temp2
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: dens1, dens2
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(IN) :: ekbar1, temp2
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(IN) :: dens1, dens2
     REAL(num), INTENT(IN) :: q1, q2, m1
-    REAL(num), DIMENSION(-2:nx+3,-2:ny+3,-2:nz+3) :: calc_coulomb_log
+    REAL(num), DIMENSION(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng) :: &
+        calc_coulomb_log
     REAL(num) :: b0, dB, bmin, bmax
     REAL(num) :: local_ekbar1, local_temp2, gamm
     INTEGER :: i, j, k
 
     calc_coulomb_log = 0.0_num
-    DO k = -2, nz+3
-    DO j = -2, ny+3
-    DO i = -2, nx+3
+    DO k = -ng+1, nz+ng
+    DO j = -ng+1, ny+ng
+    DO i = -ng+1, nx+ng
       local_ekbar1 = MAX(ekbar1(i,j,k), 100.0_num)
       local_temp2 = MAX(temp2(i,j,k), 100.0_num)
       IF (dens1(i,j,k) <= 1.0_num .OR. dens2(i,j,k) <= 1.0_num) THEN
@@ -1339,7 +1340,7 @@ CONTAINS
     ! It is almost identical to the calc_number_density subroutine in calc_df,
     ! except it uses the secondary_list rather than the attached_list.
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -1399,7 +1400,7 @@ CONTAINS
     ! It is almost identical to the calc_temperature subroutine in calc_df,
     ! except it uses the secondary_list rather than the attached_list.
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: sigma
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: ispecies
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
@@ -1521,7 +1522,7 @@ CONTAINS
 
   SUBROUTINE calc_coll_ekbar(data_array, ispecies)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     REAL(num) :: part_mc, part_w
     REAL(num) :: part_u2, gamma_rel, gamma_rel_m1, wdata, fac, gf

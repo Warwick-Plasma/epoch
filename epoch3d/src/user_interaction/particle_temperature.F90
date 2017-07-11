@@ -28,10 +28,10 @@ CONTAINS
   SUBROUTINE setup_particle_temperature(temperature, direction, part_species, &
       drift)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temperature
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_species), POINTER :: part_species
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: drift
+    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), INTENT(IN) :: drift
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     TYPE(particle), POINTER :: current
