@@ -34,7 +34,7 @@ CONTAINS
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       DO j = -ng+1, ny+ng
         DO i = 1, ng
-          data_array(i,j) = data_array(i,j) + data_array( -i+1,j)
+          data_array(i,j) = data_array(i,j) + data_array(-i+1,j)
         ENDDO
       ENDDO
     ENDIF
