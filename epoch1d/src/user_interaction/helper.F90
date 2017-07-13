@@ -1,5 +1,5 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -469,6 +469,9 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:), ALLOCATABLE :: npart_in_cell
+#ifdef PARTICLE_SHAPE_TOPHAT
+    REAL(num), DIMENSION(:), ALLOCATABLE :: rpart_in_cell
+#endif
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, i, isubx
@@ -531,11 +534,22 @@ CONTAINS
       current => current%next
       ipart = ipart + 1
     ENDDO
-
     DEALLOCATE(density_map)
     DEALLOCATE(density)
 
     wdata = dx
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+    ! For the TOPHAT shape function, particles can be located on a
+    ! neighbouring process
+    ALLOCATE(rpart_in_cell(-2:nx+3))
+
+    rpart_in_cell = npart_in_cell
+    CALL processor_summation_bcs(rpart_in_cell, ng)
+    npart_in_cell = rpart_in_cell
+
+    DEALLOCATE(rpart_in_cell)
+#endif
 
     partlist => species%attached_list
     ! Second loop renormalises particle weights
