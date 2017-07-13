@@ -52,7 +52,6 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
 #endif
-
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
@@ -259,8 +258,6 @@ CONTAINS
       ALLOCATE(jz(1-jng:nx_new+jng))
     ENDIF
 
-    RETURN
-
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
     ALLOCATE(ex(-ng+1:nx_new+ng))
@@ -385,8 +382,6 @@ CONTAINS
         DEALLOCATE(temp_sum)
       ENDIF
     ENDDO
-
-    PRINT *,'Balance Over'
 
   END SUBROUTINE redistribute_fields
 
