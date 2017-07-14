@@ -93,7 +93,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: tmp
     REAL(num), PARAMETER :: mean_steps = 0.25_num
 
-    ALLOCATE(tmp(-ng+1:nx+ng, -ng+1:ny+ng))
+    ALLOCATE(tmp(1-ng:nx+ng, 1-ng:ny+ng))
 
     CALL calc_temperature(tmp, fluid_list)
 
@@ -381,12 +381,12 @@ CONTAINS
     io_list = species_list
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
-        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-ng+1:nx+ng, &
-            -ng+1:ny+ng))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(1-ng:nx+ng, &
+            1-ng:ny+ng))
         CALL calc_temperature(species_list(ispecies)%migrate%fluid_energy, &
             ispecies)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-ng+1:nx+ng, &
-            -ng+1:ny+ng))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(1-ng:nx+ng, &
+            1-ng:ny+ng))
         CALL calc_number_density(species_list(ispecies)%migrate%fluid_density,&
             ispecies)
       ENDIF

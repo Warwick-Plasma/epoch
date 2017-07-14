@@ -25,7 +25,7 @@ CONTAINS
 
   SUBROUTINE calc_boundary(data_array)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER :: ix
 
     CALL processor_summation_bcs(data_array, ng)
@@ -33,7 +33,7 @@ CONTAINS
     IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       DO ix = 1,ng
-        data_array(ix) = data_array(ix) + data_array(-ng+1)
+        data_array(ix) = data_array(ix) + data_array(1-ng)
       ENDDO
     ENDIF
     IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
@@ -49,7 +49,7 @@ CONTAINS
 
   SUBROUTINE calc_mass_density(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_m
@@ -125,7 +125,7 @@ CONTAINS
 
   SUBROUTINE calc_ekbar(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
@@ -140,7 +140,7 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
-    ALLOCATE(wt(-ng+1:nx+ng))
+    ALLOCATE(wt(1-ng:nx+ng))
     data_array = 0.0_num
     wt = 0.0_num
     part_mc  = 1.0_num
@@ -225,7 +225,7 @@ CONTAINS
 
   SUBROUTINE calc_ekflux(data_array, current_species, direction)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species, direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
@@ -240,7 +240,7 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
-    ALLOCATE(wt(-ng+1:nx+ng))
+    ALLOCATE(wt(1-ng:nx+ng))
     data_array = 0.0_num
     wt = 0.0_num
     part_mc  = 1.0_num
@@ -362,7 +362,7 @@ CONTAINS
 
   SUBROUTINE calc_poynt_flux(data_array, direction)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: direction
     INTEGER :: ix
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
@@ -400,7 +400,7 @@ CONTAINS
 
   SUBROUTINE calc_charge_density(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q
@@ -476,7 +476,7 @@ CONTAINS
 
   SUBROUTINE calc_number_density(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -535,7 +535,7 @@ CONTAINS
 
   SUBROUTINE calc_temperature(sigma, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: sigma
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: current_species
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
@@ -558,10 +558,10 @@ CONTAINS
       spec_sum = .TRUE.
     ENDIF
 
-    ALLOCATE(meanx(-ng+1:nx+ng))
-    ALLOCATE(meany(-ng+1:nx+ng))
-    ALLOCATE(meanz(-ng+1:nx+ng))
-    ALLOCATE(part_count(-ng+1:nx+ng))
+    ALLOCATE(meanx(1-ng:nx+ng))
+    ALLOCATE(meany(1-ng:nx+ng))
+    ALLOCATE(meanz(1-ng:nx+ng))
+    ALLOCATE(part_count(1-ng:nx+ng))
     meanx = 0.0_num
     meany = 0.0_num
     meanz = 0.0_num
@@ -657,7 +657,7 @@ CONTAINS
 
   SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -715,7 +715,7 @@ CONTAINS
 
   SUBROUTINE calc_per_species_current(data_array, current_species, direction)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(INOUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: data_array
     INTEGER, INTENT(IN) :: current_species, direction
 
     REAL(num) :: part_px, part_py, part_pz
@@ -805,7 +805,7 @@ CONTAINS
 
   SUBROUTINE calc_per_species_jx(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     CALL calc_per_species_current(data_array, current_species, c_dir_x)
@@ -816,7 +816,7 @@ CONTAINS
 
   SUBROUTINE calc_per_species_jy(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     CALL calc_per_species_current(data_array, current_species, c_dir_y)
@@ -827,7 +827,7 @@ CONTAINS
 
   SUBROUTINE calc_per_species_jz(data_array, current_species)
 
-    REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
 
     CALL calc_per_species_current(data_array, current_species, c_dir_z)

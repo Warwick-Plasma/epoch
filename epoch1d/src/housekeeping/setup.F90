@@ -162,7 +162,7 @@ CONTAINS
     x_grid_max = x_grid_max - dx / 2.0_num
 
     ! Setup global grid
-    DO ix = -ng+1, nx_global + ng
+    DO ix = 1-ng, nx_global + ng
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
@@ -180,9 +180,9 @@ CONTAINS
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
     ! Setup local grid
-    x(-ng+1:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
 
-    xb(-ng+1:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
   END SUBROUTINE setup_grid
 
@@ -255,10 +255,10 @@ CONTAINS
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
-          ALLOCATE(avg%r4array(-ng+1:nx+ng, nspec_local))
+          ALLOCATE(avg%r4array(1-ng:nx+ng, nspec_local))
           avg%r4array = 0.0_num
         ELSE
-          ALLOCATE(avg%array(-ng+1:nx+ng, nspec_local))
+          ALLOCATE(avg%array(1-ng:nx+ng, nspec_local))
           avg%array = 0.0_num
         ENDIF
 

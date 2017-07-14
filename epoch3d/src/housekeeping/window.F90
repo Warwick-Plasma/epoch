@@ -37,9 +37,9 @@ CONTAINS
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(temperature(-ng+1:ny+ng,-ng+1:nz+ng, 1:3))
-    ALLOCATE(drift(-ng+1:ny+ng,-ng+1:nz+ng, 1:3))
+    ALLOCATE(density(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(temperature(1-ng:ny+ng,1-ng:nz+ng, 1:3))
+    ALLOCATE(drift(1-ng:ny+ng,1-ng:nz+ng, 1:3))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -117,8 +117,8 @@ CONTAINS
     CALL shift_field(jz, jng)
 
     IF (x_max_boundary) THEN
-      DO k = -ng+1, nz+ng
-        DO j = -ng+1, ny+ng
+      DO k = 1-ng, nz+ng
+        DO j = 1-ng, ny+ng
           ! Fix incoming field cell.
           ex(nx,j,k)   = ex_x_max(j,k)
           ex(nx+1,j,k) = ex_x_max(j,k)
@@ -184,9 +184,9 @@ CONTAINS
     IF (nproc > 1) THEN
       IF (SIZE(density,1) /= ny+6 .OR. SIZE(density,2) /= nz+6) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(-ng+1:ny+ng,-ng+1:nz+ng))
-        ALLOCATE(temperature(-ng+1:ny+ng,-ng+1:nz+ng, 1:3))
-        ALLOCATE(drift(-ng+1:ny+ng,-ng+1:nz+ng, 1:3))
+        ALLOCATE(density(1-ng:ny+ng,1-ng:nz+ng))
+        ALLOCATE(temperature(1-ng:ny+ng,1-ng:nz+ng, 1:3))
+        ALLOCATE(drift(1-ng:ny+ng,1-ng:nz+ng, 1:3))
       ENDIF
     ENDIF
 
@@ -204,9 +204,9 @@ CONTAINS
 
       parameters%pack_ix = nx
       DO i = 1, 3
-        DO iz = -ng+1, nz+ng
+        DO iz = 1-ng, nz+ng
           parameters%pack_iz = iz
-          DO iy = -ng+1, ny+ng
+          DO iy = 1-ng, ny+ng
             parameters%pack_iy = iy
             temperature(iy,iz,i) = evaluate_with_parameters( &
                 species_list(ispecies)%temperature_function(i), &
@@ -216,9 +216,9 @@ CONTAINS
           ENDDO
         ENDDO
       ENDDO
-      DO iz = -ng+1, nz+ng
+      DO iz = 1-ng, nz+ng
         parameters%pack_iz = iz
-        DO iy = -ng+1, ny+ng
+        DO iy = 1-ng, ny+ng
           parameters%pack_iy = iy
           density(iy,iz) = evaluate_with_parameters( &
               species_list(ispecies)%density_function, parameters, errcode)

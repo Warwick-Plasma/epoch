@@ -37,9 +37,9 @@ CONTAINS
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(-ng+1:ny+ng))
-    ALLOCATE(temperature(-ng+1:ny+ng, 1:3))
-    ALLOCATE(drift(-ng+1:ny+ng, 1:3))
+    ALLOCATE(density(1-ng:ny+ng))
+    ALLOCATE(temperature(1-ng:ny+ng, 1:3))
+    ALLOCATE(drift(1-ng:ny+ng, 1:3))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -117,7 +117,7 @@ CONTAINS
     CALL shift_field(jz, jng)
 
     IF (x_max_boundary) THEN
-      DO j = -ng+1, ny+ng
+      DO j = 1-ng, ny+ng
         ! Fix incoming field cell.
         ex(nx,j)   = ex_x_max(j)
         ex(nx+1,j) = ex_x_max(j)
@@ -179,9 +179,9 @@ CONTAINS
     IF (nproc > 1) THEN
       IF (SIZE(density) /= ny+6) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(-ng+1:ny+ng))
-        ALLOCATE(temperature(-ng+1:ny+ng, 1:3))
-        ALLOCATE(drift(-ng+1:ny+ng, 1:3))
+        ALLOCATE(density(1-ng:ny+ng))
+        ALLOCATE(temperature(1-ng:ny+ng, 1:3))
+        ALLOCATE(drift(1-ng:ny+ng, 1:3))
       ENDIF
     ENDIF
 
@@ -199,7 +199,7 @@ CONTAINS
 
       parameters%pack_ix = nx
       DO i = 1, 3
-        DO iy = -ng+1, ny+ng
+        DO iy = 1-ng, ny+ng
           parameters%pack_iy = iy
           temperature(iy,i) = evaluate_with_parameters( &
               species_list(ispecies)%temperature_function(i), &
@@ -208,7 +208,7 @@ CONTAINS
               species_list(ispecies)%drift_function(i), parameters, errcode)
         ENDDO
       ENDDO
-      DO iy = -ng+1, ny+ng
+      DO iy = 1-ng, ny+ng
         parameters%pack_iy = iy
         density(iy) = evaluate_with_parameters( &
             species_list(ispecies)%density_function, parameters, errcode)

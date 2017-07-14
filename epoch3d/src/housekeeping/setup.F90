@@ -190,17 +190,17 @@ CONTAINS
     z_grid_max = z_grid_max - dz / 2.0_num
 
     ! Setup global grid
-    DO ix = -ng+1, nx_global + ng
+    DO ix = 1-ng, nx_global + ng
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
-    DO iy = -ng+1, ny_global + ng
+    DO iy = 1-ng, ny_global + ng
       y_global(iy) = y_grid_min + (iy - 1) * dy
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
-    DO iz = -ng+1, nz_global + ng
+    DO iz = 1-ng, nz_global + ng
       z_global(iz) = z_grid_min + (iz - 1) * dz
       zb_global(iz) = zb_min + (iz - 1) * dz
       zb_offset_global(iz) = zb_global(iz)
@@ -234,13 +234,13 @@ CONTAINS
     z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
 
     ! Setup local grid
-    x(-ng+1:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-    y(-ng+1:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
-    z(-ng+1:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
+    z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
 
-    xb(-ng+1:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-    yb(-ng+1:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
-    zb(-ng+1:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
+    zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
 
   END SUBROUTINE setup_grid
 
@@ -322,11 +322,11 @@ CONTAINS
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
-          ALLOCATE(avg%r4array(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng,&
+          ALLOCATE(avg%r4array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,&
               nspec_local))
           avg%r4array = 0.0_num
         ELSE
-          ALLOCATE(avg%array(-ng+1:nx+ng,-ng+1:ny+ng,-ng+1:nz+ng,&
+          ALLOCATE(avg%array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,&
               nspec_local))
           avg%array = 0.0_num
         ENDIF
@@ -423,26 +423,26 @@ CONTAINS
 
     INTEGER :: nx0, nx1, ny0, ny1, nz0, nz1
 
-    ALLOCATE(ex_x_min(-ng+1:ny+ng,-ng+1:nz+ng), ex_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(ey_x_min(-ng+1:ny+ng,-ng+1:nz+ng), ey_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(ez_x_min(-ng+1:ny+ng,-ng+1:nz+ng), ez_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(bx_x_min(-ng+1:ny+ng,-ng+1:nz+ng), bx_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(by_x_min(-ng+1:ny+ng,-ng+1:nz+ng), by_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
-    ALLOCATE(bz_x_min(-ng+1:ny+ng,-ng+1:nz+ng), bz_x_max(-ng+1:ny+ng,-ng+1:nz+ng))
+    ALLOCATE(ex_x_min(1-ng:ny+ng,1-ng:nz+ng), ex_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(ey_x_min(1-ng:ny+ng,1-ng:nz+ng), ey_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(ez_x_min(1-ng:ny+ng,1-ng:nz+ng), ez_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(bx_x_min(1-ng:ny+ng,1-ng:nz+ng), bx_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(by_x_min(1-ng:ny+ng,1-ng:nz+ng), by_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(bz_x_min(1-ng:ny+ng,1-ng:nz+ng), bz_x_max(1-ng:ny+ng,1-ng:nz+ng))
 
-    ALLOCATE(ex_y_min(-ng+1:nx+ng,-ng+1:nz+ng), ex_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
-    ALLOCATE(ey_y_min(-ng+1:nx+ng,-ng+1:nz+ng), ey_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
-    ALLOCATE(ez_y_min(-ng+1:nx+ng,-ng+1:nz+ng), ez_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
-    ALLOCATE(bx_y_min(-ng+1:nx+ng,-ng+1:nz+ng), bx_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
-    ALLOCATE(by_y_min(-ng+1:nx+ng,-ng+1:nz+ng), by_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
-    ALLOCATE(bz_y_min(-ng+1:nx+ng,-ng+1:nz+ng), bz_y_max(-ng+1:nx+ng,-ng+1:nz+ng))
+    ALLOCATE(ex_y_min(1-ng:nx+ng,1-ng:nz+ng), ex_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(ey_y_min(1-ng:nx+ng,1-ng:nz+ng), ey_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(ez_y_min(1-ng:nx+ng,1-ng:nz+ng), ez_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(bx_y_min(1-ng:nx+ng,1-ng:nz+ng), bx_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(by_y_min(1-ng:nx+ng,1-ng:nz+ng), by_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(bz_y_min(1-ng:nx+ng,1-ng:nz+ng), bz_y_max(1-ng:nx+ng,1-ng:nz+ng))
 
-    ALLOCATE(ex_z_min(-ng+1:nx+ng,-ng+1:ny+ng), ex_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
-    ALLOCATE(ey_z_min(-ng+1:nx+ng,-ng+1:ny+ng), ey_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
-    ALLOCATE(ez_z_min(-ng+1:nx+ng,-ng+1:ny+ng), ez_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
-    ALLOCATE(bx_z_min(-ng+1:nx+ng,-ng+1:ny+ng), bx_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
-    ALLOCATE(by_z_min(-ng+1:nx+ng,-ng+1:ny+ng), by_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
-    ALLOCATE(bz_z_min(-ng+1:nx+ng,-ng+1:ny+ng), bz_z_max(-ng+1:nx+ng,-ng+1:ny+ng))
+    ALLOCATE(ex_z_min(1-ng:nx+ng,1-ng:ny+ng), ex_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(ey_z_min(1-ng:nx+ng,1-ng:ny+ng), ey_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(ez_z_min(1-ng:nx+ng,1-ng:ny+ng), ez_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(bx_z_min(1-ng:nx+ng,1-ng:ny+ng), bx_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(by_z_min(1-ng:nx+ng,1-ng:ny+ng), by_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(bz_z_min(1-ng:nx+ng,1-ng:ny+ng), bz_z_max(1-ng:nx+ng,1-ng:ny+ng))
 
     nx0 = 1
     nx1 = nx

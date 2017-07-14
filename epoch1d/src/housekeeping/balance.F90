@@ -123,12 +123,12 @@ CONTAINS
 
       ! Do X array separately because we already have global copies
       DEALLOCATE(x)
-      ALLOCATE(x(-ng+1:nx+ng))
-      x(-ng+1:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+      ALLOCATE(x(1-ng:nx+ng))
+      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
 
       DEALLOCATE(xb)
-      ALLOCATE(xb(-ng+1:nx+ng))
-      xb(-ng+1:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+      ALLOCATE(xb(1-ng:nx+ng))
+      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
       ! Recalculate x_grid_mins/maxs so that rebalancing works next time
       DO iproc = 0, nprocx - 1
@@ -217,7 +217,7 @@ CONTAINS
 
     ! Full domain arrays
 
-    ALLOCATE(temp(-ng+1:nx_new+ng))
+    ALLOCATE(temp(1-ng:nx_new+ng))
 
     ! Current will be recalculated during the particle push, so there
     ! is no need to copy the contents of the old arrays.
@@ -227,7 +227,7 @@ CONTAINS
     ! a different size.
 
     IF (overriding) THEN
-      ALLOCATE(temp2(-ng+1:nx+ng))
+      ALLOCATE(temp2(1-ng:nx+ng))
 
       temp2(0:nx+1) = jx(0:nx+1)
       CALL remap_field(temp2, temp)
@@ -260,44 +260,44 @@ CONTAINS
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
-    ALLOCATE(ex(-ng+1:nx_new+ng))
+    ALLOCATE(ex(1-ng:nx_new+ng))
     ex = temp
 
     CALL remap_field(ey, temp)
     DEALLOCATE(ey)
-    ALLOCATE(ey(-ng+1:nx_new+ng))
+    ALLOCATE(ey(1-ng:nx_new+ng))
     ey = temp
 
     CALL remap_field(ez, temp)
     DEALLOCATE(ez)
-    ALLOCATE(ez(-ng+1:nx_new+ng))
+    ALLOCATE(ez(1-ng:nx_new+ng))
     ez = temp
 
     CALL remap_field(bx, temp)
     DEALLOCATE(bx)
-    ALLOCATE(bx(-ng+1:nx_new+ng))
+    ALLOCATE(bx(1-ng:nx_new+ng))
     bx = temp
 
     CALL remap_field(by, temp)
     DEALLOCATE(by)
-    ALLOCATE(by(-ng+1:nx_new+ng))
+    ALLOCATE(by(1-ng:nx_new+ng))
     by = temp
 
     CALL remap_field(bz, temp)
     DEALLOCATE(bz)
-    ALLOCATE(bz(-ng+1:nx_new+ng))
+    ALLOCATE(bz(1-ng:nx_new+ng))
     bz = temp
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
         CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-ng+1:nx_new+ng))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(1-ng:nx_new+ng))
         species_list(ispecies)%migrate%fluid_energy = temp
 
         CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-ng+1:nx_new+ng))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(1-ng:nx_new+ng))
         species_list(ispecies)%migrate%fluid_density = temp
       ENDIF
     ENDDO
@@ -305,22 +305,22 @@ CONTAINS
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)
       DEALLOCATE(cpml_psi_eyx)
-      ALLOCATE(cpml_psi_eyx(-ng+1:nx_new+ng))
+      ALLOCATE(cpml_psi_eyx(1-ng:nx_new+ng))
       cpml_psi_eyx = temp
 
       CALL remap_field(cpml_psi_byx, temp)
       DEALLOCATE(cpml_psi_byx)
-      ALLOCATE(cpml_psi_byx(-ng+1:nx_new+ng))
+      ALLOCATE(cpml_psi_byx(1-ng:nx_new+ng))
       cpml_psi_byx = temp
 
       CALL remap_field(cpml_psi_ezx, temp)
       DEALLOCATE(cpml_psi_ezx)
-      ALLOCATE(cpml_psi_ezx(-ng+1:nx_new+ng))
+      ALLOCATE(cpml_psi_ezx(1-ng:nx_new+ng))
       cpml_psi_ezx = temp
 
       CALL remap_field(cpml_psi_bzx, temp)
       DEALLOCATE(cpml_psi_bzx)
-      ALLOCATE(cpml_psi_bzx(-ng+1:nx_new+ng))
+      ALLOCATE(cpml_psi_bzx(1-ng:nx_new+ng))
       cpml_psi_bzx = temp
 
       CALL deallocate_cpml_helpers
@@ -347,7 +347,7 @@ CONTAINS
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
-        ALLOCATE(r4temp_sum(-ng+1:nx_new+ng, nspec_local))
+        ALLOCATE(r4temp_sum(1-ng:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field_r4(&
@@ -357,7 +357,7 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %r4array(-ng+1:nx_new+ng, nspec_local))
+            %r4array(1-ng:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
@@ -365,7 +365,7 @@ CONTAINS
       ELSE
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
-        ALLOCATE(temp_sum(-ng+1:nx_new+ng, nspec_local))
+        ALLOCATE(temp_sum(1-ng:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field(&
@@ -375,7 +375,7 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %array(-ng+1:nx_new+ng, nspec_local))
+            %array(1-ng:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%array = temp_sum
 

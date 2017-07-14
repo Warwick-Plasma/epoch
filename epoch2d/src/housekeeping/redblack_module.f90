@@ -247,8 +247,8 @@ CONTAINS
 
   SUBROUTINE redblack1d(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(num), DIMENSION(-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(num), DIMENSION(1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(num), DIMENSION(1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in
@@ -263,8 +263,8 @@ CONTAINS
 
   SUBROUTINE redblack2d(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(num), DIMENSION(-ng+1:,-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-ng+1:,-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(num), DIMENSION(1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(num), DIMENSION(1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in
@@ -279,8 +279,8 @@ CONTAINS
 
   SUBROUTINE redblack3d(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(num), DIMENSION(-ng+1:,-ng+1:,-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in
@@ -295,8 +295,8 @@ CONTAINS
 
   SUBROUTINE redblack1d_r4(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(r4), DIMENSION(-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(r4), DIMENSION(-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(r4), DIMENSION(1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(r4), DIMENSION(1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in
@@ -311,8 +311,8 @@ CONTAINS
 
   SUBROUTINE redblack2d_r4(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(r4), DIMENSION(-ng+1:,-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(r4), DIMENSION(-ng+1:,-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(r4), DIMENSION(1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(r4), DIMENSION(1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in
@@ -327,8 +327,8 @@ CONTAINS
 
   SUBROUTINE redblack3d_r4(field_in, field_out, sendtypes_in, recvtypes_in)
 
-    REAL(r4), DIMENSION(-ng+1:,-ng+1:,-ng+1:), TARGET, INTENT(IN) :: field_in
-    REAL(r4), DIMENSION(-ng+1:,-ng+1:,-ng+1:), TARGET, INTENT(OUT) :: field_out
+    REAL(r4), DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    REAL(r4), DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
     INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
 
     sendtypes => sendtypes_in

@@ -178,7 +178,7 @@ CONTAINS
       IF (.NOT.print_arrays) CYCLE
 
       IF (.NOT.any_written) THEN
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         CALL create_subtypes
         any_written = .TRUE.
         IF (timer_collect) THEN
@@ -1043,7 +1043,7 @@ CONTAINS
       CASE(c_dump_jz)
         avg%r4array(:,1) = avg%r4array(:,1) + REAL(jz(1-ng:nx+ng) * dt, r4)
       CASE(c_dump_ekbar)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
@@ -1051,7 +1051,7 @@ CONTAINS
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_mass_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
@@ -1059,7 +1059,7 @@ CONTAINS
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_charge_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
@@ -1067,7 +1067,7 @@ CONTAINS
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_number_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
@@ -1075,7 +1075,7 @@ CONTAINS
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_temperature)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
@@ -1104,35 +1104,35 @@ CONTAINS
       CASE(c_dump_jz)
         avg%array(:,1) = avg%array(:,1) + jz(1-ng:nx+ng) * dt
       CASE(c_dump_ekbar)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_mass_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_charge_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_number_density)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
       CASE(c_dump_temperature)
-        ALLOCATE(array(-ng+1:nx+ng))
+        ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
@@ -1150,7 +1150,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
     INTEGER, INTENT(IN) :: stagger
-    REAL(num), DIMENSION(-ng+1:), INTENT(IN) :: array
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: reduced
     INTEGER :: io, mask, dumped
     INTEGER :: i, ii, rnx
@@ -1325,7 +1325,7 @@ CONTAINS
       SUBROUTINE func(data_array, current_species)
         USE constants
         USE shared_data
-        REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+        REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
       END SUBROUTINE func
     END INTERFACE
@@ -1603,7 +1603,7 @@ CONTAINS
       SUBROUTINE func(data_array, direction)
         USE constants
         USE shared_data
-        REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+        REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: direction
       END SUBROUTINE func
     END INTERFACE
@@ -1727,7 +1727,7 @@ CONTAINS
       SUBROUTINE func(data_array, current_species, direction)
         USE constants
         USE shared_data
-        REAL(num), DIMENSION(-ng+1:), INTENT(OUT) :: data_array
+        REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species, direction
       END SUBROUTINE func
     END INTERFACE

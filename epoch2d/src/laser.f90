@@ -328,9 +328,9 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(array(-ng+1:ny+ng))
+      ALLOCATE(array(1-ng:ny+ng))
     ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(array(-ng+1:nx+ng))
+      ALLOCATE(array(1-ng:nx+ng))
     ENDIF
 
   END SUBROUTINE allocate_with_boundary
