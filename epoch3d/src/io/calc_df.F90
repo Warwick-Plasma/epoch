@@ -35,7 +35,7 @@ CONTAINS
       DO k = 1-ng, nz+ng
       DO j = 1-ng, ny+ng
       DO i = 1, ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(-i+1,j,k)
+        data_array(i,j,k) = data_array(i,j,k) + data_array(1-i,j,k)
       ENDDO
       ENDDO
       ENDDO
@@ -56,7 +56,7 @@ CONTAINS
       DO k = 1-ng, nz+ng
       DO j = 1, ng
       DO i = 1-ng, nx+ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(i,-j+1,k)
+        data_array(i,j,k) = data_array(i,j,k) + data_array(i,1-j,k)
       ENDDO
       ENDDO
       ENDDO
@@ -77,7 +77,7 @@ CONTAINS
       DO k = 1, ng
       DO j = 1-ng, ny+ng
       DO i = 1-ng, nx+ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(i,j,-k+1)
+        data_array(i,j,k) = data_array(i,j,k) + data_array(i,j,1-k)
       ENDDO
       ENDDO
       ENDDO

@@ -34,7 +34,7 @@ CONTAINS
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
         DO i = 1, ng
-          data_array(i,j) = data_array(i,j) + data_array(-i+1,j)
+          data_array(i,j) = data_array(i,j) + data_array(1-i,j)
         ENDDO
       ENDDO
     ENDIF
@@ -51,7 +51,7 @@ CONTAINS
         .AND. bc_particle(c_bd_y_min) /= c_bc_reflect) THEN
       DO j = 1, ng
         DO i = 1-ng, nx+ng
-          data_array(i,j) = data_array(i,j) + data_array(i, -j+1)
+          data_array(i,j) = data_array(i,j) + data_array(i, 1-j)
         ENDDO
       ENDDO
     ENDIF
