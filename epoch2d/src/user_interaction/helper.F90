@@ -114,11 +114,11 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ALLOCATE(species_list(ispecies)%initial_conditions&
-          %density(-2:nx+3,-2:ny+3))
+          %density(1-ng:nx+ng,1-ng:ny+ng))
       ALLOCATE(species_list(ispecies)%initial_conditions&
-          %temp(-2:nx+3,-2:ny+3,1:3))
+          %temp(1-ng:nx+ng,1-ng:ny+ng,1:3))
       ALLOCATE(species_list(ispecies)%initial_conditions&
-          %drift(-2:nx+3,-2:ny+3,1:3))
+          %drift(1-ng:nx+ng,1-ng:ny+ng,1:3))
 
       species_list(ispecies)%initial_conditions%density = 1.0_num
       species_list(ispecies)%initial_conditions%temp = 0.0_num
@@ -149,7 +149,7 @@ CONTAINS
   SUBROUTINE non_uniform_load_particles(density, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(INOUT) :: density
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: density
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
@@ -167,8 +167,8 @@ CONTAINS
     num_valid_cells_local = 0
     density_total = 0.0_num
 
-    DO iy = -2, ny+3
-    DO ix = -2, nx+3
+    DO iy = 1-ng, ny+ng
+    DO ix = 1-ng, nx+ng
       IF (density(ix,iy) > density_max) density(ix,iy) = density_max
     ENDDO ! ix
     ENDDO ! iy
@@ -271,7 +271,7 @@ CONTAINS
   SUBROUTINE load_particles(species, load_list)
 
     TYPE(particle_species), POINTER :: species
-    LOGICAL, DIMENSION(-2:,-2:), INTENT(IN) :: load_list
+    LOGICAL, DIMENSION(1-ng:,1-ng:), INTENT(IN) :: load_list
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
@@ -496,7 +496,7 @@ CONTAINS
   SUBROUTINE setup_particle_density(density_in, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: density_in
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     TYPE(particle), POINTER :: current
@@ -509,15 +509,15 @@ CONTAINS
     LOGICAL, DIMENSION(:,:), ALLOCATABLE :: density_map
 #include "particle_head.inc"
 
-    ALLOCATE(density(-2:nx+3,-2:ny+3))
-    ALLOCATE(density_map(-2:nx+3,-2:ny+3))
+    ALLOCATE(density(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(density_map(1-ng:nx+ng,1-ng:ny+ng))
     density = density_in
     density_map = .FALSE.
 
     CALL field_bc(density, ng)
 
-    DO iy = -2, ny+3
-    DO ix = -2, nx+3
+    DO iy = 1-ng, ny+ng
+    DO ix = 1-ng, nx+ng
       IF (density(ix,iy) > density_max) density(ix,iy) = density_max
       IF (density(ix,iy) >= density_min) THEN
         density_map(ix,iy) = .TRUE.
@@ -530,7 +530,7 @@ CONTAINS
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
-    ALLOCATE(npart_in_cell(-2:nx+3,-2:ny+3))
+    ALLOCATE(npart_in_cell(1-ng:nx+ng,1-ng:ny+ng))
     npart_in_cell = 0
 
     partlist => species%attached_list

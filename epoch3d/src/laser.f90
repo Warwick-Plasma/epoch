@@ -407,11 +407,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(array(-2:ny+3, -2:nz+3))
+      ALLOCATE(array(1-ng:ny+ng, 1-ng:nz+ng))
     ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(array(-2:nx+3, -2:nz+3))
+      ALLOCATE(array(1-ng:nx+ng, 1-ng:nz+ng))
     ELSE IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
-      ALLOCATE(array(-2:nx+3, -2:ny+3))
+      ALLOCATE(array(1-ng:nx+ng, 1-ng:ny+ng))
     ENDIF
 
   END SUBROUTINE allocate_with_boundary

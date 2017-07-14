@@ -829,7 +829,7 @@ CONTAINS
       filename, got_file)
 
     TYPE(primitive_stack), INTENT(INOUT) :: output
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     REAL(num), INTENT(IN) :: mult
     CHARACTER(LEN=*), INTENT(IN) :: mult_string, element, value, filename
     LOGICAL, INTENT(IN) :: got_file
