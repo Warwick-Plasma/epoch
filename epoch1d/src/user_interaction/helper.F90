@@ -107,7 +107,7 @@ CONTAINS
     DO ispecies = 1, n_species
       ALLOCATE(species_list(ispecies)%initial_conditions%density(1-ng:nx+ng))
       ALLOCATE(species_list(ispecies)%initial_conditions%temp(1-ng:nx+ng,1:3))
-      ALLOCATE(species_list(ispecies)%initial_conditions%drift(-ng:nx+ng,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions%drift(1-ng:nx+ng,1:3))
 
       species_list(ispecies)%initial_conditions%density = 1.0_num
       species_list(ispecies)%initial_conditions%temp = 0.0_num
