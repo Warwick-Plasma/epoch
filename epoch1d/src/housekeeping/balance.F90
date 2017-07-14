@@ -52,6 +52,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
 #endif
+
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
@@ -235,7 +236,6 @@ CONTAINS
       ALLOCATE(jx(1-jng:nx_new+jng))
       jx(0:nx_new+1) = temp(0:nx_new+1)
 
-
       temp2(0:nx+1) = jy(0:nx+1)
       CALL remap_field(temp2, temp)
       DEALLOCATE(jy)
@@ -405,6 +405,7 @@ CONTAINS
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
 
     CALL do_field_mpi_with_lengths(field_out, ng, n_new(1))
+
   END SUBROUTINE remap_field
 
 

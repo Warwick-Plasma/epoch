@@ -84,7 +84,7 @@ CONTAINS
     ENDIF
     IF (z_max_boundary .AND. bc_particle(c_bd_z_max) /= c_bc_periodic &
         .AND. bc_particle(c_bd_z_max) /= c_bc_reflect) THEN
-      DO k =1, ng
+      DO k = 1, ng
       DO j = -ng, ny+ng
       DO i = -ng, nx+ng
         data_array(i,j,nz-k+1) = data_array(i,j,nz-k+1) + data_array(i,j,nz+k)

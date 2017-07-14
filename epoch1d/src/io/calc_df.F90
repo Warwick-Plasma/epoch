@@ -32,7 +32,7 @@ CONTAINS
 
     IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
-      DO ix = 1,ng
+      DO ix = 1, ng
         data_array(ix) = data_array(ix) + data_array(1-ng)
       ENDDO
     ENDIF

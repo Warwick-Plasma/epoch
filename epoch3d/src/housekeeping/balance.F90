@@ -532,7 +532,7 @@ CONTAINS
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
-        ALLOCATE(r4temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng,&
+        ALLOCATE(r4temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng, &
             nspec_local))
 
         DO i = 1, nspec_local
@@ -543,8 +543,8 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %r4array(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng,&
-             nspec_local))
+            %r4array(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng, &
+            nspec_local))
 
         io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
@@ -552,7 +552,7 @@ CONTAINS
       ELSE
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
-        ALLOCATE(temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng,&
+        ALLOCATE(temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng, &
             nspec_local))
 
         DO i = 1, nspec_local

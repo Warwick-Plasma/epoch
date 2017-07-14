@@ -322,12 +322,10 @@ CONTAINS
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
-          ALLOCATE(avg%r4array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,&
-              nspec_local))
+          ALLOCATE(avg%r4array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,nspec_local))
           avg%r4array = 0.0_num
         ELSE
-          ALLOCATE(avg%array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,&
-              nspec_local))
+          ALLOCATE(avg%array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,nspec_local))
           avg%array = 0.0_num
         ENDIF
 

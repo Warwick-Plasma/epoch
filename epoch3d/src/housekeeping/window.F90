@@ -37,9 +37,9 @@ CONTAINS
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(1-ng:ny+ng,1-ng:nz+ng))
-    ALLOCATE(temperature(1-ng:ny+ng,1-ng:nz+ng, 1:3))
-    ALLOCATE(drift(1-ng:ny+ng,1-ng:nz+ng, 1:3))
+    ALLOCATE(density(1-ng:ny+ng, 1-ng:nz+ng))
+    ALLOCATE(temperature(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
+    ALLOCATE(drift(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -184,9 +184,9 @@ CONTAINS
     IF (nproc > 1) THEN
       IF (SIZE(density,1) /= ny+6 .OR. SIZE(density,2) /= nz+6) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(1-ng:ny+ng,1-ng:nz+ng))
-        ALLOCATE(temperature(1-ng:ny+ng,1-ng:nz+ng, 1:3))
-        ALLOCATE(drift(1-ng:ny+ng,1-ng:nz+ng, 1:3))
+        ALLOCATE(density(1-ng:ny+ng, 1-ng:nz+ng))
+        ALLOCATE(temperature(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
+        ALLOCATE(drift(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
       ENDIF
     ENDIF
 

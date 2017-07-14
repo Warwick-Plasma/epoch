@@ -1303,8 +1303,7 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: ekbar1, temp2
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: dens1, dens2
     REAL(num), INTENT(IN) :: q1, q2, m1
-    REAL(num), DIMENSION(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) :: &
-        calc_coulomb_log
+    REAL(num), DIMENSION(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng) :: calc_coulomb_log
     REAL(num) :: b0, dB, bmin, bmax
     REAL(num) :: local_ekbar1, local_temp2, gamm
     INTEGER :: i, j, k
