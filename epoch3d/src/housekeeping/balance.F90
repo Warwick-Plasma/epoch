@@ -862,7 +862,8 @@ CONTAINS
     ! Slice in X-direction with an additional index
 
     IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
@@ -879,7 +880,8 @@ CONTAINS
     ENDIF
 
     IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
@@ -900,7 +902,8 @@ CONTAINS
     ! Slice in Y-direction with an additional index
 
     IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
@@ -917,7 +920,8 @@ CONTAINS
     ENDIF
 
     IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
@@ -938,7 +942,8 @@ CONTAINS
     ! Slice in Z-direction with an additional index
 
     IF (bc_particle(c_bd_z_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
@@ -955,7 +960,8 @@ CONTAINS
     ENDIF
 
     IF (bc_particle(c_bd_z_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
+      IF (.NOT.ALLOCATED(temp)) &
+          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
       DO ispecies = 1, n_species
         DO i = 1, 3
