@@ -26,20 +26,20 @@ CONTAINS
   SUBROUTINE calc_boundary(data_array)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER :: ix
+    INTEGER :: i
 
     CALL processor_summation_bcs(data_array, ng)
 
     IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
-      DO ix = 1, ng
-        data_array(ix) = data_array(ix) + data_array(1-ix)
+      DO i = 1, ng
+        data_array(i) = data_array(i) + data_array(1-i)
       ENDDO
     ENDIF
     IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
-      DO ix = 1, ng
-        data_array(nx-ix+1) = data_array(nx-ix+1) + data_array(nx+ix)
+      DO i = 1, ng
+        data_array(nx-i+1) = data_array(nx-i+1) + data_array(nx+i)
       ENDDO
     ENDIF
 

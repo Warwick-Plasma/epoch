@@ -33,34 +33,34 @@ CONTAINS
     IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
-        DO i = 1, ng
-          data_array(i,j) = data_array(i,j) + data_array(1-i,j)
-        ENDDO
+      DO i = 1, ng
+        data_array(i,j) = data_array(i,j) + data_array(1-i,j)
+      ENDDO
       ENDDO
     ENDIF
     IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
         .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
-        DO i = 1, ng
-          data_array(nx-i+1,j) = data_array(nx-i+1,j) + data_array(nx+i,j)
-        ENDDO
+      DO i = 1, ng
+        data_array(nx-i+1,j) = data_array(nx-i+1,j) + data_array(nx+i,j)
+      ENDDO
       ENDDO
     ENDIF
 
     IF (y_min_boundary .AND. bc_particle(c_bd_y_min) /= c_bc_periodic &
         .AND. bc_particle(c_bd_y_min) /= c_bc_reflect) THEN
       DO j = 1, ng
-        DO i = 1-ng, nx+ng
-          data_array(i,j) = data_array(i,j) + data_array(i, 1-j)
-        ENDDO
+      DO i = 1-ng, nx+ng
+        data_array(i,j) = data_array(i,j) + data_array(i,1-j)
+      ENDDO
       ENDDO
     ENDIF
     IF (y_max_boundary .AND. bc_particle(c_bd_y_max) /= c_bc_periodic &
         .AND. bc_particle(c_bd_y_max) /= c_bc_reflect) THEN
       DO j = 1, ng
-        DO i = 1-ng, nx+ng
-          data_array(i,ny+j-1) = data_array(i,ny+j-1) + data_array(i,ny+j)
-        ENDDO
+      DO i = 1-ng, nx+ng
+        data_array(i,ny-j+1) = data_array(i,ny-j+1) + data_array(i,ny+j)
+      ENDDO
       ENDDO
     ENDIF
 
