@@ -59,7 +59,6 @@ CONTAINS
     INTEGER :: ispecies
 #endif
 
-    RETURN
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
@@ -898,6 +897,7 @@ CONTAINS
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
+    ! Slice in Y-direction with an additional index
 
     IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
       IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
