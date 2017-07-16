@@ -1,0 +1,6 @@
+*.sdf
+*.cfd
+*.dat
+*.status
+*.deck
+*.visit
