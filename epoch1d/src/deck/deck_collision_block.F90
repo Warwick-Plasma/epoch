@@ -114,7 +114,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'collisional_ionisation')) THEN
+    IF (str_cmp(element, 'collisional_ionisation') &
+        .OR. str_cmp(element, 'collisional_ionization')) THEN
       use_collisional_ionisation = as_logical_print(value, element, errcode)
       IF (use_collisional_ionisation) THEN
 #ifndef PER_SPECIES_WEIGHT
@@ -154,16 +155,16 @@ CONTAINS
     CHARACTER(*), INTENT(OUT) :: str_out
     CHARACTER(*), INTENT(OUT) :: token_out
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos
+    INTEGER :: str_len, chr, pos
     CHARACTER(1) :: c
 
     str_len = LEN(str_in)
     pos = str_len
 
-    DO char = 1, str_len
-      c = str_in(char:char)
+    DO chr = 1, str_len
+      c = str_in(chr:chr)
       IF (c == ' ')  THEN
-        pos = char
+        pos = chr
         EXIT
       ENDIF
     ENDDO

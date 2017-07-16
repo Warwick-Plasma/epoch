@@ -57,8 +57,8 @@ CONTAINS
         CALL integer_as_string(ng, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
-        PRINT*,'There must be at least ' // TRIM(str) // &
-            ' cells in each direction.'
+        PRINT*,'There must be at least ' // TRIM(str) &
+            // ' cells in each direction.'
       ENDIF
       CALL abort_code(c_err_bad_setup)
     ENDIF
@@ -365,11 +365,11 @@ CONTAINS
     errstring(MPI_ERR_WIN                  ) = 'MPI_ERR_WIN                  '
     errstring(MPI_ERR_LASTCODE             ) = 'MPI_ERR_LASTCODE             '
 
-    PRINT*, "Caught MPI error: ", TRIM(errstring(error_code))
+    PRINT*, 'Caught MPI error: ', TRIM(errstring(error_code))
     IF (comm == MPI_COMM_WORLD) THEN
-      PRINT*, "Communicator MPI_COMM_WORLD"
+      PRINT*, 'Communicator MPI_COMM_WORLD'
     ELSE
-      PRINT*, "Communicator ", comm, "(Not MPI_COMM_WORLD)"
+      PRINT*, 'Communicator ', comm, '(Not MPI_COMM_WORLD)'
     ENDIF
 
     ! Deliberately raise a divide-by-zero error

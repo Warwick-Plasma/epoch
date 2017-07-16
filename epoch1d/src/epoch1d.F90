@@ -90,7 +90,7 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+  CALL MPI_BCAST(data_dir, c_max_path_length, MPI_CHARACTER, 0, comm, errcode)
 
   ! version check only, exit silently
   IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
