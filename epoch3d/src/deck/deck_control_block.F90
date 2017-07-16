@@ -447,7 +447,6 @@ CONTAINS
       errcode = c_err_terminate
     ENDIF
 
-
   END FUNCTION control_block_check
 
 

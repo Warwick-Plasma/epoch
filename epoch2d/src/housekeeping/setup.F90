@@ -609,16 +609,14 @@ CONTAINS
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
       dt = cfl * dx * dy / SQRT(dx**2 + dy**2) / c
-    ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / sqrt(max( 1.0_num / dx**2, 1.0_num / dy**2 )) / c
-    ENDIF
+      dt = 1.0_num / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2)) / c
 
-    IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
-      dt = min(dx, dy) / c
+      dt = MIN(dx, dy) / c
     ENDIF
 
     dt_solver = dt
@@ -628,11 +626,12 @@ CONTAINS
 
     IF (maxwell_solver /= c_maxwell_solver_yee .AND. dt < dt_solver) THEN
       IF (rank == 0) THEN
-        PRINT*,'*** WARNING ***'
-        PRINT*,'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
-        PRINT*,'time step given by CFL condition, making steps shorter than intended.'
-        PRINT*,'This may have an adverse effect on dispersion properties!'
-        PRINT*,'Increase grid resolution to fix this.'
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
+        PRINT*, 'time step given by CFL condition, making steps shorter ', &
+            'than intended.'
+        PRINT*, 'This may have an adverse effect on dispersion properties!'
+        PRINT*, 'Increase grid resolution to fix this.'
       ENDIF
     ENDIF
 
@@ -649,10 +648,10 @@ CONTAINS
       IF (io_block_list(io)%dt_min_average > 0 &
           .AND. io_block_list(io)%dt_min_average < dt) THEN
         IF (rank == 0) THEN
-          PRINT*,'*** WARNING ***'
-          PRINT*,'Time step is too small to satisfy "nstep_average"'
-          PRINT*,'Averaging will occur over fewer time steps than specified'
-          PRINT*,'Set "dt_multiplier" less than ', &
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Time step is too small to satisfy "nstep_average"'
+          PRINT*, 'Averaging will occur over fewer time steps than specified'
+          PRINT*, 'Set "dt_multiplier" less than ', &
               dt_multiplier * io_block_list(io)%dt_min_average / dt, &
               ' to fix this'
         ENDIF

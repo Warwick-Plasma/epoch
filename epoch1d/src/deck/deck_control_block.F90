@@ -154,10 +154,6 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
-      fng = 2
-    ENDIF
-
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) == '') THEN
         WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
@@ -168,6 +164,10 @@ CONTAINS
           // TRIM(data_dir) // '/' // TRIM(restart_filename)
 
       CALL check_valid_restart
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
     ENDIF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
