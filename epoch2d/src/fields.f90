@@ -26,7 +26,7 @@ MODULE fields
   REAL(num) :: cnx, cny
   REAL(num) :: alphax, alphay
   REAL(num) :: betaxy, betayx
-  REAL(num) :: deltax, deltay
+  REAL(num) :: deltax
 
 CONTAINS
 
@@ -59,7 +59,6 @@ CONTAINS
       betaxy = 0.125_num * (dx / dy)**2
       betayx = 0.125_num
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
-      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
@@ -71,7 +70,6 @@ CONTAINS
       betayx = 0.125_num * (delta / dx)**2
       betaxy = 0.125_num * (delta / dy)**2
       deltax = 0.0_num
-      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
