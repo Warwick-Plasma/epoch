@@ -625,36 +625,40 @@ CONTAINS
     IF (str_cmp(element, 'temp_back') .OR. str_cmp(element, 'temp_back_k') &
          .OR. str_cmp(element, 'temp_back_ev')) THEN
        IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
+
        initial_conditions(species_id)%temp_back(1) = &
-            as_real_print(value, element, errcode)*mult
+            as_real_print(value, element, errcode) * mult
        initial_conditions(species_id)%temp_back(2) = &
-            as_real_print(value, element, errcode)*mult
+            as_real_print(value, element, errcode) * mult
        initial_conditions(species_id)%temp_back(3) = &
-            as_real_print(value, element, errcode)*mult
+            as_real_print(value, element, errcode) * mult
        RETURN
     END IF
 
     IF (str_cmp(element, 'temp_x_back') &
          .OR. str_cmp(element, 'temp_x_back_ev')) THEN
       IF (str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
+
       initial_conditions(species_id)%temp_back(1) = &
-          as_real_print(value, element, errcode)*mult
+          as_real_print(value, element, errcode) * mult
       RETURN
     END IF
 
     IF (str_cmp(element, 'temp_y_back') &
          .OR. str_cmp(element, 'temp_y_back_ev')) THEN
       IF (str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
+
       initial_conditions(species_id)%temp_back(2) = &
-          as_real_print(value, element, errcode)*mult
+          as_real_print(value, element, errcode) * mult
       RETURN
     END IF
 
     IF (str_cmp(element, 'temp_z_back') &
          .OR. str_cmp(element, 'temp_z_back_ev')) THEN
       IF (str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
+
       initial_conditions(species_id)%temp_back(3) = &
-          as_real_print(value, element, errcode)*mult
+          as_real_print(value, element, errcode) * mult
       RETURN
     END IF
 

@@ -31,6 +31,7 @@ CONTAINS
     TYPE(particle), POINTER, INTENT(IN) :: current
     REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: temperature, drift
     REAL(num), INTENT(INOUT) :: temp_local, drift_local
+    REAL(num) :: gf
     INTEGER :: ix, iy, iz
 
 #include "particle_head.inc"
@@ -41,14 +42,15 @@ CONTAINS
     temp_local = 0.0_num
     drift_local = 0.0_num
     DO iz = sf_min, sf_max
-      DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          temp_local = temp_local + gx(ix) * gy(iy) * gz(iz) &
-              * temperature(cell_x+ix, cell_y+iy, cell_z+iz)
-          drift_local = drift_local + gx(ix) * gy(iy) * gz(iz) &
-              * drift(cell_x+ix, cell_y+iy, cell_z+iz)
-        ENDDO
-      ENDDO
+    DO iy = sf_min, sf_max
+    DO ix = sf_min, sf_max
+      gf = gx(ix) * gy(iy) * gz(iz)
+      temp_local = temp_local &
+          + gf * temperature(cell_x+ix, cell_y+iy, cell_z+iz)
+      drift_local = drift_local &
+          + gf * drift(cell_x+ix, cell_y+iy, cell_z+iz)
+    ENDDO
+    ENDDO
     ENDDO
 
   END SUBROUTINE params_local
