@@ -533,6 +533,9 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: npart_in_cell
+#ifdef PARTICLE_SHAPE_TOPHAT
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: rpart_in_cell
+#endif
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
@@ -633,6 +636,18 @@ CONTAINS
     DEALLOCATE(density)
 
     wdata = dx * dy * dz
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+    ! For the TOPHAT shape function, particles can be located on a
+    ! neighbouring process
+    ALLOCATE(rpart_in_cell(-2:nx+3,-2:ny+3,-2:nz+3))
+
+    rpart_in_cell = npart_in_cell
+    CALL processor_summation_bcs(rpart_in_cell, ng)
+    npart_in_cell = rpart_in_cell
+
+    DEALLOCATE(rpart_in_cell)
+#endif
 
     partlist => species%attached_list
     ! Second loop renormalises particle weights
