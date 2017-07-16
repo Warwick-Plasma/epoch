@@ -107,7 +107,7 @@ CONTAINS
     REAL(num) :: idtyz, idtxz, idtxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma, third
+    REAL(num) :: root, dtfac, gamma_rel, gamma_rel_m1, part_u2, third
     REAL(num) :: delta_x, delta_y, delta_z
     REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
@@ -351,8 +351,9 @@ CONTAINS
         part_uz = uzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        root = dtco2 / gamma
+        part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        root = dtco2 / gamma_rel
 
         delta_x = part_ux * root
         delta_y = part_uy * root
@@ -509,13 +510,15 @@ CONTAINS
           ! the system. These particles are copied into a separate part of the
           ! output file.
 
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
           current_probe => species_list(ispecies)%attached_probes
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
-            probe_energy = (gamma - 1.0_num) * part_mc2
+            probe_energy = gamma_rel_m1 * part_mc2
 
             ! Unidirectional probe
             IF (probe_energy > current_probe%ek_min) THEN
@@ -550,6 +553,12 @@ CONTAINS
       CALL particle_bcs
 
       IF (smooth_currents) CALL smooth_current()
+    END IF
+
+    IF (use_current_correction) THEN
+      jx = jx - initial_jx
+      jy = jy - initial_jy
+      jz = jz - initial_jz
     END IF
 
   END SUBROUTINE push_particles

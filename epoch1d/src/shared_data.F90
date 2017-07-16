@@ -77,6 +77,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
 
+  ! Frequency function type codes
+  INTEGER, PARAMETER :: c_of_omega = 1
+  INTEGER, PARAMETER :: c_of_freq = 2
+  INTEGER, PARAMETER :: c_of_lambda = 3
+
   ! Error codes
   INTEGER, PARAMETER :: c_err_none = 0
   INTEGER, PARAMETER :: c_err_unknown_block = 2**0
@@ -187,10 +192,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_dir_xy_angle = c_ndims + 6
   INTEGER, PARAMETER :: c_dir_yz_angle = c_ndims + 7
   INTEGER, PARAMETER :: c_dir_zx_angle = c_ndims + 8
+  INTEGER, PARAMETER :: c_dir_mod_p = c_ndims + 9
 
   ! constants defining the maximum number of dimensions and directions
   ! in a distribution function
-  INTEGER, PARAMETER :: c_df_maxdirs = c_dir_zx_angle
+  INTEGER, PARAMETER :: c_df_maxdirs = c_dir_mod_p
   INTEGER, PARAMETER :: c_df_maxdims = 3
 
   ! define flags
@@ -375,6 +381,7 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
   INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
   INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
+  INTEGER, PARAMETER :: c_const_dir_mod_p = 91
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -423,6 +430,22 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_driftz = 46
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
+
+  ! This type represents parameters given to the parser.
+  ! It can be extended by a developer freely
+  ! It is the responsibility of the developer to ensure that a parameter is
+  ! specified when needed
+
+  ! If you set the use_grid_position parameter to .FALSE. then the deck parser
+  ! will evaluate position x, y, z as being at the location pack_pos(1,2,3)
+  ! rather than x(pack%ix), y(pack%iy), z(pack%iz). It is essential that the
+  ! ix, parameters are still set to match, because other functions
+  ! will still use them
+  TYPE parameter_pack
+    LOGICAL :: use_grid_position = .TRUE.
+    INTEGER :: pack_ix = 1
+    REAL(num) :: pack_pos = 0.0_num
+  END TYPE parameter_pack
 
   TYPE stack_element
     INTEGER :: ptype
@@ -558,6 +581,21 @@ MODULE shared_data
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
 
+  ! Represents the initial conditions of a species
+  TYPE initial_condition_block
+    REAL(num), DIMENSION(:), POINTER :: density
+    REAL(num), DIMENSION(:,:), POINTER :: temp
+    REAL(num), DIMENSION(:,:), POINTER :: drift
+
+    REAL(num) :: density_min
+    REAL(num) :: density_max
+
+    ! Delta-f settings
+    REAL(num) :: temp_back(3)
+    REAL(num) :: drift_back(3)
+    REAL(num) :: density_back
+  END TYPE initial_condition_block
+
   ! Object representing a particle species
   TYPE particle_species
     ! Core properties
@@ -613,32 +651,14 @@ MODULE shared_data
     ! Particle migration
     TYPE(particle_species_migration) :: migrate
 
+    ! Initial conditions
+    TYPE(initial_condition_block) :: initial_conditions
   END TYPE particle_species
-
-  !----------------------------------------------------------------------------
-  ! Initial conditions
-  !----------------------------------------------------------------------------
-  ! Represents the initial conditions of a species
-  TYPE initial_condition_block
-    REAL(num), DIMENSION(:), POINTER :: density
-    REAL(num), DIMENSION(:,:), POINTER :: temp
-    REAL(num), DIMENSION(:,:), POINTER :: drift
-
-    REAL(num) :: density_min
-    REAL(num) :: density_max
-
-    ! Delta-f settings
-    REAL(num) :: temp_back(3)
-    REAL(num) :: drift_back(3)
-    REAL(num) :: density_back
-  END TYPE initial_condition_block
-
-  INTEGER :: deck_state
-  TYPE(initial_condition_block), DIMENSION(:), ALLOCATABLE :: initial_conditions
 
   !----------------------------------------------------------------------------
   ! file handling
   !----------------------------------------------------------------------------
+  INTEGER :: deck_state
   INTEGER :: subtype_field, subtype_field_r4
   INTEGER :: subarray_field, subarray_field_r4
   INTEGER :: subarray_field_big, subarray_field_big_r4
@@ -787,6 +807,7 @@ MODULE shared_data
     LOGICAL :: use_charge_min, use_charge_max
     LOGICAL :: use_mass_min, use_mass_max
     LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
     REAL(num) :: gamma_min, gamma_max, random_fraction
     REAL(num) :: x_min, x_max
@@ -861,15 +882,20 @@ MODULE shared_data
   REAL(num) :: by_x_min, by_x_max
   REAL(num) :: bz_x_min, bz_x_max
 
+  REAL(num) :: initial_jx, initial_jy, initial_jz
+
   TYPE(particle_species), DIMENSION(:), POINTER :: species_list
   TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
   TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb
 
-  INTEGER, PARAMETER :: data_dir_max_length = 64
-  CHARACTER(LEN=data_dir_max_length) :: data_dir, filesystem
   INTEGER, PARAMETER :: c_max_string_length = 64
+  INTEGER, PARAMETER :: c_max_prefix = 16
+  ! Maximum path length on Linux machines
+  INTEGER, PARAMETER :: c_max_path_length = 4096 + c_max_prefix
+  CHARACTER(LEN=c_max_path_length) :: data_dir
+  CHARACTER(LEN=c_max_prefix) :: filesystem
 
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
@@ -899,11 +925,10 @@ MODULE shared_data
   LOGICAL :: print_deck_constants
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
+  LOGICAL :: use_current_correction
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
   INTEGER :: restart_number, step
-  CHARACTER(LEN=5+c_max_zeros+c_id_length) :: restart_filename
-  CHARACTER(LEN=6+data_dir_max_length+c_max_zeros+c_id_length) :: &
-      full_restart_filename
+  CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
@@ -995,17 +1020,21 @@ MODULE shared_data
     INTEGER :: id
     REAL(num) :: profile
     REAL(num) :: phase
+    REAL(num) :: current_integral_phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
+    LOGICAL :: use_omega_function
     TYPE(primitive_stack) :: time_function, phase_function, profile_function
+    TYPE(primitive_stack) :: omega_function
 
     REAL(num) :: amp, omega, pol_angle, t_start, t_end
+    INTEGER :: omega_func_type
 
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
 
   TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
-  INTEGER :: n_laser_x_min, n_laser_x_max
+  INTEGER :: n_laser_x_min = 0, n_laser_x_max = 0
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid

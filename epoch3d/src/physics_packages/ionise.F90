@@ -1,5 +1,6 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2012      Alistair Lawrence-Douglas <a.a.lawrence-douglas@warwick.ac.uk>
+! Copyright (C) 2012      Alistair Lawrence-Douglas \
+!                             <a.a.lawrence-douglas@warwick.ac.uk>
 ! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify

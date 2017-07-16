@@ -30,8 +30,12 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 28 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 29 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
+  ! 3rd alias for ionisation
+  CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
+  INTEGER, PARAMETER :: ionisation_index = 25
+
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                       ', &
@@ -73,7 +77,8 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'use_current_correction   ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -115,7 +120,8 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'use_current_correction   ' /)
 
 CONTAINS
 
@@ -130,6 +136,7 @@ CONTAINS
       print_deck_constants = .FALSE.
       allow_missing_restart = .FALSE.
       print_eta_string = .FALSE.
+      use_current_correction = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -182,6 +189,9 @@ CONTAINS
       timer_collect = .TRUE.
     ENDIF
 
+    ! use_balance only if threshold is positive
+    IF (dlb_threshold > 0) use_balance = .TRUE.
+
   END SUBROUTINE control_deck_finalise
 
 
@@ -221,6 +231,11 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
+
+    ! Adds 3rd alias just for ionisation s vs z issue
+    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
+      elementselected = ionisation_index
+    ENDIF
 
     IF (elementselected == 0) RETURN
 
@@ -267,7 +282,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -350,6 +364,8 @@ CONTAINS
       print_eta_string = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+28)
       n_zeros_control = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+29)
+      use_current_correction = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -358,7 +374,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, iu
+    INTEGER :: errcode, idx, io, iu
 
     errcode = c_err_none
 
@@ -374,15 +390,15 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    DO index = 1, control_block_elements
-      IF (.NOT. control_block_done(index)) THEN
+    DO idx = 1, control_block_elements
+      IF (.NOT. control_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
+                TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF

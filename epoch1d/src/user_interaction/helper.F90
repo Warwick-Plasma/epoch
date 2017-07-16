@@ -37,12 +37,12 @@ CONTAINS
       ! Set temperature at boundary for thermal bcs.
 
       IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_min(1:3) = &
-            initial_conditions(ispecies)%temp(1,1:3)
+        species_list(ispecies)%ext_temp_x_min(:) = &
+            species_list(ispecies)%initial_conditions%temp(1,:)
       ENDIF
       IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_max(1:3) = &
-            initial_conditions(ispecies)%temp(nx,1:3)
+        species_list(ispecies)%ext_temp_x_max(:) = &
+            species_list(ispecies)%initial_conditions%temp(nx,:)
       ENDIF
     ENDDO
 
@@ -61,23 +61,25 @@ CONTAINS
       species => species_list(ispecies)
 
 #ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL setup_particle_density(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL non_uniform_load_particles(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #endif
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,1), c_dir_x, species, &
-          initial_conditions(ispecies)%drift(:,1))
+          species_list(ispecies)%initial_conditions%temp(:,1), c_dir_x, &
+          species, species_list(ispecies)%initial_conditions%drift(:,1))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,2), c_dir_y, species, &
-          initial_conditions(ispecies)%drift(:,2))
+          species_list(ispecies)%initial_conditions%temp(:,2), c_dir_y, &
+          species, species_list(ispecies)%initial_conditions%drift(:,2))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,3), c_dir_z, species, &
-          initial_conditions(ispecies)%drift(:,3))
+          species_list(ispecies)%initial_conditions%temp(:,3), c_dir_z, &
+          species, species_list(ispecies)%initial_conditions%drift(:,3))
     ENDDO
 
     IF (rank == 0) THEN
@@ -105,20 +107,19 @@ CONTAINS
 
     INTEGER :: ispecies
 
-    ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)%density(-2:nx+3))
-      ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,1:3))
-      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions%density(1-ng:nx+ng))
+      ALLOCATE(species_list(ispecies)%initial_conditions%temp(1-ng:nx+ng,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions%drift(1-ng:nx+ng,1:3))
 
-      initial_conditions(ispecies)%density = 1.0_num
-      initial_conditions(ispecies)%temp = 0.0_num
-      initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%density_min = EPSILON(1.0_num)
-      initial_conditions(ispecies)%density_max = HUGE(1.0_num)
-      initial_conditions(ispecies)%density_back = 0.0_num
-      initial_conditions(ispecies)%drift_back = 0.0_num
-      initial_conditions(ispecies)%temp_back = 0.0_num
+      species_list(ispecies)%initial_conditions%density = 1.0_num
+      species_list(ispecies)%initial_conditions%temp = 0.0_num
+      species_list(ispecies)%initial_conditions%drift = 0.0_num
+      species_list(ispecies)%initial_conditions%density_min = EPSILON(1.0_num)
+      species_list(ispecies)%initial_conditions%density_max = HUGE(1.0_num)
+      species_list(ispecies)%initial_conditions%density_back = 0.0_num
+      species_list(ispecies)%initial_conditions%temp_back = 0.0_num
+      species_list(ispecies)%initial_conditions%drift_back = 0.0_num
     ENDDO
 
   END SUBROUTINE allocate_ic
@@ -130,13 +131,10 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      DEALLOCATE(initial_conditions(ispecies)%density)
-      DEALLOCATE(initial_conditions(ispecies)%temp)
-      DEALLOCATE(initial_conditions(ispecies)%drift)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%density)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%temp)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%drift)
     ENDDO
-#ifndef DELTAF_METHOD
-    IF (.NOT. move_window) DEALLOCATE(initial_conditions)
-#endif
 
   END SUBROUTINE deallocate_ic
 
@@ -146,7 +144,7 @@ CONTAINS
   SUBROUTINE non_uniform_load_particles(density, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: density
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: density
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
@@ -164,7 +162,7 @@ CONTAINS
     num_valid_cells_local = 0
     density_total = 0.0_num
 
-    DO ix = -2, nx+3
+    DO ix = 1-ng, nx+ng
       IF (density(ix) > density_max) density(ix) = density_max
     ENDDO ! ix
 
@@ -264,7 +262,7 @@ CONTAINS
   SUBROUTINE load_particles(species, load_list)
 
     TYPE(particle_species), POINTER :: species
-    LOGICAL, DIMENSION(-2:), INTENT(IN) :: load_list
+    LOGICAL, DIMENSION(1-ng:), INTENT(IN) :: load_list
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
@@ -481,7 +479,7 @@ CONTAINS
   SUBROUTINE setup_particle_density(density_in, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:), INTENT(IN) :: density_in
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     TYPE(particle), POINTER :: current
@@ -494,14 +492,14 @@ CONTAINS
     LOGICAL, DIMENSION(:), ALLOCATABLE :: density_map
 #include "particle_head.inc"
 
-    ALLOCATE(density(-2:nx+3))
-    ALLOCATE(density_map(-2:nx+3))
+    ALLOCATE(density(1-ng:nx+ng))
+    ALLOCATE(density_map(1-ng:nx+ng))
     density = density_in
     density_map = .FALSE.
 
     CALL field_bc(density, ng)
 
-    DO ix = -2, nx+3
+    DO ix = 1-ng, nx+ng
       IF (density(ix) > density_max) density(ix) = density_max
       IF (density(ix) >= density_min) THEN
         density_map(ix) = .TRUE.
@@ -513,7 +511,7 @@ CONTAINS
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
-    ALLOCATE(npart_in_cell(-2:nx+3))
+    ALLOCATE(npart_in_cell(1-ng:nx+ng))
     npart_in_cell = 0
 
     partlist => species%attached_list

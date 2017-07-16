@@ -218,6 +218,9 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
+# Use compiler extension ISATTY to enable coloured welcome banner
+#DEFINES += $(D)USE_ISATTY
+
 # Compile the delta-f version of EPOCH
 #DEFINES += $(D)DELTAF_METHOD
 
@@ -268,8 +271,9 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   particle_temperature.F90 particles.F90 partlist.F90 photons.F90 prefetch.F90 \
   probes.F90 random_generator.f90 redblack_module.f90 setup.F90 \
   shape_functions.F90 shared_data.F90 shunt.F90 simple_io.f90 \
-  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 timer.f90 \
-  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
+  terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -422,9 +426,10 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
   random_generator.o setup.o shared_data.o strings.o timer.o version_data.o \
   window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
-epoch2d.o: epoch2d.F90 balance.o collisions.o deck.o diagnostics.o fields.o \
-  finish.o helper.o ic_module.o ionise.o mpi_routines.o particle_migration.o \
-  particles.o photons.o setup.o split_particle.o welcome.o window.o
+epoch2d.o: epoch2d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
+  fields.o finish.o helper.o ic_module.o ionise.o mpi_routines.o \
+  particle_migration.o particles.o photons.o setup.o split_particle.o \
+  welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
@@ -463,9 +468,10 @@ split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 shared_data.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
+terminal_controls.o: terminal_controls.F90
 timer.o: timer.f90 shared_data.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
-welcome.o: welcome.F90 shared_data.o version_data.o
+welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
