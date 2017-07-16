@@ -98,11 +98,11 @@ def plotevolution(path, key):
     sdffiles = [osp.join(path, '{:04d}.sdf'.format(i)) for i in range(3)]
 
     fig, axarr = plt.subplots(1,3, figsize=(10,4))
-    axarr[0].set_ylabel('y [µm]')
+    axarr[0].set_ylabel(r'y [${\mu}\mathrm{m}$]')
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
 
         plotdump(sdffile, key, ax)
-        ax.set_xlabel('x [µm]')
+        ax.set_xlabel(r'x [${\mu}\mathrm{m}$]')
 
     if path.endswith('lehe_x'):
         dt = c * dt_lehe / dx
