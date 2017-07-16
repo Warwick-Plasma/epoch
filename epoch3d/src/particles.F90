@@ -578,18 +578,21 @@ CONTAINS
     REAL(num) :: f0
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
     REAL(num) :: f0_exponent, norm, two_kb_mass, two_pi_kb_mass3
+    TYPE(particle_species), POINTER :: species
 
-    IF (ABS(initial_conditions(ispecies)%density_back) > c_tiny) THEN
+    species => species_list(ispecies)
+
+    IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
        two_kb_mass = 2.0_num * kb * mass
        two_pi_kb_mass3 = (pi * two_kb_mass)**3
 
-       Tx = initial_conditions(ispecies)%temp_back(1)
-       Ty = initial_conditions(ispecies)%temp_back(2)
-       Tz = initial_conditions(ispecies)%temp_back(3)
-       driftx  = initial_conditions(ispecies)%drift_back(1)
-       drifty  = initial_conditions(ispecies)%drift_back(2)
-       driftz  = initial_conditions(ispecies)%drift_back(3)
-       density = initial_conditions(ispecies)%density_back
+       Tx = species%initial_conditions%temp_back(1)
+       Ty = species%initial_conditions%temp_back(2)
+       Tz = species%initial_conditions%temp_back(3)
+       driftx  = species%initial_conditions%drift_back(1)
+       drifty  = species%initial_conditions%drift_back(2)
+       driftz  = species%initial_conditions%drift_back(3)
+       density = species%initial_conditions%density_back
        f0_exponent = ((p(1) - driftx)**2 / Tx &
                     + (p(2) - drifty)**2 / Ty &
                     + (p(3) - driftz)**2 / Tz) / two_kb_mass

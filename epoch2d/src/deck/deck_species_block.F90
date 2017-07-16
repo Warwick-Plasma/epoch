@@ -534,7 +534,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'density_back')) THEN
-      initial_conditions(species_id)%density_back = &
+      species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
@@ -582,19 +582,19 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'drift_x_back')) THEN
-      initial_conditions(species_id)%drift_back(1) = &
+      species_list(species_id)%initial_conditions%drift_back(1) = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_y_back')) THEN
-      initial_conditions(species_id)%drift_back(2) = &
+      species_list(species_id)%initial_conditions%drift_back(2) = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_z_back')) THEN
-      initial_conditions(species_id)%drift_back(3) = &
+      species_list(species_id)%initial_conditions%drift_back(3) = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
@@ -624,22 +624,22 @@ CONTAINS
 
     IF (str_cmp(element, 'temp_back') .OR. str_cmp(element, 'temp_back_k') &
          .OR. str_cmp(element, 'temp_back_ev')) THEN
-       IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
+      IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
 
-       initial_conditions(species_id)%temp_back(1) = &
-            as_real_print(value, element, errcode) * mult
-       initial_conditions(species_id)%temp_back(2) = &
-            as_real_print(value, element, errcode) * mult
-       initial_conditions(species_id)%temp_back(3) = &
-            as_real_print(value, element, errcode) * mult
-       RETURN
+      species_list(species_id)%initial_conditions%temp_back(1) = &
+          as_real_print(value, element, errcode) * mult
+      species_list(species_id)%initial_conditions%temp_back(2) = &
+          as_real_print(value, element, errcode) * mult
+      species_list(species_id)%initial_conditions%temp_back(3) = &
+          as_real_print(value, element, errcode) * mult
+      RETURN
     END IF
 
     IF (str_cmp(element, 'temp_x_back') &
          .OR. str_cmp(element, 'temp_x_back_ev')) THEN
       IF (str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
 
-      initial_conditions(species_id)%temp_back(1) = &
+      species_list(species_id)%initial_conditions%temp_back(1) = &
           as_real_print(value, element, errcode) * mult
       RETURN
     END IF
@@ -648,7 +648,7 @@ CONTAINS
          .OR. str_cmp(element, 'temp_y_back_ev')) THEN
       IF (str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
 
-      initial_conditions(species_id)%temp_back(2) = &
+      species_list(species_id)%initial_conditions%temp_back(2) = &
           as_real_print(value, element, errcode) * mult
       RETURN
     END IF
@@ -657,7 +657,7 @@ CONTAINS
          .OR. str_cmp(element, 'temp_z_back_ev')) THEN
       IF (str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
 
-      initial_conditions(species_id)%temp_back(3) = &
+      species_list(species_id)%initial_conditions%temp_back(3) = &
           as_real_print(value, element, errcode) * mult
       RETURN
     END IF
