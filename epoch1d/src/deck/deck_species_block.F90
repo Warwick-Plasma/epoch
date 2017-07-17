@@ -301,12 +301,13 @@ CONTAINS
     ENDIF
 
     ! Collect ionisation energies for the species
-    IF (str_cmp(element, 'ionisation_energies')) THEN
+    IF (str_cmp(element, 'ionisation_energies') &
+        .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
         NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
-        CALL evaluate_and_return_all(stack, 0, &
+        CALL evaluate_and_return_all(stack, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
         CALL deallocate_stack(stack)
       ENDIF
@@ -314,6 +315,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'ionisation_electron_species') &
+        .OR. str_cmp(element, 'ionization_electron_species') &
         .OR. str_cmp(element, 'electron_species') &
         .OR. str_cmp(element, 'electron')) THEN
       release_species_list = value
@@ -522,12 +524,18 @@ CONTAINS
     IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
       dmin = as_real_print(value, element, errcode)
       IF (dmin <= 0.0_num) dmin = EPSILON(1.0_num)
-      initial_conditions(species_id)%density_min = dmin
+      species_list(species_id)%initial_conditions%density_min = dmin
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
-      initial_conditions(species_id)%density_max = &
+      species_list(species_id)%initial_conditions%density_max = &
+          as_real_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'density_back')) THEN
+      species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
     ENDIF
@@ -545,7 +553,7 @@ CONTAINS
       ENDIF
 
       CALL fill_array(species_list(species_id)%density_function, &
-          initial_conditions(species_id)%density, &
+          species_list(species_id)%initial_conditions%density, &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -553,7 +561,7 @@ CONTAINS
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,n), &
+          species_list(species_id)%initial_conditions%drift(:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -561,7 +569,7 @@ CONTAINS
     IF (str_cmp(element, 'drift_y')) THEN
       n = 2
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,n), &
+          species_list(species_id)%initial_conditions%drift(:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -569,8 +577,26 @@ CONTAINS
     IF (str_cmp(element, 'drift_z')) THEN
       n = 3
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          initial_conditions(species_id)%drift(:,n), &
+          species_list(species_id)%initial_conditions%drift(:,n), &
           mult, mult_string, element, value, filename, got_file)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'drift_x_back')) THEN
+      species_list(species_id)%initial_conditions%drift_back(1) = &
+          as_real_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'drift_y_back')) THEN
+      species_list(species_id)%initial_conditions%drift_back(2) = &
+          as_real_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'drift_z_back')) THEN
+      species_list(species_id)%initial_conditions%drift_back(3) = &
+          as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -582,24 +608,60 @@ CONTAINS
 
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
       n = 2
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
       n = 3
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
 
       debug_mode = .FALSE.
-      initial_conditions(species_id)%temp(:,2) = &
-          initial_conditions(species_id)%temp(:,n)
-      initial_conditions(species_id)%temp(:,3) = &
-          initial_conditions(species_id)%temp(:,n)
       RETURN
     ENDIF
+
+    IF (str_cmp(element, 'temp_back') .OR. str_cmp(element, 'temp_back_k') &
+         .OR. str_cmp(element, 'temp_back_ev')) THEN
+      IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
+
+      species_list(species_id)%initial_conditions%temp_back(1) = &
+          as_real_print(value, element, errcode) * mult
+      species_list(species_id)%initial_conditions%temp_back(2) = &
+          as_real_print(value, element, errcode) * mult
+      species_list(species_id)%initial_conditions%temp_back(3) = &
+          as_real_print(value, element, errcode) * mult
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_x_back') &
+         .OR. str_cmp(element, 'temp_x_back_ev')) THEN
+      IF (str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
+
+      species_list(species_id)%initial_conditions%temp_back(1) = &
+          as_real_print(value, element, errcode) * mult
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_y_back') &
+         .OR. str_cmp(element, 'temp_y_back_ev')) THEN
+      IF (str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
+
+      species_list(species_id)%initial_conditions%temp_back(2) = &
+          as_real_print(value, element, errcode) * mult
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_z_back') &
+         .OR. str_cmp(element, 'temp_z_back_ev')) THEN
+      IF (str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
+
+      species_list(species_id)%initial_conditions%temp_back(3) = &
+          as_real_print(value, element, errcode) * mult
+      RETURN
+    END IF
 
     IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
         .OR. str_cmp(element, 'temp_x_ev')) THEN
@@ -607,7 +669,7 @@ CONTAINS
 
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -618,7 +680,7 @@ CONTAINS
 
       n = 2
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -629,7 +691,7 @@ CONTAINS
 
       n = 3
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          initial_conditions(species_id)%temp(:,n), &
+          species_list(species_id)%initial_conditions%temp(:,n), &
           mult, mult_string, element, value, filename, got_file)
       RETURN
     ENDIF
@@ -695,7 +757,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: name
     INTEGER :: create_species_number_from_name
     INTEGER :: i, io, iu
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     DO i = 1, n_species
       IF (str_cmp(name, species_names(i))) THEN
@@ -707,8 +769,8 @@ CONTAINS
     ! If we're here then then named species doesn't yet exist
 
     ! First issue a warning message if the name overrides a built-in one
-    CALL load_block(name, block)
-    IF (block%ptype /= c_pt_bad .AND. block%ptype /= c_pt_null) THEN
+    CALL load_block(name, iblock)
+    IF (iblock%ptype /= c_pt_bad .AND. iblock%ptype /= c_pt_null) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -832,13 +894,14 @@ CONTAINS
       filename, got_file)
 
     TYPE(primitive_stack), INTENT(INOUT) :: output
-    REAL(num), DIMENSION(-2:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     REAL(num), INTENT(IN) :: mult
     CHARACTER(LEN=*), INTENT(IN) :: mult_string, element, value, filename
     LOGICAL, INTENT(IN) :: got_file
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: stack
     INTEGER :: io, iu, ix
+    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -856,10 +919,10 @@ CONTAINS
 
       CALL load_single_array_from_file(filename, array, offset, errcode)
 
-      CALL load_block(species_list(species_id)%name, block)
-      CALL push_to_stack(stack, block)
-      CALL load_block(element, block)
-      CALL push_to_stack(stack, block)
+      CALL load_block(species_list(species_id)%name, iblock)
+      CALL push_to_stack(stack, iblock)
+      CALL load_block(element, iblock)
+      CALL push_to_stack(stack, iblock)
       IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
       CALL tokenize(value, stack, errcode)
@@ -867,7 +930,7 @@ CONTAINS
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check
-      array(1) = evaluate_at_point(stack, 1, errcode)
+      array(1) = evaluate(stack, errcode)
       IF (errcode /= c_err_none) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
@@ -880,7 +943,8 @@ CONTAINS
       ENDIF
 
       DO ix = -2, nx+3
-        array(ix) = evaluate_at_point(stack, ix, errcode)
+        parameters%pack_ix = ix
+        array(ix) = evaluate_with_parameters(stack, parameters, errcode)
       ENDDO
     ENDIF
 
@@ -981,7 +1045,7 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_positron
       species_charge_set(species_id) = .TRUE.
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
-      trident_electron_species = species_id
+      trident_positron_species = species_id
 #else
       errcode = c_err_generic_warning
 #endif

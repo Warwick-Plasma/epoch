@@ -3,11 +3,11 @@ begin:control
   npart = 3200
 
   # final time of simulation
-  t_end = 1.5e-1
+  t_end = 3.0e-1
 
   # size of domain
-  x_min = 0
-  x_max = 5.0e5
+  x_start = 0
+  x_end = 5.0e5
 end:control
 
 
@@ -18,60 +18,58 @@ end:boundaries
 
 
 begin:constant
-  drift_p = 2.5e-24
-  temp = 273
-  dens = 10
+  temp = 27300
+  dens = 1
 end:constant
 
 
 begin:species
-  # Rightwards travelling electrons
-  name = Right
+  name = electrons
   charge = -1
   mass = 1.0
   frac = 0.5
   temp_x = temp
-  drift_x = drift_p
-  density = dens
+  density = dens + 0.8*dens * sin(2*pi*x/lengthx)
+  density_min = 0.0
 end:species
 
 
 begin:species
-  # Leftwards travelling electrons
-  name = Left
-  charge = -1
-  mass = 1.0
+  name = protons
+  charge = 1
+  mass = 1836.2
   frac = 0.5
-  temp_x = temp
-  drift_x = -drift_p
-  density = dens
+  temp_x = temp_x(electrons)
+  density = density(electrons)
 end:species
 
 
 begin:output
   # number of timesteps between output dumps
-  dt_snapshot = 1.5e-3
+  dt_snapshot = 21e-3
   # Number of dt_snapshot between full dumps
   full_dump_every = 1
+  dump_last = F
 
   # Properties at particle positions
-  particles = always
-  px = always
+  #particles = always
+  #px = always
+  #particle_weight = always
 
   # Properties on grid
   grid = always
   ex = always
-  ey = always
-  ez = always
-  bx = always
-  by = always
-  bz = always
-  jx = always
-  ekbar = always
-  mass_density = never + species
+  #ey = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
+  #jx = always
+  #ekbar = always
+  #mass_density = never + species
   charge_density = always
   number_density = always + species
-  temperature = always + species
+  #temperature = always + species
 
   # extended io
   distribution_functions = always
@@ -87,12 +85,12 @@ begin:dist_fn
 
   # range is ignored for spatial coordinates
   range1 = (1, 1)
-  range2 = (-5e-24, 5e-24)
+  range2 = (-10e-24, 10e-24)
 
   # resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 200
 
-  include_species:Left
-  include_species:Right
+  include_species:electrons
+  include_species:protons
 end:dist_fn

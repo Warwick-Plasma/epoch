@@ -34,9 +34,10 @@ CONTAINS
   ! These functions contain the user functions for the deck parser
   !----------------------------------------------------------------------------
 
-  FUNCTION custom_function(opcode, ix, errcode)
+  FUNCTION custom_function(opcode, parameters, errcode)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: errcode
     REAL(num) :: custom_function
 
@@ -53,9 +54,10 @@ CONTAINS
   ! These functions contain the user constants for the deck parser
   !----------------------------------------------------------------------------
 
-  FUNCTION custom_constant(opcode, ix, errcode)
+  FUNCTION custom_constant(opcode, parameters, errcode)
 
-    INTEGER, INTENT(IN) :: opcode, ix
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: errcode
     REAL(num) :: custom_constant
 

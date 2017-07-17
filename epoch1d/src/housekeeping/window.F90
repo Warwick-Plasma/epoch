@@ -152,6 +152,7 @@ CONTAINS
     INTEGER :: ispecies, i
     INTEGER(i8) :: ipart, npart_per_cell, n0
     REAL(num) :: temp_local, drift_local, npart_frac
+    TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -170,18 +171,20 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      parameters%pack_ix = nx
       DO i = 1, 3
-        temperature(i) = evaluate_at_point( &
-            species_list(ispecies)%temperature_function(i), nx, errcode)
-        drift(i) = evaluate_at_point( &
-            species_list(ispecies)%drift_function(i), nx, errcode)
+        temperature(i) = evaluate_with_parameters( &
+            species_list(ispecies)%temperature_function(i), parameters, errcode)
+        drift(i) = evaluate_with_parameters( &
+            species_list(ispecies)%drift_function(i), parameters, errcode)
       ENDDO
-      density = evaluate_at_point( &
-          species_list(ispecies)%density_function, nx, errcode)
-      IF (density > initial_conditions(ispecies)%density_max) &
-          density = initial_conditions(ispecies)%density_max
+      density = evaluate_with_parameters( &
+          species_list(ispecies)%density_function, parameters, errcode)
+      IF (density > species_list(ispecies)%initial_conditions%density_max) THEN
+        density = species_list(ispecies)%initial_conditions%density_max
+      ENDIF
 
-      IF (density < initial_conditions(ispecies)%density_min) CYCLE
+      IF (density < species_list(ispecies)%initial_conditions%density_min) CYCLE
 
       DO ipart = n0, npart_per_cell
         ! Place extra particle based on probability

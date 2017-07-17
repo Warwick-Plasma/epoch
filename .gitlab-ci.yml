@@ -1,23 +1,28 @@
+variables:
+  GIT_STRATEGY: clone
+
 before_script:
   - git submodule update --recursive --init SDF
 
 test_ubuntu_gfortran:
   script:
-    - COMPILER=gfortran sh -x test_all.sh -et
-    - sh -x test_all.sh -uv
+    - export COMPILER=gfortran
+    - scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
     - gfortran
 
 test_ubuntu_intel:
   script:
-    - COMPILER=intel sh -x test_all.sh -et
+    - export COMPILER=intel
+    - scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
     - intel
 
 test_osx:
   script:
-    - COMPILER=gfortran sh -x test_all.sh
+    - export COMPILER=gfortran
+    - scripts/run-tests-epoch-all.sh
   tags:
     - osx

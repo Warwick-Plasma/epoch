@@ -48,6 +48,7 @@ PROGRAM pic
   USE collisions
   USE particle_migration
   USE ionise
+  USE calc_df
 #ifdef PHOTONS
   USE photons
 #endif
@@ -60,7 +61,7 @@ PROGRAM pic
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime, dt0
+  REAL(num) :: runtime, dt0, dt_store
 
   step = 0
   time = 0.0_num
@@ -89,7 +90,7 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+  CALL MPI_BCAST(data_dir, c_max_path_length, MPI_CHARACTER, 0, comm, errcode)
 
   ! version check only, exit silently
   IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
@@ -133,18 +134,25 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
+  IF (use_current_correction) CALL calc_initial_current
   CALL particle_bcs
   CALL efield_bcs
 
   IF (ic_from_restart) THEN
     dt0 = dt
+    dt_store = dt
     IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
-    time = time + dt0 / 2.0_num
+    dt = dt0 / 2.0_num
+    time = time + dt
     CALL update_eb_fields_final
+    dt = dt_store
     CALL moving_window
   ELSE
-    time = time + dt / 2.0_num
+    dt_store = dt
+    dt = dt / 2.0_num
+    time = time + dt
     CALL bfield_final_bcs
+    dt = dt_store
   ENDIF
 
   ! Setup particle migration between species

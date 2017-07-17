@@ -408,6 +408,7 @@ CONTAINS
 
     INTEGER :: i
 
+    CALL update_laser_omegas
     CALL bfield_bcs(.FALSE.)
 
     IF (x_min_boundary) THEN
@@ -483,8 +484,8 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = ABS(momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num))
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
                 i = 2
@@ -538,8 +539,8 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -ABS(momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num))
+                cur%part_p(i) = -flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
                 i = 2
