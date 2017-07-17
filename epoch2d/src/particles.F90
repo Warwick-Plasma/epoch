@@ -125,6 +125,9 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+#ifdef DELTAF_METHOD
+    REAL(num) :: weight_back
+#endif
 
     TYPE(particle), POINTER :: current, next
 
@@ -366,6 +369,15 @@ CONTAINS
           part_x = part_x + delta_x
           part_y = part_y + delta_y
 
+          ! Delta-f calcuation: subtract background from
+          ! calculated current.
+#ifdef DELTAF_METHOD
+          weight_back = current%pvol * f0(ispecies, part_mc / c, current%part_p)
+          fcx = idty * (part_weight - weight_back)
+          fcy = idtx * (part_weight - weight_back)
+          fcz = idxy * (part_weight - weight_back)
+#endif
+
 #ifdef PARTICLE_SHAPE_TOPHAT
           cell_x_r = part_x * idx - 0.5_num
           cell_y_r = part_y * idy - 0.5_num
@@ -501,6 +513,49 @@ CONTAINS
     END IF
 
   END SUBROUTINE push_particles
+
+
+
+  ! Background distribution function used for delta-f calculations.
+  ! Specialise to a drifting (tri)-Maxwellian to simplify and ensure
+  ! zero density/current divergence.
+  ! Can effectively switch off deltaf method by setting zero background density.
+
+  FUNCTION f0(ispecies, mass, p)
+
+    INTEGER, INTENT(IN) :: ispecies
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(:), INTENT(IN) :: p
+    REAL(num) :: f0
+    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
+    REAL(num) :: f0_exponent, norm, two_kb_mass, two_pi_kb_mass3
+    TYPE(particle_species), POINTER :: species
+
+    species => species_list(ispecies)
+
+    IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
+       two_kb_mass = 2.0_num * kb * mass
+       two_pi_kb_mass3 = (pi * two_kb_mass)**3
+
+       Tx = species%initial_conditions%temp_back(1)
+       Ty = species%initial_conditions%temp_back(2)
+       Tz = species%initial_conditions%temp_back(3)
+       driftx  = species%initial_conditions%drift_back(1)
+       drifty  = species%initial_conditions%drift_back(2)
+       driftz  = species%initial_conditions%drift_back(3)
+       density = species%initial_conditions%density_back
+       f0_exponent = ((p(1) - driftx)**2 / Tx &
+                    + (p(2) - drifty)**2 / Ty &
+                    + (p(3) - driftz)**2 / Tz) / two_kb_mass
+       norm = density / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+       f0 = norm * EXP(-f0_exponent)
+    ELSE
+       f0 = 0.0_num
+    ENDIF
+
+  END FUNCTION f0
+
+
 
 #ifdef PHOTONS
   SUBROUTINE push_photons(ispecies)

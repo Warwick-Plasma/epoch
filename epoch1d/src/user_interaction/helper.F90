@@ -20,6 +20,7 @@ MODULE helper
   USE strings
   USE partlist
   USE calc_df
+  USE deltaf_loader
 
   IMPLICIT NONE
 
@@ -96,6 +97,8 @@ CONTAINS
       ENDDO
     ENDIF
 
+    CALL deltaf_load
+
   END SUBROUTINE auto_load
 
 
@@ -114,6 +117,9 @@ CONTAINS
       species_list(ispecies)%initial_conditions%drift = 0.0_num
       species_list(ispecies)%initial_conditions%density_min = EPSILON(1.0_num)
       species_list(ispecies)%initial_conditions%density_max = HUGE(1.0_num)
+      species_list(ispecies)%initial_conditions%density_back = 0.0_num
+      species_list(ispecies)%initial_conditions%temp_back = 0.0_num
+      species_list(ispecies)%initial_conditions%drift_back = 0.0_num
     ENDDO
 
   END SUBROUTINE allocate_ic
@@ -207,6 +213,11 @@ CONTAINS
         ! can easily over_ride)
         current%charge = species%charge
         current%mass = species%mass
+#endif
+#ifdef DELTAF_METHOD
+        ! Store the number of particles per cell to allow calculation
+        ! of phase space volume later
+        current%pvol = npart_per_cell
 #endif
         current%part_pos = x(ix) + (random() - 0.5_num) * dx
 
@@ -387,6 +398,11 @@ CONTAINS
           ! can easily over_ride)
           current%charge = species%charge
           current%mass = species%mass
+#endif
+#ifdef DELTAF_METHOD
+          ! Store the number of particles per cell to allow calculation
+          ! of phase space volume later
+          current%pvol = npart_per_cell
 #endif
           current%part_pos = x(ix) + (random() - 0.5_num) * dx
 
