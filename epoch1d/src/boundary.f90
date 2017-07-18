@@ -260,8 +260,9 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nn, i, flip_dir = 0
+    INTEGER :: nn, i, flip_dir
 
+    flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     nn = nx
