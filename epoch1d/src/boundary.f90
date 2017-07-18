@@ -275,7 +275,8 @@ CONTAINS
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary)) THEN
+    IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_min) == c_bc_thermal) .AND. x_min_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -296,7 +297,8 @@ CONTAINS
         neighbour( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary)) THEN
+    IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_max) == c_bc_thermal) .AND. x_max_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
