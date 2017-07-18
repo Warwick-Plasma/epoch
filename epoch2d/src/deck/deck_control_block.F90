@@ -432,16 +432,7 @@ CONTAINS
     ENDIF
 
     IF (field_order == 2 .AND. maxwell_solver == c_maxwell_solver_cowan) THEN
-      IF (rank == 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*)
-          WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'In 2D "maxwell_solver = cowan" is not supported.', &
-              ' Falling back to "maxwell_solver = pukhov."'
-        ENDDO
-      ENDIF
-      maxwell_solver = c_maxwell_solver_pukhov
+      maxwell_solver = c_maxwell_solver_yee
     ENDIF
 
   END FUNCTION control_block_check
