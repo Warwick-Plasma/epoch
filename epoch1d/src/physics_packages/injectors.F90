@@ -86,17 +86,21 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: current
 
-    current => injector_x_min
-    DO WHILE(ASSOCIATED(current))
-      CALL run_single_injector(current, c_dir_x, x_min, dx)
-      current => current%next
-    ENDDO
+    IF (x_min_boundary) THEN
+      current => injector_x_min
+      DO WHILE(ASSOCIATED(current))
+        CALL run_single_injector(current, c_dir_x, x_min, dx)
+        current => current%next
+      ENDDO
+    ENDIF
 
-    current => injector_x_max
-    DO WHILE(ASSOCIATED(current))
-      CALL run_single_injector(current, c_dir_x, x_max, dx)
-      current => current%next
-    ENDDO
+    IF (x_max_boundary) THEN
+      current => injector_x_max
+      DO WHILE(ASSOCIATED(current))
+        CALL run_single_injector(current, c_dir_x, x_max, dx)
+        current => current%next
+      ENDDO
+    ENDIF
 
   END SUBROUTINE run_injectors
 
