@@ -266,7 +266,7 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   deck_particle_probe_block.F90 deck_qed_block.F90 deck_species_block.F90 \
   deck_subset_block.f90 deck_window_block.f90 deltaf_loader.F90 \
   diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.F90 \
-  fields.f90 finish.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 \
+  fields.f90 finish.f90 helper.F90 ic_module.f90 injectors.F90 ionise.F90 iterators.F90 \
   laser.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
   particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
   particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
@@ -430,7 +430,7 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
   window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch1d.o: epoch1d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
-  fields.o finish.o helper.o ic_module.o ionise.o mpi_routines.o \
+  fields.o finish.o helper.o ic_module.o injectors.o ionise.o mpi_routines.o \
   particle_migration.o particles.o photons.o setup.o split_particle.o \
   welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
@@ -443,6 +443,7 @@ finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
 helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
+injectors.o: injectors.F90 particle_temperature.o partlist.o shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o

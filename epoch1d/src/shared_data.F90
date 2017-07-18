@@ -564,6 +564,7 @@ MODULE shared_data
     REAL(num) :: optical_depth_tri
 #endif
 #endif
+    REAL(num) :: force_multiplier = 1.0_num
   END TYPE particle
 
   ! Data for migration between species
@@ -876,7 +877,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = png * 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx
   INTEGER :: nx_global
@@ -1022,6 +1023,26 @@ MODULE shared_data
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
 
+  !----------------------------------------------------------------------------
+  ! Particle injectors
+  !----------------------------------------------------------------------------
+  TYPE injector_block
+
+    INTEGER :: boundary
+    INTEGER :: id
+    INTEGER :: species
+    INTEGER(i8) :: npart_per_cell
+
+    TYPE(primitive_stack) :: density_function
+    TYPE(primitive_stack) :: temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
+
+    REAL(num) :: density
+    REAL(num), DIMENSION(3) :: temperature, drift
+
+    REAL(num) :: next_inject
+
+  END TYPE injector_block
   !----------------------------------------------------------------------------
   ! laser boundaries
   !----------------------------------------------------------------------------

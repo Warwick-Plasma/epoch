@@ -54,7 +54,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, part_mc, ipart_mc, part_weight
+    REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_fm
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES
@@ -209,6 +209,7 @@ CONTAINS
         part_ux = current%part_p(1) * ipart_mc
         part_uy = current%part_p(2) * ipart_mc
         part_uz = current%part_p(3) * ipart_mc
+        part_fm = current%force_multiplier
 
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
@@ -274,9 +275,9 @@ CONTAINS
 #endif
 
         ! update particle momenta using weighted fields
-        uxm = part_ux + cmratio * ex_part
-        uym = part_uy + cmratio * ey_part
-        uzm = part_uz + cmratio * ez_part
+        uxm = part_ux + cmratio * ex_part * part_fm
+        uym = part_uy + cmratio * ey_part * part_fm
+        uzm = part_uz + cmratio * ez_part * part_fm
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
         root = ccmratio / SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
@@ -302,9 +303,9 @@ CONTAINS
             + (tauz * tauy - taux) * uym)) * tau
 
         ! Rotation over, go to full timestep
-        part_ux = uxp + cmratio * ex_part
-        part_uy = uyp + cmratio * ey_part
-        part_uz = uzp + cmratio * ez_part
+        part_ux = uxp + cmratio * ex_part * part_fm
+        part_uy = uyp + cmratio * ey_part * part_fm
+        part_uz = uzp + cmratio * ez_part * part_fm
 
         ! Calculate particle velocity from particle momentum
         part_u2 = part_ux**2 + part_uy**2 + part_uz**2

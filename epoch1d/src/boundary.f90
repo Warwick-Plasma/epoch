@@ -453,6 +453,7 @@ CONTAINS
 
       DO WHILE (ASSOCIATED(cur))
         next => cur%next
+        cur%force_multiplier = 1.0_num
 
         xbd = 0
         out_of_bounds = .FALSE.
@@ -463,6 +464,9 @@ CONTAINS
           IF (x_min_boundary) THEN
             ! Particle has left the system
             IF (part_pos < x_min) THEN
+              cur%force_multiplier = 0.0_num
+            ENDIF
+            IF (part_pos < x_min - dx/2.0 * png) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -474,41 +478,56 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
             xbd = -1
-            ! Particle has left the system
-            IF (x_min_boundary) THEN
-              xbd = 0
-              IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
-                cur%part_pos = 2.0_num * x_min - part_pos
-                cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-                DO i = 1, 3
-                  temp(i) = species_list(ispecies)%ext_temp_x_min(i)
-                ENDDO
+          ENDIF
+          !Particle centrepoint has crossed domain boundary
+          IF (part_pos < x_min) THEN
+            xbd = 0
+            !Reflecting boundaries apply at that point because this
+            !is the edge of the domain
+            IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+              cur%part_pos = 2.0_num * x_min - part_pos
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+              !Thermal boundaries just prevent particle from accelerating
+              cur%force_multiplier = 0.0_num
+            ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+              !Periodic boundaries are like processor boundaries
+              !Particle moves when it meets boundary with centre
+              xbd = -1
+              cur%part_pos = part_pos + length_x
+            ELSE
+              ! Default to open boundary conditions - stop force on particle
+              cur%force_multiplier = 0.0_num
+            ENDIF
+          ENDIF
 
-                ! x-direction
-                i = 1
-                cur%part_p(i) = flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+          !Particle has left domain fully
+          IF (part_pos < x_min - dx/2.0_num * png) THEN
+            IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+              DO i = 1, 3
+                temp(i) = species_list(ispecies)%ext_temp_x_min(i)
+              ENDDO
 
-                ! y-direction
-                i = 2
-                cur%part_p(i) = momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+              ! x-direction
+              i = 1
+              cur%part_p(i) = flux_momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                ! z-direction
-                i = 3
-                cur%part_p(i) = momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+              ! y-direction
+              i = 2
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos = 2.0_num * x_min - part_pos
+              ! z-direction
+              i = 3
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
-                xbd = -1
-                cur%part_pos = part_pos + length_x
-              ELSE
-                ! Default to open boundary conditions - remove particle
-                out_of_bounds = .TRUE.
-              ENDIF
+!              cur%part_pos = 2.0_num * x_min - part_pos
+
+            ELSE
+              ! Default to open boundary conditions - stop force on particle
+              out_of_bounds = .TRUE.
             ENDIF
           ENDIF
         ENDIF
@@ -518,6 +537,9 @@ CONTAINS
           IF (x_max_boundary) THEN
             ! Particle has left the system
             IF (part_pos >= x_max) THEN
+              cur%force_multiplier = 0.0_num
+            ENDIF
+            IF (part_pos < x_max + dx/2.0 * png) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -529,41 +551,44 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
             xbd = 1
+          ENDIF
             ! Particle has left the system
-            IF (x_max_boundary) THEN
-              xbd = 0
-              IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
-                cur%part_pos = 2.0_num * x_max - part_pos
-                cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-                DO i = 1, 3
-                  temp(i) = species_list(ispecies)%ext_temp_x_max(i)
-                ENDDO
+          IF (part_pos >= x_max) THEN
+            xbd = 0
+            IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+              cur%part_pos = 2.0_num * x_max - part_pos
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
+              xbd = 1
+              cur%part_pos = part_pos - length_x
+            ELSE
+              ! Default to open boundary conditions - turn off particle force
+              cur%force_multiplier = 0.0_num
+            ENDIF
 
-                ! x-direction
-                i = 1
-                cur%part_p(i) = -flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+            IF (part_pos >= x_max + dx/2.0_num * png) THEN
+              DO i = 1, 3
+                temp(i) = species_list(ispecies)%ext_temp_x_max(i)
+              ENDDO
 
-                ! y-direction
-                i = 2
-                cur%part_p(i) = momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+              ! x-direction
+              i = 1
+              cur%part_p(i) = -flux_momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                ! z-direction
-                i = 3
-                cur%part_p(i) = momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+              ! y-direction
+              i = 2
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos = 2.0_num * x_max - part_pos
+              ! z-direction
+              i = 3
+              cur%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
-                xbd = 1
-                cur%part_pos = part_pos - length_x
-              ELSE
-                ! Default to open boundary conditions - remove particle
-                out_of_bounds = .TRUE.
-              ENDIF
+              cur%part_pos = 2.0_num * x_max - part_pos
+            ELSE
+              out_of_bounds = .TRUE.
             ENDIF
           ENDIF
         ENDIF
