@@ -167,6 +167,7 @@ CONTAINS
     INTEGER :: error, io, iu
 
     errcode = c_err_none
+    error = 0
     current => injector_x_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
