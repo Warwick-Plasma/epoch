@@ -171,12 +171,11 @@ PROGRAM pic
 
   IF (timer_collect) CALL timer_start(c_timer_step)
 
-  CALL initialise_injectors()
   DO
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
 
-    CALL run_injector()
+    CALL run_injectors()
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset

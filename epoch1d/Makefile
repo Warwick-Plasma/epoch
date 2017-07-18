@@ -261,8 +261,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
-  deck_fields_block.f90 deck_io_block.F90 deck_io_global_block.F90 \
-  deck_laser_block.f90 deck_part_from_file_block.F90 \
+  deck_fields_block.f90 deck_injector_block.f90 deck_io_block.F90 \
+  deck_io_global_block.F90 deck_laser_block.f90 deck_part_from_file_block.F90 \
   deck_particle_probe_block.F90 deck_qed_block.F90 deck_species_block.F90 \
   deck_subset_block.f90 deck_window_block.f90 deltaf_loader.F90 \
   diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.F90 \
@@ -398,7 +398,7 @@ custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
 deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
-  deck_fields_block.o deck_io_block.o deck_io_global_block.o \
+  deck_fields_block.o deck_injector_block.o deck_io_block.o deck_io_global_block.o \
   deck_laser_block.o deck_part_from_file_block.o deck_particle_probe_block.o \
   deck_qed_block.o deck_species_block.o deck_subset_block.o \
   deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
@@ -411,6 +411,7 @@ deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o \
   utilities.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
+deck_injector_block.o: deck_injector_block.f90 injectors.o strings_advanced.o utilities.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o utilities.o
 deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o utilities.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o utilities.o

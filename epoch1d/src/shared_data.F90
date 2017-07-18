@@ -1040,9 +1040,15 @@ MODULE shared_data
     REAL(num) :: density
     REAL(num), DIMENSION(3) :: temperature, drift
 
+    REAL(num) :: t_start, t_end
+
     REAL(num) :: next_inject
 
+    TYPE(injector_block), POINTER :: next
   END TYPE injector_block
+
+  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+
   !----------------------------------------------------------------------------
   ! laser boundaries
   !----------------------------------------------------------------------------

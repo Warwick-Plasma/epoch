@@ -98,6 +98,9 @@ CONTAINS
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
 
+    NULLIFY(injector_x_min)
+    NULLIFY(injector_x_max)
+
     NULLIFY(dist_fns)
     NULLIFY(io_block_list)
 
