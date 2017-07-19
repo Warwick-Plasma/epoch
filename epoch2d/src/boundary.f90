@@ -470,8 +470,9 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, nn, sz, i, flip_dir = 0
+    INTEGER :: subarray, nn, sz, i, flip_dir
 
+    flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     sizes(1) = nx + 2 * ng
