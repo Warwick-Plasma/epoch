@@ -120,7 +120,8 @@ CONTAINS
 #endif
     CALL qed_deck_finalise
     CALL species_deck_finalise
-    CALL part_from_file_deck_finalise ! Must be called after species_deck_finalise
+    CALL part_from_file_deck_finalise ! Must be called after
+                                      ! species_deck_finalise
     CALL window_deck_finalise
 
   END SUBROUTINE deck_finalise
@@ -289,7 +290,8 @@ CONTAINS
       handle_block = window_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
-      handle_block = part_from_file_block_handle_element(block_element, block_value)
+      handle_block = &
+          part_from_file_block_handle_element(block_element, block_value)
       RETURN
     ENDIF
 
