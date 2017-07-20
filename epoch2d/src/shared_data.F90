@@ -1092,4 +1092,46 @@ MODULE shared_data
   REAL(num) :: total_particle_energy = 0.0_num
   REAL(num) :: total_field_energy = 0.0_num
 
+  !----------------------------------------------------------------------------
+  ! custom particle loading - written by MP Tooley
+  !----------------------------------------------------------------------------
+
+  INTEGER :: n_custom_loaders = 0
+  INTEGER, PARAMETER :: c_loader_chunk_size = 131072 ! 1MB/variable data chunks
+
+  TYPE custom_particle_loader
+    INTEGER :: species_id
+
+    ! Position Data
+    CHARACTER(LEN=string_length) :: x_data
+    CHARACTER(LEN=string_length) :: y_data
+    INTEGER(KIND=MPI_OFFSET_KIND) :: x_data_offset
+    INTEGER(KIND=MPI_OFFSET_KIND) :: y_data_offset
+
+    ! Momentum Data
+    CHARACTER(LEN=string_length) :: px_data
+    CHARACTER(LEN=string_length) :: py_data
+    CHARACTER(LEN=string_length) :: pz_data
+    INTEGER(KIND=MPI_OFFSET_KIND) :: px_data_offset
+    INTEGER(KIND=MPI_OFFSET_KIND) :: py_data_offset
+    INTEGER(KIND=MPI_OFFSET_KIND) :: pz_data_offset
+    LOGICAL :: px_data_given
+    LOGICAL :: py_data_given
+    LOGICAL :: pz_data_given
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+    ! Weight data
+    CHARACTER(LEN=string_length) :: w_data
+    INTEGER(KIND=MPI_OFFSET_KIND) :: w_data_offset
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    CHARACTER(LEN=string_length) :: id_data
+    INTEGER(KIND=MPI_OFFSET_KIND) :: id_data_offset
+    LOGICAL :: id_data_given
+    LOGICAL :: id_data_4byte
+#endif
+  END TYPE custom_particle_loader
+
+  TYPE(custom_particle_loader), DIMENSION(:), POINTER :: custom_loaders_list
+
 END MODULE shared_data

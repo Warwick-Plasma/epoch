@@ -30,6 +30,7 @@ MODULE deck_species_block
   PUBLIC :: species_deck_initialise, species_deck_finalise
   PUBLIC :: species_block_start, species_block_end
   PUBLIC :: species_block_handle_element, species_block_check
+  PUBLIC :: species_number_from_name
 
   INTEGER :: species_id, current_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0

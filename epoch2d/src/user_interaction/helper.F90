@@ -1,5 +1,5 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -16,10 +16,12 @@
 
 MODULE helper
 
+  USE balance
   USE boundary
   USE strings
   USE partlist
   USE calc_df
+  USE simple_io
   USE deltaf_loader
 
   IMPLICIT NONE
@@ -679,5 +681,179 @@ CONTAINS
     DEALLOCATE(cdf)
 
   END FUNCTION sample_dist_function
+
+
+
+  SUBROUTINE custom_particle_load
+
+    LOGICAL :: file_inconsistencies
+    INTEGER :: current_loader_num
+    INTEGER :: part_count, read_count
+    CHARACTER(LEN=string_length) :: stra
+    REAL(num), DIMENSION(:), POINTER :: xbuf, ybuf
+    REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+    REAL(num), DIMENSION(:), POINTER :: wbuf
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
+    INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
+    INTEGER :: id_offset
+    INTEGER, DIMENSION(:), POINTER :: part_counts
+#endif
+    TYPE(particle_species), POINTER :: species
+    TYPE(custom_particle_loader), POINTER :: curr_loader
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: new_particle
+
+    ! Only needed if there are custom loaders to act on
+    IF (n_custom_loaders < 1) RETURN
+
+    ! For every custom loader
+    DO current_loader_num = 1, n_custom_loaders
+      file_inconsistencies = .FALSE.
+
+      curr_loader => custom_loaders_list(current_loader_num)
+
+      ! Grab associated particle lists
+      species => species_list(curr_loader%species_id)
+      partlist => species%attached_list
+
+      ! Just to be sure
+      CALL destroy_partlist(partlist)
+      CALL create_empty_partlist(partlist)
+
+      ! MPI read files
+      part_count = load_1d_real_array(curr_loader%x_data, xbuf, &
+          curr_loader%x_data_offset, errcode)
+
+      read_count = load_1d_real_array(curr_loader%y_data, ybuf, &
+          curr_loader%y_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+      read_count = load_1d_real_array(curr_loader%w_data, wbuf, &
+          curr_loader%w_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+#endif
+      IF (curr_loader%px_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%px_data, pxbuf, &
+            curr_loader%px_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+      IF (curr_loader%py_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%py_data, pybuf, &
+            curr_loader%py_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+      IF (curr_loader%pz_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%pz_data, pzbuf, &
+            curr_loader%pz_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      IF (curr_loader%id_data_given) THEN
+        IF (curr_loader%id_data_4byte) THEN
+          read_count = load_1d_integer4_array(curr_loader%id_data, idbuf4, &
+              curr_loader%id_data_offset, errcode)
+        ELSE
+          read_count = load_1d_integer8_array(curr_loader%id_data, idbuf8, &
+              curr_loader%id_data_offset, errcode)
+        ENDIF
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+#endif
+
+      CALL MPI_ALLREDUCE(MPI_IN_PLACE, file_inconsistencies, 1, MPI_LOGICAL, &
+          MPI_LOR, comm, errcode)
+
+      IF (file_inconsistencies) THEN
+        IF (rank == 0) THEN
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'Error while loading particles_from_file for species ', &
+              TRIM(species%name)
+        ENDIF
+        CALL abort_code(c_err_bad_setup)
+      ENDIF
+
+! This is needed to get the IDs assigned properly
+#if defined(PARTICLEID) || defined(PARTICLE_ID4)
+      IF (.NOT.curr_loader%id_data_given) THEN
+        ALLOCATE(part_counts(0:nproc-1))
+        CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
+            MPI_INTEGER4, comm)
+        id_offset = 0
+        i = 0
+        DO WHILE (i < rank)
+          id_offset = id_offset + part_counts(i)
+        ENDDO
+      ENDIF
+#endif
+
+      DO read_count = 1, part_count
+        CALL create_particle(new_particle)
+        CALL add_particle_to_partlist(partlist, new_particle)
+
+        ! Insert data to particle
+        new_particle%part_pos(1) = xbuf(read_count)
+        new_particle%part_pos(2) = ybuf(read_count)
+        new_particle%weight = wbuf(read_count)
+        IF (curr_loader%px_data_given) THEN
+          new_particle%part_p(1) = pxbuf(read_count)
+        ENDIF
+        IF (curr_loader%py_data_given) THEN
+          new_particle%part_p(2) = pybuf(read_count)
+        ENDIF
+        IF (curr_loader%pz_data_given) THEN
+          new_particle%part_p(3) = pzbuf(read_count)
+        ENDIF
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+        IF (curr_loader%id_data_given) THEN
+#if defined(PARTICLE_ID4)
+          IF (curr_loader%id_data_4byte) THEN
+            new_particle%id = idbuf4(read_count)
+          ELSE
+            new_particle%id = INT(idbuf8(read_count), i4)
+          ENDIF
+#else
+          IF (curr_loader%id_data_4byte) THEN
+            new_particle%id = INT(idbuf4(read_count), i8)
+          ELSE
+            new_particle%id = idbuf8(read_count)
+          ENDIF
+#endif
+        ELSE
+#if defined(PARTICLE_ID4)
+          new_particle%id = INT(id_offset + read_count, i4)
+#else
+          new_particle%id = INT(id_offset + read_count, i8)
+#endif
+        ENDIF
+#endif
+        ! Just being careful
+        NULLIFY(new_particle)
+      ENDDO
+
+      ! Need to keep totals accurate
+      CALL MPI_ALLREDUCE(partlist%count, species%count, 1, MPI_INTEGER8, &
+          MPI_SUM, comm, errcode)
+
+      IF (rank == 0) THEN
+        CALL integer_as_string(species%count, stra)
+        WRITE(*,*) 'Inserted ', TRIM(stra), &
+            ' custom particles of species "', TRIM(species%name), '"'
+#ifndef NO_IO
+        WRITE(stat_unit,*) 'Inserted ', TRIM(stra), &
+            ' custom particles of species "', TRIM(species%name), '"'
+#endif
+      ENDIF
+    ENDDO
+
+    CALL distribute_particles
+
+  END SUBROUTINE custom_particle_load
 
 END MODULE helper
