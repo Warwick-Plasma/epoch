@@ -702,8 +702,11 @@ CONTAINS
       ENDIF
 
       ! Correct to domain size
-      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min + dir_d/2.0_num)
-      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max - dir_d/2.0_num)
+      global_ranges(1,idim) = &
+          MAX(global_ranges(1,idim), dir_min + dir_d / 2.0_num)
+      global_ranges(2,idim) = &
+          MIN(global_ranges(2,idim), dir_max - dir_d / 2.0_num)
+
       ! Correct to match cell edges
       global_ranges(1,idim) = dir_min &
           + FLOOR((global_ranges(1,idim) - dir_min) / dir_d ) * dir_d
