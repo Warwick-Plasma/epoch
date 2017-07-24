@@ -672,8 +672,8 @@ CONTAINS
     ENDIF
 
     ! Correct to domain size
-    global_ranges(1,1) = MAX(global_ranges(1,1), dir_min)
-    global_ranges(2,1) = MIN(global_ranges(2,1), dir_max)
+    global_ranges(1,1) = MAX(global_ranges(1,1), dir_min + dir_d / 2.0_num)
+    global_ranges(2,1) = MIN(global_ranges(2,1), dir_max - dir_d / 2.0_num)
     ! Correct to match cell edges
     global_ranges(1,1) = dir_min &
         + FLOOR((global_ranges(1,1) - dir_min) / dir_d ) * dir_d
