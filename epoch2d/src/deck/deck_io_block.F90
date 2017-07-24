@@ -714,9 +714,9 @@ CONTAINS
                 WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
                     // '" in ', 'output block number ', block_number
                 WRITE(io,*) 'Only one average per variable can be computed'
-                WRITE(io,*) 'If multiple were specified the first averaging&
-                    & time will be used'
-                WRITE(io,*) ''
+                WRITE(io,*) 'If multiple were specified the first averaging ', &
+                    'time will be used'
+                WRITE(io,*)
               ENDDO
               warning_printed = .TRUE.
             ENDIF
