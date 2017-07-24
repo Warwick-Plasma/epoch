@@ -939,7 +939,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays
     LOGICAL, INTENT(IN) :: force
     LOGICAL, DIMENSION(:), INTENT(INOUT) :: first_call
-    INTEGER :: id, io, is, nstep_next = 0
+    INTEGER :: id, io, is, nstep_next = 0, av_block
     REAL(num) :: t0, t1, time_first
     LOGICAL :: last_call, dump
 
@@ -1076,8 +1076,9 @@ CONTAINS
 
       IF (time >= io_block_list(io)%average_time_start) THEN
         DO id = 1, num_vars_to_dump
+          av_block = averaged_var_block(id)
           IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) /= 0) THEN
-            CALL average_field(id, io_block_list(io)%averaged_data(id))
+            CALL average_field(id, io_block_list(av_block)%averaged_data(id))
           ENDIF
         ENDDO
       ENDIF
