@@ -59,8 +59,21 @@ dt_lehe   = dt_multiplier * 1.0/np.sqrt(max(1.0/dx**2, 1.0/dy**2)) / c
 dt_yee    = dt_multiplier * dx * dy / np.sqrt(dx**2+dy**2) / c
 dt_pukhov = dt_multiplier * min(dx,dy)/c
 
-vg_lehe = c*(1.0 + 2.0*(1.0-c*dt_lehe/dx)*(k_l*dx/2.0)**2)
-vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
+vg_lehe   = c*(1.0 + 2.0*(1.0-c*dt_lehe/dx)*(k_l*dx/2.0)**2)
+vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
+vg_pukhov = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_pukhov/dx*np.sin(k_l*dx/2.0))**2)
+
+def xt2(sdffile, key = 'Electric Field/Ey'):
+    t = sdffile['Header']['time']
+    xaxis = sdffile[key].grid_mid.data[0]
+    data = sdffile[key].data
+    b = np.sum(data**2)
+    if b>0:
+        x = np.sum(xaxis[:,np.newaxis]*data**2)/b
+    else:
+        x = None
+
+    return t, x
 
 
 class test_maxwell_solvers(SimTest):
@@ -124,6 +137,26 @@ class test_maxwell_solvers(SimTest):
 
             fig.tight_layout()
             fig.savefig(key.replace('/','_') + '_' + title + '.png', dpi=320)
+
+
+    def test_group_velocity(self):
+        tx = {}
+        for solver in self.solvers:
+            tx[solver] = np.array([xt2(dump) for dump in self.dumps[solver][1:]])
+        print(tx)
+
+        vg = dict(lehe_x = vg_lehe, pukhov = vg_pukhov, yee = vg_yee)
+
+        for solver, data in tx.items():
+            vg_sim = np.polyfit(data[:,0], data[:,1], 1)[0]
+
+            # For reference, right here, right now the following line prints
+            # yee 294442115.217 285957057.716 0.0296724884782
+            # lehe_x 309593124.332 311627789.852 0.00652915300077
+            # pukhov 291804104.274 292363351.796 0.0019128509744
+            print(solver, vg_sim, vg[solver], abs(vg_sim-vg[solver])/vg[solver])
+
+            assert np.isclose(vg_sim, vg[solver], rtol=0.05) #
 
 
 if __name__=='__main__':
