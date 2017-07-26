@@ -19,7 +19,6 @@ import numpy as np
 import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
 import unittest
 import platform
 from . import SimTest
@@ -30,41 +29,46 @@ def showdatafields(sdffile):
     print('Data fields present in "' + sdffile + '":')
     print(data.keys())
 
+
 def plotdump(sdffile, key, ax):
     data = sdf.read(sdffile, dict=True)
     array = data[key].data
     ax.plot(array)
     ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
 
+
 def plotdump2d(sdffile, key, ax):
     data = sdf.read(sdffile, dict=True)
-    array = data[key].data[:,:,0]
+    array = data[key].data[:, :, 0]
     ax.imshow(array)
     ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
+
 
 def plotevolution(key):
     print('plotting: ' + key)
     sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
-    fig, axarr = plt.subplots(3,5, figsize=(20,11))
+    fig, axarr = plt.subplots(3, 5, figsize=(20, 11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump(sdffile, key, ax)
     fig.suptitle(key)
-    fig.savefig(key.replace('/','_') + '.png', dpi=160)
+    fig.savefig(key.replace('/', '_') + '.png', dpi=160)
+
 
 def plot2devolution(key):
     print('plotting: ' + key)
     sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
-    fig, axarr = plt.subplots(3,5, figsize=(20,11))
+    fig, axarr = plt.subplots(3, 5, figsize=(20, 11))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump2d(sdffile, key, ax)
     fig.suptitle(key)
-    fig.savefig(key.replace('/','_') + '.png', dpi=160)
+    fig.savefig(key.replace('/', '_') + '.png', dpi=160)
+
 
 def createplots():
     if platform.system() == 'Darwin':
         print('macosx backend')
         plt.switch_backend('macosx')
-    #showdatafields('0000.sdf')
+    # showdatafields('0000.sdf')
     plotevolution('Electric Field/Ex')
     plotevolution('Derived/Number_Density/Right')
     plotevolution('Derived/Number_Density/Left')
@@ -80,7 +84,5 @@ class test_twostream(SimTest):
         createplots()
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()
-
-
