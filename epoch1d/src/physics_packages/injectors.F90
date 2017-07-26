@@ -118,7 +118,7 @@ CONTAINS
     INTEGER :: parts_this_time, ipart, ct, idir
 
     IF (time < injector%next_inject) RETURN
-    !IF (time < injector%t_start .OR. time > injector%t_end) RETURN
+    IF (time < injector%t_start .OR. time > injector%t_end) RETURN
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
     !Assume agressive maximum thermal momentum, all components
