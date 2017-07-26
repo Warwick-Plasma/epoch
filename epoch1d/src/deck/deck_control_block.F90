@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 29 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -70,7 +70,8 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'use_current_correction   ' /)
+          'use_current_correction   ', &
+          'maxwell_solver           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -105,7 +106,8 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'use_current_correction   ' /)
+          'use_current_correction   ', &
+          'maxwell_solver           ' /)
 
 CONTAINS
 
@@ -162,6 +164,10 @@ CONTAINS
           // TRIM(data_dir) // '/' // TRIM(restart_filename)
 
       CALL check_valid_restart
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
     ENDIF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
@@ -334,6 +340,14 @@ CONTAINS
       n_zeros_control = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+29)
       use_current_correction = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+30)
+      maxwell_solver = as_integer_print(value, element, errcode)
+      IF (maxwell_solver /= c_maxwell_solver_yee &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_cowan &
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+        errcode = c_err_bad_value
+      ENDIF
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -385,6 +399,25 @@ CONTAINS
         ENDDO
       ENDIF
       errcode = c_err_terminate
+    ENDIF
+
+    IF (maxwell_solver /= c_maxwell_solver_yee &
+        .AND. field_order /= 2) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'For "field_order" > 2 only "maxwell_solver = yee"', &
+              ' is supported in this version of EPOCH.'
+        ENDDO
+      ENDIF
+      errcode = c_err_terminate
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_cowan &
+        .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
+      maxwell_solver = c_maxwell_solver_yee
     ENDIF
 
   END FUNCTION control_block_check

@@ -585,6 +585,26 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_maxwell_solver_yee) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_yee, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_cowan) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_cowan, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_pukhov) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_pukhov, num))
+      RETURN
+    ENDIF
+
     err = c_err_unknown_element
 
   END SUBROUTINE do_constant

@@ -24,6 +24,7 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
+  REAL(num) :: alphax, deltax
 
 CONTAINS
 
@@ -43,6 +44,21 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE set_field_order
+
+
+
+  SUBROUTINE set_maxwell_solver
+
+    REAL(num) :: dx_cdt
+
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
+      dx_cdt = dx / (c * dt)
+      deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      alphax = 1.0_num - 3.0_num * deltax
+    ENDIF
+
+  END SUBROUTINE set_maxwell_solver
 
 
 
@@ -200,15 +216,29 @@ CONTAINS
       cpml_x = hdtx
 
       IF (field_order == 2) THEN
-        DO ix = 1, nx
-          cpml_x = hdtx / cpml_kappa_bx(ix)
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
 
-          by(ix) = by(ix) &
-              + cpml_x * (ez(ix+1) - ez(ix  ))
+            by(ix) = by(ix) &
+                + cpml_x * (ez(ix+1) - ez(ix  ))
 
-          bz(ix) = bz(ix) &
-              - cpml_x * (ey(ix+1) - ey(ix  ))
-        ENDDO
+            bz(ix) = bz(ix) &
+                - cpml_x * (ey(ix+1) - ey(ix  ))
+          ENDDO
+        ELSE
+          DO ix = 1, nx
+            cpml_x = hdtx / cpml_kappa_bx(ix)
+
+            by(ix) = by(ix) &
+                + cpml_x * (alphax * (ez(ix+1) - ez(ix  ))  &
+                         +  deltax * (ez(ix+2) - ez(ix-1)))
+
+            bz(ix) = bz(ix) &
+                - cpml_x * (alphax * (ey(ix+1) - ey(ix  ))  &
+                         +  deltax * (ey(ix+2) - ey(ix-1)))
+          ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -252,13 +282,25 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
-        DO ix = 1, nx
-          by(ix) = by(ix) &
-              + hdtx * (ez(ix+1) - ez(ix  ))
+        IF (maxwell_solver == c_maxwell_solver_yee) THEN
+          DO ix = 1, nx
+            by(ix) = by(ix) &
+                + hdtx * (ez(ix+1) - ez(ix  ))
 
-          bz(ix) = bz(ix) &
-              - hdtx * (ey(ix+1) - ey(ix  ))
-        ENDDO
+            bz(ix) = bz(ix) &
+                - hdtx * (ey(ix+1) - ey(ix  ))
+          ENDDO
+        ELSE
+          DO ix = 1, nx
+            by(ix) = by(ix) &
+                + hdtx * (alphax * (ez(ix+1) - ez(ix  ))  &
+                       +  deltax * (ez(ix+2) - ez(ix-1)))
+
+            bz(ix) = bz(ix) &
+                - hdtx * (alphax * (ey(ix+1) - ey(ix  ))  &
+                       +  deltax * (ey(ix+2) - ey(ix-1)))
+          ENDDO
+        ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num

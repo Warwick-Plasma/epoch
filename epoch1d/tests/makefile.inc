@@ -18,7 +18,7 @@
 # can be changed inside the actual makefile for the example. this ensures,
 # that all examples work the same, so they can be used for testing.
 
-EPOCH=../../bin/epoch1d
+EPOCH?=../../bin/epoch1d
 # MPRIPROCS can be set as an environmental variable, using
 # $export MPRIPROCS=8
 MPIPROCS?=2
