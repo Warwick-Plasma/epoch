@@ -309,8 +309,7 @@ CONTAINS
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
-        .OR. bc_particle(c_bd_x_min) == c_bc_thermal) .AND. x_min_boundary) THEN
+    IF (bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -331,8 +330,7 @@ CONTAINS
         neighbour( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
-        .OR. bc_particle(c_bd_x_max) == c_bc_thermal) .AND. x_max_boundary) THEN
+    IF (bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
@@ -564,8 +562,6 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-!              cur%part_pos = 2.0_num * x_min - part_pos
-
             ELSE
               ! Default to open boundary conditions - remove particle
               out_of_bounds = .TRUE.
@@ -628,7 +624,6 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-!              cur%part_pos = 2.0_num * x_max - part_pos
             ELSE
               out_of_bounds = .TRUE.
             ENDIF
