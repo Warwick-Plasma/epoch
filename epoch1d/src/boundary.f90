@@ -526,7 +526,7 @@ CONTAINS
 !              cur%part_pos = 2.0_num * x_min - part_pos
 
             ELSE
-              ! Default to open boundary conditions - stop force on particle
+              ! Default to open boundary conditions - remove particle
               out_of_bounds = .TRUE.
             ENDIF
           ENDIF
@@ -539,7 +539,7 @@ CONTAINS
             IF (part_pos >= x_max) THEN
               cur%force_multiplier = 0.0_num
             ENDIF
-            IF (part_pos < x_max + dx/2.0 * png) THEN
+            IF (part_pos >= x_max + dx/2.0 * png) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -565,8 +565,9 @@ CONTAINS
               ! Default to open boundary conditions - turn off particle force
               cur%force_multiplier = 0.0_num
             ENDIF
-
-            IF (part_pos >= x_max + dx/2.0_num * png) THEN
+          ENDIF
+          IF (part_pos >= x_max + dx/2.0_num * png) THEN
+            IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3
                 temp(i) = species_list(ispecies)%ext_temp_x_max(i)
               ENDDO
@@ -586,7 +587,7 @@ CONTAINS
               cur%part_p(i) = momentum_from_temperature(&
                   species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              cur%part_pos = 2.0_num * x_max - part_pos
+!              cur%part_pos = 2.0_num * x_max - part_pos
             ELSE
               out_of_bounds = .TRUE.
             ENDIF
