@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import types
-import os
 import os.path as osp
 import unittest
 import platform
@@ -32,7 +30,7 @@ from . import SimTest
 
 micron = 1e-6
 femto = 1e-15
-c = 2.99792458e8 # m/s
+c = 2.99792458e8  # m/s
 
 # check that these correspond to input deck!
 
@@ -47,8 +45,8 @@ y_max = x_max
 dt_multiplier = 0.95
 
 lambda_l = 0.5 * micron
-x0 = -12.0 * micron # m
-t0 = 8 * femto # s
+x0 = -12.0 * micron  # m
+t0 = 8 * femto  # s
 
 # derived quantities from the above
 k_l = 2*np.pi/lambda_l
@@ -56,20 +54,22 @@ dx = (x_max-x_min)/nx
 dy = (y_max-y_min)/ny
 
 dt_lehe   = dt_multiplier * 1.0/np.sqrt(max(1.0/dx**2, 1.0/dy**2)) / c
-dt_yee    = dt_multiplier * dx * dy / np.sqrt(dx**2+dy**2) / c
-dt_pukhov = dt_multiplier * min(dx,dy)/c
+dt_yee    = dt_multiplier * dx * dy / np.sqrt(dx**2 + dy**2) / c
+dt_pukhov = dt_multiplier * min(dx, dy)/c
 
 vg_lehe   = c*(1.0 + 2.0*(1.0-c*dt_lehe/dx)*(k_l*dx/2.0)**2)
 vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
-vg_pukhov = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_pukhov/dx*np.sin(k_l*dx/2.0))**2)
+vg_pukhov = c*np.cos(k_l*dx/2.0) \
+          / np.sqrt(1-(c*dt_pukhov/dx*np.sin(k_l*dx/2.0))**2)
 
-def xt2(sdffile, key = 'Electric Field/Ey'):
+
+def xt2(sdffile, key='Electric Field/Ey'):
     t = sdffile['Header']['time']
     xaxis = sdffile[key].grid_mid.data[0]
     data = sdffile[key].data
     b = np.sum(data**2)
-    if b>0 and t>0:
-        x = np.sum(xaxis[:,np.newaxis]*data**2)/b
+    if b > 0 and t > 0:
+        x = np.sum(xaxis[:, np.newaxis]*data**2)/b
     else:
         x = None
 
@@ -77,7 +77,7 @@ def xt2(sdffile, key = 'Electric Field/Ey'):
 
 
 class test_maxwell_solvers(SimTest):
-    solvers = ['yee','lehe_x','pukhov']
+    solvers = ['yee', 'lehe_x', 'pukhov']
 
     @classmethod
     def setUpClass(cls):
@@ -86,7 +86,8 @@ class test_maxwell_solvers(SimTest):
         dumps = cls.dumps = {}
         for solver in cls.solvers:
             l = dumps.setdefault(solver, [])
-            for dump in [osp.join(solver, '{:04d}.sdf'.format(i)) for i in range(4)]:
+            for dump in [osp.join(solver, '{:04d}.sdf'.format(i))
+                         for i in range(4)]:
                 l.append(sdf.read(dump, dict=True))
 
     def test_createplot(self):
@@ -96,16 +97,16 @@ class test_maxwell_solvers(SimTest):
 
         for solver in self.solvers:
             key = 'Electric Field/Ey'
-            fig, axarr = plt.subplots(1,3, figsize=(10,4))
+            fig, axarr = plt.subplots(1, 3, figsize=(10, 4))
             axarr[0].set_ylabel(r'y [${\mu}\mathrm{m}$]')
-            dumps = self.dumps[solver]
-            dumps = dumps[1:4]
+            dumps = self.dumps[solver][1:]
             for (dump, ax) in zip(dumps, np.ravel(axarr)):
                 array = dump[key].data
                 xaxis = dump[key].grid_mid.data[0]*1e6
                 yaxis = dump[key].grid_mid.data[1]*1e6
-                im = ax.imshow(array.T, extent=[min(xaxis), max(xaxis), min(yaxis), max(yaxis)])
-                im.set_clim([-1e11,1e11])
+                im = ax.imshow(array.T, extent=[min(xaxis), max(xaxis),
+                                                min(yaxis), max(yaxis)])
+                im.set_clim([-1e11, 1e11])
                 t = dump['Header']['time']
 
                 x = (x0 + c*(t-t0))*1e6
@@ -113,14 +114,20 @@ class test_maxwell_solvers(SimTest):
                 x_yee = (x0 + vg_yee*(t-t0))*1e6
 
                 if x > 0:
-                    ax.plot([x, x], [min(yaxis), 0.9*min(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x, x], [0.9*max(yaxis), max(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x, x], [min(yaxis), 0.9*min(yaxis)], color='k',
+                            linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x, x], [0.9*max(yaxis), max(yaxis)], color='k',
+                            linestyle='-', linewidth=2, alpha=0.25)
 
-                    ax.plot([x_lehe, x_lehe], [min(yaxis), 0.9*min(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x_lehe, x_lehe], [0.9*max(yaxis), max(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_lehe, x_lehe], [min(yaxis), 0.9*min(yaxis)],
+                            color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_lehe, x_lehe], [0.9*max(yaxis), max(yaxis)],
+                            color='b', linestyle='-', linewidth=2, alpha=0.25)
 
-                    ax.plot([x_yee, x_yee], [min(yaxis), 0.9*min(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_yee, x_yee], [min(yaxis), 0.9*min(yaxis)],
+                            color='r', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)],
+                            color='r', linestyle='-', linewidth=2, alpha=0.25)
 
                 ax.set_title('{:2.1f} fs'.format(dump['Header']['time']*1e15))
 
@@ -137,30 +144,29 @@ class test_maxwell_solvers(SimTest):
             fig.suptitle(key+', c*dt/dx={:0.03f}'.format(dt))
 
             fig.tight_layout()
-            fig.savefig(key.replace('/','_') + '_' + title + '.png', dpi=320)
-
+            fig.savefig(key.replace('/', '_') + '_' + title + '.png', dpi=320)
 
     def test_group_velocity(self):
         tx = {}
         for solver in self.solvers:
-            tx[solver] = np.array([xt2(dump) for dump in self.dumps[solver][1:]])
+            tx[solver] = np.array([xt2(dump)
+                                   for dump in self.dumps[solver][1:]])
         print(tx)
 
-        vg = dict(lehe_x = vg_lehe, pukhov = vg_pukhov, yee = vg_yee)
+        vg = dict(lehe_x=vg_lehe, pukhov=vg_pukhov, yee=vg_yee)
 
         for solver, data in tx.items():
-            vg_sim = np.polyfit(data[:,0], data[:,1], 1)[0]
+            vg_sim = np.polyfit(data[:, 0], data[:, 1], 1)[0]
 
             # For reference, right here, right now the following line prints
             # yee 284766391.118 285957057.716 0.00416379510941
             # lehe_x 309981206.147 311627789.852 0.00528381536589
             # pukhov 291262060.412 292363351.796 0.00376685852363
-            print(solver, vg_sim, vg[solver], abs(vg_sim-vg[solver])/vg[solver])
+            print(solver, vg_sim, vg[solver],
+                  abs(vg_sim-vg[solver])/vg[solver])
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.01) #
+            assert np.isclose(vg_sim, vg[solver], rtol=0.01)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     unittest.main()
-
-

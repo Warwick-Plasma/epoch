@@ -19,7 +19,6 @@ import numpy as np
 import sdf
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import os
 import unittest
 import platform
 from . import SimTest
@@ -30,25 +29,28 @@ def showdatafields(sdffile):
     print('Data fields present in "' + sdffile + '":')
     print(data.keys())
 
+
 def plotdump(sdffile, key, ax):
     data = sdf.read(sdffile, dict=True)
-    array = data[key].data[:,80,:]
+    array = data[key].data[:, 80, :]
     ax.imshow(array.T, origin='lower')
     ax.set_title('{:2.1f} fs'.format(data['Header']['time']*1e15))
 
+
 def plotevolution(key):
     sdffiles = ['{:04d}.sdf'.format(i) for i in range(3)]
-    fig, axarr = plt.subplots(1,3, figsize=(10,4))
+    fig, axarr = plt.subplots(1, 3, figsize=(10, 4))
     for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
         plotdump(sdffile, key, ax)
     fig.suptitle(key)
-    fig.savefig(key.replace('/','_') + '.png', dpi=160)
+    fig.savefig(key.replace('/', '_') + '.png', dpi=160)
+
 
 def createplots():
     if platform.system() == 'Darwin':
         print('macosx backend')
         plt.switch_backend('macosx')
-    #showdatafields('0000.sdf')
+    # showdatafields('0000.sdf')
     plotevolution('Electric Field/Ex')
 
 
@@ -71,10 +73,9 @@ class test_laser(SimTest):
     def test_Eex0001(self):
         self.totaleyassert('0001.sdf', 3.89491316738e+25)
 
-    def test_Eex0002 (self):
+    def test_Eex0002(self):
         self.totaleyassert('0002.sdf', 7.28973146423e+25)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     unittest.main()
-
-
