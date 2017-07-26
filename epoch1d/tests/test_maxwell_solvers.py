@@ -51,18 +51,17 @@ t0 = 8 * femto # s
 k_l = 2*np.pi/lambda_l
 dx = (x_max-x_min)/nx
 
-dt = dt_multiplier * dx / c
+dt_yee = dt_multiplier * dx / c
 
-vg_lehe = c*(1.0 + 2.0*(1.0-c*dt/dx)*(k_l*dx/2.0)**2)
-vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt/dx*np.sin(k_l*dx/2.0))**2)
-
+vg_lehe   = c*(1.0 + 2.0*(1.0-c*dt_yee/dx)*(k_l*dx/2.0)**2)
+vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
 
 def xt(sdffile, key = 'Electric Field/Ey'):
     t = sdffile['Header']['time']
     xaxis = sdffile[key].grid_mid.data[0]
     data = sdffile[key].data
     b = np.sum(data**2)
-    if b>0:
+    if b>0 and t>0:
         x = np.sum(xaxis*data**2)/b
     else:
         x = None
@@ -71,69 +70,60 @@ def xt(sdffile, key = 'Electric Field/Ey'):
 
 
 class test_maxwell_solvers(SimTest):
+    solvers = ['yee','lehe_x']
+
     @classmethod
     def setUpClass(cls):
         super(test_maxwell_solvers, cls).setUpClass()
-        sdffiles = zip([osp.join('yee','{:04d}.sdf'.format(i)) for i in range(8)],   [osp.join('lehe_x','{:04d}.sdf'.format(i)) for i in range(8)])
 
-        dumps = cls.dumps = []
-        for yee_dump, lehe_dump in sdffiles:
-            dump = types.SimpleNamespace()
-            dump.yee = sdf.read(yee_dump, dict=True)
-            dump.lehe = sdf.read(lehe_dump, dict=True)
-            dumps.append(dump)
-
+        dumps = cls.dumps = {}
+        for solver in cls.solvers:
+            l = dumps.setdefault(solver, [])
+            for dump in [osp.join(solver, '{:04d}.sdf'.format(i)) for i in range(8)]:
+                l.append(sdf.read(dump, dict=True))
 
     def test_createplot(self):
         if platform.system() == 'Darwin':
             print('macosx backend')
             plt.switch_backend('macosx')
 
+        key = 'Electric Field/Ey'
         fig, axarr = plt.subplots(2,4, figsize=(16,9))
 
-        key = 'Electric Field/Ey'
-
-        for (dump, ax) in zip(self.dumps, np.ravel(axarr)):
-            array_yee = dump.yee[key].data
-            array_lehe = dump.lehe[key].data
-            axis = dump.yee[key].grid_mid.data[0]*1e6
-
-            ax.plot(axis, array_lehe, label='Lehe', linewidth=1)
-            ax.plot(axis, array_yee, label='Yee', linewidth=1)
-            ax.set_title('{:2.1f} fs'.format(dump.yee['Header']['time']*1e15))
+        for i, ax in enumerate(np.ravel(axarr)):
+            dump0 = self.dumps[self.solvers[0]][i]
+            axis = dump0[key].grid_mid.data[0]*1e6
+            for solver in self.solvers:
+                array = self.dumps[solver][i][key].data
+                ax.plot(axis, array, label=solver, linewidth=1)
+            ax.set_title('{:2.1f} fs'.format(dump0['Header']['time']*1e15))
             ax.set_xlabel(r'x [${\mu}\mathrm{m}$]')
-            ax.legend()
+            ax.legend(loc='best')
+
         fig.suptitle(key)
+
+        fig.tight_layout()
         fig.savefig(key.replace('/','_') + '.png', dpi=320)
 
+
     def test_group_velocity(self):
-        tx_yee = []
-        tx_lehe = []
-        for dump in self.dumps:
-            t, x = xt(dump.yee)
-            if t < 6e-15:
-                continue
-            tx_yee.append((t,x))
-            tx_lehe.append(xt(dump.lehe))
+        tx = {}
+        for solver in self.solvers:
+            tx[solver] = np.array([xt(dump) for dump in self.dumps[solver][1:]])
+        print(tx)
 
-        tx_yee = np.array(tx_yee)
-        vg_yee_sim = np.polyfit(tx_yee[:,0], tx_yee[:,1], 1)[0]
-        print(tx_yee)
+        vg = dict(lehe_x = vg_lehe, yee = vg_yee)
 
-        # for reference, right here, right now, the following line prints
-        # 292363351.796 291329547.371 0.00353602604066
-        print(vg_yee, vg_yee_sim, abs(vg_yee-vg_yee_sim)/vg_yee)
+        for solver, data in tx.items():
+            vg_sim = np.polyfit(data[:,0], data[:,1], 1)[0]
 
-        tx_lehe = np.array(tx_lehe)
-        vg_lehe_sim = np.polyfit(tx_lehe[:,0], tx_lehe[:,1], 1)[0]
-        print(tx_lehe)
+            # For reference, right here, right now the following line prints
+            # yee 291329547.371 292363351.796 0.00353602604066
+            # lehe_x 310055314.605 311627789.85156083 0.00504600455477
+            print(solver, vg_sim, vg[solver], abs(vg_sim-vg[solver])/vg[solver])
 
-        # for reference, right here, right now, the following line prints
-        # 311627789.85156083 310055314.605 0.00504600455477
-        print(vg_lehe, vg_lehe_sim, abs(vg_lehe-vg_lehe_sim)/vg_lehe)
+            assert np.isclose(vg_sim, vg[solver], rtol=0.01) #
 
-        assert np.isclose(vg_yee, vg_yee_sim, rtol=0.01) #
-        assert np.isclose(vg_lehe, vg_lehe_sim, rtol=0.01)
 
 if __name__=='__main__':
     unittest.main()
