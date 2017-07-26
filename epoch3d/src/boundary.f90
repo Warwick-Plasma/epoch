@@ -992,6 +992,7 @@ CONTAINS
 
     INTEGER :: i
 
+    CALL update_laser_omegas
     CALL bfield_bcs(.FALSE.)
 
     IF (x_min_boundary) THEN

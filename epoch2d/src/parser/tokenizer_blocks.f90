@@ -197,6 +197,7 @@ CONTAINS
     IF (str_cmp(name, 'dir_xy_angle')) as_constant = c_const_dir_xy_angle
     IF (str_cmp(name, 'dir_yz_angle')) as_constant = c_const_dir_yz_angle
     IF (str_cmp(name, 'dir_zx_angle')) as_constant = c_const_dir_zx_angle
+    IF (str_cmp(name, 'dir_mod_p')) as_constant = c_const_dir_mod_p
 
     IF (as_constant == c_const_x .AND. stagger(c_dir_x,tokenize_stagger)) &
         as_constant = c_const_xb

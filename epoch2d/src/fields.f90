@@ -48,6 +48,7 @@ CONTAINS
   END SUBROUTINE set_field_order
 
 
+
   SUBROUTINE set_maxwell_solver
 
     REAL(num) :: delta, dx_cdt
@@ -59,29 +60,27 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
-      delta  = dx
       dx_cdt = dx / (c * dt)
-      betaxy = 0.125_num * (delta / dy)**2
+      betaxy = 0.125_num * (dx / dy)**2
       betayx = 0.125_num
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
-      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
     IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
-      delta = min(dx, dy)
+      delta = MIN(dx, dy)
 
-      betaxy = 0.125_num * (delta / dy)**2
       betayx = 0.125_num * (delta / dx)**2
+      betaxy = 0.125_num * (delta / dy)**2
       deltax = 0.0_num
-      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-  ENDSUBROUTINE set_maxwell_solver
+  END SUBROUTINE set_maxwell_solver
+
 
 
   SUBROUTINE update_e_field
