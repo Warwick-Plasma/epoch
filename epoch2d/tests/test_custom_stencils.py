@@ -78,7 +78,7 @@ def plotdump(sdffile, key, ax):
     # calculate_omega.py --dt-multiplier 0.99 --Y 3 --params 0.9082126568805592 0.04075757835916255
     # -0.04142032920970152 -0.20827814817872584 --physical-dx 1e-7 --laser-wavelength 5e-7
     # yields vg=1.0490493627815458 c
-    vg_opt = 1.0490493627815458
+    vg_opt = 1.0490493627815458 * c
 
     # calculate_omega.py --dt-multiplier 0.99 --Y 3 --symmetric  --params 0.8988685682513151
     # 0.01862292597327679 -0.04155873453935287 --physical-dx 1e-7 --laser-wavelength 5e-7
