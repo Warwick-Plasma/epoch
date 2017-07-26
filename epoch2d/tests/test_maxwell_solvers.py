@@ -68,7 +68,7 @@ def xt2(sdffile, key = 'Electric Field/Ey'):
     xaxis = sdffile[key].grid_mid.data[0]
     data = sdffile[key].data
     b = np.sum(data**2)
-    if b>0:
+    if b>0 and t>0:
         x = np.sum(xaxis[:,np.newaxis]*data**2)/b
     else:
         x = None
@@ -99,6 +99,7 @@ class test_maxwell_solvers(SimTest):
             fig, axarr = plt.subplots(1,3, figsize=(10,4))
             axarr[0].set_ylabel(r'y [${\mu}\mathrm{m}$]')
             dumps = self.dumps[solver]
+            dumps = dumps[1:4]
             for (dump, ax) in zip(dumps, np.ravel(axarr)):
                 array = dump[key].data
                 xaxis = dump[key].grid_mid.data[0]*1e6
@@ -151,12 +152,12 @@ class test_maxwell_solvers(SimTest):
             vg_sim = np.polyfit(data[:,0], data[:,1], 1)[0]
 
             # For reference, right here, right now the following line prints
-            # yee 294442115.217 285957057.716 0.0296724884782
-            # lehe_x 309593124.332 311627789.852 0.00652915300077
-            # pukhov 291804104.274 292363351.796 0.0019128509744
+            # yee 284766391.118 285957057.716 0.00416379510941
+            # lehe_x 309981206.147 311627789.852 0.00528381536589
+            # pukhov 291262060.412 292363351.796 0.00376685852363
             print(solver, vg_sim, vg[solver], abs(vg_sim-vg[solver])/vg[solver])
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.05) #
+            assert np.isclose(vg_sim, vg[solver], rtol=0.01) #
 
 
 if __name__=='__main__':
