@@ -17,6 +17,8 @@
 MODULE deck_injector_block
 
   USE strings_advanced
+  USE shunt
+  USE evaluator
   USE injectors
   USE utilities
 
@@ -71,7 +73,7 @@ CONTAINS
   FUNCTION injector_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: errcode
+    INTEGER :: errcode, i
     REAL(num) :: dummy
     INTEGER :: io, iu
 
@@ -110,47 +112,67 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'density')) THEN
+      CALL initialise_stack(working_injector%density_function)
+      CALL tokenize(value, working_injector%density_function, errcode)
       working_injector%density = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_x')) THEN
-      working_injector%temperature(1) = as_real_print(value, element, errcode)
+      i=1
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      working_injector%temperature(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_y')) THEN
-      working_injector%temperature(2) = as_real_print(value, element, errcode)
+      i=2
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      working_injector%temperature(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'temp_z')) THEN
-      working_injector%temperature(3) = as_real_print(value, element, errcode)
-      RETURN
+      i=1
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      working_injector%temperature(i) = as_real_print(value, element, errcode)
     ENDIF
 
     IF (str_cmp(element, 'temp')) THEN
-      working_injector%temperature = as_real_print(value, element, errcode)
+      DO i = 1, 3
+        CALL initialise_stack(working_injector%temperature_function(i))
+        CALL tokenize(value, working_injector%temperature_function(i), &
+            errcode)
+        working_injector%temperature(i) = as_real_print(value, element, &
+            errcode)
+      ENDDO
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_x')) THEN
-      working_injector%drift(1) = as_real_print(value, element, errcode)
+      i=1
+      CALL initialise_stack(working_injector%drift_function(i))
+      CALL tokenize(value, working_injector%drift_function(i), errcode)
+      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_y')) THEN
-      working_injector%drift(2) = as_real_print(value, element, errcode)
+      i=2
+      CALL initialise_stack(working_injector%drift_function(i))
+      CALL tokenize(value, working_injector%drift_function(i), errcode)
+      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'drift_z')) THEN
-      working_injector%drift(3) = as_real_print(value, element, errcode)
-      RETURN
-    ENDIF
-
-    IF (str_cmp(element, 'drift')) THEN
-      working_injector%drift = as_real_print(value, element, errcode)
+      i=3
+      CALL initialise_stack(working_injector%drift_function(i))
+      CALL tokenize(value, working_injector%drift_function(i), errcode)
+      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 

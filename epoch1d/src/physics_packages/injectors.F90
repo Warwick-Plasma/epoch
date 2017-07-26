@@ -19,6 +19,7 @@ MODULE injectors
   USE shared_data
   USE partlist
   USE particle_temperature
+  USE evaluator
 
   IMPLICIT NONE
 
@@ -108,7 +109,7 @@ CONTAINS
 
   SUBROUTINE run_single_injector(injector, direction, bdy_pos, bdy_space)
 
-    TYPE(injector_block), INTENT(INOUT) :: injector
+    TYPE(injector_block), POINTER :: injector
     INTEGER, INTENT(IN) :: direction
     REAL(num), INTENT(IN) :: bdy_pos, bdy_space
     TYPE(particle), POINTER :: new
@@ -119,8 +120,10 @@ CONTAINS
 
     IF (time < injector%next_inject) RETURN
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
+
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
+    CALL populate_injector_properties(injector)
     !Assume agressive maximum thermal momentum, all components
     !like hottest component
     p_therm = SQRT(mass * kb * MAXVAL(injector%temperature))
@@ -165,5 +168,30 @@ CONTAINS
     injector%next_inject = time + dt_inject
 
   END SUBROUTINE run_single_injector
+
+
+
+  SUBROUTINE populate_injector_properties(injector)
+
+    TYPE(injector_block), POINTER :: injector
+    INTEGER :: errcode, i
+
+    errcode = 0
+    IF (injector%density_function%is_time_varying) &
+        injector%density = evaluate(injector%density_function, errcode)
+
+    !Stack can only be time varying if valid. Change if this isn't true
+    DO i = 1, 3
+      IF (injector%temperature_function(i)%is_time_varying) &
+          injector%temperature(i) = evaluate(injector%temperature_function(i), &
+          errcode)
+      IF (injector%drift_function(i)%is_time_varying) &
+          injector%drift(i) = evaluate(injector%drift_function(i), &
+          errcode)
+    ENDDO
+
+    IF (errcode /= c_err_none) CALL abort_code(errcode)
+
+  END SUBROUTINE populate_injector_properties
 
 END MODULE injectors

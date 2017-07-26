@@ -411,7 +411,8 @@ deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o \
   utilities.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
-deck_injector_block.o: deck_injector_block.f90 injectors.o strings_advanced.o utilities.o
+deck_injector_block.o: deck_injector_block.f90 evaluate.o injectors.o shunt.o \
+  utilities.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o utilities.o
 deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o utilities.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o utilities.o
@@ -444,7 +445,8 @@ finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
 helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
-injectors.o: injectors.F90 particle_temperature.o partlist.o shared_data.o
+injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
+  shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
