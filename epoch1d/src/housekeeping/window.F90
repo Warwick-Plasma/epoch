@@ -258,7 +258,7 @@ CONTAINS
       IF (time >= window_start_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
-        CALL setup_particle_boundaries
+        CALL setup_boundaries
         IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.
       ENDIF

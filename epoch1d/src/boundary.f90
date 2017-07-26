@@ -26,24 +26,63 @@ MODULE boundary
 
 CONTAINS
 
-  SUBROUTINE setup_particle_boundaries
+  SUBROUTINE setup_boundaries
 
-    INTEGER :: i
+    INTEGER :: i, ispecies
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
+    CHARACTER(LEN=2*c_max_string_length) :: species_name
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    error = .FALSE.
+
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_other) bc_particle(i) = c_bc_reflect
+      error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
       IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+
+      ! Note: reflecting EM boundaries not yet implemented.
+      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
     ENDDO
+
+    DO ispecies = 1, n_species
+      DO i = 1, 2*c_ndims
+        species_name = TRIM(boundary(i)) // " on species " &
+            // TRIM(species_list(ispecies)%name)
+        error = error .OR. setup_particle_boundary(bc_particle(i), &
+            species_name, allow_null = .TRUE.)
+      ENDDO
+    ENDDO
+
+    IF (error) THEN
+        errcode = c_err_bad_value
+        CALL abort_code(errcode)
+    ENDIF
+
+  END SUBROUTINE setup_boundaries
+
+
+
+  FUNCTION setup_particle_boundary(boundary, boundary_name, allow_null) &
+      RESULT(error)
+
+    INTEGER, INTENT(INOUT) :: boundary
+    CHARACTER(LEN=*), INTENT(IN) :: boundary_name
+    LOGICAL, INTENT(IN), OPTIONAL :: allow_null
+    INTEGER :: i
+    LOGICAL :: error
+
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
+
+    IF (boundary == c_bc_other) boundary = c_bc_reflect
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
     ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
@@ -52,40 +91,34 @@ CONTAINS
     ! (or outflow).
 
     ! Laser boundaries assume open particles unless otherwise specified.
-    DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_simple_laser &
-          .OR. bc_particle(i) == c_bc_simple_outflow &
-          .OR. bc_particle(i) == c_bc_cpml_laser &
-          .OR. bc_particle(i) == c_bc_cpml_outflow) &
-              bc_particle(i) = c_bc_open
-    ENDDO
-
-    ! Note: reflecting EM boundaries not yet implemented.
-    DO i = 1, 2*c_ndims
-      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
-      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
-    ENDDO
+    IF (boundary == c_bc_simple_laser &
+        .OR. boundary == c_bc_simple_outflow &
+        .OR. boundary == c_bc_cpml_laser &
+        .OR. boundary == c_bc_cpml_outflow) &
+            boundary = c_bc_open
 
     ! Sanity check on particle boundaries
     error = .FALSE.
-    DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_periodic &
-          .OR. bc_particle(i) == c_bc_reflect &
-          .OR. bc_particle(i) == c_bc_thermal &
-          .OR. bc_particle(i) == c_bc_open) CYCLE
-      IF (rank == 0) THEN
-        WRITE(*,*)
-        WRITE(*,*) '*** ERROR ***'
-        WRITE(*,*) 'Unrecognised particle boundary condition on "', &
-            boundary(i), '" boundary.'
-      ENDIF
-      error = .TRUE.
-      errcode = c_err_bad_value
-    ENDDO
+    IF (boundary == c_bc_periodic &
+        .OR. boundary == c_bc_reflect &
+        .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_open) RETURN
 
-    IF (error) CALL abort_code(errcode)
+    ! Perfectly valid for per species boundaries to be null
+    ! not main boundaries
+    IF (PRESENT(allow_null)) THEN
+      IF (allow_null .AND. boundary == c_bc_null) RETURN
+    ENDIF
 
-  END SUBROUTINE setup_particle_boundaries
+    IF (rank == 0) THEN
+      WRITE(*,*)
+      WRITE(*,*) '*** ERROR ***'
+      WRITE(*,*) 'Unrecognised particle boundary condition on "', &
+          TRIM(boundary_name), '" boundary.'
+    ENDIF
+    error = .TRUE.
+
+  END FUNCTION setup_particle_boundary
 
 
 
@@ -442,9 +475,16 @@ CONTAINS
     INTEGER :: ispecies, i, ix
     REAL(num) :: temp(3)
     REAL(num) :: part_pos
+    INTEGER, DIMENSION(2 * c_ndims) :: bc_particle_local
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
+
+      bc_particle_local = bc_particle
+      DO i = 1, 2*c_ndims
+        IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
+            bc_particle_local(i) = species_list(ispecies)%bc_particle(i)
+      ENDDO
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))
@@ -484,13 +524,13 @@ CONTAINS
             xbd = 0
             !Reflecting boundaries apply at that point because this
             !is the edge of the domain
-            IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+            ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               !Thermal boundaries just prevent particle from accelerating
               cur%force_multiplier = 0.0_num
-            ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
               !Periodic boundaries are like processor boundaries
               !Particle moves when it meets boundary with centre
               xbd = -1
@@ -503,7 +543,7 @@ CONTAINS
 
           !Particle has left domain fully
           IF (part_pos < x_min - dx/2.0_num * png) THEN
-            IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+            IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3
                 temp(i) = species_list(ispecies)%ext_temp_x_min(i)
               ENDDO
@@ -555,10 +595,10 @@ CONTAINS
             ! Particle has left the system
           IF (part_pos >= x_max) THEN
             xbd = 0
-            IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_x_max) == c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_max - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_x_max) == c_bc_periodic) THEN
               xbd = 1
               cur%part_pos = part_pos - length_x
             ELSE
@@ -567,7 +607,7 @@ CONTAINS
             ENDIF
           ENDIF
           IF (part_pos >= x_max + dx/2.0_num * png) THEN
-            IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+            IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3
                 temp(i) = species_list(ispecies)%ext_temp_x_max(i)
               ENDDO
