@@ -5,3 +5,8 @@ default:
 	$(MAKE) -C pukhov
 	$(MAKE) -C cowan
 
+clean:
+	$(MAKE) -C yee     clean
+	$(MAKE) -C lehe_x  clean
+	$(MAKE) -C pukhov  clean
+	$(MAKE) -C cowan   clean
