@@ -56,7 +56,8 @@ CONTAINS
       DO i = 1, 2*c_ndims
         species_name = TRIM(boundary(i)) // " on species " &
             // TRIM(species_list(ispecies)%name)
-        error = error .OR. setup_particle_boundary(bc_particle(i), &
+        error = error .OR. setup_particle_boundary(&
+            species_list(ispecies)%bc_particle(i), &
             species_name, allow_null = .TRUE.)
       ENDDO
     ENDDO
