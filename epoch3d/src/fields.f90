@@ -50,6 +50,7 @@ CONTAINS
   END SUBROUTINE set_field_order
 
 
+
   SUBROUTINE set_maxwell_solver
 
     REAL(num) :: delta, dx_cdt
@@ -86,12 +87,12 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_cowan) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
-      delta = min(dx, dy, dz)
+      delta = MIN(dx, dy, dz)
       c1 = (delta / dx)**2
       c2 = (delta / dy)**2
       c3 = (delta / dz)**2
-      cx1 = 1.0_num / ( c1*c2 + c2*c3 + c1*c3 )
-      cx2 = 1.0_num - c1*c2*c3 * cx1
+      cx1 = 1.0_num / (c1 * c2 + c2 * c3 + c1 * c3)
+      cx2 = 1.0_num - c1 * c2 * c3 * cx1
 
       betayx = 0.125_num * c1 * cx2
       betaxy = 0.125_num * c2 * cx2
@@ -102,9 +103,9 @@ CONTAINS
       deltax = 0.0_num
       deltay = 0.0_num
       deltaz = 0.0_num
-      gammax = c2*c3 * (0.0625_num - 0.125_num * c2*c3 * cx1)
-      gammay = c1*c3 * (0.0625_num - 0.125_num * c1*c3 * cx1)
-      gammaz = c1*c2 * (0.0625_num - 0.125_num * c1*c2 * cx1)
+      gammax = c2 * c3 * (0.0625_num - 0.125_num * c2 * c3 * cx1)
+      gammay = c1 * c3 * (0.0625_num - 0.125_num * c1 * c3 * cx1)
+      gammaz = c1 * c2 * (0.0625_num - 0.125_num * c1 * c2 * cx1)
       alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz - 4.0_num * gammax
       alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz - 4.0_num * gammay
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy - 4.0_num * gammaz
@@ -112,7 +113,7 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
-      delta = min(dx, dy, dz)
+      delta = MIN(dx, dy, dz)
 
       betayx = 0.125_num * (delta / dx)**2
       betaxy = 0.125_num * (delta / dy)**2
@@ -132,6 +133,7 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE set_maxwell_solver
+
 
 
   SUBROUTINE update_e_field

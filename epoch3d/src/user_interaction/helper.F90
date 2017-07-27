@@ -1,5 +1,5 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -16,10 +16,13 @@
 
 MODULE helper
 
+  USE balance
   USE boundary
   USE strings
   USE partlist
   USE calc_df
+  USE simple_io
+  USE deltaf_loader
 
   IMPLICIT NONE
 
@@ -36,28 +39,28 @@ CONTAINS
       ! Set temperature at boundary for thermal bcs.
 
       IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_min(-2:ny+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(1,-2:ny+3,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_x_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(1,:,:,:)
       ENDIF
       IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_max(-2:ny+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(nx,-2:ny+3,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_x_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(nx,:,:,:)
       ENDIF
       IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_min(-2:nx+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,1,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_y_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,1,:,:)
       ENDIF
       IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_max(-2:nx+3,-2:nz+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,ny,-2:nz+3,1:3)
+        species_list(ispecies)%ext_temp_y_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,ny,:,:)
       ENDIF
       IF (bc_particle(c_bd_z_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_z_min(-2:nx+3,-2:ny+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,1,1:3)
+        species_list(ispecies)%ext_temp_z_min(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,:,1,:)
       ENDIF
       IF (bc_particle(c_bd_z_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_z_max(-2:nx+3,-2:ny+3,1:3) = &
-            initial_conditions(ispecies)%temp(-2:nx+3,-2:ny+3,nz,1:3)
+        species_list(ispecies)%ext_temp_z_max(:,:,:) = &
+            species_list(ispecies)%initial_conditions%temp(:,:,nz,:)
       ENDIF
     ENDDO
 
@@ -76,23 +79,25 @@ CONTAINS
       species => species_list(ispecies)
 
 #ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL setup_particle_density(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(initial_conditions(ispecies)%density, &
-          species, initial_conditions(ispecies)%density_min, &
-          initial_conditions(ispecies)%density_max)
+      CALL non_uniform_load_particles(&
+          species_list(ispecies)%initial_conditions%density, species, &
+          species_list(ispecies)%initial_conditions%density_min, &
+          species_list(ispecies)%initial_conditions%density_max)
 #endif
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,1), c_dir_x, species, &
-          initial_conditions(ispecies)%drift(:,:,:,1))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,1), c_dir_x, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,1))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,2), c_dir_y, species, &
-          initial_conditions(ispecies)%drift(:,:,:,2))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,2), c_dir_y, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,2))
       CALL setup_particle_temperature(&
-          initial_conditions(ispecies)%temp(:,:,:,3), c_dir_z, species, &
-          initial_conditions(ispecies)%drift(:,:,:,3))
+          species_list(ispecies)%initial_conditions%temp(:,:,:,3), c_dir_z, &
+          species, species_list(ispecies)%initial_conditions%drift(:,:,:,3))
     ENDDO
 
     IF (rank == 0) THEN
@@ -110,6 +115,8 @@ CONTAINS
       ENDDO
     ENDIF
 
+    CALL deltaf_load
+
   END SUBROUTINE auto_load
 
 
@@ -118,17 +125,22 @@ CONTAINS
 
     INTEGER :: ispecies
 
-    ALLOCATE(initial_conditions(1:n_species))
     DO ispecies = 1, n_species
-      ALLOCATE(initial_conditions(ispecies)%density(-2:nx+3,-2:ny+3,-2:nz+3))
-      ALLOCATE(initial_conditions(ispecies)%temp (-2:nx+3,-2:ny+3,-2:nz+3,1:3))
-      ALLOCATE(initial_conditions(ispecies)%drift(-2:nx+3,-2:ny+3,-2:nz+3,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %density(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %temp(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,1:3))
+      ALLOCATE(species_list(ispecies)%initial_conditions&
+          %drift(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,1:3))
 
-      initial_conditions(ispecies)%density = 1.0_num
-      initial_conditions(ispecies)%temp = 0.0_num
-      initial_conditions(ispecies)%drift = 0.0_num
-      initial_conditions(ispecies)%density_min = EPSILON(1.0_num)
-      initial_conditions(ispecies)%density_max = HUGE(1.0_num)
+      species_list(ispecies)%initial_conditions%density = 1.0_num
+      species_list(ispecies)%initial_conditions%temp = 0.0_num
+      species_list(ispecies)%initial_conditions%drift = 0.0_num
+      species_list(ispecies)%initial_conditions%density_min = EPSILON(1.0_num)
+      species_list(ispecies)%initial_conditions%density_max = HUGE(1.0_num)
+      species_list(ispecies)%initial_conditions%density_back = 0.0_num
+      species_list(ispecies)%initial_conditions%temp_back = 0.0_num
+      species_list(ispecies)%initial_conditions%drift_back = 0.0_num
     ENDDO
 
   END SUBROUTINE allocate_ic
@@ -140,11 +152,10 @@ CONTAINS
     INTEGER :: ispecies
 
     DO ispecies = 1, n_species
-      DEALLOCATE(initial_conditions(ispecies)%density)
-      DEALLOCATE(initial_conditions(ispecies)%temp)
-      DEALLOCATE(initial_conditions(ispecies)%drift)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%density)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%temp)
+      DEALLOCATE(species_list(ispecies)%initial_conditions%drift)
     ENDDO
-    IF (.NOT. move_window) DEALLOCATE(initial_conditions)
 
   END SUBROUTINE deallocate_ic
 
@@ -154,7 +165,7 @@ CONTAINS
   SUBROUTINE non_uniform_load_particles(density, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(INOUT) :: density
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: density
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(INOUT) :: density_min, density_max
     INTEGER(i8) :: num_valid_cells_local, num_valid_cells_global
@@ -172,9 +183,9 @@ CONTAINS
     num_valid_cells_local = 0
     density_total = 0.0_num
 
-    DO iz = -2, nz+3
-    DO iy = -2, ny+3
-    DO ix = -2, nx+3
+    DO iz = 1-ng, nz+ng
+    DO iy = 1-ng, ny+ng
+    DO ix = 1-ng, nx+ng
       IF (density(ix,iy,iz) > density_max) density(ix,iy,iz) = density_max
     ENDDO ! ix
     ENDDO ! iy
@@ -238,6 +249,11 @@ CONTAINS
         current%charge = species%charge
         current%mass = species%mass
 #endif
+#ifdef DELTAF_METHOD
+        ! Store the number of particles per cell to allow calculation
+        ! of phase space volume later
+        current%pvol = npart_per_cell
+#endif
         current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
         current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
         current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
@@ -285,7 +301,7 @@ CONTAINS
   SUBROUTINE load_particles(species, load_list)
 
     TYPE(particle_species), POINTER :: species
-    LOGICAL, DIMENSION(-2:,-2:,-2:), INTENT(IN) :: load_list
+    LOGICAL, DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: load_list
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: valid_cell_list
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
@@ -431,6 +447,11 @@ CONTAINS
           current%charge = species%charge
           current%mass = species%mass
 #endif
+#ifdef DELTAF_METHOD
+          ! Store the number of particles per cell to allow calculation
+          ! of phase space volume later
+          current%pvol = npart_per_cell
+#endif
           current%part_pos(1) = x(ix) + (random() - 0.5_num) * dx
           current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
           current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
@@ -524,12 +545,15 @@ CONTAINS
   SUBROUTINE setup_particle_density(density_in, species, density_min, &
       density_max)
 
-    REAL(num), DIMENSION(-2:,-2:,-2:), INTENT(IN) :: density_in
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:,:,:), ALLOCATABLE :: npart_in_cell
+#ifdef PARTICLE_SHAPE_TOPHAT
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: rpart_in_cell
+#endif
     REAL(num) :: wdata
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
@@ -537,16 +561,16 @@ CONTAINS
     LOGICAL, DIMENSION(:,:,:), ALLOCATABLE :: density_map
 #include "particle_head.inc"
 
-    ALLOCATE(density(-2:nx+3,-2:ny+3,-2:nz+3))
-    ALLOCATE(density_map(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(density(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(density_map(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     density = density_in
     density_map = .FALSE.
 
     CALL field_bc(density, ng)
 
-    DO iz = -2, nz+3
-    DO iy = -2, ny+3
-    DO ix = -2, nx+3
+    DO iz = 1-ng, nz+ng
+    DO iy = 1-ng, ny+ng
+    DO ix = 1-ng, nx+ng
       IF (density(ix,iy,iz) > density_max) density(ix,iy,iz) = density_max
       IF (density(ix,iy,iz) >= density_min) THEN
         density_map(ix,iy,iz) = .TRUE.
@@ -560,7 +584,7 @@ CONTAINS
     ! Uniformly load particles in space
     CALL load_particles(species, density_map)
 
-    ALLOCATE(npart_in_cell(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(npart_in_cell(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     npart_in_cell = 0
 
     partlist => species%attached_list
@@ -631,6 +655,18 @@ CONTAINS
 
     wdata = dx * dy * dz
 
+#ifdef PARTICLE_SHAPE_TOPHAT
+    ! For the TOPHAT shape function, particles can be located on a
+    ! neighbouring process
+    ALLOCATE(rpart_in_cell(-2:nx+3,-2:ny+3,-2:nz+3))
+
+    rpart_in_cell = npart_in_cell
+    CALL processor_summation_bcs(rpart_in_cell, ng)
+    npart_in_cell = rpart_in_cell
+
+    DEALLOCATE(rpart_in_cell)
+#endif
+
     partlist => species%attached_list
     ! Second loop renormalises particle weights
     current => partlist%head
@@ -697,5 +733,184 @@ CONTAINS
     DEALLOCATE(cdf)
 
   END FUNCTION sample_dist_function
+
+
+
+  SUBROUTINE custom_particle_load
+
+    LOGICAL :: file_inconsistencies
+    INTEGER :: current_loader_num
+    INTEGER :: part_count, read_count
+    CHARACTER(LEN=string_length) :: stra
+    REAL(num), DIMENSION(:), POINTER :: xbuf, ybuf, zbuf
+    REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+    REAL(num), DIMENSION(:), POINTER :: wbuf
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
+    INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
+    INTEGER :: id_offset
+    INTEGER, DIMENSION(:), POINTER :: part_counts
+#endif
+    TYPE(particle_species), POINTER :: species
+    TYPE(custom_particle_loader), POINTER :: curr_loader
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: new_particle
+
+    ! Only needed if there are custom loaders to act on
+    IF (n_custom_loaders < 1) RETURN
+
+    ! For every custom loader
+    DO current_loader_num = 1, n_custom_loaders
+      file_inconsistencies = .FALSE.
+
+      curr_loader => custom_loaders_list(current_loader_num)
+
+      ! Grab associated particle lists
+      species => species_list(curr_loader%species_id)
+      partlist => species%attached_list
+
+      ! Just to be sure
+      CALL destroy_partlist(partlist)
+      CALL create_empty_partlist(partlist)
+
+      ! MPI read files
+      part_count = load_1d_real_array(curr_loader%x_data, xbuf, &
+          curr_loader%x_data_offset, errcode)
+
+      read_count = load_1d_real_array(curr_loader%y_data, ybuf, &
+          curr_loader%y_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+
+      read_count = load_1d_real_array(curr_loader%z_data, zbuf, &
+          curr_loader%z_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+      read_count = load_1d_real_array(curr_loader%w_data, wbuf, &
+          curr_loader%w_data_offset, errcode)
+      IF (part_count /= read_count) file_inconsistencies = .TRUE.
+#endif
+      IF (curr_loader%px_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%px_data, pxbuf, &
+            curr_loader%px_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+      IF (curr_loader%py_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%py_data, pybuf, &
+            curr_loader%py_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+      IF (curr_loader%pz_data_given) THEN
+        read_count = load_1d_real_array(curr_loader%pz_data, pzbuf, &
+            curr_loader%pz_data_offset, errcode)
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      IF (curr_loader%id_data_given) THEN
+        IF (curr_loader%id_data_4byte) THEN
+          read_count = load_1d_integer4_array(curr_loader%id_data, idbuf4, &
+              curr_loader%id_data_offset, errcode)
+        ELSE
+          read_count = load_1d_integer8_array(curr_loader%id_data, idbuf8, &
+              curr_loader%id_data_offset, errcode)
+        ENDIF
+        IF (part_count /= read_count) file_inconsistencies = .TRUE.
+      ENDIF
+#endif
+
+      CALL MPI_ALLREDUCE(MPI_IN_PLACE, file_inconsistencies, 1, MPI_LOGICAL, &
+          MPI_LOR, comm, errcode)
+
+      IF (file_inconsistencies) THEN
+        IF (rank == 0) THEN
+          WRITE(*,*) '*** ERROR ***'
+          WRITE(*,*) 'Error while loading particles_from_file for species ', &
+              TRIM(species%name)
+        ENDIF
+        CALL abort_code(c_err_bad_setup)
+      ENDIF
+
+! This is needed to get the IDs assigned properly
+#if defined(PARTICLEID) || defined(PARTICLE_ID4)
+      IF (.NOT.curr_loader%id_data_given) THEN
+        ALLOCATE(part_counts(0:nproc-1))
+        CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
+            MPI_INTEGER4, comm)
+        id_offset = 0
+        i = 0
+        DO WHILE (i < rank)
+          id_offset = id_offset + part_counts(i)
+        ENDDO
+      ENDIF
+#endif
+
+      DO read_count = 1, part_count
+        CALL create_particle(new_particle)
+        CALL add_particle_to_partlist(partlist, new_particle)
+
+        ! Insert data to particle
+        new_particle%part_pos(1) = xbuf(read_count)
+        new_particle%part_pos(2) = ybuf(read_count)
+        new_particle%part_pos(3) = zbuf(read_count)
+        new_particle%weight = wbuf(read_count)
+        IF (curr_loader%px_data_given) THEN
+          new_particle%part_p(1) = pxbuf(read_count)
+        ENDIF
+        IF (curr_loader%py_data_given) THEN
+          new_particle%part_p(2) = pybuf(read_count)
+        ENDIF
+        IF (curr_loader%pz_data_given) THEN
+          new_particle%part_p(3) = pzbuf(read_count)
+        ENDIF
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+        IF (curr_loader%id_data_given) THEN
+#if defined(PARTICLE_ID4)
+          IF (curr_loader%id_data_4byte) THEN
+            new_particle%id = idbuf4(read_count)
+          ELSE
+            new_particle%id = INT(idbuf8(read_count), i4)
+          ENDIF
+#else
+          IF (curr_loader%id_data_4byte) THEN
+            new_particle%id = INT(idbuf4(read_count), i8)
+          ELSE
+            new_particle%id = idbuf8(read_count)
+          ENDIF
+#endif
+        ELSE
+#if defined(PARTICLE_ID4)
+          new_particle%id = INT(id_offset + read_count, i4)
+#else
+          new_particle%id = INT(id_offset + read_count, i8)
+#endif
+        ENDIF
+#endif
+        ! Just being careful
+        NULLIFY(new_particle)
+      ENDDO
+
+      ! Need to keep totals accurate
+      CALL MPI_ALLREDUCE(partlist%count, species%count, 1, MPI_INTEGER8, &
+          MPI_SUM, comm, errcode)
+
+      IF (rank == 0) THEN
+        CALL integer_as_string(species%count, stra)
+        WRITE(*,*) 'Inserted ', TRIM(stra), &
+            ' custom particles of species "', TRIM(species%name), '"'
+#ifndef NO_IO
+        WRITE(stat_unit,*) 'Inserted ', TRIM(stra), &
+            ' custom particles of species "', TRIM(species%name), '"'
+#endif
+      ENDIF
+    ENDDO
+
+    CALL distribute_particles
+
+  END SUBROUTINE custom_particle_load
 
 END MODULE helper

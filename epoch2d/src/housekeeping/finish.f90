@@ -80,7 +80,6 @@ CONTAINS
 
     DEALLOCATE(io_block_list, STAT=stat)
     DEALLOCATE(io_list_data, STAT=stat)
-    DEALLOCATE(initial_conditions, STAT=stat)
     DEALLOCATE(file_prefixes, STAT=stat)
     DEALLOCATE(file_numbers, STAT=stat)
 

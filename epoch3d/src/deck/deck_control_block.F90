@@ -32,6 +32,10 @@ MODULE deck_control_block
 
   INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
+  ! 3rd alias for ionisation
+  CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
+  INTEGER, PARAMETER :: ionisation_index = 25
+
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                       ', &
@@ -191,6 +195,9 @@ CONTAINS
       timer_collect = .TRUE.
     ENDIF
 
+    ! use_balance only if threshold is positive
+    IF (dlb_threshold > 0) use_balance = .TRUE.
+
   END SUBROUTINE control_deck_finalise
 
 
@@ -230,6 +237,11 @@ CONTAINS
         EXIT
       ENDIF
     ENDDO
+
+    ! Adds 3rd alias just for ionisation s vs z issue
+    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
+      elementselected = ionisation_index
+    ENDIF
 
     IF (elementselected == 0) RETURN
 
@@ -276,7 +288,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -378,7 +389,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, iu
+    INTEGER :: errcode, idx, io, iu
 
     errcode = c_err_none
 
@@ -394,15 +405,15 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    DO index = 1, control_block_elements
-      IF (.NOT. control_block_done(index)) THEN
+    DO idx = 1, control_block_elements
+      IF (.NOT. control_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
+                TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
@@ -436,7 +447,6 @@ CONTAINS
       ENDIF
       errcode = c_err_terminate
     ENDIF
-
 
   END FUNCTION control_block_check
 

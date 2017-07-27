@@ -46,6 +46,7 @@ CONTAINS
   END SUBROUTINE set_field_order
 
 
+
   SUBROUTINE set_maxwell_solver
 
     REAL(num) :: dx_cdt
@@ -61,7 +62,8 @@ CONTAINS
       alphax = 1.0_num - 3.0_num * deltax
     ENDIF
 
-  ENDSUBROUTINE set_maxwell_solver
+  END SUBROUTINE set_maxwell_solver
+
 
 
   SUBROUTINE update_e_field

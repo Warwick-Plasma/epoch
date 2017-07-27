@@ -40,7 +40,7 @@ MODULE setup
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #ifndef NO_IO
-  CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
+  CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
 
 CONTAINS
@@ -162,7 +162,7 @@ CONTAINS
     x_grid_max = x_grid_max - dx / 2.0_num
 
     ! Setup global grid
-    DO ix = -2, nx_global + 3
+    DO ix = 1-ng, nx_global + ng
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
@@ -180,9 +180,9 @@ CONTAINS
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
     ! Setup local grid
-    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
 
-    xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
   END SUBROUTINE setup_grid
 
@@ -255,10 +255,10 @@ CONTAINS
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
-          ALLOCATE(avg%r4array(-2:nx+3, nspec_local))
+          ALLOCATE(avg%r4array(1-ng:nx+ng, nspec_local))
           avg%r4array = 0.0_num
         ELSE
-          ALLOCATE(avg%array(-2:nx+3, nspec_local))
+          ALLOCATE(avg%array(1-ng:nx+ng, nspec_local))
           avg%array = 0.0_num
         ENDIF
 
@@ -477,7 +477,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix
-    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
 
     IF (ic_from_restart) RETURN
 
@@ -490,13 +490,28 @@ CONTAINS
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        DO ix = 1, nx
-          omega2 = fac1 * initial_conditions(ispecies)%density(ix) &
-              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,:))
-          IF (omega2 <= c_tiny) CYCLE
-          omega = SQRT(omega2)
-          IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-        ENDDO ! ix
+        IF (species_list(ispecies)%initial_conditions%density_max > 0) THEN
+          DO ix = 1, nx
+            clipped_dens = MIN(&
+                species_list(ispecies)%initial_conditions%density(ix), &
+                species_list(ispecies)%initial_conditions%density_max)
+            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(&
+                species_list(ispecies)%initial_conditions%temp(ix,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+        ELSE
+          DO ix = 1, nx
+            omega2 = fac1 &
+                * species_list(ispecies)%initial_conditions%density(ix) &
+                + fac2 * MAXVAL(&
+                species_list(ispecies)%initial_conditions%temp(ix,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+        ENDIF
       ENDIF
     ENDDO
 
@@ -521,11 +536,11 @@ CONTAINS
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
       dt = cfl * dx / c
-    ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
+
     ENDIF
 
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
@@ -549,16 +564,16 @@ CONTAINS
 
     IF (maxwell_solver /= c_maxwell_solver_yee .AND. dt < dt_solver) THEN
       IF (rank == 0) THEN
-        PRINT*,'*** WARNING ***'
-        PRINT*,'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
-        PRINT*,'time step given by CFL condition, making steps shorter than intended.'
-        PRINT*,'This may have an adverse effect on dispersion properties!'
-        PRINT*,'Increase grid resolution to fix this.'
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
+        PRINT*, 'time step given by CFL condition, making steps shorter ', &
+            'than intended.'
+        PRINT*, 'This may have an adverse effect on dispersion properties!'
+        PRINT*, 'Increase grid resolution to fix this.'
       ENDIF
     ENDIF
 
     dt = dt_multiplier * dt
-
 
     IF (.NOT. any_average) RETURN
 
@@ -571,10 +586,10 @@ CONTAINS
       IF (io_block_list(io)%dt_min_average > 0 &
           .AND. io_block_list(io)%dt_min_average < dt) THEN
         IF (rank == 0) THEN
-          PRINT*,'*** WARNING ***'
-          PRINT*,'Time step is too small to satisfy "nstep_average"'
-          PRINT*,'Averaging will occur over fewer time steps than specified'
-          PRINT*,'Set "dt_multiplier" less than ', &
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Time step is too small to satisfy "nstep_average"'
+          PRINT*, 'Averaging will occur over fewer time steps than specified'
+          PRINT*, 'Set "dt_multiplier" less than ', &
               dt_multiplier * io_block_list(io)%dt_min_average / dt, &
               ' to fix this'
         ENDIF
@@ -924,6 +939,12 @@ CONTAINS
             CALL sdf_read_srl(sdf_handle, file_numbers)
           ENDIF
         ENDIF
+
+        CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
+            block_id, ndims, 'laser_x_min_phase', 'x_min')
+        CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
+            block_id, ndims, 'laser_x_max_phase', 'x_max')
+
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1173,6 +1194,40 @@ CONTAINS
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE read_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
+      block_id_in, ndims, block_id_compare, direction_name)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    INTEGER, INTENT(IN) :: laser_count
+    TYPE(laser_block), POINTER :: laser_base_pointer
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
+    CHARACTER(LEN=*), INTENT(IN) :: direction_name
+    REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
+    INTEGER, DIMENSION(4) :: dims
+
+    IF (str_cmp(block_id_in, block_id_compare)) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      IF (ndims /= 1 .OR. dims(1) /= laser_count) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of laser phases on ', TRIM(direction_name), &
+            ' does not match number of lasers.'
+        PRINT*, 'Lasers will be populated in order, but correct operation ', &
+            'is not guaranteed'
+      ENDIF
+
+      ALLOCATE(laser_phases(dims(1)))
+      CALL sdf_read_srl(sdf_handle, laser_phases)
+      CALL setup_laser_phases(laser_base_pointer, laser_phases)
+      DEALLOCATE(laser_phases)
+    ENDIF
+
+  END SUBROUTINE read_laser_phases
 
 
 

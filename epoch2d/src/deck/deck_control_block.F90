@@ -32,6 +32,10 @@ MODULE deck_control_block
 
   INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
+  ! 3rd alias for ionisation
+  CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
+  INTEGER, PARAMETER :: ionisation_index = 21
+
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                       ', &
@@ -158,10 +162,6 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
-      fng = 2
-    ENDIF
-
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) == '') THEN
         WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
@@ -174,6 +174,10 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
+    ENDIF
+
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
     IF (deck_state == c_ds_first) RETURN
@@ -182,6 +186,9 @@ CONTAINS
       check_walltime = .TRUE.
       timer_collect = .TRUE.
     ENDIF
+
+    ! use_balance only if threshold is positive
+    IF (dlb_threshold > 0) use_balance = .TRUE.
 
   END SUBROUTINE control_deck_finalise
 
@@ -223,6 +230,11 @@ CONTAINS
       ENDIF
     ENDDO
 
+    ! Adds 3rd alias just for ionisation s vs z issue
+    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
+      elementselected = ionisation_index
+    ENDIF
+
     IF (elementselected == 0) RETURN
 
     IF (control_block_done(elementselected)) THEN
@@ -260,7 +272,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -362,7 +373,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, iu
+    INTEGER :: errcode, idx, io, iu
 
     errcode = c_err_none
 
@@ -378,15 +389,15 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    DO index = 1, control_block_elements
-      IF (.NOT. control_block_done(index)) THEN
+    DO idx = 1, control_block_elements
+      IF (.NOT. control_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
+                TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
@@ -422,16 +433,7 @@ CONTAINS
     ENDIF
 
     IF (field_order == 2 .AND. maxwell_solver == c_maxwell_solver_cowan) THEN
-      IF (rank == 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*)
-          WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'In 2D "maxwell_solver = cowan" is not supported.', &
-              ' Falling back to "maxwell_solver = pukhov."'
-        ENDDO
-      ENDIF
-      maxwell_solver = c_maxwell_solver_pukhov
+      maxwell_solver = c_maxwell_solver_yee
     ENDIF
 
   END FUNCTION control_block_check

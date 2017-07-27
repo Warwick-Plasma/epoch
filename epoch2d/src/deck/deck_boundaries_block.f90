@@ -190,29 +190,29 @@ CONTAINS
   FUNCTION boundary_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-    INTEGER :: index, io, iu
+    INTEGER :: idx, io, iu
     INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
 
     errcode = c_err_none
 
-    DO index = 1, nbase
-      IF (.NOT.boundary_block_done(index+nbase) &
-          .AND. .NOT.boundary_block_done(index+2*nbase)) THEN
-        boundary_block_done(index+  nbase) = .TRUE.
-        boundary_block_done(index+2*nbase) = .TRUE.
+    DO idx = 1, nbase
+      IF (.NOT.boundary_block_done(idx+nbase) &
+          .AND. .NOT.boundary_block_done(idx+2*nbase)) THEN
+        boundary_block_done(idx+  nbase) = .TRUE.
+        boundary_block_done(idx+2*nbase) = .TRUE.
       ENDIF
     ENDDO
 
-    DO index = 1, boundary_block_elements - 4
-      IF (.NOT. boundary_block_done(index)) THEN
+    DO idx = 1, boundary_block_elements - 4
+      IF (.NOT. boundary_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required boundary block element "' &
-                // TRIM(ADJUSTL(boundary_block_name(index))) // '" absent.'
+                // TRIM(ADJUSTL(boundary_block_name(idx))) // '" absent.'
             WRITE(io,*) 'Please create this entry in the input deck'
           ENDDO
         ENDIF
@@ -222,15 +222,15 @@ CONTAINS
 
     ! Sanity check on periodic boundaries
     error = .FALSE.
-    DO index = 1, c_ndims
-      IF (bc_field(2*index-1) == c_bc_periodic &
-          .AND. bc_field(2*index) /= c_bc_periodic) error = .TRUE.
-      IF (bc_field(2*index-1) /= c_bc_periodic &
-          .AND. bc_field(2*index) == c_bc_periodic) error = .TRUE.
-      IF (bc_particle(2*index-1) == c_bc_periodic &
-          .AND. bc_particle(2*index) /= c_bc_periodic) error = .TRUE.
-      IF (bc_particle(2*index-1) /= c_bc_periodic &
-          .AND. bc_particle(2*index) == c_bc_periodic) error = .TRUE.
+    DO idx = 1, c_ndims
+      IF (bc_field(2*idx-1) == c_bc_periodic &
+          .AND. bc_field(2*idx) /= c_bc_periodic) error = .TRUE.
+      IF (bc_field(2*idx-1) /= c_bc_periodic &
+          .AND. bc_field(2*idx) == c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*idx-1) == c_bc_periodic &
+          .AND. bc_particle(2*idx) /= c_bc_periodic) error = .TRUE.
+      IF (bc_particle(2*idx-1) /= c_bc_periodic &
+          .AND. bc_particle(2*idx) == c_bc_periodic) error = .TRUE.
     ENDDO
 
     IF (error) THEN

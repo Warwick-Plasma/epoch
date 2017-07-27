@@ -26,25 +26,25 @@ MODULE shunt
 
 CONTAINS
 
-  FUNCTION char_type(char)
+  FUNCTION char_type(chr)
 
-    CHARACTER, INTENT(IN) :: char
+    CHARACTER, INTENT(IN) :: chr
     INTEGER :: char_type
 
     char_type = c_char_unknown
 
-    IF (char == ' ') THEN
+    IF (chr == ' ') THEN
       char_type = c_char_space
-    ELSEIF (char >= '0' .AND. char <= '9' .OR. char == '.') THEN
+    ELSEIF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       char_type = c_char_numeric
-    ELSEIF ((char >= 'A' .AND. char <= 'Z') &
-        .OR. (char >= 'a' .AND. char <= 'z') .OR. char == '_') THEN
+    ELSEIF ((chr >= 'A' .AND. chr <= 'Z') &
+        .OR. (chr >= 'a' .AND. chr <= 'z') .OR. chr == '_') THEN
       char_type = c_char_alpha
-    ELSEIF (char == '(' .OR. char == ')' .OR. char == ',') THEN
+    ELSEIF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
       char_type = c_char_delimiter
     ! 92 is the ASCII code for backslash
-    ELSEIF (char == '+' .OR. char == '-' .OR. ICHAR(char) == 92 &
-        .OR. char == '/' .OR. char == '*' .OR. char == '^') THEN
+    ELSEIF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
+        .OR. chr == '/' .OR. chr == '*' .OR. chr == '^') THEN
       char_type = c_char_opcode
     ENDIF
 
@@ -52,102 +52,102 @@ CONTAINS
 
 
 
-  SUBROUTINE load_block(name, block)
+  SUBROUTINE load_block(name, iblock)
 
     CHARACTER(LEN=*), INTENT(IN) :: name
-    TYPE(stack_element), INTENT(OUT) :: block
+    TYPE(stack_element), INTENT(OUT) :: iblock
     INTEGER :: work
     REAL(num) :: value
 
-    block%ptype = c_pt_bad
-    block%value = 0
-    block%numerical_data = 0.0_num
+    iblock%ptype = c_pt_bad
+    iblock%value = 0
+    iblock%numerical_data = 0.0_num
     work = 0
 
     IF (LEN(TRIM(name)) == 0) THEN
-      block%ptype = c_pt_null
-      block%value = 0
-      block%numerical_data = 0.0_num
+      iblock%ptype = c_pt_null
+      iblock%value = 0
+      iblock%numerical_data = 0.0_num
       RETURN
     ENDIF
 
     work = as_constant(name)
     IF (work /= 0) THEN
       ! block is a named constant
-      block%ptype = c_pt_constant
-      block%value = work
+      iblock%ptype = c_pt_constant
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_deck_constant(name)
     IF (work /= 0) THEN
       ! block is a deck constant
-      block%ptype = c_pt_deck_constant
-      block%value = work
+      iblock%ptype = c_pt_deck_constant
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_default_constant(name)
     IF (work /= 0) THEN
       ! block is a named constant
-      block%ptype = c_pt_default_constant
-      block%value = work
+      iblock%ptype = c_pt_default_constant
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_operator(name)
     IF (work /= 0) THEN
       ! block is an operator
-      block%ptype = c_pt_operator
-      block%value = work
+      iblock%ptype = c_pt_operator
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_function(name)
     IF (work /= 0) THEN
       ! block is a function
-      block%ptype = c_pt_function
-      block%value = work
+      iblock%ptype = c_pt_function
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_parenthesis(name)
     IF (work /= 0) THEN
       ! block is a parenthesis
-      block%ptype = c_pt_parenthesis
-      block%value = work
+      iblock%ptype = c_pt_parenthesis
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_species(name)
     IF (work /= 0) THEN
       ! block is a species name
-      block%ptype = c_pt_species
-      block%value = work
+      iblock%ptype = c_pt_species
+      iblock%value = work
       RETURN
     ENDIF
 
     work = as_subset(name)
     IF (work /= 0) THEN
       ! block is a subset name
-      block%ptype = c_pt_subset
-      block%value = work
+      iblock%ptype = c_pt_subset
+      iblock%value = work
       RETURN
     ENDIF
 
     IF (str_cmp(name, ',')) THEN
-      block%ptype = c_pt_separator
-      block%value = 0
-      block%numerical_data = 0.0_num
+      iblock%ptype = c_pt_separator
+      iblock%value = 0
+      iblock%numerical_data = 0.0_num
       RETURN
     ENDIF
 
     value = as_real_simple(name, work)
     IF (IAND(work, c_err_bad_value) == 0) THEN
       ! block is a simple variable
-      block%ptype = c_pt_variable
-      block%value = 0
-      block%numerical_data = value
+      iblock%ptype = c_pt_variable
+      iblock%value = 0
+      iblock%numerical_data = value
     ENDIF
 
   END SUBROUTINE load_block
@@ -377,7 +377,7 @@ CONTAINS
     INTEGER :: current_type, current_pointer, i, ptype
 
     TYPE(primitive_stack) :: stack
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     CALL initialise_stack(stack)
 
@@ -402,9 +402,9 @@ CONTAINS
         current_pointer = current_pointer+1
       ELSE
 #ifndef RPN_DECK
-        CALL tokenize_subexpression_infix(current, block, stack, output, err)
+        CALL tokenize_subexpression_infix(current, iblock, stack, output, err)
 #else
-        CALL tokenize_subexpression_rpn(current, block, stack, output, err)
+        CALL tokenize_subexpression_rpn(current, iblock, stack, output, err)
 #endif
         IF (err /= c_err_none) RETURN
         current(:) = ' '
@@ -415,9 +415,9 @@ CONTAINS
     ENDDO
 
 #ifndef RPN_DECK
-    CALL tokenize_subexpression_infix(current, block, stack, output, err)
+    CALL tokenize_subexpression_infix(current, iblock, stack, output, err)
 #else
-    CALL tokenize_subexpression_rpn(current, block, stack, output, err)
+    CALL tokenize_subexpression_rpn(current, iblock, stack, output, err)
 #endif
     IF (err /= c_err_none) RETURN
 
@@ -443,13 +443,13 @@ CONTAINS
 
 
 
-  SUBROUTINE tokenize_subexpression_infix(current, block, stack, output, err)
+  SUBROUTINE tokenize_subexpression_infix(current, iblock, stack, output, err)
 
     ! This subroutine tokenizes input in normal infix maths notation
     ! It uses Dijkstra's shunting yard algorithm to convert to RPN
 
     CHARACTER(LEN=*), INTENT(IN) :: current
-    TYPE(stack_element), INTENT(INOUT) :: block
+    TYPE(stack_element), INTENT(INOUT) :: iblock
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
@@ -459,11 +459,11 @@ CONTAINS
     IF (ICHAR(current(1:1)) == 0) RETURN
 
     ! Populate the block
-    CALL load_block(current, block)
+    CALL load_block(current, iblock)
 #ifdef PARSER_DEBUG
-    block%text = TRIM(current)
+    iblock%text = TRIM(current)
 #endif
-    IF (block%ptype == c_pt_bad) THEN
+    IF (iblock%ptype == c_pt_bad) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -479,29 +479,29 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (block%ptype == c_pt_deck_constant) THEN
-      const = deck_constant_list(block%value)
+    IF (iblock%ptype == c_pt_deck_constant) THEN
+      const = deck_constant_list(iblock%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
       ENDDO
     ENDIF
 
-    IF (block%ptype /= c_pt_parenthesis &
-        .AND. block%ptype /= c_pt_null) THEN
-      last_block_type = block%ptype
+    IF (iblock%ptype /= c_pt_parenthesis &
+        .AND. iblock%ptype /= c_pt_null) THEN
+      last_block_type = iblock%ptype
     ENDIF
 
-    IF (block%ptype == c_pt_variable &
-        .OR. block%ptype == c_pt_constant &
-        .OR. block%ptype == c_pt_default_constant &
-        .OR. block%ptype == c_pt_species &
-        .OR. block%ptype == c_pt_subset) THEN
-      CALL push_to_stack(output, block)
+    IF (iblock%ptype == c_pt_variable &
+        .OR. iblock%ptype == c_pt_constant &
+        .OR. iblock%ptype == c_pt_default_constant &
+        .OR. iblock%ptype == c_pt_species &
+        .OR. iblock%ptype == c_pt_subset) THEN
+      CALL push_to_stack(output, iblock)
     ENDIF
 
-    IF (block%ptype == c_pt_parenthesis) THEN
-      IF (block%value == c_paren_left_bracket) THEN
-        CALL push_to_stack(stack, block)
+    IF (iblock%ptype == c_pt_parenthesis) THEN
+      IF (iblock%value == c_paren_left_bracket) THEN
+        CALL push_to_stack(stack, iblock)
       ELSE
         DO
           CALL stack_snoop(stack, block2, 0)
@@ -523,12 +523,12 @@ CONTAINS
       ENDIF
     ENDIF
 
-    IF (block%ptype == c_pt_function) THEN
+    IF (iblock%ptype == c_pt_function) THEN
       ! Just push functions straight onto the stack
-      CALL push_to_stack(stack, block)
+      CALL push_to_stack(stack, iblock)
     ENDIF
 
-    IF (block%ptype == c_pt_separator) THEN
+    IF (iblock%ptype == c_pt_separator) THEN
       DO
         CALL stack_snoop(stack, block2, 0)
         IF (block2%ptype /= c_pt_parenthesis) THEN
@@ -543,12 +543,12 @@ CONTAINS
       ENDDO
     ENDIF
 
-    IF (block%ptype == c_pt_operator) THEN
+    IF (iblock%ptype == c_pt_operator) THEN
       DO
         IF (stack%stack_point == 0) THEN
           ! stack is empty, so just push operator onto stack and
           ! leave loop
-          CALL push_to_stack(stack, block)
+          CALL push_to_stack(stack, iblock)
           EXIT
         ENDIF
         ! stack is not empty so check precedence etc.
@@ -556,27 +556,27 @@ CONTAINS
         IF (block2%ptype /= c_pt_operator) THEN
           ! Previous block is not an operator so push current operator
           ! to stack and leave loop
-          CALL push_to_stack(stack, block)
+          CALL push_to_stack(stack, iblock)
           EXIT
         ELSE
-          IF (opcode_assoc(block%value) == c_assoc_la &
-              .OR. opcode_assoc(block%value) == c_assoc_a) THEN
+          IF (opcode_assoc(iblock%value) == c_assoc_la &
+              .OR. opcode_assoc(iblock%value) == c_assoc_a) THEN
             ! Operator is full associative or left associative
-            IF (opcode_precedence(block%value) &
+            IF (opcode_precedence(iblock%value) &
                 <= opcode_precedence(block2%value)) THEN
               CALL pop_to_stack(stack, output)
               CYCLE
             ELSE
-              CALL push_to_stack(stack, block)
+              CALL push_to_stack(stack, iblock)
               EXIT
             ENDIF
           ELSE
-            IF (opcode_precedence(block%value) &
+            IF (opcode_precedence(iblock%value) &
                 < opcode_precedence(block2%value)) THEN
               CALL pop_to_stack(stack, output)
               CYCLE
             ELSE
-              CALL push_to_stack(stack, block)
+              CALL push_to_stack(stack, iblock)
               EXIT
             ENDIF
           ENDIF
@@ -588,12 +588,12 @@ CONTAINS
 
 
 
-  SUBROUTINE tokenize_subexpression_rpn(current, block, stack, output, err)
+  SUBROUTINE tokenize_subexpression_rpn(current, iblock, stack, output, err)
 
     ! This routine tokenizes input which is already in Reverse Polish Notiation
 
     CHARACTER(LEN=*), INTENT(IN) :: current
-    TYPE(stack_element), INTENT(INOUT) :: block
+    TYPE(stack_element), INTENT(INOUT) :: iblock
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     INTEGER, INTENT(INOUT) :: err
     TYPE(deck_constant) :: const
@@ -602,12 +602,12 @@ CONTAINS
     IF (ICHAR(current(1:1)) == 0) RETURN
 
     ! Populate the block
-    CALL load_block(current, block)
+    CALL load_block(current, iblock)
 #ifdef PARSER_DEBUG
-    block%text = TRIM(current)
-    PRINT *, block%ptype, TRIM(current)
+    iblock%text = TRIM(current)
+    PRINT *, iblock%ptype, TRIM(current)
 #endif
-    IF (block%ptype == c_pt_bad) THEN
+    IF (iblock%ptype == c_pt_bad) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*)
@@ -620,19 +620,19 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (block%ptype /= c_pt_parenthesis &
-        .AND. block%ptype /= c_pt_null) THEN
-      last_block_type = block%ptype
-      IF (debug_mode) PRINT *, 'Setting', block%ptype, TRIM(current)
+    IF (iblock%ptype /= c_pt_parenthesis &
+        .AND. iblock%ptype /= c_pt_null) THEN
+      last_block_type = iblock%ptype
+      IF (debug_mode) PRINT *, 'Setting', iblock%ptype, TRIM(current)
     ENDIF
 
-    IF (block%ptype == c_pt_deck_constant) THEN
-      const = deck_constant_list(block%value)
+    IF (iblock%ptype == c_pt_deck_constant) THEN
+      const = deck_constant_list(iblock%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
       ENDDO
-    ELSE IF (block%ptype /= c_pt_null) THEN
-      CALL push_to_stack(output, block)
+    ELSE IF (iblock%ptype /= c_pt_null) THEN
+      CALL push_to_stack(output, iblock)
     ENDIF
 
   END SUBROUTINE tokenize_subexpression_rpn
@@ -644,11 +644,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: opcode
     TYPE(primitive_stack), INTENT(INOUT) :: stack, output
     TYPE(primitive_stack) :: func_stack
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
     INTEGER :: id, i, err
 
-    CALL stack_snoop(output, block, 0)
-    id = block%value
+    CALL stack_snoop(output, iblock, 0)
+    id = iblock%value
     func_stack%stack_point = 0
 
     IF (opcode == c_func_rho) THEN
@@ -728,27 +728,31 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER :: i, err, ierr
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
+    TYPE(parameter_pack) :: parameters
+
+    parameters%pack_ix = 1
+    parameters%pack_iy = 1
 
     CALL eval_reset()
 
     DO i = 1, input_stack%stack_point
       err = c_err_none
-      block = input_stack%entries(i)
-      IF (block%ptype == c_pt_variable) THEN
-        CALL push_on_eval(block%numerical_data)
-      ELSE IF (block%ptype == c_pt_species) THEN
-        CALL do_species(block%value, err)
-      ELSE IF (block%ptype == c_pt_operator) THEN
-        CALL do_operator(block%value, err)
-      ELSE IF (block%ptype == c_pt_constant &
-          .OR. block%ptype == c_pt_default_constant) THEN
-        CALL do_constant(block%value, .FALSE., 1, 1, err)
-      ELSE IF (block%ptype == c_pt_function) THEN
-        IF (block%value == c_func_interpolate) THEN
-          CALL do_sanity_check(block%value, err)
+      iblock = input_stack%entries(i)
+      IF (iblock%ptype == c_pt_variable) THEN
+        CALL push_on_eval(iblock%numerical_data)
+      ELSE IF (iblock%ptype == c_pt_species) THEN
+        CALL do_species(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_operator) THEN
+        CALL do_operator(iblock%value, err)
+      ELSE IF (iblock%ptype == c_pt_constant &
+          .OR. iblock%ptype == c_pt_default_constant) THEN
+        CALL do_constant(iblock%value, .FALSE., parameters, err)
+      ELSE IF (iblock%ptype == c_pt_function) THEN
+        IF (iblock%value == c_func_interpolate) THEN
+          CALL do_sanity_check(iblock%value, err)
         ELSE
-          CALL do_functions(block%value, .FALSE., 1, 1, err)
+          CALL do_functions(iblock%value, .FALSE., parameters, err)
         ENDIF
       ELSE
         ! Not yet implemented. Reset the stack and exit

@@ -43,6 +43,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
@@ -72,6 +75,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
@@ -101,6 +107,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
