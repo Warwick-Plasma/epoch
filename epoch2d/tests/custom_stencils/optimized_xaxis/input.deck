@@ -63,7 +63,7 @@ end:laser
 
 begin:output
   # number of timesteps between output dumps
-  dt_snapshot = 50 * femto
+  dt_snapshot = 25 * femto
 
   # Properties on grid
   grid = always
