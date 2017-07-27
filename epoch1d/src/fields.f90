@@ -62,6 +62,15 @@ CONTAINS
       alphax = 1.0_num - 3.0_num * deltax
     ENDIF
 
+    IF ((rank == 0) .AND. (maxwell_solver .NE. c_maxwell_solver_yee)) THEN
+        PRINT*,''
+        PRINT*,'Maxwell solver set to the following parameters:'
+        PRINT*,'alphax=', alphax
+        PRINT*,'deltax=', deltax
+        PRINT*,'c*dt/dx=', dt * c / dx
+        PRINT*,''
+    ENDIF
+
   END SUBROUTINE set_maxwell_solver
 
 

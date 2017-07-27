@@ -132,6 +132,19 @@ CONTAINS
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy
     ENDIF
 
+    IF ((rank == 0) .AND. (maxwell_solver .NE. c_maxwell_solver_yee)) THEN
+        PRINT*,''
+        PRINT*,'Maxwell solver set to the following parameters:'
+        PRINT*,'alpha=', alphax, alphay, alphaz
+        PRINT*,'betax=', betaxy, betaxz
+        PRINT*,'betay=', betayx, betayz
+        PRINT*,'betaz=', betazx, betazy
+        PRINT*,'gamma=', gammax, gammay, gammaz
+        PRINT*,'delta=', deltax, deltay, deltaz
+        PRINT*,'c*dt/dx=', dt * c / dx
+        PRINT*,''
+    ENDIF
+
   END SUBROUTINE set_maxwell_solver
 
 
