@@ -75,11 +75,20 @@ def plotdump(sdffile, key, ax):
     #vg_yee  = c*(1.0 - (1.0-c*dt/dx)*(k_l*dx/2.0)**2)
     vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
 
+    # calculate_omega.py --dt-multiplier 0.99 --Y 3 --params 0.9082126568805592 0.04075757835916255
+    # -0.04142032920970152 -0.20827814817872584 --physical-dx 1e-7 --laser-wavelength 5e-7
+    # yields vg=1.0490493627815458 c
+    vg_opt = 1.0490493627815458 * c
 
-    # values below extracted from output of optimize_stencil.py using "--write-omega" option
-    vg_opt = 1.049403558017087956e+00 * c
-    #vg_opt_symm = 1.045047840357337332e+00 * c
-    vg_opt_xaxis = 1.019893873344021484e+00 * c
+    # calculate_omega.py --dt-multiplier 0.99 --Y 3 --symmetric  --params 0.8988685682513151
+    # 0.01862292597327679 -0.04155873453935287 --physical-dx 1e-7 --laser-wavelength 5e-7
+    # yields vg=1.044753207834214 c
+    vg_opt_symm = 1.044753207834214 * c
+
+    # calculate_omega.py --dt-multiplier 0.99 --Y 3  --params 0.956632159129662  0.025096871992206993
+    # -0.017744324957063393 -0.0009692545471922645 --physical-dx 1e-7 --laser-wavelength 5e-7
+    # yields vg=1.0197513694119302 c
+    vg_opt_xaxis = 1.0197513694119302 * c
 
 
     x = (x0 + c*(t-t0))*1e6
