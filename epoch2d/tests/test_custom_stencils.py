@@ -149,6 +149,7 @@ class test_custom_stencils(SimTest):
                     ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
 
                 ax.set_title('{:2.1f} fs'.format(t*1e15))
+                ax.set_xlabel('x [µm]')
 
             if solver == 'optimized':
                 title = 'Opt'
