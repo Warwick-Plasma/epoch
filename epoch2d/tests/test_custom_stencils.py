@@ -130,20 +130,23 @@ class test_custom_stencils(SimTest):
                 t = dump['Header']['time']
                 dx = np.asscalar(dump[key].grid_mid.data[0][1] - dump[key].grid_mid.data[0][0])
 
+                vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt[solver]/dx*np.sin(k_l*dx/2.0))**2)
+
                 x = (x0 + c*(t-t0))*1e6
-                x_opt = (x0 + vg['optimized']*(t-t0))*1e6
-                x_opt_xaxis = (x0 + vg['optimized_xaxis']*(t-t0))*1e6
+                x_this = (x0 + vg[solver]*(t-t0))*1e6
                 x_yee = (x0 + vg_yee*(t-t0))*1e6
+                t, x_sim = xt2(dump)
+                x_sim *= 1e6
 
                 if x > 0:
                     ax.plot([x, x], [min(yaxis), 0.9*min(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
                     ax.plot([x, x], [0.9*max(yaxis), max(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
 
-                    ax.plot([x_opt, x_opt], [min(yaxis), 0.9*min(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x_opt, x_opt], [0.9*max(yaxis), max(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_this, x_this], [min(yaxis), 0.9*min(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_this, x_this], [0.9*max(yaxis), max(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
 
-                    ax.plot([x_opt_xaxis, x_opt_xaxis], [min(yaxis), 0.9*min(yaxis)], color='y', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x_opt_xaxis, x_opt_xaxis], [0.9*max(yaxis), max(yaxis)], color='y', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_sim, x_sim], [min(yaxis), 0.9*min(yaxis)], color='w', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_sim, x_sim], [0.9*max(yaxis), max(yaxis)], color='w', linestyle='-', linewidth=2, alpha=0.25)
 
                     ax.plot([x_yee, x_yee], [min(yaxis), 0.9*min(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
                     ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
