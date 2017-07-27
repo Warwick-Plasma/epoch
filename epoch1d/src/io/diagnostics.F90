@@ -1272,6 +1272,10 @@ CONTAINS
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
         i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
+        IF ( i1 < i0) THEN
+          i0 = 1
+          i1 = i0
+        ENDIF
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, &
@@ -1519,6 +1523,10 @@ CONTAINS
         temp_grid_id = 'grid/' // TRIM(sub%name)
 
         i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+        IF ( i1 < i0) THEN
+          i0 = 1
+          i1 = i0
+        ENDIF
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
@@ -1594,6 +1602,10 @@ CONTAINS
           temp_grid_id = 'grid/' // TRIM(sub%name)
 
           i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+          IF ( i1 < i0) THEN
+            i0 = 1
+            i1 = i0
+          ENDIF
 
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
