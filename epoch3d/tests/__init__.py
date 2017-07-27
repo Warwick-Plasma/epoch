@@ -14,7 +14,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-import os, subprocess
+import os
+import subprocess
+
 
 class SimTest(unittest.TestCase):
     '''
@@ -30,7 +32,7 @@ class SimTest(unittest.TestCase):
     def setUpClass(cls):
         # remove 'test_' at the beginning of the class name
         simdir = cls.__name__[5:]
-        #print('Changing to simdir: {}'.format(simdir))
+        # print('Changing to simdir: {}'.format(simdir))
         os.chdir(os.path.join(os.path.dirname(__file__), simdir))
         exitcode = subprocess.call('make', shell=True)
         cls.epochexitcode = exitcode
@@ -40,7 +42,8 @@ class SimTest(unittest.TestCase):
 
     def setUp(self):
         if self.epochexitcode:
-            self.fail('running EPOCH errored (exitcode {:})'.format(self.epochexitcode))
+            self.fail('running EPOCH errored (exitcode {:})'
+                      .format(self.epochexitcode))
 
     @classmethod
     def tearDownClass(cls):
