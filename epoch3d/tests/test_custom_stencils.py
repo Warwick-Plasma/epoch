@@ -139,19 +139,23 @@ class test_custom_stencils(SimTest):
                 t = dump['Header']['time']
                 dx = np.asscalar(dump[key].grid_mid.data[0][1] - dump[key].grid_mid.data[0][0])
 
-                vg_lehe = c*(1.0 + 2.0*(1.0-c*dt_lehe/dx)*(k_l*dx/2.0)**2)
-                vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
+                vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt[solver]/dx*np.sin(k_l*dx/2.0))**2)
 
                 x = (x0 + c*(t-t0))*1e6
-                x_lehe = (x0 + vg_lehe*(t-t0))*1e6
+                x_this = (x0 + vg[solver]*(t-t0))*1e6
                 x_yee = (x0 + vg_yee*(t-t0))*1e6
+                t, x_sim = xt3(dump)
+                x_sim *= 1e6
 
                 if x > 0:
                     ax.plot([x, x], [min(yaxis), 0.9*min(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
                     ax.plot([x, x], [0.9*max(yaxis), max(yaxis)], color='k', linestyle='-', linewidth=2, alpha=0.25)
 
-                    ax.plot([x_lehe, x_lehe], [min(yaxis), 0.9*min(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
-                    ax.plot([x_lehe, x_lehe], [0.9*max(yaxis), max(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_this, x_this], [min(yaxis), 0.9*min(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_this, x_this], [0.9*max(yaxis), max(yaxis)], color='b', linestyle='-', linewidth=2, alpha=0.25)
+
+                    ax.plot([x_sim, x_sim], [min(yaxis), 0.9*min(yaxis)], color='w', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_sim, x_sim], [0.9*max(yaxis), max(yaxis)], color='w', linestyle='-', linewidth=2, alpha=0.25)
 
                     ax.plot([x_yee, x_yee], [min(yaxis), 0.9*min(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
                     ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)], color='r', linestyle='-', linewidth=2, alpha=0.25)
@@ -182,13 +186,12 @@ class test_custom_stencils(SimTest):
             vg_sim = np.polyfit(data[:,0], data[:,1], 1)[0]
 
             # For reference, right here, right now the following line prints
-            # TODO somethings wrong here
-            # optimized 278880245.692 321174454.0417929 0.131686090899
-            # optimized_xaxis 287886421.034 308574011.4909087 0.0670425560353
-            # optimized_xaxis_soft 290992048.805 307468806.63501453 0.0535883883988
+            # optimized 320424292.475 321174454.0417929 0.00233568254622
+            # optimized_xaxis 308261456.168 308574011.4909087 0.00101290229036
+            # optimized_xaxis_soft 307269136.793 307468806.63501453 0.000649398695336
             print(solver, vg_sim, vg[solver], abs(vg_sim-vg[solver])/vg[solver])
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.20) #
+            assert np.isclose(vg_sim, vg[solver], rtol=0.01) #
 
 
 if __name__=='__main__':
