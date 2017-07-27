@@ -113,7 +113,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'deltax')) THEN
-      gammaz = as_real_print(value, element, errcode)
+      deltax = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
