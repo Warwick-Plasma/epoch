@@ -1,4 +1,4 @@
-v4.8.0 to v4.9.0 2017-07-28
+## v4.8.0 to v4.9.0 (2017-07-28)
 
  * Add alternative field solvers for the Maxwell equations.
    The following stencils are implemented lehe: R. Lehe
@@ -95,7 +95,7 @@ Bugfixes:
  * Fixed the VisIt SDF reader build script for VisIt 2.7.{2,3}, 2.12.x
 
 
-v4.7.6 to v4.8.0 2016-04-17
+## v4.7.6 to v4.8.0 (2016-04-17)
 
  * Corrections for various issues in EPOCH's collisions
 
@@ -116,7 +116,7 @@ v4.7.6 to v4.8.0 2016-04-17
  * Stagger grid when evaluating field components (issue #1337)
 
 
-v4.7.0 to v4.7.6 2016-02-12
+## v4.7.0 to v4.7.6 (2016-02-12)
 
  * Fixed typo in check_qed_variable() routine
 
@@ -137,7 +137,7 @@ v4.7.0 to v4.7.6 2016-02-12
  * Moved the Changelog to the top-level directory
 
 
-v4.6.0 to v4.7.0 2015-11-23
+## v4.6.0 to v4.7.0 (2015-11-23)
 
  * Fixed build status URL
 
@@ -253,7 +253,7 @@ v4.6.0 to v4.7.0 2015-11-23
    - Store string properties as unicode for python3
 
 
-v4.5.0 to v4.6.0 2015-09-18
+## v4.5.0 to v4.6.0 (2015-09-18)
 
  * Exit with error if no valid COMPILER specified
 
@@ -358,7 +358,7 @@ v4.5.0 to v4.6.0 2015-09-18
    - Fix some memory leaks.
 
 
-v4.4.2 to v4.5.0 2015-06-19
+## v4.4.2 to v4.5.0 (2015-06-19)
 
  * Fixed COMMIT file generation scripts.
 
@@ -674,7 +674,7 @@ v4.4.2 to v4.5.0 2015-06-19
    - Added error message to build script.
 
 
-10-01-2015 Changes for version 4.4.2
+## v4.3.0 to v4.4.2 (2015-01-10)
 
  * Added data reduction for grid-based variables.
    This change adds the integer parameters "skip_{x,y,z}" and "skip" to the
@@ -885,7 +885,7 @@ Bugfixes:
  * Various small bugfixes and corrections.
 
 
-24-01-2014 Changes for version 4.3
+## v4.2.0 to v4.3.0 (2014-01-21)
 
  * Added 'restart' dumpmask constant.
 
@@ -1602,7 +1602,8 @@ Bugfixes:
 
  * Updated MatLab and IDL readers for new file revision.
 
-24-01-2014 Changes for version 4.2
+
+## v4.1.0 to v4.2.0 (2013-02-23)
 
  * Allow the data directory to contain a '/' character.
 
@@ -1645,7 +1646,8 @@ Bugfixes:
    block. To avoid this problem, we use the untruncated version of the
    string to request the shortened version from the SDF library
 
-24-01-2014 Changes for version 4.1
+
+## v4.0.0 to v4.1.0 (2013-01-24)
 
  * Changed the default for "dump_first" back to "T".
 
@@ -1798,7 +1800,8 @@ Bugfixes:
 
  * Various other minor bugfixes and tweaks
 
-25-07-2012 Changes for version 4.0
+
+## v3.1.0 to v4.0.0 (2012-07-24)
 
 Additions and changes:
 
@@ -2431,7 +2434,8 @@ Bugfixes:
 
  * Various other tidying and bugfixing
 
-23-06-2011 Changes for version 3.1
+
+## v3.0.0 to v3.1.0 (2011-06-23)
 
 Syntax changes:
 
@@ -2564,7 +2568,8 @@ Bugfixes:
 
  * Various other tidying and bugfixing
 
-25-02-2011 Changes for version 3.0
+
+## v2.3.0 to v3.0.0 (2011-02-28)
 
 Syntax changes:
 
@@ -2691,7 +2696,8 @@ Additions and changes:
 
  * Various bugfixes
 
-28-09-2010 Changes for version 2.3
+
+## v2.2.0 to v2.3.0 (2010-09-28)
 
  * Added optional "use_random_seed" flag.
    If this boolean flag is set to true in the control block of the
@@ -2736,7 +2742,8 @@ Additions and changes:
 
  * Added CFD reader for Matlab.
 
-13-08-2010 Changes for version 2.2
+
+## v2.1.0 to v2.2.0 (2010-08-13)
 
  * The fields_external and species_external blocks have been removed.
    This functionality is now obtained by passing the external filename
@@ -2883,7 +2890,7 @@ Additions and changes:
  * Allow grids which cannot be exactly divided across processes.
 
 
-16-04-2010 Changes for version 2.1
+## v2.0.0 to v2.1.0 (2010-04-16)
 
  * Various minor bug fixes.
 
