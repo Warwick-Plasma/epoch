@@ -90,7 +90,7 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+  CALL MPI_BCAST(data_dir, c_max_path_length, MPI_CHARACTER, 0, comm, errcode)
 
   ! version check only, exit silently
   IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
@@ -120,9 +120,11 @@ PROGRAM pic
     time = 0.0_num
   ENDIF
 
+  CALL custom_particle_load
   CALL manual_load
   CALL initialise_window ! window.f90
   CALL set_dt
+  CALL set_maxwell_solver
   CALL deallocate_ic
 
   npart_global = 0

@@ -197,29 +197,39 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: i, j, err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
+        parameters%pack_ix = 0
         DO j = 1,nz
-        DO i = 1,ny
-          laser%phase(i,j) = &
-              evaluate_at_point(laser%phase_function, 0, i, j, err)
-        ENDDO
+          parameters%pack_iz = j
+          DO i = 1,ny
+            parameters%pack_iy = i
+            laser%phase(i,j) = &
+                evaluate_with_parameters(laser%phase_function, parameters, err)
+          ENDDO
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
+        parameters%pack_iy = 0
         DO j = 1,nz
-        DO i = 1,nx
-          laser%phase(i,j) = &
-              evaluate_at_point(laser%phase_function, i, 0, j, err)
-        ENDDO
+          parameters%pack_iz = j
+          DO i = 1,nx
+            parameters%pack_ix = i
+            laser%phase(i,j) = &
+                evaluate_with_parameters(laser%phase_function, parameters, err)
+          ENDDO
         ENDDO
       CASE(c_bd_z_min, c_bd_z_max)
+        parameters%pack_iz = 0
         DO j = 1,ny
-        DO i = 1,nx
-          laser%phase(i,j) = &
-              evaluate_at_point(laser%phase_function, i, j, 0, err)
-        ENDDO
+          parameters%pack_iy = j
+          DO i = 1,nx
+            parameters%pack_ix = i
+            laser%phase(i,j) = &
+                evaluate_with_parameters(laser%phase_function, parameters, err)
+          ENDDO
         ENDDO
     END SELECT
 
@@ -231,29 +241,42 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: i, j, err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
+        parameters%pack_ix = 0
         DO j = 1,nz
-        DO i = 1,ny
-          laser%profile(i,j) = &
-              evaluate_at_point(laser%profile_function, 0, i, j, err)
-        ENDDO
+          parameters%pack_iz = j
+          DO i = 1,ny
+            parameters%pack_iy = i
+            laser%profile(i,j) = &
+                evaluate_with_parameters(laser%profile_function, parameters, &
+                err)
+          ENDDO
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
+        parameters%pack_iy = 0
         DO j = 1,nz
-        DO i = 1,nx
-          laser%profile(i,j) = &
-              evaluate_at_point(laser%profile_function, i, 0, j, err)
-        ENDDO
+          parameters%pack_iz = j
+          DO i = 1,nx
+            parameters%pack_ix = i
+            laser%profile(i,j) = &
+                evaluate_with_parameters(laser%profile_function, parameters, &
+                err)
+          ENDDO
         ENDDO
       CASE(c_bd_z_min, c_bd_z_max)
+        parameters%pack_iz = 0
         DO j = 1,ny
-        DO i = 1,nx
-          laser%profile(i,j) = &
-              evaluate_at_point(laser%profile_function, i, j, 0, err)
-        ENDDO
+          parameters%pack_iy = j
+          DO i = 1,nx
+            parameters%pack_ix = i
+            laser%profile(i,j) = &
+                evaluate_with_parameters(laser%profile_function, parameters, &
+                err)
+          ENDDO
         ENDDO
     END SELECT
 
@@ -384,11 +407,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(array(-2:ny+3, -2:nz+3))
+      ALLOCATE(array(1-ng:ny+ng, 1-ng:nz+ng))
     ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(array(-2:nx+3, -2:nz+3))
+      ALLOCATE(array(1-ng:nx+ng, 1-ng:nz+ng))
     ELSE IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
-      ALLOCATE(array(-2:nx+3, -2:ny+3))
+      ALLOCATE(array(1-ng:nx+ng, 1-ng:ny+ng))
     ENDIF
 
   END SUBROUTINE allocate_with_boundary

@@ -470,8 +470,9 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, nn, sz, i, flip_dir = 0
+    INTEGER :: subarray, nn, sz, i, flip_dir
 
+    flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     sizes(1) = nx + 2 * ng
@@ -493,7 +494,8 @@ CONTAINS
         neighbour(-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary)) THEN
+    IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_min) == c_bc_thermal) .AND. x_min_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -514,7 +516,8 @@ CONTAINS
         neighbour( 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary)) THEN
+    IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_max) == c_bc_thermal) .AND. x_max_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
@@ -547,7 +550,8 @@ CONTAINS
         neighbour(0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_min) == c_bc_reflect .AND. y_min_boundary)) THEN
+    IF ((bc_particle(c_bd_y_min) == c_bc_reflect &
+        .OR. bc_particle(c_bd_y_min) == c_bc_thermal) .AND. y_min_boundary) THEN
       IF (flip_dir == c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -568,7 +572,8 @@ CONTAINS
         neighbour(0, 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_y_max) == c_bc_reflect .AND. y_max_boundary)) THEN
+    IF ((bc_particle(c_bd_y_max) == c_bc_reflect &
+        .OR. bc_particle(c_bd_y_max) == c_bc_thermal) .AND. y_max_boundary) THEN
       IF (flip_dir == c_dir_y) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng

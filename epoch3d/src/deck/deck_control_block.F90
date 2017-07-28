@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 29 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -78,7 +78,8 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'use_current_correction   ' /)
+          'use_current_correction   ', &
+          'maxwell_solver           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -121,7 +122,8 @@ MODULE deck_control_block
           'allow_missing_restart    ', &
           'print_eta_string         ', &
           'n_zeros                  ', &
-          'use_current_correction   ' /)
+          'use_current_correction   ', &
+          'maxwell_solver           ' /)
 
 CONTAINS
 
@@ -180,6 +182,10 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+      fng = 2
+    ENDIF
+
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
     IF (deck_state == c_ds_first) RETURN
@@ -188,6 +194,9 @@ CONTAINS
       check_walltime = .TRUE.
       timer_collect = .TRUE.
     ENDIF
+
+    ! use_balance only if threshold is positive
+    IF (dlb_threshold > 0) use_balance = .TRUE.
 
   END SUBROUTINE control_deck_finalise
 
@@ -279,7 +288,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -364,6 +372,14 @@ CONTAINS
       n_zeros_control = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+29)
       use_current_correction = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+30)
+      maxwell_solver = as_integer_print(value, element, errcode)
+      IF (maxwell_solver /= c_maxwell_solver_yee &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_cowan &
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+        errcode = c_err_bad_value
+      ENDIF
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -372,7 +388,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, iu
+    INTEGER :: errcode, idx, io, iu
 
     errcode = c_err_none
 
@@ -388,15 +404,15 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    DO index = 1, control_block_elements
-      IF (.NOT. control_block_done(index)) THEN
+    DO idx = 1, control_block_elements
+      IF (.NOT. control_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
+                TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
@@ -412,6 +428,20 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The option "neutral_background=F" is not supported', &
               ' in this version of EPOCH.'
+        ENDDO
+      ENDIF
+      errcode = c_err_terminate
+    ENDIF
+
+    IF (maxwell_solver /= c_maxwell_solver_yee &
+        .AND. field_order /= 2) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'For "field_order" > 2 only "maxwell_solver = yee"', &
+              ' is supported in this version of EPOCH.'
         ENDDO
       ENDIF
       errcode = c_err_terminate

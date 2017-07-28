@@ -1,0 +1,34 @@
+begin:control
+  nx = 240
+
+  # final time of simulation
+  t_end = 75 * femto
+
+  # size of domain
+  x_min = -12 * micron
+  x_max = -x_min
+end:control
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = open
+end:boundaries
+
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = 1.0e15
+  lambda = 0.5 * micron
+  t_profile = gauss(time,8*femto,1.8*femto)
+  t_end = 14 * femto
+end:laser
+
+
+begin:output
+  dt_snapshot = 12 * femto
+
+  # Properties on grid
+  grid = always
+  ey = always
+end:output
