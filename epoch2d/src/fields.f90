@@ -84,7 +84,6 @@ CONTAINS
         PRINT*,'Maxwell solver set to the following parameters:'
         PRINT*,'alpha=', alphax, alphay
         PRINT*,' beta=', betaxy, betayx
-        PRINT*,'gamma=', gammax, gammay
         PRINT*,'delta=', deltax, deltay
         PRINT*,'c*dt/dx=', dt * c / dx
         PRINT*,''
