@@ -36,7 +36,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3
+  FFLAGS = -O3 -g
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -55,7 +55,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3
+  FFLAGS = -O3 -g
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
