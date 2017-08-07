@@ -1046,7 +1046,7 @@ MODULE shared_data
 
     REAL(num) :: t_start, t_end
 
-    REAL(num) :: next_inject
+    REAL(num) :: depth, dt_inject
 
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
