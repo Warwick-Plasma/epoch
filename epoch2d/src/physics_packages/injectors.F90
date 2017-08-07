@@ -20,7 +20,6 @@ MODULE injectors
   USE partlist
   USE particle_temperature
   USE evaluator
-  USE random_generator
 
   IMPLICIT NONE
 
@@ -36,11 +35,10 @@ CONTAINS
     injector%density = 0.0_num
     injector%drift = 0.0_num
     injector%temperature = 0.0_num
+    injector%next_inject = 0.0_num
     injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
-    injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
@@ -117,16 +115,11 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
-    REAL(num) :: gamma_mass, v_inject, n_eff
+    REAL(num) :: gamma_mass, v_inject, dt_inject, n_eff
     INTEGER :: parts_this_time, ipart, ct, idir
 
+    IF (time < injector%next_inject) RETURN
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
-    IF (injector%dt_inject > 0.0_num) THEN
-      injector%depth = injector%depth - random() * 2.0_num * &
-          dt / injector%dt_inject
-      IF (injector%depth >= 0.0_num) RETURN
-    ENDIF
-    injector%depth = 1.0_num
 
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
@@ -138,8 +131,8 @@ CONTAINS
     gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
     v_inject =  ABS(p_inject_drift / gamma_mass)
 
-    injector%dt_inject = bdy_space/(injector%npart_per_cell * v_inject)
-    parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
+    dt_inject = bdy_space/(injector%npart_per_cell * v_inject)
+    parts_this_time = MAX(FLOOR(dt/dt_inject),1)
 
     CALL create_empty_partlist(plist)
     DO ipart = 1, parts_this_time
@@ -172,6 +165,7 @@ CONTAINS
       new => new%next
     ENDDO
     CALL append_partlist(species_list(injector%species)%attached_list, plist)
+    injector%next_inject = time + dt_inject
 
   END SUBROUTINE run_single_injector
 
