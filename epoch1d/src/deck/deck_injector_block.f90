@@ -114,7 +114,6 @@ CONTAINS
     IF (str_cmp(element, 'density')) THEN
       CALL initialise_stack(working_injector%density_function)
       CALL tokenize(value, working_injector%density_function, errcode)
-      working_injector%density = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -122,7 +121,6 @@ CONTAINS
       i=1
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      working_injector%temperature(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -130,7 +128,6 @@ CONTAINS
       i=2
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      working_injector%temperature(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -138,15 +135,12 @@ CONTAINS
       i=1
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      working_injector%temperature(i) = as_real_print(value, element, errcode)
     ENDIF
 
     IF (str_cmp(element, 'temp')) THEN
       DO i = 1, 3
         CALL initialise_stack(working_injector%temperature_function(i))
         CALL tokenize(value, working_injector%temperature_function(i), &
-            errcode)
-        working_injector%temperature(i) = as_real_print(value, element, &
             errcode)
       ENDDO
       RETURN
@@ -156,7 +150,6 @@ CONTAINS
       i=1
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
-      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -164,7 +157,6 @@ CONTAINS
       i=2
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
-      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -172,7 +164,6 @@ CONTAINS
       i=3
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
-      working_injector%drift(i) = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
