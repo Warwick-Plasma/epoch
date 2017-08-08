@@ -1041,11 +1041,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: temperature_function(3)
     TYPE(primitive_stack) :: drift_function(3)
 
-    REAL(num) :: density
-    REAL(num), DIMENSION(3) :: temperature, drift
-
     REAL(num) :: t_start, t_end
-
     REAL(num) :: depth, dt_inject
 
     TYPE(injector_block), POINTER :: next

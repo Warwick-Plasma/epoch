@@ -33,9 +33,6 @@ CONTAINS
 
     injector%npart_per_cell = 0
     injector%species = -1
-    injector%density = 0.0_num
-    injector%drift = 0.0_num
-    injector%temperature = 0.0_num
     injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
@@ -117,8 +114,10 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
-    REAL(num) :: gamma_mass, v_inject, n_eff
+    REAL(num) :: gamma_mass, v_inject, n_eff, density
+    REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, ct, idir
+    TYPE(parameter_pack) :: parameters
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
     IF (injector%dt_inject > 0.0_num) THEN
@@ -126,28 +125,41 @@ CONTAINS
           dt / injector%dt_inject
       IF (injector%depth >= 0.0_num) RETURN
     ENDIF
-    injector%depth = 1.0_num
+
+    IF (direction == c_bd_x_min) THEN
+      parameters%pack_ix = 0
+    ENDIF
+    IF (direction == c_bd_x_max) THEN
+      parameters%pack_ix = nx
+    ENDIF
 
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
-    CALL populate_injector_properties(injector)
+    CALL populate_injector_properties(injector, parameters, density, &
+        temperature, drift)
+
     !Assume agressive maximum thermal momentum, all components
     !like hottest component
-    p_therm = SQRT(mass * kb * MAXVAL(injector%temperature))
-    p_inject_drift = injector%drift(direction)
+    p_therm = SQRT(mass * kb * MAXVAL(temperature))
+    p_inject_drift = drift(direction)
     gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
     v_inject =  ABS(p_inject_drift / gamma_mass)
 
     injector%dt_inject = bdy_space/(injector%npart_per_cell * v_inject)
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
+    injector%depth = 1.0_num
 
     CALL create_empty_partlist(plist)
     DO ipart = 1, parts_this_time
       CALL create_particle(new)
       new%part_pos = bdy_pos - bdy_space*png/2.0_num
+      parameters%pack_pos = new%part_pos
+      parameters%use_grid_position = .FALSE.
+      CALL populate_injector_properties(injector, parameters, density, &
+          temperature, drift)
       DO idir = 1, 3
         new%part_p(idir) = momentum_from_temperature(mass, &
-            injector%temperature(idir), injector%drift(idir))
+            temperature(idir), drift(idir))
 #ifdef PER_PARTICLE_CHARGE_MASS
         new%charge = species_list(injector%species)%charge
         new%mass = mass
@@ -164,11 +176,11 @@ CONTAINS
       ct = ct + 1
       new => new%next
     ENDDO
-    v_inject = ABS(v_inject) / REAL(ct, num)
-    n_eff = bdy_space/(dt / parts_this_time * v_inject)
+    v_inject = ABS(v_inject) / MAX(REAL(ct, num), c_tiny)
+    n_eff = bdy_space * parts_this_time /MAX(dt * v_inject, c_tiny)
     new => plist%head
     DO WHILE(ASSOCIATED(new))
-      new%weight = bdy_space * injector%density/REAL(n_eff,num)
+      new%weight = bdy_space * density/REAL(n_eff,num)
       new => new%next
     ENDDO
     CALL append_partlist(species_list(injector%species)%attached_list, plist)
@@ -177,23 +189,35 @@ CONTAINS
 
 
 
-  SUBROUTINE populate_injector_properties(injector)
+  SUBROUTINE populate_injector_properties(injector, parameters, density, &
+      temperature, drift)
 
     TYPE(injector_block), POINTER :: injector
+    TYPE(parameter_pack), INTENT(IN) :: parameters
+    REAL(num), INTENT(OUT) :: density
+    REAL(num), DIMENSION(3), INTENT(OUT) :: temperature, drift
     INTEGER :: errcode, i
 
     errcode = 0
-    IF (injector%density_function%is_time_varying) &
-        injector%density = evaluate(injector%density_function, errcode)
+    density = evaluate_with_parameters(injector%density_function, &
+        parameters, errcode)
 
     !Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
-      IF (injector%temperature_function(i)%is_time_varying) &
-          injector%temperature(i) = evaluate(injector%temperature_function(i), &
-          errcode)
-      IF (injector%drift_function(i)%is_time_varying) &
-          injector%drift(i) = evaluate(injector%drift_function(i), &
-          errcode)
+      IF (injector%temperature_function(i)%init) THEN
+        temperature(i) = &
+            evaluate_with_parameters(injector%temperature_function(i), &
+            parameters, errcode)
+      ELSE
+        temperature(i) = 0.0_num
+      ENDIF
+      IF (injector%drift_function(i)%init) THEN
+        drift(i) = &
+            evaluate_with_parameters(injector%drift_function(i), &
+            parameters, errcode)
+      ELSE
+        drift(i) = 0.0_num
+      ENDIF
     ENDDO
 
     IF (errcode /= c_err_none) CALL abort_code(errcode)
