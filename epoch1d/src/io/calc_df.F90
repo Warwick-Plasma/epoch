@@ -363,8 +363,8 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(working)
-      CALL calc_boundary(wt_working)
+      CALL calc_boundary(working, ispecies)
+      CALL calc_boundary(wt_working, ispecies)
       data_array = data_array + working
       wt = wt + wt_working
     ENDDO
