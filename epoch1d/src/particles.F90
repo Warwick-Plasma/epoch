@@ -445,6 +445,7 @@ CONTAINS
 #endif
         current => next
       ENDDO
+      CALL current_bcs(ispecies = ispecies, do_mpi = .FALSE.)
     ENDDO
 
     IF (.NOT.use_field_ionisation) THEN
