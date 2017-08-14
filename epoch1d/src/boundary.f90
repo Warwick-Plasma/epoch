@@ -251,23 +251,29 @@ CONTAINS
 
 
 
-  SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary)
+  SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary, zero)
 
     INTEGER, INTENT(IN) :: ng, stagger_type, boundary
+    LOGICAL, INTENT(IN), OPTIONAL :: zero
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
+    REAL(num) :: mult
     INTEGER :: i, nn
 
+    mult = 1.0_num
+    IF (PRESENT(zero)) THEN
+        IF (zero) mult = 0.0_num
+    ENDIF
     IF (bc_field(boundary) == c_bc_periodic) RETURN
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng-1
-          field(i-ng) = -field(ng-i)
+          field(i-ng) = -field(ng-i) * mult
         ENDDO
         field(0) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(i-ng) = -field(ng+1-i)
+          field(i-ng) = -field(ng+1-i) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
@@ -275,11 +281,11 @@ CONTAINS
       IF (stagger(c_dir_x,stagger_type)) THEN
         field(nn) = 0.0_num
         DO i = 1, ng-1
-          field(nn+i) = -field(nn-i)
+          field(nn+i) = -field(nn-i) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(nn+i) = -field(nn+1-i)
+          field(nn+i) = -field(nn+1-i) * mult
         ENDDO
       ENDIF
     ENDIF
@@ -671,20 +677,39 @@ CONTAINS
 
 
 
-  SUBROUTINE current_bcs
+  SUBROUTINE current_bcs(ispecies, do_mpi)
 
     INTEGER :: i
+    INTEGER, OPTIONAL, INTENT(IN) :: ispecies
+    LOGICAL, OPTIONAL, INTENT(IN) :: do_mpi
+    LOGICAL :: mpi_run
+    INTEGER, DIMENSION(2*c_ndims) :: local_bcs
+
+    mpi_run = .TRUE.
+    IF (PRESENT(do_mpi)) mpi_run = do_mpi
+
+    IF (PRESENT(ispecies)) THEN
+      DO i = 1, 2*c_ndims
+        IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) THEN
+          local_bcs(i) = species_list(ispecies)%bc_particle(i)
+        ELSE
+          local_bcs(i) = bc_particle(i)
+        ENDIF
+      ENDDO
+    ENDIF
 
     ! domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x)
-    CALL processor_summation_bcs(jy, jng, c_dir_y)
-    CALL processor_summation_bcs(jz, jng, c_dir_z)
+    IF (mpi_run) THEN
+      CALL processor_summation_bcs(jx, jng, c_dir_x)
+      CALL processor_summation_bcs(jy, jng, c_dir_y)
+      CALL processor_summation_bcs(jz, jng, c_dir_z)
+    ENDIF
 
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_reflect) THEN
-        CALL field_clamp_zero(jx, jng, c_stagger_jx, i)
-        CALL field_clamp_zero(jy, jng, c_stagger_jy, i)
-        CALL field_clamp_zero(jz, jng, c_stagger_jz, i)
+      IF (local_bcs(i) == c_bc_reflect) THEN
+        CALL field_clamp_zero(jx, jng, c_stagger_jx, i, zero = .TRUE.)
+        CALL field_clamp_zero(jy, jng, c_stagger_jy, i, zero = .TRUE.)
+        CALL field_clamp_zero(jz, jng, c_stagger_jz, i, zero = .TRUE.)
       ENDIF
     ENDDO
 
