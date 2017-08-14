@@ -446,7 +446,7 @@ helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
-  shared_data.o
+  random_generator.o shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o

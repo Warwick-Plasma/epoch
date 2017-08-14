@@ -749,6 +749,13 @@ CONTAINS
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cf2, temp(3)
     REAL(num) :: part_pos
+    REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
+
+    x_min_outer = x_min - dx / 2.0_num * png
+    x_max_outer = x_max + dx / 2.0_num * png
+
+    y_min_outer = y_min - dy / 2.0_num * png
+    y_max_outer = y_max + dy / 2.0_num * png
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
@@ -773,7 +780,7 @@ CONTAINS
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos < x_min) THEN
+            IF (part_pos < x_min_outer) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -785,13 +792,19 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
             xbd = -1
-            ! Particle has left the system
-            IF (x_min_boundary) THEN
-              xbd = 0
-              IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
-                cur%part_pos(1) = 2.0_num * x_min - part_pos
-                cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+          ENDIF
+          ! Particle has crossed the boundary
+          IF (part_pos < x_min) THEN
+            xbd = 0
+            IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+              cur%part_pos(1) = 2.0_num * x_min - part_pos
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+              xbd = -1
+              cur%part_pos(1) = part_pos + length_x
+            ENDIF
+            IF (part_pos < x_min_outer) THEN
+              IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -827,10 +840,6 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
-
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
-                xbd = -1
-                cur%part_pos(1) = part_pos + length_x
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
@@ -843,7 +852,7 @@ CONTAINS
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos >= x_max) THEN
+            IF (part_pos >= x_max_outer) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -855,13 +864,19 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
             xbd = 1
-            ! Particle has left the system
-            IF (x_max_boundary) THEN
-              xbd = 0
-              IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
-                cur%part_pos(1) = 2.0_num * x_max - part_pos
-                cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+          ENDIF
+          ! Particle has left the system
+          IF (part_pos > x_max) THEN
+            xbd = 0
+            IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+              cur%part_pos(1) = 2.0_num * x_max - part_pos
+              cur%part_p(1) = -cur%part_p(1)
+            ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
+              xbd = 1
+              cur%part_pos(1) = part_pos - length_x
+            ENDIF
+            IF (part_pos > x_max_outer) THEN
+              IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -898,9 +913,6 @@ CONTAINS
 
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
 
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
-                xbd = 1
-                cur%part_pos(1) = part_pos - length_x
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
@@ -914,7 +926,7 @@ CONTAINS
             .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
           IF (y_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos < y_min) THEN
+            IF (part_pos < y_min_outer) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -926,13 +938,18 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < y_min_local) THEN
             ybd = -1
-            ! Particle has left the system
-            IF (y_min_boundary) THEN
-              ybd = 0
-              IF (bc_particle(c_bd_y_min) == c_bc_reflect) THEN
-                cur%part_pos(2) = 2.0_num * y_min - part_pos
-                cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+          ENDIF
+          IF (part_pos < y_min) THEN
+            ybd = 0
+            IF (bc_particle(c_bd_y_min) == c_bc_reflect) THEN
+              cur%part_pos(2) = 2.0_num * y_min - part_pos
+              cur%part_p(2) = -cur%part_p(2)
+            ELSE IF (bc_particle(c_bd_y_min) == c_bc_periodic) THEN
+              ybd = -1
+              cur%part_pos(2) = part_pos + length_y
+            ENDIF
+            IF (part_pos < y_min_outer) THEN
+              IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -984,7 +1001,7 @@ CONTAINS
             .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
           IF (y_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos >= y_max) THEN
+            IF (part_pos >= y_max_outer) THEN
               ybd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -997,12 +1014,18 @@ CONTAINS
           IF (part_pos >= y_max_local) THEN
             ybd = 1
             ! Particle has left the system
-            IF (y_max_boundary) THEN
+            IF (part_pos >= y_max) THEN
               ybd = 0
               IF (bc_particle(c_bd_y_max) == c_bc_reflect) THEN
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+              ELSE IF (bc_particle(c_bd_y_max) == c_bc_periodic) THEN
+                ybd = 1
+                cur%part_pos(2) = part_pos - length_y
+              ENDIF
+            ENDIF
+            IF (part_pos >= y_max_outer) THEN
+              IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1038,10 +1061,6 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
-
-              ELSE IF (bc_particle(c_bd_y_max) == c_bc_periodic) THEN
-                ybd = 1
-                cur%part_pos(2) = part_pos - length_y
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
