@@ -23,41 +23,60 @@ MODULE calc_df
 
 CONTAINS
 
-  SUBROUTINE calc_boundary(data_array)
+  SUBROUTINE calc_boundary(data_array, species, do_mpi)
 
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN), OPTIONAL :: species
+    LOGICAL, INTENT(IN), OPTIONAL :: do_mpi
+    INTEGER, DIMENSION(2*c_ndims) :: bcs
     INTEGER :: i, j
+    LOGICAL :: run_mpi
 
-    CALL processor_summation_bcs(data_array, ng)
+    run_mpi = .TRUE.
+    IF (PRESENT(do_mpi)) run_mpi = do_mpi
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+    bcs = bc_particle
+    IF (PRESENT(species)) THEN
+      DO i = 1, 2*c_ndims
+        IF (species_list(species)%bc_particle(i) .NE. c_bc_null) &
+            bcs(i) = species_list(species)%bc_particle(i)
+        ENDDO
+    ENDIF
+
+    IF (run_mpi) CALL processor_summation_bcs(data_array, ng)
+
+    IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
       DO i = 1, ng
         data_array(i,j) = data_array(i,j) + data_array(1-i,j)
       ENDDO
       ENDDO
+      data_array(1-ng:-1,:) = 0.0_num
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+    IF (x_max_boundary .AND. bcs(c_bd_x_max) == c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
       DO i = 1, ng
         data_array(nx-i+1,j) = data_array(nx-i+1,j) + data_array(nx+i,j)
       ENDDO
       ENDDO
+      data_array(nx+1:nx+ng, :) = 0.0_num
     ENDIF
 
-    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) == c_bc_reflect) THEN
+    IF (y_min_boundary .AND. bcs(c_bd_y_min) == c_bc_reflect) THEN
       DO j = 1, ng
       DO i = 1-ng, nx+ng
         data_array(i,j) = data_array(i,j) + data_array(i,1-j)
       ENDDO
       ENDDO
+      data_array(:,1-ng:-1) = 0.0_num
     ENDIF
-    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) == c_bc_reflect) THEN
+    IF (y_max_boundary .AND. bcs(c_bd_y_max) == c_bc_reflect) THEN
       DO j = 1, ng
       DO i = 1-ng, nx+ng
         data_array(i,ny-j+1) = data_array(i,ny-j+1) + data_array(i,ny+j)
       ENDDO
       ENDDO
+      data_array(:,ny+1:ny+ng) = 0.0_num
     ENDIF
 
   END SUBROUTINE calc_boundary
@@ -130,6 +149,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     data_array = data_array * idx
@@ -231,6 +251,8 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(wt, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -372,6 +394,8 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(wt, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -500,6 +524,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     data_array = data_array * idx
@@ -562,6 +587,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     data_array = data_array * idx
@@ -647,6 +673,10 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
+      CALL calc_boundary(meanx, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(meany, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(meanz, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(part_count, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     CALL calc_boundary(meanx)
@@ -692,6 +722,8 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
+      CALL calc_boundary(sigma, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(part_count, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     CALL calc_boundary(sigma)
@@ -756,6 +788,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
     ENDDO
 
     CALL calc_boundary(data_array)

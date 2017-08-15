@@ -259,11 +259,12 @@ CONTAINS
     REAL(num) :: mult
     INTEGER :: i, nn
 
+    IF (bc_field(boundary) == c_bc_periodic) RETURN
+
     mult = 1.0_num
     IF (PRESENT(zero)) THEN
         IF (zero) mult = 0.0_num
     ENDIF
-    IF (bc_field(boundary) == c_bc_periodic) RETURN
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN

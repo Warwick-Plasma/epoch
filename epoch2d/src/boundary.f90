@@ -26,6 +26,103 @@ MODULE boundary
 
 CONTAINS
 
+  SUBROUTINE setup_boundaries
+
+    INTEGER :: i, ispecies
+    LOGICAL :: error
+    CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
+        boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max' /)
+    CHARACTER(LEN=2*c_max_string_length) :: species_name
+
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
+
+    error = .FALSE.
+
+    cpml_boundaries = .FALSE.
+    DO i = 1, 2*c_ndims
+      error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
+      IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
+      IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+
+      ! Note: reflecting EM boundaries not yet implemented.
+      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
+    ENDDO
+
+    DO ispecies = 1, n_species
+      DO i = 1, 2*c_ndims
+        species_name = TRIM(boundary(i)) // " on species " &
+            // TRIM(species_list(ispecies)%name)
+        error = error .OR. setup_particle_boundary(&
+            species_list(ispecies)%bc_particle(i), &
+            species_name, allow_null = .TRUE.)
+      ENDDO
+    ENDDO
+
+    IF (error) THEN
+        errcode = c_err_bad_value
+        CALL abort_code(errcode)
+    ENDIF
+
+  END SUBROUTINE setup_boundaries
+
+
+
+  FUNCTION setup_particle_boundary(boundary, boundary_name, allow_null) &
+      RESULT(error)
+
+    INTEGER, INTENT(INOUT) :: boundary
+    CHARACTER(LEN=*), INTENT(IN) :: boundary_name
+    LOGICAL, INTENT(IN), OPTIONAL :: allow_null
+    INTEGER :: i
+    LOGICAL :: error
+
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
+
+    IF (boundary == c_bc_other) boundary = c_bc_reflect
+
+    ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
+    ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
+    ! can then be set separately. IN THE DECK, laser bcs are chosen either
+    ! by seting the main bcs OR by setting the field bcs to simple_laser
+    ! (or outflow).
+
+    ! Laser boundaries assume open particles unless otherwise specified.
+    IF (boundary == c_bc_simple_laser &
+        .OR. boundary == c_bc_simple_outflow &
+        .OR. boundary == c_bc_cpml_laser &
+        .OR. boundary == c_bc_cpml_outflow) &
+            boundary = c_bc_open
+
+    ! Sanity check on particle boundaries
+    error = .FALSE.
+    IF (boundary == c_bc_periodic &
+        .OR. boundary == c_bc_reflect &
+        .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_open) RETURN
+
+    ! Perfectly valid for per species boundaries to be null
+    ! not main boundaries
+    IF (PRESENT(allow_null)) THEN
+      IF (allow_null .AND. boundary == c_bc_null) RETURN
+    ENDIF
+
+    IF (rank == 0) THEN
+      WRITE(*,*)
+      WRITE(*,*) '*** ERROR ***'
+      WRITE(*,*) 'Unrecognised particle boundary condition on "', &
+          TRIM(boundary_name), '" boundary.'
+    ENDIF
+    error = .TRUE.
+
+  END FUNCTION setup_particle_boundary
+
+
+
   SUBROUTINE setup_particle_boundaries
 
     INTEGER :: i
@@ -402,23 +499,30 @@ CONTAINS
 
 
 
-  SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary)
+  SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary, zero)
 
     INTEGER, INTENT(IN) :: ng, stagger_type, boundary
+    LOGICAL, INTENT(IN), OPTIONAL :: zero
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, nn
+    REAL(num) :: mult
 
     IF (bc_field(boundary) == c_bc_periodic) RETURN
+
+    mult = 1.0_num
+    IF (PRESENT(zero)) THEN
+        IF (zero) mult = 0.0_num
+    ENDIF
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng-1
-          field(i-ng,:) = -field(ng-i,:)
+          field(i-ng,:) = -field(ng-i,:) * mult
         ENDDO
         field(0,:) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(i-ng,:) = -field(ng+1-i,:)
+          field(i-ng,:) = -field(ng+1-i,:) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
@@ -426,23 +530,23 @@ CONTAINS
       IF (stagger(c_dir_x,stagger_type)) THEN
         field(nn,:) = 0.0_num
         DO i = 1, ng-1
-          field(nn+i,:) = -field(nn-i,:)
+          field(nn+i,:) = -field(nn-i,:) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(nn+i,:) = -field(nn+1-i,:)
+          field(nn+i,:) = -field(nn+1-i,:) * mult
         ENDDO
       ENDIF
 
     ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng-1
-          field(:,i-ng) = -field(:,ng-i)
+          field(:,i-ng) = -field(:,ng-i) * mult
         ENDDO
         field(:,0) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(:,i-ng) = -field(:,ng+1-i)
+          field(:,i-ng) = -field(:,ng+1-i) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
@@ -450,11 +554,11 @@ CONTAINS
       IF (stagger(c_dir_y,stagger_type)) THEN
         field(:,nn) = 0.0_num
         DO i = 1, ng-1
-          field(:,nn+i) = -field(:,nn-i)
+          field(:,nn+i) = -field(:,nn-i) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(:,nn+i) = -field(:,nn+1-i)
+          field(:,nn+i) = -field(:,nn+1-i) * mult
         ENDDO
       ENDIF
     ENDIF
@@ -741,6 +845,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd
     INTEGER(i8) :: ixp, iyp
+    INTEGER, DIMENSION(c_ndims*2) :: bc_part_local
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy
     INTEGER :: cell_x, cell_y
@@ -759,6 +864,13 @@ CONTAINS
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
+
+      bc_part_local = bc_particle
+
+      DO i =1, 2*c_ndims
+        IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
+            bc_part_local(i) = species_list(ispecies)%bc_particle(i)
+      ENDDO
 
       DO iy = -1, 1
         DO ix = -1, 1
@@ -796,15 +908,15 @@ CONTAINS
           ! Particle has crossed the boundary
           IF (part_pos < x_min) THEN
             xbd = 0
-            IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+            IF (bc_part_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+            ELSE IF (bc_part_local(c_bd_x_min) == c_bc_periodic) THEN
               xbd = -1
               cur%part_pos(1) = part_pos + length_x
             ENDIF
             IF (part_pos < x_min_outer) THEN
-              IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+              IF (bc_part_local(c_bd_x_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -868,15 +980,15 @@ CONTAINS
           ! Particle has left the system
           IF (part_pos > x_max) THEN
             xbd = 0
-            IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+            IF (bc_part_local(c_bd_x_max) == c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_max - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
+            ELSE IF (bc_part_local(c_bd_x_max) == c_bc_periodic) THEN
               xbd = 1
               cur%part_pos(1) = part_pos - length_x
             ENDIF
             IF (part_pos > x_max_outer) THEN
-              IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+              IF (bc_part_local(c_bd_x_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -941,15 +1053,15 @@ CONTAINS
           ENDIF
           IF (part_pos < y_min) THEN
             ybd = 0
-            IF (bc_particle(c_bd_y_min) == c_bc_reflect) THEN
+            IF (bc_part_local(c_bd_y_min) == c_bc_reflect) THEN
               cur%part_pos(2) = 2.0_num * y_min - part_pos
               cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc_particle(c_bd_y_min) == c_bc_periodic) THEN
+            ELSE IF (bc_part_local(c_bd_y_min) == c_bc_periodic) THEN
               ybd = -1
               cur%part_pos(2) = part_pos + length_y
             ENDIF
             IF (part_pos < y_min_outer) THEN
-              IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+              IF (bc_part_local(c_bd_y_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -986,7 +1098,7 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
 
-              ELSE IF (bc_particle(c_bd_y_min) == c_bc_periodic) THEN
+              ELSE IF (bc_part_local(c_bd_y_min) == c_bc_periodic) THEN
                 ybd = -1
                 cur%part_pos(2) = part_pos + length_y
               ELSE
@@ -1016,16 +1128,16 @@ CONTAINS
             ! Particle has left the system
             IF (part_pos >= y_max) THEN
               ybd = 0
-              IF (bc_particle(c_bd_y_max) == c_bc_reflect) THEN
+              IF (bc_part_local(c_bd_y_max) == c_bc_reflect) THEN
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle(c_bd_y_max) == c_bc_periodic) THEN
+              ELSE IF (bc_part_local(c_bd_y_max) == c_bc_periodic) THEN
                 ybd = 1
                 cur%part_pos(2) = part_pos - length_y
               ENDIF
             ENDIF
             IF (part_pos >= y_max_outer) THEN
-              IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+              IF (bc_part_local(c_bd_y_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1117,20 +1229,39 @@ CONTAINS
 
 
 
-  SUBROUTINE current_bcs
+  SUBROUTINE current_bcs(ispecies, do_mpi)
 
     INTEGER :: i
+    INTEGER, OPTIONAL, INTENT(IN) :: ispecies
+    LOGICAL, OPTIONAL, INTENT(IN) :: do_mpi
+    LOGICAL :: mpi_run
+    INTEGER, DIMENSION(2*c_ndims) :: local_bcs
+
+    mpi_run = .TRUE.
+    IF (PRESENT(do_mpi)) mpi_run = do_mpi
+
+    IF (PRESENT(ispecies)) THEN
+      DO i = 1, 2*c_ndims
+        IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) THEN
+          local_bcs(i) = species_list(ispecies)%bc_particle(i)
+        ELSE
+          local_bcs(i) = bc_particle(i)
+        ENDIF
+      ENDDO
+    ENDIF
 
     ! domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x)
-    CALL processor_summation_bcs(jy, jng, c_dir_y)
-    CALL processor_summation_bcs(jz, jng, c_dir_z)
+    IF (mpi_run) THEN
+      CALL processor_summation_bcs(jx, jng, c_dir_x)
+      CALL processor_summation_bcs(jy, jng, c_dir_y)
+      CALL processor_summation_bcs(jz, jng, c_dir_z)
+    ENDIF
 
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_reflect) THEN
-        CALL field_clamp_zero(jx, jng, c_stagger_jx, i)
-        CALL field_clamp_zero(jy, jng, c_stagger_jy, i)
-        CALL field_clamp_zero(jz, jng, c_stagger_jz, i)
+      IF (local_bcs(i) == c_bc_reflect) THEN
+        CALL field_clamp_zero(jx, jng, c_stagger_jx, i, zero = .TRUE.)
+        CALL field_clamp_zero(jy, jng, c_stagger_jy, i, zero = .TRUE.)
+        CALL field_clamp_zero(jz, jng, c_stagger_jz, i, zero = .TRUE.)
       ENDIF
     ENDDO
 
