@@ -1098,9 +1098,6 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
 
-              ELSE IF (bc_part_local(c_bd_y_min) == c_bc_periodic) THEN
-                ybd = -1
-                cur%part_pos(2) = part_pos + length_y
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.

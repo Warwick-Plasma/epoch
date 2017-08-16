@@ -193,6 +193,18 @@ CONTAINS
       current => current%next
     ENDDO
 
+    current => injector_y_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%species ==-1) error = IOR(error, 1)
+      current => current%next
+    ENDDO
+
+    current => injector_y_max
+    DO WHILE(ASSOCIATED(current))
+      IF (current%species ==-1) error = IOR(error, 1)
+      current => current%next
+    ENDDO
+
     IF (IAND(error, 1) /= 0) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
