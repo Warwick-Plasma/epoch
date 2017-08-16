@@ -101,7 +101,7 @@ CONTAINS
     IF (x_min_boundary) THEN
       current => injector_x_min
       DO WHILE(ASSOCIATED(current))
-        CALL run_single_injector(current, c_bd_x_min, x_min, dx)
+        CALL run_single_injector(current, c_bd_x_min)
         current => current%next
       ENDDO
     ENDIF
@@ -109,7 +109,7 @@ CONTAINS
     IF (x_max_boundary) THEN
       current => injector_x_max
       DO WHILE(ASSOCIATED(current))
-        CALL run_single_injector(current, c_bd_x_max, x_max, dx)
+        CALL run_single_injector(current, c_bd_x_max)
         current => current%next
       ENDDO
     ENDIF
@@ -117,7 +117,7 @@ CONTAINS
     IF (y_min_boundary) THEN
       current => injector_y_min
       DO WHILE(ASSOCIATED(current))
-        CALL run_single_injector(current, c_bd_y_min, y_min, dy)
+        CALL run_single_injector(current, c_bd_y_min)
         current => current%next
       ENDDO
     ENDIF
@@ -125,7 +125,7 @@ CONTAINS
     IF (y_max_boundary) THEN
       current => injector_y_max
       DO WHILE(ASSOCIATED(current))
-        CALL run_single_injector(current, c_bd_y_max, y_max, dy)
+        CALL run_single_injector(current, c_bd_y_max)
         current => current%next
       ENDDO
     ENDIF
@@ -134,11 +134,11 @@ CONTAINS
 
 
 
-  SUBROUTINE run_single_injector(injector, direction, bdy_pos, bdy_space)
+  SUBROUTINE run_single_injector(injector, direction)
 
     TYPE(injector_block), POINTER :: injector
     INTEGER, INTENT(IN) :: direction
-    REAL(num), INTENT(IN) :: bdy_pos, bdy_space
+    REAL(num) :: bdy_pos, bdy_space
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
@@ -151,37 +151,43 @@ CONTAINS
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
-
     IF (direction == c_bd_x_min) THEN
       parameters%pack_ix = 0
       nel = (/ny/)
       perp_cell_size = (/dy/)
       perp_dir_index = (/2/)
       dir_index = 1
-    ENDIF
-    IF (direction == c_bd_x_max) THEN
+      bdy_pos = x_min
+      bdy_space = -dx
+    ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
       nel = (/ny/)
       perp_cell_size = (/dy/)
       perp_dir_index = (/2/)
       dir_index = 1
-    ENDIF
-    IF (direction == c_bd_y_min) THEN
+      bdy_pos = x_max
+      bdy_space = dx
+    ELSE IF (direction == c_bd_y_min) THEN
       parameters%pack_iy = 0
       nel = (/nx/)
       perp_cell_size = (/dx/)
       perp_dir_index = (/1/)
       dir_index = 2
-    ENDIF
-    IF (direction == c_bd_y_max) THEN
-      parameters%pack_ix = ny
+      bdy_pos = y_min
+      bdy_space = -dy
+    ELSE IF (direction == c_bd_y_max) THEN
+      parameters%pack_iy = ny
       nel = (/nx/)
       perp_cell_size = (/dx/)
       perp_dir_index = (/1/)
       dir_index = 2
+      bdy_pos = y_max
+      bdy_space = dy
+    ELSE
+      RETURN
     ENDIF
 
-    vol = bdy_space
+    vol = ABS(bdy_space)
     DO idir = 1, c_ndims-1
       vol = vol * perp_cell_size(idir)
     ENDDO
@@ -196,7 +202,6 @@ CONTAINS
         IF (perp_dir_index(idir) == 1) cur_cell(idir) = x(ii)
         IF (perp_dir_index(idir) == 2) cur_cell(idir) = y(ii)
       ENDDO
-
 
       parameters%use_grid_position = .TRUE.
       CALL assign_pack_value(parameters, perp_dir_index(1), ii)
@@ -224,7 +229,7 @@ CONTAINS
       gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
       v_inject =  ABS(p_inject_drift / gamma_mass)
 
-      injector%dt_inject(ii) = bdy_space/MAX(npart_par * v_inject,c_tiny)
+      injector%dt_inject(ii) = ABS(bdy_space)/MAX(npart_par * v_inject,c_tiny)
       parts_this_time = FLOOR(ABS(injector%depth(ii) - 1.0_num))
       injector%depth(ii) = 1.0_num
 
@@ -237,7 +242,8 @@ CONTAINS
                 * perp_cell_size(idir) &
                 + cur_cell(idir)
           ENDDO
-          new%part_pos(dir_index) = bdy_pos - bdy_space*png/2.0_num
+          new%part_pos(dir_index) = bdy_pos + bdy_space*png/2.0_num
+ !      PRINT*, bdy_pos, bdy_space, new%part_pos(dir_index)
           parameters%pack_pos = new%part_pos
           parameters%use_grid_position = .FALSE.
           CALL populate_injector_properties(injector, parameters, density, &
@@ -263,7 +269,7 @@ CONTAINS
         new => new%next
       ENDDO
       v_inject = ABS(v_inject) / MAX(REAL(ct, num), c_tiny)
-      n_eff = bdy_space * parts_this_time /MAX(dt * v_inject, c_tiny)
+      n_eff = ABS(bdy_space) * parts_this_time /MAX(dt * v_inject, c_tiny)
       new => plist%head
       DO WHILE(ASSOCIATED(new))
         new%weight = vol * density/REAL(n_eff,num)
