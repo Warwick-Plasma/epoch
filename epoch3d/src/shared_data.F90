@@ -55,6 +55,7 @@ MODULE constants
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
   ! Boundary type codes
+  INTEGER, PARAMETER :: c_bc_null = -1
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2
   INTEGER, PARAMETER :: c_bc_simple_laser = 3
@@ -666,7 +667,10 @@ MODULE shared_data
 
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
-  END TYPE particle_species
+
+    !Per species boundary conditions
+    INTEGER, DIMENSION(2 * c_ndims) :: bc_particle
+ END TYPE particle_species
 
   !----------------------------------------------------------------------------
   ! file handling
@@ -906,7 +910,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = 2 * png
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global
@@ -1081,6 +1085,30 @@ MODULE shared_data
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
+
+  !----------------------------------------------------------------------------
+  ! Particle injectors
+  !----------------------------------------------------------------------------
+  TYPE injector_block
+
+    INTEGER :: boundary
+    INTEGER :: id
+    INTEGER :: species
+    INTEGER(i8) :: npart_per_cell
+
+    TYPE(primitive_stack) :: density_function
+    TYPE(primitive_stack) :: temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
+
+    REAL(num) :: t_start, t_end
+    REAL(num), DIMENSION(:,:), POINTER :: depth, dt_inject
+
+    TYPE(injector_block), POINTER :: next
+  END TYPE injector_block
+
+  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_block), POINTER :: injector_y_min, injector_y_max
+  TYPE(injector_block), POINTER :: injector_z_min, injector_z_max
 
   !----------------------------------------------------------------------------
   ! laser boundaries

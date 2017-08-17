@@ -213,7 +213,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_bc
 
-    as_bc = -1
+    as_bc = c_bc_null
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'periodic')) THEN
       as_bc = c_bc_periodic
