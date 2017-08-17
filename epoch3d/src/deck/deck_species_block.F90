@@ -438,6 +438,30 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'bc_x_min')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_min) = &
+          as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_max')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_max) = &
+          as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_min')) THEN
+      species_list(species_id)%bc_particle(c_bd_y_min) = &
+          as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_max')) THEN
+      species_list(species_id)%bc_particle(c_bd_y_max) = &
+          as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     ! *************************************************************
     ! This section sets properties for tracer particles
     ! *************************************************************
