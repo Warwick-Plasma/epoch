@@ -90,6 +90,20 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (.NOT. boundary_set) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Cannot set injector properties before boundary is set'
+        ENDDO
+        CALL abort_code(c_err_required_element_not_set)
+      ENDIF
+      extended_error_string = 'boundary'
+      errcode = c_err_required_element_not_set
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'species')) THEN
       working_injector%species = as_integer_print(value, element, errcode)
       RETURN
@@ -108,6 +122,11 @@ CONTAINS
     IF (str_cmp(element, 'npart_per_cell')) THEN
       working_injector%npart_per_cell = as_integer_print(value, element, &
           errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'density_min')) THEN
+      working_injector%density_min = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
@@ -132,7 +151,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'temp_z')) THEN
-      i=1
+      i=3
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
     ENDIF
@@ -184,45 +203,54 @@ CONTAINS
     current => injector_x_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
     current => injector_x_max
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
     current => injector_y_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
     current => injector_y_max
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
     current => injector_z_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
     current => injector_z_max
     DO WHILE(ASSOCIATED(current))
       IF (current%species ==-1) error = IOR(error, 1)
+      IF (.NOT. current%density_function%init) error = IOR(error,2)
       current => current%next
     ENDDO
 
-    IF (IAND(error, 1) /= 0) THEN
+    IF (error /= 0) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Must define a species for every injector.'
+          IF (IAND(error, 1) /= 1) &
+              WRITE(io,*) 'Must define a species for every injector'
+          IF (IAND(error, 2) /= 0) &
+              WRITE(io,*) 'Must define a density for every injector'
         ENDDO
       ENDIF
       errcode = c_err_missing_elements
