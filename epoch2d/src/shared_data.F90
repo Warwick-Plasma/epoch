@@ -736,7 +736,8 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_gamma        = 49
   INTEGER, PARAMETER :: c_dump_part_proc         = 50
   INTEGER, PARAMETER :: c_dump_part_proc0        = 51
-  INTEGER, PARAMETER :: num_vars_to_dump         = 51
+  INTEGER, PARAMETER :: c_dump_ppc               = 52
+  INTEGER, PARAMETER :: num_vars_to_dump         = 52
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -1065,6 +1066,7 @@ MODULE shared_data
     INTEGER :: id
     INTEGER :: species
     INTEGER(i8) :: npart_per_cell
+    REAL(num) :: density_min
 
     TYPE(primitive_stack) :: density_function
     TYPE(primitive_stack) :: temperature_function(3)

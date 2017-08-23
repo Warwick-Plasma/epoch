@@ -97,6 +97,7 @@ CONTAINS
     io_block_name (c_dump_mass_density     ) = 'mass_density'
     io_block_name (c_dump_charge_density   ) = 'charge_density'
     io_block_name (c_dump_number_density   ) = 'number_density'
+    io_block_name (c_dump_ppc              ) = 'ppc'
     io_block_name (c_dump_temperature      ) = 'temperature'
     io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
     io_block_name (c_dump_probes           ) = 'particle_probes'
@@ -646,6 +647,7 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
@@ -685,6 +687,7 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN

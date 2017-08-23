@@ -36,6 +36,7 @@ CONTAINS
     injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
+    injector%density_min = 0.0_num
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1:ny, 1:nz))
       ALLOCATE(injector%depth(1:ny, 1:nz))
@@ -165,10 +166,12 @@ CONTAINS
     REAL(num) :: bdy_pos, bdy_space
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
-    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
-    REAL(num) :: gamma_mass, v_inject, n_eff, density, npart_par,vol
+    REAL(num), PARAMETER :: third = 1.0_num/3.0_num
+    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
+    REAL(num) :: gamma_mass, v_inject, density, npart_par,vol
     REAL(num), DIMENSION(3) :: temperature, drift
-    INTEGER :: parts_this_time, ipart, ct, idir, dir_index, ii, jj
+    INTEGER :: parts_this_time, ipart, idir, dir_index, ii, jj
+    REAL(num) :: npart_total
     INTEGER :: ipart_trans, ipart_trans2
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel, npart_perp
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
@@ -238,9 +241,17 @@ CONTAINS
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
     cur_cell = 0.0_num
+
+    !Fit particles
+    !npart_par is REAL because you can meaningfully inject at non-integer
+    !rate
+    npart_par = MAX((REAL(injector%npart_per_cell, num))**third,1.0_num)
+    !npart_perp is integer because you are actually placing particles
+    npart_perp = CEILING(npart_par)
+    npart_total = npart_par * REAL(PRODUCT(npart_perp),num)
+    CALL create_empty_partlist(plist)
     DO ii = 1, nel(1)
       DO jj = 1, nel(2)
-        CALL create_empty_partlist(plist)
         i2d = (/ii, jj/)
         DO idir = 1, c_ndims-1
           IF (perp_dir_index(idir) == 1) cur_cell(idir) = x(i2d(idir))
@@ -258,13 +269,14 @@ CONTAINS
           IF (injector%depth(ii,jj) >= 0.0_num) CYCLE
         ENDIF
 
-        CALL populate_injector_properties(injector, parameters, density, &
+        CALL populate_injector_properties(injector, parameters, density_grid, &
             temperature, drift)
+        IF (density_grid < injector%density_min) CYCLE
 
         !Fit particles
         !npart_par is REAL because you can meaningfully inject at non-integer
         !rate
-        npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
+        npart_par = MAX((REAL(injector%npart_per_cell, num))**third,1.0_num)
         !npart_perp is integer because you are actually placing particles
         npart_perp = CEILING(npart_par)
 
@@ -275,9 +287,11 @@ CONTAINS
         gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
         v_inject =  ABS(p_inject_drift / gamma_mass)
 
-        injector%dt_inject(ii,jj) = ABS(bdy_space)/MAX(npart_par * v_inject,c_tiny)
+        injector%dt_inject(ii,jj) = ABS(bdy_space) &
+            / MAX(npart_par * v_inject,c_tiny)
         parts_this_time = FLOOR(ABS(injector%depth(ii,jj) - 1.0_num))
-        injector%depth(ii,jj) = 1.0_num
+        injector%depth(ii, jj) = injector%depth(ii, jj) &
+            + REAL(parts_this_time, num)
 
         DO ipart = 1, parts_this_time
           DO ipart_trans = 1, npart_perp(1)
@@ -302,29 +316,14 @@ CONTAINS
               new%charge = species_list(injector%species)%charge
               new%mass = mass
 #endif
+              new%weight = vol * density / npart_total
               CALL add_particle_to_partlist(plist, new)
             ENDDO
           ENDDO
         ENDDO
-        new => plist%head
-        v_inject = 0.0_num
-        ct=0
-        DO WHILE(ASSOCIATED(new))
-          gamma_mass = SQRT(SUM(new%part_p**2) + typical_mc2) / c
-          v_inject = v_inject + new%part_p(dir_index) / gamma_mass
-          ct = ct + 1
-          new => new%next
-        ENDDO
-        v_inject = ABS(v_inject) / MAX(REAL(ct, num), c_tiny)
-        n_eff = ABS(bdy_space) * parts_this_time /MAX(dt * v_inject, c_tiny)
-        new => plist%head
-        DO WHILE(ASSOCIATED(new))
-          new%weight = vol * density/REAL(n_eff,num)
-          new => new%next
-        ENDDO
-        CALL append_partlist(species_list(injector%species)%attached_list, plist)
       ENDDO
     ENDDO
+    CALL append_partlist(species_list(injector%species)%attached_list, plist)
 
   END SUBROUTINE run_single_injector
 
@@ -340,15 +339,15 @@ CONTAINS
     INTEGER :: errcode, i
 
     errcode = 0
-    density = evaluate_with_parameters(injector%density_function, &
-        parameters, errcode)
+    density = MAX(evaluate_with_parameters(injector%density_function, &
+        parameters, errcode),0.0_num)
 
     !Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
       IF (injector%temperature_function(i)%init) THEN
         temperature(i) = &
-            evaluate_with_parameters(injector%temperature_function(i), &
-            parameters, errcode)
+            MAX(evaluate_with_parameters(injector%temperature_function(i), &
+            parameters, errcode),0.0_num)
       ELSE
         temperature(i) = 0.0_num
       ENDIF

@@ -38,6 +38,7 @@ CONTAINS
     injector%t_end = t_end
     injector%depth = 1.0_num
     injector%dt_inject = -1.0_num
+    injector%density_min = 0.0_num
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
@@ -114,7 +115,7 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
-    REAL(num) :: gamma_mass, v_inject, n_eff, density
+    REAL(num) :: gamma_mass, v_inject, density
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, ct, idir
     INTEGER :: dir_index = 1
@@ -145,6 +146,7 @@ CONTAINS
     typical_mc2 = (mass * c)**2
     CALL populate_injector_properties(injector, parameters, density, &
         temperature, drift)
+    IF (density < injector%density_min) RETURN
 
     !Assume agressive maximum thermal momentum, all components
     !like hottest component
@@ -155,7 +157,7 @@ CONTAINS
 
     injector%dt_inject = ABS(bdy_space)/(injector%npart_per_cell * v_inject)
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
-    injector%depth = 1.0_num
+    injector%depth = injector%depth + REAL(parts_this_time, num)
 
     CALL create_empty_partlist(plist)
     DO ipart = 1, parts_this_time
@@ -173,23 +175,9 @@ CONTAINS
         new%mass = mass
 #endif
       ENDDO
+      new%weight = ABS(bdy_space) * density &
+          / REAL(injector%npart_per_cell, num)
       CALL add_particle_to_partlist(plist, new)
-    ENDDO
-    new => plist%head
-    v_inject = 0.0_num
-    ct=0
-    DO WHILE(ASSOCIATED(new))
-      gamma_mass = SQRT(SUM(new%part_p**2) + typical_mc2) / c
-      v_inject = v_inject + new%part_p(dir_index) / gamma_mass
-      ct = ct + 1
-      new => new%next
-    ENDDO
-    v_inject = ABS(v_inject) / MAX(REAL(ct, num), c_tiny)
-    n_eff = ABS(bdy_space) * parts_this_time /MAX(dt * v_inject, c_tiny)
-    new => plist%head
-    DO WHILE(ASSOCIATED(new))
-      new%weight = ABS(bdy_space) * density/REAL(n_eff,num)
-      new => new%next
     ENDDO
     CALL append_partlist(species_list(injector%species)%attached_list, plist)
 
@@ -207,15 +195,15 @@ CONTAINS
     INTEGER :: errcode, i
 
     errcode = 0
-    density = evaluate_with_parameters(injector%density_function, &
-        parameters, errcode)
+    density = MAX(evaluate_with_parameters(injector%density_function, &
+        parameters, errcode),0.0_num)
 
     !Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
       IF (injector%temperature_function(i)%init) THEN
         temperature(i) = &
-            evaluate_with_parameters(injector%temperature_function(i), &
-            parameters, errcode)
+            MAX(evaluate_with_parameters(injector%temperature_function(i), &
+            parameters, errcode),0.0_num)
       ELSE
         temperature(i) = 0.0_num
       ENDIF
