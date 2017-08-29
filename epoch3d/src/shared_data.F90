@@ -981,6 +981,8 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: z_grid_mins, z_grid_maxs
 
+  LOGICAL :: safe_periods = .FALSE.
+
   REAL(num) :: total_ohmic_heating = 0.0_num
 
   LOGICAL :: ic_from_restart = .FALSE.

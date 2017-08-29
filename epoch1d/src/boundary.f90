@@ -295,16 +295,32 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, INTENT(IN), OPTIONAL :: species
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
     INTEGER :: nn, i, flip_dir
+    INTEGER, DIMENSION(-1:1) :: neighbour_local
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
+
+    neighbour_local = neighbour
+    IF (PRESENT(species)) THEN
+      IF (x_min_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_x_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) &
+            neighbour_local(-1) = MPI_PROC_NULL
+      ENDIF
+      IF (x_max_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_x_max) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) &
+            neighbour_local(1) = MPI_PROC_NULL
+      ENDIF
+    ENDIF
 
     nn = nx
 
@@ -312,8 +328,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(nn+1), ng, mpireal, &
-        neighbour( 1), tag, temp, ng, mpireal, &
-        neighbour(-1), tag, comm, status, errcode)
+        neighbour_local( 1), tag, temp, ng, mpireal, &
+        neighbour_local(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF (bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary) THEN
@@ -333,8 +349,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng), ng, mpireal, &
-        neighbour(-1), tag, temp, ng, mpireal, &
-        neighbour( 1), tag, comm, status, errcode)
+        neighbour_local(-1), tag, temp, ng, mpireal, &
+        neighbour_local( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF (bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary) THEN
@@ -701,9 +717,9 @@ CONTAINS
 
     ! domain is decomposed. Just add currents at edges
     IF (mpi_run) THEN
-      CALL processor_summation_bcs(jx, jng, c_dir_x)
-      CALL processor_summation_bcs(jy, jng, c_dir_y)
-      CALL processor_summation_bcs(jz, jng, c_dir_z)
+      CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
+      CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)
+      CALL processor_summation_bcs(jz, jng, c_dir_z, species = ispecies)
     ENDIF
 
     DO i = 1, 2*c_ndims

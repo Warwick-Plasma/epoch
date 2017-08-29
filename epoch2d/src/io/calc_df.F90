@@ -43,7 +43,8 @@ CONTAINS
         ENDDO
     ENDIF
 
-    IF (run_mpi) CALL processor_summation_bcs(data_array, ng)
+    IF (run_mpi) CALL processor_summation_bcs(data_array, ng, &
+        species = species)
 
     IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
@@ -149,12 +150,12 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
     data_array = data_array * idx
 
-    CALL calc_boundary(data_array)
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -251,12 +252,14 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(wt, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(data_array)
-    CALL calc_boundary(wt)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(data_array)
+      CALL calc_boundary(wt)
+    ENDIF
 
     data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
@@ -394,12 +397,14 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(wt, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(data_array)
-    CALL calc_boundary(wt)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(data_array)
+      CALL calc_boundary(wt)
+    ENDIF
 
     data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
@@ -524,12 +529,12 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
     data_array = data_array * idx
 
-    CALL calc_boundary(data_array)
+    IF (safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -587,12 +592,12 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
     data_array = data_array * idx
 
-    CALL calc_boundary(data_array)
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -646,10 +651,10 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(data_array)
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -730,16 +735,18 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(meanx, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(meany, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(meanz, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(part_count, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(meanx, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(meany, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(meanz, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(meanx)
-    CALL calc_boundary(meany)
-    CALL calc_boundary(meanz)
-    CALL calc_boundary(part_count)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(meanx)
+      CALL calc_boundary(meany)
+      CALL calc_boundary(meanz)
+      CALL calc_boundary(part_count)
+    ENDIF
 
     part_count = MAX(part_count, 1.e-6_num)
 
@@ -779,12 +786,14 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(sigma, ispecies, do_mpi = .FALSE.)
-      CALL calc_boundary(part_count, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(sigma, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(sigma)
-    CALL calc_boundary(part_count)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(sigma)
+      CALL calc_boundary(part_count)
+    ENDIF
 
     ! 3/2 kT = <p^2>/(2m)
     sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
@@ -845,10 +854,10 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
-    CALL calc_boundary(data_array)
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

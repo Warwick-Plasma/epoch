@@ -441,12 +441,14 @@ CONTAINS
     IF (str_cmp(element, 'bc_x_min')) THEN
       species_list(species_id)%bc_particle(c_bd_x_min) = &
           as_bc_print(value, element, errcode)
+      IF (bc_particle(c_bd_x_min) == c_bc_periodic) safe_periods = .TRUE.
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'bc_x_max')) THEN
       species_list(species_id)%bc_particle(c_bd_x_max) = &
           as_bc_print(value, element, errcode)
+      IF (bc_particle(c_bd_x_max) == c_bc_periodic) safe_periods = .TRUE.
       RETURN
     ENDIF
 
