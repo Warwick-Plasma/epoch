@@ -789,17 +789,53 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, INTENT(IN), OPTIONAL :: species
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: subarray, nn, sz, i, flip_dir
+    INTEGER, DIMENSION(-1:1, -1:1, -1:1) :: neighbour_local
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
+
+    neighbour_local = neighbour
+    IF (PRESENT(species)) THEN
+      IF (x_min_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_x_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) &
+            neighbour_local(-1,0,0) = MPI_PROC_NULL
+      ENDIF
+      IF (x_max_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_x_max) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) &
+            neighbour_local(1,0,0) = MPI_PROC_NULL
+      ENDIF
+      IF (y_min_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
+            neighbour_local(0,-1,0) = MPI_PROC_NULL
+      ENDIF
+      IF (y_max_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
+            neighbour_local(0,1,0) = MPI_PROC_NULL
+      ENDIF
+      IF (z_min_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_z_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) &
+            neighbour_local(0,0,-1) = MPI_PROC_NULL
+      ENDIF
+      IF (z_max_boundary) THEN
+        IF (species_list(species)%bc_particle(c_bd_z_min) /= c_bc_null .AND. &
+            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) &
+            neighbour_local(0,0,1) = MPI_PROC_NULL
+      ENDIF
+    ENDIF
 
     sizes(1) = nx + 2 * ng
     sizes(2) = ny + 2 * ng
@@ -818,8 +854,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(nn+1,1-ng,1-ng), 1, subarray, &
-        neighbour( 1,0,0), tag, temp, sz, mpireal, &
-        neighbour(-1,0,0), tag, comm, status, errcode)
+        neighbour_local( 1,0,0), tag, temp, sz, mpireal, &
+        neighbour_local(-1,0,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
@@ -840,8 +876,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
-        neighbour(-1,0,0), tag, temp, sz, mpireal, &
-        neighbour( 1,0,0), tag, comm, status, errcode)
+        neighbour_local(-1,0,0), tag, temp, sz, mpireal, &
+        neighbour_local( 1,0,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
@@ -875,8 +911,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng,nn+1,1-ng), 1, subarray, &
-        neighbour(0, 1,0), tag, temp, sz, mpireal, &
-        neighbour(0,-1,0), tag, comm, status, errcode)
+        neighbour_local(0, 1,0), tag, temp, sz, mpireal, &
+        neighbour_local(0,-1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_y_min) == c_bc_reflect &
@@ -897,8 +933,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
-        neighbour(0,-1,0), tag, temp, sz, mpireal, &
-        neighbour(0, 1,0), tag, comm, status, errcode)
+        neighbour_local(0,-1,0), tag, temp, sz, mpireal, &
+        neighbour_local(0, 1,0), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_y_max) == c_bc_reflect &
@@ -932,8 +968,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng,1-ng,nn+1), 1, subarray, &
-        neighbour(0,0, 1), tag, temp, sz, mpireal, &
-        neighbour(0,0,-1), tag, comm, status, errcode)
+        neighbour_local(0,0, 1), tag, temp, sz, mpireal, &
+        neighbour_local(0,0,-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
     IF ((bc_particle(c_bd_z_min) == c_bc_reflect &
@@ -1795,9 +1831,9 @@ CONTAINS
     ENDIF
 
     ! domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x)
-    CALL processor_summation_bcs(jy, jng, c_dir_y)
-    CALL processor_summation_bcs(jz, jng, c_dir_z)
+    CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
+    CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)
+    CALL processor_summation_bcs(jz, jng, c_dir_z, species = ispecies)
 
     DO i = 1, 2*c_ndims
       IF (local_bcs(i) == c_bc_reflect) THEN
