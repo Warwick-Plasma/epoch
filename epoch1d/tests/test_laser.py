@@ -21,7 +21,7 @@ import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
 import platform
-from . import SimTest
+from tests import SimTest
 
 
 def showdatafields(sdffile):
