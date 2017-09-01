@@ -720,7 +720,10 @@ CONTAINS
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    CALL field_bc(array, ng)
+    array(:0,:) = 0.0_num
+    array(:,:0) = 0.0_num
+    array(nx+1:,:) = 0.0_num
+    array(:,ny+1:) = 0.0_num
 
   END SUBROUTINE processor_summation_bcs
 
