@@ -175,7 +175,6 @@ PROGRAM pic
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
 
-    CALL run_injectors()
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -189,6 +188,7 @@ PROGRAM pic
 #endif
     CALL update_eb_fields_half
     IF (push) THEN
+      CALL run_injectors
       ! .FALSE. this time to use load balancing threshold
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles

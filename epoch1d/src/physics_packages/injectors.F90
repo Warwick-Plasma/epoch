@@ -115,18 +115,26 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
-    REAL(num) :: gamma_mass, v_inject, density
+    REAL(num) :: gamma_mass, v_inject, density, npart_ideal, itemp
+    REAL(num) :: v_inject_s
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, ct, idir
     INTEGER :: dir_index = 1
     TYPE(parameter_pack) :: parameters
+    LOGICAL :: first_inject
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
     IF (injector%dt_inject > 0.0_num) THEN
-      injector%depth = injector%depth - random() * 2.0_num * &
-          dt / injector%dt_inject
+      npart_ideal = dt / injector%dt_inject
+      itemp = random_g(SQRT(0.5_num &
+          * npart_ideal)) + npart_ideal
+      injector%depth = injector%depth - itemp
+          
       IF (injector%depth >= 0.0_num) RETURN
+      first_inject = .FALSE.
+    ELSE
+      first_inject = .TRUE.
     ENDIF
 
     IF (direction == c_bd_x_min) THEN
@@ -153,16 +161,26 @@ CONTAINS
     p_therm = SQRT(mass * kb * MAXVAL(temperature))
     p_inject_drift = drift(dir_index)
     gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
-    v_inject =  ABS(p_inject_drift / gamma_mass)
+    v_inject_s = p_inject_drift / gamma_mass
+    v_inject =  ABS(v_inject_s)
 
-    injector%dt_inject = ABS(bdy_space)/(injector%npart_per_cell * v_inject)
+    injector%dt_inject = ABS(bdy_space) / (injector%npart_per_cell * v_inject)
+    npart_ideal = injector%dt_inject / dt
+    IF (first_inject) THEN
+      !On the first run of the injectors it isn't possible to decrement the 
+      !optical depth until this point
+      npart_ideal = dt / injector%dt_inject
+      injector%depth = injector%depth - MAX(random_g(SQRT(0.25_num &
+          * npart_ideal)) + npart_ideal,0.0_num)
+    ENDIF
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
     injector%depth = injector%depth + REAL(parts_this_time, num)
 
     CALL create_empty_partlist(plist)
     DO ipart = 1, parts_this_time
       CALL create_particle(new)
-      new%part_pos = bdy_pos + bdy_space*png/2.0_num
+      new%part_pos = bdy_pos + bdy_space*png/2.0_num - random() &
+          * v_inject_s * dt
       parameters%pack_pos = new%part_pos
       parameters%use_grid_position = .FALSE.
       CALL populate_injector_properties(injector, parameters, density, &

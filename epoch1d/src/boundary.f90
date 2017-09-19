@@ -565,7 +565,7 @@ CONTAINS
           ENDIF
 
           !Particle has left domain fully
-          IF (part_pos < x_min - dx/2.0_num * png) THEN
+          IF (part_pos < x_min - dx/2.0_num * png - dx) THEN
             IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3
                 temp(i) = species_list(ispecies)%ext_temp_x_min(i)
@@ -627,7 +627,7 @@ CONTAINS
 !              cur%force_multiplier = 0.0_num
             ENDIF
           ENDIF
-          IF (part_pos >= x_max + dx/2.0_num * png) THEN
+          IF (part_pos >= x_max + dx/2.0_num * png + dx) THEN
             IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3
                 temp(i) = species_list(ispecies)%ext_temp_x_max(i)

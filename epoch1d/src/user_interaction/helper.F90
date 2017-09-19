@@ -276,15 +276,26 @@ CONTAINS
     REAL(num), ALLOCATABLE :: num_frac(:)
     INTEGER(i8) :: cell_x
     INTEGER(i8) :: i, ipos
-    INTEGER :: ix
+    INTEGER :: ix, imin, imax
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 
     npart_this_species = species%count
     IF (npart_this_species <= 0) RETURN
 
+    IF (x_min_boundary .AND. species%fill_ghosts) THEN
+      imin = -1
+    ELSE
+      imin = 1
+    ENDIF
+    IF (x_max_boundary .AND. species%fill_ghosts) THEN
+      imax = nx + 2
+    ELSE
+      imax = nx
+    ENDIF
+
     num_valid_cells_local = 0
-    DO ix = 1, nx
+    DO ix = imin, imax
       IF (load_list(ix)) num_valid_cells_local = num_valid_cells_local + 1
     ENDDO ! ix
 
@@ -389,7 +400,7 @@ CONTAINS
     current => partlist%head
     IF (npart_per_cell > 0) THEN
 
-      DO ix = 1, nx
+      DO ix = imin, imax
         IF (.NOT. load_list(ix)) CYCLE
 
         ipart = 0
@@ -426,7 +437,7 @@ CONTAINS
       ALLOCATE(valid_cell_list(num_valid_cells_local))
 
       ipos = 0
-      DO ix = 1, nx
+      DO ix = imin, imax
         IF (load_list(ix)) THEN
           ipos = ipos + 1
           valid_cell_list(ipos) = ix - 1
@@ -456,6 +467,17 @@ CONTAINS
       current => next
     ENDDO
 
+!    current=>partlist%head
+!    DO WHILE(ASSOCIATED(current))
+!      next => current%next
+!      IF (current%part_pos < x_min - dx*png/2.0_num &
+!          .OR. current%part_pos > x_max + dx*png/2.0_num) THEN 
+!        CALL remove_particle_from_partlist(partlist, current)
+!        DEALLOCATE(current)
+!      ENDIF
+!      current => next
+!    ENDDO
+
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
 
@@ -484,7 +506,7 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
-    TYPE(particle), POINTER :: current
+    TYPE(particle), POINTER :: current, next
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:), ALLOCATABLE :: npart_in_cell
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -587,6 +609,18 @@ CONTAINS
     ENDDO
 
     DEALLOCATE(npart_in_cell)
+
+    current=>partlist%head
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      IF (current%part_pos < x_min - dx*png/2.0_num &
+          .OR. current%part_pos > x_max + dx*png/2.0_num) THEN
+        CALL remove_particle_from_partlist(partlist, current)
+        PRINT *,'DELETING'
+        DEALLOCATE(current)
+      ENDIF
+      current => next
+    ENDDO
 
   END SUBROUTINE setup_particle_density
 #endif
