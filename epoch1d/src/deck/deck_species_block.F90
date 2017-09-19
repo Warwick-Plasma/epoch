@@ -354,6 +354,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'fill_ghosts')) THEN
+      species_list(species_id)%fill_ghosts = as_logical_print(value, element, &
+          errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'mass')) THEN
       species_list(species_id)%mass = species_mass
       ! Find the release species for each ionising species and subtract the
