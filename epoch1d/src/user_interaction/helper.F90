@@ -467,17 +467,6 @@ CONTAINS
       current => next
     ENDDO
 
-!    current=>partlist%head
-!    DO WHILE(ASSOCIATED(current))
-!      next => current%next
-!      IF (current%part_pos < x_min - dx*png/2.0_num &
-!          .OR. current%part_pos > x_max + dx*png/2.0_num) THEN 
-!        CALL remove_particle_from_partlist(partlist, current)
-!        DEALLOCATE(current)
-!      ENDIF
-!      current => next
-!    ENDDO
-
     CALL MPI_ALLREDUCE(partlist%count, npart_this_species, 1, MPI_INTEGER8, &
         MPI_SUM, comm, errcode)
 
@@ -610,17 +599,22 @@ CONTAINS
 
     DEALLOCATE(npart_in_cell)
 
-    current=>partlist%head
-    DO WHILE(ASSOCIATED(current))
-      next => current%next
-      IF (current%part_pos < x_min - dx*png/2.0_num &
-          .OR. current%part_pos > x_max + dx*png/2.0_num) THEN
-        CALL remove_particle_from_partlist(partlist, current)
-        PRINT *,'DELETING'
-        DEALLOCATE(current)
-      ENDIF
-      current => next
-    ENDDO
+    !If you are filling ghost cells to meet an injector
+    !Then you have overfilled by half a cell but need those particles
+    !To calculate weights correctly. Now delete those particles that
+    !Overlap with the injection region
+    IF (species%fill_ghosts) THEN
+      current=>partlist%head
+      DO WHILE(ASSOCIATED(current))
+        next => current%next
+        IF (current%part_pos < x_min - dx*png/2.0_num &
+            .OR. current%part_pos > x_max + dx*png/2.0_num) THEN
+          CALL remove_particle_from_partlist(partlist, current)
+          DEALLOCATE(current)
+        ENDIF
+        current => next
+      ENDDO
+    ENDIF
 
   END SUBROUTINE setup_particle_density
 #endif
