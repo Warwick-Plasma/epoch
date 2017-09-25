@@ -322,6 +322,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'meet_injectors')) THEN
+      species_list(species_id)%fill_ghosts = as_logical_print(value, element, &
+          errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'mass')) THEN
       species_mass = as_real_print(value, element, errcode) * m0
     ENDIF

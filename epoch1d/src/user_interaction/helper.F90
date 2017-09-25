@@ -276,7 +276,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: num_frac(:)
     INTEGER(i8) :: cell_x
     INTEGER(i8) :: i, ipos
-    INTEGER :: ix, imin, imax
+    INTEGER :: ix, ix_min, ix_max
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 
@@ -284,18 +284,18 @@ CONTAINS
     IF (npart_this_species <= 0) RETURN
 
     IF (x_min_boundary .AND. species%fill_ghosts) THEN
-      imin = -1
+      ix_min = -1
     ELSE
-      imin = 1
+      ix_min = 1
     ENDIF
     IF (x_max_boundary .AND. species%fill_ghosts) THEN
-      imax = nx + 2
+      ix_max = nx + 2
     ELSE
-      imax = nx
+      ix_max = nx
     ENDIF
 
     num_valid_cells_local = 0
-    DO ix = imin, imax
+    DO ix = ix_min, ix_max
       IF (load_list(ix)) num_valid_cells_local = num_valid_cells_local + 1
     ENDDO ! ix
 
@@ -400,7 +400,7 @@ CONTAINS
     current => partlist%head
     IF (npart_per_cell > 0) THEN
 
-      DO ix = imin, imax
+      DO ix = ix_min, ix_max
         IF (.NOT. load_list(ix)) CYCLE
 
         ipart = 0
@@ -437,7 +437,7 @@ CONTAINS
       ALLOCATE(valid_cell_list(num_valid_cells_local))
 
       ipos = 0
-      DO ix = imin, imax
+      DO ix = ix_min, ix_max
         IF (load_list(ix)) THEN
           ipos = ipos + 1
           valid_cell_list(ipos) = ix - 1
