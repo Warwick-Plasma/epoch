@@ -127,8 +127,9 @@ CONTAINS
 
     IF (injector%dt_inject > 0.0_num) THEN
       npart_ideal = dt / injector%dt_inject
-      itemp = random_g(SQRT(0.5_num &
-          * npart_ideal)) + npart_ideal
+      itemp = random_g(0.5*SQRT(npart_ideal &
+          *(1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+          + npart_ideal
       injector%depth = injector%depth - itemp
           
       IF (injector%depth >= 0.0_num) RETURN
@@ -170,8 +171,10 @@ CONTAINS
       !On the first run of the injectors it isn't possible to decrement the 
       !optical depth until this point
       npart_ideal = dt / injector%dt_inject
-      injector%depth = injector%depth - MAX(random_g(SQRT(0.25_num &
-          * npart_ideal)) + npart_ideal,0.0_num)
+      itemp = random_g(0.5*SQRT(npart_ideal &
+          *(1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+          + npart_ideal
+      injector%depth = injector%depth - itemp
     ENDIF
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
     injector%depth = injector%depth + REAL(parts_this_time, num)
