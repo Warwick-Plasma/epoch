@@ -527,7 +527,7 @@ CONTAINS
           IF (x_min_boundary) THEN
             ! Particle has left the system
             IF (part_pos < x_min) THEN
-!              cur%force_multiplier = 0.0_num
+              cur%force_multiplier = 0.0_num
             ENDIF
             IF (part_pos < x_min - dx/2.0 * png) THEN
               xbd = 0
@@ -552,7 +552,7 @@ CONTAINS
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               !Thermal boundaries just prevent particle from accelerating
-!              cur%force_multiplier = 0.0_num
+              cur%force_multiplier = 0.0_num
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
               !Periodic boundaries are like processor boundaries
               !Particle moves when it meets boundary with centre
@@ -560,7 +560,7 @@ CONTAINS
               cur%part_pos = part_pos + length_x
             ELSE
               ! Default to open boundary conditions - stop force on particle
-!              cur%force_multiplier = 0.0_num
+              cur%force_multiplier = 0.0_num
             ENDIF
           ENDIF
 
@@ -598,7 +598,7 @@ CONTAINS
           IF (x_max_boundary) THEN
             ! Particle has left the system
             IF (part_pos >= x_max) THEN
-!              cur%force_multiplier = 0.0_num
+              cur%force_multiplier = 0.0_num
             ENDIF
             IF (part_pos >= x_max + dx/2.0 * png) THEN
               xbd = 0
@@ -624,7 +624,7 @@ CONTAINS
               cur%part_pos = part_pos - length_x
             ELSE
               ! Default to open boundary conditions - turn off particle force
-!              cur%force_multiplier = 0.0_num
+              cur%force_multiplier = 0.0_num
             ENDIF
           ENDIF
           IF (part_pos >= x_max + dx/2.0_num * png + dx) THEN

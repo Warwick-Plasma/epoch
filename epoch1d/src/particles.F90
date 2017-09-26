@@ -209,7 +209,7 @@ CONTAINS
         part_ux = current%part_p(1) * ipart_mc
         part_uy = current%part_p(2) * ipart_mc
         part_uz = current%part_p(3) * ipart_mc
-        part_fm = current%force_multiplier
+        part_fm = 1.0_num !current%force_multiplier
 
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)

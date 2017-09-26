@@ -440,7 +440,7 @@ CONTAINS
       DO ix = ix_min, ix_max
         IF (load_list(ix)) THEN
           ipos = ipos + 1
-          valid_cell_list(ipos) = ix - 1
+          valid_cell_list(ipos) = ix - ix_min
         ENDIF
       ENDDO ! ix
 
@@ -448,7 +448,7 @@ CONTAINS
         ipos = INT(random() * (num_valid_cells_local - 1)) + 1
         ipos = valid_cell_list(ipos)
 
-        cell_x = ipos + 1
+        cell_x = ipos + ix_min
 
         current%part_pos = x(cell_x) + (random() - 0.5_num) * dx
 

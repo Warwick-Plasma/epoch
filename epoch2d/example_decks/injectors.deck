@@ -1,0 +1,117 @@
+begin:control
+  nx = 128
+  ny = 128
+  # final time of simulation
+  t_end = 3.0e-1
+
+  # size of domain
+  x_min = 0
+  x_max = 2.5e5
+  y_min = -2.5e5
+  y_max = 2.5e5
+  stdout_frequency = 1000
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+
+begin:constant
+  drift_p = 2.5e-24
+  temp = 273
+  dens = 1
+  ppc = 8
+
+end:constant
+
+begin:injector
+
+  boundary = x_min
+  species = Beam
+  density = dens
+  temp = temp
+  drift_y = drift_p
+  npart_per_cell = ppc
+
+end:injector
+
+begin:species
+  # Background electrons (immobile ions)
+  name = Background
+  charge = -1
+  mass = 1.0
+  npart = ppc*nx*ny
+  temp = temp
+  drift_x = -drift_p/1000
+  density = dens*1000
+end:species
+
+
+begin:species
+  # Beam
+  name = Beam
+  charge = -1
+  mass = 1.0
+#  temp_x = temp
+#  drift_x = drift_p
+#  density = dens
+  bc_y_min = simple_outflow
+  bc_y_max = simple_outflow
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 0.5e-2
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 1
+  dump_last = T
+
+  # Properties at particle positions
+  #particles = always
+  #px = always
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  ppc = always + species
+  #ekbar = always
+  #mass_density = never + species
+  charge_density = always
+  number_density = always + species
+  #temperature = always + species
+
+  # extended io
+  distribution_functions = always
+end:output
+
+
+begin:dist_fn
+  name = x_px
+  ndims = 2
+
+  direction1 = dir_x
+  direction2 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-5e-24, 5e-24)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 200
+
+  include_species:Beam
+  include_species:Background
+end:dist_fn

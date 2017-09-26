@@ -38,12 +38,12 @@ CONTAINS
     injector%t_end = t_end
     injector%density_min = 0.0_num
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(injector%dt_inject(1:ny))
-      ALLOCATE(injector%depth(1:ny))
+      ALLOCATE(injector%dt_inject(1-ng:ny+ng))
+      ALLOCATE(injector%depth(1-ng:ny+ng))
     ENDIF
     IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(injector%dt_inject(1:nx))
-      ALLOCATE(injector%depth(1:nx))
+      ALLOCATE(injector%dt_inject(1-ng:nx+ng))
+      ALLOCATE(injector%depth(1-ng:nx+ng))
     ENDIF
     injector%depth = 1.0_num
     injector%dt_inject = -1.0_num

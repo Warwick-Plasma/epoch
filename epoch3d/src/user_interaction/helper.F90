@@ -517,7 +517,8 @@ CONTAINS
       DO ix = iz_min, ix_max
         IF (load_list(ix,iy,iz)) THEN
           ipos = ipos + 1
-          valid_cell_list(ipos) = ix - 1 + nx_e * (iy - 1 + ny_e * (iz - 1))
+          valid_cell_list(ipos) = ix - ix_min + nx_e * (iy - iy_min + ny_e &
+              * (iz - iz_min))
         ENDIF
       ENDDO ! ix
       ENDDO ! iy
@@ -527,15 +528,15 @@ CONTAINS
         ipos = INT(random() * (num_valid_cells_local - 1)) + 1
         ipos = valid_cell_list(ipos)
 
-        cell_z = ipos / (nx * ny)
-        ipos = ipos - (nx * ny) * cell_z
-        cell_z = cell_z + 1
+        cell_z = ipos / (nx_e * ny_e)
+        ipos = ipos - (nx_e * ny_e) * cell_z
+        cell_z = cell_z + iz_min
 
-        cell_y = ipos / nx
-        ipos = ipos - nx * cell_y
-        cell_y = cell_y + 1
+        cell_y = ipos / nx_e
+        ipos = ipos - nx_e * cell_y
+        cell_y = cell_y + iy_min
 
-        cell_x = ipos + 1
+        cell_x = ipos + ix_min
 
         current%part_pos(1) = x(cell_x) + (random() - 0.5_num) * dx
         current%part_pos(2) = y(cell_y) + (random() - 0.5_num) * dy
