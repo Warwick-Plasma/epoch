@@ -131,7 +131,7 @@ CONTAINS
           *(1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
           + npart_ideal
       injector%depth = injector%depth - itemp
-          
+
       IF (injector%depth >= 0.0_num) RETURN
       first_inject = .FALSE.
     ELSE
@@ -166,7 +166,6 @@ CONTAINS
     v_inject =  ABS(v_inject_s)
 
     injector%dt_inject = ABS(bdy_space) / (injector%npart_per_cell * v_inject)
-    npart_ideal = injector%dt_inject / dt
     IF (first_inject) THEN
       !On the first run of the injectors it isn't possible to decrement the 
       !optical depth until this point

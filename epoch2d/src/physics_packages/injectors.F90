@@ -143,13 +143,16 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
-    REAL(num) :: gamma_mass, v_inject, density, npart_par,vol
+    REAL(num) :: gamma_mass, v_inject, density, vol
+    REAL(num) :: npart_ideal, itemp, v_inject_s
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, ct, idir, dir_index, ii, ipart_trans
-    REAL(num) :: npart_total
-    INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel, npart_perp
+    !REAL(num) :: npart_total
+    INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
+    LOGICAL :: first_inject
+
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
@@ -201,11 +204,10 @@ CONTAINS
     !Fit particles
     !npart_par is REAL because you can meaningfully inject at non-integer
     !rate
-    npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
+!    npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
     !npart_perp is integer because you are actually placing particles
-    npart_perp = CEILING(npart_par)
-    npart_total = npart_par * REAL(PRODUCT(npart_perp), num)
-
+!    npart_perp = CEILING(npart_par)
+!    npart_total = npart_par * REAL(PRODUCT(npart_perp), num)
     CALL create_empty_partlist(plist)
     DO ii = 1, nel(1)
       DO idir = 1, c_ndims-1
@@ -217,9 +219,18 @@ CONTAINS
       CALL assign_pack_value(parameters, perp_dir_index(1), ii)
 
       IF (injector%dt_inject(ii) > 0.0_num) THEN
-        injector%depth(ii) = injector%depth(ii) - random() * 2.0_num &
-            * dt / injector%dt_inject(ii)
+!        injector%depth(ii) = injector%depth(ii) - random() * 2.0_num &
+!            * dt / injector%dt_inject(ii)
+        npart_ideal = dt / injector%dt_inject(ii)
+        itemp = random_g(0.5*SQRT(npart_ideal * &
+            (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+            + npart_ideal
+        injector%depth(ii) = injector%depth(ii) - itemp
+        first_inject = .FALSE.
+
         IF (injector%depth(ii) >= 0.0_num) CYCLE
+      ELSE
+        first_inject = .TRUE.
       ENDIF
 
       CALL populate_injector_properties(injector, parameters, density_grid, &
@@ -230,23 +241,33 @@ CONTAINS
       !Fit particles
       !npart_par is REAL because you can meaningfully inject at non-integer
       !rate
-      npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
+!      npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
       !npart_perp is integer because you are actually placing particles
-      npart_perp = CEILING(npart_par)
+!      npart_perp = CEILING(npart_par)
 
       !Assume agressive maximum thermal momentum, all components
       !like hottest component
       p_therm = SQRT(mass * kb * MAXVAL(temperature))
       p_inject_drift = drift(dir_index)
       gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
-      v_inject =  ABS(p_inject_drift / gamma_mass)
+      v_inject_s = p_inject_drift / gamma_mass
+      v_inject =  ABS(v_inject_s)
 
-      injector%dt_inject(ii) = ABS(bdy_space)/MAX(npart_par * v_inject,c_tiny)
+      injector%dt_inject(ii) = ABS(bdy_space) &
+          / MAX(injector%npart_per_cell * v_inject,c_tiny)
+      IF (first_inject) THEN
+          !On the first run of the injectors it isn't possible to decrement
+          !the optical depth until this point
+          npart_ideal = dt / injector%dt_inject(ii)
+          itemp = random_g(0.5*SQRT(npart_ideal * &
+              (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+              + npart_ideal
+          injector%depth(ii) = injector%depth(ii) - itemp
+      ENDIF
       parts_this_time = FLOOR(ABS(injector%depth(ii) - 1.0_num))
       injector%depth(ii) = injector%depth(ii) + REAL(parts_this_time, num)
 
       DO ipart = 1, parts_this_time
-        DO ipart_trans = 1, npart_perp(1)
           CALL create_particle(new)
           new%part_pos = 0.0_num
           DO idir = 1, c_ndims-1
@@ -254,7 +275,8 @@ CONTAINS
                 * perp_cell_size(idir) &
                 + cur_cell(idir)
           ENDDO
-          new%part_pos(dir_index) = bdy_pos + bdy_space*png/2.0_num
+          new%part_pos(dir_index) = bdy_pos + bdy_space*png/2.0_num - random() &
+              * v_inject_s * dt
           parameters%pack_pos = new%part_pos
           parameters%use_grid_position = .FALSE.
           CALL populate_injector_properties(injector, parameters, density, &
@@ -267,9 +289,8 @@ CONTAINS
           new%charge = species_list(injector%species)%charge
           new%mass = mass
 #endif
-          new%weight = vol * density_grid/npart_total
+          new%weight = vol * density_grid / REAL(injector%npart_per_cell, num)
           CALL add_particle_to_partlist(plist, new)
-        ENDDO
       ENDDO
     ENDDO
 

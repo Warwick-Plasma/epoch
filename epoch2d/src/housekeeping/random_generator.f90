@@ -17,7 +17,7 @@ MODULE random_generator
 
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: random, random_init, get_random_state, set_random_state
+  PUBLIC :: random, random_g, random_init, get_random_state, set_random_state
   INTEGER :: x = 123456789, y = 362436069, z = 521288629, w = 916191069
 
 CONTAINS
@@ -72,6 +72,36 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE random_init
+
+
+
+  FUNCTION random_g(stdev)
+
+    DOUBLE PRECISION, INTENT(IN) :: stdev
+    DOUBLE PRECISION :: random_g
+
+    DOUBLE PRECISION :: rand1, rand2, w
+    DOUBLE PRECISION, PARAMETER :: c_tiny = TINY(1.D0)
+
+    ! This is a basic polar Box-Muller transform
+    ! It generates gaussian distributed random numbers
+    DO
+      rand1 = random()
+      rand2 = random()
+
+      rand1 = 2.D0 * rand1 - 1.D0
+      rand2 = 2.D0 * rand2 - 1.D0
+
+      w = rand1**2 + rand2**2
+
+      IF (w > c_tiny .AND. w < 1.D0) EXIT
+    ENDDO
+
+    w = SQRT((-2.D0 * LOG(w)) / w)
+
+    random_g = rand1 * w * stdev
+
+  END FUNCTION random_g
 
 
 
