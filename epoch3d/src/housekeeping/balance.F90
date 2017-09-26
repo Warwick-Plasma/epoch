@@ -104,7 +104,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_x) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in X
-          ALLOCATE(load_x(nx_global))
+          ALLOCATE(load_x(nx_global + 2 * ng))
           CALL get_load_in_x(load_x)
           CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
         ENDIF
@@ -115,7 +115,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_y) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in Y
-          ALLOCATE(load_y(ny_global))
+          ALLOCATE(load_y(ny_global + 2 * ng))
           CALL get_load_in_y(load_y)
           CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
         ENDIF
@@ -126,7 +126,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_z) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in Z
-          ALLOCATE(load_z(nz_global))
+          ALLOCATE(load_z(nz_global + 2 * ng))
           CALL get_load_in_z(load_z)
           CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
         ENDIF
@@ -1945,7 +1945,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num)
+        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + REAL(ng, num) &
+            + 0.5_num)
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -1984,7 +1985,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_grid_min, NOT y_grid_min_local
-        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num)
+        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + REAL(ng, num) &
+            + 0.5_num)
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -2023,7 +2025,8 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so z_grid_min, NOT z_grid_min_local
-        cell = FLOOR((current%part_pos(3) - z_grid_min) / dz + 1.5_num)
+        cell = FLOOR((current%part_pos(3) - z_grid_min) / dz + REAL(ng, num) &
+            + 0.5_num)
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -2051,13 +2054,13 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
-    sz = SIZE(load)
+    sz = SIZE(load) - 2 * ng
     maxs = sz
 
     load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
@@ -2131,6 +2134,7 @@ CONTAINS
     TYPE(particle), INTENT(IN) :: part
     INTEGER :: get_particle_processor
     INTEGER :: iproc, coords(c_ndims)
+    REAL(num) :: minpos, maxpos
 
     get_particle_processor = -1
     coords = -1
@@ -2139,24 +2143,51 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (part%part_pos(1) >= x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. part%part_pos(1) < x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = x_grid_mins(iproc) - dx * ng
+      ELSE
+        minpos = x_grid_mins(iproc) - dx / 2.0_num
+      ENDIF
+      IF (iproc == nprocx - 1) THEN
+        maxpos = x_grid_maxs(iproc) + dx * ng
+      ELSE
+        maxpos = x_grid_maxs(iproc) + dx / 2.0_num
+      ENDIF
+      IF (part%part_pos(1) >= minpos .AND. part%part_pos(1) < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy - 1
-      IF (part%part_pos(2) >= y_grid_mins(iproc) - dy / 2.0_num &
-          .AND. part%part_pos(2) < y_grid_maxs(iproc) + dy / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = y_grid_mins(iproc) - dy * ng
+      ELSE
+        minpos = y_grid_mins(iproc) - dy / 2.0_num
+      ENDIF
+      IF (iproc == nprocy - 1) THEN
+        maxpos = y_grid_maxs(iproc) + dy * ng
+      ELSE
+        maxpos = y_grid_maxs(iproc) + dy / 2.0_num
+      ENDIF
+      IF (part%part_pos(2) >= minpos .AND. part%part_pos(2) < maxpos) THEN
         coords(c_ndims-1) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocz - 1
-      IF (part%part_pos(3) >= z_grid_mins(iproc) - dz / 2.0_num &
-          .AND. part%part_pos(3) < z_grid_maxs(iproc) + dz / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = z_grid_mins(iproc) - dz * ng
+      ELSE
+        minpos = z_grid_mins(iproc) - dz / 2.0_num
+      ENDIF
+      IF (iproc == nprocz - 1) THEN
+        maxpos = z_grid_maxs(iproc) + dz * ng
+      ELSE
+        maxpos = z_grid_maxs(iproc) + dz / 2.0_num
+      ENDIF
+      IF (part%part_pos(3) >= minpos .AND. part%part_pos(3) < maxpos) THEN
         coords(c_ndims-2) = iproc
         EXIT
       ENDIF

@@ -1207,14 +1207,14 @@ CONTAINS
     REAL(num) :: part_pos, z_min_outer, z_max_outer
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
 
-    x_min_outer = x_min - dx / 2.0_num * png
-    x_max_outer = x_max + dx / 2.0_num * png
+    x_min_outer = x_min - dx / 2.0_num * png - dx
+    x_max_outer = x_max + dx / 2.0_num * png + dx
 
-    y_min_outer = y_min - dy / 2.0_num * png
-    y_max_outer = y_max + dy / 2.0_num * png
+    y_min_outer = y_min - dy / 2.0_num * png - dy
+    y_max_outer = y_max + dy / 2.0_num * png + dy
 
-    z_min_outer = z_min - dz / 2.0_num * png
-    z_max_outer = z_max + dz / 2.0_num * png
+    z_min_outer = z_min - dz / 2.0_num * png - dz
+    z_max_outer = z_max + dz / 2.0_num * png + dz
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head

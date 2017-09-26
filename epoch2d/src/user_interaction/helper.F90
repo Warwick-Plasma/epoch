@@ -297,16 +297,39 @@ CONTAINS
     INTEGER(i8) :: cell_x
     INTEGER(i8) :: cell_y
     INTEGER(i8) :: i, ipos
-    INTEGER :: ix, iy
+    INTEGER :: ix, iy, ix_min, ix_max, iy_min, iy_max, nx_e
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 
     npart_this_species = species%count
     IF (npart_this_species <= 0) RETURN
 
+    IF (x_min_boundary .AND. species%fill_ghosts) THEN
+      ix_min = -1
+    ELSE
+      ix_min = 1
+    ENDIF
+    IF (x_max_boundary .AND. species%fill_ghosts) THEN
+      ix_max = nx + 2
+    ELSE
+      ix_max = nx
+    ENDIF
+    nx_e = ix_max - ix_min
+
+    IF (y_min_boundary .AND. species%fill_ghosts) THEN
+      iy_min = -1
+    ELSE
+      iy_min = 1
+    ENDIF
+    IF (y_max_boundary .AND. species%fill_ghosts) THEN
+      iy_max = ny + 2
+    ELSE
+      iy_max = ny
+    ENDIF
+
     num_valid_cells_local = 0
-    DO iy = 1, ny
-    DO ix = 1, nx
+    DO iy = iy_min, iy_max
+    DO ix = ix_min, ix_max
       IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local + 1
     ENDDO ! ix
     ENDDO ! iy
@@ -412,8 +435,8 @@ CONTAINS
     current => partlist%head
     IF (npart_per_cell > 0) THEN
 
-      DO iy = 1, ny
-      DO ix = 1, nx
+      DO iy = iy_min, iy_max
+      DO ix = ix_min, ix_max
         IF (.NOT. load_list(ix, iy)) CYCLE
 
         ipart = 0
@@ -452,11 +475,11 @@ CONTAINS
       ALLOCATE(valid_cell_list(num_valid_cells_local))
 
       ipos = 0
-      DO iy = 1, ny
-      DO ix = 1, nx
+      DO iy = iy_min, iy_max
+      DO ix = ix_min, ix_max
         IF (load_list(ix,iy)) THEN
           ipos = ipos + 1
-          valid_cell_list(ipos) = ix - 1 + nx * (iy - 1)
+          valid_cell_list(ipos) = ix - 1 + nx_e * (iy - 1)
         ENDIF
       ENDDO ! ix
       ENDDO ! iy
@@ -517,7 +540,7 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: density_in
     TYPE(particle_species), POINTER :: species
     REAL(num), INTENT(IN) :: density_min, density_max
-    TYPE(particle), POINTER :: current
+    TYPE(particle), POINTER :: current, next
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:,:), ALLOCATABLE :: npart_in_cell
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -638,6 +661,25 @@ CONTAINS
     ENDDO
 
     DEALLOCATE(npart_in_cell)
+
+    !If you are filling ghost cells to meet an injector
+    !Then you have overfilled by half a cell but need those particles
+    !To calculate weights correctly. Now delete those particles that
+    !Overlap with the injection region
+    IF (species%fill_ghosts) THEN
+      current=>partlist%head
+      DO WHILE(ASSOCIATED(current))
+        next => current%next
+        IF (current%part_pos(1) < x_min - dx * png / 2.0_num &
+            .OR. current%part_pos(1) > x_max + dx * png / 2.0_num &
+            .OR. current%part_pos(2) < y_min - dy * png / 2.0_num &
+            .OR. current%part_pos(2) > y_max + dy * png / 2.0_num) THEN
+          CALL remove_particle_from_partlist(partlist, current)
+          DEALLOCATE(current)
+        ENDIF
+        current => next
+      ENDDO
+    ENDIF
 
   END SUBROUTINE setup_particle_density
 #endif
