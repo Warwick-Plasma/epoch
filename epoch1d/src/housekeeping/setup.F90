@@ -963,16 +963,16 @@ CONTAINS
           ENDDO
         ENDIF
       CASE(c_blocktype_plain_mesh)
-        IF (str_cmp(block_id, 'grid') &
-            .OR. str_cmp(block_id, 'grid_full')) THEN
+        IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
           CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
-          IF (.NOT. got_full) THEN
+          IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)
             ELSE
+              ! Offset grid is offset only in x
               offset_x_min = extents(1)
               offset_x_max = extents(c_ndims+1)
             ENDIF
@@ -1521,6 +1521,7 @@ CONTAINS
 
 
   SUBROUTINE shift_particles_to_window(window_offset)
+
     REAL(num), INTENT(IN) :: window_offset
     TYPE(particle), POINTER :: current
     TYPE(particle_list), POINTER :: partlist
@@ -1548,12 +1549,11 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_min, window_offset
     INTEGER :: ix
 
-    DO ix = 1-ng, nx_global + ng
+    DO ix = 1 - ng, nx_global + ng
       xb_offset_global(ix) = xb_offset_global(ix) - window_offset
     ENDDO
     window_shift = window_offset
+
   END SUBROUTINE
-
-
 
 END MODULE setup

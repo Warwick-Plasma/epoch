@@ -612,7 +612,7 @@ CONTAINS
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2)) / c
+      dt = 1.0_num / c / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2))
 
     ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
@@ -1043,10 +1043,9 @@ CONTAINS
           ENDDO
         ENDIF
       CASE(c_blocktype_plain_mesh)
-        IF (str_cmp(block_id, 'grid') &
-            .OR. str_cmp(block_id, 'grid_full')) THEN
-            CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
-          IF (.NOT. got_full) THEN
+        IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
+          CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+          IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
             y_min = extents(2)
@@ -1055,6 +1054,7 @@ CONTAINS
               got_full = .TRUE.
               full_x_min = extents(1)
             ELSE
+              ! Offset grid is offset only in x
               offset_x_min = extents(1)
               offset_x_max = extents(c_ndims+1)
             ENDIF
@@ -1624,6 +1624,7 @@ CONTAINS
 
 
   SUBROUTINE shift_particles_to_window(window_offset)
+
     REAL(num), INTENT(IN) :: window_offset
     TYPE(particle), POINTER :: current
     TYPE(particle_list), POINTER :: partlist
@@ -1651,13 +1652,11 @@ CONTAINS
     REAL(num), INTENT(IN) :: x_min, window_offset
     INTEGER :: ix
 
-    DO ix = 1-ng, nx_global + ng
+    DO ix = 1 - ng, nx_global + ng
       xb_offset_global(ix) = xb_offset_global(ix) - window_offset
     ENDDO
     window_shift(1) = window_offset
+
   END SUBROUTINE
-
-
-
 
 END MODULE setup
