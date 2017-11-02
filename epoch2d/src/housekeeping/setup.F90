@@ -612,7 +612,7 @@ CONTAINS
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2)) / c
+      dt = 1.0_num / c / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2))
 
     ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
@@ -785,6 +785,7 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
     INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    REAL(num) :: window_offset, offset_x_min, full_x_min, offset_x_max
 
     got_full = .FALSE.
     npart_global = 0
@@ -1042,15 +1043,21 @@ CONTAINS
           ENDDO
         ENDIF
       CASE(c_blocktype_plain_mesh)
-        IF (.NOT.got_full) THEN
-          IF (str_cmp(block_id, 'grid') &
-              .OR. str_cmp(block_id, 'grid_full')) THEN
-            CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+        IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
+          CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+          IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
             y_min = extents(2)
             y_max = extents(c_ndims+2)
-            IF (str_cmp(block_id, 'grid_full')) got_full = .TRUE.
+            IF (str_cmp(block_id, 'grid_full')) THEN
+              got_full = .TRUE.
+              full_x_min = extents(1)
+            ELSE
+              ! Offset grid is offset only in x
+              offset_x_min = extents(1)
+              offset_x_max = extents(c_ndims+1)
+            ENDIF
           ENDIF
         ENDIF
       CASE(c_blocktype_point_mesh)
@@ -1274,7 +1281,10 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+    window_offset = full_x_min - offset_x_min
+    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
     CALL setup_grid
+    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
@@ -1610,5 +1620,43 @@ CONTAINS
   END FUNCTION it_optical_depth_trident
 #endif
 #endif
+
+
+
+  SUBROUTINE shift_particles_to_window(window_offset)
+
+    REAL(num), INTENT(IN) :: window_offset
+    TYPE(particle), POINTER :: current
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle_species), POINTER :: species
+    INTEGER :: ispecies
+
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+      partlist => species%attached_list
+      current => partlist%head
+
+      DO WHILE(ASSOCIATED(current))
+        current%part_pos(1) = current%part_pos(1) + window_offset
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE shift_particles_to_window
+
+
+
+  SUBROUTINE create_moved_window(x_min, window_offset)
+
+    REAL(num), INTENT(IN) :: x_min, window_offset
+    INTEGER :: ix
+
+    DO ix = 1 - ng, nx_global + ng
+      xb_offset_global(ix) = xb_offset_global(ix) - window_offset
+    ENDDO
+    window_shift(1) = window_offset
+
+  END SUBROUTINE
 
 END MODULE setup
