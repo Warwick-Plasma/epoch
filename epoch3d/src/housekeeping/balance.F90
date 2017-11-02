@@ -363,7 +363,7 @@ CONTAINS
     ! a different size.
 
     IF (overriding) THEN
-      ALLOCATE(temp2(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+      ALLOCATE(temp2(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
 
       temp2(0:nx+1, 0:ny+1, 0:nz+1) = jx(0:nx+1, 0:ny+1, 0:nz+1)
       CALL remap_field(temp2, temp)
