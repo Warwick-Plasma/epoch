@@ -222,8 +222,8 @@ CONTAINS
 !        injector%depth(ii) = injector%depth(ii) - random() * 2.0_num &
 !            * dt / injector%dt_inject(ii)
         npart_ideal = dt / injector%dt_inject(ii)
-        itemp = random_g(0.5*SQRT(npart_ideal * &
-            (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+        itemp = random_g(0.5_num * SQRT(npart_ideal &
+            * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
             + npart_ideal
         injector%depth(ii) = injector%depth(ii) - itemp
         first_inject = .FALSE.
@@ -259,8 +259,8 @@ CONTAINS
           ! On the first run of the injectors it isn't possible to decrement
           ! the optical depth until this point
           npart_ideal = dt / injector%dt_inject(ii)
-          itemp = random_g(0.5*SQRT(npart_ideal * &
-              (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+          itemp = random_g(0.5_num * SQRT(npart_ideal &
+              * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
               + npart_ideal
           injector%depth(ii) = injector%depth(ii) - itemp
       ENDIF
