@@ -802,7 +802,7 @@ CONTAINS
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
           ENDDO
-        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
