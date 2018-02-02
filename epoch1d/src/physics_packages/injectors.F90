@@ -167,7 +167,7 @@ CONTAINS
 
     injector%dt_inject = ABS(bdy_space) / (injector%npart_per_cell * v_inject)
     IF (first_inject) THEN
-      !On the first run of the injectors it isn't possible to decrement the 
+      !On the first run of the injectors it isn't possible to decrement the
       !optical depth until this point
       npart_ideal = dt / injector%dt_inject
       itemp = random_g(0.5*SQRT(npart_ideal &

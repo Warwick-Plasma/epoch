@@ -356,7 +356,7 @@ CONTAINS
       iz_max = nz + 2
     ELSE
       iz_max = nz
-    ENDIF 
+    ENDIF
 
     num_valid_cells_local = 0
     DO iz = iz_min, iz_max

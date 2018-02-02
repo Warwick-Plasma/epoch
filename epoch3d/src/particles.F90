@@ -551,7 +551,7 @@ CONTAINS
     ENDDO
 
     IF (.NOT.use_field_ionisation) THEN
-      IF (.NOT. safe_periods) THEN 
+      IF (.NOT. safe_periods) THEN
         CALL current_bcs
       ELSE IF (smooth_currents) THEN
         CALL field_bc(jx, ng)
