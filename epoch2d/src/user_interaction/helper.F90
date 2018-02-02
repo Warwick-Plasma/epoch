@@ -488,8 +488,6 @@ CONTAINS
         ipos = INT(random() * (num_valid_cells_local - 1)) + 1
         ipos = valid_cell_list(ipos)
 
-        PRINT *,ipos
-
         cell_y = ipos / nx_e
         ipos = ipos - nx_e * cell_y
         cell_y = cell_y + iy_min
@@ -548,7 +546,7 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: rpart_in_cell
 #endif
-    REAL(num) :: wdata
+    REAL(num) :: wdata, x0, x1, y0, y1
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, i, j, isubx, isuby
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: density
@@ -669,13 +667,19 @@ CONTAINS
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
     IF (species%fill_ghosts) THEN
-      current=>partlist%head
+      x1 = 0.5_num * dx * png
+      x0 = x_min - x1
+      x1 = x_max + x1
+
+      y1 = 0.5_num * dy * png
+      y0 = y_min - y1
+      y1 = y_max + y1
+
+      current => partlist%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
-        IF (current%part_pos(1) < x_min - dx * png / 2.0_num &
-            .OR. current%part_pos(1) > x_max + dx * png / 2.0_num &
-            .OR. current%part_pos(2) < y_min - dy * png / 2.0_num &
-            .OR. current%part_pos(2) > y_max + dy * png / 2.0_num) THEN
+        IF (current%part_pos(1) < x0 .OR. current%part_pos(1) > x1 &
+            .OR. current%part_pos(2) < y0 .OR. current%part_pos(2) > y1) THEN
           CALL remove_particle_from_partlist(partlist, current)
           DEALLOCATE(current)
         ENDIF

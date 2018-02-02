@@ -636,7 +636,6 @@ CONTAINS
       injector_current => injector_current%next
     ENDDO
 
-
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
     DEALLOCATE(ex_x_min)
     ALLOCATE(ex_x_min(1-ng:ny_new+ng, 1-ng:nz_new+ng))
@@ -2238,12 +2237,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = x_grid_mins(iproc) - dx * ng
       ELSE
-        minpos = x_grid_mins(iproc) - dx / 2.0_num
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
       ENDIF
       IF (iproc == nprocx - 1) THEN
         maxpos = x_grid_maxs(iproc) + dx * ng
       ELSE
-        maxpos = x_grid_maxs(iproc) + dx / 2.0_num
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
       ENDIF
       IF (part%part_pos(1) >= minpos .AND. part%part_pos(1) < maxpos) THEN
         coords(c_ndims) = iproc
@@ -2255,12 +2254,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = y_grid_mins(iproc) - dy * ng
       ELSE
-        minpos = y_grid_mins(iproc) - dy / 2.0_num
+        minpos = y_grid_mins(iproc) - dy * 0.5_num
       ENDIF
       IF (iproc == nprocy - 1) THEN
         maxpos = y_grid_maxs(iproc) + dy * ng
       ELSE
-        maxpos = y_grid_maxs(iproc) + dy / 2.0_num
+        maxpos = y_grid_maxs(iproc) + dy * 0.5_num
       ENDIF
       IF (part%part_pos(2) >= minpos .AND. part%part_pos(2) < maxpos) THEN
         coords(c_ndims-1) = iproc
@@ -2272,12 +2271,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = z_grid_mins(iproc) - dz * ng
       ELSE
-        minpos = z_grid_mins(iproc) - dz / 2.0_num
+        minpos = z_grid_mins(iproc) - dz * 0.5_num
       ENDIF
       IF (iproc == nprocz - 1) THEN
         maxpos = z_grid_maxs(iproc) + dz * ng
       ELSE
-        maxpos = z_grid_maxs(iproc) + dz / 2.0_num
+        maxpos = z_grid_maxs(iproc) + dz * 0.5_num
       ENDIF
       IF (part%part_pos(3) >= minpos .AND. part%part_pos(3) < maxpos) THEN
         coords(c_ndims-2) = iproc

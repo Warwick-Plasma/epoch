@@ -38,12 +38,14 @@ CONTAINS
     bcs = bc_particle
     IF (PRESENT(species)) THEN
       DO i = 1, 2*c_ndims
-        IF (species_list(species)%bc_particle(i) .NE. c_bc_null) &
-            bcs(i) = species_list(species)%bc_particle(i)
-        ENDDO
+        IF (species_list(species)%bc_particle(i) /= c_bc_null) THEN
+          bcs(i) = species_list(species)%bc_particle(i)
+        ENDIF
+      ENDDO
     ENDIF
 
-    IF (run_mpi) CALL processor_summation_bcs(data_array, ng, species = species)
+    IF (run_mpi) &
+        CALL processor_summation_bcs(data_array, ng, species = species)
 
     IF (x_min_boundary .AND. bc_particle(c_bd_x_min) == c_bc_reflect) THEN
       DO k = 1-ng, nz+ng
@@ -182,7 +184,6 @@ CONTAINS
         current => current%next
       ENDDO
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
-
     ENDDO
 
     data_array = data_array * idx
@@ -691,7 +692,6 @@ CONTAINS
       current => io_list(ispecies)%attached_list%head
 
       DO WHILE (ASSOCIATED(current))
-
 #include "particle_to_grid.inc"
 
         DO iz = sf_min, sf_max

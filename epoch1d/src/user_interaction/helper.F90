@@ -501,7 +501,7 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     REAL(num), DIMENSION(:), ALLOCATABLE :: rpart_in_cell
 #endif
-    REAL(num) :: wdata
+    REAL(num) :: wdata, x0, x1
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, i, isubx
     REAL(num), DIMENSION(:), ALLOCATABLE :: density
@@ -604,11 +604,14 @@ CONTAINS
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
     IF (species%fill_ghosts) THEN
-      current=>partlist%head
+      x1 = 0.5_num * dx * png
+      x0 = x_min - x1
+      x1 = x_max + x1
+
+      current => partlist%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
-        IF (current%part_pos < x_min - dx*png/2.0_num &
-            .OR. current%part_pos > x_max + dx*png/2.0_num) THEN
+        IF (current%part_pos < x0 .OR. current%part_pos > x1) THEN
           CALL remove_particle_from_partlist(partlist, current)
           DEALLOCATE(current)
         ENDIF

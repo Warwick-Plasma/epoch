@@ -174,6 +174,7 @@ PROGRAM pic
   DO
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
+
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset

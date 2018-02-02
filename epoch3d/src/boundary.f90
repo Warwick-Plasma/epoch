@@ -40,7 +40,7 @@ CONTAINS
     error = .FALSE.
 
     cpml_boundaries = .FALSE.
-    DO i = 1, 2*c_ndims
+    DO i = 1, 2 * c_ndims
       error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
@@ -53,7 +53,7 @@ CONTAINS
     ENDDO
 
     DO ispecies = 1, n_species
-      DO i = 1, 2*c_ndims
+      DO i = 1, 2 * c_ndims
         species_name = TRIM(boundary(i)) // ' on species ' &
             // TRIM(species_list(ispecies)%name)
         error = error .OR. setup_particle_boundary(&
@@ -63,8 +63,8 @@ CONTAINS
     ENDDO
 
     IF (error) THEN
-        errcode = c_err_bad_value
-        CALL abort_code(errcode)
+      errcode = c_err_bad_value
+      CALL abort_code(errcode)
     ENDIF
 
   END SUBROUTINE setup_boundaries
@@ -708,18 +708,18 @@ CONTAINS
 
     mult = 1.0_num
     IF (PRESENT(zero)) THEN
-        IF (zero) mult = 0.0_num
+      IF (zero) mult = 0.0_num
     ENDIF
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng-1
-          field(i-ng,:,:) = -field(ng-i,:,:)*mult
+          field(i-ng,:,:) = -field(ng-i,:,:) * mult
         ENDDO
         field(0,:,:) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(i-ng,:,:) = -field(ng+1-i,:,:)*mult
+          field(i-ng,:,:) = -field(ng+1-i,:,:) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
@@ -727,23 +727,23 @@ CONTAINS
       IF (stagger(c_dir_x,stagger_type)) THEN
         field(nn,:,:) = 0.0_num
         DO i = 1, ng-1
-          field(nn+i,:,:) = -field(nn-i,:,:)*mult
+          field(nn+i,:,:) = -field(nn-i,:,:) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(nn+i,:,:) = -field(nn+1-i,:,:)*mult
+          field(nn+i,:,:) = -field(nn+1-i,:,:) * mult
         ENDDO
       ENDIF
 
     ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng-1
-          field(:,i-ng,:) = -field(:,ng-i,:)*mult
+          field(:,i-ng,:) = -field(:,ng-i,:) * mult
         ENDDO
         field(:,0,:) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(:,i-ng,:) = -field(:,ng+1-i,:)*mult
+          field(:,i-ng,:) = -field(:,ng+1-i,:) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
@@ -751,23 +751,23 @@ CONTAINS
       IF (stagger(c_dir_y,stagger_type)) THEN
         field(:,nn,:) = 0.0_num
         DO i = 1, ng-1
-          field(:,nn+i,:) = -field(:,nn-i,:)*mult
+          field(:,nn+i,:) = -field(:,nn-i,:) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(:,nn+i,:) = -field(:,nn+1-i,:)*mult
+          field(:,nn+i,:) = -field(:,nn+1-i,:) * mult
         ENDDO
       ENDIF
 
     ELSE IF (boundary == c_bd_z_min .AND. z_min_boundary) THEN
       IF (stagger(c_dir_z,stagger_type)) THEN
         DO i = 1, ng-1
-          field(:,:,i-ng) = -field(:,:,ng-i)*mult
+          field(:,:,i-ng) = -field(:,:,ng-i) * mult
         ENDDO
         field(:,:,0) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(:,:,i-ng) = -field(:,:,ng+1-i)*mult
+          field(:,:,i-ng) = -field(:,:,ng+1-i) * mult
         ENDDO
       ENDIF
     ELSE IF (boundary == c_bd_z_max .AND. z_max_boundary) THEN
@@ -775,11 +775,11 @@ CONTAINS
       IF (stagger(c_dir_z,stagger_type)) THEN
         field(:,:,nn) = 0.0_num
         DO i = 1, ng-1
-          field(:,:,nn+i) = -field(:,:,nn-i)*mult
+          field(:,:,nn+i) = -field(:,:,nn-i) * mult
         ENDDO
       ELSE
         DO i = 1, ng
-          field(:,:,nn+i) = -field(:,:,nn+1-i)*mult
+          field(:,:,nn+i) = -field(:,:,nn+1-i) * mult
         ENDDO
       ENDIF
     ENDIF
@@ -806,33 +806,39 @@ CONTAINS
     IF (PRESENT(species)) THEN
       IF (x_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) &
-            neighbour_local(-1,0,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) THEN
+          neighbour_local(-1,0,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (x_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_max) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) &
-            neighbour_local(1,0,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) THEN
+          neighbour_local(1,0,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (y_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
-            neighbour_local(0,-1,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) THEN
+          neighbour_local(0,-1,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (y_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
-            neighbour_local(0,1,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) THEN
+          neighbour_local(0,1,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (z_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_z_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) &
-            neighbour_local(0,0,-1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) THEN
+          neighbour_local(0,0,-1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (z_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_z_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) &
-            neighbour_local(0,0,1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_z_min) /= c_bc_periodic) THEN
+          neighbour_local(0,0,1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
     ENDIF
 
@@ -1194,7 +1200,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(i8) :: ixp, iyp, izp
-    INTEGER, DIMENSION(c_ndims*2) :: bc_part_local
+    INTEGER, DIMENSION(2*c_ndims) :: bc_part_local
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy, iz
     INTEGER :: cell_x, cell_y, cell_z
@@ -1206,21 +1212,21 @@ CONTAINS
     REAL(num) :: part_pos, z_min_outer, z_max_outer
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
 
-    x_min_outer = x_min - dx / 2.0_num * png - dx
-    x_max_outer = x_max + dx / 2.0_num * png + dx
+    x_min_outer = x_min - 0.5_num * dx * png - dx
+    x_max_outer = x_max + 0.5_num * dx * png + dx
 
-    y_min_outer = y_min - dy / 2.0_num * png - dy
-    y_max_outer = y_max + dy / 2.0_num * png + dy
+    y_min_outer = y_min - 0.5_num * dy * png - dy
+    y_max_outer = y_max + 0.5_num * dy * png + dy
 
-    z_min_outer = z_min - dz / 2.0_num * png - dz
-    z_max_outer = z_max + dz / 2.0_num * png + dz
+    z_min_outer = z_min - 0.5_num * dz * png - dz
+    z_max_outer = z_max + 0.5_num * dz * png + dz
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
 
       bc_part_local = bc_particle
 
-      DO i =1, 2*c_ndims
+      DO i = 1, 2 * c_ndims
         IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
             bc_part_local(i) = species_list(ispecies)%bc_particle(i)
       ENDDO
@@ -1834,7 +1840,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    ! domain is decomposed. Just add currents at edges
+    ! Domain is decomposed. Just add currents at edges
     CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
     CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)
     CALL processor_summation_bcs(jz, jng, c_dir_z, species = ispecies)

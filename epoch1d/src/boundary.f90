@@ -40,7 +40,7 @@ CONTAINS
     error = .FALSE.
 
     cpml_boundaries = .FALSE.
-    DO i = 1, 2*c_ndims
+    DO i = 1, 2 * c_ndims
       error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
@@ -53,7 +53,7 @@ CONTAINS
     ENDDO
 
     DO ispecies = 1, n_species
-      DO i = 1, 2*c_ndims
+      DO i = 1, 2 * c_ndims
         species_name = TRIM(boundary(i)) // ' on species ' &
             // TRIM(species_list(ispecies)%name)
         error = error .OR. setup_particle_boundary(&
@@ -63,8 +63,8 @@ CONTAINS
     ENDDO
 
     IF (error) THEN
-        errcode = c_err_bad_value
-        CALL abort_code(errcode)
+      errcode = c_err_bad_value
+      CALL abort_code(errcode)
     ENDIF
 
   END SUBROUTINE setup_boundaries
@@ -262,7 +262,7 @@ CONTAINS
 
     mult = 1.0_num
     IF (PRESENT(zero)) THEN
-        IF (zero) mult = 0.0_num
+      IF (zero) mult = 0.0_num
     ENDIF
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
@@ -311,13 +311,15 @@ CONTAINS
     IF (PRESENT(species)) THEN
       IF (x_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) &
-            neighbour_local(-1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) THEN
+          neighbour_local(-1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (x_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_max) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) &
-            neighbour_local(1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) THEN
+          neighbour_local(1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
     ENDIF
 
@@ -503,7 +505,8 @@ CONTAINS
       cur => species_list(ispecies)%attached_list%head
 
       bc_particle_local = bc_particle
-      DO i = 1, 2*c_ndims
+
+      DO i = 1, 2 * c_ndims
         IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
             bc_particle_local(i) = species_list(ispecies)%bc_particle(i)
       ENDDO
@@ -715,7 +718,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    ! domain is decomposed. Just add currents at edges
+    ! Domain is decomposed. Just add currents at edges
     IF (mpi_run) THEN
       CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
       CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)

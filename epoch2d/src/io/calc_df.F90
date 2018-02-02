@@ -38,13 +38,14 @@ CONTAINS
     bcs = bc_particle
     IF (PRESENT(species)) THEN
       DO i = 1, 2*c_ndims
-        IF (species_list(species)%bc_particle(i) .NE. c_bc_null) &
-            bcs(i) = species_list(species)%bc_particle(i)
-        ENDDO
+        IF (species_list(species)%bc_particle(i) /= c_bc_null) THEN
+          bcs(i) = species_list(species)%bc_particle(i)
+        ENDIF
+      ENDDO
     ENDIF
 
-    IF (run_mpi) CALL processor_summation_bcs(data_array, ng, &
-        species = species)
+    IF (run_mpi) &
+        CALL processor_summation_bcs(data_array, ng, species = species)
 
     IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
@@ -60,7 +61,7 @@ CONTAINS
         data_array(nx-i+1,j) = data_array(nx-i+1,j) + data_array(nx+i,j)
       ENDDO
       ENDDO
-      data_array(nx+1:nx+ng, :) = 0.0_num
+      data_array(nx+1:nx+ng,:) = 0.0_num
     ENDIF
 
     IF (y_min_boundary .AND. bcs(c_bd_y_min) == c_bc_reflect) THEN
@@ -635,7 +636,6 @@ CONTAINS
       current => io_list(ispecies)%attached_list%head
 
       DO WHILE (ASSOCIATED(current))
-
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
@@ -644,8 +644,6 @@ CONTAINS
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
         ENDDO
         ENDDO
-!        data_array(cell_x, cell_y) = &
-!            data_array(cell_x, cell_y) + 1.0_num
 
         current => current%next
       ENDDO

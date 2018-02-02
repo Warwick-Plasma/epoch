@@ -37,18 +37,22 @@ CONTAINS
     injector%t_start = 0.0_num
     injector%t_end = t_end
     injector%density_min = 0.0_num
+
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:ny+ng, 1-ng:nz+ng))
       ALLOCATE(injector%depth(1-ng:ny+ng, 1-ng:nz+ng))
     ENDIF
+
     IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:nz+ng))
       ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:nz+ng))
     ENDIF
+
     IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:ny+ng))
       ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:ny+ng))
     ENDIF
+
     injector%depth = 1.0_num
     injector%dt_inject = -1.0_num
     NULLIFY(injector%next)
@@ -177,7 +181,6 @@ CONTAINS
     INTEGER, DIMENSION(2) :: i2d
     LOGICAL :: first_inject
 
-
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
     IF (direction == c_bd_x_min) THEN
@@ -256,13 +259,11 @@ CONTAINS
         CALL assign_pack_value(parameters, perp_dir_index(2), jj)
 
         IF (injector%dt_inject(ii,jj) > 0.0_num) THEN
-          !injector%depth(ii,jj) = injector%depth(ii,jj) &
-          !   - random() * 2.0_num * dt / injector%dt_inject(ii,jj)
-          npart_ideal = dt / injector%dt_inject(ii, jj)
+          npart_ideal = dt / injector%dt_inject(ii,jj)
           itemp = random_g(0.5_num * SQRT(npart_ideal &
               * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
               + npart_ideal
-          injector%depth(ii, jj) = injector%depth(ii, jj) - itemp
+          injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
           first_inject = .FALSE.
 
           IF (injector%depth(ii,jj) >= 0.0_num) CYCLE
@@ -272,60 +273,62 @@ CONTAINS
 
         CALL populate_injector_properties(injector, parameters, density_grid, &
             temperature, drift)
-        IF (density_grid < injector%density_min) CYCLE
 
+        IF (density_grid < injector%density_min) CYCLE
 
         ! Assume agressive maximum thermal momentum, all components
         ! like hottest component
         p_therm = SQRT(mass * kb * MAXVAL(temperature))
         p_inject_drift = drift(dir_index)
         gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
-        v_inject_s =  p_inject_drift / gamma_mass
+        v_inject_s = p_inject_drift / gamma_mass
         v_inject = ABS(v_inject_s)
 
-!        injector%dt_inject(ii,jj) = ABS(bdy_space) &
-!            / MAX(npart_par * v_inject,c_tiny)
         injector%dt_inject(ii,jj) = ABS(bdy_space) &
-          / MAX(injector%npart_per_cell * v_inject, c_tiny)
+            / MAX(injector%npart_per_cell * v_inject, c_tiny)
         IF (first_inject) THEN
-          npart_ideal = dt / injector%dt_inject(ii, jj)
+          npart_ideal = dt / injector%dt_inject(ii,jj)
           itemp = random_g(0.5_num * SQRT(npart_ideal &
               * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
               + npart_ideal
-          injector%depth(ii, jj) = injector%depth(ii, jj) - itemp
+          injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
         ENDIF
 
         parts_this_time = FLOOR(ABS(injector%depth(ii,jj) - 1.0_num))
-        injector%depth(ii, jj) = injector%depth(ii, jj) &
+        injector%depth(ii,jj) = injector%depth(ii,jj) &
             + REAL(parts_this_time, num)
 
         DO ipart = 1, parts_this_time
-              CALL create_particle(new)
-              new%part_pos = 0.0_num
-              DO idir = 1, c_ndims-1
-                new%part_pos(perp_dir_index(idir)) = (random() - 0.5_num)  &
-                    * perp_cell_size(idir) &
-                    + cur_cell(idir)
-              ENDDO
-              new%part_pos(dir_index) = bdy_pos + bdy_space*png/2.0_num - random() &
-                  * v_inject_s * dt
-              parameters%pack_pos = new%part_pos
-              parameters%use_grid_position = .FALSE.
-              CALL populate_injector_properties(injector, parameters, density, &
-                temperature, drift)
-              DO idir = 1, 3
-                new%part_p(idir) = momentum_from_temperature(mass, &
-                    temperature(idir), drift(idir))
-              ENDDO
+          CALL create_particle(new)
+
+          new%part_pos = 0.0_num
+          DO idir = 1, c_ndims-1
+            new%part_pos(perp_dir_index(idir)) = &
+                (random() - 0.5_num) * perp_cell_size(idir) + cur_cell(idir)
+          ENDDO
+
+          new%part_pos(dir_index) = bdy_pos + 0.5_num * bdy_space * png &
+              - random() * v_inject_s * dt
+          parameters%pack_pos = new%part_pos
+          parameters%use_grid_position = .FALSE.
+
+          CALL populate_injector_properties(injector, parameters, density, &
+              temperature, drift)
+
+          DO idir = 1, 3
+            new%part_p(idir) = momentum_from_temperature(mass, &
+                temperature(idir), drift(idir))
+          ENDDO
 #ifdef PER_PARTICLE_CHARGE_MASS
-              new%charge = species_list(injector%species)%charge
-              new%mass = mass
+          new%charge = species_list(injector%species)%charge
+          new%mass = mass
 #endif
-              new%weight = vol * density / REAL(injector%npart_per_cell, num)
-              CALL add_particle_to_partlist(plist, new)
+          new%weight = vol * density / REAL(injector%npart_per_cell, num)
+          CALL add_particle_to_partlist(plist, new)
         ENDDO
       ENDDO
     ENDDO
+
     CALL append_partlist(species_list(injector%species)%attached_list, plist)
 
   END SUBROUTINE run_single_injector
@@ -343,21 +346,21 @@ CONTAINS
 
     errcode = 0
     density = MAX(evaluate_with_parameters(injector%density_function, &
-        parameters, errcode),0.0_num)
+        parameters, errcode), 0.0_num)
 
     ! Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
       IF (injector%temperature_function(i)%init) THEN
         temperature(i) = &
             MAX(evaluate_with_parameters(injector%temperature_function(i), &
-            parameters, errcode),0.0_num)
+                parameters, errcode), 0.0_num)
       ELSE
         temperature(i) = 0.0_num
       ENDIF
       IF (injector%drift_function(i)%init) THEN
         drift(i) = &
             evaluate_with_parameters(injector%drift_function(i), &
-            parameters, errcode)
+                                     parameters, errcode)
       ELSE
         drift(i) = 0.0_num
       ENDIF

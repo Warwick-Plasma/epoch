@@ -40,7 +40,7 @@ CONTAINS
     error = .FALSE.
 
     cpml_boundaries = .FALSE.
-    DO i = 1, 2*c_ndims
+    DO i = 1, 2 * c_ndims
       error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
@@ -53,7 +53,7 @@ CONTAINS
     ENDDO
 
     DO ispecies = 1, n_species
-      DO i = 1, 2*c_ndims
+      DO i = 1, 2 * c_ndims
         species_name = TRIM(boundary(i)) // ' on species ' &
             // TRIM(species_list(ispecies)%name)
         error = error .OR. setup_particle_boundary(&
@@ -63,8 +63,8 @@ CONTAINS
     ENDDO
 
     IF (error) THEN
-        errcode = c_err_bad_value
-        CALL abort_code(errcode)
+      errcode = c_err_bad_value
+      CALL abort_code(errcode)
     ENDIF
 
   END SUBROUTINE setup_boundaries
@@ -510,7 +510,7 @@ CONTAINS
 
     mult = 1.0_num
     IF (PRESENT(zero)) THEN
-        IF (zero) mult = 0.0_num
+      IF (zero) mult = 0.0_num
     ENDIF
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
@@ -579,27 +579,32 @@ CONTAINS
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
+
     neighbour_local = neighbour
     IF (PRESENT(species)) THEN
       IF (x_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) &
-            neighbour_local(-1,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_min) /= c_bc_periodic) THEN
+          neighbour_local(-1,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (x_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_x_max) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) &
-            neighbour_local(1,0) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_x_max) /= c_bc_periodic) THEN
+          neighbour_local(1,0) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (y_min_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
-            neighbour_local(0,-1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) THEN
+          neighbour_local(0,-1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
       IF (y_max_boundary) THEN
         IF (species_list(species)%bc_particle(c_bd_y_min) /= c_bc_null .AND. &
-            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) &
-            neighbour_local(0,1) = MPI_PROC_NULL
+            species_list(species)%bc_particle(c_bd_y_min) /= c_bc_periodic) THEN
+          neighbour_local(0,1) = MPI_PROC_NULL
+        ENDIF
       ENDIF
     ENDIF
 
@@ -872,7 +877,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd
     INTEGER(i8) :: ixp, iyp
-    INTEGER, DIMENSION(c_ndims*2) :: bc_part_local
+    INTEGER, DIMENSION(2*c_ndims) :: bc_part_local
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy
     INTEGER :: cell_x, cell_y
@@ -883,18 +888,18 @@ CONTAINS
     REAL(num) :: part_pos
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
 
-    x_min_outer = x_min - dx / 2.0_num * png - dx
-    x_max_outer = x_max + dx / 2.0_num * png + dx
+    x_min_outer = x_min - 0.5_num * dx * png - dx
+    x_max_outer = x_max + 0.5_num * dx * png + dx
 
-    y_min_outer = y_min - dy / 2.0_num * png - dy
-    y_max_outer = y_max + dy / 2.0_num * png + dy
+    y_min_outer = y_min - 0.5_num * dy * png - dy
+    y_max_outer = y_max + 0.5_num * dy * png + dy
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
 
       bc_part_local = bc_particle
 
-      DO i =1, 2*c_ndims
+      DO i = 1, 2 * c_ndims
         IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
             bc_part_local(i) = species_list(ispecies)%bc_particle(i)
       ENDDO
@@ -979,6 +984,7 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
+
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
@@ -1197,6 +1203,7 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
+
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
@@ -1274,7 +1281,7 @@ CONTAINS
       ENDDO
     ENDIF
 
-    ! domain is decomposed. Just add currents at edges
+    ! Domain is decomposed. Just add currents at edges
     IF (mpi_run) THEN
       CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
       CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)

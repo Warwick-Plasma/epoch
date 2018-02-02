@@ -768,7 +768,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos - x_grid_min) / dx + REAL(ng,num) &
+        cell = FLOOR((current%part_pos - x_grid_min) / dx + REAL(ng, num) &
             + 0.5_num)
 
         load(cell) = load(cell) + 1
@@ -889,12 +889,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = x_grid_mins(iproc) - dx * ng
       ELSE
-        minpos = x_grid_mins(iproc) - dx / 2.0_num
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
       ENDIF
       IF (iproc == nprocx - 1) THEN
         maxpos = x_grid_maxs(iproc) + dx * ng
       ELSE
-        maxpos = x_grid_maxs(iproc) + dx / 2.0_num
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
       ENDIF
       IF (part%part_pos >= minpos .AND. part%part_pos < maxpos) THEN
         coords(c_ndims) = iproc

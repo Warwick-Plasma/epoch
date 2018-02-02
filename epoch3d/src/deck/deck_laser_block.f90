@@ -326,6 +326,4 @@ CONTAINS
 
   END FUNCTION laser_block_check
 
-
-
 END MODULE deck_laser_block

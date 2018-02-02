@@ -517,8 +517,8 @@ CONTAINS
       DO ix = iz_min, ix_max
         IF (load_list(ix,iy,iz)) THEN
           ipos = ipos + 1
-          valid_cell_list(ipos) = ix - ix_min + nx_e * (iy - iy_min + ny_e &
-              * (iz - iz_min))
+          valid_cell_list(ipos) = ix - ix_min &
+              + nx_e * (iy - iy_min + ny_e * (iz - iz_min))
         ENDIF
       ENDDO ! ix
       ENDDO ! iy
@@ -591,7 +591,7 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: rpart_in_cell
 #endif
-    REAL(num) :: wdata
+    REAL(num) :: wdata, x0, x1, y0, y1, z0, z1
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, iz, i, j, k, isubx, isuby, isubz
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: density
@@ -733,22 +733,30 @@ CONTAINS
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
     IF (species%fill_ghosts) THEN
-      current=>partlist%head
+      x1 = 0.5_num * dx * png
+      x0 = x_min - x1
+      x1 = x_max + x1
+
+      y1 = 0.5_num * dy * png
+      y0 = y_min - y1
+      y1 = y_max + y1
+
+      z1 = 0.5_num * dz * png
+      z0 = z_min - z1
+      z1 = z_max + z1
+
+      current => partlist%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
-        IF (current%part_pos(1) < x_min - dx * png / 2.0_num &
-            .OR. current%part_pos(1) > x_max + dx * png / 2.0_num &
-            .OR. current%part_pos(2) < y_min - dy * png / 2.0_num &
-            .OR. current%part_pos(2) > y_max + dy * png / 2.0_num &
-            .OR. current%part_pos(3) < z_min - dz * png / 2.0_num &
-            .OR. current%part_pos(3) > z_max + dz * png) THEN
+        IF (current%part_pos(1) < x0 .OR. current%part_pos(1) > x1 &
+            .OR. current%part_pos(2) < y0 .OR. current%part_pos(2) > y1 &
+            .OR. current%part_pos(3) < z0 .OR. current%part_pos(3) > z1) THEN
           CALL remove_particle_from_partlist(partlist, current)
           DEALLOCATE(current)
         ENDIF
         current => next
       ENDDO
     ENDIF
-
 
   END SUBROUTINE setup_particle_density
 #endif

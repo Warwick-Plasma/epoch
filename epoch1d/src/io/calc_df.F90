@@ -33,18 +33,19 @@ CONTAINS
     LOGICAL :: run_mpi
 
     run_mpi = .TRUE.
-
     IF (PRESENT(do_mpi)) run_mpi = do_mpi
 
     bcs = bc_particle
     IF (PRESENT(species)) THEN
       DO i = 1, 2*c_ndims
-        IF (species_list(species)%bc_particle(i) .NE. c_bc_null) &
-            bcs(i) = species_list(species)%bc_particle(i)
-        ENDDO
+        IF (species_list(species)%bc_particle(i) /= c_bc_null) THEN
+          bcs(i) = species_list(species)%bc_particle(i)
+        ENDIF
+      ENDDO
     ENDIF
 
-    IF (run_mpi) CALL processor_summation_bcs(data_array, ng, species = species)
+    IF (run_mpi) &
+        CALL processor_summation_bcs(data_array, ng, species = species)
 
     IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO i = 1, ng
@@ -130,8 +131,8 @@ CONTAINS
     ENDDO
 
     data_array = data_array * idx
-    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
 
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -227,6 +228,7 @@ CONTAINS
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
       CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
     ENDDO
+
     IF (.NOT. safe_periods) THEN
       CALL calc_boundary(data_array)
       CALL calc_boundary(wt)
@@ -367,6 +369,7 @@ CONTAINS
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
       CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
     ENDDO
+
     IF (.NOT. safe_periods) THEN
       CALL calc_boundary(data_array)
       CALL calc_boundary(wt)
@@ -488,8 +491,8 @@ CONTAINS
     ENDDO
 
     data_array = data_array * idx
-    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
 
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -509,6 +512,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
 #include "particle_head.inc"
+
     data_array = 0.0_num
 
     idx = 1.0_num / dx
@@ -540,14 +544,15 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
         ENDDO
+
         current => current%next
       ENDDO
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
     data_array = data_array * idx
-    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
 
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -565,6 +570,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
 #include "particle_head.inc"
+
     data_array = 0.0_num
 
     spec_start = current_species
@@ -589,13 +595,13 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix)
         ENDDO
+
         current => current%next
       ENDDO
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) CALL calc_boundary(data_array)
-
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -809,8 +815,8 @@ CONTAINS
       ENDDO
       CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
     ENDDO
-    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
 
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

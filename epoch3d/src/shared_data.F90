@@ -671,7 +671,7 @@ MODULE shared_data
 
     ! Per species boundary conditions
     INTEGER, DIMENSION(2 * c_ndims) :: bc_particle
- END TYPE particle_species
+  END TYPE particle_species
 
   !----------------------------------------------------------------------------
   ! file handling

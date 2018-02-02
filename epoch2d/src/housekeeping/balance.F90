@@ -1699,12 +1699,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = x_grid_mins(iproc) - dx * ng
       ELSE
-        minpos = x_grid_mins(iproc) - dx / 2.0_num
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
       ENDIF
       IF (iproc == nprocx - 1) THEN
         maxpos = x_grid_maxs(iproc) + dx * ng
       ELSE
-        maxpos = x_grid_maxs(iproc) + dx / 2.0_num
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
       ENDIF
       IF (part%part_pos(1) >= minpos .AND. part%part_pos(1) < maxpos) THEN
         coords(c_ndims) = iproc
@@ -1716,12 +1716,12 @@ CONTAINS
       IF (iproc == 0) THEN
         minpos = y_grid_mins(iproc) - dy * ng
       ELSE
-        minpos = y_grid_mins(iproc) - dy / 2.0_num
+        minpos = y_grid_mins(iproc) - dy * 0.5_num
       ENDIF
       IF (iproc == nprocy - 1) THEN
         maxpos = y_grid_maxs(iproc) + dy * ng
       ELSE
-        maxpos = y_grid_maxs(iproc) + dy / 2.0_num
+        maxpos = y_grid_maxs(iproc) + dy * 0.5_num
       ENDIF
       IF (part%part_pos(2) >= minpos .AND. part%part_pos(2) < maxpos) THEN
         coords(c_ndims-1) = iproc

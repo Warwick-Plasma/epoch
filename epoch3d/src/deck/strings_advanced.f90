@@ -368,6 +368,4 @@ CONTAINS
 
   END FUNCTION as_time_print
 
-
-
 END MODULE strings_advanced
