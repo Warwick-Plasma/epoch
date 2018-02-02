@@ -275,8 +275,8 @@ CONTAINS
         IF (density_grid < injector%density_min) CYCLE
 
 
-        !Assume agressive maximum thermal momentum, all components
-        !like hottest component
+        ! Assume agressive maximum thermal momentum, all components
+        ! like hottest component
         p_therm = SQRT(mass * kb * MAXVAL(temperature))
         p_inject_drift = drift(dir_index)
         gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
@@ -345,7 +345,7 @@ CONTAINS
     density = MAX(evaluate_with_parameters(injector%density_function, &
         parameters, errcode),0.0_num)
 
-    !Stack can only be time varying if valid. Change if this isn't true
+    ! Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
       IF (injector%temperature_function(i)%init) THEN
         temperature(i) = &

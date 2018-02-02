@@ -728,10 +728,10 @@ CONTAINS
 
     DEALLOCATE(npart_in_cell)
 
-    !If you are filling ghost cells to meet an injector
-    !Then you have overfilled by half a cell but need those particles
-    !To calculate weights correctly. Now delete those particles that
-    !Overlap with the injection region
+    ! If you are filling ghost cells to meet an injector
+    ! Then you have overfilled by half a cell but need those particles
+    ! To calculate weights correctly. Now delete those particles that
+    ! Overlap with the injection region
     IF (species%fill_ghosts) THEN
       current=>partlist%head
       DO WHILE(ASSOCIATED(current))

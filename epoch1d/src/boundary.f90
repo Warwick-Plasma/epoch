@@ -541,20 +541,20 @@ CONTAINS
           IF (part_pos < x_min_local) THEN
             xbd = -1
           ENDIF
-          !Particle centrepoint has crossed domain boundary
+          ! Particle centrepoint has crossed domain boundary
           IF (part_pos < x_min) THEN
             xbd = 0
-            !Reflecting boundaries apply at that point because this
-            !is the edge of the domain
+            ! Reflecting boundaries apply at that point because this
+            ! is the edge of the domain
             IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
-              !Thermal boundaries just prevent particle from accelerating
+              ! Thermal boundaries just prevent particle from accelerating
               cur%force_multiplier = 0.0_num
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
-              !Periodic boundaries are like processor boundaries
-              !Particle moves when it meets boundary with centre
+              ! Periodic boundaries are like processor boundaries
+              ! Particle moves when it meets boundary with centre
               xbd = -1
               cur%part_pos = part_pos + length_x
             ELSE
@@ -563,7 +563,7 @@ CONTAINS
             ENDIF
           ENDIF
 
-          !Particle has left domain fully
+          ! Particle has left domain fully
           IF (part_pos < x_min - dx/2.0_num * png - dx) THEN
             IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
               DO i = 1, 3

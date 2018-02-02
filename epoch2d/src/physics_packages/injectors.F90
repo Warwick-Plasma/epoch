@@ -201,11 +201,11 @@ CONTAINS
     typical_mc2 = (mass * c)**2
     cur_cell = 0.0_num
 
-    !Fit particles
+    ! Fit particles
     !npart_par is REAL because you can meaningfully inject at non-integer
-    !rate
+    ! Rate
 !    npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
-    !npart_perp is integer because you are actually placing particles
+    ! npart_perp is integer because you are actually placing particles
 !    npart_perp = CEILING(npart_par)
 !    npart_total = npart_par * REAL(PRODUCT(npart_perp), num)
     CALL create_empty_partlist(plist)
@@ -238,15 +238,15 @@ CONTAINS
 
       IF (density_grid < injector%density_min) CYCLE
 
-      !Fit particles
+      ! Fit particles
       !npart_par is REAL because you can meaningfully inject at non-integer
-      !rate
+      ! Rate
 !      npart_par = MAX(SQRT(REAL(injector%npart_per_cell, num)),1.0_num)
-      !npart_perp is integer because you are actually placing particles
+      ! npart_perp is integer because you are actually placing particles
 !      npart_perp = CEILING(npart_par)
 
-      !Assume agressive maximum thermal momentum, all components
-      !like hottest component
+      ! Assume agressive maximum thermal momentum, all components
+      ! like hottest component
       p_therm = SQRT(mass * kb * MAXVAL(temperature))
       p_inject_drift = drift(dir_index)
       gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
@@ -256,8 +256,8 @@ CONTAINS
       injector%dt_inject(ii) = ABS(bdy_space) &
           / MAX(injector%npart_per_cell * v_inject,c_tiny)
       IF (first_inject) THEN
-          !On the first run of the injectors it isn't possible to decrement
-          !the optical depth until this point
+          ! On the first run of the injectors it isn't possible to decrement
+          ! the optical depth until this point
           npart_ideal = dt / injector%dt_inject(ii)
           itemp = random_g(0.5*SQRT(npart_ideal * &
               (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
@@ -313,7 +313,7 @@ CONTAINS
     density = MAX(evaluate_with_parameters(injector%density_function, &
         parameters, errcode),0.0_num)
 
-    !Stack can only be time varying if valid. Change if this isn't true
+    ! Stack can only be time varying if valid. Change if this isn't true
     DO i = 1, 3
       IF (injector%temperature_function(i)%init) THEN
         temperature(i) = &

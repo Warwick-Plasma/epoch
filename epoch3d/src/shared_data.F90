@@ -669,7 +669,7 @@ MODULE shared_data
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
 
-    !Per species boundary conditions
+    ! Per species boundary conditions
     INTEGER, DIMENSION(2 * c_ndims) :: bc_particle
  END TYPE particle_species
 
