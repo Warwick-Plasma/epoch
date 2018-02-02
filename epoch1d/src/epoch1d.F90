@@ -142,7 +142,7 @@ PROGRAM pic
   IF (ic_from_restart) THEN
     dt0 = dt
     dt_store = dt
-    IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
+    IF (dt_from_restart > 0) dt0 = dt_from_restart
     dt = dt0 / 2.0_num
     time = time + dt
     CALL update_eb_fields_final

@@ -125,7 +125,7 @@ CONTAINS
         CALL create_timestring(elapsed_time, timestring)
         IF (print_eta_string) THEN
           eta_timestring = ''
-          IF (time .GT. 0.0_num) THEN
+          IF (time > 0.0_num) THEN
             elapsed_time = (t_end - time) * elapsed_time / time
             CALL create_timestring(elapsed_time, eta_timestring)
           ENDIF
