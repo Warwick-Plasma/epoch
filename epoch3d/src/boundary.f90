@@ -58,7 +58,7 @@ CONTAINS
             // TRIM(species_list(ispecies)%name)
         error = error .OR. setup_particle_boundary(&
             species_list(ispecies)%bc_particle(i), &
-            species_name, allow_null = .TRUE.)
+            species_name, allow_null=.TRUE.)
       ENDDO
     ENDDO
 
@@ -1841,15 +1841,15 @@ CONTAINS
     ENDIF
 
     ! Domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x, species = ispecies)
-    CALL processor_summation_bcs(jy, jng, c_dir_y, species = ispecies)
-    CALL processor_summation_bcs(jz, jng, c_dir_z, species = ispecies)
+    CALL processor_summation_bcs(jx, jng, c_dir_x, species=ispecies)
+    CALL processor_summation_bcs(jy, jng, c_dir_y, species=ispecies)
+    CALL processor_summation_bcs(jz, jng, c_dir_z, species=ispecies)
 
     DO i = 1, 2*c_ndims
       IF (local_bcs(i) == c_bc_reflect) THEN
-        CALL field_clamp_zero(jx, jng, c_stagger_jx, i, zero = .TRUE.)
-        CALL field_clamp_zero(jy, jng, c_stagger_jy, i, zero = .TRUE.)
-        CALL field_clamp_zero(jz, jng, c_stagger_jz, i, zero = .TRUE.)
+        CALL field_clamp_zero(jx, jng, c_stagger_jx, i, zero=.TRUE.)
+        CALL field_clamp_zero(jy, jng, c_stagger_jy, i, zero=.TRUE.)
+        CALL field_clamp_zero(jz, jng, c_stagger_jz, i, zero=.TRUE.)
       ENDIF
     ENDDO
 

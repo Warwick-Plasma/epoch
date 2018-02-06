@@ -45,7 +45,7 @@ CONTAINS
     ENDIF
 
     IF (run_mpi) &
-        CALL processor_summation_bcs(data_array, ng, species = species)
+        CALL processor_summation_bcs(data_array, ng, species=species)
 
     IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO j = 1-ng, ny+ng
@@ -151,7 +151,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
     ENDDO
 
     data_array = data_array * idx
@@ -253,8 +253,8 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(wt, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) THEN
@@ -398,8 +398,8 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(wt, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(wt, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) THEN
@@ -530,7 +530,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
     ENDDO
 
     data_array = data_array * idx
@@ -593,7 +593,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
     ENDDO
 
     data_array = data_array * idx
@@ -647,7 +647,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) CALL calc_boundary(data_array)
@@ -731,10 +731,10 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(meanx, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(meany, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(meanz, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(part_count, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(meanx, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(meany, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(meanz, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) THEN
@@ -782,8 +782,8 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(sigma, ispecies, do_mpi = safe_periods)
-      CALL calc_boundary(part_count, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(sigma, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) THEN
@@ -850,7 +850,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = safe_periods)
+      CALL calc_boundary(data_array, ispecies, do_mpi=safe_periods)
     ENDDO
 
     IF (.NOT. safe_periods) CALL calc_boundary(data_array)
