@@ -76,7 +76,6 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, i
-    REAL(num) :: dummy
     INTEGER :: io, iu
 
     errcode = c_err_none

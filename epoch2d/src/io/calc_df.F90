@@ -611,8 +611,6 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     ! The data to be weighted onto the grid
-    REAL(num) :: wdata
-    REAL(num) :: idx
     INTEGER :: ispecies, ix, iy, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum

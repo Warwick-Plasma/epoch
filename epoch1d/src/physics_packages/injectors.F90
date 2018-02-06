@@ -118,7 +118,7 @@ CONTAINS
     REAL(num) :: gamma_mass, v_inject, density, npart_ideal, itemp
     REAL(num) :: v_inject_s
     REAL(num), DIMENSION(3) :: temperature, drift
-    INTEGER :: parts_this_time, ipart, ct, idir
+    INTEGER :: parts_this_time, ipart, idir
     INTEGER :: dir_index = 1
     TYPE(parameter_pack) :: parameters
     LOGICAL :: first_inject

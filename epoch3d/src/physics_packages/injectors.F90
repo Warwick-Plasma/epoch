@@ -166,13 +166,11 @@ CONTAINS
     REAL(num) :: bdy_pos, bdy_space
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
-    REAL(num), PARAMETER :: third = 1.0_num/3.0_num
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
     REAL(num) :: gamma_mass, v_inject, density, vol
     REAL(num) :: npart_ideal, itemp, v_inject_s
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index, ii, jj
-    INTEGER :: ipart_trans, ipart_trans2
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters

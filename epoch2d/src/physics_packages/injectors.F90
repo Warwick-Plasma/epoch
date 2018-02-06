@@ -146,7 +146,7 @@ CONTAINS
     REAL(num) :: gamma_mass, v_inject, density, vol
     REAL(num) :: npart_ideal, itemp, v_inject_s
     REAL(num), DIMENSION(3) :: temperature, drift
-    INTEGER :: parts_this_time, ipart, ct, idir, dir_index, ii, ipart_trans
+    INTEGER :: parts_this_time, ipart, idir, dir_index, ii
     !REAL(num) :: npart_total
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell

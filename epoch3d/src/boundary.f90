@@ -77,7 +77,6 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: boundary
     CHARACTER(LEN=*), INTENT(IN) :: boundary_name
     LOGICAL, INTENT(IN), OPTIONAL :: allow_null
-    INTEGER :: i
     LOGICAL :: error
 
     ! For some types of boundary, fields and particles are treated in
