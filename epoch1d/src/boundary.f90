@@ -122,6 +122,69 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_particle_boundaries
+
+    INTEGER :: i
+    LOGICAL :: error
+    CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
+        boundary = (/ 'x_min', 'x_max' /)
+
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
+
+    cpml_boundaries = .FALSE.
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) == c_bc_other) bc_particle(i) = c_bc_reflect
+      IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
+      IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+    ENDDO
+
+    ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
+    ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
+    ! can then be set separately. IN THE DECK, laser bcs are chosen either
+    ! by seting the main bcs OR by setting the field bcs to simple_laser
+    ! (or outflow).
+
+    ! Laser boundaries assume open particles unless otherwise specified.
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) == c_bc_simple_laser &
+          .OR. bc_particle(i) == c_bc_simple_outflow &
+          .OR. bc_particle(i) == c_bc_cpml_laser &
+          .OR. bc_particle(i) == c_bc_cpml_outflow) &
+              bc_particle(i) = c_bc_open
+    ENDDO
+
+    ! Note: reflecting EM boundaries not yet implemented.
+    DO i = 1, 2*c_ndims
+      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
+    ENDDO
+
+    ! Sanity check on particle boundaries
+    error = .FALSE.
+    DO i = 1, 2*c_ndims
+      IF (bc_particle(i) == c_bc_periodic &
+          .OR. bc_particle(i) == c_bc_reflect &
+          .OR. bc_particle(i) == c_bc_thermal &
+          .OR. bc_particle(i) == c_bc_open) CYCLE
+      IF (rank == 0) THEN
+        WRITE(*,*)
+        WRITE(*,*) '*** ERROR ***'
+        WRITE(*,*) 'Unrecognised particle boundary condition on "', &
+            boundary(i), '" boundary.'
+      ENDIF
+      error = .TRUE.
+      errcode = c_err_bad_value
+    ENDDO
+
+    IF (error) CALL abort_code(errcode)
+
+  END SUBROUTINE setup_particle_boundaries
+
+
+
   ! Exchanges field values at processor boundaries and applies field
   ! boundary conditions
   SUBROUTINE field_bc(field, ng)
@@ -255,8 +318,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng, stagger_type, boundary
     LOGICAL, INTENT(IN), OPTIONAL :: zero
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
-    REAL(num) :: mult
     INTEGER :: i, nn
+    REAL(num) :: mult
 
     IF (bc_field(boundary) == c_bc_periodic) RETURN
 
@@ -333,7 +396,8 @@ CONTAINS
         neighbour_local(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_min) == c_bc_reflect .AND. x_min_boundary) THEN
+    IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_min) == c_bc_thermal) .AND. x_min_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -354,7 +418,8 @@ CONTAINS
         neighbour_local( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF (bc_particle(c_bd_x_max) == c_bc_reflect .AND. x_max_boundary) THEN
+    IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
+        .OR. bc_particle(c_bd_x_max) == c_bc_thermal) .AND. x_max_boundary) THEN
       IF (flip_dir == c_dir_x) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
@@ -495,11 +560,15 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd
     INTEGER(i8) :: ixp
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle_local
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix
     REAL(num) :: temp(3)
     REAL(num) :: part_pos
-    INTEGER, DIMENSION(2 * c_ndims) :: bc_particle_local
+    REAL(num) :: x_min_outer, x_max_outer
+
+    x_min_outer = x_min - 0.5_num * dx * png - dx
+    x_max_outer = x_max + 0.5_num * dx * png + dx
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
@@ -527,7 +596,7 @@ CONTAINS
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos < x_min - dx/2.0 * png) THEN
+            IF (part_pos < x_min_outer) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -540,47 +609,43 @@ CONTAINS
           IF (part_pos < x_min_local) THEN
             xbd = -1
           ENDIF
-          ! Particle centrepoint has crossed domain boundary
+          ! Particle has crossed the boundary
           IF (part_pos < x_min) THEN
             xbd = 0
-            ! Reflecting boundaries apply at that point because this
-            ! is the edge of the domain
             IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
-              ! Periodic boundaries are like processor boundaries
-              ! Particle moves when it meets boundary with centre
               xbd = -1
               cur%part_pos = part_pos + length_x
             ENDIF
-          ENDIF
+            IF (part_pos < x_min_outer) THEN
+              IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
+                DO i = 1, 3
+                  temp(i) = species_list(ispecies)%ext_temp_x_min(i)
+                ENDDO
 
-          ! Particle has left domain fully
-          IF (part_pos < x_min - dx/2.0_num * png - dx) THEN
-            IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
-              DO i = 1, 3
-                temp(i) = species_list(ispecies)%ext_temp_x_min(i)
-              ENDDO
+                ! x-direction
+                i = 1
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = flux_momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_pos = 2.0_num * x_min - part_pos
 
-            ELSE
-              ! Default to open boundary conditions - remove particle
-              out_of_bounds = .TRUE.
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF
@@ -589,7 +654,7 @@ CONTAINS
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos >= x_max + dx/2.0 * png) THEN
+            IF (part_pos >= x_max_outer) THEN
               xbd = 0
               out_of_bounds = .TRUE.
             ENDIF
@@ -602,7 +667,7 @@ CONTAINS
           IF (part_pos >= x_max_local) THEN
             xbd = 1
           ENDIF
-            ! Particle has left the system
+          ! Particle has left the system
           IF (part_pos >= x_max) THEN
             xbd = 0
             IF (bc_particle_local(c_bd_x_max) == c_bc_reflect) THEN
@@ -612,30 +677,33 @@ CONTAINS
               xbd = 1
               cur%part_pos = part_pos - length_x
             ENDIF
-          ENDIF
-          IF (part_pos >= x_max + dx/2.0_num * png + dx) THEN
-            IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
-              DO i = 1, 3
-                temp(i) = species_list(ispecies)%ext_temp_x_max(i)
-              ENDDO
+            IF (part_pos >= x_max_outer) THEN
+              IF (bc_particle_local(c_bd_x_max) == c_bc_thermal) THEN
+                DO i = 1, 3
+                  temp(i) = species_list(ispecies)%ext_temp_x_max(i)
+                ENDDO
 
-              ! x-direction
-              i = 1
-              cur%part_p(i) = -flux_momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! x-direction
+                i = 1
+                cur%part_p(i) = -flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! y-direction
-              i = 2
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ! z-direction
-              i = 3
-              cur%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp(i), 0.0_num)
+                ! z-direction
+                i = 3
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
 
-            ELSE
-              out_of_bounds = .TRUE.
+                cur%part_pos = 2.0_num * x_max - part_pos
+
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              ENDIF
             ENDIF
           ENDIF
         ENDIF

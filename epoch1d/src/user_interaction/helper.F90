@@ -276,7 +276,8 @@ CONTAINS
     REAL(num), ALLOCATABLE :: num_frac(:)
     INTEGER(i8) :: cell_x
     INTEGER(i8) :: i, ipos
-    INTEGER :: ix, ix_min, ix_max
+    INTEGER :: ix
+    INTEGER :: ix_min, ix_max
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 

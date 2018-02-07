@@ -17,8 +17,7 @@ MODULE random_generator
 
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: random, random_init, get_random_state, set_random_state
-  PUBLIC :: random_g
+  PUBLIC :: random, random_g, random_init, get_random_state, set_random_state
   INTEGER :: x = 123456789, y = 362436069, z = 521288629, w = 916191069
 
 CONTAINS
@@ -56,6 +55,26 @@ CONTAINS
 
 
 
+  SUBROUTINE random_init(seed)
+
+    INTEGER, INTENT(IN) :: seed
+    INTEGER :: i
+    DOUBLE PRECISION :: dummy
+
+    x = x + seed
+    y = y + seed
+    z = z + seed
+    w = w + seed
+
+    ! 'Warm-up' the generator by cycling through a few times
+    DO i = 1, 1000
+      dummy = random()
+    ENDDO
+
+  END SUBROUTINE random_init
+
+
+
   FUNCTION random_g(stdev)
 
     DOUBLE PRECISION, INTENT(IN) :: stdev
@@ -83,26 +102,6 @@ CONTAINS
     random_g = rand1 * w * stdev
 
   END FUNCTION random_g
-
-
-
-  SUBROUTINE random_init(seed)
-
-    INTEGER, INTENT(IN) :: seed
-    INTEGER :: i
-    DOUBLE PRECISION :: dummy
-
-    x = x + seed
-    y = y + seed
-    z = z + seed
-    w = w + seed
-
-    ! 'Warm-up' the generator by cycling through a few times
-    DO i = 1, 1000
-      dummy = random()
-    ENDDO
-
-  END SUBROUTINE random_init
 
 
 

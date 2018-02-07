@@ -38,8 +38,6 @@ CONTAINS
 
   SUBROUTINE injector_deck_initialise
 
-    boundary_set = .FALSE.
-
   END SUBROUTINE injector_deck_initialise
 
 

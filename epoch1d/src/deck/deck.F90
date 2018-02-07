@@ -24,6 +24,7 @@ MODULE deck
   USE deck_control_block
   USE deck_boundaries_block
   USE deck_species_block
+  USE deck_injector_block
   USE deck_io_block
   USE deck_io_global_block
   USE deck_window_block
@@ -36,7 +37,6 @@ MODULE deck
   USE deck_qed_block
   ! Initial Condition Blocks
   USE deck_laser_block
-  USE deck_injector_block
   USE deck_fields_block
   ! Extended IO Blocks
   USE deck_dist_fn_block
@@ -85,10 +85,10 @@ CONTAINS
     CALL control_deck_initialise
     CALL dist_fn_deck_initialise
     CALL fields_deck_initialise
+    CALL injector_deck_initialise
     CALL io_deck_initialise
     CALL io_global_deck_initialise
     CALL laser_deck_initialise
-    CALL injector_deck_initialise
     CALL subset_deck_initialise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_initialise
@@ -113,10 +113,10 @@ CONTAINS
     CALL control_deck_finalise
     CALL dist_fn_deck_finalise
     CALL fields_deck_finalise
+    CALL injector_deck_finalise
     CALL io_deck_finalise
     CALL io_global_deck_finalise
     CALL laser_deck_finalise
-    CALL injector_deck_finalise
     CALL subset_deck_finalise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_finalise

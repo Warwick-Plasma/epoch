@@ -172,7 +172,8 @@ CONTAINS
     v_inject_s = p_inject_drift / gamma_mass
     v_inject = ABS(v_inject_s)
 
-    injector%dt_inject = ABS(bdy_space) / (injector%npart_per_cell * v_inject)
+    injector%dt_inject = ABS(bdy_space) &
+        / MAX(injector%npart_per_cell * v_inject, c_tiny)
     IF (first_inject) THEN
       ! On the first run of the injectors it isn't possible to decrement
       ! the optical depth until this point
@@ -202,13 +203,12 @@ CONTAINS
       DO idir = 1, 3
         new%part_p(idir) = momentum_from_temperature(mass, &
             temperature(idir), drift(idir))
-#ifdef PER_PARTICLE_CHARGE_MASS
-        new%charge = species_list(injector%species)%charge
-        new%mass = mass
-#endif
       ENDDO
-      new%weight = ABS(bdy_space) * density &
-          / REAL(injector%npart_per_cell, num)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      new%charge = species_list(injector%species)%charge
+      new%mass = mass
+#endif
+      new%weight = vol * density / REAL(injector%npart_per_cell, num)
       CALL add_particle_to_partlist(plist, new)
     ENDDO
 
