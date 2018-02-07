@@ -619,9 +619,7 @@ CONTAINS
     ! The weight of a particle
     REAL(num) :: part_w
     REAL(num) :: gf
-    REAL(num), DIMENSION(:), POINTER :: part_count, meanx, meany, meanz
-    REAL(num), DIMENSION(:), POINTER :: w_part_count, w_meanx, w_meany
-    REAL(num), DIMENSION(:), POINTER :: w_meanz, w_sigma
+    REAL(num), DIMENSION(:), ALLOCATABLE :: part_count, meanx, meany, meanz
     INTEGER :: ispecies, ix, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
@@ -641,28 +639,16 @@ CONTAINS
     ALLOCATE(meany(1-ng:nx+ng))
     ALLOCATE(meanz(1-ng:nx+ng))
     ALLOCATE(part_count(1-ng:nx+ng))
-    IF (spec_sum) THEN
-      ALLOCATE(w_part_count(1-ng:nx+ng))
-      ALLOCATE(w_meanx(1-ng:nx+ng), w_meany(1-ng:nx+ng), w_meanz(1-ng:nx+ng))
-    ELSE
-      w_part_count => part_count
-      w_meanx => meanx
-      w_meany => meany
-      w_meanz => meanz
-    ENDIF
     meanx = 0.0_num
     meany = 0.0_num
     meanz = 0.0_num
     part_count = 0.0_num
+    sigma = 0.0_num
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      w_part_count = 0.0_num
-      w_meanx = 0.0_num
-      w_meany = 0.0_num
-      w_meanz = 0.0_num
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
       part_w = io_list(ispecies)%weight
@@ -683,27 +669,24 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           gf = gx(ix) * part_w
-          w_meanx(cell_x+ix) = w_meanx(cell_x+ix) + gf * part_pmx
-          w_meany(cell_x+ix) = w_meany(cell_x+ix) + gf * part_pmy
-          w_meanz(cell_x+ix) = w_meanz(cell_x+ix) + gf * part_pmz
-          w_part_count(cell_x+ix) = w_part_count(cell_x+ix) + gf
+          meanx(cell_x+ix) = meanx(cell_x+ix) + gf * part_pmx
+          meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
+          meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(w_meanx, ispecies)
-      CALL calc_boundary(w_meany, ispecies)
-      CALL calc_boundary(w_meanz, ispecies)
-      CALL calc_boundary(w_part_count, ispecies)
-      IF (spec_sum) THEN
-        meanx = meanx + w_meanx
-        meany = meany + w_meany
-        meanz = meanz + w_meanz
-        part_count = part_count + w_part_count
-      ENDIF
+      CALL calc_boundary(meanx, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(meany, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(meanz, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi=safe_periods)
     ENDDO
 
-    IF (spec_sum) THEN
-      DEALLOCATE(w_meanx, w_meany, w_meanz)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(meanx)
+      CALL calc_boundary(meany)
+      CALL calc_boundary(meanz)
+      CALL calc_boundary(part_count)
     ENDIF
 
     part_count = MAX(part_count, 1.e-6_num)
@@ -712,15 +695,11 @@ CONTAINS
     meany = meany / part_count
     meanz = meanz / part_count
 
-    ALLOCATE(w_sigma(1-ng:nx+ng))
     part_count = 0.0_num
-    sigma = 0.0_num
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
-      w_sigma = 0.0_num
-      w_part_count = 0.0_num
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
 
@@ -737,30 +716,27 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           gf = gx(ix)
-          w_sigma(cell_x+ix) = w_sigma(cell_x+ix) + gf &
+          sigma(cell_x+ix) = sigma(cell_x+ix) + gf &
               * ((part_pmx - meanx(cell_x+ix))**2 &
               + (part_pmy - meany(cell_x+ix))**2 &
               + (part_pmz - meanz(cell_x+ix))**2)
-          w_part_count(cell_x+ix) = w_part_count(cell_x+ix) + gf
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         ENDDO
         current => current%next
       ENDDO
-      CALL calc_boundary(w_sigma, ispecies)
-      CALL calc_boundary(part_count, ispecies)
-      sigma = sigma + w_sigma
-      IF (spec_sum) THEN
-        part_count = part_count + w_part_count
-      ENDIF
+      CALL calc_boundary(sigma, ispecies, do_mpi=safe_periods)
+      CALL calc_boundary(part_count, ispecies, do_mpi=safe_periods)
     ENDDO
 
-    IF (spec_sum) THEN
-      DEALLOCATE(w_part_count)
+    IF (.NOT. safe_periods) THEN
+      CALL calc_boundary(sigma)
+      CALL calc_boundary(part_count)
     ENDIF
 
     ! 3/2 kT = <p^2>/(2m)
     sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
 
-    DEALLOCATE(part_count, meanx, meany, meanz, w_sigma)
+    DEALLOCATE(part_count, meanx, meany, meanz)
 
   END SUBROUTINE calc_temperature
 
