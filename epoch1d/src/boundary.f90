@@ -518,7 +518,6 @@ CONTAINS
 
       DO WHILE (ASSOCIATED(cur))
         next => cur%next
-        cur%force_multiplier = 1.0_num
 
         xbd = 0
         out_of_bounds = .FALSE.
@@ -528,9 +527,6 @@ CONTAINS
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
             ! Particle has left the system
-            IF (part_pos < x_min) THEN
-              cur%force_multiplier = 0.0_num
-            ENDIF
             IF (part_pos < x_min - dx/2.0 * png) THEN
               xbd = 0
               out_of_bounds = .TRUE.
@@ -552,17 +548,11 @@ CONTAINS
             IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
-              ! Thermal boundaries just prevent particle from accelerating
-              cur%force_multiplier = 0.0_num
             ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
               ! Periodic boundaries are like processor boundaries
               ! Particle moves when it meets boundary with centre
               xbd = -1
               cur%part_pos = part_pos + length_x
-            ELSE
-              ! Default to open boundary conditions - stop force on particle
-              cur%force_multiplier = 0.0_num
             ENDIF
           ENDIF
 
@@ -599,9 +589,6 @@ CONTAINS
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
             ! Particle has left the system
-            IF (part_pos >= x_max) THEN
-              cur%force_multiplier = 0.0_num
-            ENDIF
             IF (part_pos >= x_max + dx/2.0 * png) THEN
               xbd = 0
               out_of_bounds = .TRUE.
@@ -624,9 +611,6 @@ CONTAINS
             ELSE IF (bc_particle_local(c_bd_x_max) == c_bc_periodic) THEN
               xbd = 1
               cur%part_pos = part_pos - length_x
-            ELSE
-              ! Default to open boundary conditions - turn off particle force
-              cur%force_multiplier = 0.0_num
             ENDIF
           ENDIF
           IF (part_pos >= x_max + dx/2.0_num * png + dx) THEN

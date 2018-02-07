@@ -565,7 +565,6 @@ MODULE shared_data
     REAL(num) :: optical_depth_tri
 #endif
 #endif
-    REAL(num) :: force_multiplier = 1.0_num
   END TYPE particle
 
   ! Data for migration between species
