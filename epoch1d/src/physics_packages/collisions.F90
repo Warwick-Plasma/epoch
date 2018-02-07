@@ -41,6 +41,7 @@ MODULE collisions
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
   REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
 
+#ifndef PER_SPECIES_WEIGHT
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
       (/ 0.5250_num, 0.5300_num, 0.1300_num, &
          0.0000_num, 0.6000_num, 0.3880_num, &
@@ -71,6 +72,7 @@ MODULE collisions
 
   REAL(num), DIMENSION(0:2), PARAMETER :: &
       l_bell = (/ 1.27_num, 0.542_num, 0.95_num /) * 1e-13_num
+#endif
 
   REAL(num), DIMENSION(:), ALLOCATABLE :: meanx, meany, meanz, part_count
 

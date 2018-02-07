@@ -800,7 +800,9 @@ CONTAINS
         ! Insert data to particle
         new_particle%part_pos(1) = xbuf(read_count)
         new_particle%part_pos(2) = ybuf(read_count)
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
         new_particle%weight = wbuf(read_count)
+#endif
         IF (curr_loader%px_data_given) THEN
           new_particle%part_p(1) = pxbuf(read_count)
         ENDIF
