@@ -1358,7 +1358,7 @@ CONTAINS
 #endif
 
         ELSE IF (block_id(1:14) == 'trident depth/') THEN
-#ifdef TRIDENT_PHOTONS
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_optical_depth_trident)
 #else
