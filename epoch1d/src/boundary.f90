@@ -609,7 +609,7 @@ CONTAINS
           IF (part_pos < x_min_local) THEN
             xbd = -1
           ENDIF
-          ! Particle has crossed the boundary
+          ! Particle has left the system
           IF (part_pos < x_min) THEN
             xbd = 0
             IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN

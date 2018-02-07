@@ -937,7 +937,7 @@ CONTAINS
           IF (part_pos < x_min_local) THEN
             xbd = -1
           ENDIF
-          ! Particle has crossed the boundary
+          ! Particle has left the system
           IF (part_pos < x_min) THEN
             xbd = 0
             IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
@@ -1084,6 +1084,7 @@ CONTAINS
           IF (part_pos < y_min_local) THEN
             ybd = -1
           ENDIF
+          ! Particle has left the system
           IF (part_pos < y_min) THEN
             ybd = 0
             IF (bc_particle_local(c_bd_y_min) == c_bc_reflect) THEN
@@ -1155,16 +1156,16 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos >= y_max_local) THEN
             ybd = 1
-            ! Particle has left the system
-            IF (part_pos >= y_max) THEN
-              ybd = 0
-              IF (bc_particle_local(c_bd_y_max) == c_bc_reflect) THEN
-                cur%part_pos(2) = 2.0_num * y_max - part_pos
-                cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_particle_local(c_bd_y_max) == c_bc_periodic) THEN
-                ybd = 1
-                cur%part_pos(2) = part_pos - length_y
-              ENDIF
+          ENDIF
+          ! Particle has left the system
+          IF (part_pos >= y_max) THEN
+            ybd = 0
+            IF (bc_particle_local(c_bd_y_max) == c_bc_reflect) THEN
+              cur%part_pos(2) = 2.0_num * y_max - part_pos
+              cur%part_p(2) = -cur%part_p(2)
+            ELSE IF (bc_particle_local(c_bd_y_max) == c_bc_periodic) THEN
+              ybd = 1
+              cur%part_pos(2) = part_pos - length_y
             ENDIF
             IF (part_pos >= y_max_outer) THEN
               IF (bc_particle_local(c_bd_y_max) == c_bc_thermal) THEN
