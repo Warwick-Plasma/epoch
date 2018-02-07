@@ -698,7 +698,7 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
     INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
-    INTEGER :: id_offset
+    INTEGER :: i, id_offset
     INTEGER, DIMENSION(:), POINTER :: part_counts
 #endif
     TYPE(particle_species), POINTER :: species
@@ -786,8 +786,7 @@ CONTAINS
         CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
             MPI_INTEGER4, comm)
         id_offset = 0
-        i = 0
-        DO WHILE (i < rank)
+        DO i = 0, rank
           id_offset = id_offset + part_counts(i)
         ENDDO
       ENDIF
