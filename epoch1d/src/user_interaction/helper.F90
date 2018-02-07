@@ -725,7 +725,7 @@ CONTAINS
       ENDIF
 
 ! This is needed to get the IDs assigned properly
-#if defined(PARTICLEID) || defined(PARTICLE_ID4)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       IF (.NOT.curr_loader%id_data_given) THEN
         ALLOCATE(part_counts(0:nproc-1))
         CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
