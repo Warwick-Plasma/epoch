@@ -1835,11 +1835,11 @@ CONTAINS
     REAL(num) :: charge1, charge2 ! charges of the collision partners
     REAL(num) :: plist1_length, plist2_length
 
-    INTEGER :: N, max_num, i, j
-    INTEGER, DIMENSION(:), ALLOCATABLE :: histo1, histo2
+    INTEGER(i8) :: N, max_num, i, j
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo1, histo2
     INTEGER :: histo1max, histo2max
-    INTEGER :: cnt1, cnt2
-    INTEGER :: a, b
+    INTEGER(i8) :: cnt1, cnt2
+    INTEGER(i8) :: a, b
     INTEGER :: error
 
     dt = 1.0e-8_num
@@ -2004,8 +2004,8 @@ CONTAINS
     TYPE(particle), POINTER :: part
     REAL(num) :: mass, charge ! mass and charg of the collision partners
 
-    INTEGER :: N, max_num, i, j
-    INTEGER, DIMENSION(:), ALLOCATABLE :: histo
+    INTEGER(i8) :: N, max_num, i, j
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER :: histo_max
     INTEGER :: error
     REAL(num) :: plist_length
@@ -2100,31 +2100,12 @@ CONTAINS
 
 
 
-  SUBROUTINE scatter_count(particle1, particle2, full)
-
-    TYPE(particle), INTENT(INOUT) :: particle1, particle2
-    LOGICAL, INTENT(IN) :: full
-    INTEGER :: coll_num
-
-    IF (full) THEN
-      coll_num = 2
-    ELSE
-      coll_num = 1
-    ENDIF
-
-    particle1%coll_count = particle1%coll_count + coll_num
-    particle2%coll_count = particle2%coll_count + coll_num
-
-  END SUBROUTINE scatter_count
-
-
-
   SUBROUTINE test_shuffle
 
     TYPE(particle_list) :: partlist
     TYPE(particle), POINTER :: part
-    INTEGER :: N, max_num, min_num, i, j, k
-    INTEGER(i8) :: plist_length
+    INTEGER :: N, max_num, min_num, k
+    INTEGER(i8) :: i, j, plist_length
     INTEGER :: iterations
     REAL(num), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER, DIMENSION(:), ALLOCATABLE :: minp, maxp
@@ -2146,7 +2127,7 @@ CONTAINS
     WRITE(*,*)
 
     DO k = 1, iterations
-      plist_length = (max_num - min_num) * random() + min_num
+      plist_length = INT((max_num - min_num) * random() + min_num, i8)
       histo = 0.0_num
       minp = max_num
       maxp = 0
@@ -2163,7 +2144,7 @@ CONTAINS
         part => partlist%head
         DO j = 1, plist_length
           IF (.NOT. ASSOCIATED(part)) WRITE(*,*) '    !!not associated!!'
-          part%coll_count = j
+          part%coll_count = INT(j)
           part => part%next
         ENDDO
 
@@ -2196,54 +2177,6 @@ CONTAINS
     DEALLOCATE(histo)
 
   END SUBROUTINE test_shuffle
-
-
-
-  SUBROUTINE check_particle_data
-
-    INTEGER :: ispecies
-    INTEGER :: ipart
-    REAL(num) :: part_x
-    REAL(num) :: part_px, part_py, part_pz
-    LOGICAL :: haveNaN
-    TYPE(particle), POINTER :: current
-
-    haveNaN = .FALSE.
-
-    DO ispecies = 1, n_species
-      current => species_list(ispecies)%attached_list%head
-      DO ipart = 1, species_list(ispecies)%attached_list%count
-        part_x  = current%part_pos - x_grid_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-
-        IF (part_x /= part_x) THEN
-          WRITE (*,*) 'WARNING x = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_px /= part_px) THEN
-          WRITE (*,*) 'WARNING px = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_py /= part_py) THEN
-          WRITE (*,*) 'WARNING py = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_pz /= part_pz) THEN
-          WRITE (*,*) 'WARNING pz = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-
-        IF (haveNaN) THEN
-          STOP
-        ENDIF
-
-        current => current%next
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE check_particle_data
 
 #endif
 
