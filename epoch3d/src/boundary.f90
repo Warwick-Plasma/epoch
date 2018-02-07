@@ -1200,7 +1200,7 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(i8) :: ixp, iyp, izp
-    INTEGER, DIMENSION(2*c_ndims) :: bc_part_local
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle_local
     LOGICAL :: out_of_bounds
     INTEGER :: ispecies, i, ix, iy, iz
     INTEGER :: cell_x, cell_y, cell_z
@@ -1225,11 +1225,11 @@ CONTAINS
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
 
-      bc_part_local = bc_particle
+      bc_particle_local = bc_particle
 
       DO i = 1, 2 * c_ndims
         IF (species_list(ispecies)%bc_particle(i) /= c_bc_null) &
-            bc_part_local(i) = species_list(ispecies)%bc_particle(i)
+            bc_particle_local(i) = species_list(ispecies)%bc_particle(i)
       ENDDO
 
       DO iz = -1, 1
@@ -1271,15 +1271,15 @@ CONTAINS
           ! Particle has crossed the boundary
           IF (part_pos < x_min) THEN
             xbd = 0
-            IF (bc_part_local(c_bd_x_min) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_x_min) == c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_min - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_part_local(c_bd_x_min) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_x_min) == c_bc_periodic) THEN
               xbd = -1
               cur%part_pos(1) = part_pos + length_x
             ENDIF
             IF (part_pos < x_min_outer) THEN
-              IF (bc_part_local(c_bd_x_min) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_x_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -1357,15 +1357,15 @@ CONTAINS
           ! Particle has left the system
           IF (part_pos >= x_max) THEN
             xbd = 0
-            IF (bc_part_local(c_bd_x_max) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_x_max) == c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_max - part_pos
               cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc_part_local(c_bd_x_max) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_x_max) == c_bc_periodic) THEN
               xbd = 1
               cur%part_pos(1) = part_pos - length_x
             ENDIF
             IF (part_pos >= x_max_outer) THEN
-              IF (bc_part_local(c_bd_x_max) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_x_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
                 cell_y = FLOOR(cell_y_r + 0.5_num)
@@ -1443,15 +1443,15 @@ CONTAINS
           ENDIF
           IF (part_pos < y_min) THEN
             ybd = 0
-            IF (bc_part_local(c_bd_y_min) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_y_min) == c_bc_reflect) THEN
               cur%part_pos(2) = 2.0_num * y_min - part_pos
               cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc_part_local(c_bd_y_min) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_y_min) == c_bc_periodic) THEN
               ybd = -1
               cur%part_pos(2) = part_pos + length_y
             ENDIF
             IF (part_pos < y_min_outer) THEN
-              IF (bc_part_local(c_bd_y_min) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_y_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1528,16 +1528,16 @@ CONTAINS
             ! Particle has left the system
             IF (part_pos >= y_max) THEN
               ybd = 0
-              IF (bc_part_local(c_bd_y_max) == c_bc_reflect) THEN
+              IF (bc_particle_local(c_bd_y_max) == c_bc_reflect) THEN
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
-              ELSE IF (bc_part_local(c_bd_y_max) == c_bc_periodic) THEN
+              ELSE IF (bc_particle_local(c_bd_y_max) == c_bc_periodic) THEN
                 ybd = 1
                 cur%part_pos(2) = part_pos - length_y
               ENDIF
             ENDIF
             IF (part_pos >= y_max_outer) THEN
-              IF (bc_part_local(c_bd_y_max) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_y_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1615,15 +1615,15 @@ CONTAINS
           ENDIF
           IF (part_pos < z_min) THEN
             zbd = 0
-            IF (bc_part_local(c_bd_z_min) == c_bc_reflect) THEN
+            IF (bc_particle_local(c_bd_z_min) == c_bc_reflect) THEN
               cur%part_pos(3) = 2.0_num * z_min - part_pos
               cur%part_p(3) = -cur%part_p(3)
-            ELSE IF (bc_part_local(c_bd_z_min) == c_bc_periodic) THEN
+            ELSE IF (bc_particle_local(c_bd_z_min) == c_bc_periodic) THEN
               zbd = -1
               cur%part_pos(3) = part_pos + length_z
             ENDIF
             IF (part_pos < z_min_outer) THEN
-              IF (bc_part_local(c_bd_z_min) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_z_min) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
@@ -1700,16 +1700,16 @@ CONTAINS
             ! Particle has left the system
             IF (part_pos >= z_max) THEN
               zbd = 0
-              IF (bc_part_local(c_bd_z_max) == c_bc_reflect) THEN
+              IF (bc_particle_local(c_bd_z_max) == c_bc_reflect) THEN
                 cur%part_pos(3) = 2.0_num * z_max - part_pos
                 cur%part_p(3) = -cur%part_p(3)
-              ELSE IF (bc_part_local(c_bd_z_max) == c_bc_periodic) THEN
+              ELSE IF (bc_particle_local(c_bd_z_max) == c_bc_periodic) THEN
                 zbd = 1
                 cur%part_pos(3) = part_pos - length_z
               ENDIF
             ENDIF
             IF (part_pos >= z_max_outer) THEN
-              IF (bc_part_local(c_bd_z_max) == c_bc_thermal) THEN
+              IF (bc_particle_local(c_bd_z_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
                 cell_x = FLOOR(cell_x_r + 0.5_num)
