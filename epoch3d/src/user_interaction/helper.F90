@@ -809,7 +809,7 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
     INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
-    INTEGER :: id_offset
+    INTEGER :: i, id_offset
     INTEGER, DIMENSION(:), POINTER :: part_counts
 #endif
     TYPE(particle_species), POINTER :: species
@@ -895,14 +895,13 @@ CONTAINS
       ENDIF
 
 ! This is needed to get the IDs assigned properly
-#if defined(PARTICLEID) || defined(PARTICLE_ID4)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       IF (.NOT.curr_loader%id_data_given) THEN
         ALLOCATE(part_counts(0:nproc-1))
         CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
             MPI_INTEGER4, comm)
         id_offset = 0
-        i = 0
-        DO WHILE (i < rank)
+        DO i = 0, rank
           id_offset = id_offset + part_counts(i)
         ENDDO
       ENDIF
@@ -916,7 +915,9 @@ CONTAINS
         new_particle%part_pos(1) = xbuf(read_count)
         new_particle%part_pos(2) = ybuf(read_count)
         new_particle%part_pos(3) = zbuf(read_count)
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
         new_particle%weight = wbuf(read_count)
+#endif
         IF (curr_loader%px_data_given) THEN
           new_particle%part_p(1) = pxbuf(read_count)
         ENDIF

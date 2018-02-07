@@ -13,7 +13,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#if defined(__GFORTRAN__) || defined(__INTEL_COMPILER)
+#if (defined(__GFORTRAN__) || defined(__INTEL_COMPILER)) && !defined(USE_ISATTY)
 #define USE_ISATTY
 #endif
 

@@ -101,12 +101,13 @@ CONTAINS
     REAL(num) :: idtf, idxf
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma_rel, gamma_rel_m1, part_u2
+    REAL(num) :: root, dtfac, gamma_rel, part_u2
     REAL(num) :: delta_x, part_vy, part_vz
     INTEGER :: ispecies, ix, dcellx, cx
     INTEGER(i8) :: ipart
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
+    REAL(num) :: gamma_rel_m1
 #endif
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species

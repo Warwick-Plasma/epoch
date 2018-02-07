@@ -30,10 +30,6 @@ CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifdef PER_SPECIES_WEIGHT
-    INTEGER :: ierr
-#endif
-
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
@@ -306,8 +302,6 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells
-#else
-    INTEGER :: ierr
 #endif
 
     IF (.NOT. move_window) RETURN

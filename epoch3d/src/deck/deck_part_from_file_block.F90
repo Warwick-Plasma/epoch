@@ -79,7 +79,7 @@ CONTAINS
   SUBROUTINE part_from_file_block_start
 
 #ifdef PER_PARTICLE_CHARGE_MASS
-    INTEGER :: io iu
+    INTEGER :: io, iu
 
     IF (rank == 0) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
