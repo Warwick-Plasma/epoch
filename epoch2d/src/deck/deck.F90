@@ -342,6 +342,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_block_check())
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
+    errcode_deck = IOR(errcode_deck, injector_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifndef NO_PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())

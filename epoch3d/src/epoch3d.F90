@@ -103,7 +103,7 @@ PROGRAM pic
   CALL timer_init
 
   IF (use_exact_restart) CALL read_cpu_split
-  CALL setup_particle_boundaries ! boundary.f90
+  CALL setup_boundaries ! boundary.f90
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90

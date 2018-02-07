@@ -287,6 +287,8 @@ CONTAINS
         injector%dt_inject(ii,jj) = ABS(bdy_space) &
             / MAX(injector%npart_per_cell * v_inject, c_tiny)
         IF (first_inject) THEN
+          ! On the first run of the injectors it isn't possible to decrement
+          ! the optical depth until this point
           npart_ideal = dt / injector%dt_inject(ii,jj)
           itemp = random_g(0.5_num * SQRT(npart_ideal &
               * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &

@@ -1209,8 +1209,9 @@ CONTAINS
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
     REAL(num) :: cf2, temp(3)
-    REAL(num) :: part_pos, z_min_outer, z_max_outer
+    REAL(num) :: part_pos
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
+    REAL(num) :: z_min_outer, z_max_outer
 
     x_min_outer = x_min - 0.5_num * dx * png - dx
     x_max_outer = x_max + 0.5_num * dx * png + dx
@@ -1841,9 +1842,11 @@ CONTAINS
     ENDIF
 
     ! Domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x, species=ispecies)
-    CALL processor_summation_bcs(jy, jng, c_dir_y, species=ispecies)
-    CALL processor_summation_bcs(jz, jng, c_dir_z, species=ispecies)
+    IF (mpi_run) THEN
+      CALL processor_summation_bcs(jx, jng, c_dir_x, species=ispecies)
+      CALL processor_summation_bcs(jy, jng, c_dir_y, species=ispecies)
+      CALL processor_summation_bcs(jz, jng, c_dir_z, species=ispecies)
+    ENDIF
 
     DO i = 1, 2*c_ndims
       IF (local_bcs(i) == c_bc_reflect) THEN

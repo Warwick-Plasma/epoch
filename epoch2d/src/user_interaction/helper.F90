@@ -297,7 +297,8 @@ CONTAINS
     INTEGER(i8) :: cell_x
     INTEGER(i8) :: cell_y
     INTEGER(i8) :: i, ipos
-    INTEGER :: ix, iy, ix_min, ix_max, iy_min, iy_max, nx_e
+    INTEGER :: ix, iy, nx_e
+    INTEGER :: ix_min, ix_max, iy_min, iy_max
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
 

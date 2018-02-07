@@ -47,7 +47,7 @@ CONTAINS
     IF (run_mpi) &
         CALL processor_summation_bcs(data_array, ng, species=species)
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+    IF (x_min_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
       DO k = 1-ng, nz+ng
       DO j = 1-ng, ny+ng
       DO i = 1, ng
@@ -57,7 +57,7 @@ CONTAINS
       ENDDO
       data_array(1-ng:-1,:,:) = 0.0_num
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+    IF (x_max_boundary .AND. bcs(c_bd_x_max) == c_bc_reflect) THEN
       DO k = 1-ng, nz+ng
       DO j = 1-ng, ny+ng
       DO i = 1, ng
@@ -68,7 +68,7 @@ CONTAINS
       data_array(nx+1:nx+ng,:,:) = 0.0_num
     ENDIF
 
-    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) == c_bc_reflect) THEN
+    IF (y_min_boundary .AND. bcs(c_bd_y_min) == c_bc_reflect) THEN
       DO k = 1-ng, nz+ng
       DO j = 1, ng
       DO i = 1-ng, nx+ng
@@ -78,7 +78,7 @@ CONTAINS
       ENDDO
       data_array(:,1-ng:-1,:) = 0.0_num
     ENDIF
-    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) == c_bc_reflect) THEN
+    IF (y_max_boundary .AND. bcs(c_bd_y_max) == c_bc_reflect) THEN
       DO k = 1-ng, nz+ng
       DO j = 1, ng
       DO i = 1-ng, nx+ng
@@ -89,7 +89,7 @@ CONTAINS
       data_array(:,ny+1:ny+ng,:) = 0.0_num
     ENDIF
 
-    IF (z_min_boundary .AND. bc_particle(c_bd_z_min) == c_bc_reflect) THEN
+    IF (z_min_boundary .AND. bcs(c_bd_z_min) == c_bc_reflect) THEN
       DO k = 1, ng
       DO j = 1-ng, ny+ng
       DO i = 1-ng, nx+ng
@@ -99,7 +99,7 @@ CONTAINS
       ENDDO
       data_array(:,:,1-ng:-1) = 0.0_num
     ENDIF
-    IF (z_max_boundary .AND. bc_particle(c_bd_z_max) == c_bc_reflect) THEN
+    IF (z_max_boundary .AND. bcs(c_bd_z_max) == c_bc_reflect) THEN
       DO k = 1, ng
       DO j = 1-ng, ny+ng
       DO i = 1-ng, nx+ng
