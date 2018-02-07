@@ -535,7 +535,7 @@ CONTAINS
 
     data_array = data_array * idx
 
-    IF (safe_periods) CALL calc_boundary(data_array)
+    IF (.NOT. safe_periods) CALL calc_boundary(data_array)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO

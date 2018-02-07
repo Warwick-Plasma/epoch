@@ -1354,7 +1354,7 @@ CONTAINS
             xbd = 1
           ENDIF
           ! Particle has left the system
-          IF (part_pos > x_max) THEN
+          IF (part_pos >= x_max) THEN
             xbd = 0
             IF (bc_part_local(c_bd_x_max) == c_bc_reflect) THEN
               cur%part_pos(1) = 2.0_num * x_max - part_pos
@@ -1363,7 +1363,7 @@ CONTAINS
               xbd = 1
               cur%part_pos(1) = part_pos - length_x
             ENDIF
-            IF (part_pos > x_max_outer) THEN
+            IF (part_pos >= x_max_outer) THEN
               IF (bc_part_local(c_bd_x_max) == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
@@ -1697,7 +1697,7 @@ CONTAINS
           IF (part_pos >= z_max_local) THEN
             zbd = 1
             ! Particle has left the system
-            IF (part_pos >= y_max) THEN
+            IF (part_pos >= z_max) THEN
               zbd = 0
               IF (bc_part_local(c_bd_z_max) == c_bc_reflect) THEN
                 cur%part_pos(3) = 2.0_num * z_max - part_pos

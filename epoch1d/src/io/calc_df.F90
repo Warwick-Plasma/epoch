@@ -53,7 +53,7 @@ CONTAINS
       ENDDO
       data_array(1-ng:-1) = 0.0_num
     ENDIF
-    IF (x_max_boundary .AND. bcs(c_bd_x_min) == c_bc_reflect) THEN
+    IF (x_max_boundary .AND. bcs(c_bd_x_max) == c_bc_reflect) THEN
       DO i = 1, ng
         data_array(nx-i+1) = data_array(nx-i+1) + data_array(nx+i)
       ENDDO

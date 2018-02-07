@@ -361,7 +361,7 @@ CONTAINS
     num_valid_cells_local = 0
     DO iz = iz_min, iz_max
     DO iy = iy_min, iy_max
-    DO ix = iz_min, ix_max
+    DO ix = ix_min, ix_max
       IF (load_list(ix, iy, iz)) &
           num_valid_cells_local = num_valid_cells_local + 1
     ENDDO ! ix
@@ -514,7 +514,7 @@ CONTAINS
       ipos = 0
       DO iz = iz_min, iz_max
       DO iy = iy_min, iy_max
-      DO ix = iz_min, ix_max
+      DO ix = ix_min, ix_max
         IF (load_list(ix,iy,iz)) THEN
           ipos = ipos + 1
           valid_cell_list(ipos) = ix - ix_min &

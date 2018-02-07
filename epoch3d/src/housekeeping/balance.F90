@@ -873,7 +873,7 @@ CONTAINS
       injector_current => injector_current%next
     ENDDO
 
-    injector_current => injector_y_max
+    injector_current => injector_z_max
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_z, injector_current%dt_inject, temp_slice)
       DEALLOCATE(injector_current%dt_inject)
