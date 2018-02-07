@@ -58,7 +58,7 @@ CONTAINS
 
       ! Check the final answers
       DO i = 1, n_elements
-        IF (eval_stack_entries(i) /= array(i)) THEN
+        IF (ABS(eval_stack_entries(i) - array(i)) > c_tiny) THEN
           PRINT*,i,eval_stack_entries(i),array(i),eval_stack_entries(i)-array(i)
         ENDIF
       ENDDO

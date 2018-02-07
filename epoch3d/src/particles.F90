@@ -107,7 +107,7 @@ CONTAINS
     REAL(num) :: idtyz, idtxz, idtxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma_rel, gamma_rel_m1, part_u2, third
+    REAL(num) :: root, dtfac, gamma_rel, part_u2, third
     REAL(num) :: delta_x, delta_y, delta_z
     REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
@@ -115,6 +115,7 @@ CONTAINS
     INTEGER(i8) :: ipart
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
+    REAL(num) :: gamma_rel_m1
 #endif
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species
