@@ -278,7 +278,9 @@ CONTAINS
         new%charge = species_list(injector%species)%charge
         new%mass = mass
 #endif
+#ifndef PER_SPECIES_WEIGHT
         new%weight = vol * density / REAL(injector%npart_per_cell, num)
+#endif
         CALL add_particle_to_partlist(plist, new)
       ENDDO
     ENDDO
