@@ -679,7 +679,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies, do_mpi = .FALSE.)
+      CALL calc_boundary(data_array, ispecies, do_mpi=.FALSE.)
     ENDDO
 
     CALL calc_boundary(data_array)
