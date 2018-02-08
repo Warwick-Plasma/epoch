@@ -56,6 +56,26 @@ CONTAINS
 
 
 
+  SUBROUTINE random_init(seed)
+
+    INTEGER, INTENT(IN) :: seed
+    INTEGER :: i
+    DOUBLE PRECISION :: dummy
+
+    x = x + seed
+    y = y + seed
+    z = z + seed
+    w = w + seed
+
+    ! 'Warm-up' the generator by cycling through a few times
+    DO i = 1, 1000
+      dummy = random()
+    ENDDO
+
+  END SUBROUTINE random_init
+
+
+
   FUNCTION random_box_muller(stdev, mu)
 
     DOUBLE PRECISION, INTENT(IN) :: stdev
@@ -101,26 +121,6 @@ CONTAINS
     ENDIF
 
   END FUNCTION random_box_muller
-
-
-
-  SUBROUTINE random_init(seed)
-
-    INTEGER, INTENT(IN) :: seed
-    INTEGER :: i
-    DOUBLE PRECISION :: dummy
-
-    x = x + seed
-    y = y + seed
-    z = z + seed
-    w = w + seed
-
-    ! 'Warm-up' the generator by cycling through a few times
-    DO i = 1, 1000
-      dummy = random()
-    ENDDO
-
-  END SUBROUTINE random_init
 
 
 
