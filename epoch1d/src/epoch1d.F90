@@ -173,17 +173,20 @@ PROGRAM pic
   DO
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
+
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
       timer_first(c_timer_step) = timer_walltime
     ENDIF
+
     push = (time >= particle_push_start_time)
 #ifdef PHOTONS
     IF (push .AND. use_qed .AND. time > qed_start_time) THEN
       CALL qed_update_optical_depth()
     ENDIF
 #endif
+
     CALL update_eb_fields_half
     IF (push) THEN
       ! .FALSE. this time to use load balancing threshold
