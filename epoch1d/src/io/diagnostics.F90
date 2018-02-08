@@ -461,7 +461,7 @@ CONTAINS
             c_stagger_cell_centre, calc_number_density, array)
 
         CALL write_nspecies_field(c_dump_ppc, code, &
-            'ppc', 'ppc', 'particles in cell', &
+            'ppc', 'Particles_Per_Cell', 'n_particles', &
             c_stagger_cell_centre, calc_ppc, array)
 
         CALL write_nspecies_field(c_dump_temperature, code, &
