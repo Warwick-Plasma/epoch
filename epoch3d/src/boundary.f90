@@ -37,38 +37,32 @@ CONTAINS
     ! different ways, deal with that here
 
     cpml_boundaries = .FALSE.
+    error = .FALSE.
     DO i = 1, 2*c_ndims
       IF (bc_particle(i) == c_bc_other) bc_particle(i) = c_bc_reflect
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
       IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
-    ENDDO
 
-    ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
-    ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
-    ! can then be set separately. IN THE DECK, laser bcs are chosen either
-    ! by seting the main bcs OR by setting the field bcs to simple_laser
-    ! (or outflow).
+      ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
+      ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
+      ! can then be set separately. IN THE DECK, laser bcs are chosen either
+      ! by seting the main bcs OR by setting the field bcs to simple_laser
+      ! (or outflow).
 
-    ! Laser boundaries assume open particles unless otherwise specified.
-    DO i = 1, 2*c_ndims
+      ! Laser boundaries assume open particles unless otherwise specified.
       IF (bc_particle(i) == c_bc_simple_laser &
           .OR. bc_particle(i) == c_bc_simple_outflow &
           .OR. bc_particle(i) == c_bc_cpml_laser &
           .OR. bc_particle(i) == c_bc_cpml_outflow) &
               bc_particle(i) = c_bc_open
-    ENDDO
 
-    ! Note: reflecting EM boundaries not yet implemented.
-    DO i = 1, 2*c_ndims
+      ! Note: reflecting EM boundaries not yet implemented.
       IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
-    ENDDO
 
-    ! Sanity check on particle boundaries
-    error = .FALSE.
-    DO i = 1, 2*c_ndims
+      ! Sanity check on particle boundaries
       IF (bc_particle(i) == c_bc_periodic &
           .OR. bc_particle(i) == c_bc_reflect &
           .OR. bc_particle(i) == c_bc_thermal &
