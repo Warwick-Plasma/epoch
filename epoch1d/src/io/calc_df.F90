@@ -533,6 +533,54 @@ CONTAINS
 
 
 
+  SUBROUTINE calc_ppc(data_array, current_species)
+
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+    ! The data to be weighted onto the grid
+    INTEGER :: ispecies, ix, spec_start, spec_end
+    TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
+#include "particle_head.inc"
+    data_array = 0.0_num
+
+    spec_start = current_species
+    spec_end = current_species
+    spec_sum = .FALSE.
+
+    IF (current_species <= 0) THEN
+      spec_start = 1
+      spec_end = n_species
+      spec_sum = .TRUE.
+    ENDIF
+
+    DO ispecies = spec_start, spec_end
+#ifndef NO_TRACER_PARTICLES
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+#endif
+      current => io_list(ispecies)%attached_list%head
+
+      DO WHILE (ASSOCIATED(current))
+#include "particle_to_grid.inc"
+
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix)
+        ENDDO
+        current => current%next
+      ENDDO
+      CALL calc_boundary(data_array)
+    ENDDO
+
+    CALL calc_boundary(data_array)
+
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
+
+  END SUBROUTINE calc_ppc
+
+
+
   SUBROUTINE calc_temperature(sigma, current_species)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: sigma
