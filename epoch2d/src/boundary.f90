@@ -26,7 +26,7 @@ MODULE boundary
 
 CONTAINS
 
-  SUBROUTINE setup_particle_boundaries
+  SUBROUTINE setup_boundaries
 
     INTEGER :: i
     LOGICAL :: error
@@ -37,13 +37,39 @@ CONTAINS
     ! different ways, deal with that here
 
     cpml_boundaries = .FALSE.
+    error = .FALSE.
     DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_other) bc_particle(i) = c_bc_reflect
+      error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
+
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
       IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+
+      ! Note: reflecting EM boundaries not yet implemented.
+      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
+      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
     ENDDO
+
+    IF (error) THEN
+      errcode = c_err_bad_value
+      CALL abort_code(errcode)
+    ENDIF
+
+  END SUBROUTINE setup_boundaries
+
+
+
+  FUNCTION setup_particle_boundary(boundary, boundary_name) RESULT(error)
+
+    INTEGER, INTENT(INOUT) :: boundary
+    CHARACTER(LEN=*), INTENT(IN) :: boundary_name
+    LOGICAL :: error
+
+    ! For some types of boundary, fields and particles are treated in
+    ! different ways, deal with that here
+
+    IF (boundary == c_bc_other) boundary = c_bc_reflect
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
     ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
@@ -52,40 +78,28 @@ CONTAINS
     ! (or outflow).
 
     ! Laser boundaries assume open particles unless otherwise specified.
-    DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_simple_laser &
-          .OR. bc_particle(i) == c_bc_simple_outflow &
-          .OR. bc_particle(i) == c_bc_cpml_laser &
-          .OR. bc_particle(i) == c_bc_cpml_outflow) &
-              bc_particle(i) = c_bc_open
-    ENDDO
-
-    ! Note: reflecting EM boundaries not yet implemented.
-    DO i = 1, 2*c_ndims
-      IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
-      IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
-    ENDDO
+    IF (boundary == c_bc_simple_laser &
+        .OR. boundary == c_bc_simple_outflow &
+        .OR. boundary == c_bc_cpml_laser &
+        .OR. boundary == c_bc_cpml_outflow) &
+            boundary = c_bc_open
 
     ! Sanity check on particle boundaries
     error = .FALSE.
-    DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_periodic &
-          .OR. bc_particle(i) == c_bc_reflect &
-          .OR. bc_particle(i) == c_bc_thermal &
-          .OR. bc_particle(i) == c_bc_open) CYCLE
-      IF (rank == 0) THEN
-        WRITE(*,*)
-        WRITE(*,*) '*** ERROR ***'
-        WRITE(*,*) 'Unrecognised particle boundary condition on "', &
-            boundary(i), '" boundary.'
-      ENDIF
-      error = .TRUE.
-      errcode = c_err_bad_value
-    ENDDO
+    IF (boundary == c_bc_periodic &
+        .OR. boundary == c_bc_reflect &
+        .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_open) RETURN
 
-    IF (error) CALL abort_code(errcode)
+    IF (rank == 0) THEN
+      WRITE(*,*)
+      WRITE(*,*) '*** ERROR ***'
+      WRITE(*,*) 'Unrecognised particle boundary condition on "', &
+          TRIM(boundary_name), '" boundary.'
+    ENDIF
+    error = .TRUE.
 
-  END SUBROUTINE setup_particle_boundaries
+  END FUNCTION setup_particle_boundary
 
 
 
