@@ -268,28 +268,19 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE particle_reflection_bcs(array, ng, flip_direction)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
-    REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nn, i, flip_dir, n, bc
+    INTEGER :: nn, n, i, flip_dir, bc
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
-    nn = nx
     n = 0
+    nn = nx
 
-    ALLOCATE(temp(ng))
-
-    temp = 0.0_num
-    CALL MPI_SENDRECV(array(nn+1), ng, mpireal, &
-        neighbour( 1), tag, temp, ng, mpireal, &
-        neighbour(-1), tag, comm, status, errcode)
-
-    ! Deal with reflecting boundaries differently
     n = n + 1
     bc = bc_particle(n)
     IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
@@ -303,16 +294,8 @@ CONTAINS
           array(i) = array(i) + array(1-i)
         ENDDO
       ENDIF
-    ELSE
-      array(1:ng) = array(1:ng) + temp
     ENDIF
 
-    temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng), ng, mpireal, &
-        neighbour(-1), tag, temp, ng, mpireal, &
-        neighbour( 1), tag, comm, status, errcode)
-
-    ! Deal with reflecting boundaries differently
     n = n + 1
     bc = bc_particle(n)
     IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
@@ -326,7 +309,47 @@ CONTAINS
           array(nn+1-i) = array(nn+1-i) + array(nn+i)
         ENDDO
       ENDIF
-    ELSE
+    ENDIF
+
+  END SUBROUTINE particle_reflection_bcs
+
+
+
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    REAL(num), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, nn, sz, n
+
+    ! First apply reflecting boundary conditions
+    CALL particle_reflection_bcs(array, ng, flip_direction)
+
+    ! Now apply periodic and processor boundaries
+    n = 0
+    nn = nx
+
+    ALLOCATE(temp(ng))
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(nn+1), ng, mpireal, &
+        neighbour( 1), tag, temp, ng, mpireal, &
+        neighbour(-1), tag, comm, status, errcode)
+
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
+      array(1:ng) = array(1:ng) + temp
+    ENDIF
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(1-ng), ng, mpireal, &
+        neighbour(-1), tag, temp, ng, mpireal, &
+        neighbour( 1), tag, comm, status, errcode)
+
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(nn+1-ng:nn) = array(nn+1-ng:nn) + temp
     ENDIF
 

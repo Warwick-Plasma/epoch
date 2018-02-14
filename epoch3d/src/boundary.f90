@@ -699,40 +699,19 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE particle_reflection_bcs(array, ng, flip_direction)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
-    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, nn, sz, i, flip_dir, n, bc
+    INTEGER :: nn, n, i, flip_dir, bc
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
-    sizes(1) = nx + 2 * ng
-    sizes(2) = ny + 2 * ng
-    sizes(3) = nz + 2 * ng
-    starts = 1
-
-    subsizes(1) = ng
-    subsizes(2) = sizes(2)
-    subsizes(3) = sizes(3)
-    nn = nx
     n = 0
+    nn = nx
 
-    subarray = create_3d_array_subtype(mpireal, subsizes, sizes, starts)
-
-    sz = subsizes(1) * subsizes(2) * subsizes(3)
-    ALLOCATE(temp(subsizes(1), subsizes(2), subsizes(3)))
-
-    temp = 0.0_num
-    CALL MPI_SENDRECV(array(nn+1,1-ng,1-ng), 1, subarray, &
-        neighbour( 1,0,0), tag, temp, sz, mpireal, &
-        neighbour(-1,0,0), tag, comm, status, errcode)
-
-    ! Deal with reflecting boundaries differently
     n = n + 1
     bc = bc_particle(n)
     IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
@@ -746,16 +725,8 @@ CONTAINS
           array(i,:,:) = array(i,:,:) + array(1-i,:,:)
         ENDDO
       ENDIF
-    ELSE
-      array(1:ng,:,:) = array(1:ng,:,:) + temp
     ENDIF
 
-    temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
-        neighbour(-1,0,0), tag, temp, sz, mpireal, &
-        neighbour( 1,0,0), tag, comm, status, errcode)
-
-    ! Deal with reflecting boundaries differently
     n = n + 1
     bc = bc_particle(n)
     IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
@@ -769,7 +740,123 @@ CONTAINS
           array(nn+1-i,:,:) = array(nn+1-i,:,:) + array(nn+i,:,:)
         ENDDO
       ENDIF
-    ELSE
+    ENDIF
+
+    nn = ny
+
+    n = n + 1
+    bc = bc_particle(n)
+    IF (y_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng-1
+          array(:,i,:) = array(:,i,:) - array(:,-i,:)
+        ENDDO
+      ELSE
+        DO i = 1, ng-1
+          array(:,i,:) = array(:,i,:) + array(:,1-i,:)
+        ENDDO
+      ENDIF
+    ENDIF
+
+    n = n + 1
+    bc = bc_particle(n)
+    IF (y_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng
+          array(:,nn-i,:) = array(:,nn-i,:) - array(:,nn+i,:)
+        ENDDO
+      ELSE
+        DO i = 1, ng
+          array(:,nn+1-i,:) = array(:,nn+1-i,:) + array(:,nn+i,:)
+        ENDDO
+      ENDIF
+    ENDIF
+
+    nn = nz
+
+    n = n + 1
+    bc = bc_particle(n)
+    IF (z_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng-1
+          array(:,:,i) = array(:,:,i) - array(:,:,-i)
+        ENDDO
+      ELSE
+        DO i = 1, ng-1
+          array(:,:,i) = array(:,:,i) + array(:,:,1-i)
+        ENDDO
+      ENDIF
+    ENDIF
+
+    n = n + 1
+    bc = bc_particle(n)
+    IF (z_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng
+          array(:,:,nn-i) = array(:,:,nn-i) - array(:,:,nn+i)
+        ENDDO
+      ELSE
+        DO i = 1, ng
+          array(:,:,nn+1-i) = array(:,:,nn+1-i) + array(:,:,nn+i)
+        ENDDO
+      ENDIF
+    ENDIF
+
+  END SUBROUTINE particle_reflection_bcs
+
+
+
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, nn, sz, n
+
+    ! First apply reflecting boundary conditions
+    CALL particle_reflection_bcs(array, ng, flip_direction)
+
+    ! Now apply periodic and processor boundaries
+    n = 0
+
+    sizes(1) = nx + 2 * ng
+    sizes(2) = ny + 2 * ng
+    sizes(3) = nz + 2 * ng
+    starts = 1
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
+    nn = nx
+
+    subarray = create_3d_array_subtype(mpireal, subsizes, sizes, starts)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+    ALLOCATE(temp(subsizes(1), subsizes(2), subsizes(3)))
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(nn+1,1-ng,1-ng), 1, subarray, &
+        neighbour( 1,0,0), tag, temp, sz, mpireal, &
+        neighbour(-1,0,0), tag, comm, status, errcode)
+
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
+      array(1:ng,:,:) = array(1:ng,:,:) + temp
+    ENDIF
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
+        neighbour(-1,0,0), tag, temp, sz, mpireal, &
+        neighbour( 1,0,0), tag, comm, status, errcode)
+
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(nn+1-ng:nn,:,:) = array(nn+1-ng:nn,:,:) + temp
     ENDIF
 
@@ -791,21 +878,8 @@ CONTAINS
         neighbour(0, 1,0), tag, temp, sz, mpireal, &
         neighbour(0,-1,0), tag, comm, status, errcode)
 
-    ! Deal with reflecting boundaries differently
     n = n + 1
-    bc = bc_particle(n)
-    IF (y_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
-        ! Currents get reversed in the direction of the boundary
-        DO i = 1, ng-1
-          array(:,i,:) = array(:,i,:) - array(:,-i,:)
-        ENDDO
-      ELSE
-        DO i = 1, ng-1
-          array(:,i,:) = array(:,i,:) + array(:,1-i,:)
-        ENDDO
-      ENDIF
-    ELSE
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(:,1:ng,:) = array(:,1:ng,:) + temp
     ENDIF
 
@@ -814,21 +888,8 @@ CONTAINS
         neighbour(0,-1,0), tag, temp, sz, mpireal, &
         neighbour(0, 1,0), tag, comm, status, errcode)
 
-    ! Deal with reflecting boundaries differently
     n = n + 1
-    bc = bc_particle(n)
-    IF (y_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
-        ! Currents get reversed in the direction of the boundary
-        DO i = 1, ng
-          array(:,nn-i,:) = array(:,nn-i,:) - array(:,nn+i,:)
-        ENDDO
-      ELSE
-        DO i = 1, ng
-          array(:,nn+1-i,:) = array(:,nn+1-i,:) + array(:,nn+i,:)
-        ENDDO
-      ENDIF
-    ELSE
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(:,nn+1-ng:nn,:) = array(:,nn+1-ng:nn,:) + temp
     ENDIF
 
@@ -850,20 +911,8 @@ CONTAINS
         neighbour(0,0, 1), tag, temp, sz, mpireal, &
         neighbour(0,0,-1), tag, comm, status, errcode)
 
-    ! Deal with reflecting boundaries differently
-    bc = bc_particle(n)
-    IF (z_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
-        ! Currents get reversed in the direction of the boundary
-        DO i = 1, ng-1
-          array(:,:,i) = array(:,:,i) - array(:,:,-i)
-        ENDDO
-      ELSE
-        DO i = 1, ng-1
-          array(:,:,i) = array(:,:,i) + array(:,:,1-i)
-        ENDDO
-      ENDIF
-    ELSE
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(:,:,1:ng) = array(:,:,1:ng) + temp
     ENDIF
 
@@ -872,20 +921,8 @@ CONTAINS
         neighbour(0,0,-1), tag, temp, sz, mpireal, &
         neighbour(0,0, 1), tag, comm, status, errcode)
 
-    ! Deal with reflecting boundaries differently
-    bc = bc_particle(n)
-    IF (z_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
-        ! Currents get reversed in the direction of the boundary
-        DO i = 1, ng
-          array(:,:,nn-i) = array(:,:,nn-i) - array(:,:,nn+i)
-        ENDDO
-      ELSE
-        DO i = 1, ng
-          array(:,:,nn+1-i) = array(:,:,nn+1-i) + array(:,:,nn+i)
-        ENDDO
-      ENDIF
-    ELSE
+    n = n + 1
+    IF (bc_particle(n) == c_bc_periodic) THEN
       array(:,:,nn+1-ng:nn) = array(:,:,nn+1-ng:nn) + temp
     ENDIF
 
