@@ -274,12 +274,13 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nn, i, flip_dir
+    INTEGER :: nn, i, flip_dir, n, bc
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     nn = nx
+    n = 0
 
     ALLOCATE(temp(ng))
 
@@ -289,9 +290,10 @@ CONTAINS
         neighbour(-1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_min) == c_bc_reflect &
-        .OR. bc_particle(c_bd_x_min) == c_bc_thermal) .AND. x_min_boundary) THEN
-      IF (flip_dir == c_dir_x) THEN
+    n = n + 1
+    bc = bc_particle(n)
+    IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i) = array(i) - array(-i)
@@ -311,9 +313,10 @@ CONTAINS
         neighbour( 1), tag, comm, status, errcode)
 
     ! Deal with reflecting boundaries differently
-    IF ((bc_particle(c_bd_x_max) == c_bc_reflect &
-        .OR. bc_particle(c_bd_x_max) == c_bc_thermal) .AND. x_max_boundary) THEN
-      IF (flip_dir == c_dir_x) THEN
+    n = n + 1
+    bc = bc_particle(n)
+    IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+      IF (flip_dir == n/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i) = array(nn-i) - array(nn+i)
