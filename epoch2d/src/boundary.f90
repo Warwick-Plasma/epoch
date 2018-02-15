@@ -556,17 +556,13 @@ CONTAINS
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE particle_periodic_bcs(array, ng)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
-    INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: subarray, nn, sz, n
-
-    ! First apply reflecting boundary conditions
-    CALL particle_reflection_bcs(array, ng, flip_direction)
 
     ! Now apply periodic and processor boundaries
     n = 0
@@ -638,6 +634,22 @@ CONTAINS
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
+
+  END SUBROUTINE particle_periodic_bcs
+
+
+
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+
+    ! First apply reflecting boundary conditions
+    CALL particle_reflection_bcs(array, ng, flip_direction)
+
+    ! Next apply periodic and subdomain boundary conditions
+    CALL particle_periodic_bcs(array, ng)
 
     CALL field_bc(array, ng)
 
