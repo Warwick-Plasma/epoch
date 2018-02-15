@@ -383,8 +383,6 @@ CONTAINS
     ! Next apply periodic and subdomain boundary conditions
     CALL particle_periodic_bcs(array, ng)
 
-    CALL field_bc(array, ng)
-
   END SUBROUTINE processor_summation_bcs
 
 
