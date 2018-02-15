@@ -55,6 +55,7 @@ MODULE constants
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
   ! Boundary type codes
+  INTEGER, PARAMETER :: c_bc_null = -1
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2
   INTEGER, PARAMETER :: c_bc_simple_laser = 3
@@ -664,6 +665,9 @@ MODULE shared_data
 
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
+
+    ! Per-species boundary conditions
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
   !----------------------------------------------------------------------------

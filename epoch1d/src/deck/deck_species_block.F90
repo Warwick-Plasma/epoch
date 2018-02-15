@@ -77,10 +77,12 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i, j, io, iu, nlevels, nrelease
+    INTEGER :: i, j, idx, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
     INTEGER :: errcode
     TYPE(primitive_stack) :: stack
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
+    LOGICAL :: error
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_species
@@ -181,6 +183,42 @@ CONTAINS
       DEALLOCATE(release_species)
       DEALLOCATE(ionise_to_species)
       DEALLOCATE(species_names)
+
+      ! Sanity check on periodic boundaries
+      DO i = 1, n_species
+        ! First, set the per-species boundary condition to the same value
+        ! as bc_particle if it hasn't been set yet
+        DO idx = 1, 2*c_ndims
+          IF (species_list(i)%bc_particle(idx) == c_bc_null) &
+              species_list(i)%bc_particle(idx) = bc_particle(idx)
+        ENDDO
+
+        bc_species = species_list(i)%bc_particle
+
+        error = .FALSE.
+        DO idx = 1, c_ndims
+          IF (bc_species(2*idx-1) == c_bc_periodic) THEN
+            IF (bc_species(2*idx) /= c_bc_periodic) &
+                error = .TRUE.
+          ELSE
+            IF (bc_species(2*idx) == c_bc_periodic) &
+                error = .TRUE.
+          ENDIF
+        ENDDO
+
+        IF (error) THEN
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*)
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Periodic boundaries must be specified on both', &
+                  ' sides of the domain.'
+            ENDDO
+          ENDIF
+          CALL abort_code(c_err_bad_value)
+        ENDIF
+      ENDDO
     ELSE
       DEALLOCATE(species_charge_set)
       DEALLOCATE(species_blocks)
