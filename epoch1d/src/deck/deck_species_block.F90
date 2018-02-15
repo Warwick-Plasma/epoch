@@ -79,7 +79,7 @@ CONTAINS
 
     INTEGER :: i, j, idx, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
-    INTEGER :: errcode
+    INTEGER :: errcode, bc
     TYPE(primitive_stack) :: stack
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: error
@@ -218,6 +218,24 @@ CONTAINS
           ENDIF
           CALL abort_code(c_err_bad_value)
         ENDIF
+
+        ! Finally, set bc_allspecies. This will be equal to the per-species
+        ! value if they are all compatible or c_bc_mixed otherwise
+        DO idx = 1, 2*c_ndims
+          bc = bc_species(idx)
+
+          IF (bc == c_bc_reflect .OR. bc == c_bc_thermal) THEN
+            bc = c_bc_reflect
+          ELSE IF (bc /= c_bc_periodic) THEN
+            bc = c_bc_open
+          ENDIF
+
+          IF (i == 1) THEN
+            bc_allspecies(idx) = bc
+          ELSE
+            IF (bc_allspecies(idx) /= bc) bc_allspecies(idx) = c_bc_mixed
+          ENDIF
+        ENDDO
       ENDDO
     ELSE
       DEALLOCATE(species_charge_set)
