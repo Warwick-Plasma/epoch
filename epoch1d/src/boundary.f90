@@ -320,8 +320,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, nn, sz, n
+    INTEGER :: nn, n
+    INTEGER, DIMENSION(-1:1) :: neighbour_local
 
     ! Now apply periodic and processor boundaries
     n = 0
@@ -329,10 +329,26 @@ CONTAINS
 
     ALLOCATE(temp(ng))
 
+    ! Don't bother communicating non-periodic boundaries
+    neighbour_local = neighbour(:)
+    n = n + 1
+    IF (x_min_boundary) THEN
+      IF (bc_particle(n) /= c_bc_periodic) THEN
+        neighbour_local(-1) = MPI_PROC_NULL
+      ENDIF
+    ENDIF
+    n = n + 1
+    IF (x_max_boundary) THEN
+      IF (bc_particle(n) /= c_bc_periodic) THEN
+        neighbour_local( 1) = MPI_PROC_NULL
+      ENDIF
+    ENDIF
+    n = n - 2
+
     temp = 0.0_num
     CALL MPI_SENDRECV(array(nn+1), ng, mpireal, &
-        neighbour( 1), tag, temp, ng, mpireal, &
-        neighbour(-1), tag, comm, status, errcode)
+        neighbour_local( 1), tag, temp, ng, mpireal, &
+        neighbour_local(-1), tag, comm, status, errcode)
 
     n = n + 1
     IF (bc_particle(n) == c_bc_periodic) THEN
@@ -341,8 +357,8 @@ CONTAINS
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng), ng, mpireal, &
-        neighbour(-1), tag, temp, ng, mpireal, &
-        neighbour( 1), tag, comm, status, errcode)
+        neighbour_local(-1), tag, temp, ng, mpireal, &
+        neighbour_local( 1), tag, comm, status, errcode)
 
     n = n + 1
     IF (bc_particle(n) == c_bc_periodic) THEN
