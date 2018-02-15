@@ -683,20 +683,10 @@ CONTAINS
 
   SUBROUTINE current_bcs
 
-    INTEGER :: i
-
-    ! domain is decomposed. Just add currents at edges
+    ! Domain is decomposed. Just add currents at edges
     CALL processor_summation_bcs(jx, jng, c_dir_x)
     CALL processor_summation_bcs(jy, jng, c_dir_y)
     CALL processor_summation_bcs(jz, jng, c_dir_z)
-
-    DO i = 1, 2*c_ndims
-      IF (bc_particle(i) == c_bc_reflect) THEN
-        CALL field_clamp_zero(jx, jng, c_stagger_jx, i)
-        CALL field_clamp_zero(jy, jng, c_stagger_jy, i)
-        CALL field_clamp_zero(jz, jng, c_stagger_jz, i)
-      ENDIF
-    ENDDO
 
   END SUBROUTINE current_bcs
 
