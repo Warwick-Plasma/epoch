@@ -273,13 +273,15 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: nn, n, i, flip_dir, bc
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
+    sizes = SHAPE(array)
     n = 0
-    nn = nx
+    nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
     bc = bc_particle(n)
@@ -320,12 +322,16 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
-    INTEGER :: nn, n
+    INTEGER, DIMENSION(c_ndims) :: sizes
+    INTEGER :: n, nn
     INTEGER, DIMENSION(-1:1) :: neighbour_local
 
-    ! Now apply periodic and processor boundaries
+    ! Transmit and sum all boundaries.
+    ! Set neighbour to MPI_PROC_NULL if we don't need to transfer anything
+
+    sizes = SHAPE(array)
     n = 0
-    nn = nx
+    nn = sizes(n/2+1) - 2 * ng
 
     ALLOCATE(temp(ng))
 

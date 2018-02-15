@@ -482,13 +482,15 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: nn, n, i, flip_dir, bc
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
+    sizes = SHAPE(array)
     n = 0
-    nn = nx
+    nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
     bc = bc_particle(n)
@@ -520,7 +522,7 @@ CONTAINS
       ENDIF
     ENDIF
 
-    nn = ny
+    nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
     bc = bc_particle(n)
@@ -562,19 +564,19 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, nn, sz, n
+    INTEGER :: n, nn, sz, subarray
     INTEGER, DIMENSION(-1:1) :: neighbour_local
 
-    ! Now apply periodic and processor boundaries
-    n = 0
+    ! Transmit and sum all boundaries.
+    ! Set neighbour to MPI_PROC_NULL if we don't need to transfer anything
 
-    sizes(1) = nx + 2 * ng
-    sizes(2) = ny + 2 * ng
+    sizes = SHAPE(array)
     starts = 1
+    n = 0
 
     subsizes = sizes
     subsizes(n/2+1) = ng
-    nn = nx
+    nn = sizes(n/2+1) - 2 * ng
 
     subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
 
@@ -622,7 +624,7 @@ CONTAINS
 
     subsizes = sizes
     subsizes(n/2+1) = ng
-    nn = ny
+    nn = sizes(n/2+1) - 2 * ng
 
     subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
 
