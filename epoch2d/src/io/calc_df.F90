@@ -26,16 +26,19 @@ CONTAINS
   SUBROUTINE calc_boundary(data_array)
 
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     INTEGER :: i, nn, bc
 
     CALL processor_summation_bcs(data_array, ng)
+
+    bc_species = bc_allspecies
 
     ! Reflect the open BC parts of the arrays so that it doesn't look like
     ! particles are vanishing near the boundary. This is only to make the
     ! output look nicer and doesn't have any effect on the physics.
 
     IF (x_min_boundary) THEN
-      bc = bc_particle(c_bd_x_min)
+      bc = bc_species(c_bd_x_min)
       IF (bc /= c_bc_periodic &
           .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng
@@ -45,7 +48,7 @@ CONTAINS
     ENDIF
     IF (x_max_boundary) THEN
       nn = nx
-      bc = bc_particle(c_bd_x_max)
+      bc = bc_species(c_bd_x_max)
       IF (bc /= c_bc_periodic &
           .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng
@@ -55,7 +58,7 @@ CONTAINS
     ENDIF
 
     IF (y_min_boundary) THEN
-      bc = bc_particle(c_bd_y_min)
+      bc = bc_species(c_bd_y_min)
       IF (bc /= c_bc_periodic &
           .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng
@@ -65,7 +68,7 @@ CONTAINS
     ENDIF
     IF (y_max_boundary) THEN
       nn = ny
-      bc = bc_particle(c_bd_y_max)
+      bc = bc_species(c_bd_y_max)
       IF (bc /= c_bc_periodic &
           .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng

@@ -861,11 +861,11 @@ CONTAINS
 
     ! Slice in X-direction with an additional index
 
-    IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_min(:,:,i), temp(:,:,i))
@@ -876,14 +876,12 @@ CONTAINS
             %ext_temp_x_min(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_min = temp
-      ENDDO
-    ENDIF
+      ENDIF
 
-    IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
+      IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_max(:,:,i), temp(:,:,i))
@@ -894,18 +892,18 @@ CONTAINS
             %ext_temp_x_max(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_max = temp
-      ENDDO
-    ENDIF
+      ENDIF
+    ENDDO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
     ! Slice in Y-direction with an additional index
 
-    IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_min(:,:,i), temp(:,:,i))
@@ -916,14 +914,12 @@ CONTAINS
             %ext_temp_y_min(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_min = temp
-      ENDDO
-    ENDIF
+      ENDIF
 
-    IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
+      IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_max(:,:,i), temp(:,:,i))
@@ -934,18 +930,18 @@ CONTAINS
             %ext_temp_y_max(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_max = temp
-      ENDDO
-    ENDIF
+      ENDIF
+    ENDDO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
     ! Slice in Z-direction with an additional index
 
-    IF (bc_particle(c_bd_z_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%bc_particle(c_bd_z_min) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_z, &
               species_list(ispecies)%ext_temp_z_min(:,:,i), temp(:,:,i))
@@ -956,14 +952,12 @@ CONTAINS
             %ext_temp_z_min(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_z_min = temp
-      ENDDO
-    ENDIF
+      ENDIF
 
-    IF (bc_particle(c_bd_z_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) &
-          ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
+      IF (species_list(ispecies)%bc_particle(c_bd_z_max) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) &
+            ALLOCATE(temp(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_z, &
               species_list(ispecies)%ext_temp_z_max(:,:,i), temp(:,:,i))
@@ -974,8 +968,8 @@ CONTAINS
             %ext_temp_z_max(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_z_max = temp
-      ENDDO
-    ENDIF
+      ENDIF
+    ENDDO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 

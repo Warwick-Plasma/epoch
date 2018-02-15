@@ -28,19 +28,17 @@ CONTAINS
 
   SUBROUTINE setup_boundaries
 
-    INTEGER :: i
+    INTEGER :: i, ispecies
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
+    CHARACTER(LEN=2*c_max_string_length) :: species_name
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
     cpml_boundaries = .FALSE.
-    error = .FALSE.
     DO i = 1, 2*c_ndims
-      error = error .OR. setup_particle_boundary(bc_particle(i), boundary(i))
-
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
@@ -49,6 +47,16 @@ CONTAINS
       ! Note: reflecting EM boundaries not yet implemented.
       IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
+    ENDDO
+
+    error = .FALSE.
+    DO ispecies = 1, n_species
+      DO i = 1, 2*c_ndims
+        species_name = TRIM(boundary(i)) // ' on species ' &
+            // TRIM(species_list(ispecies)%name)
+        error = error .OR. setup_particle_boundary(&
+            species_list(ispecies)%bc_particle(i), species_name)
+      ENDDO
     ENDDO
 
     IF (error) THEN
@@ -275,16 +283,19 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: nn, n, i, flip_dir, bc
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
 
     flip_dir = 0
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
+
+    bc_species = bc_allspecies
 
     sizes = SHAPE(array)
     n = 0
     nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
-    bc = bc_particle(n)
+    bc = bc_species(n)
     IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
       IF (flip_dir == n/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
@@ -299,7 +310,7 @@ CONTAINS
     ENDIF
 
     n = n + 1
-    bc = bc_particle(n)
+    bc = bc_species(n)
     IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
       IF (flip_dir == n/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
@@ -339,13 +350,13 @@ CONTAINS
     neighbour_local = neighbour(:)
     n = n + 1
     IF (x_min_boundary) THEN
-      IF (bc_particle(n) /= c_bc_periodic) THEN
+      IF (bc_allspecies(n) /= c_bc_periodic) THEN
         neighbour_local(-1) = MPI_PROC_NULL
       ENDIF
     ENDIF
     n = n + 1
     IF (x_max_boundary) THEN
-      IF (bc_particle(n) /= c_bc_periodic) THEN
+      IF (bc_allspecies(n) /= c_bc_periodic) THEN
         neighbour_local( 1) = MPI_PROC_NULL
       ENDIF
     ENDIF
@@ -357,7 +368,7 @@ CONTAINS
         neighbour_local(-1), tag, comm, status, errcode)
 
     n = n + 1
-    IF (bc_particle(n) == c_bc_periodic) THEN
+    IF (bc_allspecies(n) == c_bc_periodic) THEN
       array(1:ng) = array(1:ng) + temp
     ENDIF
 
@@ -367,7 +378,7 @@ CONTAINS
         neighbour_local( 1), tag, comm, status, errcode)
 
     n = n + 1
-    IF (bc_particle(n) == c_bc_periodic) THEN
+    IF (bc_allspecies(n) == c_bc_periodic) THEN
       array(nn+1-ng:nn) = array(nn+1-ng:nn) + temp
     ENDIF
 
@@ -510,13 +521,16 @@ CONTAINS
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd
     INTEGER(i8) :: ixp
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: out_of_bounds
-    INTEGER :: ispecies, i, ix
+    INTEGER :: bc, ispecies, i, ix
     REAL(num) :: temp(3)
     REAL(num) :: part_pos
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
+
+      bc_species = species_list(ispecies)%bc_particle
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))
@@ -549,10 +563,11 @@ CONTAINS
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
-              IF (bc_particle(c_bd_x_min) == c_bc_reflect) THEN
+              bc = bc_species(c_bd_x_min)
+              IF (bc == c_bc_reflect) THEN
                 cur%part_pos = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+              ELSE IF (bc == c_bc_thermal) THEN
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 ENDDO
@@ -574,7 +589,7 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_min - part_pos
 
-              ELSE IF (bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+              ELSE IF (bc == c_bc_periodic) THEN
                 xbd = -1
                 cur%part_pos = part_pos + length_x
               ELSE
@@ -604,10 +619,11 @@ CONTAINS
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
-              IF (bc_particle(c_bd_x_max) == c_bc_reflect) THEN
+              bc = bc_species(c_bd_x_max)
+              IF (bc == c_bc_reflect) THEN
                 cur%part_pos = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+              ELSE IF (bc == c_bc_thermal) THEN
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 ENDDO
@@ -629,7 +645,7 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_max - part_pos
 
-              ELSE IF (bc_particle(c_bd_x_max) == c_bc_periodic) THEN
+              ELSE IF (bc == c_bc_periodic) THEN
                 xbd = 1
                 cur%part_pos = part_pos - length_x
               ELSE
