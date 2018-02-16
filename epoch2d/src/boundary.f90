@@ -485,11 +485,12 @@ CONTAINS
 
 
 
-  SUBROUTINE particle_reflection_bcs(array, ng, flip_direction)
+  SUBROUTINE particle_reflection_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, INTENT(IN), OPTIONAL :: species
     INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: nn, n, i, flip_dir, bc
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
@@ -498,6 +499,13 @@ CONTAINS
     IF (PRESENT(flip_direction)) flip_dir = flip_direction
 
     bc_species = bc_allspecies
+    IF (PRESENT(species)) THEN
+      DO i = 1, 2*c_ndims
+        IF (bc_species(i) == c_bc_mixed) THEN
+          bc_species(i) = species_list(species)%bc_particle(i)
+        ENDIF
+      ENDDO
+    ENDIF
 
     sizes = SHAPE(array)
     n = 0
@@ -510,10 +518,12 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i,:) = array(i,:) - array(-i,:)
+          array(-i,:) = 0.0_num
         ENDDO
       ELSE
         DO i = 1, ng-1
           array(i,:) = array(i,:) + array(1-i,:)
+          array(1-i,:) = 0.0_num
         ENDDO
       ENDIF
     ENDIF
@@ -525,10 +535,12 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i,:) = array(nn-i,:) - array(nn+i,:)
+          array(nn+i,:) = 0.0_num
         ENDDO
       ELSE
         DO i = 1, ng
           array(nn+1-i,:) = array(nn+1-i,:) + array(nn+i,:)
+          array(nn+i,:) = 0.0_num
         ENDDO
       ENDIF
     ENDIF
@@ -542,10 +554,12 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(:,i) = array(:,i) - array(:,-i)
+          array(:,-i) = 0.0_num
         ENDDO
       ELSE
         DO i = 1, ng-1
           array(:,i) = array(:,i) + array(:,1-i)
+          array(:,1-i) = 0.0_num
         ENDDO
       ENDIF
     ENDIF
@@ -557,10 +571,12 @@ CONTAINS
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(:,nn-i) = array(:,nn-i) - array(:,nn+i)
+          array(:,nn+i) = 0.0_num
         ENDDO
       ELSE
         DO i = 1, ng
           array(:,nn+1-i) = array(:,nn+1-i) + array(:,nn+i)
+          array(:,nn+i) = 0.0_num
         ENDDO
       ENDIF
     ENDIF
@@ -681,18 +697,57 @@ CONTAINS
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
+    CALL particle_clear_bcs(array, ng)
+
   END SUBROUTINE particle_periodic_bcs
 
 
 
-  SUBROUTINE processor_summation_bcs(array, ng, flip_direction)
+  SUBROUTINE particle_clear_bcs(array, ng)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    INTEGER, DIMENSION(c_ndims) :: sizes
+    INTEGER :: n, nn
+
+    sizes = SHAPE(array)
+    n = 0
+
+    nn = sizes(n/2+1) - 2 * ng
+
+    n = n + 1
+    IF (x_min_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
+      array(:0,:) = 0.0_num
+    ENDIF
+    n = n + 1
+    IF (x_max_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
+      array(nn+1:,:) = 0.0_num
+    ENDIF
+
+    nn = sizes(n/2+1) - 2 * ng
+
+    n = n + 1
+    IF (y_min_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
+      array(:,:0) = 0.0_num
+    ENDIF
+    n = n + 1
+    IF (y_max_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
+      array(:,nn+1:) = 0.0_num
+    ENDIF
+
+  END SUBROUTINE particle_clear_bcs
+
+
+
+  SUBROUTINE processor_summation_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
+    INTEGER, INTENT(IN), OPTIONAL :: species
 
     ! First apply reflecting boundary conditions
-    CALL particle_reflection_bcs(array, ng, flip_direction)
+    CALL particle_reflection_bcs(array, ng, flip_direction, species)
 
     ! Next apply periodic and subdomain boundary conditions
     CALL particle_periodic_bcs(array, ng)
@@ -1209,12 +1264,14 @@ CONTAINS
 
 
 
-  SUBROUTINE current_bcs
+  SUBROUTINE current_bcs(species)
+
+    INTEGER, INTENT(IN), OPTIONAL :: species
 
     ! Domain is decomposed. Just add currents at edges
-    CALL processor_summation_bcs(jx, jng, c_dir_x)
-    CALL processor_summation_bcs(jy, jng, c_dir_y)
-    CALL processor_summation_bcs(jz, jng, c_dir_z)
+    CALL processor_summation_bcs(jx, jng, c_dir_x, species)
+    CALL processor_summation_bcs(jy, jng, c_dir_y, species)
+    CALL processor_summation_bcs(jz, jng, c_dir_z, species)
 
   END SUBROUTINE current_bcs
 

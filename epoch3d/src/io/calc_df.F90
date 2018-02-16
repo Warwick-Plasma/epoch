@@ -23,15 +23,20 @@ MODULE calc_df
 
 CONTAINS
 
-  SUBROUTINE calc_boundary(data_array)
+  SUBROUTINE calc_boundary(data_array, species)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN), OPTIONAL :: species
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     INTEGER :: i, nn, bc
 
-    CALL processor_summation_bcs(data_array, ng)
+    CALL processor_summation_bcs(data_array, ng, species=species)
 
-    bc_species = bc_allspecies
+    IF (PRESENT(species)) THEN
+      bc_species = species_list(species)%bc_particle
+    ELSE
+      bc_species = bc_allspecies
+    ENDIF
 
     ! Reflect the open BC parts of the arrays so that it doesn't look like
     ! particles are vanishing near the boundary. This is only to make the
@@ -170,6 +175,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -275,6 +281,8 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
+      CALL calc_boundary(wt, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -420,6 +428,8 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
+      CALL calc_boundary(wt, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -561,6 +571,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -627,6 +638,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -682,7 +694,7 @@ CONTAINS
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array)
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -769,6 +781,10 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
+      CALL calc_boundary(meanx, ispecies)
+      CALL calc_boundary(meany, ispecies)
+      CALL calc_boundary(meanz, ispecies)
+      CALL calc_boundary(part_count, ispecies)
     ENDDO
 
     CALL calc_boundary(meanx)
@@ -817,6 +833,8 @@ CONTAINS
         ENDDO
         current => current%next
       ENDDO
+      CALL calc_boundary(sigma, ispecies)
+      CALL calc_boundary(part_count, ispecies)
     ENDDO
 
     CALL calc_boundary(sigma)
@@ -886,6 +904,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
@@ -984,6 +1003,7 @@ CONTAINS
 
         current => current%next
       ENDDO
+      CALL calc_boundary(data_array, ispecies)
     ENDDO
 
     CALL calc_boundary(data_array)
