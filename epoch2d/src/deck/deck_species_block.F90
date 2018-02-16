@@ -46,7 +46,9 @@ MODULE deck_species_block
   REAL(num), DIMENSION(:), POINTER :: ionisation_energies, ionise_to_species
   REAL(num), DIMENSION(:), POINTER :: mass, charge, angular, part_count
   REAL(num), DIMENSION(:), POINTER :: principle, dumpmask_array
+  REAL(num), DIMENSION(:,:), POINTER :: bc_particle_array
   REAL(num) :: species_mass, species_charge, species_dumpmask
+  REAL(num), DIMENSION(2*c_ndims) :: species_bc_particle
 
 CONTAINS
 
@@ -68,6 +70,7 @@ CONTAINS
       ALLOCATE(angular(4))
       ALLOCATE(part_count(4))
       ALLOCATE(dumpmask_array(4))
+      ALLOCATE(bc_particle_array(2*c_ndims,4))
       release_species = ''
     ENDIF
 
@@ -106,10 +109,12 @@ CONTAINS
         species_list(i)%charge = charge(i)
         species_list(i)%count = INT(part_count(i),i8)
         species_list(i)%dumpmask = INT(dumpmask_array(i))
+        species_list(i)%bc_particle = INT(bc_particle_array(:,i))
         IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
       ENDDO
 
+      DEALLOCATE(bc_particle_array)
       DEALLOCATE(dumpmask_array)
       DEALLOCATE(part_count)
       DEALLOCATE(principle)
@@ -280,6 +285,7 @@ CONTAINS
     current_block = current_block + 1
     got_name = .FALSE.
     species_dumpmask = c_io_always
+    species_bc_particle = c_bc_null
     IF (deck_state == c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
@@ -399,6 +405,26 @@ CONTAINS
       species_dumpmask = as_integer_print(value, element, errcode)
     ENDIF
 
+    IF (str_cmp(element, 'bc_x_min')) THEN
+      species_bc_particle(c_bd_x_min) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_max')) THEN
+      species_bc_particle(c_bd_x_max) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_min')) THEN
+      species_bc_particle(c_bd_y_min) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_max')) THEN
+      species_bc_particle(c_bd_y_max) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     IF (deck_state == c_ds_first) RETURN
 
     ! *************************************************************
@@ -491,6 +517,30 @@ CONTAINS
     IF (str_cmp(element, 'immobile')) THEN
       species_list(species_id)%immobile = &
           as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_min')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_min) = &
+          species_bc_particle(c_bd_x_min)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_max')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_max) = &
+          species_bc_particle(c_bd_x_max)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_min')) THEN
+      species_list(species_id)%bc_particle(c_bd_y_min) = &
+          species_bc_particle(c_bd_y_min)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_y_max')) THEN
+      species_list(species_id)%bc_particle(c_bd_y_max) = &
+          species_bc_particle(c_bd_y_max)
       RETURN
     ENDIF
 
@@ -851,6 +901,7 @@ CONTAINS
     CALL grow_array(angular, n_species)
     CALL grow_array(part_count, n_species)
     CALL grow_array(dumpmask_array, n_species)
+    CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
 
     species_names(n_species) = TRIM(name)
     ionise_to_species(n_species) = -1
@@ -862,6 +913,7 @@ CONTAINS
     angular(n_species) = -1
     part_count(n_species) = -1
     dumpmask_array(n_species) = species_dumpmask
+    bc_particle_array(:,n_species) = species_bc_particle
 
     RETURN
 
@@ -921,6 +973,8 @@ CONTAINS
     part_count(n_species) = 0
     CALL grow_array(dumpmask_array, n_species)
     dumpmask_array(n_species) = species_dumpmask
+    CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
+    bc_particle_array(:,n_species) = species_bc_particle
     RETURN
 
   END SUBROUTINE create_ionisation_species_from_name
