@@ -36,7 +36,8 @@ CONTAINS
 
     IF (x_min_boundary) THEN
       bc = bc_particle(c_bd_x_min)
-      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+      IF (bc /= c_bc_periodic &
+          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng
           data_array(i) = data_array(i) + data_array(1-i)
         ENDDO
@@ -45,7 +46,8 @@ CONTAINS
     IF (x_max_boundary) THEN
       nn = nx
       bc = bc_particle(c_bd_x_max)
-      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+      IF (bc /= c_bc_periodic &
+          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
         DO i = 1, ng
           data_array(nn-i+1) = data_array(nn-i+1) + data_array(nn+i)
         ENDDO
