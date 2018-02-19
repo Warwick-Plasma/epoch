@@ -26,21 +26,30 @@ CONTAINS
   SUBROUTINE calc_boundary(data_array)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER :: i
+    INTEGER :: i, nn, bc
 
     CALL processor_summation_bcs(data_array, ng)
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
-      DO i = 1, ng
-        data_array(i) = data_array(i) + data_array(1-i)
-      ENDDO
+    ! Reflect the open BC parts of the arrays so that it doesn't look like
+    ! particles are vanishing near the boundary. This is only to make the
+    ! output look nicer and doesn't have any effect on the physics.
+
+    IF (x_min_boundary) THEN
+      bc = bc_particle(c_bd_x_min)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(i) = data_array(i) + data_array(1-i)
+        ENDDO
+      ENDIF
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
-      DO i = 1, ng
-        data_array(nx-i+1) = data_array(nx-i+1) + data_array(nx+i)
-      ENDDO
+    IF (x_max_boundary) THEN
+      nn = nx
+      bc = bc_particle(c_bd_x_max)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(nn-i+1) = data_array(nn-i+1) + data_array(nn+i)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE calc_boundary

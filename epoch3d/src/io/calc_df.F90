@@ -26,71 +26,66 @@ CONTAINS
   SUBROUTINE calc_boundary(data_array)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER :: i, j, k
+    INTEGER :: i, nn, bc
 
     CALL processor_summation_bcs(data_array, ng)
 
-    IF (x_min_boundary .AND. bc_particle(c_bd_x_min) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_x_min) /= c_bc_reflect) THEN
-      DO k = 1-ng, nz+ng
-      DO j = 1-ng, ny+ng
-      DO i = 1, ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(1-i,j,k)
-      ENDDO
-      ENDDO
-      ENDDO
+    ! Reflect the open BC parts of the arrays so that it doesn't look like
+    ! particles are vanishing near the boundary. This is only to make the
+    ! output look nicer and doesn't have any effect on the physics.
+
+    IF (x_min_boundary) THEN
+      bc = bc_particle(c_bd_x_min)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(i,:,:) = data_array(i,:,:) + data_array(1-i,:,:)
+        ENDDO
+      ENDIF
     ENDIF
-    IF (x_max_boundary .AND. bc_particle(c_bd_x_max) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_x_max) /= c_bc_reflect) THEN
-      DO k = 1-ng, nz+ng
-      DO j = 1-ng, ny+ng
-      DO i = 1, ng
-        data_array(nx-i+1,j,k) = data_array(nx-i+1,j,k) + data_array(nx+i,j,k)
-      ENDDO
-      ENDDO
-      ENDDO
+    IF (x_max_boundary) THEN
+      nn = nx
+      bc = bc_particle(c_bd_x_max)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(nn-i+1,:,:) = data_array(nn-i+1,:,:) + data_array(nn+i,:,:)
+        ENDDO
+      ENDIF
     ENDIF
 
-    IF (y_min_boundary .AND. bc_particle(c_bd_y_min) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_y_min) /= c_bc_reflect) THEN
-      DO k = 1-ng, nz+ng
-      DO j = 1, ng
-      DO i = 1-ng, nx+ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(i,1-j,k)
-      ENDDO
-      ENDDO
-      ENDDO
+    IF (y_min_boundary) THEN
+      bc = bc_particle(c_bd_y_min)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(:,i,:) = data_array(:,i,:) + data_array(:,1-i,:)
+        ENDDO
+      ENDIF
     ENDIF
-    IF (y_max_boundary .AND. bc_particle(c_bd_y_max) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_y_max) /= c_bc_reflect) THEN
-      DO k = 1-ng, nz+ng
-      DO j = 1, ng
-      DO i = 1-ng, nx+ng
-        data_array(i,ny-j+1,k) = data_array(i,ny-j+1,k) + data_array(i,ny+j,k)
-      ENDDO
-      ENDDO
-      ENDDO
+    IF (y_max_boundary) THEN
+      nn = ny
+      bc = bc_particle(c_bd_y_max)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(:,nn-i+1,:) = data_array(:,nn-i+1,:) + data_array(:,nn+i,:)
+        ENDDO
+      ENDIF
     ENDIF
 
-    IF (z_min_boundary .AND. bc_particle(c_bd_z_min) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_z_min) /= c_bc_reflect) THEN
-      DO k = 1, ng
-      DO j = 1-ng, ny+ng
-      DO i = 1-ng, nx+ng
-        data_array(i,j,k) = data_array(i,j,k) + data_array(i,j,1-k)
-      ENDDO
-      ENDDO
-      ENDDO
+    IF (z_min_boundary) THEN
+      bc = bc_particle(c_bd_z_min)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(:,:,i) = data_array(:,:,i) + data_array(:,:,1-i)
+        ENDDO
+      ENDIF
     ENDIF
-    IF (z_max_boundary .AND. bc_particle(c_bd_z_max) /= c_bc_periodic &
-        .AND. bc_particle(c_bd_z_max) /= c_bc_reflect) THEN
-      DO k = 1, ng
-      DO j = 1-ng, ny+ng
-      DO i = 1-ng, nx+ng
-        data_array(i,j,nz-k+1) = data_array(i,j,nz-k+1) + data_array(i,j,nz+k)
-      ENDDO
-      ENDDO
-      ENDDO
+    IF (z_max_boundary) THEN
+      nn = nz
+      bc = bc_particle(c_bd_z_max)
+      IF (bc /= c_bc_periodic .AND. bc /= c_bc_reflect) THEN
+        DO i = 1, ng
+          data_array(:,:,nn-i+1) = data_array(:,:,nn-i+1) + data_array(:,:,nn+i)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE calc_boundary
