@@ -613,7 +613,7 @@ CONTAINS
 
     rpart_in_cell = npart_in_cell
     CALL processor_summation_bcs(rpart_in_cell, ng)
-    npart_in_cell = rpart_in_cell
+    npart_in_cell = INT(rpart_in_cell)
 
     DEALLOCATE(rpart_in_cell)
 #endif
