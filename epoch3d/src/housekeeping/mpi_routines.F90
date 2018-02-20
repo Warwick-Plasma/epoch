@@ -271,21 +271,42 @@ CONTAINS
     reorder = .TRUE.
 
     ! Set boundary to be periodic if *any* boundary condition requires it.
-    ! Once there are per-species boundary conditions then this will be true
+    ! For per-species boundary conditions then this will be true
     ! if any of the species are periodic
 
     IF (bc_field(c_bd_x_min) == c_bc_periodic &
-        .OR. bc_x_min_after_move == c_bc_periodic &
-        .OR. bc_particle(c_bd_x_min) == c_bc_periodic) &
-            periods(c_ndims) = .TRUE.
+        .OR. bc_x_min_after_move == c_bc_periodic) THEN
+      periods(c_ndims) = .TRUE.
+    ELSE
+      DO idim = 1, n_species
+        IF (species_list(idim)%bc_particle(c_bd_x_min) == c_bc_periodic) THEN
+          periods(c_ndims) = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
 
-    IF (bc_field(c_bd_y_min) == c_bc_periodic &
-        .OR. bc_particle(c_bd_y_min) == c_bc_periodic) &
-            periods(c_ndims-1) = .TRUE.
+    IF (bc_field(c_bd_y_min) == c_bc_periodic) THEN
+      periods(c_ndims-1) = .TRUE.
+    ELSE
+      DO idim = 1, n_species
+        IF (species_list(idim)%bc_particle(c_bd_y_min) == c_bc_periodic) THEN
+          periods(c_ndims-1) = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
 
-    IF (bc_field(c_bd_z_min) == c_bc_periodic &
-        .OR. bc_particle(c_bd_z_min) == c_bc_periodic) &
-            periods(c_ndims-2) = .TRUE.
+    IF (bc_field(c_bd_z_min) == c_bc_periodic) THEN
+      periods(c_ndims-2) = .TRUE.
+    ELSE
+      DO idim = 1, n_species
+        IF (species_list(idim)%bc_particle(c_bd_z_min) == c_bc_periodic) THEN
+          periods(c_ndims-2) = .TRUE.
+          EXIT
+        ENDIF
+      ENDDO
+    ENDIF
 
     old_comm = comm
     CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
@@ -517,27 +538,27 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
-      IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny+ng, &
             1-ng:nz+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny+ng, &
             1-ng:nz+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx+ng, &
             1-ng:nz+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng, &
             1-ng:nz+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_z_min) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_z_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_z_min(1-ng:nx+ng, &
             1-ng:ny+ng,1:3))
       ENDIF
-      IF (bc_particle(c_bd_z_max) == c_bc_thermal) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_z_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_z_max(1-ng:nx+ng, &
             1-ng:ny+ng,1:3))
       ENDIF

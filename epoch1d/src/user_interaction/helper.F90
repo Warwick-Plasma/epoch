@@ -38,11 +38,11 @@ CONTAINS
 
       ! Set temperature at boundary for thermal bcs.
 
-      IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         species_list(ispecies)%ext_temp_x_min(:) = &
             species_list(ispecies)%initial_conditions%temp(1,:)
       ENDIF
-      IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         species_list(ispecies)%ext_temp_x_max(:) = &
             species_list(ispecies)%initial_conditions%temp(nx,:)
       ENDIF
