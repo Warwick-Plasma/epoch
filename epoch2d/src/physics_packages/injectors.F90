@@ -214,7 +214,7 @@ CONTAINS
 
       IF (injector%dt_inject(ii) > 0.0_num) THEN
         npart_ideal = dt / injector%dt_inject(ii)
-        itemp = random_g(0.5_num * SQRT(npart_ideal &
+        itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
             * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
             + npart_ideal
         injector%depth(ii) = injector%depth(ii) - itemp
@@ -244,7 +244,7 @@ CONTAINS
         ! On the first run of the injectors it isn't possible to decrement
         ! the optical depth until this point
         npart_ideal = dt / injector%dt_inject(ii)
-        itemp = random_g(0.5_num * SQRT(npart_ideal &
+        itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
             * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
             + npart_ideal
         injector%depth(ii) = injector%depth(ii) - itemp
