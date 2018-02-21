@@ -1247,7 +1247,7 @@ CONTAINS
     INTEGER(i8) :: ixp, iyp, izp
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: out_of_bounds
-    INTEGER :: bc, ispecies, i, ix, iy, iz
+    INTEGER :: sgn, bc, ispecies, i, ix, iy, iz
     INTEGER :: cell_x, cell_y, cell_z
     REAL(num), DIMENSION(-1:1) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
@@ -1293,6 +1293,7 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos(1)
+        sgn = -1
         IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
@@ -1303,12 +1304,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < x_min_local) xbd = -1
+            IF (part_pos < x_min_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
-            xbd = -1
+            xbd = sgn
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
@@ -1317,8 +1318,8 @@ CONTAINS
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = -1
-                cur%part_pos(1) = part_pos + length_x
+                xbd = sgn
+                cur%part_pos(1) = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos < x_min_outer) THEN
@@ -1357,7 +1358,7 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -1380,6 +1381,7 @@ CONTAINS
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
@@ -1390,12 +1392,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= x_max_local) xbd = 1
+            IF (part_pos >= x_max_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
-            xbd = 1
+            xbd = sgn
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
@@ -1404,8 +1406,8 @@ CONTAINS
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = 1
-                cur%part_pos(1) = part_pos - length_x
+                xbd = sgn
+                cur%part_pos(1) = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos >= x_max_outer) THEN
@@ -1444,7 +1446,7 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -1468,6 +1470,7 @@ CONTAINS
         END IF
 
         part_pos = cur%part_pos(2)
+        sgn = -1
         IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
           IF (y_min_boundary) THEN
@@ -1478,12 +1481,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < y_min_local) ybd = -1
+            IF (part_pos < y_min_local) ybd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < y_min_local) THEN
-            ybd = -1
+            ybd = sgn
             ! Particle has left the system
             IF (y_min_boundary) THEN
               ybd = 0
@@ -1492,8 +1495,8 @@ CONTAINS
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
-                ybd = -1
-                cur%part_pos(2) = part_pos + length_y
+                ybd = sgn
+                cur%part_pos(2) = part_pos - sgn * length_y
               END IF
             END IF
             IF (part_pos < y_min_outer) THEN
@@ -1537,7 +1540,7 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! z-direction
@@ -1555,6 +1558,7 @@ CONTAINS
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
           IF (y_max_boundary) THEN
@@ -1565,12 +1569,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= y_max_local) ybd = 1
+            IF (part_pos >= y_max_local) ybd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= y_max_local) THEN
-            ybd = 1
+            ybd = sgn
             ! Particle has left the system
             IF (y_max_boundary) THEN
               ybd = 0
@@ -1579,8 +1583,8 @@ CONTAINS
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
-                ybd = 1
-                cur%part_pos(2) = part_pos - length_y
+                ybd = sgn
+                cur%part_pos(2) = part_pos - sgn * length_y
               END IF
             END IF
             IF (part_pos >= y_max_outer) THEN
@@ -1624,7 +1628,7 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! z-direction
@@ -1643,6 +1647,7 @@ CONTAINS
         END IF
 
         part_pos = cur%part_pos(3)
+        sgn = -1
         IF (bc_field(c_bd_z_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
           IF (z_min_boundary) THEN
@@ -1653,12 +1658,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < z_min_local) zbd = -1
+            IF (part_pos < z_min_local) zbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < z_min_local) THEN
-            zbd = -1
+            zbd = sgn
             ! Particle has left the system
             IF (z_min_boundary) THEN
               zbd = 0
@@ -1667,8 +1672,8 @@ CONTAINS
                 cur%part_pos(3) = 2.0_num * z_min - part_pos
                 cur%part_p(3) = -cur%part_p(3)
               ELSE IF (bc == c_bc_periodic) THEN
-                zbd = -1
-                cur%part_pos(3) = part_pos + length_z
+                zbd = sgn
+                cur%part_pos(3) = part_pos - sgn * length_z
               END IF
             END IF
             IF (part_pos < z_min_outer) THEN
@@ -1717,7 +1722,7 @@ CONTAINS
 
                 ! z-direction
                 i = 3
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(3) = 2.0_num * z_min_outer - part_pos
@@ -1730,6 +1735,7 @@ CONTAINS
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_z_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
           IF (z_max_boundary) THEN
@@ -1740,12 +1746,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= z_max_local) zbd = 1
+            IF (part_pos >= z_max_local) zbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= z_max_local) THEN
-            zbd = 1
+            zbd = sgn
             ! Particle has left the system
             IF (z_max_boundary) THEN
               zbd = 0
@@ -1754,8 +1760,8 @@ CONTAINS
                 cur%part_pos(3) = 2.0_num * z_max - part_pos
                 cur%part_p(3) = -cur%part_p(3)
               ELSE IF (bc == c_bc_periodic) THEN
-                zbd = 1
-                cur%part_pos(3) = part_pos - length_z
+                zbd = sgn
+                cur%part_pos(3) = part_pos - sgn * length_z
               END IF
             END IF
             IF (part_pos >= z_max_outer) THEN
@@ -1804,7 +1810,7 @@ CONTAINS
 
                 ! z-direction
                 i = 3
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 cur%part_pos(3) = 2.0_num * z_max_outer - part_pos
