@@ -609,7 +609,7 @@ CONTAINS
       current => partlist%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
-        IF (current%part_pos < x0 .OR. current%part_pos > x1) THEN
+        IF (current%part_pos < x0 .OR. current%part_pos >= x1) THEN
           CALL remove_particle_from_partlist(partlist, current)
           DEALLOCATE(current)
         ENDIF
