@@ -323,40 +323,28 @@ CONTAINS
     npart_this_species = species%count
     IF (npart_this_species <= 0) RETURN
 
-    IF (x_min_boundary .AND. species%fill_ghosts) THEN
-      ix_min = -1
-    ELSE
-      ix_min = 1
+    ix_min = 1
+    ix_max = nx
+
+    iy_min = 1
+    iy_max = ny
+
+    iz_min = 1
+    iz_max = nz
+
+    IF (species%fill_ghosts) THEN
+      IF (x_min_boundary) ix_min = ix_min - png
+      IF (x_max_boundary) ix_max = ix_max + png
+
+      IF (y_min_boundary) iy_min = iy_min - png
+      IF (y_max_boundary) iy_max = iy_max + png
+
+      IF (z_min_boundary) iz_min = iz_min - png
+      IF (z_max_boundary) iz_max = iz_max + png
     ENDIF
-    IF (x_max_boundary .AND. species%fill_ghosts) THEN
-      ix_max = nx + 2
-    ELSE
-      ix_max = nx
-    ENDIF
+
     nx_e = ix_max - ix_min
-
-    IF (y_min_boundary .AND. species%fill_ghosts) THEN
-      iy_min = -1
-    ELSE
-      iy_min = 1
-    ENDIF
-    IF (y_max_boundary .AND. species%fill_ghosts) THEN
-      iy_max = ny + 2
-    ELSE
-      iy_max = ny
-    ENDIF
     ny_e = iy_max - iy_min
-
-    IF (z_min_boundary .AND. species%fill_ghosts) THEN
-      iz_min = -1
-    ELSE
-      iz_min = 1
-    ENDIF
-    IF (z_max_boundary .AND. species%fill_ghosts) THEN
-      iz_max = nz + 2
-    ELSE
-      iz_max = nz
-    ENDIF
 
     num_valid_cells_local = 0
     DO iz = iz_min, iz_max

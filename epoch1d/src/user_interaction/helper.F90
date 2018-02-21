@@ -284,15 +284,12 @@ CONTAINS
     npart_this_species = species%count
     IF (npart_this_species <= 0) RETURN
 
-    IF (x_min_boundary .AND. species%fill_ghosts) THEN
-      ix_min = -1
-    ELSE
-      ix_min = 1
-    ENDIF
-    IF (x_max_boundary .AND. species%fill_ghosts) THEN
-      ix_max = nx + 2
-    ELSE
-      ix_max = nx
+    ix_min = 1
+    ix_max = nx
+
+    IF (species%fill_ghosts) THEN
+      IF (x_min_boundary) ix_min = ix_min - png
+      IF (x_max_boundary) ix_max = ix_max + png
     ENDIF
 
     num_valid_cells_local = 0
