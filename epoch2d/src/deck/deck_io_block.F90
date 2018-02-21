@@ -98,6 +98,7 @@ CONTAINS
     io_block_name (c_dump_charge_density   ) = 'charge_density'
     io_block_name (c_dump_number_density   ) = 'number_density'
     io_block_name (c_dump_ppc              ) = 'ppc'
+    alternate_name(c_dump_ppc              ) = 'particles_per_cell'
     io_block_name (c_dump_temperature      ) = 'temperature'
     io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
     io_block_name (c_dump_probes           ) = 'particle_probes'

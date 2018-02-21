@@ -17,7 +17,8 @@ MODULE random_generator
 
   IMPLICIT NONE
   PRIVATE
-  PUBLIC :: random, random_g, random_init, get_random_state, set_random_state
+  PUBLIC :: random, random_init, get_random_state, set_random_state
+  PUBLIC :: random_box_muller
   INTEGER :: x = 123456789, y = 362436069, z = 521288629, w = 916191069
 
 CONTAINS
@@ -75,33 +76,51 @@ CONTAINS
 
 
 
-  FUNCTION random_g(stdev)
+  FUNCTION random_box_muller(stdev, mu)
 
     DOUBLE PRECISION, INTENT(IN) :: stdev
-    DOUBLE PRECISION :: random_g
+    DOUBLE PRECISION, INTENT(IN), OPTIONAL :: mu
+    DOUBLE PRECISION :: random_box_muller
 
-    DOUBLE PRECISION :: rand1, rand2, w
-    DOUBLE PRECISION, PARAMETER :: c_tiny = TINY(1.D0)
+    DOUBLE PRECISION :: rand1, rand2, w, mu_val
+    DOUBLE PRECISION, PARAMETER :: c_tiny = TINY(1.0D0)
+    DOUBLE PRECISION, SAVE :: cached_random_value
+    LOGICAL, SAVE :: cached = .FALSE.
 
     ! This is a basic polar Box-Muller transform
     ! It generates gaussian distributed random numbers
-    DO
-      rand1 = random()
-      rand2 = random()
 
-      rand1 = 2.D0 * rand1 - 1.D0
-      rand2 = 2.D0 * rand2 - 1.D0
+    IF (PRESENT(mu)) THEN
+      mu_val = mu
+    ELSE
+      mu_val = 0.0D0
+    END IF
 
-      w = rand1**2 + rand2**2
+    IF (cached) THEN
+      cached = .FALSE.
+      random_box_muller = cached_random_value * stdev + mu_val
+    ELSE
+      cached = .TRUE.
 
-      IF (w > c_tiny .AND. w < 1.D0) EXIT
-    ENDDO
+      DO
+        rand1 = random()
+        rand2 = random()
 
-    w = SQRT((-2.D0 * LOG(w)) / w)
+        rand1 = 2.0D0 * rand1 - 1.0D0
+        rand2 = 2.0D0 * rand2 - 1.0D0
 
-    random_g = rand1 * w * stdev
+        w = rand1**2 + rand2**2
 
-  END FUNCTION random_g
+        IF (w > c_tiny .AND. w < 1.0D0) EXIT
+      ENDDO
+
+      w = SQRT((-2.0D0 * LOG(w)) / w)
+
+      random_box_muller = rand1 * w * stdev + mu_val
+      cached_random_value = rand2 * w
+    ENDIF
+
+  END FUNCTION random_box_muller
 
 
 

@@ -547,17 +547,11 @@ CONTAINS
 #endif
         current => next
       ENDDO
-      CALL current_bcs(ispecies=ispecies, do_mpi=safe_periods)
+      CALL current_bcs(species=ispecies)
     ENDDO
 
     IF (.NOT.use_field_ionisation) THEN
-      IF (.NOT. safe_periods) THEN
-        CALL current_bcs
-      ELSE IF (smooth_currents) THEN
-        CALL field_bc(jx, ng)
-        CALL field_bc(jy, ng)
-        CALL field_bc(jz, ng)
-      ENDIF
+      CALL current_bcs
       CALL particle_bcs
 
       IF (smooth_currents) CALL smooth_current()

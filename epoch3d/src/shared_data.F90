@@ -69,6 +69,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_thermal = 11
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
+  INTEGER, PARAMETER :: c_bc_mixed = 14
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -669,8 +670,8 @@ MODULE shared_data
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
 
-    ! Per species boundary conditions
-    INTEGER, DIMENSION(2 * c_ndims) :: bc_particle
+    ! Per-species boundary conditions
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
   !----------------------------------------------------------------------------
@@ -982,8 +983,6 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: z_grid_mins, z_grid_maxs
 
-  LOGICAL :: safe_periods = .FALSE.
-
   REAL(num) :: total_ohmic_heating = 0.0_num
 
   LOGICAL :: ic_from_restart = .FALSE.
@@ -995,7 +994,7 @@ MODULE shared_data
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
   LOGICAL :: use_current_correction
-  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
+  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
 
