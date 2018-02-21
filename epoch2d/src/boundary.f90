@@ -954,17 +954,17 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
             xbd = -1
-          ENDIF
-          ! Particle has left the system
-          IF (part_pos < x_min) THEN
-            xbd = 0
-            bc = bc_species(c_bd_x_min)
-            IF (bc == c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_min - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc == c_bc_periodic) THEN
-              xbd = -1
-              cur%part_pos(1) = part_pos + length_x
+            ! Particle has left the system
+            IF (x_min_boundary) THEN
+              xbd = 0
+              bc = bc_species(c_bd_x_min)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(1) = 2.0_num * x_min - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc == c_bc_periodic) THEN
+                xbd = -1
+                cur%part_pos(1) = part_pos + length_x
+              ENDIF
             ENDIF
             IF (part_pos < x_min_outer) THEN
               IF (bc == c_bc_thermal) THEN
@@ -1022,23 +1022,23 @@ CONTAINS
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= x_max_local) xbd =  1
+            IF (part_pos >= x_max_local) xbd = 1
           ENDIF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
             xbd = 1
-          ENDIF
-          ! Particle has left the system
-          IF (part_pos >= x_max) THEN
-            xbd = 0
-            bc = bc_species(c_bd_x_max)
-            IF (bc == c_bc_reflect) THEN
-              cur%part_pos(1) = 2.0_num * x_max - part_pos
-              cur%part_p(1) = -cur%part_p(1)
-            ELSE IF (bc == c_bc_periodic) THEN
-              xbd = 1
-              cur%part_pos(1) = part_pos - length_x
+            ! Particle has left the system
+            IF (x_max_boundary) THEN
+              xbd = 0
+              bc = bc_species(c_bd_x_max)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(1) = 2.0_num * x_max - part_pos
+                cur%part_p(1) = -cur%part_p(1)
+              ELSE IF (bc == c_bc_periodic) THEN
+                xbd = 1
+                cur%part_pos(1) = part_pos - length_x
+              ENDIF
             ENDIF
             IF (part_pos >= x_max_outer) THEN
               IF (bc == c_bc_thermal) THEN
@@ -1103,17 +1103,17 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < y_min_local) THEN
             ybd = -1
-          ENDIF
-          ! Particle has left the system
-          IF (part_pos < y_min) THEN
-            ybd = 0
-            bc = bc_species(c_bd_y_min)
-            IF (bc == c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_min - part_pos
-              cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc == c_bc_periodic) THEN
-              ybd = -1
-              cur%part_pos(2) = part_pos + length_y
+            ! Particle has left the system
+            IF (y_min_boundary) THEN
+              ybd = 0
+              bc = bc_species(c_bd_y_min)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(2) = 2.0_num * y_min - part_pos
+                cur%part_p(2) = -cur%part_p(2)
+              ELSE IF (bc == c_bc_periodic) THEN
+                ybd = -1
+                cur%part_pos(2) = part_pos + length_y
+              ENDIF
             ENDIF
             IF (part_pos < y_min_outer) THEN
               IF (bc == c_bc_thermal) THEN
@@ -1171,23 +1171,23 @@ CONTAINS
             ENDIF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= y_max_local) ybd =  1
+            IF (part_pos >= y_max_local) ybd = 1
           ENDIF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= y_max_local) THEN
             ybd = 1
-          ENDIF
-          ! Particle has left the system
-          IF (part_pos >= y_max) THEN
-            ybd = 0
-            bc = bc_species(c_bd_y_max)
-            IF (bc == c_bc_reflect) THEN
-              cur%part_pos(2) = 2.0_num * y_max - part_pos
-              cur%part_p(2) = -cur%part_p(2)
-            ELSE IF (bc == c_bc_periodic) THEN
-              ybd = 1
-              cur%part_pos(2) = part_pos - length_y
+            ! Particle has left the system
+            IF (y_max_boundary) THEN
+              ybd = 0
+              bc = bc_species(c_bd_y_max)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(2) = 2.0_num * y_max - part_pos
+                cur%part_p(2) = -cur%part_p(2)
+              ELSE IF (bc == c_bc_periodic) THEN
+                ybd = 1
+                cur%part_pos(2) = part_pos - length_y
+              ENDIF
             ENDIF
             IF (part_pos >= y_max_outer) THEN
               IF (bc == c_bc_thermal) THEN
