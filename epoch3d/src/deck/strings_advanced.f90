@@ -330,4 +330,42 @@ CONTAINS
 
   END FUNCTION as_real_print
 
+
+
+  FUNCTION as_time(value, err)
+
+    CHARACTER(LEN=*), INTENT(IN) :: value
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: as_time
+
+    IF (str_cmp(value, 'start')) THEN
+      as_time = 0.0_num
+      RETURN
+    ENDIF
+
+    IF (str_cmp(value, 'end')) THEN
+      as_time = t_end
+      RETURN
+    ENDIF
+
+    as_time = as_real(value, err)
+
+  END FUNCTION as_time
+
+
+
+  FUNCTION as_time_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: res
+
+    res = as_time(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
+
+    WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_time_print
+
 END MODULE strings_advanced
