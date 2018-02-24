@@ -512,7 +512,8 @@ CONTAINS
       RETURN
     ENDIF
 
-    IF (str_cmp(element, 'meet_injectors')) THEN
+    IF (str_cmp(element, 'meet_injectors') &
+        .OR. str_cmp(element, 'load_up_to_injectors')) THEN
       species_list(species_id)%fill_ghosts = &
           as_logical_print(value, element, errcode)
       RETURN
