@@ -43,12 +43,14 @@ MODULE deck_species_block
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
   REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
-  REAL(num), DIMENSION(:), POINTER :: ionisation_energies, ionise_to_species
-  REAL(num), DIMENSION(:), POINTER :: mass, charge, angular, part_count
-  REAL(num), DIMENSION(:), POINTER :: principle, dumpmask_array
-  REAL(num), DIMENSION(:,:), POINTER :: bc_particle_array
-  REAL(num) :: species_mass, species_charge, species_dumpmask
-  REAL(num), DIMENSION(2*c_ndims) :: species_bc_particle
+  REAL(num), DIMENSION(:), POINTER :: ionisation_energies
+  REAL(num), DIMENSION(:), POINTER :: mass, charge
+  INTEGER, DIMENSION(:), POINTER :: principle, angular, part_count
+  INTEGER, DIMENSION(:), POINTER :: ionise_to_species, dumpmask_array
+  INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
+  REAL(num) :: species_mass, species_charge
+  INTEGER :: species_dumpmask
+  INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
 
 CONTAINS
 
@@ -101,15 +103,15 @@ CONTAINS
         ENDIF
         ! This would usually be set after c_ds_first but all of this is required
         ! during setup of derived ionisation species
-        species_list(i)%ionise_to_species = INT(ionise_to_species(i))
+        species_list(i)%ionise_to_species = ionise_to_species(i)
         species_list(i)%ionisation_energy = ionisation_energies(i)
-        species_list(i)%n = INT(principle(i))
-        species_list(i)%l = INT(angular(i))
+        species_list(i)%n = principle(i)
+        species_list(i)%l = angular(i)
         species_list(i)%mass = mass(i)
         species_list(i)%charge = charge(i)
         species_list(i)%count = INT(part_count(i),i8)
-        species_list(i)%dumpmask = INT(dumpmask_array(i))
-        species_list(i)%bc_particle = INT(bc_particle_array(:,i))
+        species_list(i)%dumpmask = dumpmask_array(i)
+        species_list(i)%bc_particle = bc_particle_array(:,i)
         IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
       ENDDO
@@ -526,7 +528,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'dump') .OR. str_cmp(element, 'dumpmask')) THEN
-      species_list(species_id)%dumpmask = INT(species_dumpmask)
+      species_list(species_id)%dumpmask = species_dumpmask
       RETURN
     ENDIF
 
