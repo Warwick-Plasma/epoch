@@ -2226,12 +2226,12 @@ CONTAINS
 
     DO iproc = 0, nprocx - 1
       IF (iproc == 0) THEN
-        minpos = x_grid_mins(iproc) - dx * ng
+        minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
       ELSE
         minpos = x_grid_mins(iproc) - dx * 0.5_num
       ENDIF
       IF (iproc == nprocx - 1) THEN
-        maxpos = x_grid_maxs(iproc) + dx * ng
+        maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
       ELSE
         maxpos = x_grid_maxs(iproc) + dx * 0.5_num
       ENDIF
@@ -2243,12 +2243,12 @@ CONTAINS
 
     DO iproc = 0, nprocy - 1
       IF (iproc == 0) THEN
-        minpos = y_grid_mins(iproc) - dy * ng
+        minpos = y_grid_mins(iproc) - dy * (0.5_num + png)
       ELSE
         minpos = y_grid_mins(iproc) - dy * 0.5_num
       ENDIF
       IF (iproc == nprocy - 1) THEN
-        maxpos = y_grid_maxs(iproc) + dy * ng
+        maxpos = y_grid_maxs(iproc) + dy * (0.5_num + png)
       ELSE
         maxpos = y_grid_maxs(iproc) + dy * 0.5_num
       ENDIF
@@ -2260,12 +2260,12 @@ CONTAINS
 
     DO iproc = 0, nprocz - 1
       IF (iproc == 0) THEN
-        minpos = z_grid_mins(iproc) - dz * ng
+        minpos = z_grid_mins(iproc) - dz * (0.5_num + png)
       ELSE
         minpos = z_grid_mins(iproc) - dz * 0.5_num
       ENDIF
       IF (iproc == nprocz - 1) THEN
-        maxpos = z_grid_maxs(iproc) + dz * ng
+        maxpos = z_grid_maxs(iproc) + dz * (0.5_num + png)
       ELSE
         maxpos = z_grid_maxs(iproc) + dz * 0.5_num
       ENDIF
