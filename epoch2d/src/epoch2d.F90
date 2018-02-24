@@ -52,6 +52,7 @@ PROGRAM pic
 #ifdef PHOTONS
   USE photons
 #endif
+  USE injectors
 
   IMPLICIT NONE
 
@@ -189,6 +190,7 @@ PROGRAM pic
 
     CALL update_eb_fields_half
     IF (push) THEN
+      CALL run_injectors
       ! .FALSE. this time to use load balancing threshold
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles

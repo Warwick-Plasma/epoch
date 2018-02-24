@@ -624,6 +624,7 @@ MODULE shared_data
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
+    LOGICAL :: fill_ghosts
 
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
@@ -882,7 +883,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx
   INTEGER :: nx_global
@@ -1027,6 +1028,29 @@ MODULE shared_data
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
+
+  !----------------------------------------------------------------------------
+  ! Particle injectors
+  !----------------------------------------------------------------------------
+  TYPE injector_block
+
+    INTEGER :: boundary
+    INTEGER :: id
+    INTEGER :: species
+    INTEGER(i8) :: npart_per_cell
+    REAL(num) :: density_min
+
+    TYPE(primitive_stack) :: density_function
+    TYPE(primitive_stack) :: temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
+
+    REAL(num) :: t_start, t_end
+    REAL(num) :: depth, dt_inject
+
+    TYPE(injector_block), POINTER :: next
+  END TYPE injector_block
+
+  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
 
   !----------------------------------------------------------------------------
   ! laser boundaries
