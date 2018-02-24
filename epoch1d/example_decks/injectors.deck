@@ -54,8 +54,6 @@ begin:species
 #  temp_x = temp
 #  drift_x = drift_p
 #  density = dens
-  bc_y_min = simple_outflow
-  bc_y_max = simple_outflow
 end:species
 
 
