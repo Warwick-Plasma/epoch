@@ -1534,8 +1534,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + REAL(ng, num) &
-            + 0.5_num)
+        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -1574,8 +1573,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_grid_min, NOT y_grid_min_local
-        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + REAL(ng, num) &
-            + 0.5_num)
+        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
