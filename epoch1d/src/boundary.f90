@@ -565,11 +565,13 @@ CONTAINS
     LOGICAL :: out_of_bounds
     INTEGER :: bc, ispecies, i, ix
     REAL(num) :: temp(3)
-    REAL(num) :: part_pos
+    REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer
 
-    x_min_outer = x_min - 0.5_num * dx * png - dx
-    x_max_outer = x_max + 0.5_num * dx * png + dx
+    boundary_shift = 1.0_num + 0.5_num * png
+
+    x_min_outer = x_min - dx * boundary_shift
+    x_max_outer = x_max + dx * boundary_shift
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head

@@ -1253,18 +1253,20 @@ CONTAINS
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cell_z_r, cell_frac_z
     REAL(num) :: cf2, temp(3)
-    REAL(num) :: part_pos
+    REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
     REAL(num) :: z_min_outer, z_max_outer
 
-    x_min_outer = x_min - 0.5_num * dx * png - dx
-    x_max_outer = x_max + 0.5_num * dx * png + dx
+    boundary_shift = 1.0_num + 0.5_num * png
 
-    y_min_outer = y_min - 0.5_num * dy * png - dy
-    y_max_outer = y_max + 0.5_num * dy * png + dy
+    x_min_outer = x_min - dx * boundary_shift
+    x_max_outer = x_max + dx * boundary_shift
 
-    z_min_outer = z_min - 0.5_num * dz * png - dz
-    z_max_outer = z_max + 0.5_num * dz * png + dz
+    y_min_outer = y_min - dy * boundary_shift
+    y_max_outer = y_max + dy * boundary_shift
+
+    z_min_outer = z_min - dz * boundary_shift
+    z_max_outer = z_max + dz * boundary_shift
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
