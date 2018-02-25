@@ -564,7 +564,7 @@ CONTAINS
 
     rpart_in_cell = npart_in_cell
     CALL processor_summation_bcs(rpart_in_cell, ng)
-    npart_in_cell = rpart_in_cell
+    npart_in_cell = INT(rpart_in_cell)
 
     DEALLOCATE(rpart_in_cell)
 #endif
@@ -729,7 +729,7 @@ CONTAINS
       IF (.NOT.curr_loader%id_data_given) THEN
         ALLOCATE(part_counts(0:nproc-1))
         CALL MPI_ALLGATHER(part_count, 1, MPI_INTEGER4, part_counts, 1, &
-            MPI_INTEGER4, comm)
+            MPI_INTEGER4, comm, errcode)
         id_offset = 0
         DO i = 0, rank
           id_offset = id_offset + part_counts(i)
