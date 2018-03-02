@@ -57,7 +57,7 @@ CONTAINS
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
     REAL(num) :: f0_exponent, distribution, mass, npart_per_cell, idx
-    REAL(num) :: two_kb_mass, two_pi_kb_mass3, part_weight
+    REAL(num) :: two_kb_mass, two_pi_kb_mass3, part_weight, normalisation_term
     REAL(num), PARAMETER :: two_kb = 2.0_num * kb
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current
@@ -98,15 +98,32 @@ CONTAINS
         CALL params_local(current, species%initial_conditions%temp(:,3), &
             species%initial_conditions%drift(:,3), Tz, driftz)
 
-        f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
-                     + (current%part_p(2) - drifty)**2 / Ty &
-                     + (current%part_p(3) - driftz)**2 / Tz) / two_kb_mass
+        ! To allow temperatures to be zero in y or z direction, 
+        f0_exponent = 0 
+        normalisation_term = 1
+        if (Tx .ne. 0) then
+             f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
+             normalisation_term = normalisation_term*(pi * two_kb_mass)*Tx
+        end if
+        if (Ty .ne. 0) then
+             f0_exponent = f0_exponent + (current%part_p(1) - drifty)**2 / Ty
+             normalisation_term = normalisation_term*(pi * two_kb_mass)*Ty
+        end if
+        if (Tz .ne. 0) then
+             f0_exponent = f0_exponent + (current%part_p(1) - driftz)**2 / Tz
+             normalisation_term = normalisation_term*(pi * two_kb_mass)*Tz
+        end if
+        f0_exponent = f0_exponent / two_kb_mass
+
+!        f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
+!                     + (current%part_p(2) - drifty)**2 / Ty &
+!                     + (current%part_p(3) - driftz)**2 / Tz) / two_kb_mass
 
         npart_per_cell = current%pvol
 
         ! We want to calculate the distribution of markers.
         distribution = EXP(-f0_exponent) * npart_per_cell * idx &
-            / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+            / SQRT(normalisation_term)
         current%pvol = 1.0_num / distribution
 
 #if DELTAF_DEBUG
