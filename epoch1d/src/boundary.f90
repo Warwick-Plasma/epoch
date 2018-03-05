@@ -340,14 +340,16 @@ CONTAINS
 
 
 
-  SUBROUTINE particle_periodic_bcs(array, ng)
+  SUBROUTINE particle_periodic_bcs(array, ng, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: species
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes
-    INTEGER :: n, nn
+    INTEGER :: n, nn, i
     INTEGER, DIMENSION(-1:1) :: neighbour_local
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
 
     ! Transmit and sum all boundaries.
     ! Set neighbour to MPI_PROC_NULL if we don't need to transfer anything
@@ -356,19 +358,28 @@ CONTAINS
     n = 0
     nn = sizes(n/2+1) - 2 * ng
 
+    bc_species = bc_allspecies
+    IF (PRESENT(species)) THEN
+      DO i = 1, 2*c_ndims
+        IF (bc_species(i) == c_bc_mixed) THEN
+          bc_species(i) = species_list(species)%bc_particle(i)
+        ENDIF
+      ENDDO
+    ENDIF
+
     ALLOCATE(temp(ng))
 
     ! Don't bother communicating non-periodic boundaries
     neighbour_local = neighbour(:)
     n = n + 1
     IF (x_min_boundary) THEN
-      IF (bc_allspecies(n) /= c_bc_periodic) THEN
+      IF (bc_species(n) /= c_bc_periodic) THEN
         neighbour_local(-1) = MPI_PROC_NULL
       ENDIF
     ENDIF
     n = n + 1
     IF (x_max_boundary) THEN
-      IF (bc_allspecies(n) /= c_bc_periodic) THEN
+      IF (bc_species(n) /= c_bc_periodic) THEN
         neighbour_local( 1) = MPI_PROC_NULL
       ENDIF
     ENDIF
@@ -380,9 +391,7 @@ CONTAINS
         neighbour_local(-1), tag, comm, status, errcode)
 
     n = n + 1
-    IF (bc_allspecies(n) == c_bc_periodic) THEN
-      array(1:ng) = array(1:ng) + temp
-    ENDIF
+    array(1:ng) = array(1:ng) + temp
 
     temp = 0.0_num
     CALL MPI_SENDRECV(array(1-ng), ng, mpireal, &
@@ -390,9 +399,7 @@ CONTAINS
         neighbour_local( 1), tag, comm, status, errcode)
 
     n = n + 1
-    IF (bc_allspecies(n) == c_bc_periodic) THEN
-      array(nn+1-ng:nn) = array(nn+1-ng:nn) + temp
-    ENDIF
+    array(nn+1-ng:nn) = array(nn+1-ng:nn) + temp
 
     DEALLOCATE(temp)
 
@@ -402,10 +409,11 @@ CONTAINS
 
 
 
-  SUBROUTINE particle_clear_bcs(array, ng)
+  SUBROUTINE particle_clear_bcs(array, ng, species)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN), OPTIONAL :: species
     INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: n, nn
 
@@ -415,13 +423,9 @@ CONTAINS
     nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
-    IF (x_min_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
-      array(:0) = 0.0_num
-    ENDIF
+    array(:0) = 0.0_num
     n = n + 1
-    IF (x_max_boundary .AND. bc_allspecies(n) == c_bc_mixed) THEN
-      array(nn+1:) = 0.0_num
-    ENDIF
+    array(nn+1:) = 0.0_num
 
   END SUBROUTINE particle_clear_bcs
 
@@ -434,11 +438,19 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     INTEGER, INTENT(IN), OPTIONAL :: species
 
+    IF (PRESENT(species) .AND. .NOT. ANY(bc_allspecies == c_bc_mixed)) THEN
+      RETURN
+    END IF
+
+    IF (.NOT. PRESENT(species) .AND. ANY(bc_allspecies == c_bc_mixed)) THEN
+      RETURN
+    END IF
+
     ! First apply reflecting boundary conditions
     CALL particle_reflection_bcs(array, ng, flip_direction, species)
 
     ! Next apply periodic and subdomain boundary conditions
-    CALL particle_periodic_bcs(array, ng)
+    CALL particle_periodic_bcs(array, ng, species)
 
   END SUBROUTINE processor_summation_bcs
 
@@ -577,6 +589,8 @@ CONTAINS
       cur => species_list(ispecies)%attached_list%head
 
       bc_species = species_list(ispecies)%bc_particle
+
+!      PRINT *, 'AA ', ispecies, bc_species
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))

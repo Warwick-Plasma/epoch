@@ -38,50 +38,6 @@ CONTAINS
       bc_species = bc_allspecies
     ENDIF
 
-    ! Reflect the open BC parts of the arrays so that it doesn't look like
-    ! particles are vanishing near the boundary. This is only to make the
-    ! output look nicer and doesn't have any effect on the physics.
-
-    IF (x_min_boundary) THEN
-      bc = bc_species(c_bd_x_min)
-      IF (bc /= c_bc_periodic &
-          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
-        DO i = 1, ng
-          data_array(i,:) = data_array(i,:) + data_array(1-i,:)
-        ENDDO
-      ENDIF
-    ENDIF
-    IF (x_max_boundary) THEN
-      nn = nx
-      bc = bc_species(c_bd_x_max)
-      IF (bc /= c_bc_periodic &
-          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
-        DO i = 1, ng
-          data_array(nn-i+1,:) = data_array(nn-i+1,:) + data_array(nn+i,:)
-        ENDDO
-      ENDIF
-    ENDIF
-
-    IF (y_min_boundary) THEN
-      bc = bc_species(c_bd_y_min)
-      IF (bc /= c_bc_periodic &
-          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
-        DO i = 1, ng
-          data_array(:,i) = data_array(:,i) + data_array(:,1-i)
-        ENDDO
-      ENDIF
-    ENDIF
-    IF (y_max_boundary) THEN
-      nn = ny
-      bc = bc_species(c_bd_y_max)
-      IF (bc /= c_bc_periodic &
-          .AND. bc /= c_bc_reflect .AND. bc /= c_bc_thermal) THEN
-        DO i = 1, ng
-          data_array(:,nn-i+1) = data_array(:,nn-i+1) + data_array(:,nn+i)
-        ENDDO
-      ENDIF
-    ENDIF
-
   END SUBROUTINE calc_boundary
 
 
