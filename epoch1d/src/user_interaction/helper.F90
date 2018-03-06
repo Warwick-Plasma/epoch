@@ -447,6 +447,18 @@ CONTAINS
         ipos = valid_cell_list(ipos)
 
         cell_x = ipos + ix_min
+#ifdef PER_PARTICLE_CHARGE_MASS
+        ! Even if particles have per particle charge and mass, assume
+        ! that initially they all have the same charge and mass (user
+        ! can easily over_ride)
+        current%charge = species%charge
+        current%mass = species%mass
+#endif
+#ifdef DELTAF_METHOD
+        ! Store the number of particles per cell to allow calculation
+        ! of phase space volume later
+        current%pvol = npart_per_cell
+#endif
 
         current%part_pos = x(cell_x) + (random() - 0.5_num) * dx
 
