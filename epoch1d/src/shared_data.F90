@@ -549,7 +549,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num) :: part_pos
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(DELTAF_METHOD)
     REAL(num) :: weight
 #endif
 #ifdef DELTAF_METHOD

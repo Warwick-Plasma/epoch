@@ -108,11 +108,11 @@ CONTAINS
              normalisation_term = normalisation_term*(pi * two_kb_mass)*Tx
         end if
         if (Ty .ne. 0) then
-             f0_exponent = f0_exponent + (current%part_p(1) - drifty)**2 / Ty
+             f0_exponent = f0_exponent + (current%part_p(2) - drifty)**2 / Ty
              normalisation_term = normalisation_term*(pi * two_kb_mass)*Ty
         end if
         if (Tz .ne. 0) then
-             f0_exponent = f0_exponent + (current%part_p(1) - driftz)**2 / Tz
+             f0_exponent = f0_exponent + (current%part_p(3) - driftz)**2 / Tz
              normalisation_term = normalisation_term*(pi * two_kb_mass)*Tz
         end if
         f0_exponent = f0_exponent / two_kb_mass
