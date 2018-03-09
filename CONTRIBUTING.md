@@ -77,7 +77,7 @@ compatibility must be preserved.
 
 Documentation will be required, either in Latex format or a page on our
 Mediawiki site currently at
-https://cfsa-pmw.warwick.ac.uk:1731/index.php/EPOCH:Landing_Page ()
-This should cover any the input deck blocks or keys, any general
-limitations of the code or methods, and if possible links to any methods
+https://cfsa-pmw.warwick.ac.uk:1731/index.php/EPOCH:Landing_Page.
+This should cover any changes to the input deck blocks or keys, any general
+limitations of the code or methods and if possible links to any methods
 papers or description.
