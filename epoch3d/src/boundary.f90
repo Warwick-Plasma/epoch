@@ -1050,6 +1050,14 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     INTEGER, INTENT(IN), OPTIONAL :: species
 
+    IF (PRESENT(species) .AND. .NOT. ANY(bc_allspecies == c_bc_mixed)) THEN
+      RETURN
+    END IF
+
+    IF (.NOT. PRESENT(species) .AND. ANY(bc_allspecies == c_bc_mixed)) THEN
+      RETURN
+    END IF
+
     ! First apply reflecting boundary conditions
     CALL particle_reflection_bcs(array, ng, flip_direction, species)
 

@@ -32,12 +32,6 @@ CONTAINS
 
     CALL processor_summation_bcs(data_array, ng, species=species)
 
-    IF (PRESENT(species)) THEN
-      bc_species = species_list(species)%bc_particle
-    ELSE
-      bc_species = bc_allspecies
-    ENDIF
-
   END SUBROUTINE calc_boundary
 
 

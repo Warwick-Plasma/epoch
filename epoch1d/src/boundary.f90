@@ -354,10 +354,6 @@ CONTAINS
     ! Transmit and sum all boundaries.
     ! Set neighbour to MPI_PROC_NULL if we don't need to transfer anything
 
-    sizes = SHAPE(array)
-    n = 0
-    nn = sizes(n/2+1) - 2 * ng
-
     bc_species = bc_allspecies
     IF (PRESENT(species)) THEN
       DO i = 1, 2*c_ndims
@@ -366,6 +362,10 @@ CONTAINS
         ENDIF
       ENDDO
     ENDIF
+
+    sizes = SHAPE(array)
+    n = 0
+    nn = sizes(n/2+1) - 2 * ng
 
     ALLOCATE(temp(ng))
 
@@ -409,11 +409,10 @@ CONTAINS
 
 
 
-  SUBROUTINE particle_clear_bcs(array, ng, species)
+  SUBROUTINE particle_clear_bcs(array, ng)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: array
-    INTEGER, INTENT(IN), OPTIONAL :: species
     INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: n, nn
 
@@ -589,8 +588,6 @@ CONTAINS
       cur => species_list(ispecies)%attached_list%head
 
       bc_species = species_list(ispecies)%bc_particle
-
-!      PRINT *, 'AA ', ispecies, bc_species
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))

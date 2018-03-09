@@ -724,6 +724,7 @@ CONTAINS
     array(nn+1:,:) = 0.0_num
 
     nn = sizes(n/2+1) - 2 * ng
+
     n = n + 1
     array(:,:0) = 0.0_num
     n = n + 1
