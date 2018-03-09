@@ -4,17 +4,17 @@
 All contributions are welcome. EPOCH is designed to be flexible and
 general purpose, so changes should not affect code correctness
 in the general case. For this reason most capability is in the form of
-physics packages, and a minimal number of conditional calls.
+physics packages and a minimal number of conditional calls.
 
 Wherever possible we maintain "exact" matching
 of answers between minor versions, and strict backwards compatibility.
 
 EPOCH development and maintenance
-is ongoing so please search the issues at
-https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues for
-open issues, and consider creating an issue
-under the enhancement tag before starting anything,
-so work isn't duplicated. The development team is quite busy, so please allow
+is ongoing, so please search for open issues at
+https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
+and consider creating an issue
+with the enhancement tag before starting anything to avoid
+duplication of effort. The development team is quite busy, so please allow
 time for responses and code review.
 
 
@@ -25,8 +25,9 @@ the main EPOCH repository or to a private fork made available to the
 developers. In the former case the branch name should begin with your name.
 **Branches in the main repository will be deleted after merge** so if you
 wish to preserve your branch, it is best to work on a fork.
-Once your branch is ready, merge the latest version of devel and create a merge
-request. **Submit all merge requests against the devel branch.**
+Once your branch is ready, rebase your changes onto the latest version of
+of the devel branch and create a merge request.
+**Submit all merge requests against the devel branch.**
 
 If your contribution adds facility to the input deck, provide a short example
 in the merge request. If it fixes issues or bugs, please reference them
@@ -36,8 +37,8 @@ by id (such as #1591).
 # Full Access
 
 For developer access to the main EPOCH repositories, please contact ...
-For small fixes, patches can be offered via the issue tracker, currently
-at https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
+For small fixes patches can be offered via the issue tracker which can
+be found at https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
 
 
 # Coding Style
