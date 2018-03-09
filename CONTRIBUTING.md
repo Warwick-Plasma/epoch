@@ -41,7 +41,8 @@ terms as the rest of the code (GPL v3).
 
 # Full Access
 
-For developer access to the main EPOCH repositories, please contact ...
+For developer access to the main EPOCH repositories, please contact
+"GitLab Administrator <cfsa.gitlab+admin@gmail.com>".
 For small fixes patches can be offered via the issue tracker which can
 be found at https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
 
