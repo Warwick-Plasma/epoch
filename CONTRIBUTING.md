@@ -31,7 +31,8 @@ of the devel branch and create a merge request.
 
 If your contribution adds facility to the input deck, provide a short example
 in the merge request. If it fixes issues or bugs, please reference them
-by id (such as #1591).
+by id (such as "Fixes issue #1591"). This will enable the issue to be
+automatically closed once the branch has been merged.
 
 
 # Full Access
