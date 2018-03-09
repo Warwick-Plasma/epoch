@@ -34,6 +34,10 @@ in the merge request. If it fixes issues or bugs, please reference them
 by id (such as "Fixes issue #1591"). This will enable the issue to be
 automatically closed once the branch has been merged.
 
+Note that by submitting your changes for inclusion into EPOCH, you are
+implicitly accepting that these will be included under the same licensing
+terms as the rest of the code (GPL v3).
+
 
 # Full Access
 
