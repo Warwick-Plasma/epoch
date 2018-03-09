@@ -17,23 +17,6 @@ under the enhancement tag before starting anything,
 so work isn't duplicated. The development team is quite busy, so please allow
 time for responses and code review.
 
-# Physics Packages
-
-EPOCH is designed to be modular and extensible. Adding physics capability
-should be done via a physics package in the physics_packages subdirectory
-which can then be used
-in the main code. Conditional compilation (#ifdef) should be used
-**only if absolutely necessary**, such as for speed critical sections of code.
-Where possible, all control should be via the input deck. Backwards
-compatibility must be preserved.
-
-Documentation will be required, either in Latex format or a page on our
-Mediawiki site currently at
-https://cfsa-pmw.warwick.ac.uk:1731/index.php/EPOCH:Landing_Page ()
-This should cover any the input deck blocks or keys, any general
-limitations of the code or methods, and if possible links to any methods
-papers or description.
-
 
 # How to Contribute
 
@@ -48,6 +31,7 @@ request. **Submit all merge requests against the devel branch.**
 If your contribution adds facility to the input deck, provide a short example
 in the merge request. If it fixes issues or bugs, please reference them
 by id (such as #1591).
+
 
 # Full Access
 
@@ -72,3 +56,21 @@ The first line is the subject, and should generally be less than 50 characters.
 The second line must be blank. Any text here is ignored.
 The subsequent lines are the message body, and should generally be less
 than 72 characters. You can use as many lines as you like, but be concise.
+
+
+# Physics Packages
+
+EPOCH is designed to be modular and extensible. Adding physics capability
+should be done via a physics package in the physics_packages subdirectory
+which can then be used
+in the main code. Conditional compilation (#ifdef) should be used
+**only if absolutely necessary**, such as for speed critical sections of code.
+Where possible, all control should be via the input deck. Backwards
+compatibility must be preserved.
+
+Documentation will be required, either in Latex format or a page on our
+Mediawiki site currently at
+https://cfsa-pmw.warwick.ac.uk:1731/index.php/EPOCH:Landing_Page ()
+This should cover any the input deck blocks or keys, any general
+limitations of the code or methods, and if possible links to any methods
+papers or description.
