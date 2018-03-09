@@ -320,6 +320,7 @@ CONTAINS
       block_species_id = n_species
       charge(n_species) = species_charge
       mass(n_species) = species_mass
+      bc_particle_array(:, n_species) = species_bc_particle
       IF (n_secondary_species_in_block > 0) THEN
         ! Create an empty species for each ionisation energy listed in species
         ! block
