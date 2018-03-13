@@ -43,10 +43,14 @@ MODULE deck_species_block
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
   REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
-  REAL(num), DIMENSION(:), POINTER :: ionisation_energies, ionise_to_species
-  REAL(num), DIMENSION(:), POINTER :: mass, charge, angular, part_count
-  REAL(num), DIMENSION(:), POINTER :: principle, dumpmask_array
-  REAL(num) :: species_mass, species_charge, species_dumpmask
+  REAL(num), DIMENSION(:), POINTER :: ionisation_energies
+  REAL(num), DIMENSION(:), POINTER :: mass, charge
+  INTEGER, DIMENSION(:), POINTER :: principle, angular, part_count
+  INTEGER, DIMENSION(:), POINTER :: ionise_to_species, dumpmask_array
+  INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
+  REAL(num) :: species_mass, species_charge
+  INTEGER :: species_dumpmask
+  INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
 
 CONTAINS
 
@@ -68,6 +72,7 @@ CONTAINS
       ALLOCATE(angular(4))
       ALLOCATE(part_count(4))
       ALLOCATE(dumpmask_array(4))
+      ALLOCATE(bc_particle_array(2*c_ndims,4))
       release_species = ''
     ENDIF
 
@@ -77,10 +82,12 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i, j, io, iu, nlevels, nrelease
+    INTEGER :: i, j, idx, io, iu, nlevels, nrelease
     CHARACTER(LEN=8) :: string
-    INTEGER :: errcode
+    INTEGER :: errcode, bc
     TYPE(primitive_stack) :: stack
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
+    LOGICAL :: error
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_species
@@ -96,18 +103,20 @@ CONTAINS
         ENDIF
         ! This would usually be set after c_ds_first but all of this is required
         ! during setup of derived ionisation species
-        species_list(i)%ionise_to_species = INT(ionise_to_species(i))
+        species_list(i)%ionise_to_species = ionise_to_species(i)
         species_list(i)%ionisation_energy = ionisation_energies(i)
-        species_list(i)%n = INT(principle(i))
-        species_list(i)%l = INT(angular(i))
+        species_list(i)%n = principle(i)
+        species_list(i)%l = angular(i)
         species_list(i)%mass = mass(i)
         species_list(i)%charge = charge(i)
         species_list(i)%count = INT(part_count(i),i8)
-        species_list(i)%dumpmask = INT(dumpmask_array(i))
+        species_list(i)%dumpmask = dumpmask_array(i)
+        species_list(i)%bc_particle = bc_particle_array(:,i)
         IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
       ENDDO
 
+      DEALLOCATE(bc_particle_array)
       DEALLOCATE(dumpmask_array)
       DEALLOCATE(part_count)
       DEALLOCATE(principle)
@@ -181,6 +190,60 @@ CONTAINS
       DEALLOCATE(release_species)
       DEALLOCATE(ionise_to_species)
       DEALLOCATE(species_names)
+
+      ! Sanity check on periodic boundaries
+      DO i = 1, n_species
+        ! First, set the per-species boundary condition to the same value
+        ! as bc_particle if it hasn't been set yet
+        DO idx = 1, 2*c_ndims
+          IF (species_list(i)%bc_particle(idx) == c_bc_null) &
+              species_list(i)%bc_particle(idx) = bc_particle(idx)
+        ENDDO
+
+        bc_species = species_list(i)%bc_particle
+
+        error = .FALSE.
+        DO idx = 1, c_ndims
+          IF (bc_species(2*idx-1) == c_bc_periodic) THEN
+            IF (bc_species(2*idx) /= c_bc_periodic) &
+                error = .TRUE.
+          ELSE
+            IF (bc_species(2*idx) == c_bc_periodic) &
+                error = .TRUE.
+          ENDIF
+        ENDDO
+
+        IF (error) THEN
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*)
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Periodic boundaries must be specified on both', &
+                  ' sides of the domain.'
+            ENDDO
+          ENDIF
+          CALL abort_code(c_err_bad_value)
+        ENDIF
+
+        ! Finally, set bc_allspecies. This will be equal to the per-species
+        ! value if they are all compatible or c_bc_mixed otherwise
+        DO idx = 1, 2*c_ndims
+          bc = bc_species(idx)
+
+          IF (bc == c_bc_reflect .OR. bc == c_bc_thermal) THEN
+            bc = c_bc_reflect
+          ELSE IF (bc /= c_bc_periodic) THEN
+            bc = c_bc_open
+          ENDIF
+
+          IF (i == 1) THEN
+            bc_allspecies(idx) = bc
+          ELSE
+            IF (bc_allspecies(idx) /= bc) bc_allspecies(idx) = c_bc_mixed
+          ENDIF
+        ENDDO
+      ENDDO
     ELSE
       DEALLOCATE(species_charge_set)
       DEALLOCATE(species_blocks)
@@ -224,6 +287,7 @@ CONTAINS
     current_block = current_block + 1
     got_name = .FALSE.
     species_dumpmask = c_io_always
+    species_bc_particle = c_bc_null
     IF (deck_state == c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
@@ -256,6 +320,7 @@ CONTAINS
       block_species_id = n_species
       charge(n_species) = species_charge
       mass(n_species) = species_mass
+      bc_particle_array(:, n_species) = species_bc_particle
       IF (n_secondary_species_in_block > 0) THEN
         ! Create an empty species for each ionisation energy listed in species
         ! block
@@ -343,6 +408,16 @@ CONTAINS
       species_dumpmask = as_integer_print(value, element, errcode)
     ENDIF
 
+    IF (str_cmp(element, 'bc_x_min')) THEN
+      species_bc_particle(c_bd_x_min) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_max')) THEN
+      species_bc_particle(c_bd_x_max) = as_bc_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     IF (deck_state == c_ds_first) RETURN
 
     ! *************************************************************
@@ -428,13 +503,32 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'dump') .OR. str_cmp(element, 'dumpmask')) THEN
-      species_list(species_id)%dumpmask = INT(species_dumpmask)
+      species_list(species_id)%dumpmask = species_dumpmask
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'immobile')) THEN
       species_list(species_id)%immobile = &
           as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'meet_injectors') &
+        .OR. str_cmp(element, 'load_up_to_injectors')) THEN
+      species_list(species_id)%fill_ghosts = &
+          as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_min')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_min) = &
+          species_bc_particle(c_bd_x_min)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'bc_x_max')) THEN
+      species_list(species_id)%bc_particle(c_bd_x_max) = &
+          species_bc_particle(c_bd_x_max)
       RETURN
     ENDIF
 
@@ -795,6 +889,7 @@ CONTAINS
     CALL grow_array(angular, n_species)
     CALL grow_array(part_count, n_species)
     CALL grow_array(dumpmask_array, n_species)
+    CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
 
     species_names(n_species) = TRIM(name)
     ionise_to_species(n_species) = -1
@@ -806,6 +901,7 @@ CONTAINS
     angular(n_species) = -1
     part_count(n_species) = -1
     dumpmask_array(n_species) = species_dumpmask
+    bc_particle_array(:,n_species) = species_bc_particle
 
     RETURN
 
@@ -865,6 +961,8 @@ CONTAINS
     part_count(n_species) = 0
     CALL grow_array(dumpmask_array, n_species)
     dumpmask_array(n_species) = species_dumpmask
+    CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
+    bc_particle_array(:,n_species) = species_bc_particle
     RETURN
 
   END SUBROUTINE create_ionisation_species_from_name

@@ -305,6 +305,7 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_x_min)
       NULLIFY(species_list(ispecies)%ext_temp_x_max)
       NULLIFY(species_list(ispecies)%secondary_list)
+      species_list(ispecies)%bc_particle = c_bc_null
     ENDDO
 
     DO ispecies = 1, n_species
@@ -334,6 +335,7 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_energy_factor = 1.0_num
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
+      species_list(ispecies)%fill_ghosts = .FALSE.
 #ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif

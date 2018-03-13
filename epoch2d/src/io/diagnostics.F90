@@ -125,7 +125,7 @@ CONTAINS
         CALL create_timestring(elapsed_time, timestring)
         IF (print_eta_string) THEN
           eta_timestring = ''
-          IF (time .GT. 0.0_num) THEN
+          IF (time > 0.0_num) THEN
             elapsed_time = (t_end - time) * elapsed_time / time
             CALL create_timestring(elapsed_time, eta_timestring)
           ENDIF
@@ -472,6 +472,10 @@ CONTAINS
         CALL write_nspecies_field(c_dump_number_density, code, &
             'number_density', 'Number_Density', '1/m^3', &
             c_stagger_cell_centre, calc_number_density, array)
+
+        CALL write_nspecies_field(c_dump_ppc, code, &
+            'ppc', 'Particles_Per_Cell', 'n_particles', &
+            c_stagger_cell_centre, calc_ppc, array)
 
         CALL write_nspecies_field(c_dump_temperature, code, &
             'temperature', 'Temperature', 'K', &
@@ -1138,6 +1142,14 @@ CONTAINS
               + REAL(array * dt, r4)
         ENDDO
         DEALLOCATE(array)
+      CASE(c_dump_ppc)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_ppc(array, ispecies-avg%species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
         DO ispecies = 1, n_species_local
@@ -1192,6 +1204,13 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
         DO ispecies = 1, n_species_local
           CALL calc_number_density(array, ispecies-avg%species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_ppc)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_ppc(array, ispecies-avg%species_sum)
           avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)

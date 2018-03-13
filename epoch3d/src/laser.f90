@@ -543,7 +543,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
+        CALL calc_absorption(c_bd_x_min, lasers=laser_x_min)
       ELSE
         CALL calc_absorption(c_bd_x_min)
       ENDIF
@@ -621,7 +621,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
+        CALL calc_absorption(c_bd_x_max, lasers=laser_x_max)
       ELSE
         CALL calc_absorption(c_bd_x_max)
       ENDIF
@@ -699,7 +699,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_min, lasers = laser_y_min)
+        CALL calc_absorption(c_bd_y_min, lasers=laser_y_min)
       ELSE
         CALL calc_absorption(c_bd_y_min)
       ENDIF
@@ -777,7 +777,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_max, lasers = laser_y_max)
+        CALL calc_absorption(c_bd_y_max, lasers=laser_y_max)
       ELSE
         CALL calc_absorption(c_bd_y_max)
       ENDIF
@@ -855,7 +855,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_z_min, lasers = laser_z_min)
+        CALL calc_absorption(c_bd_z_min, lasers=laser_z_min)
       ELSE
         CALL calc_absorption(c_bd_z_min)
       ENDIF
@@ -933,7 +933,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_z_max, lasers = laser_z_max)
+        CALL calc_absorption(c_bd_z_max, lasers=laser_z_max)
       ELSE
         CALL calc_absorption(c_bd_z_max)
       ENDIF

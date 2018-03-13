@@ -376,6 +376,7 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_z_min)
       NULLIFY(species_list(ispecies)%ext_temp_z_max)
       NULLIFY(species_list(ispecies)%secondary_list)
+      species_list(ispecies)%bc_particle = c_bc_null
     ENDDO
 
     DO ispecies = 1, n_species
@@ -405,6 +406,7 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_energy_factor = 1.0_num
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
+      species_list(ispecies)%fill_ghosts = .FALSE.
 #ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif
@@ -675,7 +677,7 @@ CONTAINS
     IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
-      dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+      dt = cfl * dx * dy * dz / c / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2)
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe, PhD Thesis (2014)

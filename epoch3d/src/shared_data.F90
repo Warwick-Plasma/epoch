@@ -55,6 +55,7 @@ MODULE constants
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
   ! Boundary type codes
+  INTEGER, PARAMETER :: c_bc_null = -1
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2
   INTEGER, PARAMETER :: c_bc_simple_laser = 3
@@ -68,6 +69,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_thermal = 11
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
+  INTEGER, PARAMETER :: c_bc_mixed = 14
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -622,6 +624,7 @@ MODULE shared_data
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
+    LOGICAL :: fill_ghosts
 
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
@@ -666,6 +669,9 @@ MODULE shared_data
 
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
+
+    ! Per-species boundary conditions
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
   !----------------------------------------------------------------------------
@@ -737,7 +743,8 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_gamma        = 53
   INTEGER, PARAMETER :: c_dump_part_proc         = 54
   INTEGER, PARAMETER :: c_dump_part_proc0        = 55
-  INTEGER, PARAMETER :: num_vars_to_dump         = 55
+  INTEGER, PARAMETER :: c_dump_ppc               = 56
+  INTEGER, PARAMETER :: num_vars_to_dump         = 56
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -906,7 +913,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global
@@ -987,7 +994,7 @@ MODULE shared_data
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
   LOGICAL :: use_current_correction
-  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
+  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
 
@@ -1081,6 +1088,31 @@ MODULE shared_data
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
+
+  !----------------------------------------------------------------------------
+  ! Particle injectors
+  !----------------------------------------------------------------------------
+  TYPE injector_block
+
+    INTEGER :: boundary
+    INTEGER :: id
+    INTEGER :: species
+    INTEGER(i8) :: npart_per_cell
+    REAL(num) :: density_min
+
+    TYPE(primitive_stack) :: density_function
+    TYPE(primitive_stack) :: temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
+
+    REAL(num) :: t_start, t_end
+    REAL(num), DIMENSION(:,:), POINTER :: depth, dt_inject
+
+    TYPE(injector_block), POINTER :: next
+  END TYPE injector_block
+
+  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_block), POINTER :: injector_y_min, injector_y_max
+  TYPE(injector_block), POINTER :: injector_z_min, injector_z_max
 
   !----------------------------------------------------------------------------
   ! laser boundaries

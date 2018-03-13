@@ -92,7 +92,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_x) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in X
-          ALLOCATE(load_x(nx_global))
+          ALLOCATE(load_x(nx_global + 2 * ng))
           CALL get_load_in_x(load_x)
           CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
         ENDIF
@@ -768,7 +768,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num)
+        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -796,13 +796,13 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
-    sz = SIZE(load)
+    sz = SIZE(load) - 2 * ng
     maxs = sz
 
     load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
@@ -876,6 +876,7 @@ CONTAINS
     TYPE(particle), INTENT(IN) :: part
     INTEGER :: get_particle_processor
     INTEGER :: iproc, coords(c_ndims)
+    REAL(num) :: minpos, maxpos
 
     get_particle_processor = -1
     coords = -1
@@ -884,8 +885,17 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (part%part_pos >= x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. part%part_pos < x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
+      ELSE
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
+      ENDIF
+      IF (iproc == nprocx - 1) THEN
+        maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
+      ELSE
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
+      ENDIF
+      IF (part%part_pos >= minpos .AND. part%part_pos < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF
