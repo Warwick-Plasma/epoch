@@ -1018,6 +1018,8 @@ MODULE shared_data
   ! Moving window
   !----------------------------------------------------------------------------
   LOGICAL :: move_window, inject_particles
+  TYPE(primitive_stack) :: window_v_x_stack
+  LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
   REAL(num) :: window_start_time
   INTEGER :: bc_x_min_after_move
