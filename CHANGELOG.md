@@ -1,3 +1,50 @@
+## v4.9.0 to v4.10.0 (2018-03-13)
+
+ * Added time varying particle injectors
+
+ * Add per species particle boundaries You can now specify bc_x_min and
+   bc_x_max to a species block. This overrides the global boundaries for that
+   species
+
+ * Fixes #1567 with moving window and offset_grid Bug 1567: UNLOCATABLE
+   PARTICLE with restart dump and moving window Shift particles back to true
+   position and adjust offset grid
+
+ * Bugfix for assigning particle IDs
+
+ * Various fixes for compiling with DEFINES flags
+
+ * Added particles_per_cell diagnostic
+
+ * Fixed missing ierror argument to MPI_ALLGATHER This fixes issue #1636
+
+ * Fix PER_PARTICLE_CHARGE and fractional particles Previously 'fractional'
+   particles were not given mass or charge giving segfault if ppc did not
+   evenly divide by number of cells
+
+ * Added CONTRIBUTING.md guide
+
+ * Updated SDF
+   SDF/FORTRAN
+   - Fix PGI build on OSX
+   - Work around a PGI floating point bug.
+   - Fixed unix_seconds for Jan and Feb of leap years
+   - Fully initialise sdf_file_handle
+   - Changed FPE generation in error handler
+   - Fix count of leap years since 1970
+   - Check for broken OpenMPI 2.1.1 and 2.1.2
+
+   SDF/utilities
+   - Added support for string-type namevalue pairs
+   - Avoid duplicated dictionary names
+   - Made build of sdf2ascii optional (off by default)
+   - Removed unhelpful dimension squashing
+   - Removed mmap option from python reader
+
+   SDF/VisIt
+   - Added test for compatible g++ version
+
+
 ## v4.8.0 to v4.9.0 (2017-07-28)
 
  * Add alternative field solvers for the Maxwell equations.
