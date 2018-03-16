@@ -50,7 +50,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -stand f03
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -69,7 +69,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -std=f2003
 
   GNUVER := $(shell gfortran -dumpversion | head -1 \
       | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
@@ -86,9 +86,9 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
 
   ifeq ($(strip $(MODE)),debug)
-    FFLAGS = -O0 -g -Wall -Wextra -pedantic -Wno-unused-parameter \
-             -Wno-integer-division -ffree-line-length-80 -fcheck=all \
-             -fbacktrace -fbounds-check -Werror \
+    FFLAGS = -O0 -g -std=f2003 -Wall -Wextra -pedantic -Wno-unused-parameter \
+             -Wno-unused-dummy-argument -Wno-integer-division \
+             -ffree-line-length-80 -fcheck=all -fbacktrace -Werror \
              -ffpe-trap=invalid,zero,overflow -fbounds-check
     #FFLAGS += -ffpe-trap=underflow,denormal
 
