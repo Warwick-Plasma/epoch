@@ -666,7 +666,7 @@ CONTAINS
       nspec_local = nspec_local * averaged_var_dims(id)
 
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
-        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
+        IF (.NOT. ALLOCATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
         ALLOCATE(r4temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, nspec_local))
 
@@ -684,7 +684,7 @@ CONTAINS
 
         DEALLOCATE(r4temp_sum)
       ELSE
-        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
+        IF (.NOT. ALLOCATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
         ALLOCATE(temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, nspec_local))
 

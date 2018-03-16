@@ -41,8 +41,6 @@ CONTAINS
     laser%t_start = 0.0_num
     laser%t_end = t_end
     laser%current_integral_phase = 0.0_num
-    NULLIFY(laser%profile)
-    NULLIFY(laser%phase)
     NULLIFY(laser%next)
 
     CALL allocate_with_boundary(laser%profile, boundary)
@@ -77,8 +75,8 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
 
-    IF (ASSOCIATED(laser%profile)) DEALLOCATE(laser%profile)
-    IF (ASSOCIATED(laser%phase)) DEALLOCATE(laser%phase)
+    IF (ALLOCATED(laser%profile)) DEALLOCATE(laser%profile)
+    IF (ALLOCATED(laser%phase)) DEALLOCATE(laser%phase)
     IF (laser%use_profile_function) &
         CALL deallocate_stack(laser%profile_function)
     IF (laser%use_phase_function) &
@@ -436,7 +434,7 @@ CONTAINS
 
   SUBROUTINE allocate_with_boundary(array, boundary)
 
-    REAL(num), DIMENSION(:,:), POINTER :: array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: boundary
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN

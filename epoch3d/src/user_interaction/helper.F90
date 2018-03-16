@@ -890,16 +890,16 @@ CONTAINS
     INTEGER :: current_loader_num
     INTEGER :: part_count, read_count
     CHARACTER(LEN=string_length) :: stra
-    REAL(num), DIMENSION(:), POINTER :: xbuf, ybuf, zbuf
-    REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: xbuf, ybuf, zbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: pxbuf, pybuf, pzbuf
 #if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
-    REAL(num), DIMENSION(:), POINTER :: wbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: wbuf
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
-    INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
+    INTEGER(KIND=i4), DIMENSION(:), ALLOCATABLE :: idbuf4
+    INTEGER(KIND=i8), DIMENSION(:), ALLOCATABLE :: idbuf8
     INTEGER :: i, id_offset
-    INTEGER, DIMENSION(:), POINTER :: part_counts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: part_counts
 #endif
     TYPE(particle_species), POINTER :: species
     TYPE(custom_particle_loader), POINTER :: curr_loader

@@ -100,7 +100,7 @@ CONTAINS
 
     TYPE(parameter_pack) :: parameters
     INTEGER :: iant, ix, iy, iz, sz, err, nels
-    REAL(num), DIMENSION(:), POINTER :: ranges
+    REAL(num), DIMENSION(:), ALLOCATABLE :: ranges
     REAL(num) :: oscil_dat
     LOGICAL :: use_ranges
     TYPE(antenna), POINTER :: current_antenna
@@ -110,7 +110,6 @@ CONTAINS
 
     err = c_err_none
 
-    ranges => NULL()
     DO iant = 1, sz
       current_antenna => antenna_list(iant)%contents
       IF (.NOT. current_antenna%active) CYCLE

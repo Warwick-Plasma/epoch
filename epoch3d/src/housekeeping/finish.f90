@@ -97,9 +97,9 @@ CONTAINS
     DEALLOCATE(species_list, STAT=stat)
 
     DO i = 1, n_io_blocks
-      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) &
+      IF (ALLOCATED(io_block_list(i)%dump_at_times)) &
           DEALLOCATE(io_block_list(i)%dump_at_times, STAT=stat)
-      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) &
+      IF (ALLOCATED(io_block_list(i)%dump_at_nsteps)) &
           DEALLOCATE(io_block_list(i)%dump_at_nsteps, STAT=stat)
     END DO
     DEALLOCATE(io_block_list, STAT=stat)

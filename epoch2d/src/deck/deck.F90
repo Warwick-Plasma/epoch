@@ -64,7 +64,7 @@ MODULE deck
   INTEGER, PARAMETER :: buffer_size = 1024
   TYPE :: file_buffer
     CHARACTER(LEN=c_max_path_length) :: filename
-    CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
+    CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: buffer
     CHARACTER(LEN=32) :: md5sum
     INTEGER :: pos, idx, length
     TYPE(file_buffer), POINTER :: next
@@ -494,7 +494,6 @@ CONTAINS
         fbuf => file_buffer_head
         fbuf%filename = ''
         NULLIFY(fbuf%next)
-        NULLIFY(fbuf%buffer)
       ELSE
         fbuf => file_buffer_head
       END IF

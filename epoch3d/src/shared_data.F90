@@ -353,7 +353,7 @@ MODULE shared_data
     INTEGER :: promote_to_species, demote_to_species
     REAL(num) :: promotion_energy_factor, demotion_energy_factor
     REAL(num) :: promotion_density, demotion_density
-    REAL(num), DIMENSION(:,:,:), POINTER :: fluid_energy, fluid_density
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: fluid_energy, fluid_density
   END TYPE particle_species_migration
 
   LOGICAL :: use_particle_migration = .FALSE.
@@ -374,9 +374,9 @@ MODULE shared_data
 
   ! Represents the initial conditions of a species
   TYPE initial_condition_block
-    REAL(num), DIMENSION(:,:,:), POINTER :: density
-    REAL(num), DIMENSION(:,:,:,:), POINTER :: temp
-    REAL(num), DIMENSION(:,:,:,:), POINTER :: drift
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: density
+    REAL(num), DIMENSION(:,:,:,:), ALLOCATABLE :: temp
+    REAL(num), DIMENSION(:,:,:,:), ALLOCATABLE :: drift
 
     REAL(num) :: density_min
     REAL(num) :: density_max
@@ -416,7 +416,7 @@ MODULE shared_data
     LOGICAL :: split
     INTEGER(i8) :: npart_max
     ! Secondary list
-    TYPE(particle_list), DIMENSION(:,:,:), POINTER :: secondary_list
+    TYPE(particle_list), DIMENSION(:,:,:), ALLOCATABLE :: secondary_list
 
     ! Injection of particles
     REAL(num) :: npart_per_cell
@@ -424,9 +424,9 @@ MODULE shared_data
     TYPE(primitive_stack) :: drift_function(3)
 
     ! Thermal boundaries
-    REAL(num), DIMENSION(:,:,:), POINTER :: ext_temp_x_min, ext_temp_x_max
-    REAL(num), DIMENSION(:,:,:), POINTER :: ext_temp_y_min, ext_temp_y_max
-    REAL(num), DIMENSION(:,:,:), POINTER :: ext_temp_z_min, ext_temp_z_max
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ext_temp_x_min, ext_temp_x_max
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ext_temp_y_min, ext_temp_y_max
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: ext_temp_z_min, ext_temp_z_max
 
     ! Species_ionisation
     LOGICAL :: electron
@@ -540,8 +540,8 @@ MODULE shared_data
   ! Time averaged IO
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
-    REAL(num), DIMENSION(:,:,:,:), POINTER :: array
-    REAL(r4), DIMENSION(:,:,:,:), POINTER :: r4array
+    REAL(num), DIMENSION(:,:,:,:), ALLOCATABLE :: array
+    REAL(r4), DIMENSION(:,:,:,:), ALLOCATABLE :: r4array
     REAL(num) :: real_time
     INTEGER :: species_sum, n_species
     LOGICAL :: started, dump_single
@@ -555,9 +555,9 @@ MODULE shared_data
     REAL(num) :: time_start, time_stop
     REAL(num) :: walltime_interval, walltime_prev
     REAL(num) :: walltime_start, walltime_stop
-    REAL(num), POINTER :: dump_at_times(:)
-    REAL(num), POINTER :: dump_at_walltimes(:)
-    INTEGER, POINTER :: dump_at_nsteps(:)
+    REAL(num), ALLOCATABLE :: dump_at_times(:)
+    REAL(num), ALLOCATABLE :: dump_at_walltimes(:)
+    INTEGER, ALLOCATABLE :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
     INTEGER :: dump_cycle_first_index
@@ -569,7 +569,7 @@ MODULE shared_data
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
 
-  TYPE(io_block_type), POINTER :: io_block_list(:)
+  TYPE(io_block_type), ALLOCATABLE, TARGET :: io_block_list(:)
   INTEGER :: n_io_blocks
   LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
@@ -600,7 +600,7 @@ MODULE shared_data
     INTEGER, DIMENSION(c_df_maxdims) :: directions
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
-    LOGICAL, DIMENSION(:), POINTER :: use_species
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
     REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
@@ -643,8 +643,8 @@ MODULE shared_data
 
     ! The dumpmask for the subset
     INTEGER :: mask
-    INTEGER, DIMENSION(:,:), POINTER :: dumpmask
-    LOGICAL, DIMENSION(:), POINTER :: use_species
+    INTEGER, DIMENSION(:,:), ALLOCATABLE :: dumpmask
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
     LOGICAL :: use_gamma
     LOGICAL :: use_restriction(c_subset_max)
     LOGICAL :: use_restriction_function(c_subset_max)
@@ -659,7 +659,7 @@ MODULE shared_data
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
   END TYPE subset
-  TYPE(subset), DIMENSION(:), POINTER :: subset_list
+  TYPE(subset), DIMENSION(:), ALLOCATABLE, TARGET :: subset_list
   INTEGER :: n_subsets
 
 #ifndef NO_PARTICLE_PROBES
@@ -671,7 +671,7 @@ MODULE shared_data
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 
-    LOGICAL, DIMENSION(:), POINTER :: use_species
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
     TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
     INTEGER :: dumpmask
@@ -755,9 +755,10 @@ MODULE shared_data
 
   REAL(num) :: initial_jx, initial_jy, initial_jz
 
-  TYPE(particle_species), DIMENSION(:), POINTER :: species_list
-  TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
-  TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: species_list
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: ejected_list
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: io_list_data
+  TYPE(particle_species), DIMENSION(:), POINTER :: io_list
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb, y, yb, z, zb
 
@@ -812,7 +813,7 @@ MODULE shared_data
     TYPE(particle), POINTER :: particle
   END TYPE particle_sort_element
 
-  TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
+  TYPE(particle_sort_element), ALLOCATABLE, DIMENSION(:) :: coll_sort_array
   INTEGER :: coll_sort_array_size = 0
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
@@ -927,7 +928,7 @@ MODULE shared_data
 
     REAL(num) :: t_start, t_end
     LOGICAL :: has_t_end
-    REAL(num), DIMENSION(:,:), POINTER :: depth, dt_inject
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: depth, dt_inject
 
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
@@ -945,8 +946,8 @@ MODULE shared_data
     ! A unique id number for the laser (not used directly by EPOCH)
     ! Only used if hard coding time profiles
     INTEGER :: id
-    REAL(num), DIMENSION(:,:), POINTER :: profile
-    REAL(num), DIMENSION(:,:), POINTER :: phase
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: profile
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: phase
     REAL(num) :: current_integral_phase
 
     LOGICAL :: use_time_function, use_phase_function, use_profile_function
@@ -1035,6 +1036,6 @@ MODULE shared_data
 #endif
   END TYPE custom_particle_loader
 
-  TYPE(custom_particle_loader), DIMENSION(:), POINTER :: custom_loaders_list
+  TYPE(custom_particle_loader), ALLOCATABLE, TARGET :: custom_loaders_list(:)
 
 END MODULE shared_data

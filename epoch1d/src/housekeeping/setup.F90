@@ -115,7 +115,6 @@ CONTAINS
     NULLIFY(laser_x_max)
 
     NULLIFY(dist_fns)
-    NULLIFY(io_block_list)
 
     run_date = get_unix_time()
 
@@ -387,9 +386,6 @@ CONTAINS
       species_list(ispecies)%immobile = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
-      NULLIFY(species_list(ispecies)%ext_temp_x_min)
-      NULLIFY(species_list(ispecies)%ext_temp_x_max)
-      NULLIFY(species_list(ispecies)%secondary_list)
       species_list(ispecies)%bc_particle = c_bc_null
     END DO
 
@@ -817,8 +813,8 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: species_found(:)
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     REAL(num) :: window_offset, offset_x_min, full_x_min, offset_x_max
 
     got_full = .FALSE.
@@ -887,14 +883,14 @@ CONTAINS
         io_block_list(i)%nstep_prev = 0
       END IF
       io_block_list(i)%walltime_prev = time
-      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
           IF (step >= io_block_list(i)%dump_at_nsteps(is)) THEN
             io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
           END IF
         END DO
       END IF
-      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_times)
           IF (time >= io_block_list(i)%dump_at_times(is)) THEN
             io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
@@ -1331,7 +1327,7 @@ CONTAINS
 
     ! Reset dump_at_walltimes
     DO i = 1, n_io_blocks
-      IF (ASSOCIATED(io_block_list(i)%dump_at_walltimes)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_walltimes)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_walltimes)
           IF (old_elapsed_time >= io_block_list(i)%dump_at_walltimes(is)) THEN
             io_block_list(i)%dump_at_walltimes(is) = HUGE(1.0_num)
