@@ -39,6 +39,7 @@ CONTAINS
 
     INTEGER :: i, errcode
     REAL(num) :: dc
+    LOGICAL :: const_is_open
 
     IF (.NOT.print_deck_constants) RETURN
     IF (rank /= 0) RETURN
@@ -50,11 +51,14 @@ CONTAINS
     ENDIF
     WRITE(du,*)
 
+    INQUIRE(unit=duc, opened=const_is_open)
+
     DO i = 1, n_deck_constants
       errcode = 0
       dc = evaluate(deck_constant_list(i)%execution_stream, errcode)
       WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
-      WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      IF(const_is_open) &
+          WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
     ENDDO
 
   END SUBROUTINE constant_deck_finalise

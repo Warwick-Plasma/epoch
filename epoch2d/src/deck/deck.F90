@@ -521,7 +521,8 @@ CONTAINS
           OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
               iostat=errcode)
         ENDIF
-        OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
+        IF(print_deck_constants) &
+            OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
