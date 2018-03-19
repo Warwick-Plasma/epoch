@@ -148,6 +148,7 @@ CONTAINS
 
     IF (idxy <= old_size(idir)) RETURN
 
+    new_size = old_size
     ALLOCATE(tmp_array(old_size(1),old_size(2)))
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
@@ -197,6 +198,7 @@ CONTAINS
 
     IF (idxy <= old_size(idir)) RETURN
 
+    new_size = old_size
     ALLOCATE(tmp_array(old_size(1),old_size(2)))
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
