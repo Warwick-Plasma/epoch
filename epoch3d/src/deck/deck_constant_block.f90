@@ -54,6 +54,7 @@ CONTAINS
       errcode = 0
       dc = evaluate(deck_constant_list(i)%execution_stream, errcode)
       WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
     ENDDO
 
   END SUBROUTINE constant_deck_finalise

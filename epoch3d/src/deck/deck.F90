@@ -427,6 +427,7 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: const_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
     LOGICAL :: exists
@@ -462,6 +463,7 @@ CONTAINS
     ignore = .FALSE.
     continuation = .FALSE.
     status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
+    const_filename = TRIM(ADJUSTL(data_dir)) // '/const.status'
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
@@ -519,6 +521,7 @@ CONTAINS
           OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
               iostat=errcode)
         ENDIF
+        OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
@@ -747,7 +750,8 @@ CONTAINS
     ENDIF
 
 #ifndef NO_IO
-    IF (first_call) CLOSE(du)
+    CLOSE(du)
+    CLOSE(duc)
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
