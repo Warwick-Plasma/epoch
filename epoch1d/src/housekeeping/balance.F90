@@ -113,19 +113,14 @@ CONTAINS
     IF (attempt_balance) THEN
       overriding = full_check
 
+      ALLOCATE(load_x(nx_global + 2 * ng))
+      CALL get_load(load_x)
+
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
-      new_cell_x_min = cell_x_min
-      new_cell_x_max = cell_x_max
+      CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
 
-      ! Sweep in X
-      IF (nprocx > 1) THEN
-        ! Rebalancing in X
-        ALLOCATE(load_x(nx_global + 2 * ng))
-        CALL get_load_in_x(load_x)
-        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        DEALLOCATE(load_x)
-      END IF
+      DEALLOCATE(load_x)
 
       IF (.NOT.restarting) THEN
         CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
@@ -845,14 +840,13 @@ CONTAINS
 
 
 
-  SUBROUTINE get_load_in_x(load)
+  SUBROUTINE get_load(load)
 
     ! Calculate total load across the X direction
 
-    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: load
     TYPE(particle), POINTER :: current
-    INTEGER :: cell, ispecies, sz
+    INTEGER :: cell, ispecies, st
 
     load = 0
 
@@ -872,19 +866,17 @@ CONTAINS
     END DO
 
     ! Now have local densities, so add using MPI
-    sz = SIZE(load)
-    ALLOCATE(temp(sz))
-    CALL MPI_ALLREDUCE(load, temp, sz, MPI_INTEGER8, MPI_SUM, comm, errcode)
+    st = SIZE(load)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
 
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp
-    load(ng+1:sz-ng) = load(ng+1:sz-ng) + 1
+    load = push_per_field * load
+    load(ng+1:st-ng) = load(ng+1:st-ng) + 1
 
-    DEALLOCATE(temp)
-
-  END SUBROUTINE get_load_in_x
+  END SUBROUTINE get_load
 
 
 
@@ -900,7 +892,10 @@ CONTAINS
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load) - 2 * ng
+    mins = 1
     maxs = sz
+
+    IF (nproc < 2) RETURN
 
     load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 

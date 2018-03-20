@@ -117,43 +117,20 @@ CONTAINS
     IF (attempt_balance) THEN
       overriding = full_check
 
+      ALLOCATE(load_x(nx_global + 2 * ng))
+      ALLOCATE(load_y(ny_global + 2 * ng))
+      ALLOCATE(load_z(nz_global + 2 * ng))
+      CALL get_load(load_x, load_y, load_z)
+
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
       ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
       ALLOCATE(new_cell_z_min(nprocz), new_cell_z_max(nprocz))
 
-      new_cell_x_min = cell_x_min
-      new_cell_x_max = cell_x_max
-      new_cell_y_min = cell_y_min
-      new_cell_y_max = cell_y_max
-      new_cell_z_min = cell_z_min
-      new_cell_z_max = cell_z_max
+      CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+      CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+      CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
 
-      ! Sweep in X
-      IF (nprocx > 1) THEN
-        ! Rebalancing in X
-        ALLOCATE(load_x(nx_global + 2 * ng))
-        CALL get_load_in_x(load_x)
-        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        DEALLOCATE(load_x)
-      END IF
-
-      ! Sweep in Y
-      IF (nprocy > 1) THEN
-        ! Rebalancing in Y
-        ALLOCATE(load_y(ny_global + 2 * ng))
-        CALL get_load_in_y(load_y)
-        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-        DEALLOCATE(load_y)
-      END IF
-
-      ! Sweep in Z
-      IF (nprocz > 1) THEN
-        ! Rebalancing in Z
-        ALLOCATE(load_z(nz_global + 2 * ng))
-        CALL get_load_in_z(load_z)
-        CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
-        DEALLOCATE(load_z)
-      END IF
+      DEALLOCATE(load_x, load_y, load_z)
 
       IF (.NOT.restarting) THEN
         CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
@@ -2046,15 +2023,14 @@ CONTAINS
 
 
 
-  SUBROUTINE get_load_in_x(load)
+  SUBROUTINE get_load_x(load)
 
     ! Calculate total load across the X direction
     ! Summed in the Y,Z directions
 
-    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: load
     TYPE(particle), POINTER :: current
-    INTEGER :: cell, ispecies, sz
+    INTEGER :: cell, ispecies, st
 
     load = 0
 
@@ -2074,31 +2050,28 @@ CONTAINS
     END DO
 
     ! Now have local densities, so add using MPI
-    sz = SIZE(load)
-    ALLOCATE(temp(sz))
-    CALL MPI_ALLREDUCE(load, temp, sz, MPI_INTEGER8, MPI_SUM, comm, errcode)
+    st = SIZE(load)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
 
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp
-    load(ng+1:sz-ng) = load(ng+1:sz-ng) + ny_global * nz_global
+    load = push_per_field * load
+    load(ng+1:st-ng) = load(ng+1:st-ng) + ny_global * nz_global
 
-    DEALLOCATE(temp)
-
-  END SUBROUTINE get_load_in_x
+  END SUBROUTINE get_load_x
 
 
 
-  SUBROUTINE get_load_in_y(load)
+  SUBROUTINE get_load_y(load)
 
     ! Calculate total load across the Y direction
     ! Summed in the X,Z directions
 
-    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: load
     TYPE(particle), POINTER :: current
-    INTEGER :: cell, ispecies, sz
+    INTEGER :: cell, ispecies, st
 
     load = 0
 
@@ -2118,31 +2091,28 @@ CONTAINS
     END DO
 
     ! Now have local densities, so add using MPI
-    sz = SIZE(load)
-    ALLOCATE(temp(sz))
-    CALL MPI_ALLREDUCE(load, temp, sz, MPI_INTEGER8, MPI_SUM, comm, errcode)
+    st = SIZE(load)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
 
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp
-    load(ng+1:sz-ng) = load(ng+1:sz-ng) + nx_global * nz_global
+    load = push_per_field * load
+    load(ng+1:st-ng) = load(ng+1:st-ng) + nx_global * nz_global
 
-    DEALLOCATE(temp)
-
-  END SUBROUTINE get_load_in_y
+  END SUBROUTINE get_load_y
 
 
 
-  SUBROUTINE get_load_in_z(load)
+  SUBROUTINE get_load_z(load)
 
     ! Calculate total load across the Z direction
     ! Summed in the X,Y directions
 
-    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: load
     TYPE(particle), POINTER :: current
-    INTEGER :: cell, ispecies, sz
+    INTEGER :: cell, ispecies, st
 
     load = 0
 
@@ -2162,19 +2132,88 @@ CONTAINS
     END DO
 
     ! Now have local densities, so add using MPI
-    sz = SIZE(load)
-    ALLOCATE(temp(sz))
-    CALL MPI_ALLREDUCE(load, temp, sz, MPI_INTEGER8, MPI_SUM, comm, errcode)
+    st = SIZE(load)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
 
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp
-    load(ng+1:sz-ng) = load(ng+1:sz-ng) + nx_global * ny_global
+    load = push_per_field * load
+    load(ng+1:st-ng) = load(ng+1:st-ng) + nx_global * ny_global
 
-    DEALLOCATE(temp)
+  END SUBROUTINE get_load_z
 
-  END SUBROUTINE get_load_in_z
+
+
+  SUBROUTINE get_load(load_x, load_y, load_z)
+
+    ! Calculate total load across the X,Y,Z directions
+
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load_x, load_y, load_z
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load
+    TYPE(particle), POINTER :: current
+    INTEGER :: cell_x, cell_y, cell_z, ispecies, st, sx, sy, sz
+    INTEGER :: i0, i1, j0, j1, k0, k1
+
+    load_x = 0
+    load_y = 0
+    load_z = 0
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        ! Want global position, so x_grid_min, NOT x_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx) + 1 + ng
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy) + 1 + ng
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min) / dz) + 1 + ng
+#else
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min) / dz + 1.5_num) + ng
+#endif
+        load_x(cell_x) = load_x(cell_x) + 1
+        load_y(cell_y) = load_y(cell_y) + 1
+        load_z(cell_z) = load_z(cell_z) + 1
+
+        current => current%next
+      END DO
+    END DO
+
+    ! Now have local densities, so add using MPI
+    sx = SIZE(load_x)
+    sy = SIZE(load_y)
+    sz = SIZE(load_z)
+    st = sx + sy + sz
+    ALLOCATE(load(st))
+
+    i0 = 1;       i1 = i0 + sx - 1
+    j0 = i0 + i1; j1 = j0 + sy - 1
+    k0 = i0 + j1; k1 = k0 + sz - 1
+
+    load(i0:i1) = load_x
+    load(j0:j1) = load_y
+    load(k0:k1) = load_z
+
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
+
+    ! Adjust the load of pushing one particle relative to the load
+    ! of updating one field cell, then add on the field load.
+    ! The push_per_field factor will be updated automatically in future.
+    load_x = push_per_field * load(i0:i1)
+    load_x(ng+1:sx-ng) = load_x(ng+1:sx-ng) + ny_global * nz_global
+
+    load_y = push_per_field * load(j0:j1)
+    load_y(ng+1:sy-ng) = load_y(ng+1:sy-ng) + nx_global * nz_global
+
+    load_z = push_per_field * load(k0:k1)
+    load_z(ng+1:sz-ng) = load_z(ng+1:sz-ng) + nx_global * ny_global
+
+    DEALLOCATE(load)
+
+  END SUBROUTINE get_load
 
 
 
@@ -2190,7 +2229,10 @@ CONTAINS
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
     sz = SIZE(load) - 2 * ng
+    mins = 1
     maxs = sz
+
+    IF (nproc < 2) RETURN
 
     load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
