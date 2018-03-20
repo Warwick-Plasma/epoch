@@ -830,7 +830,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + 1
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + 1
 
     DEALLOCATE(temp)
 
@@ -843,7 +844,7 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(1-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
@@ -852,7 +853,7 @@ CONTAINS
     sz = SIZE(load) - 2 * ng
     maxs = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
+    load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
     proc = 1
     total = 0
