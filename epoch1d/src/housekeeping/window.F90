@@ -103,6 +103,13 @@ CONTAINS
     CALL shift_field(jy, jng)
     CALL shift_field(jz, jng)
 
+    IF (cpml_boundaries) THEN
+      CALL shift_field(cpml_psi_eyx, ng)
+      CALL shift_field(cpml_psi_ezx, ng)
+      CALL shift_field(cpml_psi_byx, ng)
+      CALL shift_field(cpml_psi_bzx, ng)
+    END IF
+
     IF (x_max_boundary) THEN
       ! Fix incoming field cell.
       ex(nx)   = ex_x_max
@@ -118,6 +125,13 @@ CONTAINS
       bx(nx)   = 0.5_num * (bx(nx-1) + bx(nx+1))
       by(nx-1) = 0.5_num * (by(nx-2) + by(nx))
       bz(nx-1) = 0.5_num * (bz(nx-2) + bz(nx))
+
+      IF (cpml_boundaries) THEN
+        cpml_psi_eyx(nx:nx+1) = cpml_psi_eyx(nx)
+        cpml_psi_ezx(nx:nx+1) = cpml_psi_ezx(nx)
+        cpml_psi_byx(nx:nx+1) = cpml_psi_byx(nx)
+        cpml_psi_bzx(nx:nx+1) = cpml_psi_bzx(nx)
+      END IF
     ENDIF
 
   END SUBROUTINE shift_fields

@@ -112,6 +112,23 @@ CONTAINS
     CALL shift_field(jy, jng)
     CALL shift_field(jz, jng)
 
+    IF (cpml_boundaries) THEN
+      CALL shift_field(cpml_psi_eyx, ng)
+      CALL shift_field(cpml_psi_ezx, ng)
+      CALL shift_field(cpml_psi_byx, ng)
+      CALL shift_field(cpml_psi_bzx, ng)
+
+      CALL shift_field(cpml_psi_exy, ng)
+      CALL shift_field(cpml_psi_ezy, ng)
+      CALL shift_field(cpml_psi_bxy, ng)
+      CALL shift_field(cpml_psi_bzy, ng)
+
+      CALL shift_field(cpml_psi_exz, ng)
+      CALL shift_field(cpml_psi_eyz, ng)
+      CALL shift_field(cpml_psi_bxz, ng)
+      CALL shift_field(cpml_psi_byz, ng)
+    END IF
+
     IF (x_max_boundary) THEN
       DO k = 1-ng, nz+ng
         DO j = 1-ng, ny+ng
@@ -129,8 +146,29 @@ CONTAINS
           bx(nx,j,k)   = 0.5_num * (bx(nx-1,j,k) + bx(nx+1,j,k))
           by(nx-1,j,k) = 0.5_num * (by(nx-2,j,k) + by(nx,j,k))
           bz(nx-1,j,k) = 0.5_num * (bz(nx-2,j,k) + bz(nx,j,k))
+        END DO
+      END DO
+
+      IF (cpml_boundaries) THEN
+        DO k = 1-ng, nz+ng
+          DO j = 1-ng, ny+ng
+            cpml_psi_eyx(nx:nx+1,j,k) = cpml_psi_eyx(nx,j,k)
+            cpml_psi_ezx(nx:nx+1,j,k) = cpml_psi_ezx(nx,j,k)
+            cpml_psi_byx(nx:nx+1,j,k) = cpml_psi_byx(nx,j,k)
+            cpml_psi_bzx(nx:nx+1,j,k) = cpml_psi_bzx(nx,j,k)
+
+            cpml_psi_exy(nx:nx+1,j,k) = cpml_psi_exy(nx,j,k)
+            cpml_psi_ezy(nx:nx+1,j,k) = cpml_psi_ezy(nx,j,k)
+            cpml_psi_bxy(nx:nx+1,j,k) = cpml_psi_bxy(nx,j,k)
+            cpml_psi_bzy(nx:nx+1,j,k) = cpml_psi_bzy(nx,j,k)
+
+            cpml_psi_exz(nx:nx+1,j,k) = cpml_psi_exz(nx,j,k)
+            cpml_psi_eyz(nx:nx+1,j,k) = cpml_psi_eyz(nx,j,k)
+            cpml_psi_bxz(nx:nx+1,j,k) = cpml_psi_bxz(nx,j,k)
+            cpml_psi_byz(nx:nx+1,j,k) = cpml_psi_byz(nx,j,k)
+          ENDDO
         ENDDO
-      ENDDO
+      END IF
     ENDIF
 
   END SUBROUTINE shift_fields
