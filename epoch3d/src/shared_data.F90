@@ -137,13 +137,6 @@ MODULE constants
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
 
-  ! Load balance codes
-  INTEGER, PARAMETER :: c_lb_x = 1
-  INTEGER, PARAMETER :: c_lb_y = 2
-  INTEGER, PARAMETER :: c_lb_z = 4
-  INTEGER, PARAMETER :: c_lb_all = c_lb_x + c_lb_y + c_lb_z
-  INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
-
   ! Taken from http://physics.nist.gov/cuu/Constants (05/07/2012)
   REAL(num), PARAMETER :: pi = 3.141592653589793238462643383279503_num
   REAL(num), PARAMETER :: q0 = 1.602176565e-19_num ! C (+/- 3.5e-27)
@@ -1126,7 +1119,6 @@ MODULE shared_data
   INTEGER :: ny_global_min, ny_global_max
   INTEGER :: nz_global_min, nz_global_max
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
-  INTEGER :: balance_mode
   LOGICAL :: debug_mode
 
   !----------------------------------------------------------------------------

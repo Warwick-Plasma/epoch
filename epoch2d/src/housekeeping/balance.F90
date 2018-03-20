@@ -45,10 +45,8 @@ CONTAINS
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
-    REAL(num) :: balance_frac_x, balance_frac_y
     REAL(num) :: max_part
-    INTEGER(i8) :: min_x, max_x, min_y, max_y
-    INTEGER(i8) :: npart_local, sum_npart, max_npart, wk
+    INTEGER(i8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
@@ -61,10 +59,6 @@ CONTAINS
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
-
-    ! This parameter allows selecting the mode of the autobalancing between
-    ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode = c_lb_all
 
     ! count particles
     npart_local = get_total_local_particles()
@@ -98,62 +92,21 @@ CONTAINS
 
       ! Sweep in X
       IF (nprocx > 1) THEN
-        IF (IAND(balance_mode, c_lb_x) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in X
-          ALLOCATE(load_x(nx_global + 2 * ng))
-          CALL get_load_in_x(load_x)
-          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        END IF
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global + 2 * ng))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+        DEALLOCATE(load_x)
       END IF
 
       ! Sweep in Y
       IF (nprocy > 1) THEN
-        IF (IAND(balance_mode, c_lb_y) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in Y
-          ALLOCATE(load_y(ny_global + 2 * ng))
-          CALL get_load_in_y(load_y)
-          CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-        END IF
+        ! Rebalancing in Y
+        ALLOCATE(load_y(ny_global + 2 * ng))
+        CALL get_load_in_y(load_y)
+        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+        DEALLOCATE(load_y)
       END IF
-
-      ! In the autobalancer then determine whether to balance in X or Y
-      ! Is this worth keeping?
-      IF (IAND(balance_mode, c_lb_auto) /= 0 ) THEN
-
-        ! Code is auto load balancing
-        max_x = 0
-        min_x = npart_global
-        DO iproc = 1, nprocx
-          wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
-          IF (wk > max_x) max_x = wk
-          IF (wk < min_x) min_x = wk
-        END DO
-
-        max_y = 0
-        min_y = npart_global
-        DO iproc = 1, nprocy
-          wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
-          IF (wk > max_y) max_y = wk
-          IF (wk < min_y) min_y = wk
-        END DO
-
-        balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
-        balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
-
-        IF (balance_frac_x < balance_frac_y) THEN
-          new_cell_x_min = cell_x_min
-          new_cell_x_max = cell_x_max
-        ELSE
-          new_cell_y_min = cell_y_min
-          new_cell_y_max = cell_y_max
-        END IF
-
-      END IF
-
-      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
-      IF (ALLOCATED(load_y)) DEALLOCATE(load_y)
 
       ! Now need to calculate the start and end points for the new domain on
       ! the current processor

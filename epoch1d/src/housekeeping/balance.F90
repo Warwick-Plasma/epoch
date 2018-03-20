@@ -58,10 +58,6 @@ CONTAINS
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
 
-    ! This parameter allows selecting the mode of the autobalancing between
-    ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode = c_lb_all
-
     ! count particles
     npart_local = get_total_local_particles()
 
@@ -91,16 +87,12 @@ CONTAINS
 
       ! Sweep in X
       IF (nprocx > 1) THEN
-        IF (IAND(balance_mode, c_lb_x) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in X
-          ALLOCATE(load_x(nx_global + 2 * ng))
-          CALL get_load_in_x(load_x)
-          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        END IF
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global + 2 * ng))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+        DEALLOCATE(load_x)
       END IF
-
-      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
 
       ! Now need to calculate the start and end points for the new domain on
       ! the current processor
