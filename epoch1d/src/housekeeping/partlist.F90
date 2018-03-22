@@ -43,7 +43,15 @@ CONTAINS
   SUBROUTINE setup_partlists
 
     nvar = 3 + c_ndims
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+    nvar = nvar + 6		
+#endif
+
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+    nvar = nvar+1
+#endif
+#ifdef DELTAF_METHOD
     nvar = nvar+1
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -377,6 +385,10 @@ CONTAINS
     array(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
+#ifdef DELTAF_METHOD
+    array(cpos) = a_particle%pvol
+    cpos = cpos+1
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     array(cpos) = a_particle%charge
     array(cpos+1) = a_particle%mass
@@ -395,6 +407,17 @@ CONTAINS
     array(cpos) = REAL(a_particle%coll_count, num)
     cpos = cpos+1
 #endif
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+    array(cpos) = a_particle%work_x
+    array(cpos+1) = a_particle%work_y
+    array(cpos+2) = a_particle%work_z
+    array(cpos+3) = a_particle%work_x_I
+    array(cpos+4) = a_particle%work_y_I
+    array(cpos+5) = a_particle%work_z_I
+    cpos = cpos+6
+#endif
+
 #ifdef PHOTONS
     array(cpos) = a_particle%optical_depth
     array(cpos+1) = a_particle%particle_energy
@@ -424,6 +447,10 @@ CONTAINS
     a_particle%weight = array(cpos)
     cpos = cpos+1
 #endif
+#ifdef DELTAF_METHOD
+    a_particle%pvol = array(cpos)
+    cpos = cpos+1
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     a_particle%charge = array(cpos)
     a_particle%mass = array(cpos+1)
@@ -445,6 +472,17 @@ CONTAINS
     a_particle%coll_count = NINT(array(cpos))
     cpos = cpos+1
 #endif
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+    a_particle%work_x = array(cpos)
+    a_particle%work_y = array(cpos+1)
+    a_particle%work_z = array(cpos+2)
+    a_particle%work_x_I = array(cpos+3)
+    a_particle%work_y_I = array(cpos+4)
+    a_particle%work_z_I = array(cpos+5)
+    cpos = cpos+6
+#endif
+
 #ifdef PHOTONS
     a_particle%optical_depth = array(cpos)
     a_particle%particle_energy = array(cpos+1)
