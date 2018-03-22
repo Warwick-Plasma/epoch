@@ -83,6 +83,16 @@ CONTAINS
     io_block_name (c_dump_part_opdepth_tri ) = 'trident_optical_depth'
 #endif
 #endif
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+    io_block_name (c_dump_part_x_work      ) = 'work_x'	
+    io_block_name (c_dump_part_y_work      ) = 'work_y'
+    io_block_name (c_dump_part_z_work      ) = 'work_z'
+    io_block_name (c_dump_part_x_workI     ) = 'work_time_int_x'
+    io_block_name (c_dump_part_y_workI     ) = 'work_time_int_y'
+    io_block_name (c_dump_part_z_workI     ) = 'work_time_int_z'
+#endif
+
 
     io_block_name (c_dump_ex               ) = 'ex'
     io_block_name (c_dump_ey               ) = 'ey'
@@ -97,6 +107,8 @@ CONTAINS
     io_block_name (c_dump_mass_density     ) = 'mass_density'
     io_block_name (c_dump_charge_density   ) = 'charge_density'
     io_block_name (c_dump_number_density   ) = 'number_density'
+    io_block_name (c_dump_ppc              ) = 'ppc'
+    alternate_name(c_dump_ppc              ) = 'particles_per_cell'
     io_block_name (c_dump_temperature      ) = 'temperature'
     io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
     io_block_name (c_dump_probes           ) = 'particle_probes'
@@ -170,7 +182,7 @@ CONTAINS
 
     INTEGER :: i, io, iu
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     n_io_blocks = block_number
@@ -290,7 +302,7 @@ CONTAINS
 
     INTEGER :: io, iu, mask
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     IF (deck_state == c_ds_first) RETURN
@@ -642,6 +654,7 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
@@ -681,6 +694,7 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
@@ -709,11 +723,16 @@ CONTAINS
                     'dumpmask of the variable'
                 WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
                     // '" in ', 'output block number ', block_number
+                WRITE(io,*) 'Only one average per variable can be computed'
+                WRITE(io,*) 'If multiple were specified the first averaging ', &
+                    'time will be used'
+                WRITE(io,*)
               ENDDO
               warning_printed = .TRUE.
             ENDIF
+          ELSE
+            averaged_var_block(mask_element) = block_number
           ENDIF
-          averaged_var_block(mask_element) = block_number
         ENDIF
       ENDIF
 
