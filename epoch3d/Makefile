@@ -213,6 +213,11 @@ DEFINES := $(DEFINE)
 # This is a legacy option which will be removed soon.
 #DEFINES += $(D)PER_PARTICLE_CHARGE_MASS
 
+#The time integrated work exerted on each particle requires another variable, that has to be
+#calculated every time step. This will slow down the simulation!
+DEFINES += $(D)Work_Done_Integrated
+
+
 # Perform checks on evaluated deck expressions.
 # This slows down the code but may be required if floating point exceptions
 # are enabled.
