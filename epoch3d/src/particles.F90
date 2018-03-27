@@ -332,13 +332,13 @@ CONTAINS
 #ifdef Work_Done_Integrated
         !This is the actual total work done by the fields: Results correspond
         !with the electron's gamma factor
-        igamma = 1.0_num/SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        Work_x = ex_part * part_ux * cmratio * igamma
-        Work_y = ey_part * part_uy * cmratio * igamma
-        Work_z = ez_part * part_uz * cmratio * igamma
-        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*igamma
-        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*igamma
-        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*igamma
+        gamma_rel = 1.0_num/SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        Work_x = ex_part * part_ux * cmratio * gamma_rel
+        Work_y = ey_part * part_uy * cmratio * gamma_rel
+        Work_z = ez_part * part_uz * cmratio * gamma_rel
+        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*gamma_rel
+        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*gamma_rel
+        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*gamma_rel
 #endif
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
@@ -381,13 +381,12 @@ CONTAINS
 #ifdef Work_Done_Integrated
 	!This is the actual total work done by the fields: Results correspond
         !with the electron's gamma factor
-        igamma = 1.0_num / gamma_rel
-        Work_x = Work_x + ex_part * part_ux * cmratio * igamma
-        Work_y = Work_y + ey_part * part_uy * cmratio * igamma
-        Work_z = Work_z + ez_part * part_uz * cmratio * igamma
-        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*igamma
-        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*igamma
-        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*igamma
+        Work_x = Work_x + ex_part * part_ux * cmratio / gamma_rel
+        Work_y = Work_y + ey_part * part_uy * cmratio / gamma_rel
+        Work_z = Work_z + ez_part * part_uz * cmratio / gamma_rel
+        Work_total_x = Work_total_x + cmratio*ex_part*part_ux/gamma_rel
+        Work_total_y = Work_total_y + cmratio*ey_part*part_uy/gamma_rel
+        Work_total_z = Work_total_z + cmratio*ez_part*part_uz/gamma_rel
 
         current%work_x = Work_x
         current%work_y = Work_y
