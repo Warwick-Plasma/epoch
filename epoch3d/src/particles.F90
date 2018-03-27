@@ -113,6 +113,11 @@ CONTAINS
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
     INTEGER(i8) :: ipart
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+    REAL(num) :: Work_x, Work_y, Work_z
+    REAL(num) :: Work_total_x, Work_total_y, Work_total_z
+#endif
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
 #endif
@@ -226,7 +231,12 @@ CONTAINS
         part_ux = current%part_p(1) * ipart_mc
         part_uy = current%part_p(2) * ipart_mc
         part_uz = current%part_p(3) * ipart_mc
-
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+        Work_total_x = current%work_x_I
+        Work_total_y = current%work_y_I
+        Work_total_z = current%work_z_I
+#endif
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
         root = dtco2 / SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
@@ -318,6 +328,18 @@ CONTAINS
         uxm = part_ux + cmratio * ex_part
         uym = part_uy + cmratio * ey_part
         uzm = part_uz + cmratio * ez_part
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+        !This is the actual total work done by the fields: Results correspond
+        !with the electron's gamma factor
+        igamma = 1.0_num/SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        Work_x = ex_part * part_ux * cmratio * igamma
+        Work_y = ey_part * part_uy * cmratio * igamma
+        Work_z = ez_part * part_uz * cmratio * igamma
+        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*igamma
+        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*igamma
+        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*igamma
+#endif
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
         root = ccmratio / SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
@@ -354,6 +376,26 @@ CONTAINS
         delta_x = part_ux * root
         delta_y = part_uy * root
         delta_z = part_uz * root
+        
+!By O.Jansen, Work_Done
+#ifdef Work_Done_Integrated
+	!This is the actual total work done by the fields: Results correspond
+        !with the electron's gamma factor
+        igamma = 1.0_num / gamma_rel
+        Work_x = Work_x + ex_part * part_ux * cmratio * igamma
+        Work_y = Work_y + ey_part * part_uy * cmratio * igamma
+        Work_z = Work_z + ez_part * part_uz * cmratio * igamma
+        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*igamma
+        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*igamma
+        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*igamma
+
+        current%work_x = Work_x
+        current%work_y = Work_y
+        current%work_z = Work_z
+        current%work_x_I = Work_total_x
+        current%work_y_I = Work_total_y
+        current%work_z_I = Work_total_z
+#endif
 
         ! Move particles to end of time step at 2nd order accuracy
         part_x = part_x + delta_x
