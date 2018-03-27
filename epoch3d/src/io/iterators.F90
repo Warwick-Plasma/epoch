@@ -262,6 +262,45 @@ CONTAINS
           cur => cur%next
         ENDDO
 
+#ifdef Work_Done_Integrated	!By O.Jansen #Work_Done
+      CASE (c_dump_part_z_work)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_z
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_y_work)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_y
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_x_work)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_x
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_z_workI)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_z_I
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_y_workI)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_y_I
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_x_workI)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_x_I
+          cur => cur%next
+        ENDDO
+#endif
+
 #ifdef PHOTONS
       CASE (c_dump_part_opdepth)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
