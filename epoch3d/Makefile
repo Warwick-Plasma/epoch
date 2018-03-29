@@ -32,15 +32,14 @@ endif
 D = -D
 
 ifeq ($(strip $(COMPILER)), auto)
-  UCOMPILER := $(shell ./src/infer_compiler.sh)
-  $(warning Inferred compiler as $(UCOMPILER))
-else
-  UCOMPILER := $(COMPILER)
+  override COMPILER := $(shell ./src/infer_compiler.sh)
+  NEWMAKEFLAGS := "$(filter-out COMPILER=auto, $(MAKEFLAGS))"
+  $(warning Inferred compiler as $(COMPILER))
 endif
 
 # PGI
 # ===
-ifeq ($(strip $(UCOMPILER)),pgi)
+ifeq ($(strip $(COMPILER)),pgi)
   FFLAGS = -r8 -fast -fastsse -O3 -Mipa=fast,inline -Minfo # Optimised
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -Mbounds -g                                     # Debug
@@ -50,7 +49,7 @@ endif
 
 # Intel
 # =====
-ifeq ($(strip $(UCOMPILER)),intel)
+ifeq ($(strip $(COMPILER)),intel)
   FFLAGS = -O3 -g
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
@@ -69,7 +68,7 @@ endif
 
 # gfortran
 # ========
-ifeq ($(strip $(UCOMPILER)),gfortran)
+ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3 -g
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
@@ -111,7 +110,7 @@ endif
 
 # g95
 # ========
-ifeq ($(strip $(UCOMPILER)),g95)
+ifeq ($(strip $(COMPILER)),g95)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g                                        # Debug
@@ -121,7 +120,7 @@ endif
 
 # IBM Bluegene
 # ============
-ifeq ($(strip $(UCOMPILER)),ibm)
+ifeq ($(strip $(COMPILER)),ibm)
   FFLAGS = -O5 -qhot -qipa # Optimised
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -C -g -qfullpath -qinfo #-qkeepparm -qflttrap \
@@ -138,7 +137,7 @@ endif
 
 # HECToR
 # ========
-ifeq ($(strip $(UCOMPILER)),hector)
+ifeq ($(strip $(COMPILER)),hector)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
@@ -355,7 +354,7 @@ epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
 	$(FC) -c $(FFLAGS) $(INFO_FLAGS) -o $(OBJDIR)/$@ $<
 
 $(SDFMOD):
-	$(MAKE) -C $(SDF)
+	$(MAKE) MAKEFLAGS=$(NEWMAKEFLAGS) COMPILER=$(COMPILER) -C $(SDF)
 
 rm:
 	@rm -rf $(BINDIR) $(OBJDIR)
