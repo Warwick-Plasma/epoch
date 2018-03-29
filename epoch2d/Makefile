@@ -13,19 +13,34 @@
 
 ifeq ($(strip $(COMPILER)),)
   MAKECMDGOALS = error
+  CMP_GUESS =$(shell ./src/infer_compiler.sh)
 error:
 	@echo '*** ERROR ***'
 	@echo 'You MUST set a value for the COMPILER variable'
-	@echo ' eg. "make COMPILER=intel"'
-	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
+	@printf " *?* It looks like you're using "
+	@printf $(CMP_GUESS)
+	@echo " *?*"
+	@printf ' so try "make COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '"'
+	@printf 'Alternatively, you can add "export COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '" to $$HOME/.bashrc'
 	@exit 1
 endif
 
 D = -D
 
+ifeq ($(strip $(COMPILER)), auto)
+  UCOMPILER := $(shell ./src/infer_compiler.sh)
+  $(warning Inferred compiler as $(UCOMPILER))
+else
+  UCOMPILER := $(COMPILER)
+endif
+
 # PGI
 # ===
-ifeq ($(strip $(COMPILER)),pgi)
+ifeq ($(strip $(UCOMPILER)),pgi)
   FFLAGS = -r8 -fast -fastsse -O3 -Mipa=fast,inline -Minfo # Optimised
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -Mbounds -g                                     # Debug
@@ -35,7 +50,7 @@ endif
 
 # Intel
 # =====
-ifeq ($(strip $(COMPILER)),intel)
+ifeq ($(strip $(UCOMPILER)),intel)
   FFLAGS = -O3 -g
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
@@ -54,7 +69,7 @@ endif
 
 # gfortran
 # ========
-ifeq ($(strip $(COMPILER)),gfortran)
+ifeq ($(strip $(UCOMPILER)),gfortran)
   FFLAGS = -O3 -g
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
@@ -96,7 +111,7 @@ endif
 
 # g95
 # ========
-ifeq ($(strip $(COMPILER)),g95)
+ifeq ($(strip $(UCOMPILER)),g95)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g                                        # Debug
@@ -106,7 +121,7 @@ endif
 
 # IBM Bluegene
 # ============
-ifeq ($(strip $(COMPILER)),ibm)
+ifeq ($(strip $(UCOMPILER)),ibm)
   FFLAGS = -O5 -qhot -qipa # Optimised
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -C -g -qfullpath -qinfo #-qkeepparm -qflttrap \
@@ -123,7 +138,7 @@ endif
 
 # HECToR
 # ========
-ifeq ($(strip $(COMPILER)),hector)
+ifeq ($(strip $(UCOMPILER)),hector)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
