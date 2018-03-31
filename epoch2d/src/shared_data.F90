@@ -568,14 +568,13 @@ MODULE shared_data
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
 #endif
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-    REAL(num) :: work_y_I = 0
-    REAL(num) :: work_x_I = 0
-    REAL(num) :: work_z_I = 0
-    REAL(num) :: work_y
+#ifdef WORK_DONE_INTEGRATED
     REAL(num) :: work_x
+    REAL(num) :: work_y
     REAL(num) :: work_z
+    REAL(num) :: work_x_total
+    REAL(num) :: work_y_total
+    REAL(num) :: work_z_total
 #endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
@@ -758,14 +757,13 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 51
   INTEGER, PARAMETER :: c_dump_ppc               = 52
   INTEGER, PARAMETER :: c_dump_average_weight    = 53
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-  INTEGER, PARAMETER :: c_dump_part_x_work       = 54
-  INTEGER, PARAMETER :: c_dump_part_y_work       = 55
-  INTEGER, PARAMETER :: c_dump_part_z_work       = 56
-  INTEGER, PARAMETER :: c_dump_part_x_workI      = 57
-  INTEGER, PARAMETER :: c_dump_part_y_workI      = 58
-  INTEGER, PARAMETER :: c_dump_part_z_workI      = 59
+#ifdef WORK_DONE_INTEGRATED
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 54
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 55
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 56
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 57
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 58
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 59
   INTEGER, PARAMETER :: num_vars_to_dump         = 59
 #else
   INTEGER, PARAMETER :: num_vars_to_dump         = 53

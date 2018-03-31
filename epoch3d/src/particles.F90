@@ -113,10 +113,9 @@ CONTAINS
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
     INTEGER(i8) :: ipart
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-    REAL(num) :: Work_x, Work_y, Work_z
-    REAL(num) :: Work_total_x, Work_total_y, Work_total_z
+#ifdef WORK_DONE_INTEGRATED
+    REAL(num) :: tmp_x, tmp_y, tmp_z
+    REAL(num) :: work_x, work_y, work_z
 #endif
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
@@ -235,20 +234,26 @@ CONTAINS
         part_ux = current%part_p(1) * ipart_mc
         part_uy = current%part_p(2) * ipart_mc
         part_uz = current%part_p(3) * ipart_mc
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-        Work_total_x = current%work_x_I
-        Work_total_y = current%work_y_I
-        Work_total_z = current%work_z_I
-#endif
+
         ! Calculate v(t) from p(t)
         ! See PSC manual page (25-27)
-        root = dtco2 / SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        gamma_rel = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+        root = dtco2 / gamma_rel
 
         ! Move particles to half timestep position to first order
         part_x = part_x + part_ux * root
         part_y = part_y + part_uy * root
         part_z = part_z + part_uz * root
+
+#ifdef WORK_DONE_INTEGRATED
+        ! This is the actual total work done by the fields: Results correspond
+        ! with the electron's gamma factor
+        root = cmratio / gamma_rel
+
+        tmp_x = part_ux * root
+        tmp_y = part_uy * root
+        tmp_z = part_uz * root
+#endif
 
         ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
@@ -332,18 +337,6 @@ CONTAINS
         uxm = part_ux + cmratio * ex_part
         uym = part_uy + cmratio * ey_part
         uzm = part_uz + cmratio * ez_part
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-        !This is the actual total work done by the fields: Results correspond
-        !with the electron's gamma factor
-        gamma_rel = 1.0_num/SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        Work_x = ex_part * part_ux * cmratio * gamma_rel
-        Work_y = ey_part * part_uy * cmratio * gamma_rel
-        Work_z = ez_part * part_uz * cmratio * gamma_rel
-        Work_total_x = Work_total_x + cmratio*ex_part*part_ux*gamma_rel
-        Work_total_y = Work_total_y + cmratio*ey_part*part_uy*gamma_rel
-        Work_total_z = Work_total_z + cmratio*ez_part*part_uz*gamma_rel
-#endif
 
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
         root = ccmratio / SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
@@ -381,25 +374,6 @@ CONTAINS
         delta_x = part_ux * root
         delta_y = part_uy * root
         delta_z = part_uz * root
-        
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-	!This is the actual total work done by the fields: Results correspond
-        !with the electron's gamma factor
-        Work_x = Work_x + ex_part * part_ux * cmratio / gamma_rel
-        Work_y = Work_y + ey_part * part_uy * cmratio / gamma_rel
-        Work_z = Work_z + ez_part * part_uz * cmratio / gamma_rel
-        Work_total_x = Work_total_x + cmratio*ex_part*part_ux/gamma_rel
-        Work_total_y = Work_total_y + cmratio*ey_part*part_uy/gamma_rel
-        Work_total_z = Work_total_z + cmratio*ez_part*part_uz/gamma_rel
-
-        current%work_x = Work_x
-        current%work_y = Work_y
-        current%work_z = Work_z
-        current%work_x_I = Work_total_x
-        current%work_y_I = Work_total_y
-        current%work_z_I = Work_total_z
-#endif
 
         ! Move particles to end of time step at 2nd order accuracy
         part_x = part_x + delta_x
@@ -411,6 +385,23 @@ CONTAINS
         current%part_pos = (/ part_x + x_grid_min_local, &
             part_y + y_grid_min_local, part_z + z_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
+
+#ifdef WORK_DONE_INTEGRATED
+        ! This is the actual total work done by the fields: Results correspond
+        ! with the electron's gamma factor
+        root = cmratio / gamma_rel
+
+        work_x = ex_part * (tmp_x + part_ux * root)
+        work_y = ey_part * (tmp_y + part_uy * root)
+        work_z = ez_part * (tmp_z + part_uz * root)
+
+        current%work_x = work_x
+        current%work_y = work_y
+        current%work_z = work_z
+        current%work_x_total = current%work_x_total + work_x
+        current%work_y_total = current%work_y_total + work_y
+        current%work_z_total = current%work_z_total + work_z
+#endif
 
 #ifndef NO_PARTICLE_PROBES
         final_part_x = current%part_pos(1)

@@ -262,41 +262,41 @@ CONTAINS
           cur => cur%next
         ENDDO
 
-#ifdef Work_Done_Integrated	!By O.Jansen #Work_Done
-      CASE (c_dump_part_z_work)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-          part_count = part_count + 1
-          array(part_count) = cur%work_z
-          cur => cur%next
-        ENDDO
-      CASE (c_dump_part_y_work)
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-          part_count = part_count + 1
-          array(part_count) = cur%work_y
-          cur => cur%next
-        ENDDO
-      CASE (c_dump_part_x_work)
+#ifdef WORK_DONE_INTEGRATED
+      CASE (c_dump_part_work_x)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%work_x
           cur => cur%next
         ENDDO
-      CASE (c_dump_part_z_workI)
+      CASE (c_dump_part_work_y)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
-          array(part_count) = cur%work_z_I
+          array(part_count) = cur%work_y
           cur => cur%next
         ENDDO
-      CASE (c_dump_part_y_workI)
+      CASE (c_dump_part_work_z)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
-          array(part_count) = cur%work_y_I
+          array(part_count) = cur%work_z
           cur => cur%next
         ENDDO
-      CASE (c_dump_part_x_workI)
+      CASE (c_dump_part_work_x_total)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
-          array(part_count) = cur%work_x_I
+          array(part_count) = cur%work_x_total
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_work_y_total)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_y_total
+          cur => cur%next
+        ENDDO
+      CASE (c_dump_part_work_z_total)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%work_z_total
           cur => cur%next
         ENDDO
 #endif

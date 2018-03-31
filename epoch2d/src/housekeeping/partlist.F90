@@ -43,10 +43,6 @@ CONTAINS
   SUBROUTINE setup_partlists
 
     nvar = 3 + c_ndims
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-    nvar = nvar + 6
-#endif
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     nvar = nvar+1
 #endif
@@ -70,6 +66,9 @@ CONTAINS
 #ifdef TRIDENT_PHOTONS
     nvar = nvar+1
 #endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    nvar = nvar+6
 #endif
     ALLOCATE(packed_particle_data(nvar))
 
@@ -406,16 +405,6 @@ CONTAINS
     array(cpos) = REAL(a_particle%coll_count, num)
     cpos = cpos+1
 #endif
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-    array(cpos) = a_particle%work_x
-    array(cpos+1) = a_particle%work_y
-    array(cpos+2) = a_particle%work_z
-    array(cpos+3) = a_particle%work_x_I
-    array(cpos+4) = a_particle%work_y_I
-    array(cpos+5) = a_particle%work_z_I
-    cpos = cpos+6
-#endif
 #ifdef PHOTONS
     array(cpos) = a_particle%optical_depth
     array(cpos+1) = a_particle%particle_energy
@@ -424,6 +413,15 @@ CONTAINS
     array(cpos) = a_particle%optical_depth_tri
     cpos = cpos+1
 #endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    array(cpos) = a_particle%work_x
+    array(cpos+1) = a_particle%work_y
+    array(cpos+2) = a_particle%work_z
+    array(cpos+3) = a_particle%work_x_total
+    array(cpos+4) = a_particle%work_y_total
+    array(cpos+5) = a_particle%work_z_total
+    cpos = cpos+6
 #endif
 
   END SUBROUTINE pack_particle
@@ -470,16 +468,6 @@ CONTAINS
     a_particle%coll_count = NINT(array(cpos))
     cpos = cpos+1
 #endif
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated
-    a_particle%work_x = array(cpos)
-    a_particle%work_y = array(cpos+1)
-    a_particle%work_z = array(cpos+2)
-    a_particle%work_x_I = array(cpos+3)
-    a_particle%work_y_I = array(cpos+4)
-    a_particle%work_z_I = array(cpos+5)
-    cpos = cpos+6
-#endif
 #ifdef PHOTONS
     a_particle%optical_depth = array(cpos)
     a_particle%particle_energy = array(cpos+1)
@@ -488,6 +476,15 @@ CONTAINS
     a_particle%optical_depth_tri = array(cpos)
     cpos = cpos+1
 #endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    a_particle%work_x = array(cpos)
+    a_particle%work_y = array(cpos+1)
+    a_particle%work_z = array(cpos+2)
+    a_particle%work_x_total = array(cpos+3)
+    a_particle%work_y_total = array(cpos+4)
+    a_particle%work_z_total = array(cpos+5)
+    cpos = cpos+6
 #endif
 
   END SUBROUTINE unpack_particle

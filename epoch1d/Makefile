@@ -70,6 +70,21 @@ endif
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3 -g
+
+  GNUVER := $(shell gfortran -dumpversion | head -1 \
+      | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
+  GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
+  GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
+
+  # Allow for 99 minor revisions
+  GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
+
+  # gfortran-4.9
+  GNUGE49 := $(shell expr $(GNUVER) \>= 409)
+  ifeq "$(GNUGE49)" "1"
+    FFLAGS += -ffpe-summary=invalid,zero,overflow
+  endif
+
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
@@ -221,11 +236,6 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
-#The time integrated work exerted on each particle requires another variable, that has to be
-#calculated every time step. This will slow down the simulation!
-DEFINES += $(D)Work_Done_Integrated
-
-
 # Use compiler extension ISATTY to enable coloured welcome banner
 #DEFINES += $(D)USE_ISATTY
 
@@ -234,6 +244,10 @@ DEFINES += $(D)Work_Done_Integrated
 
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG
+
+# The time integrated work exerted on each particle requires another variable
+# that has to be calculated every time step. This will slow down the simulation!
+#DEFINES += $(D)WORK_DONE_INTEGRATED
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the

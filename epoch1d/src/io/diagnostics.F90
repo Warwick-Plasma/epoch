@@ -381,11 +381,6 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
 
-        CALL write_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
-            'laser_x_min_phase')
-        CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
-            'laser_x_max_phase')
-
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
               'time_prev/'//TRIM(io_block_list(io)%name), &
@@ -564,22 +559,20 @@ CONTAINS
             'Trident Depth', '', it_output_real)
 #endif
 #endif
-!By O.Jansen, Work_Done
-#ifdef Work_Done_Integrated						
-        CALL write_particle_variable(c_dump_part_x_work, code, &		
-            'Work_x_direction', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_y_work, code, &
-            'Work_y_direction', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_z_work, code, &
-            'Work_z_direction', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_x_workI, code, &
-            'Time_Integrated_Work_x', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_y_workI, code, &
-            'Time_Integrated_Work_y', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_z_workI, code, &
-            'Time_Integrated_Work_z', '', it_output_real)
+#ifdef WORK_DONE_INTEGRATED
+        CALL write_particle_variable(c_dump_part_work_x, code, &
+            'Work_x_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_y, code, &
+            'Work_y_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_z, code, &
+            'Work_z_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_x_total, code, &
+            'Time_Integrated_Work_x', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_y_total, code, &
+            'Time_Integrated_Work_y', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_z_total, code, &
+            'Time_Integrated_Work_z', 'J', it_output_real)
 #endif
-
         CALL write_particle_grid(code)
 
         ! These are derived variables from the particles
