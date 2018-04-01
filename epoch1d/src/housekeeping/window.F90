@@ -256,7 +256,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
-    INTEGER :: window_shift_cells
+    INTEGER :: window_shift_cells, errcode
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -274,6 +274,7 @@ CONTAINS
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
+      IF (use_window_stack) window_v_x = evaluate(window_v_x_stack, errcode)
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once
