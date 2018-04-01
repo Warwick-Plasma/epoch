@@ -122,7 +122,7 @@ CONTAINS
       CALL shift_field(cpml_psi_ezy, ng)
       CALL shift_field(cpml_psi_bxy, ng)
       CALL shift_field(cpml_psi_bzy, ng)
-    END IF
+    ENDIF
 
     IF (x_max_boundary) THEN
       DO j = 1-ng, ny+ng
@@ -140,7 +140,8 @@ CONTAINS
         bx(nx,j)   = 0.5_num * (bx(nx-1,j) + bx(nx+1,j))
         by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
         bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
-      END DO
+      ENDDO
+
       IF (cpml_boundaries) THEN
         DO j = 1-ng, ny+ng
           cpml_psi_eyx(nx:nx+1,j) = cpml_psi_eyx(nx,j)
@@ -153,7 +154,7 @@ CONTAINS
           cpml_psi_bxy(nx:nx+1,j) = cpml_psi_bxy(nx,j)
           cpml_psi_bzy(nx:nx+1,j) = cpml_psi_bzy(nx,j)
         ENDDO
-      END IF
+      ENDIF
     ENDIF
 
   END SUBROUTINE shift_fields

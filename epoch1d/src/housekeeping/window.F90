@@ -108,7 +108,7 @@ CONTAINS
       CALL shift_field(cpml_psi_ezx, ng)
       CALL shift_field(cpml_psi_byx, ng)
       CALL shift_field(cpml_psi_bzx, ng)
-    END IF
+    ENDIF
 
     IF (x_max_boundary) THEN
       ! Fix incoming field cell.
@@ -131,7 +131,7 @@ CONTAINS
         cpml_psi_ezx(nx:nx+1) = cpml_psi_ezx(nx)
         cpml_psi_byx(nx:nx+1) = cpml_psi_byx(nx)
         cpml_psi_bzx(nx:nx+1) = cpml_psi_bzx(nx)
-      END IF
+      ENDIF
     ENDIF
 
   END SUBROUTINE shift_fields
