@@ -57,8 +57,9 @@ CONTAINS
       errcode = 0
       dc = evaluate(deck_constant_list(i)%execution_stream, errcode)
       WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
-      IF(const_is_open) &
-          WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      IF (const_is_open) THEN
+        WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      ENDIF
     ENDDO
 
   END SUBROUTINE constant_deck_finalise
