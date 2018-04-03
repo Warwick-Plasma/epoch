@@ -16,6 +16,10 @@ echo -n $MPIF90_VERS | grep -iE "ifort|intel" &> /dev/null
 echo -n $MPIF90_VERS | grep -iwE "PGI|pgfortran" &> /dev/null
 [ $? == 0 ] && COMPILER='pgi'
 
+# Check for G95
+echo -n $MPIF90_VERS | grep -iw "G95" &> /dev/null
+[ $? == 0 ] && COMPILER='g95'
+
 # Check for Cray, i.e. hector/archer
 ftn -V &> /dev/null
 [ $? == 0 ] && COMPILER='hector'
