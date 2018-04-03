@@ -27,8 +27,6 @@ CONTAINS
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN), OPTIONAL :: species
-    INTEGER, DIMENSION(2*c_ndims) :: bc_species
-    INTEGER :: i, nn, bc
 
     CALL processor_summation_bcs(data_array, ng, species=species)
 
