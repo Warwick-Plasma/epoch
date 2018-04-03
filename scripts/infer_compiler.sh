@@ -5,12 +5,16 @@ COMPILER=''
 MPIF90_VERS=`mpif90 --version 2>/dev/null`
 
 # Check for gfortran
-echo -n $MPIF90_VERS | grep -iE "GNU|gfortran" &> /dev/null
+echo -n $MPIF90_VERS | grep -iwE "GNU|gfortran" &> /dev/null
 [ $? == 0 ] && COMPILER='gfortran'
 
 # Check for intel
 echo -n $MPIF90_VERS | grep -iE "ifort|intel" &> /dev/null
 [ $? == 0 ] && COMPILER='intel'
+
+# Check for PGI
+echo -n $MPIF90_VERS | grep -iwE "PGI|pgfortran" &> /dev/null
+[ $? == 0 ] && COMPILER='pgi'
 
 # Check for Cray, i.e. hector/archer
 ftn -V &> /dev/null
