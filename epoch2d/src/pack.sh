@@ -101,9 +101,9 @@ ncolumns=130
 nl=6
 nbytes=8
 nelements=0
-machine_info="${machine_info:0:ncolumns}"
-compiler_info="${compiler_info:0:ncolumns}"
-compiler_flags="${compiler_flags:0:ncolumns}"
+compile_machine_info=$(expr substr "$compile_machine_info" 1 $ncolumns)
+compiler_info=$(expr substr "$compiler_info" 1 $ncolumns)
+compiler_flags=$(expr substr "$compiler_flags" 1 $ncolumns)
 
 write_data_bytes () {
   filename=$1
