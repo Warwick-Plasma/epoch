@@ -13,7 +13,7 @@
 
 ifeq ($(strip $(COMPILER)),)
   MAKECMDGOALS = error
-  CMP_GUESS =$(shell ./src/infer_compiler.sh)
+  CMP_GUESS = $(shell ../scripts/infer_compiler.sh)
 error:
 	@echo '*** ERROR ***'
 	@echo 'You MUST set a value for the COMPILER variable'
@@ -32,7 +32,7 @@ endif
 D = -D
 
 ifeq ($(strip $(COMPILER)), auto)
-  override COMPILER := $(shell ./src/infer_compiler.sh)
+  override COMPILER := $(shell ../scripts/infer_compiler.sh)
   NEWMAKEFLAGS := "$(filter-out COMPILER=auto, $(MAKEFLAGS))"
   $(warning Inferred compiler as $(COMPILER))
 endif
