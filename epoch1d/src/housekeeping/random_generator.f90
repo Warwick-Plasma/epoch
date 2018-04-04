@@ -18,7 +18,7 @@ MODULE random_generator
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: random, random_init, get_random_state, set_random_state
-  PUBLIC :: random_box_muller
+  PUBLIC :: random_box_muller, random_state
 
   TYPE :: random_state
     INTEGER :: x = 123456789
