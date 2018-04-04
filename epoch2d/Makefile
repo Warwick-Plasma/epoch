@@ -135,9 +135,9 @@ ifeq ($(strip $(COMPILER)),ibm)
   D = -WF,-D
 endif
 
-# HECToR
+# ARCHER (also works for HECToR)
 # ========
-ifeq ($(strip $(COMPILER)),hector)
+ifeq ($(strip $(COMPILER)),archer)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
