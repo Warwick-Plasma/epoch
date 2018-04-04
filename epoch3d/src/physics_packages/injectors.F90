@@ -37,6 +37,7 @@ CONTAINS
     injector%t_start = 0.0_num
     injector%t_end = t_end
     injector%density_min = 0.0_num
+    injector%use_flux_injector = .FALSE.
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:ny+ng, 1-ng:nz+ng))
@@ -179,9 +180,16 @@ CONTAINS
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
     INTEGER, DIMENSION(2) :: i2d
+    TYPE(temperature_function_holder), DIMENSION(3) :: temp_fns
+    REAL(num), DIMENSION(3) :: dir_mult
     LOGICAL :: first_inject
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
+
+    DO idir = 1, 3
+      temp_fns(idir)%contents => momentum_from_temperature
+      dir_mult(idir) = 1.0_num
+    END DO
 
     IF (direction == c_bd_x_min) THEN
       parameters%pack_ix = 0
@@ -191,6 +199,10 @@ CONTAINS
       dir_index = 1
       bdy_pos = x_min
       bdy_space = -dx
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
       nel = (/ny, nz/)
@@ -199,6 +211,10 @@ CONTAINS
       dir_index = 1
       bdy_pos = x_max
       bdy_space = dx
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = -1.0_num
+      END IF
     ELSE IF (direction == c_bd_y_min) THEN
       parameters%pack_iy = 0
       nel = (/nx, nz/)
@@ -207,6 +223,10 @@ CONTAINS
       dir_index = 2
       bdy_pos = y_min
       bdy_space = -dy
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_y_max) THEN
       parameters%pack_iy = ny
       nel = (/nx, nz/)
@@ -215,6 +235,10 @@ CONTAINS
       dir_index = 2
       bdy_pos = y_max
       bdy_space = dy
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = -1.0_num
+      END IF
     ELSE IF (direction == c_bd_z_min) THEN
       parameters%pack_iz = 0
       nel = (/nx, ny/)
@@ -223,6 +247,10 @@ CONTAINS
       dir_index = 3
       bdy_pos = z_min
       bdy_space = -dz
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_z_max) THEN
       parameters%pack_iz = nz
       nel = (/nx, ny/)
@@ -231,6 +259,10 @@ CONTAINS
       dir_index = 3
       bdy_pos = z_max
       bdy_space = dz
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = -1.0_num
+      END IF
     ELSE
       RETURN
     ENDIF
@@ -318,8 +350,8 @@ CONTAINS
               temperature, drift)
 
           DO idir = 1, 3
-            new%part_p(idir) = momentum_from_temperature(mass, &
-                temperature(idir), drift(idir))
+            new%part_p(idir) = temp_fns(idir)%contents(mass, &
+                temperature(idir), drift(idir)) * dir_mult(idir)
           ENDDO
 #ifdef PER_PARTICLE_CHARGE_MASS
           new%charge = species_list(injector%species)%charge

@@ -118,6 +118,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'use_flux_maxwellian')) THEN
+      working_injector%use_flux_injector = as_logical_print(value, element, &
+          errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'npart_per_cell')) THEN
       working_injector%npart_per_cell = as_integer_print(value, element, &
           errcode)

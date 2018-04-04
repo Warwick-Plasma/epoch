@@ -21,6 +21,19 @@ MODULE particle_temperature
 
   IMPLICIT NONE
 
+  ABSTRACT INTERFACE
+    FUNCTION temperature_function(mass, temperature, drift)
+      IMPORT num
+      REAL(num), INTENT(IN) :: mass, temperature, drift
+      REAL(num) :: temperature_function
+    END FUNCTION temperature_function
+  END INTERFACE
+
+  TYPE :: temperature_function_holder
+    PROCEDURE(temperature_function), POINTER, NOPASS :: contents
+  END TYPE temperature_function_holder
+
+
 CONTAINS
 
   ! Subroutine to initialise a thermal particle distribution

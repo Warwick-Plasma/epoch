@@ -1072,6 +1072,7 @@ MODULE shared_data
     INTEGER :: species
     INTEGER(i8) :: npart_per_cell
     REAL(num) :: density_min
+    LOGICAL :: use_flux_injector
 
     TYPE(primitive_stack) :: density_function
     TYPE(primitive_stack) :: temperature_function(3)

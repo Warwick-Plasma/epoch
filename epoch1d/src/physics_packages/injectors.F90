@@ -37,6 +37,7 @@ CONTAINS
     injector%t_start = 0.0_num
     injector%t_end = t_end
     injector%density_min = 0.0_num
+    injector%use_flux_injector = .FALSE.
 
     injector%depth = 1.0_num
     injector%dt_inject = -1.0_num
@@ -121,20 +122,35 @@ CONTAINS
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index
     TYPE(parameter_pack) :: parameters
+    TYPE(temperature_function_holder), DIMENSION(3) :: temp_fns
+    REAL(num), DIMENSION(3) :: dir_mult
     LOGICAL :: first_inject
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
+
+    DO idir = 1, 3
+      temp_fns(idir)%contents => momentum_from_temperature
+      dir_mult(idir) = 1.0_num
+    END DO
 
     IF (direction == c_bd_x_min) THEN
       parameters%pack_ix = 0
       dir_index = 1
       bdy_pos = x_min
       bdy_space = -dx
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
       dir_index = 1
       bdy_pos = x_max
       bdy_space = dx
+      IF (injector%use_flux_injector) THEN
+        temp_fns(dir_index)%contents => flux_momentum_from_temperature
+        dir_mult(idir) = -1.0_num
+      END IF
     ELSE
       RETURN
     ENDIF
@@ -201,8 +217,8 @@ CONTAINS
           temperature, drift)
 
       DO idir = 1, 3
-        new%part_p(idir) = momentum_from_temperature(mass, &
-            temperature(idir), drift(idir))
+        new%part_p(idir) = temp_fns(idir)%contents(mass, &
+            temperature(idir), drift(idir)) * dir_mult(idir)
       ENDDO
 #ifdef PER_PARTICLE_CHARGE_MASS
       new%charge = species_list(injector%species)%charge
