@@ -22,7 +22,7 @@ echo -n $MPIF90_VERS | grep -iw "G95" &> /dev/null
 
 # Check for Cray, i.e. hector/archer
 ftn -V &> /dev/null
-[ $? == 0 ] && COMPILER='hector'
+[ $? == 0 ] && COMPILER='archer'
 
 # Check for ibm according to current Makefile
 mpixlf90_r &> /dev/null
