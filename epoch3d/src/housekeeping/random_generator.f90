@@ -18,16 +18,16 @@ MODULE random_generator
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: random, random_init, get_random_state, set_random_state
-  PUBLIC :: random_box_muller, random_state
+  PUBLIC :: random_box_muller, random_state_type
 
-  TYPE :: random_state
+  TYPE :: random_state_type
     INTEGER :: x = 123456789
     INTEGER :: y = 362436069
     INTEGER :: z = 521288629
     INTEGER :: w = 916191069
-  END TYPE random_state
+  END TYPE random_state_type
 
-  TYPE(random_state), TARGET :: global_random
+  TYPE(random_state_type), TARGET :: global_random
 
 CONTAINS
 
@@ -41,9 +41,9 @@ CONTAINS
   FUNCTION random(state)
 
     DOUBLE PRECISION :: random
-    TYPE(random_state), INTENT(INOUT), OPTIONAL, TARGET :: state
+    TYPE(random_state_type), INTENT(INOUT), OPTIONAL, TARGET :: state
     INTEGER :: kiss, a1, b1, a2, b2, a3, b3
-    TYPE(random_state), POINTER :: current_state
+    TYPE(random_state_type), POINTER :: current_state
 
     IF (PRESENT(state)) THEN
       current_state => state
@@ -78,8 +78,8 @@ CONTAINS
   SUBROUTINE random_init(seed, state)
 
     INTEGER, INTENT(IN) :: seed
-    TYPE(random_state), INTENT(INOUT), OPTIONAL, TARGET :: state
-    TYPE(random_state), POINTER :: current_state
+    TYPE(random_state_type), INTENT(INOUT), OPTIONAL, TARGET :: state
+    TYPE(random_state_type), POINTER :: current_state
     INTEGER :: i
     DOUBLE PRECISION :: dummy
 
@@ -107,7 +107,7 @@ CONTAINS
 
     DOUBLE PRECISION, INTENT(IN) :: stdev
     DOUBLE PRECISION, INTENT(IN), OPTIONAL :: mu
-    TYPE(random_state), INTENT(INOUT), TARGET, OPTIONAL :: state
+    TYPE(random_state_type), INTENT(INOUT), TARGET, OPTIONAL :: state
     DOUBLE PRECISION :: random_box_muller
 
     DOUBLE PRECISION :: rand1, rand2, w, mu_val
