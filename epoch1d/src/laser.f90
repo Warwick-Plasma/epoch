@@ -129,15 +129,36 @@ CONTAINS
 
 
 
+  !This routine populates the constant elements of a parameter pack
+  !from a laser
+  SUBROUTINE populate_pack_from_laser(laser, parameters)
+    TYPE(laser_block), POINTER :: laser
+    TYPE(parameter_pack), INTENT(INOUT) :: parameters
+
+    SELECT CASE(laser%boundary)
+      CASE(c_bd_x_min)
+        parameters%pack_ix = 0
+      CASE(c_bd_x_max)
+        parameters%pack_ix = nx
+    END SELECT
+
+  END SUBROUTINE populate_pack_from_laser
+
+
+
   FUNCTION laser_time_profile(laser)
 
     TYPE(laser_block), POINTER :: laser
     REAL(num) :: laser_time_profile
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
+
+    CALL populate_pack_from_laser(laser, parameters)
 
     err = 0
     IF (laser%use_time_function) THEN
-      laser_time_profile = evaluate(laser%time_function, err)
+      laser_time_profile = evaluate_with_parameters(laser%time_function, &
+          parameters, err)
       RETURN
     ENDIF
 
@@ -154,7 +175,7 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
 
     err = 0
-    parameters%pack_ix = 0
+    CALL populate_pack_from_laser(laser, parameters)
     laser%phase = &
         evaluate_with_parameters(laser%phase_function, parameters, err)
 
@@ -169,7 +190,7 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
 
     err = 0
-    parameters%pack_ix = 0
+    CALL populate_pack_from_laser(laser, parameters)
     laser%profile = &
         evaluate_with_parameters(laser%profile_function, parameters, err)
 
@@ -181,9 +202,12 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
-    laser%omega = evaluate(laser%omega_function, err)
+    CALL populate_pack_from_laser(laser, parameters)
+    laser%omega = evaluate_with_parameters(laser%omega_function, parameters, &
+        err)
     IF (laser%omega_func_type == c_of_freq) &
         laser%omega = 2.0_num * pi * laser%omega
     IF (laser%omega_func_type == c_of_lambda) &
