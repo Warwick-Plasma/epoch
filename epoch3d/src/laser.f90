@@ -175,9 +175,11 @@ CONTAINS
 
 
 
-  !This routine populates the constant elements of a parameter pack
-  !from a laser
+  ! This routine populates the constant elements of a parameter pack
+  ! from a laser
+
   SUBROUTINE populate_pack_from_laser(laser, parameters)
+
     TYPE(laser_block), POINTER :: laser
     TYPE(parameter_pack), INTENT(INOUT) :: parameters
 
@@ -283,7 +285,7 @@ CONTAINS
             parameters%pack_iy = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
@@ -293,7 +295,7 @@ CONTAINS
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
       CASE(c_bd_z_min, c_bd_z_max)
@@ -303,7 +305,7 @@ CONTAINS
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
     END SELECT
@@ -320,8 +322,8 @@ CONTAINS
 
     err = 0
     CALL populate_pack_from_laser(laser, parameters)
-    laser%omega = evaluate_with_parameters(laser%omega_function, parameters, &
-        err)
+    laser%omega = &
+        evaluate_with_parameters(laser%omega_function, parameters, err)
     IF (laser%omega_func_type == c_of_freq) &
         laser%omega = 2.0_num * pi * laser%omega
     IF (laser%omega_func_type == c_of_lambda) &
