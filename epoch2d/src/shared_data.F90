@@ -569,6 +569,15 @@ MODULE shared_data
 #endif
   END TYPE particle
 
+  ! Particle ID generation
+#ifdef PARTICLE_ID4
+  INTEGER(i4) :: id_exemplar, cpu_id, highest_id
+#endif
+#ifdef PARTICLE_ID
+  INTEGER(i8) :: id_exemplar, cpu_id, highest_id
+#endif
+  INTEGER :: n_cpu_bits
+
   ! Data for migration between species
   TYPE particle_species_migration
     LOGICAL :: this_species, fluid, done

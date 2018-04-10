@@ -738,6 +738,8 @@ CONTAINS
     INTEGER(i8) :: start_local
     INTEGER :: ierr
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+
     ALLOCATE(id_starts(1:nproc+1))
 
     start_local = INT(highest_id, i8)
@@ -749,6 +751,7 @@ CONTAINS
     CALL sdf_write_srl(sdf_handle, "id_starts", "id_starts", id_starts, 0)
 
     DEALLOCATE(id_starts)
+#endif
 
   END SUBROUTINE write_id_starts
 

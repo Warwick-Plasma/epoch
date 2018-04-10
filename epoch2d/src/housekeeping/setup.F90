@@ -36,9 +36,13 @@ MODULE setup
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
-  PUBLIC :: read_cpu_split
+  PUBLIC :: read_cpu_split, after_load
 
   TYPE(particle), POINTER, SAVE :: iterator_list
+  LOGICAL, SAVE :: restart_found_ids = .FALSE.
+  LOGICAL, SAVE :: restart_found_id_starts = .FALSE.
+  INTEGER(i8) :: restart_max_id
+
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
@@ -150,6 +154,56 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_ids
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER :: n_id_bits, err, n_cpu_bits_calc
+
+    CALL MPI_SIZEOF(id_exemplar, n_id_bits, err)
+    n_id_bits = n_id_bits * 8 !Bytes to bits
+
+    n_cpu_bits_calc = CEILING(LOG(REAL(nproc,num))/LOG(2.0_num))
+    IF (n_cpu_bits > 0 .AND. n_cpu_bits < n_cpu_bits_calc) THEN
+      IF (rank == 0) PRINT '(A,I2,A, I2)', &
+          'Requested number of CPU ID bits (', n_cpu_bits, ') is too small &
+          &for number of processors requested. Switching to ', n_cpu_bits_calc
+      n_cpu_bits = n_cpu_bits_calc
+    END IF
+
+    IF (n_cpu_bits == 0) THEN
+      n_cpu_bits = n_cpu_bits_calc
+#ifdef PARTICLE_ID4
+      n_cpu_bits = MAX(n_cpu_bits, 8_i8)
+#else
+      n_cpu_bits = MAX(n_cpu_bits, 12_i8)
+#endif
+    END IF
+    highest_id = 1
+    cpu_id = rank
+    cpu_id = ISHFT(cpu_id, n_id_bits - 1_i8 - n_cpu_bits)
+#endif
+
+  END SUBROUTINE setup_ids
+
+
+
+  SUBROUTINE print_id_info
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (rank /= 0) RETURN
+    WRITE (*,'(A, I2, A)') 'Particle ID will use ', n_cpu_bits, &
+        ' bits for CPU ID'
+    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
+      PRINT *, '***WARNING*** restarting from a file containing ', &
+          'old style particle IDs. This should work as expected, but beware ', &
+          'of possible duplicate particle IDs'
+    END IF
+#endif
+
+  END SUBROUTINE print_id_info
+
+
+
   SUBROUTINE setup_grid
 
     INTEGER :: iproc, ix, iy
@@ -246,7 +300,17 @@ CONTAINS
       ENDDO
     ENDIF
 
+    CALL setup_ids
+
   END SUBROUTINE after_deck_last
+
+
+
+  SUBROUTINE after_load
+
+    CALL print_id_info
+
+  END SUBROUTINE after_load
 
 
 
@@ -775,8 +839,8 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: species_id
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: i, is, iblock, nblocks, ndims, geometry
-    INTEGER(i8) :: npart, npart_local
+    INTEGER :: i, is, iblock, nblocks, ndims, geometry, ierr
+    INTEGER(i8) :: npart, npart_local, global_max_id
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
@@ -1013,6 +1077,8 @@ CONTAINS
             block_id, ndims, 'laser_y_min_phase', 'y_min')
         CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
             block_id, ndims, 'laser_y_max_phase', 'y_max')
+
+        CALL read_id_starts(sdf_handle, block_id)
 
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
@@ -1283,6 +1349,14 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      CALL MPI_ALLREDUCE(restart_max_id, global_max_id, 1, MPI_INTEGER8, &
+          MPI_MAX, comm, ierr)
+      highest_id = global_max_id
+#endif
+    END IF
+
     window_offset = full_x_min - offset_x_min
     IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
     CALL setup_grid
@@ -1326,6 +1400,28 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE read_laser_phases
+
+
+
+  SUBROUTINE read_id_starts(sdf_handle, block_id)
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+    INTEGER, DIMENSION(1) :: dims
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: values
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (str_cmp(block_id, 'id_starts')) THEN
+      restart_found_id_starts = .TRUE.
+      CALL sdf_read_array_info(sdf_handle, dims)
+      ALLOCATE(values(dims(1)))
+      CALL sdf_read_srl(sdf_handle, values)
+      n_cpu_bits = MAX(n_cpu_bits, values(1))
+      CALL setup_ids
+      highest_id = values(rank + 2)
+      DEALLOCATE(values)
+    END IF
+#endif
+
+  END SUBROUTINE read_id_starts
 
 
 

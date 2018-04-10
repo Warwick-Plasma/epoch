@@ -578,8 +578,6 @@ MODULE shared_data
 #endif
   INTEGER :: n_cpu_bits
 
-
-
   ! Data for migration between species
   TYPE particle_species_migration
     LOGICAL :: this_species, fluid, done

@@ -1251,9 +1251,11 @@ CONTAINS
         species_subtypes_i8)
 
     IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       CALL MPI_ALLREDUCE(restart_max_id, global_max_id, 1, MPI_INTEGER8, &
           MPI_MAX, comm, ierr)
       highest_id = global_max_id
+#endif
     END IF
 
     window_offset = full_x_min - offset_x_min
@@ -1308,6 +1310,7 @@ CONTAINS
     INTEGER, DIMENSION(1) :: dims
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: values
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     IF (str_cmp(block_id, 'id_starts')) THEN
       restart_found_id_starts = .TRUE.
       CALL sdf_read_array_info(sdf_handle, dims)
@@ -1318,6 +1321,7 @@ CONTAINS
       highest_id = values(rank + 2)
       DEALLOCATE(values)
     END IF
+#endif
 
   END SUBROUTINE read_id_starts
 
