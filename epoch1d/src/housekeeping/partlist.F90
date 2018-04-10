@@ -369,7 +369,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     array(cpos:cpos+c_ndims-1) = a_particle%part_pos
@@ -395,7 +395,12 @@ CONTAINS
     cpos = cpos+2
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    array(cpos) = REAL(a_particle%id, num)
+#ifdef PARTICLE_ID
+    array(cpos) = TRANSFER(a_particle%id, 1.0_num)
+#else
+    temp_i8 = INT(a_particle%id, i8)
+    array(cpos) = TRANSFER(temp_i8, 1.0_num)
+#endif
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
@@ -420,7 +425,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     a_particle%part_pos = array(cpos)
@@ -446,10 +451,11 @@ CONTAINS
     cpos = cpos+2
 #endif
 #ifdef PARTICLE_ID4
-    a_particle%id = NINT(array(cpos))
+    temp_i8 = TRANSFER(array(cpos), temp_i8)
+    a_particle%id = INT(temp_i8)
     cpos = cpos+1
 #elif PARTICLE_ID
-    a_particle%id = NINT(array(cpos),i8)
+    a_particle%id = TRANSFER(array(cpos), a_particle%id)
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
@@ -467,6 +473,22 @@ CONTAINS
 #endif
 
   END SUBROUTINE unpack_particle
+
+
+
+  FUNCTION generate_id()
+
+#ifdef PARTICLE_ID
+    INTEGER(i8) :: generate_id
+#else
+    INTEGER(i4) :: generate_id
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    highest_id = highest_id + 1_i8
+    generate_id = cpu_id + highest_id
+#endif
+
+  END FUNCTION generate_id
 
 
 
@@ -488,7 +510,7 @@ CONTAINS
     new_particle%processor_at_t0 = 0
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    new_particle%id = 0
+    new_particle%id = generate_id()
 #endif
 #ifdef COLLISIONS_TEST
     new_particle%coll_count = 0
@@ -759,86 +781,5 @@ CONTAINS
     list%tail => item
 
   END SUBROUTINE add_particle_to_list
-
-
-
-  SUBROUTINE generate_particle_ids(partlist)
-
-    USE constants
-
-    TYPE(particle_list) :: partlist
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    INTEGER(i8), ALLOCATABLE :: nid_all(:)
-    INTEGER(i8) :: nid, part_id
-    INTEGER :: i, id_update
-    TYPE(particle), POINTER :: current
-    TYPE(pointer_list) :: idlist
-    TYPE(pointer_item), POINTER :: idcurrent, idnext
-
-    id_update = partlist%id_update
-
-    CALL MPI_ALLREDUCE(id_update, partlist%id_update, 1, MPI_INTEGER, &
-        MPI_MAX, comm, errcode)
-
-    IF (partlist%id_update == 0) RETURN
-
-    ALLOCATE(idlist%head)
-    idlist%tail => idlist%head
-    NULLIFY(idlist%head%next)
-    NULLIFY(idlist%head%part)
-
-    ! Scan through particle list and identify particles which need
-    ! an ID to be assigned.
-    nid = 0
-    current => partlist%head
-    DO WHILE(ASSOCIATED(current))
-      IF (current%id == 0) THEN
-        nid = nid + 1
-        CALL add_particle_to_list(current, idlist)
-      ENDIF
-      current => current%next
-    ENDDO
-
-    ALLOCATE(nid_all(nproc))
-
-    CALL MPI_ALLGATHER(nid, 1, MPI_INTEGER8, nid_all, 1, MPI_INTEGER8, &
-        comm, errcode)
-
-    ! Count number of particles on ranks zero to rank-1
-    nid = 0
-    DO i = 1, rank
-      nid = nid + nid_all(i)
-    ENDDO
-    part_id = particles_max_id + nid
-
-    ! Count remaining particles
-    DO i = rank+1, nproc
-      nid = nid + nid_all(i)
-    ENDDO
-
-    particles_max_id = particles_max_id + nid
-
-    DEALLOCATE(nid_all)
-
-    ! Number each particle with a unique id
-    idcurrent => idlist%head%next
-    DO WHILE(ASSOCIATED(idcurrent))
-      part_id = part_id + 1
-#if PARTICLE_ID
-      idcurrent%part%id = part_id
-#else
-      idcurrent%part%id = INT(part_id,i4)
-#endif
-      idnext => idcurrent%next
-      DEALLOCATE(idcurrent)
-      idcurrent => idnext
-    ENDDO
-
-    DEALLOCATE(idlist%head)
-
-    partlist%id_update = 0
-#endif
-
-  END SUBROUTINE generate_particle_ids
 
 END MODULE partlist

@@ -635,6 +635,10 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 ENDDO
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                cur%id = generate_id()
+#endif
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = flux_momentum_from_temperature(&
@@ -693,6 +697,10 @@ CONTAINS
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 ENDDO
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                cur%id = generate_id()
+#endif
 
                 ! x-direction
                 i = 1
