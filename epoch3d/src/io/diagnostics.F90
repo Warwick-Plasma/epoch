@@ -801,6 +801,32 @@ CONTAINS
 
 
 
+  SUBROUTINE write_id_starts(sdf_handle)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: id_starts
+    INTEGER(i8) :: start_local
+    INTEGER :: ierr
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+
+    ALLOCATE(id_starts(1:nproc+1))
+
+    start_local = INT(highest_id, i8)
+    CALL MPI_GATHER(start_local, 1, MPI_INTEGER8, id_starts(2), 1, &
+        MPI_INTEGER8, 0, comm, ierr)
+
+    id_starts = n_cpu_bits
+
+    CALL sdf_write_srl(sdf_handle, "id_starts", "id_starts", id_starts, 0)
+
+    DEALLOCATE(id_starts)
+#endif
+
+  END SUBROUTINE write_id_starts
+
+
+
   SUBROUTINE check_name_length(shorten, string)
 
     CHARACTER(LEN=*), INTENT(IN) :: shorten, string
