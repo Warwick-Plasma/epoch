@@ -173,9 +173,9 @@ CONTAINS
     IF (n_cpu_bits == 0) THEN
       n_cpu_bits = n_cpu_bits_calc
 #ifdef PARTICLE_ID4
-      n_cpu_bits = MAX(n_cpu_bits, 8_i8)
+      n_cpu_bits = MAX(n_cpu_bits, 8)
 #else
-      n_cpu_bits = MAX(n_cpu_bits, 12_i8)
+      n_cpu_bits = MAX(n_cpu_bits, 12)
 #endif
     END IF
     highest_id = 1
@@ -1414,7 +1414,7 @@ CONTAINS
       CALL sdf_read_array_info(sdf_handle, dims)
       ALLOCATE(values(dims(1)))
       CALL sdf_read_srl(sdf_handle, values)
-      n_cpu_bits = MAX(n_cpu_bits, values(1))
+      n_cpu_bits = MAX(n_cpu_bits, INT(values(1)))
       CALL setup_ids
       highest_id = values(rank + 2)
       DEALLOCATE(values)
