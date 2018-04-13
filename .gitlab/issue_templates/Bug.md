@@ -5,7 +5,7 @@ Before opening a new issue, make sure to search for keywords in the issues
 filtered by the "possible bug or "confirmed bug" label and verify the issue
 you're about to submit isn't a duplicate.
 
-See https://cfsa-pmw.warwick.ac.uk:1731/index.php/Issue_tracking for more
+See https://cfsa-pmw.warwick.ac.uk/mediawiki/index.php/Issue_tracking for more
 information on opening a bug report.
 --->
 
