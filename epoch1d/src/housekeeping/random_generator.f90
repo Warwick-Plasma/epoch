@@ -18,8 +18,16 @@ MODULE random_generator
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: random, random_init, get_random_state, set_random_state
-  PUBLIC :: random_box_muller
-  INTEGER :: x = 123456789, y = 362436069, z = 521288629, w = 916191069
+  PUBLIC :: random_box_muller, random_state_type
+
+  TYPE :: random_state_type
+    INTEGER :: x = 123456789
+    INTEGER :: y = 362436069
+    INTEGER :: z = 521288629
+    INTEGER :: w = 916191069
+  END TYPE random_state_type
+
+  TYPE(random_state_type), TARGET, SAVE :: global_random
 
 CONTAINS
 
@@ -30,25 +38,36 @@ CONTAINS
   !     period 597273182964842497>2^59
   ! Overall period>2^123;  Default seeds x,y,z,w.
   ! Set your own seeds with random_init(ix,iy,iz,iw).
-  FUNCTION random()
+  FUNCTION random(state)
 
     DOUBLE PRECISION :: random
+    TYPE(random_state_type), INTENT(INOUT), OPTIONAL, TARGET :: state
     INTEGER :: kiss, a1, b1, a2, b2, a3, b3
+    TYPE(random_state_type), POINTER :: current_state
 
-    x = 69069 * x + 1327217885
+    IF (PRESENT(state)) THEN
+      current_state => state
+    ELSE
+      current_state => global_random
+    END IF
 
-    a1 = y
+    current_state%x = 69069 * current_state%x + 1327217885
+
+    a1 = current_state%y
     b1 = 13
     a2 = IEOR(a1, ISHFT(a1, b1))
     b2 = -17
     a3 = IEOR(a2, ISHFT(a2, b2))
     b3 = 5
-    y  = IEOR(a3, ISHFT(a3, b3))
+    current_state%y  = IEOR(a3, ISHFT(a3, b3))
 
-    z = 18000 * IAND(z, 65535) + ISHFT(z, - 16)
-    w = 30903 * IAND(w, 65535) + ISHFT(w, - 16)
+    current_state%z = 18000 * IAND(current_state%z, 65535) &
+        + ISHFT(current_state%z, - 16)
+    current_state%w = 30903 * IAND(current_state%w, 65535) &
+        + ISHFT(current_state%w, - 16)
 
-    kiss = x + y + ISHFT(z, 16) + w
+    kiss = current_state%x + current_state%y + ISHFT(current_state%z, 16) &
+        + current_state%w
 
     random = (DBLE(kiss) + 2147483648.d0) / 4294967296.d0
 
@@ -56,30 +75,39 @@ CONTAINS
 
 
 
-  SUBROUTINE random_init(seed)
+  SUBROUTINE random_init(seed, state)
 
     INTEGER, INTENT(IN) :: seed
+    TYPE(random_state_type), INTENT(INOUT), OPTIONAL, TARGET :: state
+    TYPE(random_state_type), POINTER :: current_state
     INTEGER :: i
     DOUBLE PRECISION :: dummy
 
-    x = x + seed
-    y = y + seed
-    z = z + seed
-    w = w + seed
+    IF (PRESENT(state)) THEN
+      current_state => state
+    ELSE
+      current_state => global_random
+    END IF
+
+    current_state%x = current_state%x + seed
+    current_state%y = current_state%y + seed
+    current_state%z = current_state%z + seed
+    current_state%w = current_state%w + seed
 
     ! 'Warm-up' the generator by cycling through a few times
     DO i = 1, 1000
-      dummy = random()
+      dummy = random(state)
     ENDDO
 
   END SUBROUTINE random_init
 
 
 
-  FUNCTION random_box_muller(stdev, mu)
+  FUNCTION random_box_muller(stdev, mu, state)
 
     DOUBLE PRECISION, INTENT(IN) :: stdev
     DOUBLE PRECISION, INTENT(IN), OPTIONAL :: mu
+    TYPE(random_state_type), INTENT(INOUT), TARGET, OPTIONAL :: state
     DOUBLE PRECISION :: random_box_muller
 
     DOUBLE PRECISION :: rand1, rand2, w, mu_val
@@ -103,8 +131,8 @@ CONTAINS
       cached = .TRUE.
 
       DO
-        rand1 = random()
-        rand2 = random()
+        rand1 = random(state)
+        rand2 = random(state)
 
         rand1 = 2.0D0 * rand1 - 1.0D0
         rand2 = 2.0D0 * rand2 - 1.0D0
@@ -128,10 +156,10 @@ CONTAINS
 
     INTEGER, INTENT(OUT) :: state(:)
 
-    state(1) = x
-    state(2) = y
-    state(3) = z
-    state(4) = w
+    state(1) = global_random%x
+    state(2) = global_random%y
+    state(3) = global_random%z
+    state(4) = global_random%w
 
   END SUBROUTINE get_random_state
 
@@ -141,10 +169,10 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: state(:)
 
-    x = state(1)
-    y = state(2)
-    z = state(3)
-    w = state(4)
+    global_random%x = state(1)
+    global_random%y = state(2)
+    global_random%z = state(3)
+    global_random%w = state(4)
 
   END SUBROUTINE set_random_state
 

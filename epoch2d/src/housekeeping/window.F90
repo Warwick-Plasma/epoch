@@ -112,6 +112,18 @@ CONTAINS
     CALL shift_field(jy, jng)
     CALL shift_field(jz, jng)
 
+    IF (cpml_boundaries) THEN
+      CALL shift_field(cpml_psi_eyx, ng)
+      CALL shift_field(cpml_psi_ezx, ng)
+      CALL shift_field(cpml_psi_byx, ng)
+      CALL shift_field(cpml_psi_bzx, ng)
+
+      CALL shift_field(cpml_psi_exy, ng)
+      CALL shift_field(cpml_psi_ezy, ng)
+      CALL shift_field(cpml_psi_bxy, ng)
+      CALL shift_field(cpml_psi_bzy, ng)
+    ENDIF
+
     IF (x_max_boundary) THEN
       DO j = 1-ng, ny+ng
         ! Fix incoming field cell.
@@ -129,6 +141,20 @@ CONTAINS
         by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
         bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
       ENDDO
+
+      IF (cpml_boundaries) THEN
+        DO j = 1-ng, ny+ng
+          cpml_psi_eyx(nx:nx+1,j) = cpml_psi_eyx(nx,j)
+          cpml_psi_ezx(nx:nx+1,j) = cpml_psi_ezx(nx,j)
+          cpml_psi_byx(nx:nx+1,j) = cpml_psi_byx(nx,j)
+          cpml_psi_bzx(nx:nx+1,j) = cpml_psi_bzx(nx,j)
+
+          cpml_psi_exy(nx:nx+1,j) = cpml_psi_exy(nx,j)
+          cpml_psi_ezy(nx:nx+1,j) = cpml_psi_ezy(nx,j)
+          cpml_psi_bxy(nx:nx+1,j) = cpml_psi_bxy(nx,j)
+          cpml_psi_bzy(nx:nx+1,j) = cpml_psi_bzy(nx,j)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE shift_fields
@@ -301,7 +327,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
-    INTEGER :: window_shift_cells
+    INTEGER :: window_shift_cells, errcode
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -319,6 +345,7 @@ CONTAINS
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
+      IF (use_window_stack) window_v_x = evaluate(window_v_x_stack, errcode)
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once

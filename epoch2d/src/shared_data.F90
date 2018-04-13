@@ -47,6 +47,7 @@ MODULE constants
   INTEGER, PARAMETER :: stdout = 6
   INTEGER, PARAMETER :: du = 40
   INTEGER, PARAMETER :: lu = 41
+  INTEGER, PARAMETER :: duc = 42
 #ifdef NO_IO
   INTEGER, PARAMETER :: io_units(1) = (/ stdout /)
 #else
@@ -993,6 +994,8 @@ MODULE shared_data
   ! Moving window
   !----------------------------------------------------------------------------
   LOGICAL :: move_window, inject_particles
+  TYPE(primitive_stack), SAVE :: window_v_x_stack
+  LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
   REAL(num) :: window_start_time
   INTEGER :: bc_x_min_after_move

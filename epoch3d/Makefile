@@ -13,15 +13,29 @@
 
 ifeq ($(strip $(COMPILER)),)
   MAKECMDGOALS = error
+  CMP_GUESS = $(shell ../scripts/infer_compiler.sh)
 error:
 	@echo '*** ERROR ***'
 	@echo 'You MUST set a value for the COMPILER variable'
-	@echo ' eg. "make COMPILER=intel"'
-	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
+	@printf " *?* It looks like you're using "
+	@printf $(CMP_GUESS)
+	@echo " *?*"
+	@printf ' so try "make COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '"'
+	@printf 'Alternatively, you can add "export COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '" to $$HOME/.bashrc'
 	@exit 1
 endif
 
 D = -D
+
+ifeq ($(strip $(COMPILER)), auto)
+  override COMPILER := $(shell ../scripts/infer_compiler.sh)
+  NEWMAKEFLAGS := "$(filter-out COMPILER=auto, $(MAKEFLAGS))"
+  $(warning Inferred compiler as $(COMPILER))
+endif
 
 # PGI
 # ===
@@ -121,9 +135,9 @@ ifeq ($(strip $(COMPILER)),ibm)
   D = -WF,-D
 endif
 
-# HECToR
+# ARCHER (also works for HECToR)
 # ========
-ifeq ($(strip $(COMPILER)),hector)
+ifeq ($(strip $(COMPILER)),archer)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
@@ -340,7 +354,7 @@ epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
 	$(FC) -c $(FFLAGS) $(INFO_FLAGS) -o $(OBJDIR)/$@ $<
 
 $(SDFMOD):
-	$(MAKE) -C $(SDF)
+	$(MAKE) MAKEFLAGS=$(NEWMAKEFLAGS) COMPILER=$(COMPILER) -C $(SDF)
 
 rm:
 	@rm -rf $(BINDIR) $(OBJDIR)
