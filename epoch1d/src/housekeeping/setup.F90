@@ -970,6 +970,11 @@ CONTAINS
           IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)

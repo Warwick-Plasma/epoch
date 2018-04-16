@@ -1128,6 +1128,17 @@ CONTAINS
             y_max = extents(c_ndims+2)
             z_min = extents(3)
             z_max = extents(c_ndims+3)
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+            dy = (y_max - y_min) / ny_global
+            y_min = y_min + dy * cpml_thickness
+            y_max = y_max - dy * cpml_thickness
+            dz = (z_max - z_min) / nz_global
+            z_min = z_min + dz * cpml_thickness
+            z_max = z_max - dz * cpml_thickness
+
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)
