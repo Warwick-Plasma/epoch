@@ -77,7 +77,8 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
-    IF (boundary == c_bc_other) boundary = c_bc_reflect
+    IF (boundary == c_bc_other .OR. boundary == c_bc_conduct) &
+        boundary = c_bc_reflect
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
     ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
