@@ -42,6 +42,8 @@ MODULE setup
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
+  LOGICAL :: got_x_grid_min = .FALSE.
+  REAL(num) :: x_grid_min_val
 
 CONTAINS
 
@@ -158,6 +160,8 @@ CONTAINS
 
     xb_min = x_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
+
+    IF (got_x_grid_min) x_grid_min = x_grid_min_val
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -940,6 +944,9 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_from_restart)
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
+        ELSE IF (str_cmp(block_id, 'x_grid_min')) THEN
+          got_x_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, x_grid_min_val)
         ELSE IF (block_id(1:7) == 'weight/') THEN
           CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies == 0) CYClE
