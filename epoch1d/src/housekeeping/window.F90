@@ -56,7 +56,8 @@ CONTAINS
   SUBROUTINE shift_window(window_shift_cells)
 
     INTEGER, INTENT(IN) :: window_shift_cells
-    INTEGER :: iwindow
+    INTEGER :: iwindow, ix, iproc
+    REAL(num) :: xb_min
 
     ! Shift the window round one cell at a time.
     ! Inefficient, but it works
@@ -64,20 +65,31 @@ CONTAINS
       CALL insert_particles
 
       ! Shift the box around
-      x_grid_min = x_grid_min + dx
-      x_grid_max = x_grid_max + dx
-      x_grid_mins = x_grid_mins + dx
-      x_grid_maxs = x_grid_maxs + dx
-      x_grid_min_local = x_grid_min_local + dx
-      x_grid_max_local = x_grid_max_local + dx
-      x_min = x_min + dx
-      x_max = x_max + dx
-      x_min_local = x_min_local + dx
-      x_max_local = x_max_local + dx
+      x_grid_min = x_global(1) + dx
+      xb_min = xb_global(1) + dx
+      x_min = xb_min + dx * cpml_thickness
 
-      x = x + dx
-      x_global = x_global + dx
-      xb_global = xb_global + dx
+      ! Setup global grid
+      DO ix = 1-ng, nx_global + ng
+        x_global(ix) = x_grid_min + (ix - 1) * dx
+        xb_global(ix) = xb_min + (ix - 1) * dx
+      ENDDO
+      x_grid_max = x_global(nx_global)
+      x_max = xb_global(nx_global+1) - dx * cpml_thickness
+
+      DO iproc = 0, nprocx-1
+        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      ENDDO
+
+      x_grid_min_local = x_grid_mins(x_coords)
+      x_grid_max_local = x_grid_maxs(x_coords)
+
+      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
       CALL remove_particles
 

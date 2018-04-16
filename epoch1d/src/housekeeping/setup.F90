@@ -42,6 +42,8 @@ MODULE setup
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
+  LOGICAL :: got_x_grid_min = .FALSE.
+  REAL(num) :: x_grid_min_val
 
 CONTAINS
 
@@ -152,14 +154,14 @@ CONTAINS
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
     x_grid_min = x_min - dx * cpml_thickness
-    x_grid_max = x_max + dx * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
 
     xb_min = x_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
-    x_grid_max = x_grid_max - dx / 2.0_num
+
+    IF (got_x_grid_min) x_grid_min = x_grid_min_val
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -167,6 +169,7 @@ CONTAINS
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
+    x_grid_max = x_global(nx_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
@@ -941,6 +944,9 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_from_restart)
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
+        ELSE IF (str_cmp(block_id, 'x_grid_min')) THEN
+          got_x_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, x_grid_min_val)
         ELSE IF (block_id(1:7) == 'weight/') THEN
           CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies == 0) CYClE
@@ -970,6 +976,11 @@ CONTAINS
           IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)

@@ -42,6 +42,12 @@ MODULE setup
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
+  LOGICAL :: got_x_grid_min = .FALSE.
+  LOGICAL :: got_y_grid_min = .FALSE.
+  LOGICAL :: got_z_grid_min = .FALSE.
+  REAL(num) :: x_grid_min_val
+  REAL(num) :: y_grid_min_val
+  REAL(num) :: z_grid_min_val
 
 CONTAINS
 
@@ -164,17 +170,14 @@ CONTAINS
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
     x_grid_min = x_min - dx * cpml_thickness
-    x_grid_max = x_max + dx * cpml_thickness
 
     length_y = y_max - y_min
     dy = length_y / REAL(ny_global-2*cpml_thickness, num)
     y_grid_min = y_min - dy * cpml_thickness
-    y_grid_max = y_max + dy * cpml_thickness
 
     length_z = z_max - z_min
     dz = length_z / REAL(nz_global-2*cpml_thickness, num)
     z_grid_min = z_min - dz * cpml_thickness
-    z_grid_max = z_max + dz * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -183,11 +186,12 @@ CONTAINS
     yb_min = y_grid_min
     zb_min = z_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
-    x_grid_max = x_grid_max - dx / 2.0_num
     y_grid_min = y_grid_min + dy / 2.0_num
-    y_grid_max = y_grid_max - dy / 2.0_num
     z_grid_min = z_grid_min + dz / 2.0_num
-    z_grid_max = z_grid_max - dz / 2.0_num
+
+    IF (got_x_grid_min) x_grid_min = x_grid_min_val
+    IF (got_y_grid_min) y_grid_min = y_grid_min_val
+    IF (got_z_grid_min) z_grid_min = z_grid_min_val
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -195,16 +199,21 @@ CONTAINS
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
+    x_grid_max = x_global(nx_global)
+
     DO iy = 1-ng, ny_global + ng
       y_global(iy) = y_grid_min + (iy - 1) * dy
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
+    y_grid_max = y_global(ny_global)
+
     DO iz = 1-ng, nz_global + ng
       z_global(iz) = z_grid_min + (iz - 1) * dz
       zb_global(iz) = zb_min + (iz - 1) * dz
       zb_offset_global(iz) = zb_global(iz)
     ENDDO
+    z_grid_max = z_global(nz_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
@@ -1095,6 +1104,15 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_from_restart)
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
+        ELSE IF (str_cmp(block_id, 'x_grid_min')) THEN
+          got_x_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, x_grid_min_val)
+        ELSE IF (str_cmp(block_id, 'y_grid_min')) THEN
+          got_y_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, y_grid_min_val)
+        ELSE IF (str_cmp(block_id, 'z_grid_min')) THEN
+          got_z_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, z_grid_min_val)
         ELSE IF (block_id(1:7) == 'weight/') THEN
           CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies == 0) CYClE
@@ -1128,6 +1146,17 @@ CONTAINS
             y_max = extents(c_ndims+2)
             z_min = extents(3)
             z_max = extents(c_ndims+3)
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+            dy = (y_max - y_min) / ny_global
+            y_min = y_min + dy * cpml_thickness
+            y_max = y_max - dy * cpml_thickness
+            dz = (z_max - z_min) / nz_global
+            z_min = z_min + dz * cpml_thickness
+            z_max = z_max - dz * cpml_thickness
+
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)

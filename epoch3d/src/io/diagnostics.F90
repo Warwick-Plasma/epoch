@@ -257,6 +257,8 @@ CONTAINS
           CALL sdf_write_srl(sdf_handle, 'window_shift_fraction', &
               'Window Shift Fraction', window_shift_fraction)
         ENDIF
+        CALL sdf_write_srl(sdf_handle, 'x_grid_min', &
+            'Minimum grid position', x_grid_min)
 
         CALL write_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
             'laser_x_min_phase')
