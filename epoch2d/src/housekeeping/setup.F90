@@ -158,12 +158,10 @@ CONTAINS
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
     x_grid_min = x_min - dx * cpml_thickness
-    x_grid_max = x_max + dx * cpml_thickness
 
     length_y = y_max - y_min
     dy = length_y / REAL(ny_global-2*cpml_thickness, num)
     y_grid_min = y_min - dy * cpml_thickness
-    y_grid_max = y_max + dy * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -171,9 +169,7 @@ CONTAINS
     xb_min = x_grid_min
     yb_min = y_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
-    x_grid_max = x_grid_max - dx / 2.0_num
     y_grid_min = y_grid_min + dy / 2.0_num
-    y_grid_max = y_grid_max - dy / 2.0_num
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -181,11 +177,14 @@ CONTAINS
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
+    x_grid_max = x_global(nx_global)
+
     DO iy = 1-ng, ny_global + ng
       y_global(iy) = y_grid_min + (iy - 1) * dy
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
+    y_grid_max = y_global(ny_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
