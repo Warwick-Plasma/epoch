@@ -139,16 +139,18 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    CHARACTER(LEN=22) :: filename_fmt
+    CHARACTER(LEN=22) :: filename_fmt, str
     INTEGER :: io, iu
 
     IF (n_zeros_control > 0) THEN
-      IF (n_zeros_control < 4) THEN
+      IF (n_zeros_control < n_zeros) THEN
         IF (rank == 0) THEN
+          CALL integer_as_string(n_zeros, str)
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'n_zeros was less than 4 and has been ignored'
+            WRITE(io,*) 'n_zeros was less than ', TRIM(str), &
+                        ' and has been ignored'
           ENDDO
         ENDIF
         n_zeros_control = -1
