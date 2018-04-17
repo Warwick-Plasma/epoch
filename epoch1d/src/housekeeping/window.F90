@@ -226,7 +226,7 @@ CONTAINS
         ENDDO
 
         current%weight = density * dx &
-            / species_list(ispecies)%npart_per_cell
+            / (species_list(ispecies)%npart_per_cell + 1 - n0)
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank
