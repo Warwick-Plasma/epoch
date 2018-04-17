@@ -112,6 +112,10 @@ CONTAINS
     REAL(num) :: time_orig
     INTEGER, ALLOCATABLE :: file_numbers_orig(:)
     TYPE(io_block_type), POINTER :: io_block_orig(:)
+    INTEGER :: ndt
+    INTEGER(i8) :: istep, step_interval
+    REAL(num) :: time_start, time0, time1, dt_interval
+    REAL(num), PARAMETER :: total_time = 30.0_num
 
 #ifdef NO_IO
     RETURN
@@ -137,9 +141,15 @@ CONTAINS
     step_orig = step
     time_orig = time
 
+    time0 = MPI_WTIME()
+    time_start = time0
+    istep = 0
+    step_interval = 100
+    ndt = 10
+
     IF (.NOT.ic_from_restart) CALL test_output
 
-    DO i = 1, 100000000
+    DO
       step = step + 1
       time = time + dt / 2.0_num
 
@@ -147,6 +157,19 @@ CONTAINS
 
       CALL test_output
       time = time + dt / 2.0_num
+
+      istep = istep + 1
+      IF (istep == step_interval) THEN
+        time1 = MPI_WTIME()
+        dt_interval = (total_time + time_start - time1) / ndt
+        ndt = ndt - 1
+        step_interval = INT(step_interval * dt_interval / (time1 - time0), i8)
+        IF (step_interval < 0 .OR. time1 - time_start >= total_time) THEN
+          EXIT
+        ENDIF
+        time0 = time1
+        istep = 0
+      ENDIF
     ENDDO
 
     CALL test_output
