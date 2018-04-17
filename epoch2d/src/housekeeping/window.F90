@@ -33,9 +33,9 @@ CONTAINS
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(1-ng:ny+ng))
-    ALLOCATE(temperature(1-ng:ny+ng, 1:3))
-    ALLOCATE(drift(1-ng:ny+ng, 1:3))
+    ALLOCATE(density(0:ny+1))
+    ALLOCATE(temperature(0:ny+1, 1:3))
+    ALLOCATE(drift(0:ny+1, 1:3))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -210,11 +210,11 @@ CONTAINS
     IF (.NOT.x_max_boundary) RETURN
 
     IF (nproc > 1) THEN
-      IF (SIZE(density) /= ny+6) THEN
+      IF (SIZE(density) /= ny+2) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(1-ng:ny+ng))
-        ALLOCATE(temperature(1-ng:ny+ng, 1:3))
-        ALLOCATE(drift(1-ng:ny+ng, 1:3))
+        ALLOCATE(density(0:ny+1))
+        ALLOCATE(temperature(0:ny+1, 1:3))
+        ALLOCATE(drift(0:ny+1, 1:3))
       ENDIF
     ENDIF
 
@@ -232,7 +232,7 @@ CONTAINS
 
       parameters%pack_ix = nx
       DO i = 1, 3
-        DO iy = 1-ng, ny+ng
+        DO iy = 0, ny+1
           parameters%pack_iy = iy
           temperature(iy,i) = evaluate_with_parameters( &
               species_list(ispecies)%temperature_function(i), &
@@ -241,7 +241,7 @@ CONTAINS
               species_list(ispecies)%drift_function(i), parameters, errcode)
         ENDDO
       ENDDO
-      DO iy = 1-ng, ny+ng
+      DO iy = 0, ny+1
         parameters%pack_iy = iy
         density(iy) = evaluate_with_parameters( &
             species_list(ispecies)%density_function, parameters, errcode)
