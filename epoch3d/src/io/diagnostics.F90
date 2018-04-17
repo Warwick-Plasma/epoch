@@ -37,7 +37,7 @@ MODULE diagnostics
 
   PUBLIC :: output_routines, create_full_timestring
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
-  PUBLIC :: deallocate_file_list
+  PUBLIC :: deallocate_file_list, count_n_zeros
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
@@ -81,6 +81,98 @@ MODULE diagnostics
   END INTERFACE write_particle_variable
 
 CONTAINS
+
+  SUBROUTINE test_output
+
+    INTEGER :: iprefix
+    INTEGER, SAVE :: nstep_prev = -1
+    LOGICAL :: force, print_arrays
+
+    force = .FALSE.
+    IF (step == nstep_prev) RETURN
+
+    DO iprefix = 1,SIZE(file_prefixes)
+      CALL io_test(iprefix, step, print_arrays, force, prefix_first_call)
+
+      IF (.NOT.print_arrays) CYCLE
+      nstep_prev = step
+
+      file_numbers(iprefix) = file_numbers(iprefix) + 1
+    ENDDO
+
+  END SUBROUTINE test_output
+
+
+
+  SUBROUTINE count_n_zeros
+
+    USE deck_io_block
+
+    INTEGER :: i, step_orig, n_dumps
+    REAL(num) :: time_orig
+    INTEGER, ALLOCATABLE :: file_numbers_orig(:)
+    TYPE(io_block_type), POINTER :: io_block_orig(:)
+
+#ifdef NO_IO
+    RETURN
+#endif
+
+    IF (n_io_blocks <= 0) RETURN
+
+    ALLOCATE(file_list(n_io_blocks+2))
+    ALLOCATE(prefix_first_call(SIZE(file_prefixes)))
+    ALLOCATE(file_numbers_orig(SIZE(file_prefixes)))
+    ALLOCATE(io_block_orig(n_io_blocks))
+
+    file_numbers_orig(:) = file_numbers(:)
+    prefix_first_call = .TRUE.
+    DO i = 1,n_io_blocks+2
+      file_list(i)%count = 0
+    ENDDO
+
+    DO i = 1,n_io_blocks
+      CALL copy_io_block(io_block_list(i), io_block_orig(i))
+    ENDDO
+
+    step_orig = step
+    time_orig = time
+
+    IF (.NOT.ic_from_restart) CALL test_output
+
+    DO i = 1, 100000000
+      step = step + 1
+      time = time + dt / 2.0_num
+
+      IF ((step >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end)) EXIT
+
+      CALL test_output
+      time = time + dt / 2.0_num
+    ENDDO
+
+    CALL test_output
+
+    n_dumps = 0
+    step = step_orig
+    time = time_orig
+    DO i = 1,n_io_blocks
+      CALL copy_io_block(io_block_orig(i), io_block_list(i))
+      IF (file_numbers(i) > n_dumps) n_dumps = file_numbers(i)
+      file_numbers(i) = file_numbers_orig(i)
+    ENDDO
+
+    DEALLOCATE(file_list)
+    DEALLOCATE(prefix_first_call)
+    DEALLOCATE(io_block_orig)
+    DEALLOCATE(file_numbers_orig)
+
+    IF (n_dumps > 1) THEN
+      n_dumps = n_dumps - 1
+      n_zeros = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
+    ENDIF
+
+  END SUBROUTINE count_n_zeros
+
+
 
   SUBROUTINE output_routines(step, force_write)   ! step = step index
 

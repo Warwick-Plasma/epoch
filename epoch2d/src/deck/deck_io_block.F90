@@ -25,7 +25,7 @@ MODULE deck_io_block
   PRIVATE
   PUBLIC :: io_deck_initialise, io_deck_finalise
   PUBLIC :: io_block_start, io_block_end
-  PUBLIC :: io_block_handle_element, io_block_check
+  PUBLIC :: io_block_handle_element, io_block_check, copy_io_block
 
   INTEGER, PARAMETER :: ov = 29
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
@@ -853,6 +853,22 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE init_io_block
+
+
+
+  SUBROUTINE copy_io_block(io_block, io_block_copy)
+
+    TYPE(io_block_type) :: io_block, io_block_copy
+    INTEGER :: i
+
+    io_block_copy = io_block
+    NULLIFY(io_block%dump_at_nsteps)
+    NULLIFY(io_block%dump_at_times)
+    DO i = 1, num_vars_to_dump
+      io_block_copy%averaged_data(i) = io_block%averaged_data(i)
+    ENDDO
+
+  END SUBROUTINE copy_io_block
 
 
 
