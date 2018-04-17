@@ -198,11 +198,10 @@ CONTAINS
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, isuby
     INTEGER(i8) :: ipart, npart_per_cell, n0
-    REAL(num) :: cell_y_r, cell_frac_y, cy2
-    INTEGER :: cell_y
+    REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local
+    REAL(num) :: weight_local, x0
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -252,6 +251,7 @@ CONTAINS
         ENDIF
       ENDDO
 
+      x0 = x_grid_max + 0.5_num * dx
       DO iy = 1, ny
         IF (density(iy) &
                 < species_list(ispecies)%initial_conditions%density_min) THEN
@@ -263,15 +263,11 @@ CONTAINS
             IF (npart_frac < random()) CYCLE
           ENDIF
           CALL create_particle(current)
-          current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
-          current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+          cell_frac_y = 0.5_num - random()
+          current%part_pos(1) = x0 + random() * dx
+          current%part_pos(2) = y(iy) - cell_frac_y * dy
 
           ! Always use the triangle particle weighting for simplicity
-          cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
-          cell_y = FLOOR(cell_y_r + 0.5_num)
-          cell_frac_y = REAL(cell_y, num) - cell_y_r
-          cell_y = cell_y + 1
-
           cy2 = cell_frac_y**2
           gy(-1) = 0.5_num * (0.25_num + cy2 + cell_frac_y)
           gy( 0) = 0.75_num - cy2
@@ -281,8 +277,8 @@ CONTAINS
             temp_local = 0.0_num
             drift_local = 0.0_num
             DO isuby = -1, 1
-              temp_local = temp_local + gy(isuby) * temperature(cell_y+isuby, i)
-              drift_local = drift_local + gy(isuby) * drift(cell_y+isuby, i)
+              temp_local = temp_local + gy(isuby) * temperature(iy+isuby, i)
+              drift_local = drift_local + gy(isuby) * drift(iy+isuby, i)
             ENDDO
             current%part_p(i) = momentum_from_temperature(&
                 species_list(ispecies)%mass, temp_local, drift_local)
@@ -290,10 +286,10 @@ CONTAINS
 
           weight_local = 0.0_num
           DO isuby = -1, 1
-            weight_local = weight_local + gy(isuby) * dx * dy &
-                / species_list(ispecies)%npart_per_cell * density(cell_y+isuby)
+            weight_local = weight_local + gy(isuby) * density(iy+isuby)
           ENDDO
-          current%weight = weight_local
+          current%weight = weight_local * dx * dy &
+              / species_list(ispecies)%npart_per_cell
 #ifdef PARTICLE_DEBUG
           current%processor = rank
           current%processor_at_t0 = rank
