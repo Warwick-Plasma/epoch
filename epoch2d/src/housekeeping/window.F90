@@ -25,6 +25,8 @@ MODULE window
   LOGICAL, SAVE :: window_started
   REAL(num), ALLOCATABLE :: density(:), temperature(:,:), drift(:,:)
   REAL(num), SAVE :: window_shift_fraction
+  INTEGER(i8), ALLOCATABLE :: indices(:)
+  LOGICAL, ALLOCATABLE :: got_index(:)
 
 CONTAINS
 
@@ -36,6 +38,8 @@ CONTAINS
     ALLOCATE(density(0:ny+1))
     ALLOCATE(temperature(0:ny+1, 1:3))
     ALLOCATE(drift(0:ny+1, 1:3))
+    ALLOCATE(indices(ny))
+    ALLOCATE(got_index(ny))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -54,6 +58,8 @@ CONTAINS
     IF (ALLOCATED(density)) DEALLOCATE(density)
     IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
     IF (ALLOCATED(drift)) DEALLOCATE(drift)
+    IF (ALLOCATED(indices)) DEALLOCATE(indices)
+    IF (ALLOCATED(got_index)) DEALLOCATE(got_index)
 
   END SUBROUTINE deallocate_window
 
@@ -197,7 +203,8 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, isuby
-    INTEGER(i8) :: ipart, npart_per_cell, n0
+    INTEGER(i8) :: ipart, icell, npart_per_cell, n0, npart_left
+    INTEGER(i8) :: cell_index, next_index, idx
     REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: temp_local, drift_local, npart_frac
@@ -215,6 +222,8 @@ CONTAINS
         ALLOCATE(density(0:ny+1))
         ALLOCATE(temperature(0:ny+1, 1:3))
         ALLOCATE(drift(0:ny+1, 1:3))
+        ALLOCATE(indices(ny))
+        ALLOCATE(got_index(ny))
       ENDIF
     ENDIF
 
@@ -224,11 +233,7 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac > 0) THEN
-        n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
+      npart_left = INT(ny * npart_frac)
 
       parameters%pack_ix = nx
       DO i = 1, 3
@@ -251,17 +256,49 @@ CONTAINS
         ENDIF
       ENDDO
 
+      DO icell = 1, ny
+        got_index(icell) = .FALSE.
+        indices(icell) = icell
+      ENDDO
+
+      next_index = ny
+      DO icell = 1, npart_left
+        cell_index = INT(random() * (next_index - 1)) + 1
+        idx = indices(cell_index)
+        indices(cell_index:next_index-1) = indices(cell_index+1:next_index)
+        got_index(idx) = .TRUE.
+        next_index = next_index - 1
+      ENDDO
+
+      idx = 1
+      DO icell = 1, ny
+        IF (got_index(icell)) THEN
+          indices(idx) = icell
+          idx = idx + 1
+        ENDIF
+      ENDDO
+
+      idx = 1
+      cell_index = 0
+      next_index = indices(idx)
       x0 = x_grid_max + 0.5_num * dx
       DO iy = 1, ny
+        cell_index = cell_index + 1
+        IF (cell_index == next_index) THEN
+          n0 = 0
+          idx = idx + 1
+          next_index = indices(idx)
+        ELSE
+          n0 = 1
+        ENDIF
+
         IF (density(iy) &
                 < species_list(ispecies)%initial_conditions%density_min) THEN
           CYCLE
         ENDIF
+
         DO ipart = n0, npart_per_cell
           ! Place extra particle based on probability
-          IF (ipart == 0) THEN
-            IF (npart_frac < random()) CYCLE
-          ENDIF
           CALL create_particle(current)
           cell_frac_y = 0.5_num - random()
           current%part_pos(1) = x0 + random() * dx
@@ -288,6 +325,7 @@ CONTAINS
           DO isuby = -1, 1
             weight_local = weight_local + gy(isuby) * density(iy+isuby)
           ENDDO
+
           current%weight = weight_local * dx * dy &
               / species_list(ispecies)%npart_per_cell
 #ifdef PARTICLE_DEBUG
