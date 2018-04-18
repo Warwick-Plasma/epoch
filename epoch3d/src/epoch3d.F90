@@ -224,16 +224,8 @@ PROGRAM pic
 
     CALL moving_window
 
-    ! This section ensures that the particle count for the species_list
-    ! objects is accurate. This makes some things easier, but increases
-    ! communication
 #ifdef PARTICLE_COUNT_UPDATE
-    DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
-          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
-          comm, errcode)
-      species_list(ispecies)%count_update_step = step
-    ENDDO
+    CALL update_particle_count
 #endif
   ENDDO
 
