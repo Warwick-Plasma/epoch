@@ -105,9 +105,6 @@ CONTAINS
 #ifdef PER_SPECIES_WEIGHT
     found = .TRUE.
 #endif
-#ifdef PARTICLE_COUNT_UPDATE
-    found = .TRUE.
-#endif
 #ifdef NO_TRACER_PARTICLES
     found = .TRUE.
 #endif
@@ -175,10 +172,6 @@ CONTAINS
     WRITE(*,*) 'Per species weighting -DPER_SPECIES_WEIGHT'
 #else
     defines = IOR(defines, c_def_per_particle_weight)
-#endif
-#ifdef PARTICLE_COUNT_UPDATE
-    defines = IOR(defines, c_def_particle_count_update)
-    WRITE(*,*) 'Global particle counting -DPARTICLE_COUNT_UPDATE'
 #endif
 #ifdef NO_TRACER_PARTICLES
     WRITE(*,*) 'No tracer particle support -DNO_TRACER_PARTICLES'
