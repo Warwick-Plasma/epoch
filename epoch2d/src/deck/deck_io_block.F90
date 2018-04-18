@@ -175,7 +175,7 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: i, io, iu, n_zeros_estimate
+    INTEGER :: i, io, iu, n_zeros_estimate, n_dumps
     REAL(num) :: dumps
 #ifndef NO_IO
     CHARACTER(LEN=c_max_path_length) :: list_filename
@@ -253,7 +253,15 @@ CONTAINS
           ENDIF
         ENDDO
 
-        n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(dumps)) + 1)
+        n_dumps = FLOOR(dumps)
+
+        IF (io_block%dump_last .AND. dumps - n_dumps > c_tiny) &
+            n_dumps = n_dumps + 1
+
+        IF (.NOT. io_block%dump_first) &
+            n_dumps = n_dumps - 1
+
+        n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
 
         IF (n_zeros_control > 0 .AND. n_zeros_estimate /= n_zeros_control) THEN
           n_zeros = n_zeros_estimate
