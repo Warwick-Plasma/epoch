@@ -178,9 +178,6 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-    IF ((step >= nsteps .AND. nsteps >= 0) &
-        .OR. (time >= t_end) .OR. halt) EXIT
-
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -232,10 +229,14 @@ PROGRAM pic
       CALL update_particle_count
     END IF
 
-    CALL check_for_stop_condition(halt, force_dump)
-    IF (halt) EXIT
     step = step + 1
     time = time + dt / 2.0_num
+
+    CALL check_for_stop_condition(halt, force_dump)
+
+    IF ((step >= nsteps .AND. nsteps >= 0) &
+        .OR. (time >= t_end) .OR. halt) EXIT
+
     CALL output_routines(step)
     time = time + dt / 2.0_num
 
