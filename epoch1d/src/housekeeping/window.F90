@@ -174,6 +174,7 @@ CONTAINS
     INTEGER :: ispecies, i
     INTEGER(i8) :: ipart, npart_per_cell, n0
     REAL(num) :: temp_local, drift_local, npart_frac
+    REAL(num) :: x0
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -187,11 +188,6 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac > 0) THEN
-        n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
 
       parameters%pack_ix = nx
       DO i = 1, 3
@@ -206,15 +202,21 @@ CONTAINS
         density = species_list(ispecies)%initial_conditions%density_max
       ENDIF
 
-      IF (density < species_list(ispecies)%initial_conditions%density_min) CYCLE
+      IF (density < species_list(ispecies)%initial_conditions%density_min) THEN
+        CYCLE
+      ENDIF
+
+      x0 = x_grid_max + 0.5_num * dx
+      IF (npart_frac > 0) THEN
+        IF (npart_frac < random()) n0 = 0
+      ELSE
+        n0 = 1
+      ENDIF
 
       DO ipart = n0, npart_per_cell
         ! Place extra particle based on probability
-        IF (ipart == 0) THEN
-          IF (npart_frac < random()) CYCLE
-        ENDIF
         CALL create_particle(current)
-        current%part_pos = x_grid_max + dx + (random() - 0.5_num) * dx
+        current%part_pos = x0 + random() * dx
 
         DO i = 1, 3
           temp_local = temperature(i)
@@ -223,7 +225,8 @@ CONTAINS
               species_list(ispecies)%mass, temp_local, drift_local)
         ENDDO
 
-        current%weight = dx / species_list(ispecies)%npart_per_cell * density
+        current%weight = density * dx &
+            / (species_list(ispecies)%npart_per_cell + 1 - n0)
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank

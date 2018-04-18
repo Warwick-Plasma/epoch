@@ -25,6 +25,8 @@ MODULE window
   LOGICAL, SAVE :: window_started
   REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
   REAL(num), SAVE :: window_shift_fraction
+  INTEGER(i8), ALLOCATABLE :: indices(:)
+  LOGICAL, ALLOCATABLE :: got_index(:)
 
 CONTAINS
 
@@ -33,9 +35,11 @@ CONTAINS
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(1-ng:ny+ng, 1-ng:nz+ng))
-    ALLOCATE(temperature(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
-    ALLOCATE(drift(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
+    ALLOCATE(density(0:ny+1, 0:nz+1))
+    ALLOCATE(temperature(0:ny+1, 0:nz+1, 1:3))
+    ALLOCATE(drift(0:ny+1, 0:nz+1, 1:3))
+    ALLOCATE(indices(ny*nz))
+    ALLOCATE(got_index(ny*nz))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -54,6 +58,8 @@ CONTAINS
     IF (ALLOCATED(density)) DEALLOCATE(density)
     IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
     IF (ALLOCATED(drift)) DEALLOCATE(drift)
+    IF (ALLOCATED(indices)) DEALLOCATE(indices)
+    IF (ALLOCATED(got_index)) DEALLOCATE(got_index)
 
   END SUBROUTINE deallocate_window
 
@@ -213,13 +219,13 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, iz, isuby, isubz
-    INTEGER(i8) :: ipart, npart_per_cell, n0
-    REAL(num) :: cell_y_r, cell_frac_y, cy2
-    REAL(num) :: cell_z_r, cell_frac_z, cz2
-    INTEGER :: cell_y, cell_z
+    INTEGER(i8) :: ipart, icell, npart_per_cell, n0, npart_left
+    INTEGER(i8) :: cell_index, next_index, idx
+    REAL(num) :: cell_frac_y, cy2
+    REAL(num) :: cell_frac_z, cz2
     REAL(num), DIMENSION(-1:1) :: gy, gz
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local
+    REAL(num) :: weight_local, x0
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -228,11 +234,13 @@ CONTAINS
     IF (.NOT.x_max_boundary) RETURN
 
     IF (nproc > 1) THEN
-      IF (SIZE(density,1) /= ny+6 .OR. SIZE(density,2) /= nz+6) THEN
+      IF (SIZE(density,1) /= ny+2 .OR. SIZE(density,2) /= nz+2) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(1-ng:ny+ng, 1-ng:nz+ng))
-        ALLOCATE(temperature(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
-        ALLOCATE(drift(1-ng:ny+ng, 1-ng:nz+ng, 1:3))
+        ALLOCATE(density(0:ny+1, 0:nz+1))
+        ALLOCATE(temperature(0:ny+1, 0:nz+1, 1:3))
+        ALLOCATE(drift(0:ny+1, 0:nz+1, 1:3))
+        ALLOCATE(indices(ny*nz))
+        ALLOCATE(got_index(ny*nz))
       ENDIF
     ENDIF
 
@@ -242,17 +250,13 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac > 0) THEN
-        n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
+      npart_left = INT(ny * nz * npart_frac)
 
       parameters%pack_ix = nx
       DO i = 1, 3
-        DO iz = 1-ng, nz+ng
+        DO iz = 0, nz+1
           parameters%pack_iz = iz
-          DO iy = 1-ng, ny+ng
+          DO iy = 0, ny+1
             parameters%pack_iy = iy
             temperature(iy,iz,i) = evaluate_with_parameters( &
                 species_list(ispecies)%temperature_function(i), &
@@ -262,9 +266,9 @@ CONTAINS
           ENDDO
         ENDDO
       ENDDO
-      DO iz = 1-ng, nz+ng
+      DO iz = 0, nz+1
         parameters%pack_iz = iz
-        DO iy = 1-ng, ny+ng
+        DO iy = 0, ny+1
           parameters%pack_iy = iy
           density(iy,iz) = evaluate_with_parameters( &
               species_list(ispecies)%density_function, parameters, errcode)
@@ -276,33 +280,58 @@ CONTAINS
         ENDDO
       ENDDO
 
+      DO icell = 1, ny * nz
+        got_index(icell) = .FALSE.
+        indices(icell) = icell
+      ENDDO
+
+      next_index = ny * nz
+      DO icell = 1, npart_left
+        cell_index = INT(random() * (next_index - 1)) + 1
+        idx = indices(cell_index)
+        indices(cell_index:next_index-1) = indices(cell_index+1:next_index)
+        got_index(idx) = .TRUE.
+        next_index = next_index - 1
+      ENDDO
+
+      idx = 1
+      DO icell = 1, ny * nz
+        IF (got_index(icell)) THEN
+          indices(idx) = icell
+          idx = idx + 1
+        ENDIF
+      ENDDO
+
+      idx = 1
+      cell_index = 0
+      next_index = indices(idx)
+      x0 = x_grid_max + 0.5_num * dx
       DO iz = 1, nz
         DO iy = 1, ny
+          cell_index = cell_index + 1
+          IF (cell_index == next_index) THEN
+            n0 = 0
+            idx = idx + 1
+            next_index = indices(idx)
+          ELSE
+            n0 = 1
+          ENDIF
+
           IF (density(iy,iz) &
                   < species_list(ispecies)%initial_conditions%density_min) THEN
             CYCLE
           ENDIF
+
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
-            IF (ipart == 0) THEN
-              IF (npart_frac < random()) CYCLE
-            ENDIF
             CALL create_particle(current)
-            current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
-            current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
-            current%part_pos(3) = z(iz) + (random() - 0.5_num) * dz
+            cell_frac_y = 0.5_num - random()
+            cell_frac_z = 0.5_num - random()
+            current%part_pos(1) = x0 + random() * dx
+            current%part_pos(2) = y(iy) - cell_frac_y * dy
+            current%part_pos(3) = z(iz) - cell_frac_z * dz
 
             ! Always use the triangle particle weighting for simplicity
-            cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
-            cell_y = FLOOR(cell_y_r + 0.5_num)
-            cell_frac_y = REAL(cell_y, num) - cell_y_r
-            cell_y = cell_y + 1
-
-            cell_z_r = (current%part_pos(3) - z_grid_min_local) / dz
-            cell_z = FLOOR(cell_z_r + 0.5_num)
-            cell_frac_z = REAL(cell_z, num) - cell_z_r
-            cell_z = cell_z + 1
-
             cy2 = cell_frac_y**2
             gy(-1) = 0.5_num * (0.25_num + cy2 + cell_frac_y)
             gy( 0) = 0.75_num - cy2
@@ -319,9 +348,9 @@ CONTAINS
               DO isubz = -1, 1
                 DO isuby = -1, 1
                   temp_local = temp_local + gy(isuby) * gz(isubz) &
-                      * temperature(cell_y+isuby, cell_z+isubz, i)
+                      * temperature(iy+isuby, iz+isubz, i)
                   drift_local = drift_local + gy(isuby) * gz(isubz) &
-                      * drift(cell_y+isuby, cell_z+isubz, i)
+                      * drift(iy+isuby, iz+isubz, i)
                 ENDDO
               ENDDO
               current%part_p(i) = momentum_from_temperature(&
@@ -331,13 +360,13 @@ CONTAINS
             weight_local = 0.0_num
             DO isubz = -1, 1
               DO isuby = -1, 1
-                weight_local = weight_local &
-                    + gy(isuby) * gz(isubz) * dx * dy * dz &
-                    / species_list(ispecies)%npart_per_cell &
-                    * density(cell_y+isuby, cell_z+isubz)
+                weight_local = weight_local + gy(isuby) * gz(isubz) &
+                    * density(iy+isuby, iz+isubz)
               ENDDO
             ENDDO
-            current%weight = weight_local
+
+            current%weight = weight_local * dx * dy * dz &
+                / (species_list(ispecies)%npart_per_cell + 1 - n0)
 #ifdef PARTICLE_DEBUG
             current%processor = rank
             current%processor_at_t0 = rank
