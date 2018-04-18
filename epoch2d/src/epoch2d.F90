@@ -212,9 +212,7 @@ PROGRAM pic
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
-#ifdef PARTICLE_COUNT_UPDATE
       CALL update_particle_count
-#endif
     ENDIF
 
     CALL check_for_stop_condition(halt, force_dump)
