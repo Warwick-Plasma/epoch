@@ -466,6 +466,10 @@ CONTAINS
             'ppc', 'Particles_Per_Cell', 'n_particles', &
             c_stagger_cell_centre, calc_ppc, array)
 
+        CALL write_nspecies_field(c_dump_average_weight, code, &
+            'average_weight', 'Particles_Average_Weight', 'weight', &
+            c_stagger_cell_centre, calc_average_weight, array)
+
         CALL write_nspecies_field(c_dump_temperature, code, &
             'temperature', 'Temperature', 'K', &
             c_stagger_cell_centre, calc_temperature, array)
@@ -1113,6 +1117,14 @@ CONTAINS
               + REAL(array * dt, r4)
         ENDDO
         DEALLOCATE(array)
+      CASE(c_dump_average_weight)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_weight(array, ispecies-avg%species_sum)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        ENDDO
+        DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
@@ -1174,6 +1186,13 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_ppc(array, ispecies-avg%species_sum)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        ENDDO
+        DEALLOCATE(array)
+      CASE(c_dump_average_weight)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_weight(array, ispecies-avg%species_sum)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         ENDDO
         DEALLOCATE(array)
