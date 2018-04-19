@@ -38,7 +38,7 @@ CONTAINS
     ALLOCATE(density(0:ny+1, 0:nz+1))
     ALLOCATE(temperature(0:ny+1, 0:nz+1, 1:3))
     ALLOCATE(drift(0:ny+1, 0:nz+1, 1:3))
-    ALLOCATE(indices(ny*nz))
+    ALLOCATE(indices(ny*nz+1))
     ALLOCATE(got_index(ny*nz))
     window_started = .FALSE.
 #else
@@ -235,11 +235,11 @@ CONTAINS
 
     IF (nproc > 1) THEN
       IF (SIZE(density,1) /= ny+2 .OR. SIZE(density,2) /= nz+2) THEN
-        DEALLOCATE(density, temperature, drift)
+        DEALLOCATE(density, temperature, drift, indices, got_index)
         ALLOCATE(density(0:ny+1, 0:nz+1))
         ALLOCATE(temperature(0:ny+1, 0:nz+1, 1:3))
         ALLOCATE(drift(0:ny+1, 0:nz+1, 1:3))
-        ALLOCATE(indices(ny*nz))
+        ALLOCATE(indices(ny*nz+1))
         ALLOCATE(got_index(ny*nz))
       ENDIF
     ENDIF
