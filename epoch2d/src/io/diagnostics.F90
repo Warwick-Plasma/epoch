@@ -122,6 +122,7 @@ CONTAINS
 #endif
 
     IF (n_io_blocks <= 0) RETURN
+    IF (.NOT.use_accurate_n_zeros) RETURN
 
     ALLOCATE(file_list(n_io_blocks+2))
     ALLOCATE(prefix_first_call(SIZE(file_prefixes)))

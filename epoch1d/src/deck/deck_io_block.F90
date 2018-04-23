@@ -259,26 +259,31 @@ CONTAINS
 
         n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
 
-        IF (n_zeros_control > 0 .AND. n_zeros_estimate /= n_zeros_control) THEN
-          n_zeros = n_zeros_estimate
-          IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
-            DO iu = 1, nio_units ! Print to stdout and to file
-              io = io_units(iu)
-              WRITE(io,*) '*** WARNING ***'
-              WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
-                  ') has been overidden by input deck'
-            ENDDO
-          ENDIF
-          n_zeros = n_zeros_control
-        ELSE IF (n_zeros_estimate > n_zeros) THEN
-          n_zeros = n_zeros_estimate
-          IF (rank == 0) THEN
-            DO iu = 1, nio_units ! Print to stdout and to file
-              io = io_units(iu)
-              WRITE(io,*) '*** WARNING ***'
-              WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
-                  ' to accomodate requested number of snapshots'
-            ENDDO
+        IF (n_zeros_control > 0) use_accurate_n_zeros = .FALSE.
+
+        IF (.NOT.use_accurate_n_zeros) THEN
+          IF (n_zeros_control > 0 &
+              .AND. n_zeros_estimate /= n_zeros_control) THEN
+            n_zeros = n_zeros_estimate
+            IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
+                    ') has been overidden by input deck'
+              ENDDO
+            ENDIF
+            n_zeros = n_zeros_control
+          ELSE IF (n_zeros_estimate > n_zeros) THEN
+            n_zeros = n_zeros_estimate
+            IF (rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
+                    ' to accomodate requested number of snapshots'
+              ENDDO
+            ENDIF
           ENDIF
         ENDIF
 

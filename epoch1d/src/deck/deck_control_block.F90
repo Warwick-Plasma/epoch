@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 31 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 32 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -72,7 +72,8 @@ MODULE deck_control_block
           'n_zeros                  ', &
           'use_current_correction   ', &
           'maxwell_solver           ', &
-          'use_particle_count_update' /)
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -109,7 +110,8 @@ MODULE deck_control_block
           'n_zeros                  ', &
           'use_current_correction   ', &
           'maxwell_solver           ', &
-          'use_particle_count_update' /)
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
 
 CONTAINS
 
@@ -126,6 +128,7 @@ CONTAINS
       print_eta_string = .FALSE.
       use_current_correction = .FALSE.
       use_particle_count_update = .FALSE.
+      use_accurate_n_zeros = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -355,6 +358,8 @@ CONTAINS
       ENDIF
     CASE(4*c_ndims+31)
       use_particle_count_update = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+32)
+      use_accurate_n_zeros = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
