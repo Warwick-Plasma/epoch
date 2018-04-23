@@ -172,7 +172,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i
-    INTEGER(i8) :: ipart, npart_per_cell, n0
+    INTEGER(i8) :: ipart, npart_per_cell, n_frac
     REAL(num) :: temp_local, drift_local, npart_frac
     REAL(num) :: x0, dmin, dmax
     TYPE(parameter_pack) :: parameters
@@ -188,11 +188,6 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac > 0) THEN
-        n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
 
       dmin = species_list(ispecies)%initial_conditions%density_min
       dmax = species_list(ispecies)%initial_conditions%density_max
@@ -211,8 +206,14 @@ CONTAINS
 
       IF (density < dmin) CYCLE
 
+      ! Place extra particle based on probability
+      n_frac = 0
+      IF (npart_frac > 0.0_num) THEN
+        IF (random() < npart_frac) n_frac = 1
+      ENDIF
+
       x0 = x_grid_max + 0.5_num * dx
-      DO ipart = n0, npart_per_cell
+      DO ipart = 1, npart_per_cell + n_frac
         ! Place extra particle based on probability
         IF (ipart == 0) THEN
           IF (npart_frac < random()) CYCLE
