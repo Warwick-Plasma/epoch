@@ -10,6 +10,9 @@
 
  * Added average particle weight diagnostic
 
+ * Replaced PARTICLE_COUNT_UPDATE Makefile DEFINE with
+   "use_particle_count_update" control block flag
+
 
 ## v4.10.0 to v4.11.0 (2018-04-13)
 
