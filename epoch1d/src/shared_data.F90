@@ -735,7 +735,8 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc         = 46
   INTEGER, PARAMETER :: c_dump_part_proc0        = 47
   INTEGER, PARAMETER :: c_dump_ppc               = 48
-  INTEGER, PARAMETER :: num_vars_to_dump         = 48
+  INTEGER, PARAMETER :: c_dump_average_weight    = 49
+  INTEGER, PARAMETER :: num_vars_to_dump         = 49
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

@@ -581,6 +581,68 @@ CONTAINS
 
 
 
+  SUBROUTINE calc_average_weight(data_array, current_species)
+
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata
+    REAL(num), DIMENSION(:), ALLOCATABLE :: part_count
+    INTEGER :: ispecies, spec_start, spec_end
+    TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
+    REAL(num) :: cell_x_r
+    INTEGER :: cell_x
+
+    data_array = 0.0_num
+
+    spec_start = current_species
+    spec_end = current_species
+    spec_sum = .FALSE.
+
+    IF (current_species <= 0) THEN
+      spec_start = 1
+      spec_end = n_species
+      spec_sum = .TRUE.
+    ENDIF
+
+    ALLOCATE(part_count(1-ng:nx+ng))
+    part_count = 0.0_num
+
+    DO ispecies = spec_start, spec_end
+#ifndef NO_TRACER_PARTICLES
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+#endif
+      current => io_list(ispecies)%attached_list%head
+      wdata = io_list(ispecies)%weight
+
+      DO WHILE (ASSOCIATED(current))
+#ifndef PER_SPECIES_WEIGHT
+        wdata = current%weight
+#endif
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = (current%part_pos - x_grid_min_local) / dx
+#else
+        cell_x_r = (current%part_pos - x_grid_min_local) / dx + 0.5_num
+#endif
+        cell_x = FLOOR(cell_x_r) + 1
+
+        data_array(cell_x) = data_array(cell_x) + wdata
+        part_count(cell_x) = part_count(cell_x) + 1.0_num
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+    data_array = data_array / MAX(part_count, c_tiny)
+
+    DEALLOCATE(part_count)
+
+  END SUBROUTINE calc_average_weight
+
+
+
   SUBROUTINE calc_temperature(sigma, current_species)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: sigma
