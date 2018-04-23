@@ -218,7 +218,7 @@ CONTAINS
     REAL(num) :: cell_frac_z, cz2
     REAL(num), DIMENSION(-1:1) :: gy, gz
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local, x0, dmin, dmax
+    REAL(num) :: weight_local, x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -281,6 +281,8 @@ CONTAINS
             IF (random() < npart_frac) n_frac = 1
           ENDIF
 
+          wdata = dx * dy * dz / (npart_per_cell + n_frac)
+
           DO ipart = 1, npart_per_cell + n_frac
             CALL create_particle(current)
             cell_frac_y = 0.5_num - random()
@@ -322,8 +324,8 @@ CONTAINS
                     * density(iy+isuby, iz+isubz)
               ENDDO
             ENDDO
-            current%weight = weight_local * dx * dy * dz &
-                / species_list(ispecies)%npart_per_cell
+
+            current%weight = weight_local * wdata
 #ifdef PARTICLE_DEBUG
             current%processor = rank
             current%processor_at_t0 = rank

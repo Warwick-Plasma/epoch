@@ -174,7 +174,7 @@ CONTAINS
     INTEGER :: ispecies, i
     INTEGER(i8) :: ipart, npart_per_cell, n_frac
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: x0, dmin, dmax
+    REAL(num) :: x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -212,6 +212,8 @@ CONTAINS
         IF (random() < npart_frac) n_frac = 1
       ENDIF
 
+      wdata = dx / (npart_per_cell + n_frac)
+
       x0 = x_grid_max + 0.5_num * dx
       DO ipart = 1, npart_per_cell + n_frac
         ! Place extra particle based on probability
@@ -228,8 +230,7 @@ CONTAINS
               species_list(ispecies)%mass, temp_local, drift_local)
         ENDDO
 
-        current%weight = density * dx &
-            / species_list(ispecies)%npart_per_cell
+        current%weight = density * wdata
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank
