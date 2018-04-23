@@ -218,7 +218,7 @@ CONTAINS
     REAL(num) :: cell_frac_z, cz2
     REAL(num), DIMENSION(-1:1) :: gy, gz
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local, x0
+    REAL(num) :: weight_local, x0, dmin, dmax
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -247,6 +247,9 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      dmin = species_list(ispecies)%initial_conditions%density_min
+      dmax = species_list(ispecies)%initial_conditions%density_max
+
       parameters%pack_ix = nx
       DO i = 1, 3
         DO iz = 0, nz+1
@@ -267,21 +270,16 @@ CONTAINS
           parameters%pack_iy = iy
           density(iy,iz) = evaluate_with_parameters( &
               species_list(ispecies)%density_function, parameters, errcode)
-          IF (density(iy,iz) &
-                  > species_list(ispecies)%initial_conditions%density_max) THEN
-            density(iy,iz) = &
-                species_list(ispecies)%initial_conditions%density_max
-          ENDIF
+          IF (density(iy,iz) > dmax) density(iy,iz) = dmax
+          IF (density(iy,iz) < dmin) density(iy,iz) = 0.0_num
         ENDDO
       ENDDO
 
       x0 = x_grid_max + 0.5_num * dx
       DO iz = 1, nz
         DO iy = 1, ny
-          IF (density(iy,iz) &
-                  < species_list(ispecies)%initial_conditions%density_min) THEN
-            CYCLE
-          ENDIF
+          IF (density(iy,iz) < dmin) CYCLE
+
           DO ipart = n0, npart_per_cell
             ! Place extra particle based on probability
             IF (ipart == 0) THEN

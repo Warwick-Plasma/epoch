@@ -174,7 +174,7 @@ CONTAINS
     INTEGER :: ispecies, i
     INTEGER(i8) :: ipart, npart_per_cell, n0
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: x0
+    REAL(num) :: x0, dmin, dmax
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -194,6 +194,9 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      dmin = species_list(ispecies)%initial_conditions%density_min
+      dmax = species_list(ispecies)%initial_conditions%density_max
+
       parameters%pack_ix = nx
       DO i = 1, 3
         temperature(i) = evaluate_with_parameters( &
@@ -203,13 +206,10 @@ CONTAINS
       ENDDO
       density = evaluate_with_parameters( &
           species_list(ispecies)%density_function, parameters, errcode)
-      IF (density > species_list(ispecies)%initial_conditions%density_max) THEN
-        density = species_list(ispecies)%initial_conditions%density_max
-      ENDIF
+      IF (density > dmax) density = dmax
+      IF (density < dmin) density = 0.0_num
 
-      IF (density < species_list(ispecies)%initial_conditions%density_min) THEN
-        CYCLE
-      ENDIF
+      IF (density < dmin) CYCLE
 
       x0 = x_grid_max + 0.5_num * dx
       DO ipart = n0, npart_per_cell

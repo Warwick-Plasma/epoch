@@ -201,7 +201,7 @@ CONTAINS
     REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local, x0
+    REAL(num) :: weight_local, x0, dmin, dmax
     TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -230,6 +230,9 @@ CONTAINS
         n0 = 1
       ENDIF
 
+      dmin = species_list(ispecies)%initial_conditions%density_min
+      dmax = species_list(ispecies)%initial_conditions%density_max
+
       parameters%pack_ix = nx
       DO i = 1, 3
         DO iy = 0, ny+1
@@ -245,17 +248,14 @@ CONTAINS
         parameters%pack_iy = iy
         density(iy) = evaluate_with_parameters( &
             species_list(ispecies)%density_function, parameters, errcode)
-        IF (density(iy) &
-                > species_list(ispecies)%initial_conditions%density_max) THEN
-          density(iy) = species_list(ispecies)%initial_conditions%density_max
-        ENDIF
+        IF (density(iy) > dmax) density(iy) = dmax
+        IF (density(iy) < dmin) density(iy) = 0.0_num
       ENDDO
 
       x0 = x_grid_max + 0.5_num * dx
       DO iy = 1, ny
-        IF (density(iy) &
-                < species_list(ispecies)%initial_conditions%density_min) THEN
-          CYCLE
+        IF (density(iy) < dmin) CYCLE
+
         ENDIF
         DO ipart = n0, npart_per_cell
           ! Place extra particle based on probability
