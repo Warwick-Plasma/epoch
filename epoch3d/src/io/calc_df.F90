@@ -591,10 +591,11 @@ CONTAINS
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
+    INTEGER :: ispecies, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
-#include "particle_head.inc"
+    REAL(num) :: cell_x_r, cell_y_r, cell_z_r
+    INTEGER :: cell_x, cell_y, cell_z
 
     data_array = 0.0_num
 
@@ -609,35 +610,30 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
 
       DO WHILE (ASSOCIATED(current))
-#include "particle_to_grid.inc"
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
+        cell_z_r = (current%part_pos(3) - z_grid_min_local) / dz
+#else
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx + 0.5_num
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy + 0.5_num
+        cell_z_r = (current%part_pos(3) - z_grid_min_local) / dz + 0.5_num
+#endif
+        cell_x = FLOOR(cell_x_r) + 1
+        cell_y = FLOOR(cell_y_r) + 1
+        cell_z = FLOOR(cell_z_r) + 1
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-              + gx(ix) * gy(iy) * gz(iz)
-        ENDDO
-        ENDDO
-        ENDDO
+        data_array(cell_x,cell_y,cell_z) = &
+            data_array(cell_x,cell_y,cell_z) + 1.0_num
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies)
-    ENDDO
-
-    CALL calc_boundary(data_array)
-
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
 
   END SUBROUTINE calc_ppc
