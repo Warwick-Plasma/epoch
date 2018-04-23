@@ -920,6 +920,7 @@ MODULE shared_data
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
   LOGICAL :: use_particle_lists = .FALSE.
+  LOGICAL :: use_particle_count_update = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart

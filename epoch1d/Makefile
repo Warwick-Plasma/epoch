@@ -199,9 +199,6 @@ DEFINES := $(DEFINE)
 #DEFINES += $(D)PARTICLE_ID
 #DEFINES += $(D)PARTICLE_ID4
 
-# Keep global particle counts up to date.
-#DEFINES += $(D)PARTICLE_COUNT_UPDATE
-
 # Include QED routines
 #DEFINES += $(D)PHOTONS
 

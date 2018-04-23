@@ -127,6 +127,7 @@ PROGRAM pic
   CALL set_dt
   CALL set_maxwell_solver
   CALL deallocate_ic
+  CALL update_particle_count
 
   npart_global = 0
   DO ispecies = 1, n_species
@@ -211,6 +212,7 @@ PROGRAM pic
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
+      CALL update_particle_count
     ENDIF
 
     CALL check_for_stop_condition(halt, force_dump)
@@ -223,18 +225,6 @@ PROGRAM pic
     CALL update_eb_fields_final
 
     CALL moving_window
-
-    ! This section ensures that the particle count for the species_list
-    ! objects is accurate. This makes some things easier, but increases
-    ! communication
-#ifdef PARTICLE_COUNT_UPDATE
-    DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
-          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
-          comm, errcode)
-      species_list(ispecies)%count_update_step = step
-    ENDDO
-#endif
   ENDDO
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_start

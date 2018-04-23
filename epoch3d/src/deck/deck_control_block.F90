@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 31 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -79,7 +79,8 @@ MODULE deck_control_block
           'print_eta_string         ', &
           'n_zeros                  ', &
           'use_current_correction   ', &
-          'maxwell_solver           ' /)
+          'maxwell_solver           ', &
+          'use_particle_count_update' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -123,7 +124,8 @@ MODULE deck_control_block
           'print_eta_string         ', &
           'n_zeros                  ', &
           'use_current_correction   ', &
-          'maxwell_solver           ' /)
+          'maxwell_solver           ', &
+          'use_particle_count_update' /)
 
 CONTAINS
 
@@ -139,6 +141,7 @@ CONTAINS
       allow_missing_restart = .FALSE.
       print_eta_string = .FALSE.
       use_current_correction = .FALSE.
+      use_particle_count_update = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -380,6 +383,8 @@ CONTAINS
           .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
         errcode = c_err_bad_value
       ENDIF
+    CASE(4*c_ndims+31)
+      use_particle_count_update = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
