@@ -1,3 +1,8 @@
+## v4.11.0 to v4.12.0
+
+ * Added average particle weight diagnostic
+
+
 ## v4.10.0 to v4.11.0 (2018-04-13)
 
  * Added time dependent moving window
