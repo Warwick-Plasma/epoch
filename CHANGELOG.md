@@ -1,5 +1,13 @@
 ## v4.11.0 to v4.12.0
 
+ * Fixes for exact restarts
+
+ * Apply reflecting particle BCs when conduct is specified
+
+ * Fix moving window for fractional particles per cell
+
+ * Don't average ppc diagnostic over shape function
+
  * Added average particle weight diagnostic
 
 
