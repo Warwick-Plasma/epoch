@@ -188,6 +188,11 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
+      IF (npart_frac > 0) THEN
+        n0 = 0
+      ELSE
+        n0 = 1
+      ENDIF
 
       parameters%pack_ix = nx
       DO i = 1, 3
@@ -207,14 +212,11 @@ CONTAINS
       ENDIF
 
       x0 = x_grid_max + 0.5_num * dx
-      IF (npart_frac > 0) THEN
-        IF (npart_frac < random()) n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
-
       DO ipart = n0, npart_per_cell
         ! Place extra particle based on probability
+        IF (ipart == 0) THEN
+          IF (npart_frac < random()) CYCLE
+        ENDIF
         CALL create_particle(current)
         current%part_pos = x0 + random() * dx
 
@@ -226,7 +228,7 @@ CONTAINS
         ENDDO
 
         current%weight = density * dx &
-            / (species_list(ispecies)%npart_per_cell + 1 - n0)
+            / species_list(ispecies)%npart_per_cell
 #ifdef PARTICLE_DEBUG
         current%processor = rank
         current%processor_at_t0 = rank
