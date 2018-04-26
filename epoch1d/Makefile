@@ -454,7 +454,8 @@ deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
 deck_stencil_block.o: deck_stencil_block.f90 fields.o strings_advanced.o
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
-deltaf_loader.o: deltaf_loader.F90 shared_data.o
+deltaf_loader.o: deltaf_loader.F90 particle_temperature.o particles.o \
+  random_generator.o shared_data.o
 diagnostics.o: diagnostics.F90 calc_df.o deck.o deck_io_block.o dist_fn.o \
   iterators.o probes.o random_generator.o setup.o shared_data.o strings.o \
   timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)

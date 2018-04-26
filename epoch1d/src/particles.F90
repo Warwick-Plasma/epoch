@@ -25,6 +25,7 @@ MODULE particles
 #endif
 
   IMPLICIT NONE
+  PUBLIC :: f0
 
 CONTAINS
 
