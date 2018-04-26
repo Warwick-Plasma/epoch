@@ -230,7 +230,9 @@ CONTAINS
             ENDIF
             io_block_list(i)%dt_average = t_end
           ENDIF
-          IF (io_block%dump_cycle_first_index > io_block%dump_cycle) THEN
+
+          IF (io_block_list(i)%dump_cycle_first_index &
+                > io_block_list(i)%dump_cycle) THEN
             IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
@@ -240,7 +242,7 @@ CONTAINS
                 WRITE(io,*) 'Resetting to zero.'
               ENDDO
             ENDIF
-            io_block%dump_cycle_first_index = 0
+            io_block_list(i)%dump_cycle_first_index = 0
           ENDIF
         ENDDO
 

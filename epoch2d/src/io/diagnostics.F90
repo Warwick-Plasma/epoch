@@ -234,7 +234,7 @@ CONTAINS
       IF (restart_flag) code = IOR(code, c_io_restartable)
       dump_field_grid = .FALSE.
 
-      IF (restart_flag) nstep_prev = step
+      nstep_prev = step
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
