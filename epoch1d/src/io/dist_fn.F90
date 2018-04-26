@@ -151,7 +151,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
-    REAL(num) :: part_weight, part_mc, part_mc2, part_u2
+    REAL(num) :: part_weight, part_weight0, part_mc, part_mc2, part_u2
     REAL(num) :: gamma_rel, gamma_rel_m1, start
     REAL(num) :: xy_max, yz_max, zx_max
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
@@ -195,7 +195,7 @@ CONTAINS
     part_mc2 = part_mc * c
 #endif
 #ifdef PER_SPECIES_WEIGHT
-    part_weight = io_list(species)%weight
+    part_weight0 = io_list(species)%weight
 #endif
 
     DO idim = 1, curdims
@@ -446,13 +446,17 @@ CONTAINS
       part_mc2 = part_mc * c
 #endif
 #ifndef PER_SPECIES_WEIGHT
-      part_weight = current%weight
+      part_weight0 = current%weight
 #endif
 #ifdef DELTAF_METHOD
       IF (output_deltaf) THEN
-         part_weight = current%weight &
+         part_weight = part_weight0 &
              - current%pvol * f0(species, part_mc / c, current%part_p)
+      ELSE
+         part_weight = part_weight0
       END IF
+#else
+      part_weight = part_weight0
 #endif
       part_u2 = SUM((current%part_p / part_mc)**2)
       gamma_rel = SQRT(part_u2 + 1.0_num)
