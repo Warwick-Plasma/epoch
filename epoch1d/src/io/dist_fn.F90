@@ -60,6 +60,7 @@ CONTAINS
     ALLOCATE(iblock%use_species(n_species))
     iblock%use_species = .FALSE.
     iblock%output_deltaf = .FALSE.
+    iblock%output_pvol   = .FALSE.
 
   END SUBROUTINE init_dist_fn
 
@@ -103,7 +104,7 @@ CONTAINS
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
               current%restrictions, current%use_restrictions, current%ndims, &
-              current%output_deltaf, convert, errcode)
+              current%output_deltaf, current%output_pvol, convert, errcode)
 
           ! If there was an error writing the dist_fn then ignore it in future
           IF (errcode /= 0) current%dumpmask = c_io_never
@@ -118,7 +119,7 @@ CONTAINS
 
   SUBROUTINE general_dist_fn(sdf_handle, name, direction, ranges_in, &
       resolution_in, species, restrictions, use_restrictions, curdims, &
-      output_deltaf, convert, errcode)
+      output_deltaf, output_pvol, convert, errcode)
 
     TYPE(sdf_file_handle) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -129,7 +130,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
     INTEGER, INTENT(IN) :: curdims
-    LOGICAL, INTENT(IN) :: output_deltaf
+    LOGICAL, INTENT(IN) :: output_deltaf, output_pvol
     LOGICAL, INTENT(IN) :: convert
     INTEGER, INTENT(OUT) :: errcode
 
@@ -454,6 +455,9 @@ CONTAINS
              - current%pvol * f0(species, part_mc / c, current%part_p)
       ELSE
          part_weight = part_weight0
+      END IF
+      IF (output_pvol) THEN
+         part_weight = current%pvol
       END IF
 #else
       part_weight = part_weight0

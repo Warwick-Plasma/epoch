@@ -186,6 +186,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'output_pvol')) THEN
+      working_block%output_pvol = as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode /= c_err_none) RETURN
