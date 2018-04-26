@@ -153,6 +153,7 @@ PROGRAM pic
     CALL bfield_final_bcs
     dt = dt_store
   ENDIF
+  CALL count_n_zeros
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
