@@ -198,7 +198,7 @@ CONTAINS
       bdy_space = -dx
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = 1.0_num
+        dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
@@ -210,7 +210,7 @@ CONTAINS
       bdy_space = dx
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = -1.0_num
+        dir_mult(dir_index) = -1.0_num
       END IF
     ELSE IF (direction == c_bd_y_min) THEN
       parameters%pack_iy = 0
@@ -222,7 +222,7 @@ CONTAINS
       bdy_space = -dy
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = 1.0_num
+        dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_y_max) THEN
       parameters%pack_iy = ny
@@ -234,7 +234,7 @@ CONTAINS
       bdy_space = dy
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = -1.0_num
+        dir_mult(dir_index) = -1.0_num
       END IF
     ELSE IF (direction == c_bd_z_min) THEN
       parameters%pack_iz = 0
@@ -246,7 +246,7 @@ CONTAINS
       bdy_space = -dz
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = 1.0_num
+        dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_z_max) THEN
       parameters%pack_iz = nz
@@ -258,7 +258,7 @@ CONTAINS
       bdy_space = dz
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = -1.0_num
+        dir_mult(dir_index) = -1.0_num
       END IF
     ELSE
       RETURN

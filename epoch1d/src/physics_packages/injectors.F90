@@ -137,7 +137,7 @@ CONTAINS
       bdy_space = -dx
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = 1.0_num
+        dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
@@ -146,7 +146,7 @@ CONTAINS
       bdy_space = dx
       IF (injector%use_flux_injector) THEN
         flux_fn = .TRUE.
-        dir_mult(idir) = -1.0_num
+        dir_mult(dir_index) = -1.0_num
       END IF
     ELSE
       RETURN
