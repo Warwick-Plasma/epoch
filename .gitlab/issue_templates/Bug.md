@@ -46,6 +46,8 @@ OS version may also be useful.
 Paste or attach any relevant logs. If pasting text, please use code blocks
 (```) to format console output, logs, and code as it's very hard to read
 otherwise.
+
+If this relates to an existing issue, please include a link to it.
 --->
 
 /label ~"possible bug"
