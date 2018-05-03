@@ -838,6 +838,8 @@ CONTAINS
       ENDIF
     ENDDO
 
+    DEALLOCATE(custom_loaders_list)
+
     CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
