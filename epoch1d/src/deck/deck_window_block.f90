@@ -35,7 +35,35 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    IF (move_window) need_random_state = .TRUE.
+    INTEGER :: i, bc(2)
+    LOGICAL :: warn
+
+    IF (.NOT.move_window) RETURN
+
+    need_random_state = .TRUE.
+
+    IF (deck_state /= c_ds_first .OR. rank /= 0) RETURN
+
+    ! Issue warnings about unsupported boundary conditions
+
+    bc(1) = bc_x_min_after_move
+    bc(2) = bc_x_max_after_move
+
+    warn = .FALSE.
+    DO i = 1, 2
+      IF (bc(i) == c_bc_simple_laser &
+          .OR. bc(i) == c_bc_cpml_laser &
+          .OR. bc(i) == c_bc_cpml_outflow) THEN
+        warn = .TRUE.
+      ENDIF
+    ENDDO
+
+    IF (warn) THEN
+      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
+          'conditions for ', 'an X boundary after the moving window ', &
+          'begins. These boundary conditions are ', 'not compatible with ', &
+          'moving windows and are unlikely to give correct results.'
+    ENDIF
 
   END SUBROUTINE window_deck_finalise
 
