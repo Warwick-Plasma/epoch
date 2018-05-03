@@ -460,8 +460,8 @@ evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
 fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
-finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
-  laser.o partlist.o setup.o shared_data.o shunt.o window.o
+finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
+  ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
