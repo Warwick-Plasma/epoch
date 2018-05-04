@@ -99,6 +99,42 @@ CONTAINS
 
 
 
+  SUBROUTINE deallocate_injectors
+
+    CALL deallocate_injector_list(injector_x_min)
+    CALL deallocate_injector_list(injector_x_max)
+    CALL deallocate_injector_list(injector_y_min)
+    CALL deallocate_injector_list(injector_y_max)
+
+  END SUBROUTINE deallocate_injectors
+
+
+
+  SUBROUTINE deallocate_injector_list(list)
+
+    TYPE(injector_block), POINTER :: list
+    TYPE(injector_block), POINTER :: current, next
+    INTEGER :: i
+
+    current => list
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      IF (current%density_function%init) &
+          CALL deallocate_stack(current%density_function)
+      DO i = 1, 3
+        IF (current%temperature_function(i)%init) &
+            CALL deallocate_stack(current%temperature_function(i))
+        IF (current%drift_function(i)%init) &
+            CALL deallocate_stack(current%drift_function(i))
+      ENDDO
+      DEALLOCATE(current)
+      current => next
+    ENDDO
+
+  END SUBROUTINE deallocate_injector_list
+
+
+
   SUBROUTINE run_injectors
 
     TYPE(injector_block), POINTER :: current

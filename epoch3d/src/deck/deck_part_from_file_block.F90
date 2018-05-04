@@ -395,6 +395,8 @@ CONTAINS
 
     INTEGER :: i
 
+    IF (n_custom_loaders < 1) RETURN
+
     ALLOCATE(custom_loaders_list(n_custom_loaders))
     DO i = 1, n_custom_loaders
       custom_loaders_list(i)%species_id = &

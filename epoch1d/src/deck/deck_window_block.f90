@@ -77,6 +77,7 @@ CONTAINS
       CALL tokenize(value, window_v_x_stack, errcode)
       ! evaluate it once to check that it's a valid block
       window_v_x = evaluate(window_v_x_stack, errcode)
+      CALL deallocate_stack(window_v_x_stack)
       use_window_stack = window_v_x_stack%is_time_varying
       RETURN
     ENDIF
