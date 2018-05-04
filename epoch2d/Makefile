@@ -70,18 +70,25 @@ endif
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3 -g
+
+  GNUVER := $(shell gfortran -dumpversion | head -1 \
+      | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
+  GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
+  GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
+
+  # Allow for 99 minor revisions
+  GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
+
+  # gfortran-4.9
+  GNUGE49 := $(shell expr $(GNUVER) \>= 409)
+  ifeq "$(GNUGE49)" "1"
+    FFLAGS += -ffpe-summary=invalid,zero,overflow
+  endif
+
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
-
-    GNUVER := $(shell gfortran -dumpversion | head -1 \
-        | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
-    GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
-    GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
-
-    # Allow for 99 minor revisions
-    GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
 
     # gfortran-4.3
     GNUGE43 := $(shell expr $(GNUVER) \>= 403)
