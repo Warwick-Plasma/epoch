@@ -19,10 +19,10 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
+  USE shared_data
 
   IMPLICIT NONE
 
-  LOGICAL, SAVE :: window_started
   REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
   REAL(num), SAVE :: window_shift_fraction
 

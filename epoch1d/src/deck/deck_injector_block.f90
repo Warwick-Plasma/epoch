@@ -115,6 +115,7 @@ CONTAINS
 
     IF (str_cmp(element, 't_end')) THEN
       working_injector%t_end = as_time_print(value, element, errcode)
+      working_injector%has_t_end = .TRUE.
       RETURN
     ENDIF
 
