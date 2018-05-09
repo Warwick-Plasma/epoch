@@ -996,7 +996,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Moving window
   !----------------------------------------------------------------------------
-  LOGICAL :: move_window, inject_particles
+  LOGICAL :: move_window, inject_particles, window_started
   TYPE(primitive_stack), SAVE :: window_v_x_stack
   LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
@@ -1082,6 +1082,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: drift_function(3)
 
     REAL(num) :: t_start, t_end
+    LOGICAL :: has_t_end
     REAL(num), DIMENSION(:), POINTER :: depth, dt_inject
 
     TYPE(injector_block), POINTER :: next

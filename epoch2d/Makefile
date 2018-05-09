@@ -502,4 +502,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
-window.o: window.F90 boundary.o evaluate.o partlist.o
+window.o: window.F90 boundary.o evaluate.o partlist.o shared_data.o
