@@ -445,7 +445,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: sdf_handle
     LOGICAL :: valid = .TRUE.
 
-    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read, &
+                  handle_errors=.FALSE.)
 
     IF (sdf_handle%error_code == 0) THEN
       CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &
