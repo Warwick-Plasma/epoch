@@ -72,6 +72,16 @@ CONTAINS
           'window begins to move.'
     ENDIF
 
+    warn = .FALSE.
+    CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
+    CALL check_injector_boundary(x_max_boundary, injector_x_max, warn)
+
+    IF (warn) THEN
+      PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
+          'the moving window. ', 'These are not fully compatible with ', &
+          'moving windows and are likely to give ', 'incorrect results.'
+    ENDIF
+
   END SUBROUTINE window_deck_finalise
 
 
@@ -146,5 +156,27 @@ CONTAINS
     errcode = c_err_none
 
   END FUNCTION window_block_check
+
+
+
+  SUBROUTINE check_injector_boundary(bc, injector, warn)
+
+    LOGICAL, INTENT(IN) :: bc
+    TYPE(injector_block), POINTER :: injector
+    LOGICAL, INTENT(INOUT) :: warn
+    TYPE(injector_block), POINTER :: current
+
+    IF (.NOT.bc .OR. warn) RETURN
+
+    current => injector_x_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%has_t_end) THEN
+        warn = .TRUE.
+        RETURN
+      ENDIF
+      current => current%next
+    ENDDO
+
+  END SUBROUTINE check_injector_boundary
 
 END MODULE deck_window_block
