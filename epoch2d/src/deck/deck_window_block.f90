@@ -81,6 +81,13 @@ CONTAINS
           'might give incorrect results.'
     ENDIF
 
+    IF (n_custom_loaders > 0) THEN
+      PRINT*, 'WARNING: you have specified particle loading from file in ', &
+          'conjunction with ', 'moving windows. The file contents will be ', &
+          'ignored for new particles entering ', 'the domain once the ', &
+          'window begins to move.'
+    ENDIF
+
   END SUBROUTINE window_deck_finalise
 
 
