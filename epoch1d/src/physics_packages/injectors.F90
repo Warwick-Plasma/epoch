@@ -162,9 +162,9 @@ CONTAINS
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
-    !If you have a moving window that has started moving then unless you 
-    !EXPLICITLY give a t_end value to the injector stop the injector
-    IF ((move_window .AND. window_started) .AND. .NOT. injector%has_t_end) &
+    ! If you have a moving window that has started moving then unless you
+    ! EXPLICITLY give a t_end value to the injector stop the injector
+    IF (move_window .AND. window_started .AND. .NOT. injector%has_t_end) &
         RETURN
 
     flux_fn = .FALSE.

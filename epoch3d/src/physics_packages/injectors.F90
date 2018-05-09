@@ -35,8 +35,8 @@ CONTAINS
     injector%species = -1
     injector%boundary = boundary
     injector%t_start = 0.0_num
-    injector%has_t_end = .FALSE.
     injector%t_end = t_end
+    injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%use_flux_injector = .FALSE.
 
@@ -224,9 +224,9 @@ CONTAINS
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
-    !If you have a moving window that has started moving then unless you 
-    !EXPLICITLY give a t_end value to the injector stop the injector
-    IF ((move_window .AND. window_started) .AND. .NOT. injector%has_t_end) &
+    ! If you have a moving window that has started moving then unless you
+    ! EXPLICITLY give a t_end value to the injector stop the injector
+    IF (move_window .AND. window_started .AND. .NOT. injector%has_t_end) &
         RETURN
 
     flux_fn = .FALSE.
