@@ -138,6 +138,9 @@ CONTAINS
 #ifdef NO_IO
     found = .TRUE.
 #endif
+#ifdef HC_PUSH
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -220,6 +223,10 @@ CONTAINS
 #ifdef NO_IO
     ! There is no need to add a c_def for this since no I/O occurs.
     WRITE(*,*) 'Perform no I/O -DNO_IO'
+#endif
+#ifdef HC_PUSH
+    defines = IOR(defines, c_def_hc_push)
+    WRITE(*,*) 'Higuera-Cary particle push -DHC_PUSH'
 #endif
     WRITE(*,*) '*************************************************************'
 

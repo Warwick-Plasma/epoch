@@ -54,7 +54,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: part_q, part_mc, ipart_mc, part_weight
+    REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_m
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES
@@ -103,6 +103,7 @@ CONTAINS
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma_rel, part_u2
     REAL(num) :: delta_x, part_vy, part_vz
+    REAL(num) :: beta_x, beta_y, beta_z, beta2
     INTEGER :: ispecies, ix, dcellx, cx
     INTEGER(i8) :: ipart
 #ifndef NO_PARTICLE_PROBES
@@ -173,6 +174,7 @@ CONTAINS
 #endif
 #ifndef PER_PARTICLE_CHARGE_MASS
       part_q   = species_list(ispecies)%charge
+      part_m   = species_list(ispecies)%mass
       part_mc  = c * species_list(ispecies)%mass
       ipart_mc = 1.0_num / part_mc
       cmratio  = part_q * dtfac * ipart_mc
@@ -197,6 +199,7 @@ CONTAINS
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q   = current%charge
+        part_m  = current%mass
         part_mc  = c * current%mass
         ipart_mc = 1.0_num / part_mc
         cmratio  = part_q * dtfac * ipart_mc
@@ -279,8 +282,24 @@ CONTAINS
         uym = part_uy + cmratio * ey_part
         uzm = part_uz + cmratio * ez_part
 
+#ifdef HC_PUSH
+        ! Half timestep, then use Higuera-Cary push see 
+        ! https://aip.scitation.org/doi/10.1063/1.4979989
+        gamma_rel = uxm**2 + uym**2 + uzm**2 + 1.0_num
+        beta_x = part_q * bx_part  * dt * 0.5_num / part_m
+        beta_y = part_q * by_part  * dt * 0.5_num / part_m
+        beta_z = part_q * bz_part  * dt * 0.5_num / part_m
+        beta2 = beta_x**2 + beta_y**2 + beta_z**2
+        gamma_rel = 0.5_num * (gamma_rel - beta2 + SQRT((gamma_rel - beta2)**2 &
+            + 4.0_num &
+            * (beta2+ABS(beta_x*uxm + beta_y*uym + beta_z*uzm) &
+            ** 2)))
+        gamma_rel = SQRT(gamma_rel)
+#else
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
-        root = ccmratio / SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
+        gamma_rel = SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
+#endif
+        root = ccmratio / gamma_rel
 
         taux = bx_part * root
         tauy = by_part * root

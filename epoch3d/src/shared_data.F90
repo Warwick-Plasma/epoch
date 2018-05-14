@@ -229,6 +229,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
   INTEGER(i8), PARAMETER :: c_def_mpi_debug = 2**18
   INTEGER(i8), PARAMETER :: c_def_parser_checking = 2**19
+  INTEGER(i8), PARAMETER :: c_def_hc_push = 2**20
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x

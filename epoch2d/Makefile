@@ -87,7 +87,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
 
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
+             -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
 
     # gfortran-4.3
@@ -244,6 +244,9 @@ DEFINES := $(DEFINE)
 
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG
+
+#Higuera-Cary push
+DEFINES += $(D)HC_PUSH
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
