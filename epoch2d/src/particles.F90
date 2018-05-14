@@ -56,8 +56,8 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_x, part_y
     REAL(num) :: part_ux, part_uy, part_uz
-    REAL(num) :: beta_x, beta_y, beta_z, beta2
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_m
+    REAL(num) :: beta_x, beta_y, beta_z, beta2
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES

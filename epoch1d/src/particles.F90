@@ -55,6 +55,7 @@ CONTAINS
     REAL(num) :: part_x
     REAL(num) :: part_ux, part_uy, part_uz
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_m
+    REAL(num) :: beta_x, beta_y, beta_z, beta2
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES
@@ -103,7 +104,6 @@ CONTAINS
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma_rel, part_u2
     REAL(num) :: delta_x, part_vy, part_vz
-    REAL(num) :: beta_x, beta_y, beta_z, beta2
     INTEGER :: ispecies, ix, dcellx, cx
     INTEGER(i8) :: ipart
 #ifndef NO_PARTICLE_PROBES
@@ -199,7 +199,7 @@ CONTAINS
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_q   = current%charge
-        part_m  = current%mass
+        part_m   = current%mass
         part_mc  = c * current%mass
         ipart_mc = 1.0_num / part_mc
         cmratio  = part_q * dtfac * ipart_mc
