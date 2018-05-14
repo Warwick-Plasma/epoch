@@ -327,7 +327,7 @@ CONTAINS
         uzm = part_uz + cmratio * ez_part
 
 #ifdef HC_PUSH
-        ! Half timestep, then use Higuera-Cary push see 
+        ! Half timestep, then use Higuera-Cary push see
         ! https://aip.scitation.org/doi/10.1063/1.4979989
         gamma_rel = uxm**2 + uym**2 + uzm**2 + 1.0_num
         beta_x = part_q * bx_part  * dt * 0.5_num / part_m

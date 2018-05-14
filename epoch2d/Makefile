@@ -245,7 +245,7 @@ DEFINES := $(DEFINE)
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG
 
-#Higuera-Cary push
+# Higuera-Cary push
 #DEFINES += $(D)HC_PUSH
 
 # If you are having trouble compiling the encoded_source module or

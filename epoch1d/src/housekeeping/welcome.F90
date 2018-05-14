@@ -141,6 +141,7 @@ CONTAINS
 #ifdef HC_PUSH
     found = .TRUE.
 #endif
+
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
       WRITE(*,*) 'The code was compiled with no compile time options'
