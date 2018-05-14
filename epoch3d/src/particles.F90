@@ -59,7 +59,9 @@ CONTAINS
     REAL(num) :: part_x, part_y, part_z
     REAL(num) :: part_ux, part_uy, part_uz
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_m
+#ifdef HC_PUSH
     REAL(num) :: beta_x, beta_y, beta_z, beta2
+#endif
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES
