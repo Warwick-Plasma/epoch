@@ -319,7 +319,7 @@ CONTAINS
       IF (y_max_boundary) iy_max = iy_max + png
     ENDIF
 
-    nx_e = ix_max - ix_min + 1
+    nx_e = ix_max - ix_min
 
     num_valid_cells_local = 0
     DO iy = iy_min, iy_max

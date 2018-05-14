@@ -343,8 +343,8 @@ CONTAINS
       IF (z_max_boundary) iz_max = iz_max + png
     ENDIF
 
-    nx_e = ix_max - ix_min + 1
-    ny_e = iy_max - iy_min + 1
+    nx_e = ix_max - ix_min
+    ny_e = iy_max - iy_min
 
     num_valid_cells_local = 0
     DO iz = iz_min, iz_max

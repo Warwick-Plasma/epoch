@@ -87,7 +87,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
 
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -Wno-unused-parameter
+             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
 
     # gfortran-4.3
