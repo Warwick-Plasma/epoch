@@ -56,7 +56,7 @@ CONTAINS
     REAL(num) :: part_ux, part_uy, part_uz
     REAL(num) :: part_q, part_mc, ipart_mc, part_weight, part_m
 #ifdef HC_PUSH
-    REAL(num) :: beta_x, beta_y, beta_z, beta2
+    REAL(num) :: beta_x, beta_y, beta_z, beta2, beta_dot_u, alpha, sigma
 #endif
 
     ! Used for particle probes (to see of probe conditions are satisfied)
@@ -288,15 +288,15 @@ CONTAINS
         ! Half timestep, then use Higuera-Cary push see
         ! https://aip.scitation.org/doi/10.1063/1.4979989
         gamma_rel = uxm**2 + uym**2 + uzm**2 + 1.0_num
-        beta_x = part_q * bx_part  * dt * 0.5_num / part_m
-        beta_y = part_q * by_part  * dt * 0.5_num / part_m
-        beta_z = part_q * bz_part  * dt * 0.5_num / part_m
+        alpha = 0.5_num * part_q * dt / part_m
+        beta_x = alpha * bx_part
+        beta_y = alpha * bx_part
+        beta_z = alpha * bx_part
         beta2 = beta_x**2 + beta_y**2 + beta_z**2
-        gamma_rel = 0.5_num * (gamma_rel - beta2 + SQRT((gamma_rel - beta2)**2 &
-            + 4.0_num &
-            * (beta2+ABS(beta_x*uxm + beta_y*uym + beta_z*uzm) &
-            ** 2)))
-        gamma_rel = SQRT(gamma_rel)
+        sigma = gamma_rel - beta2
+        beta_dot_u = beta_x * uxm + beta_y * uym + beta_z * uzm
+        gamma_rel = sigma + SQRT(sigma**2 + 4.0_num * (beta2 + beta_dot_u**2))
+        gamma_rel = SQRT(0.5_num * gamma_rel)
 #else
         ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
         gamma_rel = SQRT(uxm**2 + uym**2 + uzm**2 + 1.0_num)
