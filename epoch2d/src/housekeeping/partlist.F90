@@ -397,11 +397,6 @@ CONTAINS
     array(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
 #endif
-#ifdef PARTICLE_DEBUG
-    array(cpos) = REAL(a_particle%processor, num)
-    array(cpos+1) = REAL(a_particle%processor_at_t0, num)
-    cpos = cpos+2
-#endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
 #ifdef PARTICLE_ID
     array(cpos) = TRANSFER(a_particle%id, 1.0_num)
@@ -473,6 +468,10 @@ CONTAINS
     cpos = cpos+1
 #elif PARTICLE_ID
     a_particle%id = TRANSFER(array(cpos), a_particle%id)
+    cpos = cpos+1
+#endif
+#ifdef COLLISIONS_TEST
+    a_particle%coll_count = NINT(array(cpos))
     cpos = cpos+1
 #endif
 #ifdef PHOTONS

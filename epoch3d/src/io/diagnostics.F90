@@ -389,6 +389,10 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
             'laser_z_max_phase')
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+        CALL write_id_starts(sdf_handle)
+#endif
+
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
               'time_prev/'//TRIM(io_block_list(io)%name), &

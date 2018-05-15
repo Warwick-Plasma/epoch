@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 32 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 33 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -81,7 +81,8 @@ MODULE deck_control_block
           'use_current_correction   ', &
           'maxwell_solver           ', &
           'use_particle_count_update', &
-          'use_accurate_n_zeros     ' /)
+          'use_accurate_n_zeros     ', &
+          'bits_in_cpu_id           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -127,7 +128,8 @@ MODULE deck_control_block
           'use_current_correction   ', &
           'maxwell_solver           ', &
           'use_particle_count_update', &
-          'use_accurate_n_zeros     ' /)
+          'use_accurate_n_zeros     ', &
+          'bits_in_cpu_id           ' /)
 
 CONTAINS
 
@@ -407,6 +409,8 @@ CONTAINS
       use_particle_count_update = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+32)
       use_accurate_n_zeros = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+33)
+      n_cpu_bits = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

@@ -107,6 +107,7 @@ CONTAINS
     nsteps = -1
     t_end = HUGE(1.0_num)
     particles_max_id = 0
+    n_cpu_bits = 0
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -1423,6 +1424,7 @@ CONTAINS
           ! PARTICLE_ID[4] flag used when writing the file. We must read in
           ! the data using the precision written to file and then convert to
           ! the currently used precision.
+          restart_found_ids = .TRUE.
           IF (datatype == c_datatype_integer8) THEN
             CALL sdf_read_point_variable(sdf_handle, npart_local, &
                 species_subtypes_i8(ispecies), it_id8)
@@ -1567,6 +1569,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: block_id
     INTEGER, DIMENSION(1) :: dims
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: values
+
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     IF (str_cmp(block_id, 'id_starts')) THEN
       restart_found_id_starts = .TRUE.
@@ -1785,6 +1788,7 @@ CONTAINS
 #else
       iterator_list%id = array(ipart)
 #endif
+      IF (iterator_list%id > restart_max_id) restart_max_id = iterator_list%id
       iterator_list => iterator_list%next
     ENDDO
 
@@ -1810,6 +1814,7 @@ CONTAINS
 #else
       iterator_list%id = INT(array(ipart),i4)
 #endif
+      IF (iterator_list%id > restart_max_id) restart_max_id = iterator_list%id
       iterator_list => iterator_list%next
     ENDDO
 

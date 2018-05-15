@@ -1448,7 +1448,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
                 cur%id = generate_id()
 #endif
-
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -flux_momentum_from_temperature(&
@@ -1540,7 +1539,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
                 cur%id = generate_id()
 #endif
-
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&
@@ -1628,6 +1626,9 @@ CONTAINS
                   ENDDO
                 ENDDO
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                cur%id = generate_id()
+#endif
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&
@@ -1719,7 +1720,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
                 cur%id = generate_id()
 #endif
-
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&
@@ -1810,7 +1810,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
                 cur%id = generate_id()
 #endif
-
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&

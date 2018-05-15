@@ -372,7 +372,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     array(cpos:cpos+c_ndims-1) = a_particle%part_pos
@@ -437,7 +437,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     a_particle%part_pos = array(cpos:cpos+c_ndims-1)
