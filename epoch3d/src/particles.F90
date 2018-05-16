@@ -334,8 +334,8 @@ CONTAINS
         gamma_rel = uxm**2 + uym**2 + uzm**2 + 1.0_num
         alpha = 0.5_num * part_q * dt / part_m
         beta_x = alpha * bx_part
-        beta_y = alpha * bx_part
-        beta_z = alpha * bx_part
+        beta_y = alpha * by_part
+        beta_z = alpha * bz_part
         beta2 = beta_x**2 + beta_y**2 + beta_z**2
         sigma = gamma_rel - beta2
         beta_dot_u = beta_x * uxm + beta_y * uym + beta_z * uzm
