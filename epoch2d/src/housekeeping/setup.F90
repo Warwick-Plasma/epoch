@@ -39,9 +39,11 @@ MODULE setup
   PUBLIC :: read_cpu_split, after_load
 
   TYPE(particle), POINTER, SAVE :: iterator_list
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   LOGICAL, SAVE :: restart_found_ids = .FALSE.
   LOGICAL, SAVE :: restart_found_id_starts = .FALSE.
   INTEGER(i8) :: restart_max_id
+#endif
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
@@ -102,8 +104,10 @@ CONTAINS
     restart_dump_every = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     particles_max_id = 0
     n_cpu_bits = 0
+#endif
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -861,8 +865,12 @@ CONTAINS
     CHARACTER(LEN=c_id_length) :: species_id
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
-    INTEGER :: i, is, iblock, nblocks, ndims, geometry, ierr
-    INTEGER(i8) :: npart, npart_local, global_max_id
+    INTEGER :: i, is, iblock, nblocks, ndims, geometry
+    INTEGER(i8) :: npart, npart_local
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER :: ierr
+    INTEGER(i8) :: global_max_id
+#endif
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
@@ -1389,13 +1397,13 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
-    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
       CALL MPI_ALLREDUCE(restart_max_id, global_max_id, 1, MPI_INTEGER8, &
           MPI_MAX, comm, ierr)
-      highest_id = global_max_id
-#endif
+      highest_id = INT(global_max_id, idkind)
     END IF
+#endif
 
     IF (use_offset_grid) THEN
       window_offset = full_x_min - offset_x_min
@@ -1451,12 +1459,13 @@ CONTAINS
 
 
   SUBROUTINE read_id_starts(sdf_handle, block_id)
+
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: block_id
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER, DIMENSION(1) :: dims
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: values
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     IF (str_cmp(block_id, 'id_starts')) THEN
       restart_found_id_starts = .TRUE.
       CALL sdf_read_array_info(sdf_handle, dims)
@@ -1464,7 +1473,7 @@ CONTAINS
       CALL sdf_read_srl(sdf_handle, values)
       n_cpu_bits = MAX(n_cpu_bits, INT(values(1)))
       CALL setup_ids
-      highest_id = values(rank + 2)
+      highest_id = INT(values(rank + 2), idkind)
       DEALLOCATE(values)
     END IF
 #endif

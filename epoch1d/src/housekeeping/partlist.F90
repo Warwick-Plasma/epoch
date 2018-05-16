@@ -372,7 +372,10 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos, temp_i8
+    INTEGER(i8) :: cpos
+#ifdef PARTICLE_ID4
+    INTEGER(i8) :: temp_i8
+#endif
 
     cpos = 1
     array(cpos:cpos+c_ndims-1) = a_particle%part_pos
@@ -397,13 +400,12 @@ CONTAINS
     array(cpos+1) = REAL(a_particle%processor_at_t0, num)
     cpos = cpos+2
 #endif
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-#ifdef PARTICLE_ID
-    array(cpos) = TRANSFER(a_particle%id, 1.0_num)
-#else
+#ifdef PARTICLE_ID4
     temp_i8 = INT(a_particle%id, i8)
     array(cpos) = TRANSFER(temp_i8, 1.0_num)
-#endif
+    cpos = cpos+1
+#elif PARTICLE_ID
+    array(cpos) = TRANSFER(a_particle%id, 1.0_num)
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
@@ -437,7 +439,10 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos, temp_i8
+    INTEGER(i8) :: cpos
+#ifdef PARTICLE_ID4
+    INTEGER(i8) :: temp_i8
+#endif
 
     cpos = 1
     a_particle%part_pos = array(cpos)
@@ -497,16 +502,16 @@ CONTAINS
 
 
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   FUNCTION generate_id()
 
     INTEGER(idkind) :: generate_id
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     highest_id = highest_id + 1_idkind
     generate_id = cpu_id + highest_id
-#endif
 
   END FUNCTION generate_id
+#endif
 
 
 

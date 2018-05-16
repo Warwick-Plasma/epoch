@@ -381,9 +381,7 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         CALL write_id_starts(sdf_handle)
-#endif
 
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
@@ -870,11 +868,10 @@ CONTAINS
   SUBROUTINE write_id_starts(sdf_handle)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: id_starts
     INTEGER(i8) :: start_local
     INTEGER :: ierr
-
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
 
     ALLOCATE(id_starts(1:nproc+1))
 
