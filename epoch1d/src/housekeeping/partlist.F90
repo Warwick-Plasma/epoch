@@ -499,13 +499,10 @@ CONTAINS
 
   FUNCTION generate_id()
 
-#ifdef PARTICLE_ID
-    INTEGER(i8) :: generate_id
-#else
-    INTEGER(i4) :: generate_id
-#endif
+    INTEGER(idkind) :: generate_id
+
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    highest_id = highest_id + 1_i8
+    highest_id = highest_id + 1_idkind
     generate_id = cpu_id + highest_id
 #endif
 
