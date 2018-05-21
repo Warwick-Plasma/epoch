@@ -81,7 +81,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, ex, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_ex)
-        CALL evaluate_string_in_space(value, ex, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, ex, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
@@ -92,7 +92,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, ey, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_ey)
-        CALL evaluate_string_in_space(value, ey, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, ey, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
@@ -103,7 +103,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, ez, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_ez)
-        CALL evaluate_string_in_space(value, ez, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, ez, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
@@ -114,7 +114,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, bx, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_bx)
-        CALL evaluate_string_in_space(value, bx, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, bx, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
@@ -125,7 +125,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, by, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_by)
-        CALL evaluate_string_in_space(value, by, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, by, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
@@ -136,7 +136,7 @@ CONTAINS
         CALL load_single_array_from_file(filename, bz, offset, errcode)
       ELSE
         CALL set_tokenizer_stagger(c_stagger_bz)
-        CALL evaluate_string_in_space(value, bz, -2, nx+3, errcode)
+        CALL evaluate_string_in_space(value, bz, 1-ng, nx+ng, errcode)
         CALL set_tokenizer_stagger(c_stagger_centre)
       ENDIF
       RETURN
