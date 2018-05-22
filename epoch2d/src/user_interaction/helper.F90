@@ -638,7 +638,7 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     ! For the TOPHAT shape function, particles can be located on a
     ! neighbouring process
-    ALLOCATE(rpart_in_cell(-2:nx+3,-2:ny+3))
+    ALLOCATE(rpart_in_cell(1-ng:nx+ng,1-ng:ny+ng))
 
     rpart_in_cell = npart_in_cell
     CALL processor_summation_bcs(rpart_in_cell, ng)
