@@ -1003,7 +1003,7 @@ CONTAINS
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    CALL particle_clear_bcs(array, ng)
+    IF (PRESENT(species)) CALL particle_clear_bcs(array, ng)
 
   END SUBROUTINE particle_periodic_bcs
 

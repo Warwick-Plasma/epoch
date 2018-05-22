@@ -404,7 +404,7 @@ CONTAINS
 
     DEALLOCATE(temp)
 
-    CALL particle_clear_bcs(array, ng)
+    IF (PRESENT(species)) CALL particle_clear_bcs(array, ng)
 
   END SUBROUTINE particle_periodic_bcs
 
