@@ -22,6 +22,8 @@ MODULE current_smooth
   USE shared_data
 #endif
 
+  USE boundary
+
   IMPLICIT NONE
 
 CONTAINS
@@ -29,6 +31,11 @@ CONTAINS
   SUBROUTINE smooth_current()
 
     ! A very simple current smoothing routine
+
+    ! First copy in values to ghost cells 
+    CALL field_bc(jx, jng)
+    CALL field_bc(jy, jng)
+    CALL field_bc(jz, jng)
 
     CALL smooth_array(jx)
     CALL smooth_array(jy)
