@@ -411,7 +411,7 @@ boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
-current_smooth.o: current_smooth.F90 shape_functions.o shared_data.o
+current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
