@@ -1040,7 +1040,7 @@ CONTAINS
         CALL abort_code(errcode)
       ENDIF
 
-      DO ix = -ng+1, nx+ng
+      DO ix = 1-ng, nx+ng
         parameters%pack_ix = ix
         array(ix) = evaluate_with_parameters(stack, parameters, errcode)
       ENDDO
