@@ -21,7 +21,6 @@ MODULE current_smooth
 #else
   USE shared_data
 #endif
-
   USE boundary
 
   IMPLICIT NONE
@@ -32,7 +31,7 @@ CONTAINS
 
     ! A very simple current smoothing routine
 
-    ! First copy in values to ghost cells 
+    ! First copy in values to ghost cells
     CALL field_bc(jx, jng)
     CALL field_bc(jy, jng)
     CALL field_bc(jz, jng)
