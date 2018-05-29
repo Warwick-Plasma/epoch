@@ -799,6 +799,9 @@ CONTAINS
     npart_global = 0
     step = -1
 
+    full_x_min = 0.0_num
+    offset_x_min = 0.0_num
+
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
     ENDIF
@@ -1303,10 +1306,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
-    window_offset = full_x_min - offset_x_min
-    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
+    IF (use_offset_grid) THEN
+      window_offset = full_x_min - offset_x_min
+      CALL shift_particles_to_window(window_offset)
+    ENDIF
+
     CALL setup_grid
-    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
+
+    IF (use_offset_grid) THEN
+      CALL create_moved_window(offset_x_min, window_offset)
+    ENDIF
+
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
