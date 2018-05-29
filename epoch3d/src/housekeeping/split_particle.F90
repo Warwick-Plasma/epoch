@@ -35,8 +35,8 @@ CONTAINS
     INTEGER(i8) :: local_count
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
@@ -78,8 +78,8 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
@@ -131,8 +131,8 @@ CONTAINS
     REAL(num) :: jitter_x, jitter_y, jitter_z
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
