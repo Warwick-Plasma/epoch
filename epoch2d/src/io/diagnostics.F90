@@ -1452,7 +1452,7 @@ CONTAINS
         ranges = cell_local_ranges(global_ranges(sub))
         ran_sec = cell_section_ranges(ranges) + 1
 
-        IF(convert) THEN
+        IF (convert) THEN
           rsubtype  = sub%subtype_r4
           rsubarray = sub%subarray_r4
         ELSE
@@ -1652,7 +1652,7 @@ CONTAINS
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
       dump_part = sub%space_restrictions
-      IF(convert) THEN
+      IF (convert) THEN
         rsubtype  = sub%subtype_r4
         rsubarray = sub%subarray_r4
       ELSE

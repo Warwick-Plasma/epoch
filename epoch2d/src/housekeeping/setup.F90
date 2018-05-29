@@ -1304,9 +1304,9 @@ CONTAINS
         species_subtypes_i8)
 
     window_offset = full_x_min - offset_x_min
-    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
+    IF (use_offset_grid) CALL shift_particles_to_window(window_offset)
     CALL setup_grid
-    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
+    IF (use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
