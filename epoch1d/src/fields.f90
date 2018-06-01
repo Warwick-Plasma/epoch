@@ -24,7 +24,8 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
-  REAL(num) :: alphax, deltax
+  REAL(num) :: alphax
+  REAL(num) :: deltax
 
 CONTAINS
 
@@ -70,21 +71,19 @@ CONTAINS
     REAL(num) :: cx1, cx2, cx3
 
     IF (cpml_boundaries) THEN
-      cpml_x = cnx
-
       IF (field_order == 2) THEN
         DO ix = 1, nx
-          cpml_x = cnx / cpml_kappa_ex(ix)
+          cx1 = cnx / cpml_kappa_ex(ix)
 
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
           ey(ix) = ey(ix) &
-              - cpml_x * (bz(ix  ) - bz(ix-1)) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
               - fac * jy(ix)
 
           ez(ix) = ez(ix) &
-              + cpml_x * (by(ix  ) - by(ix-1)) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
         ENDDO
       ELSE IF (field_order == 4) THEN
@@ -140,26 +139,28 @@ CONTAINS
       CALL cpml_advance_e_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
+        cx1 = cnx
+
         DO ix = 1, nx
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
           ey(ix) = ey(ix) &
-              - cnx * (bz(ix  ) - bz(ix-1)) &
+              - cx1 * (bz(ix  ) - bz(ix-1)) &
               - fac * jy(ix)
 
           ez(ix) = ez(ix) &
-              + cnx * (by(ix  ) - by(ix-1)) &
+              + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
         ENDDO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
-        DO ix = 1, nx
-          cx1 = c1 * cnx
-          cx2 = c2 * cnx
+        cx1 = c1 * cnx
+        cx2 = c2 * cnx
 
+        DO ix = 1, nx
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -178,11 +179,11 @@ CONTAINS
         c2 = -25.0_num / 384.0_num
         c3 = 3.0_num / 640.0_num
 
-        DO ix = 1, nx
-          cx1 = c1 * cnx
-          cx2 = c2 * cnx
-          cx3 = c3 * cnx
+        cx1 = c1 * cnx
+        cx2 = c2 * cnx
+        cx3 = c3 * cnx
 
+        DO ix = 1, nx
           ex(ix) = ex(ix) &
               - fac * jx(ix)
 
@@ -213,30 +214,28 @@ CONTAINS
     REAL(num) :: cx1, cx2, cx3
 
     IF (cpml_boundaries) THEN
-      cpml_x = hdtx
-
       IF (field_order == 2) THEN
         IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO ix = 1, nx
-            cpml_x = hdtx / cpml_kappa_bx(ix)
+            cx1 = hdtx / cpml_kappa_bx(ix)
 
             by(ix) = by(ix) &
-                + cpml_x * (ez(ix+1) - ez(ix  ))
+                + cx1 * (ez(ix+1) - ez(ix  ))
 
             bz(ix) = bz(ix) &
-                - cpml_x * (ey(ix+1) - ey(ix  ))
+                - cx1 * (ey(ix+1) - ey(ix  ))
           ENDDO
         ELSE
           DO ix = 1, nx
-            cpml_x = hdtx / cpml_kappa_bx(ix)
+            cx1 = hdtx / cpml_kappa_bx(ix)
 
             by(ix) = by(ix) &
-                + cpml_x * (alphax * (ez(ix+1) - ez(ix  ))  &
-                         +  deltax * (ez(ix+2) - ez(ix-1)))
+                + cx1 * (alphax * (ez(ix+1) - ez(ix  ))  &
+                       + deltax * (ez(ix+2) - ez(ix-1)))
 
             bz(ix) = bz(ix) &
-                - cpml_x * (alphax * (ey(ix+1) - ey(ix  ))  &
-                         +  deltax * (ey(ix+2) - ey(ix-1)))
+                - cx1 * (alphax * (ey(ix+1) - ey(ix  ))  &
+                       + deltax * (ey(ix+2) - ey(ix-1)))
           ENDDO
         ENDIF
       ELSE IF (field_order == 4) THEN
@@ -282,33 +281,35 @@ CONTAINS
       CALL cpml_advance_b_currents(hdt)
     ELSE
       IF (field_order == 2) THEN
+        cx1 = hdtx
+
         IF (maxwell_solver == c_maxwell_solver_yee) THEN
           DO ix = 1, nx
             by(ix) = by(ix) &
-                + hdtx * (ez(ix+1) - ez(ix  ))
+                + cx1 * (ez(ix+1) - ez(ix  ))
 
             bz(ix) = bz(ix) &
-                - hdtx * (ey(ix+1) - ey(ix  ))
+                - cx1 * (ey(ix+1) - ey(ix  ))
           ENDDO
         ELSE
           DO ix = 1, nx
             by(ix) = by(ix) &
-                + hdtx * (alphax * (ez(ix+1) - ez(ix  ))  &
-                       +  deltax * (ez(ix+2) - ez(ix-1)))
+                + cx1 * (alphax * (ez(ix+1) - ez(ix  ))  &
+                       + deltax * (ez(ix+2) - ez(ix-1)))
 
             bz(ix) = bz(ix) &
-                - hdtx * (alphax * (ey(ix+1) - ey(ix  ))  &
-                       +  deltax * (ey(ix+2) - ey(ix-1)))
+                - cx1 * (alphax * (ey(ix+1) - ey(ix  ))  &
+                       + deltax * (ey(ix+2) - ey(ix-1)))
           ENDDO
         ENDIF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
-        DO ix = 1, nx
-          cx1 = c1 * hdtx
-          cx2 = c2 * hdtx
+        cx1 = c1 * hdtx
+        cx2 = c2 * hdtx
 
+        DO ix = 1, nx
           by(ix) = by(ix) &
               + cx1 * (ez(ix+1) - ez(ix  )) &
               + cx2 * (ez(ix+2) - ez(ix-1))
@@ -322,11 +323,11 @@ CONTAINS
         c2 = -25.0_num / 384.0_num
         c3 = 3.0_num / 640.0_num
 
-        DO ix = 1, nx
-          cx1 = c1 * hdtx
-          cx2 = c2 * hdtx
-          cx3 = c3 * hdtx
+        cx1 = c1 * hdtx
+        cx2 = c2 * hdtx
+        cx3 = c3 * hdtx
 
+        DO ix = 1, nx
           by(ix) = by(ix) &
               + cx1 * (ez(ix+1) - ez(ix  )) &
               + cx2 * (ez(ix+2) - ez(ix-1)) &
