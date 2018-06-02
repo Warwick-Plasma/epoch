@@ -686,20 +686,17 @@ CONTAINS
     IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
-      dt = cfl * dx * dy * dz / c / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2)
+      dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / c &
-          / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2 + 1.0_num / dz**2))
+      dt = MIN(dx, dy * dz / SQRT(dy**2 + dz**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
-      dt = 1.0_num / c &
-          / SQRT(MAX(1.0_num / dy**2, 1.0_num / dx**2 + 1.0_num / dz**2))
+      dt = MIN(dy, dx * dz / SQRT(dx**2 + dz**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe_z) THEN
-      dt = 1.0_num / c &
-          / SQRT(MAX(1.0_num / dz**2, 1.0_num / dx**2 + 1.0_num / dy**2))
+      dt = MIN(dz, dx * dy / SQRT(dx**2 + dy**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
