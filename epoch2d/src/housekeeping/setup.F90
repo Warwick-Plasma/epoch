@@ -624,6 +624,11 @@ CONTAINS
       dt = MIN(dx, dy) / c
     ENDIF
 
+    IF (any_open) THEN
+      dt_solver = dx * dy / SQRT(dx**2 + dy**2) / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
     dt_solver = dt
 
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)

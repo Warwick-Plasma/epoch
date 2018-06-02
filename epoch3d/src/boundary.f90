@@ -37,16 +37,21 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    any_open = .FALSE.
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
-      IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+      IF (bc_field(i) == c_bc_simple_laser) THEN
+        add_laser(i) = .TRUE.
+        any_open = .TRUE.
+      ENDIF
 
       ! Note: reflecting EM boundaries not yet implemented.
       IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
+      IF (bc_field(i) == c_bc_simple_outflow) any_open = .TRUE.
     ENDDO
 
     error = .FALSE.

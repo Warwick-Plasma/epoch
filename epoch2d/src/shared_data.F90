@@ -1050,6 +1050,7 @@ MODULE shared_data
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
+  LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
