@@ -618,11 +618,8 @@ CONTAINS
       ! cfl is a function of field_order
       dt = cfl * dx * dy / c / SQRT(dx**2 + dy**2)
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / c / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2))
-
-    ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       dt = MIN(dx, dy) / c
     ENDIF
