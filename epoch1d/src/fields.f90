@@ -54,22 +54,21 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
       alphax = 1.0_num - 3.0_num * deltax
-    ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       alphax = 1.0_num - 3.0_num * deltax
     ENDIF
 
-    IF ((rank == 0) .AND. (maxwell_solver .NE. c_maxwell_solver_yee)) THEN
-        PRINT*,''
-        PRINT*,'Maxwell solver set to the following parameters:'
-        PRINT*,'alphax=', alphax
-        PRINT*,'deltax=', deltax
-        PRINT*,'c*dt/dx=', dt * c / dx
-        PRINT*,''
+    IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
+        PRINT*
+        PRINT*, 'Maxwell solver set to the following parameters:'
+        PRINT*, 'alpha=', alphax
+        PRINT*, 'delta=', deltax
+        PRINT*, 'c*dt/dx=', dt * c / dx
+        PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

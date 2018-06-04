@@ -351,9 +351,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
     errcode_deck = IOR(errcode_deck, injector_block_check())
-    IF (maxwell_solver == c_maxwell_solver_custom) THEN
-      errcode_deck = IOR(errcode_deck, stencil_block_check())
-    ENDIF
+    errcode_deck = IOR(errcode_deck, stencil_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifndef NO_PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())

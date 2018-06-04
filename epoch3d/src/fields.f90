@@ -58,11 +58,11 @@ CONTAINS
 
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
       alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz &
-                    - 4.0_num * gammax - 3.0_num * deltax
+                       - 4.0_num * gammax - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz &
-                    - 4.0_num * gammay - 3.0_num * deltay
+                       - 4.0_num * gammay - 3.0_num * deltay
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy &
-                    - 4.0_num * gammaz - 3.0_num * deltaz
+                       - 4.0_num * gammaz - 3.0_num * deltaz
 
     ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
@@ -165,17 +165,17 @@ CONTAINS
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy
     ENDIF
 
-    IF ((rank == 0) .AND. (maxwell_solver .NE. c_maxwell_solver_yee)) THEN
-        PRINT*,''
-        PRINT*,'Maxwell solver set to the following parameters:'
-        PRINT*,'alpha=', alphax, alphay, alphaz
-        PRINT*,'betax=', betaxy, betaxz
-        PRINT*,'betay=', betayx, betayz
-        PRINT*,'betaz=', betazx, betazy
-        PRINT*,'gamma=', gammax, gammay, gammaz
-        PRINT*,'delta=', deltax, deltay, deltaz
-        PRINT*,'c*dt/dx=', dt * c / dx
-        PRINT*,''
+    IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
+        PRINT*
+        PRINT*, 'Maxwell solver set to the following parameters:'
+        PRINT*, 'alpha=', alphax, alphay, alphaz
+        PRINT*, 'betax=', betaxy, betaxz
+        PRINT*, 'betay=', betayx, betayz
+        PRINT*, 'betaz=', betazx, betazy
+        PRINT*, 'gamma=', gammax, gammay, gammaz
+        PRINT*, 'delta=', deltax, deltay, deltaz
+        PRINT*, 'c*dt/dx=', dt * c / dx
+        PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

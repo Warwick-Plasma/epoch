@@ -88,14 +88,15 @@ CONTAINS
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
 
-    IF ((rank == 0) .AND. (maxwell_solver .NE. c_maxwell_solver_yee)) THEN
-        PRINT*,''
-        PRINT*,'Maxwell solver set to the following parameters:'
-        PRINT*,'alpha=', alphax, alphay
-        PRINT*,' beta=', betaxy, betayx
-        PRINT*,'delta=', deltax, deltay
-        PRINT*,'c*dt/dx=', dt * c / dx
-        PRINT*,''
+    IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
+        PRINT*
+        PRINT*, 'Maxwell solver set to the following parameters:'
+        PRINT*, 'alpha=', alphax, alphay
+        PRINT*, 'betax=', betaxy
+        PRINT*, 'betay=', betayx
+        PRINT*, 'delta=', deltax, deltay
+        PRINT*, 'c*dt/dx=', dt * c / dx
+        PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

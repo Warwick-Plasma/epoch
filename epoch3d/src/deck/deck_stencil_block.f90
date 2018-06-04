@@ -142,9 +142,12 @@ CONTAINS
   FUNCTION stencil_block_check() RESULT(errcode)
 
     INTEGER :: errcode
+
     errcode = c_err_none
 
-    IF ( .NOT. dt_set ) THEN
+    IF (maxwell_solver /= c_maxwell_solver_custom) RETURN
+
+    IF (.NOT. dt_set) THEN
       errcode = c_err_missing_elements
     ENDIF
 

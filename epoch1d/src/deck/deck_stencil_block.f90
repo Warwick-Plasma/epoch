@@ -68,64 +68,64 @@ CONTAINS
     IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'betaxy')) THEN
-      ! betaxy = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betaxy ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'betayx')) THEN
-!       betayx = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betayx ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'betaxz')) THEN
-!       betaxz = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betaxz ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'betazx')) THEN
-!       betazx = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betazx ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'betayz')) THEN
-!       betayz = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betayz ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'betazy')) THEN
-!       betazy = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element betazy ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'gammax')) THEN
-!       betazy = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element gammax ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'gammay')) THEN
-!       gammay = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element gammay ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'gammaz')) THEN
-!       gammaz = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element gammaz ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
@@ -136,15 +136,15 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'deltay')) THEN
-!       deltay = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element deltay ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
 
     IF (str_cmp(element, 'deltaz')) THEN
-!       deltaz = as_real_print(value, element, errcode)
-      extended_error_string = 'Stencil element deltaz ignored in 1D code'
+      extended_error_string = 'Stencil element ' &
+          // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
     ENDIF
@@ -164,9 +164,12 @@ CONTAINS
   FUNCTION stencil_block_check() RESULT(errcode)
 
     INTEGER :: errcode
+
     errcode = c_err_none
 
-    IF ( .NOT. dt_set ) THEN
+    IF (maxwell_solver /= c_maxwell_solver_custom) RETURN
+
+    IF (.NOT. dt_set) THEN
       errcode = c_err_missing_elements
     ENDIF
 
