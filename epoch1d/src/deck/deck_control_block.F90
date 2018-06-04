@@ -174,8 +174,10 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_x) THEN
       fng = 2
+      maxwell_solver = c_maxwell_solver_lehe_x
     ENDIF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
@@ -352,6 +354,7 @@ CONTAINS
       maxwell_solver = as_integer_print(value, element, errcode)
       IF (maxwell_solver /= c_maxwell_solver_yee &
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_x &
           .AND. maxwell_solver /= c_maxwell_solver_cowan &
           .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
         errcode = c_err_bad_value

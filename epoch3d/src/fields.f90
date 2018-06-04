@@ -55,7 +55,7 @@ CONTAINS
     REAL(num) :: delta, dx_cdt
     REAL(num) :: c1, c2, c3, cx1, cx2
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
@@ -73,6 +73,42 @@ CONTAINS
       alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx
       alphaz = 1.0_num - 2.0_num * betazx
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      dx_cdt = dy / (c * dt)
+      betayx = 0.125_num * (dy / dx)**2
+      betayz = 0.125_num * (dy / dz)**2
+      betaxy = 0.125_num
+      betazy = 0.125_num
+      betaxz = 0.0_num
+      betazx = 0.0_num
+      deltax = 0.0_num
+      deltay = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      deltaz = 0.0_num
+      gammax = 0.0_num
+      gammay = 0.0_num
+      gammaz = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy
+      alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz - 3.0_num * deltay
+      alphaz = 1.0_num - 2.0_num * betazx
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_z) THEN
+      dx_cdt = dz / (c * dt)
+      betazx = 0.125_num * (dz / dx)**2
+      betazy = 0.125_num * (dz / dy)**2
+      betaxz = 0.125_num
+      betayz = 0.125_num
+      betayx = 0.0_num
+      betaxy = 0.0_num
+      deltax = 0.0_num
+      deltay = 0.0_num
+      deltaz = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      gammax = 0.0_num
+      gammay = 0.0_num
+      gammaz = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy
+      alphay = 1.0_num - 2.0_num * betayx
+      alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy - 3.0_num * deltaz
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)

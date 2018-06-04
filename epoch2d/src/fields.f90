@@ -26,7 +26,7 @@ MODULE fields
   REAL(num) :: cnx, cny
   REAL(num) :: alphax, alphay
   REAL(num) :: betaxy, betayx
-  REAL(num) :: deltax
+  REAL(num) :: deltax, deltay
 
 CONTAINS
 
@@ -53,14 +53,24 @@ CONTAINS
 
     REAL(num) :: delta, dx_cdt
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
       betayx = 0.125_num
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
       alphay = 1.0_num - 2.0_num * betayx
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      dx_cdt = dy / (c * dt)
+      betayx = 0.125_num * (dy / dx)**2
+      betaxy = 0.125_num
+      deltax = 0.0_num
+      deltay = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
+      alphax = 1.0_num - 2.0_num * betaxy
+      alphay = 1.0_num - 2.0_num * betayx - 3.0_num * deltay
 
     ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
@@ -69,6 +79,7 @@ CONTAINS
       betayx = 0.125_num * (delta / dx)**2
       betaxy = 0.125_num * (delta / dy)**2
       deltax = 0.0_num
+      deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
     ENDIF
@@ -307,7 +318,8 @@ CONTAINS
               bx(ix, iy) = bx(ix, iy) &
                   - cy1 * (alphay * (ez(ix  , iy+1) - ez(ix  , iy  ))  &
                          + betayx * (ez(ix+1, iy+1) - ez(ix+1, iy  )   &
-                                   + ez(ix-1, iy+1) - ez(ix-1, iy  )))
+                                   + ez(ix-1, iy+1) - ez(ix-1, iy  ))  &
+                         + deltay * (ez(ix  , iy+2) - ez(ix  , iy-1)))
 
               by(ix, iy) = by(ix, iy) &
                   + cx1 * (alphax * (ez(ix+1, iy  ) - ez(ix  , iy  ))  &
@@ -322,7 +334,8 @@ CONTAINS
                          + deltax * (ey(ix+2, iy  ) - ey(ix-1, iy  ))) &
                   + cy1 * (alphay * (ex(ix  , iy+1) - ex(ix  , iy  ))  &
                          + betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
-                                   + ex(ix-1, iy+1) - ex(ix-1, iy  )))
+                                   + ex(ix-1, iy+1) - ex(ix-1, iy  ))  &
+                         + deltay * (ex(ix  , iy+2) - ex(ix  , iy-1)))
             ENDDO
           ENDDO
         ENDIF
@@ -417,7 +430,8 @@ CONTAINS
               bx(ix, iy) = bx(ix, iy) &
                   - cy1 * (alphay * (ez(ix  , iy+1) - ez(ix  , iy  ))  &
                          + betayx * (ez(ix+1, iy+1) - ez(ix+1, iy  )   &
-                                   + ez(ix-1, iy+1) - ez(ix-1, iy  )))
+                                   + ez(ix-1, iy+1) - ez(ix-1, iy  ))  &
+                         + deltay * (ez(ix  , iy+2) - ez(ix  , iy-1)))
 
               by(ix, iy) = by(ix, iy) &
                   + cx1 * (alphax * (ez(ix+1, iy  ) - ez(ix  , iy  ))  &
@@ -432,7 +446,8 @@ CONTAINS
                          + deltax * (ey(ix+2, iy  ) - ey(ix-1, iy  ))) &
                   + cy1 * (alphay * (ex(ix  , iy+1) - ex(ix  , iy  ))  &
                          + betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
-                                   + ex(ix-1, iy+1) - ex(ix-1, iy  )))
+                                   + ex(ix-1, iy+1) - ex(ix-1, iy  ))  &
+                         + deltay * (ex(ix  , iy+2) - ex(ix  , iy-1)))
             ENDDO
           ENDDO
         ENDIF

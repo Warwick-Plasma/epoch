@@ -688,10 +688,18 @@ CONTAINS
       ! cfl is a function of field_order
       dt = cfl * dx * dy * dz / c / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2)
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe, PhD Thesis (2014)
       dt = 1.0_num / c &
           / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2 + 1.0_num / dz**2))
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      dt = 1.0_num / c &
+          / SQRT(MAX(1.0_num / dy**2, 1.0_num / dx**2 + 1.0_num / dz**2))
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_z) THEN
+      dt = 1.0_num / c &
+          / SQRT(MAX(1.0_num / dz**2, 1.0_num / dx**2 + 1.0_num / dy**2))
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN

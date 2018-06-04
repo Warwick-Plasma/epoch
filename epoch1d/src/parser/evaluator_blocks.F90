@@ -575,6 +575,21 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_maxwell_solver_lehe_x) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_x, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe_y) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_y, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe_z) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_z, num))
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_maxwell_solver_cowan) THEN
       CALL push_on_eval(REAL(c_maxwell_solver_cowan, num))
       RETURN
