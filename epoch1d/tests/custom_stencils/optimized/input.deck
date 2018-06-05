@@ -12,13 +12,6 @@ begin:control
   dt_multiplier = 1
 end:control
 
-begin:stencil
-
-  deltax = -0.013364149548965119
-  dt = 0.95 * dx / c
-
-end:stencil
-
 
 begin:boundaries
   bc_x_min = simple_laser
@@ -42,3 +35,9 @@ begin:output
   grid = always
   ey = always
 end:output
+
+
+begin:stencil
+  dt = 0.95 * dx / c
+  deltax = -0.013364149548965119
+end:stencil

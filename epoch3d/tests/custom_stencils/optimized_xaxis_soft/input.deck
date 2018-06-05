@@ -15,33 +15,10 @@ begin:control
   z_max = x_max
 
   stdout_frequency = 10
-    maxwell_solver = custom
-    dt_multiplier = 1
 
+  maxwell_solver = custom
+  dt_multiplier = 1
 end:control
-
-
-begin:stencil
-
-    # These coefficients have been calculated with
-    # optimize_stencil.py version 0.2+1.g0d913ee
-
-    # using the command line
-    # "optimize_stencil.py --dim 3 --Y 3 --Z 3 --dt-multiplier 0.99 --N 1 --weight xaxis_soft"
-
-    dt = 0.9493391116848393 * dx / c
-    betaxy = 0.06041451023625669
-    betaxz = 0.06030251774679948
-    betayx = 0.06041451023625669
-    betayz = -0.017481592735549903
-    betazx = 0.06030251774679948
-    betazy = -0.017481592735549903
-    deltax = -0.02187397991068981
-    deltay = -0.3160037968338166
-    deltaz = -0.3149437496680533
-
-end:stencil
-
 
 
 begin:boundaries
@@ -84,3 +61,23 @@ begin:output
   #by = always
   #bz = always
 end:output
+
+
+begin:stencil
+  # These coefficients have been calculated with
+  # optimize_stencil.py version 0.2+1.g0d913ee
+
+  # using the command line
+  # "optimize_stencil.py --dim 3 --Y 3 --Z 3 --dt-multiplier 0.99 --N 1 --weight xaxis_soft"
+
+  dt = 0.9493391116848393 * dx / c
+  betaxy = 0.06041451023625669
+  betaxz = 0.06030251774679948
+  betayx = 0.06041451023625669
+  betayz = -0.017481592735549903
+  betazx = 0.06030251774679948
+  betazy = -0.017481592735549903
+  deltax = -0.02187397991068981
+  deltay = -0.3160037968338166
+  deltaz = -0.3149437496680533
+end:stencil
