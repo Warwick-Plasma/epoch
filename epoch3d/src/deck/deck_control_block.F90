@@ -190,8 +190,19 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_x &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_y &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_z) THEN
       fng = 2
+      IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+        maxwell_solver = c_maxwell_solver_lehe_x
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Using Lehe solver optimised for the x-direction'
+        ENDDO
+      ENDIF
     ENDIF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
@@ -384,6 +395,9 @@ CONTAINS
       maxwell_solver = as_integer_print(value, element, errcode)
       IF (maxwell_solver /= c_maxwell_solver_yee &
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_x &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_y &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_z &
           .AND. maxwell_solver /= c_maxwell_solver_cowan &
           .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
         errcode = c_err_bad_value

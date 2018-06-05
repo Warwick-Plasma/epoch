@@ -548,6 +548,11 @@ CONTAINS
 
     ENDIF
 
+    IF (any_open) THEN
+      dt_solver = dx / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
     dt_solver = dt
 
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)

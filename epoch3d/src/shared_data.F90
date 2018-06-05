@@ -125,8 +125,11 @@ MODULE constants
   ! Maxwell Solvers
   INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
   INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 2
-  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 1
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 4
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 5
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -394,8 +397,11 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 102
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_x = 102
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_y = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
+  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -1071,6 +1077,7 @@ MODULE shared_data
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
   LOGICAL :: z_min_boundary, z_max_boundary
+  LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
