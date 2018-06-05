@@ -98,7 +98,7 @@ CONTAINS
     ENDIF
 
     IF (str_cmp(element, 'gammax')) THEN
-      betazy = as_real_print(value, element, errcode)
+      gammax = as_real_print(value, element, errcode)
       RETURN
     ENDIF
 
