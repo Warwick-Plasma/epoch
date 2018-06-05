@@ -132,14 +132,14 @@ class test_custom_stencils(SimTest):
 
             # For reference, right here, right now the following line prints
 
-            # yee 284766391.118 285957057.716 0.00416379510941
-            # lehe_x 309981206.147 311627789.852 0.00528381536589
-            # pukhov 291262060.412 292363351.796 0.00376685852363
+            # optimized   301440080.113 301666013.514 0.000748952120
+            # lehe_custom 310055314.605 311627789.852 0.005046004555
+            # lehe_x      310055314.605 311627789.852 0.005046004555
 
             print('{:11} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
                   vg[solver], abs(vg_sim-vg[solver])/vg[solver]))
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.01)
+            assert np.isclose(vg_sim, vg[solver], rtol=0.006)
 
 
 if __name__ == '__main__':

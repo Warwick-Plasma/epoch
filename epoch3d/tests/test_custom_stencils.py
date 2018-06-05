@@ -202,14 +202,14 @@ class test_custom_stencils(SimTest):
 
             # For reference, right here, right now the following line prints
 
-            # optimized 320424292.475 321174454.0417929 0.00233568254622
-            # optimized_xaxis 308261456.168 308574011.4909087 0.00101290229036
-            # optimized_xaxis_soft 307269136.793 307468806.63501453 0.000649399
+            # optimized_xaxis_soft 307269136.793 307468806.635 0.000649398695
+            # optimized            320424292.475 321174454.042 0.002335682546
+            # optimized_xaxis      308261456.168 308574011.491 0.001012902290
 
-            print('{:6} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
+            print('{:20} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
                   vg[solver], abs(vg_sim-vg[solver])/vg[solver]))
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.01)
+            assert np.isclose(vg_sim, vg[solver], rtol=0.003)
 
 
 if __name__ == '__main__':
