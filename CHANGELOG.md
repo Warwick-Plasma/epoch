@@ -1,3 +1,128 @@
+## v4.11.0 to v4.12.0
+
+ * Fixes for exact restarts
+
+ * Apply reflecting particle BCs when conduct is specified
+
+ * Fix moving window for fractional particles per cell
+
+ * Don't average ppc diagnostic over shape function
+
+ * Added average particle weight diagnostic
+
+ * Replaced PARTICLE_COUNT_UPDATE Makefile DEFINE with
+   "use_particle_count_update" control block flag
+
+ * Added "use_accurate_n_zeros" control block flag to enable finding the
+   exact number of output that are generated
+
+
+## v4.10.0 to v4.11.0 (2018-04-13)
+
+ * Added time dependent moving window
+
+ * Added multiple RNG states
+
+ * Fixed F2003 extension in shared_data
+
+ * Fixed errors in derived variable ouput for photons
+
+ * Fix bug in grow_array in 2D
+
+ * If print_const is used, output constant values into a separate file
+
+ * Allow CPML with moving window
+
+ * Added COMPILER=auto option to automatically detect compiler
+
+ * Added time dependent moving window
+
+ * Fix pack.sh script for non-bash shells
+
+ * Added issue templates
+
+ * Changed the Make rule from hector to archer
+
+ * Fixed lasers so that positions work as expected
+
+ * Fixed #1691, compilation error with older gfortran
+
+ * Updated mediawiki links to the new location
+
+ * Updated SDF submodule
+   SDF/FORTRAN
+   - Fix pack.sh script for non-bash shells
+
+   SDF/IDL
+   - Functions to read key-val pair file into struct
+   - Rename main function
+   - Added licensing header
+   - Uppercase keywords
+   - Correct indentation
+   - General tidy
+
+   SDF/Matlab
+   - Read name-value pairs into structure
+   - Removed DOS linefeed characters
+   - Added license header
+   - Tidied up a little
+
+   SDF/utilities
+   - Script to read name-val pairs from file into dict
+   - Fix float vs int ordering
+   - Made PEP8 compliant
+
+   SDF/VisIt
+   - Fix build script for VisIt-2.13 and 2.13.1 on macOS
+
+
+## v4.9.0 to v4.10.0 (2018-03-13)
+
+ * Added time varying particle injectors
+
+ * Add per species particle boundaries You can now specify bc_x_min and
+   bc_x_max to a species block. This overrides the global boundaries for that
+   species
+
+ * Fixes #1567 with moving window and offset_grid Bug 1567: UNLOCATABLE
+   PARTICLE with restart dump and moving window Shift particles back to true
+   position and adjust offset grid
+
+ * Bugfix for assigning particle IDs
+
+ * Various fixes for compiling with DEFINES flags
+
+ * Added particles_per_cell diagnostic
+
+ * Fixed missing ierror argument to MPI_ALLGATHER This fixes issue #1636
+
+ * Fix PER_PARTICLE_CHARGE and fractional particles Previously 'fractional'
+   particles were not given mass or charge giving segfault if ppc did not
+   evenly divide by number of cells
+
+ * Added CONTRIBUTING.md guide
+
+ * Updated SDF
+   SDF/FORTRAN
+   - Fix PGI build on OSX
+   - Work around a PGI floating point bug.
+   - Fixed unix_seconds for Jan and Feb of leap years
+   - Fully initialise sdf_file_handle
+   - Changed FPE generation in error handler
+   - Fix count of leap years since 1970
+   - Check for broken OpenMPI 2.1.1 and 2.1.2
+
+   SDF/utilities
+   - Added support for string-type namevalue pairs
+   - Avoid duplicated dictionary names
+   - Made build of sdf2ascii optional (off by default)
+   - Removed unhelpful dimension squashing
+   - Removed mmap option from python reader
+
+   SDF/VisIt
+   - Added test for compatible g++ version
+
+
 ## v4.8.0 to v4.9.0 (2017-07-28)
 
  * Add alternative field solvers for the Maxwell equations.

@@ -25,6 +25,7 @@ MODULE deck
   USE deck_stencil_block
   USE deck_boundaries_block
   USE deck_species_block
+  USE deck_injector_block
   USE deck_io_block
   USE deck_io_global_block
   USE deck_window_block
@@ -85,6 +86,7 @@ CONTAINS
     CALL control_deck_initialise
     CALL dist_fn_deck_initialise
     CALL fields_deck_initialise
+    CALL injector_deck_initialise
     CALL io_deck_initialise
     CALL io_global_deck_initialise
     CALL laser_deck_initialise
@@ -113,6 +115,7 @@ CONTAINS
     CALL control_deck_finalise
     CALL dist_fn_deck_finalise
     CALL fields_deck_finalise
+    CALL injector_deck_finalise
     CALL io_deck_finalise
     CALL io_global_deck_finalise
     CALL laser_deck_finalise
@@ -155,6 +158,8 @@ CONTAINS
       CALL io_global_block_start
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_start
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      CALL injector_block_start
     ELSE IF (str_cmp(block_name, 'stencil')) THEN
       CALL stencil_block_start
     ELSE IF (str_cmp(block_name, 'subset')) THEN
@@ -202,6 +207,8 @@ CONTAINS
       CALL io_global_block_end
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_end
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      CALL injector_block_end
     ELSE IF (str_cmp(block_name, 'stencil')) THEN
       CALL stencil_block_end
     ELSE IF (str_cmp(block_name, 'subset')) THEN
@@ -275,6 +282,8 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       handle_block = laser_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      handle_block = injector_block_handle_element(block_element, block_value)
     ELSE IF (str_cmp(block_name, 'stencil')) THEN
       handle_block = stencil_block_handle_element(block_element, block_value)
       RETURN
@@ -341,6 +350,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_block_check())
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
+    errcode_deck = IOR(errcode_deck, injector_block_check())
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
       errcode_deck = IOR(errcode_deck, stencil_block_check())
     ENDIF
@@ -428,6 +438,7 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: const_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
     LOGICAL :: exists
@@ -463,6 +474,7 @@ CONTAINS
     ignore = .FALSE.
     continuation = .FALSE.
     status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
+    const_filename = TRIM(ADJUSTL(data_dir)) // '/const.status'
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
@@ -519,6 +531,9 @@ CONTAINS
         ELSE
           OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
               iostat=errcode)
+        ENDIF
+        IF (print_deck_constants) THEN
+          OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
         ENDIF
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
@@ -748,7 +763,8 @@ CONTAINS
     ENDIF
 
 #ifndef NO_IO
-    IF (first_call) CLOSE(du)
+    CLOSE(du)
+    CLOSE(duc)
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
@@ -803,7 +819,7 @@ CONTAINS
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
           ENDDO
-        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)

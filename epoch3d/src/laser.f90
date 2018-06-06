@@ -175,15 +175,49 @@ CONTAINS
 
 
 
+  ! This routine populates the constant elements of a parameter pack
+  ! from a laser
+
+  SUBROUTINE populate_pack_from_laser(laser, parameters)
+
+    TYPE(laser_block), POINTER :: laser
+    TYPE(parameter_pack), INTENT(INOUT) :: parameters
+
+    parameters%pack_ix = 0
+    parameters%pack_iy = 0
+    parameters%pack_iz = 0
+
+    SELECT CASE(laser%boundary)
+      CASE(c_bd_x_min)
+        parameters%pack_ix = 0
+      CASE(c_bd_x_max)
+        parameters%pack_ix = nx
+      CASE(c_bd_y_min)
+        parameters%pack_iy = 0
+      CASE(c_bd_y_max)
+        parameters%pack_iy = ny
+      CASE(c_bd_z_min)
+        parameters%pack_iz = 0
+      CASE(c_bd_z_max)
+        parameters%pack_iz = nz
+    END SELECT
+
+  END SUBROUTINE populate_pack_from_laser
+
+
+
   FUNCTION laser_time_profile(laser)
 
     TYPE(laser_block), POINTER :: laser
     REAL(num) :: laser_time_profile
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
+    CALL populate_pack_from_laser(laser, parameters)
     IF (laser%use_time_function) THEN
-      laser_time_profile = evaluate(laser%time_function, err)
+      laser_time_profile = evaluate_with_parameters(laser%time_function, &
+          parameters, err)
       RETURN
     ENDIF
 
@@ -200,9 +234,9 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
 
     err = 0
+    CALL populate_pack_from_laser(laser, parameters)
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
-        parameters%pack_ix = 0
         DO j = 1,nz
           parameters%pack_iz = j
           DO i = 1,ny
@@ -212,7 +246,6 @@ CONTAINS
           ENDDO
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
-        parameters%pack_iy = 0
         DO j = 1,nz
           parameters%pack_iz = j
           DO i = 1,nx
@@ -222,7 +255,6 @@ CONTAINS
           ENDDO
         ENDDO
       CASE(c_bd_z_min, c_bd_z_max)
-        parameters%pack_iz = 0
         DO j = 1,ny
           parameters%pack_iy = j
           DO i = 1,nx
@@ -244,38 +276,36 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
 
     err = 0
+    CALL populate_pack_from_laser(laser, parameters)
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
-        parameters%pack_ix = 0
         DO j = 1,nz
           parameters%pack_iz = j
           DO i = 1,ny
             parameters%pack_iy = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
       CASE(c_bd_y_min, c_bd_y_max)
-        parameters%pack_iy = 0
         DO j = 1,nz
           parameters%pack_iz = j
           DO i = 1,nx
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
       CASE(c_bd_z_min, c_bd_z_max)
-        parameters%pack_iz = 0
         DO j = 1,ny
           parameters%pack_iy = j
           DO i = 1,nx
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
-                err)
+                    err)
           ENDDO
         ENDDO
     END SELECT
@@ -288,9 +318,12 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: laser
     INTEGER :: err
+    TYPE(parameter_pack) :: parameters
 
     err = 0
-    laser%omega = evaluate(laser%omega_function, err)
+    CALL populate_pack_from_laser(laser, parameters)
+    laser%omega = &
+        evaluate_with_parameters(laser%omega_function, parameters, err)
     IF (laser%omega_func_type == c_of_freq) &
         laser%omega = 2.0_num * pi * laser%omega
     IF (laser%omega_func_type == c_of_lambda) &
@@ -543,7 +576,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_min, lasers = laser_x_min)
+        CALL calc_absorption(c_bd_x_min, lasers=laser_x_min)
       ELSE
         CALL calc_absorption(c_bd_x_min)
       ENDIF
@@ -621,7 +654,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_max, lasers = laser_x_max)
+        CALL calc_absorption(c_bd_x_max, lasers=laser_x_max)
       ELSE
         CALL calc_absorption(c_bd_x_max)
       ENDIF
@@ -699,7 +732,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_min, lasers = laser_y_min)
+        CALL calc_absorption(c_bd_y_min, lasers=laser_y_min)
       ELSE
         CALL calc_absorption(c_bd_y_min)
       ENDIF
@@ -777,7 +810,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_max, lasers = laser_y_max)
+        CALL calc_absorption(c_bd_y_max, lasers=laser_y_max)
       ELSE
         CALL calc_absorption(c_bd_y_max)
       ENDIF
@@ -855,7 +888,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_z_min, lasers = laser_z_min)
+        CALL calc_absorption(c_bd_z_min, lasers=laser_z_min)
       ELSE
         CALL calc_absorption(c_bd_z_min)
       ENDIF
@@ -933,7 +966,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_z_max, lasers = laser_z_max)
+        CALL calc_absorption(c_bd_z_max, lasers=laser_z_max)
       ELSE
         CALL calc_absorption(c_bd_z_max)
       ENDIF

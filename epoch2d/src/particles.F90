@@ -104,13 +104,14 @@ CONTAINS
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma_rel, gamma_rel_m1, part_u2, third, igamma
+    REAL(num) :: root, dtfac, gamma_rel, part_u2, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
     REAL(num) :: hy_iy, xfac1, yfac1, yfac2
     INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
     INTEGER(i8) :: ipart
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
+    REAL(num) :: gamma_rel_m1
 #endif
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species
@@ -497,6 +498,7 @@ CONTAINS
 #endif
         current => next
       ENDDO
+      CALL current_bcs(species=ispecies)
     ENDDO
 
     IF (.NOT.use_field_ionisation) THEN

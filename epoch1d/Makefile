@@ -13,15 +13,29 @@
 
 ifeq ($(strip $(COMPILER)),)
   MAKECMDGOALS = error
+  CMP_GUESS = $(shell ../scripts/infer_compiler.sh)
 error:
 	@echo '*** ERROR ***'
 	@echo 'You MUST set a value for the COMPILER variable'
-	@echo ' eg. "make COMPILER=intel"'
-	@echo 'Alternatively, you can add "export COMPILER=intel" to $$HOME/.bashrc'
+	@printf " *?* It looks like you're using "
+	@printf $(CMP_GUESS)
+	@echo " *?*"
+	@printf ' so try "make COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '"'
+	@printf 'Alternatively, you can add "export COMPILER='
+	@printf $(CMP_GUESS)
+	@echo '" to $$HOME/.bashrc'
 	@exit 1
 endif
 
 D = -D
+
+ifeq ($(strip $(COMPILER)), auto)
+  override COMPILER := $(shell ../scripts/infer_compiler.sh)
+  NEWMAKEFLAGS := "$(filter-out COMPILER=auto, $(MAKEFLAGS))"
+  $(warning Inferred compiler as $(COMPILER))
+endif
 
 # PGI
 # ===
@@ -56,18 +70,25 @@ endif
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
   FFLAGS = -O3 -g
+
+  GNUVER := $(shell gfortran -dumpversion | head -1 \
+      | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
+  GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
+  GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
+
+  # Allow for 99 minor revisions
+  GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
+
+  # gfortran-4.9
+  GNUGE49 := $(shell expr $(GNUVER) \>= 409)
+  ifeq "$(GNUGE49)" "1"
+    FFLAGS += -ffpe-summary=invalid,zero,overflow
+  endif
+
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
-
-    GNUVER := $(shell gfortran -dumpversion | head -1 \
-        | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
-    GNUMAJOR := $(shell echo $(GNUVER) | cut -f1 -d\.)
-    GNUMINOR := $(shell echo $(GNUVER) | cut -f2 -d\.)
-
-    # Allow for 99 minor revisions
-    GNUVER := $(shell expr 100 \* $(GNUMAJOR) + $(GNUMINOR))
 
     # gfortran-4.3
     GNUGE43 := $(shell expr $(GNUVER) \>= 403)
@@ -121,9 +142,9 @@ ifeq ($(strip $(COMPILER)),ibm)
   D = -WF,-D
 endif
 
-# HECToR
+# ARCHER (also works for HECToR)
 # ========
-ifeq ($(strip $(COMPILER)),hector)
+ifeq ($(strip $(COMPILER)),archer)
   FFLAGS = -O3
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
@@ -184,9 +205,6 @@ DEFINES := $(DEFINE)
 # an 8-byte integer, the second uses 4-bytes.
 #DEFINES += $(D)PARTICLE_ID
 #DEFINES += $(D)PARTICLE_ID4
-
-# Keep global particle counts up to date.
-#DEFINES += $(D)PARTICLE_COUNT_UPDATE
 
 # Include QED routines
 #DEFINES += $(D)PHOTONS
@@ -261,20 +279,20 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
-  deck_fields_block.f90 deck_io_block.F90 deck_io_global_block.F90 \
-  deck_laser_block.f90 deck_part_from_file_block.F90 \
+  deck_fields_block.f90 deck_injector_block.f90 deck_io_block.F90 \
+  deck_io_global_block.F90 deck_laser_block.f90 deck_part_from_file_block.F90 \
   deck_particle_probe_block.F90 deck_qed_block.F90 deck_species_block.F90 \
   deck_stencil_block.f90 deck_subset_block.f90 deck_window_block.f90 \
-  deltaf_loader.F90 \
-  diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.F90 \
-  fields.f90 finish.f90 helper.F90 ic_module.f90 ionise.F90 iterators.F90 \
-  laser.f90 mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 \
-  particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
-  particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
-  random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
-  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
-  strings.f90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
-  tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+  deltaf_loader.F90 diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 \
+  evaluator_blocks.F90 fields.f90 finish.f90 helper.F90 ic_module.f90 \
+  injectors.F90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
+  mpi_subtype_control.f90 numerics.f90 particle_migration.F90 \
+  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
+  partlist.F90 photons.F90 prefetch.F90 probes.F90 random_generator.f90 \
+  redblack_module.f90 setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 \
+  simple_io.f90 split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
+  terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -340,7 +358,7 @@ epoch_source_info.o: $(OBJDIR)/epoch_source_info.f90 $(SOURCE_ALL)
 	$(FC) -c $(FFLAGS) $(INFO_FLAGS) -o $(OBJDIR)/$@ $<
 
 $(SDFMOD):
-	$(MAKE) -C $(SDF)
+	$(MAKE) MAKEFLAGS=$(NEWMAKEFLAGS) COMPILER=$(COMPILER) -C $(SDF)
 
 rm:
 	@rm -rf $(BINDIR) $(OBJDIR)
@@ -393,17 +411,17 @@ boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
-current_smooth.o: current_smooth.F90 shape_functions.o shared_data.o
+current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o
 deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
-  deck_fields_block.o deck_io_block.o deck_io_global_block.o \
-  deck_laser_block.o deck_part_from_file_block.o deck_particle_probe_block.o \
-  deck_qed_block.o deck_species_block.o deck_stencil_block.o \
-  deck_subset_block.o \
-  deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
+  deck_fields_block.o deck_injector_block.o deck_io_block.o \
+  deck_io_global_block.o deck_laser_block.o deck_part_from_file_block.o \
+  deck_particle_probe_block.o deck_qed_block.o deck_species_block.o \
+  deck_stencil_block.o deck_subset_block.o deck_window_block.o photons.o \
+  strings.o utilities.o version_data.o $(SDFMOD)
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
@@ -413,10 +431,11 @@ deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o \
   utilities.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
+deck_injector_block.o: deck_injector_block.f90 evaluate.o injectors.o shunt.o \
+  strings_advanced.o utilities.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o utilities.o
 deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o utilities.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o utilities.o
-deck_stencil_block.o: deck_stencil_block.f90 fields.o laser.o strings_advanced.o
 deck_part_from_file_block.o: deck_part_from_file_block.F90 \
   deck_species_block.o partlist.o setup.o simple_io.o strings_advanced.o \
   utilities.o
@@ -425,15 +444,16 @@ deck_particle_probe_block.o: deck_particle_probe_block.F90 probes.o \
 deck_qed_block.o: deck_qed_block.F90 strings_advanced.o utilities.o
 deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
   strings_advanced.o utilities.o
+deck_stencil_block.o: deck_stencil_block.f90 fields.o strings_advanced.o
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
-diagnostics.o: diagnostics.F90 calc_df.o deck.o dist_fn.o iterators.o probes.o \
-  random_generator.o setup.o shared_data.o strings.o timer.o version_data.o \
-  window.o $(SDFMOD) $(ENCODED_SOURCE)
+diagnostics.o: diagnostics.F90 calc_df.o deck.o deck_io_block.o dist_fn.o \
+  iterators.o probes.o random_generator.o setup.o shared_data.o strings.o \
+  timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch1d.o: epoch1d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
-  fields.o finish.o helper.o ic_module.o ionise.o mpi_routines.o \
+  fields.o finish.o helper.o ic_module.o injectors.o ionise.o mpi_routines.o \
   particle_migration.o particles.o photons.o setup.o split_particle.o \
   welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
@@ -441,11 +461,13 @@ evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
 fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
-finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o ionise.o \
-  laser.o partlist.o setup.o shared_data.o shunt.o window.o
+finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
+  ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
+injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
+  random_generator.o shared_data.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
@@ -481,4 +503,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
-window.o: window.F90 boundary.o evaluate.o partlist.o
+window.o: window.F90 boundary.o evaluate.o partlist.o shared_data.o

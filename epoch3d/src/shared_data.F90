@@ -47,6 +47,7 @@ MODULE constants
   INTEGER, PARAMETER :: stdout = 6
   INTEGER, PARAMETER :: du = 40
   INTEGER, PARAMETER :: lu = 41
+  INTEGER, PARAMETER :: duc = 42
 #ifdef NO_IO
   INTEGER, PARAMETER :: io_units(1) = (/ stdout /)
 #else
@@ -55,6 +56,7 @@ MODULE constants
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
   ! Boundary type codes
+  INTEGER, PARAMETER :: c_bc_null = -1
   INTEGER, PARAMETER :: c_bc_periodic = 1
   INTEGER, PARAMETER :: c_bc_other = 2
   INTEGER, PARAMETER :: c_bc_simple_laser = 3
@@ -68,6 +70,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_thermal = 11
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
+  INTEGER, PARAMETER :: c_bc_mixed = 14
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -123,8 +126,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_maxwell_solver_custom = -1
   INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
   INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 2
-  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 1
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 4
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 5
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -392,9 +398,12 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 102
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 103
-  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 104
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_x = 102
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_y = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
+  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
+  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -624,6 +633,7 @@ MODULE shared_data
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
+    LOGICAL :: fill_ghosts
 
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
@@ -668,6 +678,9 @@ MODULE shared_data
 
     ! Initial conditions
     TYPE(initial_condition_block) :: initial_conditions
+
+    ! Per-species boundary conditions
+    INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
   !----------------------------------------------------------------------------
@@ -739,7 +752,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_gamma        = 53
   INTEGER, PARAMETER :: c_dump_part_proc         = 54
   INTEGER, PARAMETER :: c_dump_part_proc0        = 55
-  INTEGER, PARAMETER :: num_vars_to_dump         = 55
+  INTEGER, PARAMETER :: c_dump_ppc               = 56
+  INTEGER, PARAMETER :: c_dump_average_weight    = 57
+  INTEGER, PARAMETER :: num_vars_to_dump         = 57
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -908,7 +923,7 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
-  INTEGER, PARAMETER :: ng = 3
+  INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
   INTEGER :: fng, nx, ny, nz
   INTEGER :: nx_global, ny_global, nz_global
@@ -957,6 +972,8 @@ MODULE shared_data
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
   LOGICAL :: use_particle_lists = .FALSE.
+  LOGICAL :: use_particle_count_update = .FALSE.
+  LOGICAL :: use_accurate_n_zeros = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
@@ -989,7 +1006,7 @@ MODULE shared_data
   LOGICAL :: allow_missing_restart
   LOGICAL :: done_mpi_initialise = .FALSE.
   LOGICAL :: use_current_correction
-  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle
+  INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
 
@@ -1013,7 +1030,9 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Moving window
   !----------------------------------------------------------------------------
-  LOGICAL :: move_window, inject_particles
+  LOGICAL :: move_window, inject_particles, window_started
+  TYPE(primitive_stack), SAVE :: window_v_x_stack
+  LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
   REAL(num) :: window_start_time
   INTEGER :: bc_x_min_after_move
@@ -1061,6 +1080,7 @@ MODULE shared_data
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
   LOGICAL :: z_min_boundary, z_max_boundary
+  LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
@@ -1084,6 +1104,33 @@ MODULE shared_data
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
   INTEGER :: balance_mode
   LOGICAL :: debug_mode
+
+  !----------------------------------------------------------------------------
+  ! Particle injectors
+  !----------------------------------------------------------------------------
+  TYPE injector_block
+
+    INTEGER :: boundary
+    INTEGER :: id
+    INTEGER :: species
+    INTEGER(i8) :: npart_per_cell
+    REAL(num) :: density_min
+    LOGICAL :: use_flux_injector
+
+    TYPE(primitive_stack) :: density_function
+    TYPE(primitive_stack) :: temperature_function(3)
+    TYPE(primitive_stack) :: drift_function(3)
+
+    REAL(num) :: t_start, t_end
+    LOGICAL :: has_t_end
+    REAL(num), DIMENSION(:,:), POINTER :: depth, dt_inject
+
+    TYPE(injector_block), POINTER :: next
+  END TYPE injector_block
+
+  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_block), POINTER :: injector_y_min, injector_y_max
+  TYPE(injector_block), POINTER :: injector_z_min, injector_z_max
 
   !----------------------------------------------------------------------------
   ! laser boundaries

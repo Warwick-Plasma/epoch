@@ -79,7 +79,7 @@ CONTAINS
   SUBROUTINE part_from_file_block_start
 
 #ifdef PER_PARTICLE_CHARGE_MASS
-    INTEGER :: io iu
+    INTEGER :: io, iu
 
     IF (rank == 0) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
@@ -383,6 +383,8 @@ CONTAINS
   SUBROUTINE setup_custom_loaders_list
 
     INTEGER :: i
+
+    IF (n_custom_loaders < 1) RETURN
 
     ALLOCATE(custom_loaders_list(n_custom_loaders))
     DO i = 1, n_custom_loaders

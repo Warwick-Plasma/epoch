@@ -99,7 +99,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_x) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in X
-          ALLOCATE(load_x(nx_global))
+          ALLOCATE(load_x(nx_global + 2 * ng))
           CALL get_load_in_x(load_x)
           CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
         ENDIF
@@ -110,7 +110,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_y) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in Y
-          ALLOCATE(load_y(ny_global))
+          ALLOCATE(load_y(ny_global + 2 * ng))
           CALL get_load_in_y(load_y)
           CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
         ENDIF
@@ -284,6 +284,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp, temp2
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp_slice
     TYPE(laser_block), POINTER :: current
+    TYPE(injector_block), POINTER :: injector_current
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
@@ -517,6 +518,36 @@ CONTAINS
       current => current%next
     ENDDO
 
+    injector_current => injector_x_min
+    DO WHILE(ASSOCIATED(injector_current))
+      CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
+      DEALLOCATE(injector_current%dt_inject)
+      ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng))
+      injector_current%dt_inject = temp_slice
+
+      CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
+      DEALLOCATE(injector_current%depth)
+      ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
+      injector_current%depth = temp_slice
+
+      injector_current => injector_current%next
+    ENDDO
+
+    injector_current => injector_x_max
+    DO WHILE(ASSOCIATED(injector_current))
+      CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
+      DEALLOCATE(injector_current%dt_inject)
+      ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng))
+      injector_current%dt_inject = temp_slice
+
+      CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
+      DEALLOCATE(injector_current%depth)
+      ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
+      injector_current%depth = temp_slice
+
+      injector_current => injector_current%next
+    ENDDO
+
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
     DEALLOCATE(ex_x_min)
     ALLOCATE(ex_x_min(1-ng:ny_new+ng))
@@ -613,6 +644,36 @@ CONTAINS
       current => current%next
     ENDDO
 
+    injector_current => injector_y_min
+    DO WHILE(ASSOCIATED(injector_current))
+      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
+      DEALLOCATE(injector_current%dt_inject)
+      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng))
+      injector_current%dt_inject = temp_slice
+
+      CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
+      DEALLOCATE(injector_current%depth)
+      ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
+      injector_current%depth = temp_slice
+
+      injector_current => injector_current%next
+    ENDDO
+
+    injector_current => injector_y_max
+    DO WHILE(ASSOCIATED(injector_current))
+      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
+      DEALLOCATE(injector_current%dt_inject)
+      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng))
+      injector_current%dt_inject = temp_slice
+
+      CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
+      DEALLOCATE(injector_current%depth)
+      ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
+      injector_current%depth = temp_slice
+
+      injector_current => injector_current%next
+    ENDDO
+
     CALL remap_field_slice(c_dir_y, ex_y_min, temp_slice)
     DEALLOCATE(ex_y_min)
     ALLOCATE(ex_y_min(1-ng:nx_new+ng))
@@ -677,10 +738,10 @@ CONTAINS
 
     ! Slice in X-direction with an additional index
 
-    IF (bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_min(:,i), temp(:,i))
@@ -690,13 +751,11 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_min = temp
-      ENDDO
-    ENDIF
+      ENDIF
 
-    IF (bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
+      IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_max(:,i), temp(:,i))
@@ -706,17 +765,17 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_max = temp
-      ENDDO
-    ENDIF
+      ENDIF
+    ENDDO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
     ! Slice in Y-direction with an additional index
 
-    IF (bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_min(:,i), temp(:,i))
@@ -726,13 +785,11 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_min = temp
-      ENDDO
-    ENDIF
+      ENDIF
 
-    IF (bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-      IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
+      IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+        IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
 
-      DO ispecies = 1, n_species
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_max(:,i), temp(:,i))
@@ -742,8 +799,8 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_max = temp
-      ENDDO
-    ENDIF
+      ENDIF
+    ENDDO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
@@ -1477,7 +1534,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num)
+        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -1516,7 +1573,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_grid_min, NOT y_grid_min_local
-        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num)
+        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -1544,13 +1601,13 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
-    sz = SIZE(load)
+    sz = SIZE(load) - 2 * ng
     maxs = sz
 
     load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
@@ -1624,6 +1681,7 @@ CONTAINS
     TYPE(particle), INTENT(IN) :: part
     INTEGER :: get_particle_processor
     INTEGER :: iproc, coords(c_ndims)
+    REAL(num) :: minpos, maxpos
 
     get_particle_processor = -1
     coords = -1
@@ -1632,16 +1690,34 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (part%part_pos(1) >= x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. part%part_pos(1) < x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
+      ELSE
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
+      ENDIF
+      IF (iproc == nprocx - 1) THEN
+        maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
+      ELSE
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
+      ENDIF
+      IF (part%part_pos(1) >= minpos .AND. part%part_pos(1) < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF
     ENDDO
 
     DO iproc = 0, nprocy - 1
-      IF (part%part_pos(2) >= y_grid_mins(iproc) - dy / 2.0_num &
-          .AND. part%part_pos(2) < y_grid_maxs(iproc) + dy / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = y_grid_mins(iproc) - dy * (0.5_num + png)
+      ELSE
+        minpos = y_grid_mins(iproc) - dy * 0.5_num
+      ENDIF
+      IF (iproc == nprocy - 1) THEN
+        maxpos = y_grid_maxs(iproc) + dy * (0.5_num + png)
+      ELSE
+        maxpos = y_grid_maxs(iproc) + dy * 0.5_num
+      ENDIF
+      IF (part%part_pos(2) >= minpos .AND. part%part_pos(2) < maxpos) THEN
         coords(c_ndims-1) = iproc
         EXIT
       ENDIF
