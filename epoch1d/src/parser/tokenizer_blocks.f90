@@ -195,6 +195,7 @@ CONTAINS
     IF (str_cmp(name, 'lehe_y')) as_constant = c_const_maxwell_solver_lehe_y
     IF (str_cmp(name, 'lehe_z')) as_constant = c_const_maxwell_solver_lehe_z
     IF (str_cmp(name, 'lehe')) as_constant = c_const_maxwell_solver_lehe
+    IF (str_cmp(name, 'custom')) as_constant = c_const_maxwell_solver_custom
 
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant

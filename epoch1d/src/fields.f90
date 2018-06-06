@@ -24,8 +24,8 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx
   REAL(num) :: cnx
-  REAL(num) :: alphax
-  REAL(num) :: deltax
+  REAL(num) :: alphax = 1.0_num
+  REAL(num) :: deltax = 0.0_num
 
 CONTAINS
 
@@ -52,11 +52,23 @@ CONTAINS
 
     REAL(num) :: dx_cdt
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      alphax = 1.0_num - 3.0_num * deltax
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       alphax = 1.0_num - 3.0_num * deltax
+    ENDIF
+
+    IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
+        PRINT*
+        PRINT*, 'Maxwell solver set to the following parameters:'
+        PRINT*, 'alpha=', alphax
+        PRINT*, 'delta=', deltax
+        PRINT*, 'c*dt/dx=', dt * c / dx
+        PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

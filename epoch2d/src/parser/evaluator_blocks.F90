@@ -620,6 +620,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_maxwell_solver_custom) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_custom, num))
+      RETURN
+    ENDIF
+
     err = c_err_unknown_element
 
   END SUBROUTINE do_constant

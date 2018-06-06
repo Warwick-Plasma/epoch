@@ -24,9 +24,9 @@ MODULE fields
   REAL(num) :: hdt, fac
   REAL(num) :: hdtx, hdty
   REAL(num) :: cnx, cny
-  REAL(num) :: alphax, alphay
-  REAL(num) :: betaxy, betayx
-  REAL(num) :: deltax, deltay
+  REAL(num) :: alphax = 1.0_num, alphay = 1.0_num
+  REAL(num) :: betaxy = 0.0_num, betayx = 0.0_num
+  REAL(num) :: deltax = 0.0_num, deltay = 0.0_num
 
 CONTAINS
 
@@ -53,7 +53,11 @@ CONTAINS
 
     REAL(num) :: delta, dx_cdt
 
-    IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
+      alphay = 1.0_num - 2.0_num * betayx - 3.0_num * deltay
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       betaxy = 0.125_num * (dx / dy)**2
@@ -82,6 +86,17 @@ CONTAINS
       deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
+    ENDIF
+
+    IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
+        PRINT*
+        PRINT*, 'Maxwell solver set to the following parameters:'
+        PRINT*, 'alpha=', alphax, alphay
+        PRINT*, 'betax=', betaxy
+        PRINT*, 'betay=', betayx
+        PRINT*, 'delta=', deltax, deltay
+        PRINT*, 'c*dt/dx=', dt * c / dx
+        PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

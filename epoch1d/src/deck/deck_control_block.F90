@@ -356,7 +356,8 @@ CONTAINS
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
           .AND. maxwell_solver /= c_maxwell_solver_lehe_x &
           .AND. maxwell_solver /= c_maxwell_solver_cowan &
-          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov &
+          .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
         errcode = c_err_bad_value
       ENDIF
     CASE(4*c_ndims+31)

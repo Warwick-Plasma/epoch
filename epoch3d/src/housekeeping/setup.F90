@@ -710,6 +710,20 @@ CONTAINS
       dt = MIN(dt, dt_solver)
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      dt = dt_custom
+      IF (dt_multiplier < 1.0_num) THEN
+        IF (rank == 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Custom maxwell solver is used with custom timestep specified'
+          PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
+          PRINT*, 'unity in order to ensure the correct time step.'
+          PRINT*, 'Overriding dt_multiplier now.'
+        ENDIF
+        dt_multiplier = 1.0_num
+      ENDIF
+    ENDIF
+
     dt_solver = dt
 
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)

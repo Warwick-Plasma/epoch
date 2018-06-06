@@ -22,6 +22,7 @@ MODULE deck
   USE deck_constant_block
   ! Deck Blocks
   USE deck_control_block
+  USE deck_stencil_block
   USE deck_boundaries_block
   USE deck_species_block
   USE deck_injector_block
@@ -89,6 +90,7 @@ CONTAINS
     CALL io_deck_initialise
     CALL io_global_deck_initialise
     CALL laser_deck_initialise
+    CALL stencil_deck_initialise
     CALL subset_deck_initialise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_initialise
@@ -117,6 +119,7 @@ CONTAINS
     CALL io_deck_finalise
     CALL io_global_deck_finalise
     CALL laser_deck_finalise
+    CALL stencil_deck_finalise
     CALL subset_deck_finalise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_finalise
@@ -157,6 +160,8 @@ CONTAINS
       CALL laser_block_start
     ELSE IF (str_cmp(block_name, 'injector')) THEN
       CALL injector_block_start
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      CALL stencil_block_start
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_start
 #ifndef NO_PARTICLE_PROBES
@@ -204,6 +209,8 @@ CONTAINS
       CALL laser_block_end
     ELSE IF (str_cmp(block_name, 'injector')) THEN
       CALL injector_block_end
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      CALL stencil_block_end
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_end
 #ifndef NO_PARTICLE_PROBES
@@ -277,10 +284,11 @@ CONTAINS
       RETURN
     ELSE IF (str_cmp(block_name, 'injector')) THEN
       handle_block = injector_block_handle_element(block_element, block_value)
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      handle_block = stencil_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'subset')) THEN
-      handle_block = &
-          subset_block_handle_element(block_element, block_value)
+      handle_block = subset_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'probe')) THEN
 #ifndef NO_PARTICLE_PROBES
@@ -343,6 +351,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
     errcode_deck = IOR(errcode_deck, injector_block_check())
+    errcode_deck = IOR(errcode_deck, stencil_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifndef NO_PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())
