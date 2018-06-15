@@ -27,6 +27,9 @@
  * Added "stencil" block for specifying a Maxwell solver with custom
    coefficients
 
+ * Added "work_{x,y,z}" and "work_{x,y,z}_total" dumpmasks for tracking the
+   work done on each particle by the electric field.
+
  * Various bugfixes
 
  * Updated the SDF submodule:

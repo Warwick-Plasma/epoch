@@ -83,6 +83,14 @@ CONTAINS
     io_block_name (c_dump_part_opdepth_tri ) = 'trident_optical_depth'
 #endif
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    io_block_name (c_dump_part_work_x      ) = 'work_x'
+    io_block_name (c_dump_part_work_y      ) = 'work_y'
+    io_block_name (c_dump_part_work_z      ) = 'work_z'
+    io_block_name (c_dump_part_work_x_total) = 'work_x_total'
+    io_block_name (c_dump_part_work_y_total) = 'work_y_total'
+    io_block_name (c_dump_part_work_z_total) = 'work_z_total'
+#endif
 
     io_block_name (c_dump_ex               ) = 'ex'
     io_block_name (c_dump_ey               ) = 'ey'

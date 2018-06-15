@@ -572,6 +572,20 @@ CONTAINS
             'Trident Depth', '', it_output_real)
 #endif
 #endif
+#ifdef WORK_DONE_INTEGRATED
+        CALL write_particle_variable(c_dump_part_work_x, code, &
+            'Work_x_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_y, code, &
+            'Work_y_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_z, code, &
+            'Work_z_direction', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_x_total, code, &
+            'Time_Integrated_Work_x', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_y_total, code, &
+            'Time_Integrated_Work_y', 'J', it_output_real)
+        CALL write_particle_variable(c_dump_part_work_z_total, code, &
+            'Time_Integrated_Work_z', 'J', it_output_real)
+#endif
         CALL write_particle_grid(code)
 
         ! These are derived variables from the particles

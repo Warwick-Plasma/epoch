@@ -245,6 +245,10 @@ DEFINES := $(DEFINE)
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG
 
+# The time integrated work exerted on each particle requires another variable
+# that has to be calculated every time step. This will slow down the simulation!
+#DEFINES += $(D)WORK_DONE_INTEGRATED
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.

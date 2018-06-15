@@ -568,6 +568,14 @@ MODULE shared_data
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    REAL(num) :: work_x
+    REAL(num) :: work_y
+    REAL(num) :: work_z
+    REAL(num) :: work_x_total
+    REAL(num) :: work_y_total
+    REAL(num) :: work_z_total
+#endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
     REAL(num) :: particle_energy
@@ -754,7 +762,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 55
   INTEGER, PARAMETER :: c_dump_ppc               = 56
   INTEGER, PARAMETER :: c_dump_average_weight    = 57
+#ifdef WORK_DONE_INTEGRATED
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 58
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 59
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 60
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 61
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 62
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 63
+  INTEGER, PARAMETER :: num_vars_to_dump         = 63
+#else
   INTEGER, PARAMETER :: num_vars_to_dump         = 57
+#endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------

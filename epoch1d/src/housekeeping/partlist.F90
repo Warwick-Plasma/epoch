@@ -67,6 +67,9 @@ CONTAINS
     nvar = nvar+1
 #endif
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    nvar = nvar+6
+#endif
     ALLOCATE(packed_particle_data(nvar))
 
   END SUBROUTINE setup_partlists
@@ -411,6 +414,15 @@ CONTAINS
     cpos = cpos+1
 #endif
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    array(cpos) = a_particle%work_x
+    array(cpos+1) = a_particle%work_y
+    array(cpos+2) = a_particle%work_z
+    array(cpos+3) = a_particle%work_x_total
+    array(cpos+4) = a_particle%work_y_total
+    array(cpos+5) = a_particle%work_z_total
+    cpos = cpos+6
+#endif
 
   END SUBROUTINE pack_particle
 
@@ -464,6 +476,15 @@ CONTAINS
     a_particle%optical_depth_tri = array(cpos)
     cpos = cpos+1
 #endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    a_particle%work_x = array(cpos)
+    a_particle%work_y = array(cpos+1)
+    a_particle%work_z = array(cpos+2)
+    a_particle%work_x_total = array(cpos+3)
+    a_particle%work_y_total = array(cpos+4)
+    a_particle%work_z_total = array(cpos+5)
+    cpos = cpos+6
 #endif
 
   END SUBROUTINE unpack_particle
