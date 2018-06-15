@@ -784,7 +784,6 @@ CONTAINS
     rank_check = 0
 
     IF (str_cmp(element, 'import')) THEN
-      invalid_block = .TRUE.
 #ifndef NO_IO
       IF (rank == rank_check) THEN
         WRITE(du,*)
