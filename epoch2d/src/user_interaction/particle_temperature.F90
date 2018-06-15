@@ -28,10 +28,10 @@ CONTAINS
   SUBROUTINE setup_particle_temperature(temperature, direction, part_species, &
       drift)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: temperature
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: temperature
     INTEGER, INTENT(IN) :: direction
     TYPE(particle_species), POINTER :: part_species
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: drift
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: drift
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     TYPE(particle), POINTER :: current
@@ -84,42 +84,32 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: mass, temperature, drift
     REAL(num) :: momentum_from_temperature
+    DOUBLE PRECISION :: stdev, mu
 
-    REAL(num) :: stdev
-    REAL(num) :: rand1, rand2, w
-    REAL(num), SAVE :: val
-    LOGICAL, SAVE :: cached = .FALSE.
-
-    ! This is a basic polar Box-Muller transform
-    ! It generates gaussian distributed random numbers
-    ! The standard deviation (stdev) is related to temperature
-
-    stdev = SQRT(temperature * kb * mass)
-
-    IF (cached) THEN
-      cached = .FALSE.
-      momentum_from_temperature = val * stdev + drift
-    ELSE
-      cached = .TRUE.
-
-      DO
-        rand1 = random()
-        rand2 = random()
-
-        rand1 = 2.0_num * rand1 - 1.0_num
-        rand2 = 2.0_num * rand2 - 1.0_num
-
-        w = rand1**2 + rand2**2
-
-        IF (w > c_tiny .AND. w < 1.0_num) EXIT
-      ENDDO
-
-      w = SQRT((-2.0_num * LOG(w)) / w)
-
-      momentum_from_temperature = rand1 * w * stdev + drift
-      val = rand2 * w
-    ENDIF
+    stdev = DBLE(SQRT(temperature * kb * mass))
+    mu = DBLE(drift)
+    momentum_from_temperature = random_box_muller(stdev, mu)
 
   END FUNCTION momentum_from_temperature
+
+
+
+  ! Function for generating momenta of thermal particles in a particular
+  ! direction, e.g. the +x direction.
+  ! These satisfy a Rayleigh distribution, formed by combining two
+  ! normally-distributed (~N(0,sigma)) random variables as follows:
+  ! Z = SQRT(X**2 + Y**2)
+  FUNCTION flux_momentum_from_temperature(mass, temperature, drift)
+
+    REAL(num), INTENT(IN) :: mass, temperature, drift
+    REAL(num) :: flux_momentum_from_temperature
+    REAL(num) :: mom1, mom2
+
+    mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
+    mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
+
+    flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
+
+  END FUNCTION flux_momentum_from_temperature
 
 END MODULE particle_temperature

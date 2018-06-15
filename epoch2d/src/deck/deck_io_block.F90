@@ -25,7 +25,7 @@ MODULE deck_io_block
   PRIVATE
   PUBLIC :: io_deck_initialise, io_deck_finalise
   PUBLIC :: io_block_start, io_block_end
-  PUBLIC :: io_block_handle_element, io_block_check
+  PUBLIC :: io_block_handle_element, io_block_check, copy_io_block
 
   INTEGER, PARAMETER :: ov = 29
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
@@ -106,6 +106,9 @@ CONTAINS
     io_block_name (c_dump_mass_density     ) = 'mass_density'
     io_block_name (c_dump_charge_density   ) = 'charge_density'
     io_block_name (c_dump_number_density   ) = 'number_density'
+    io_block_name (c_dump_ppc              ) = 'ppc'
+    alternate_name(c_dump_ppc              ) = 'particles_per_cell'
+    io_block_name (c_dump_average_weight   ) = 'average_weight'
     io_block_name (c_dump_temperature      ) = 'temperature'
     io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
     io_block_name (c_dump_probes           ) = 'particle_probes'
@@ -181,9 +184,10 @@ CONTAINS
 
   SUBROUTINE io_deck_finalise
 
-    INTEGER :: i, io, iu
+    INTEGER :: i, io, iu, n_zeros_estimate, n_dumps
+    REAL(num) :: dumps
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     n_io_blocks = block_number
@@ -221,6 +225,8 @@ CONTAINS
         ENDDO
       ! Second pass
       ELSE
+        dumps = 1.0_num
+
         DO i = 1, n_io_blocks
           IF (io_block_list(i)%disabled) CYCLE
 
@@ -236,7 +242,9 @@ CONTAINS
             ENDIF
             io_block_list(i)%dt_average = t_end
           ENDIF
-          IF (io_block%dump_cycle_first_index > io_block%dump_cycle) THEN
+
+          IF (io_block_list(i)%dump_cycle_first_index &
+                > io_block_list(i)%dump_cycle) THEN
             IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
@@ -246,9 +254,51 @@ CONTAINS
                 WRITE(io,*) 'Resetting to zero.'
               ENDDO
             ENDIF
-            io_block%dump_cycle_first_index = 0
+            io_block_list(i)%dump_cycle_first_index = 0
+          ENDIF
+
+          IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
+            dumps = MAX(dumps, t_end / io_block_list(i)%dt_snapshot)
           ENDIF
         ENDDO
+
+        n_dumps = FLOOR(dumps)
+
+        IF (io_block%dump_last .AND. dumps - n_dumps > c_tiny) &
+            n_dumps = n_dumps + 1
+
+        IF (.NOT. io_block%dump_first) &
+            n_dumps = n_dumps - 1
+
+        n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
+
+        IF (n_zeros_control > 0) use_accurate_n_zeros = .FALSE.
+
+        IF (.NOT.use_accurate_n_zeros) THEN
+          IF (n_zeros_control > 0 &
+              .AND. n_zeros_estimate /= n_zeros_control) THEN
+            n_zeros = n_zeros_estimate
+            IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
+                    ') has been overidden by input deck'
+              ENDDO
+            ENDIF
+            n_zeros = n_zeros_control
+          ELSE IF (n_zeros_estimate > n_zeros) THEN
+            n_zeros = n_zeros_estimate
+            IF (rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** WARNING ***'
+                WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
+                    ' to accomodate requested number of snapshots'
+              ENDDO
+            ENDIF
+          ENDIF
+        ENDIF
 
         ALLOCATE(file_prefixes(nfile_prefixes))
         ALLOCATE(file_numbers(nfile_prefixes))
@@ -303,7 +353,7 @@ CONTAINS
 
     INTEGER :: io, iu, mask
 #ifndef NO_IO
-    CHARACTER(LEN=c_max_string_length) :: list_filename
+    CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
 
     IF (deck_state == c_ds_first) RETURN
@@ -426,33 +476,7 @@ CONTAINS
     SELECT CASE (elementselected-num_vars_to_dump)
     CASE(1)
       io_block%dt_snapshot = as_real_print(value, element, errcode)
-      IF (io_block%dt_snapshot < 0.0_num) THEN
-        io_block%dt_snapshot = 0.0_num
-      ELSE IF (io_block%dt_snapshot > 0.0_num) THEN
-        io = MAX(n_zeros, FLOOR(LOG10(t_end / io_block%dt_snapshot)) + 1)
-        IF (n_zeros_control > 0 .AND. io /= n_zeros_control) THEN
-          n_zeros = io
-          IF (n_zeros > n_zeros_control .AND. rank == 0) THEN
-            DO iu = 1, nio_units ! Print to stdout and to file
-              io = io_units(iu)
-              WRITE(io,*) '*** WARNING ***'
-              WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
-                  ') has been overidden by input deck'
-            ENDDO
-          ENDIF
-          n_zeros = n_zeros_control
-        ELSE IF (io > n_zeros) THEN
-          n_zeros = io
-          IF (rank == 0) THEN
-            DO iu = 1, nio_units ! Print to stdout and to file
-              io = io_units(iu)
-              WRITE(io,*) '*** WARNING ***'
-              WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
-                  ' to accomodate requested number of snapshots'
-            ENDDO
-          ENDIF
-        ENDIF
-      ENDIF
+      IF (io_block%dt_snapshot < 0.0_num) io_block%dt_snapshot = 0.0_num
     CASE(2)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
@@ -655,6 +679,8 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
+        IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
@@ -694,6 +720,8 @@ CONTAINS
         IF (mask_element == c_dump_mass_density) bad = .FALSE.
         IF (mask_element == c_dump_charge_density) bad = .FALSE.
         IF (mask_element == c_dump_number_density) bad = .FALSE.
+        IF (mask_element == c_dump_ppc) bad = .FALSE.
+        IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
@@ -722,11 +750,16 @@ CONTAINS
                     'dumpmask of the variable'
                 WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
                     // '" in ', 'output block number ', block_number
+                WRITE(io,*) 'Only one average per variable can be computed'
+                WRITE(io,*) 'If multiple were specified the first averaging ', &
+                    'time will be used'
+                WRITE(io,*)
               ENDDO
               warning_printed = .TRUE.
             ENDIF
+          ELSE
+            averaged_var_block(mask_element) = block_number
           ENDIF
-          averaged_var_block(mask_element) = block_number
         ENDIF
       ENDIF
 
@@ -834,6 +867,22 @@ CONTAINS
     ENDDO
 
   END SUBROUTINE init_io_block
+
+
+
+  SUBROUTINE copy_io_block(io_block, io_block_copy)
+
+    TYPE(io_block_type) :: io_block, io_block_copy
+    INTEGER :: i
+
+    io_block_copy = io_block
+    NULLIFY(io_block%dump_at_nsteps)
+    NULLIFY(io_block%dump_at_times)
+    DO i = 1, num_vars_to_dump
+      io_block_copy%averaged_data(i) = io_block%averaged_data(i)
+    ENDDO
+
+  END SUBROUTINE copy_io_block
 
 
 

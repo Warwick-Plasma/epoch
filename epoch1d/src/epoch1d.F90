@@ -48,9 +48,11 @@ PROGRAM pic
   USE collisions
   USE particle_migration
   USE ionise
+  USE calc_df
 #ifdef PHOTONS
   USE photons
 #endif
+  USE injectors
 
   IMPLICIT NONE
 
@@ -60,7 +62,7 @@ PROGRAM pic
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime, dt0
+  REAL(num) :: runtime, dt_store
 
   step = 0
   time = 0.0_num
@@ -89,7 +91,7 @@ PROGRAM pic
     CALL cleanup_stop_files
   ENDIF
 
-  CALL MPI_BCAST(data_dir, 64, MPI_CHARACTER, 0, comm, errcode)
+  CALL MPI_BCAST(data_dir, c_max_path_length, MPI_CHARACTER, 0, comm, errcode)
 
   ! version check only, exit silently
   IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
@@ -101,7 +103,7 @@ PROGRAM pic
   CALL timer_init
 
   IF (use_exact_restart) CALL read_cpu_split
-  CALL setup_particle_boundaries ! boundary.f90
+  CALL setup_boundaries ! boundary.f90
   CALL mpi_initialise  ! mpi_routines.f90
   CALL after_control   ! setup.f90
   CALL open_files      ! setup.f90
@@ -119,10 +121,13 @@ PROGRAM pic
     time = 0.0_num
   ENDIF
 
+  CALL custom_particle_load
   CALL manual_load
   CALL initialise_window ! window.f90
   CALL set_dt
+  CALL set_maxwell_solver
   CALL deallocate_ic
+  CALL update_particle_count
 
   npart_global = 0
   DO ispecies = 1, n_species
@@ -132,19 +137,23 @@ PROGRAM pic
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
+  IF (use_current_correction) CALL calc_initial_current
   CALL particle_bcs
   CALL efield_bcs
 
   IF (ic_from_restart) THEN
-    dt0 = dt
-    IF (dt_from_restart .GT. 0) dt0 = dt_from_restart
-    time = time + dt0 / 2.0_num
+    IF (dt_from_restart > 0) dt = dt_from_restart
+    time = time + dt / 2.0_num
     CALL update_eb_fields_final
     CALL moving_window
   ELSE
-    time = time + dt / 2.0_num
+    dt_store = dt
+    dt = dt / 2.0_num
+    time = time + dt
     CALL bfield_final_bcs
+    dt = dt_store
   ENDIF
+  CALL count_n_zeros
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
@@ -163,19 +172,23 @@ PROGRAM pic
   DO
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
+
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
       timer_first(c_timer_step) = timer_walltime
     ENDIF
+
     push = (time >= particle_push_start_time)
 #ifdef PHOTONS
     IF (push .AND. use_qed .AND. time > qed_start_time) THEN
       CALL qed_update_optical_depth()
     ENDIF
 #endif
+
     CALL update_eb_fields_half
     IF (push) THEN
+      CALL run_injectors
       ! .FALSE. this time to use load balancing threshold
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
@@ -200,6 +213,7 @@ PROGRAM pic
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
+      CALL update_particle_count
     ENDIF
 
     CALL check_for_stop_condition(halt, force_dump)
@@ -212,18 +226,6 @@ PROGRAM pic
     CALL update_eb_fields_final
 
     CALL moving_window
-
-    ! This section ensures that the particle count for the species_list
-    ! objects is accurate. This makes some things easier, but increases
-    ! communication
-#ifdef PARTICLE_COUNT_UPDATE
-    DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
-          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
-          comm, errcode)
-      species_list(ispecies)%count_update_step = step
-    ENDDO
-#endif
   ENDDO
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_start

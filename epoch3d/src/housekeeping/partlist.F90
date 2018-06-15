@@ -50,6 +50,9 @@ CONTAINS
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     nvar = nvar+1
 #endif
+#ifdef DELTAF_METHOD
+    nvar = nvar+1
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     nvar = nvar+2
 #endif
@@ -381,6 +384,10 @@ CONTAINS
     array(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
+#ifdef DELTAF_METHOD
+    array(cpos) = a_particle%pvol
+    cpos = cpos+1
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     array(cpos) = a_particle%charge
     array(cpos+1) = a_particle%mass
@@ -436,6 +443,10 @@ CONTAINS
     cpos = cpos+3
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     a_particle%weight = array(cpos)
+    cpos = cpos+1
+#endif
+#ifdef DELTAF_METHOD
+    a_particle%pvol = array(cpos)
     cpos = cpos+1
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -853,5 +864,28 @@ CONTAINS
 #endif
 
   END SUBROUTINE generate_particle_ids
+
+
+
+  SUBROUTINE update_particle_count
+
+    ! This routine ensures that the particle count for the species_list
+    ! objects is accurate. This makes some things easier, but increases
+    ! communication
+    INTEGER :: ispecies
+    LOGICAL, SAVE :: update = .TRUE.
+
+    IF (.NOT.update) RETURN
+
+    DO ispecies = 1, n_species
+      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
+          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
+          comm, errcode)
+      species_list(ispecies)%count_update_step = step
+    ENDDO
+
+    update = use_particle_count_update
+
+  END SUBROUTINE update_particle_count
 
 END MODULE partlist

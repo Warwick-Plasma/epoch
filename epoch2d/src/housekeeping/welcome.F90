@@ -24,6 +24,7 @@ MODULE welcome
 
   USE version_data
   USE shared_data
+  USE terminal_controls
 
   IMPLICIT NONE
 
@@ -40,6 +41,8 @@ CONTAINS
 
     IF (rank /= 0) RETURN
 
+    CALL set_term_attr(c_term_bold)
+    CALL set_term_attr(c_term_blue)
     WRITE(*,*)
     WRITE(*,*)
     WRITE(*,*)
@@ -49,8 +52,11 @@ CONTAINS
         // 'd#######  d##P      d##P'
     WRITE(*,'(A)') '       d########P  d###########    d###########     .###' &
         // '#######  d##P      d##P '
-    WRITE(*,'(A)') '      ----        ----     ----  -----     ----   ----- ' &
-        // '        ----      -- P  '
+    CALL set_term_attr(c_term_cyan)
+    WRITE(*,'(A)',ADVANCE='NO') '      ----        ----     ----  -----     ' &
+        // '----   -----         ----      --'
+    CALL set_term_attr(c_term_blue)
+    WRITE(*,'(A)') ' P  '
     WRITE(*,'(A)') '     d########P  d####,,,####P ####.      .#### d###P   ' &
         // '       d############P   '
     WRITE(*,'(A)') '    d########P  d#########P   ####       .###P ####.    ' &
@@ -64,13 +70,13 @@ CONTAINS
     WRITE(*,*)
 
     CALL create_ascii_header
-    CALL compiler_directives
-
-    WRITE(*,*)
+    CALL set_term_attr(c_term_green)
     WRITE(*,*) 'Welcome to ', TRIM(c_code_name), ' version ', &
         TRIM(version_string) // '   (commit ' // TRIM(c_commit_id) // ')'
     WRITE(*,*)
-
+    CALL set_term_attr(c_term_default_colour)
+    CALL set_term_attr(c_term_reset_attributes)
+    CALL compiler_directives
     CALL mpi_status_message
 
   END SUBROUTINE welcome_message
@@ -97,9 +103,6 @@ CONTAINS
     found = .TRUE.
 #endif
 #ifdef PER_SPECIES_WEIGHT
-    found = .TRUE.
-#endif
-#ifdef PARTICLE_COUNT_UPDATE
     found = .TRUE.
 #endif
 #ifdef NO_TRACER_PARTICLES
@@ -137,7 +140,9 @@ CONTAINS
 #endif
 
     IF (.NOT.found) THEN
+      WRITE(*,*) '*************************************************************'
       WRITE(*,*) 'The code was compiled with no compile time options'
+      WRITE(*,*) '*************************************************************'
       RETURN
     ENDIF
 
@@ -167,10 +172,6 @@ CONTAINS
     WRITE(*,*) 'Per species weighting -DPER_SPECIES_WEIGHT'
 #else
     defines = IOR(defines, c_def_per_particle_weight)
-#endif
-#ifdef PARTICLE_COUNT_UPDATE
-    defines = IOR(defines, c_def_particle_count_update)
-    WRITE(*,*) 'Global particle counting -DPARTICLE_COUNT_UPDATE'
 #endif
 #ifdef NO_TRACER_PARTICLES
     WRITE(*,*) 'No tracer particle support -DNO_TRACER_PARTICLES'

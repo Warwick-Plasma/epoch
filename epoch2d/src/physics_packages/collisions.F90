@@ -41,6 +41,7 @@ MODULE collisions
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
   REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
 
+#ifndef PER_SPECIES_WEIGHT
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
       (/ 0.5250_num, 0.5300_num, 0.1300_num, &
          0.0000_num, 0.6000_num, 0.3880_num, &
@@ -71,6 +72,7 @@ MODULE collisions
 
   REAL(num), DIMENSION(0:2), PARAMETER :: &
       l_bell = (/ 1.27_num, 0.542_num, 0.95_num /) * 1e-13_num
+#endif
 
   REAL(num), DIMENSION(:,:), ALLOCATABLE :: meanx, meany, meanz, part_count
 
@@ -87,16 +89,16 @@ CONTAINS
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
-    ALLOCATE(idens(-2:nx+3,-2:ny+3))
-    ALLOCATE(jdens(-2:nx+3,-2:ny+3))
-    ALLOCATE(itemp(-2:nx+3,-2:ny+3))
-    ALLOCATE(jtemp(-2:nx+3,-2:ny+3))
-    ALLOCATE(log_lambda(-2:nx+3,-2:ny+3))
-    ALLOCATE(meanx(-2:nx+3,-2:ny+3))
-    ALLOCATE(meany(-2:nx+3,-2:ny+3))
-    ALLOCATE(meanz(-2:nx+3,-2:ny+3))
-    ALLOCATE(part_count(-2:nx+3,-2:ny+3))
-    ALLOCATE(iekbar(-2:nx+3,-2:ny+3))
+    ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(itemp(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(jtemp(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(log_lambda(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meanx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meany(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -210,20 +212,20 @@ CONTAINS
     ENDDO ! ix
     ENDDO ! iy
 
-    ALLOCATE(idens(-2:nx+3,-2:ny+3))
-    ALLOCATE(jdens(-2:nx+3,-2:ny+3))
-    ALLOCATE(e_dens(-2:nx+3,-2:ny+3))
-    ALLOCATE(itemp(-2:nx+3,-2:ny+3))
-    ALLOCATE(jtemp(-2:nx+3,-2:ny+3))
-    ALLOCATE(e_temp(-2:nx+3,-2:ny+3))
-    ALLOCATE(log_lambda(-2:nx+3,-2:ny+3))
-    ALLOCATE(e_log_lambda(-2:nx+3,-2:ny+3))
-    ALLOCATE(meanx(-2:nx+3,-2:ny+3))
-    ALLOCATE(meany(-2:nx+3,-2:ny+3))
-    ALLOCATE(meanz(-2:nx+3,-2:ny+3))
-    ALLOCATE(part_count(-2:nx+3,-2:ny+3))
-    ALLOCATE(iekbar(-2:nx+3,-2:ny+3))
-    ALLOCATE(e_ekbar(-2:nx+3,-2:ny+3))
+    ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(e_dens(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(itemp(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(jtemp(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(e_temp(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(log_lambda(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(e_log_lambda(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meanx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meany(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(e_ekbar(1-ng:nx+ng,1-ng:ny+ng))
 
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
@@ -889,7 +891,7 @@ CONTAINS
     REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
     REAL(num) :: e3, e4, e5, e6
-    REAL(num) :: gc, gcr
+    REAL(num) :: gamma_rel_inv, gamma_rel, gamma_rel_m1, gamma_rel_r
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_mag, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
@@ -932,21 +934,24 @@ CONTAINS
     vc = (p1 + p2) * c**2 / (e1 + e2)
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
-    gc = 1.0_num / SQRT(1.0_num - vc_sq / c**2)
+
+    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gamma_rel = 1.0_num / gamma_rel_inv
+    gamma_rel_m1 = vc_sq / c**2 / (gamma_rel_inv + gamma_rel_inv**2)
 
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
-    p3 = p1 + vc * (tvar - gc * e1 / c**2)
-    tvar = p2_vc * (gc - 1.0_num) / (vc_sq + c_tiny)
-    p4 = p2 + vc * (tvar - gc * e2 / c**2)
+    tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+    p3 = p1 + vc * (tvar - gamma_rel * e1 / c**2)
+    tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+    p4 = p2 + vc * (tvar - gamma_rel * e2 / c**2)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
 
     ! Lorentz energy transform
-    e3 = gc * (e1 - p1_vc)
-    e4 = gc * (e2 - p2_vc)
+    e3 = gamma_rel * (e1 - p1_vc)
+    e4 = gamma_rel * (e2 - p2_vc)
     ! Pre-collision velocities in COM frame
     v3 = p3 * c**2 / e3
     v4 = p4 * c**2 / e4
@@ -963,7 +968,7 @@ CONTAINS
 !    m_red = mass1 * mass2 / (mass1 + mass2)
 !    nu = ((idens * (charge1 * charge2)**2 * log_lambda) &
 !        / (8.0_num * pi * (epsilon0**2) * (m_red**2) * (vrabs**3))) &
-!        * gc * dt * factor
+!        * gamma_rel * dt * factor
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -997,10 +1002,10 @@ CONTAINS
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
     vcr = -v4
-    gcr = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
+    gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     tan_theta_cm = sin_theta &
-        / (gcr * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
+        / (gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
     tan_theta_cm2 = tan_theta_cm**2
 
     sin_theta = SQRT(tan_theta_cm2 / (1.0_num + tan_theta_cm2))
@@ -1012,10 +1017,10 @@ CONTAINS
     p4 = -p3
 
     ! Lorentz momentum transform to get back to lab frame
-    tvar = DOT_PRODUCT(p3, vc) * (gc - 1.0_num) / vc_sq
-    p5 = p3 + vc * (tvar + gc * e3 / c**2)
-    tvar = DOT_PRODUCT(p4, vc) * (gc - 1.0_num) / vc_sq
-    p6 = p4 + vc * (tvar + gc * e4 / c**2)
+    tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
+    p5 = p3 + vc * (tvar + gamma_rel * e3 / c**2)
+    tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
+    p6 = p4 + vc * (tvar + gamma_rel * e4 / c**2)
 
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
@@ -1106,14 +1111,16 @@ CONTAINS
       jtemp, jdens)
 
     REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2, jtemp, jdens
-    REAL(num) :: gr, mu, ek, slow, fast
+    REAL(num) :: sc, grm1, mu, ek, slow, fast
     REAL(num) :: manheimer_collisions
 
     ! Manheimer-like collision operator
     ! Valid for e-i and e-e collisions
-    gr = 1.0_num / SQRT(1.0_num - (vrabs / c)**2)
+    sc = SQRT(1.0_num - (vrabs / c)**2)
+    grm1 = (vrabs / c)**2 / (sc + sc**2)
+
     mu = m2 / 1.6726d-27
-    ek = (gr - 1.0_num) * m1 * c**2 / q0
+    ek = grm1 * m1 * c**2 / q0
 
     IF (jtemp <= 0.0_num) THEN
       IF (ek <= 0.0_num) THEN
@@ -1281,17 +1288,17 @@ CONTAINS
 
   PURE FUNCTION calc_coulomb_log(ekbar1, temp2, dens1, dens2, q1, q2, m1)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: ekbar1, temp2
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: dens1, dens2
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: ekbar1, temp2
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: dens1, dens2
     REAL(num), INTENT(IN) :: q1, q2, m1
-    REAL(num), DIMENSION(-2:nx+3,-2:ny+3) :: calc_coulomb_log
+    REAL(num), DIMENSION(1-ng:nx+ng,1-ng:ny+ng) :: calc_coulomb_log
     REAL(num) :: b0, dB, bmin, bmax
     REAL(num) :: local_ekbar1, local_temp2, gamm
     INTEGER :: i, j
 
     calc_coulomb_log = 0.0_num
-    DO j = -2, ny+3
-    DO i = -2, nx+3
+    DO j = 1-ng, ny+ng
+    DO i = 1-ng, nx+ng
       local_ekbar1 = MAX(ekbar1(i,j), 100.0_num)
       local_temp2 = MAX(temp2(i,j), 100.0_num)
       IF (dens1(i,j) <= 1.0_num .OR. dens2(i,j) <= 1.0_num) THEN
@@ -1318,7 +1325,7 @@ CONTAINS
     ! It is almost identical to the calc_number_density subroutine in calc_df,
     ! except it uses the secondary_list rather than the attached_list.
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
@@ -1330,27 +1337,28 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idx   = 1.0_num / dx / dy
+    idx = 1.0_num / dx / dy
 
-#ifdef PER_SPECIES_WEIGHT
-    wdata = species_list(ispecies)%weight * idx
-#endif
+    wdata = species_list(ispecies)%weight
+
     DO jy = 1, ny
     DO jx = 1, nx
+      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
       current => species_list(ispecies)%secondary_list(jx,jy)%head
+
       DO WHILE (ASSOCIATED(current))
 #ifndef PER_SPECIES_WEIGHT
-        wdata = current%weight * idx
+        wdata = current%weight
 #endif
 
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
-          data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) &
-              + gx(ix) * gy(iy) * wdata
-        ENDDO ! ix
-        ENDDO ! iy
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+        ENDDO
+        ENDDO
 
         current => current%next
       ENDDO
@@ -1358,6 +1366,8 @@ CONTAINS
     ENDDO ! jy
 
     CALL calc_boundary(data_array)
+
+    data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
@@ -1373,12 +1383,12 @@ CONTAINS
     ! It is almost identical to the calc_temperature subroutine in calc_df,
     ! except it uses the secondary_list rather than the attached_list.
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: sigma
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: ispecies
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
     ! The weight of a particle
-    REAL(num) :: l_weight
+    REAL(num) :: part_w
     REAL(num) :: gf
     INTEGER :: ix, iy
     INTEGER :: jx, jy
@@ -1391,21 +1401,19 @@ CONTAINS
     part_count = 0.0_num
     sigma = 0.0_num
 
-#ifndef PER_PARTICLE_CHARGE_MASS
     sqrt_part_m  = SQRT(species_list(ispecies)%mass)
-#endif
-#ifdef PER_SPECIES_WEIGHT
-    l_weight = species_list(ispecies)%weight
-#endif
+    part_w = species_list(ispecies)%weight
+
     DO jy = 1, ny
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx,jy)%head
+
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
 #endif
 #ifndef PER_SPECIES_WEIGHT
-        l_weight = current%weight
+        part_w = current%weight
 #endif
         ! Copy the particle properties out for speed
         part_pmx = current%part_p(1) / sqrt_part_m
@@ -1416,7 +1424,7 @@ CONTAINS
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * l_weight
+          gf = gx(ix) * gy(iy) * part_w
           meanx(cell_x+ix, cell_y+iy) = &
               meanx(cell_x+ix, cell_y+iy) + gf * part_pmx
           meany(cell_x+ix, cell_y+iy) = &
@@ -1425,8 +1433,8 @@ CONTAINS
               meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO ! ix
-        ENDDO ! iy
+        ENDDO
+        ENDDO
         current => current%next
       ENDDO
     ENDDO ! jx
@@ -1443,10 +1451,13 @@ CONTAINS
     meany = meany / part_count
     meanz = meanz / part_count
 
+    sqrt_part_m  = SQRT(species_list(ispecies)%mass)
+
     part_count = 0.0_num
     DO jy = 1, ny
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx,jy)%head
+
       DO WHILE(ASSOCIATED(current))
 #ifdef PER_PARTICLE_CHARGE_MASS
         sqrt_part_m  = SQRT(current%mass)
@@ -1467,8 +1478,8 @@ CONTAINS
               + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO ! ix
-        ENDDO ! iy
+        ENDDO
+        ENDDO
         current => current%next
       ENDDO
     ENDDO ! jx
@@ -1486,10 +1497,15 @@ CONTAINS
 
   SUBROUTINE calc_coll_ekbar(data_array, ispecies)
 
-    REAL(num), DIMENSION(-2:,-2:), INTENT(OUT) :: data_array
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
-    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_w
-    REAL(num) :: gamm, wdata, fac, gf
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
+    ! The weight of a particle
+    REAL(num) :: part_w
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata
+    REAL(num) :: fac, gamma_rel, gamma_rel_m1
     INTEGER :: ix, iy
     INTEGER :: jx, jy
     TYPE(particle), POINTER :: current
@@ -1497,52 +1513,73 @@ CONTAINS
 
     data_array = 0.0_num
     part_count = 0.0_num
-#ifndef PER_PARTICLE_CHARGE_MASS
+    part_mc  = 1.0_num
+    part_w = 1.0_num
+
     part_mc = c * species_list(ispecies)%mass
-#endif
-#ifdef PER_SPECIES_WEIGHT
     part_w = species_list(ispecies)%weight
-#endif
+    fac = part_mc * part_w * c
 
     DO jy = 1, ny
     DO jx = 1, nx
       current => species_list(ispecies)%secondary_list(jx,jy)%head
+
       DO WHILE (ASSOCIATED(current))
+        ! Copy the particle properties out for speed
 #ifdef PER_PARTICLE_CHARGE_MASS
         part_mc = c * current%mass
-#endif
 #ifndef PER_SPECIES_WEIGHT
         part_w = current%weight
 #endif
         fac = part_mc * part_w * c
+#else
+#ifndef PER_SPECIES_WEIGHT
+        part_w = current%weight
+        fac = part_mc * part_w * c
+#endif
+#endif
 
-        part_ux = current%part_p(1) / part_mc
-        part_uy = current%part_p(2) / part_mc
-        part_uz = current%part_p(3) / part_mc
-        gamm = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        wdata = (gamm - 1.0_num) * fac
+        IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
+          part_ux = current%part_p(1) / part_mc
+          part_uy = current%part_p(2) / part_mc
+          part_uz = current%part_p(3) / part_mc
+
+          part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+          gamma_rel = SQRT(part_u2 + 1.0_num)
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
+          wdata = gamma_rel_m1 * fac
+        ELSE
+#ifdef PHOTONS
+          wdata = current%particle_energy * part_w
+#else
+          wdata = 0.0_num
+#endif
+        ENDIF
 
 #include "particle_to_grid.inc"
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy)
-          data_array(cell_x+ix, cell_y+iy) = data_array(cell_x+ix, cell_y+iy) &
-              + gf * wdata
-          part_count(cell_x+ix, cell_y+iy) = part_count(cell_x+ix, cell_y+iy) &
-              + gf * part_w
-        ENDDO ! ix
-        ENDDO ! iy
+          data_array(cell_x+ix, cell_y+iy) = &
+              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+          part_count(cell_x+ix, cell_y+iy) = &
+              part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
+        ENDDO
+        ENDDO
 
         current => current%next
       ENDDO
     ENDDO ! jx
-    ENDDO ! jx
+    ENDDO ! jy
 
     CALL calc_boundary(data_array)
     CALL calc_boundary(part_count)
 
     data_array = data_array / MAX(part_count, c_tiny)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    ENDDO
 
   END SUBROUTINE calc_coll_ekbar
 
@@ -1868,11 +1905,11 @@ CONTAINS
     REAL(num) :: charge1, charge2 ! charges of the collision partners
     REAL(num) :: plist1_length, plist2_length
 
-    INTEGER :: N, max_num, i, j
-    INTEGER, DIMENSION(:), ALLOCATABLE :: histo1, histo2
+    INTEGER(i8) :: N, max_num, i, j
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo1, histo2
     INTEGER :: histo1max, histo2max
-    INTEGER :: cnt1, cnt2
-    INTEGER :: a, b
+    INTEGER(i8) :: cnt1, cnt2
+    INTEGER(i8) :: a, b
     INTEGER :: error
 
     dt = 1.0e-8_num
@@ -2037,8 +2074,8 @@ CONTAINS
     TYPE(particle), POINTER :: part
     REAL(num) :: mass, charge ! mass and charg of the collision partners
 
-    INTEGER :: N, max_num, i, j
-    INTEGER, DIMENSION(:), ALLOCATABLE :: histo
+    INTEGER(i8) :: N, max_num, i, j
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER :: histo_max
     INTEGER :: error
     REAL(num) :: plist_length
@@ -2133,31 +2170,12 @@ CONTAINS
 
 
 
-  SUBROUTINE scatter_count(particle1, particle2, full)
-
-    TYPE(particle), INTENT(INOUT) :: particle1, particle2
-    LOGICAL, INTENT(IN) :: full
-    INTEGER :: coll_num
-
-    IF (full) THEN
-      coll_num = 2
-    ELSE
-      coll_num = 1
-    ENDIF
-
-    particle1%coll_count = particle1%coll_count + coll_num
-    particle2%coll_count = particle2%coll_count + coll_num
-
-  END SUBROUTINE scatter_count
-
-
-
   SUBROUTINE test_shuffle
 
     TYPE(particle_list) :: partlist
     TYPE(particle), POINTER :: part
-    INTEGER :: N, max_num, min_num, i, j, k
-    INTEGER(i8) :: plist_length
+    INTEGER :: N, max_num, min_num, k
+    INTEGER(i8) :: i, j, plist_length
     INTEGER :: iterations
     REAL(num), DIMENSION(:), ALLOCATABLE :: histo
     INTEGER, DIMENSION(:), ALLOCATABLE :: minp, maxp
@@ -2179,7 +2197,7 @@ CONTAINS
     WRITE(*,*)
 
     DO k = 1, iterations
-      plist_length = (max_num - min_num) * random() + min_num
+      plist_length = INT((max_num - min_num) * random() + min_num, i8)
       histo = 0.0_num
       minp = max_num
       maxp = 0
@@ -2196,7 +2214,7 @@ CONTAINS
         part => partlist%head
         DO j = 1, plist_length
           IF (.NOT. ASSOCIATED(part)) WRITE(*,*) '    !!not associated!!'
-          part%coll_count = j
+          part%coll_count = INT(j)
           part => part%next
         ENDDO
 
@@ -2229,59 +2247,6 @@ CONTAINS
     DEALLOCATE(histo)
 
   END SUBROUTINE test_shuffle
-
-
-
-  SUBROUTINE check_particle_data
-
-    INTEGER :: ispecies
-    INTEGER :: ipart
-    REAL(num) :: part_x, part_y
-    REAL(num) :: part_px, part_py, part_pz
-    LOGICAL :: haveNaN
-    TYPE(particle), POINTER :: current
-
-    haveNaN = .FALSE.
-
-    DO ispecies = 1, n_species
-      current => species_list(ispecies)%attached_list%head
-      DO ipart = 1, species_list(ispecies)%attached_list%count
-        part_x  = current%part_pos(1) - x_grid_min_local
-        part_y  = current%part_pos(2) - y_grid_min_local
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-
-        IF (part_x /= part_x) THEN
-          WRITE (*,*) 'WARNING x = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_y /= part_y) THEN
-          WRITE (*,*) 'WARNING y = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_px /= part_px) THEN
-          WRITE (*,*) 'WARNING px = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_py /= part_py) THEN
-          WRITE (*,*) 'WARNING py = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-        IF (part_pz /= part_pz) THEN
-          WRITE (*,*) 'WARNING pz = NaN on node ', rank, ipart
-          haveNaN = .TRUE.
-        ENDIF
-
-        IF (haveNaN) THEN
-          STOP
-        ENDIF
-
-        current => current%next
-      ENDDO
-    ENDDO
-
-  END SUBROUTINE check_particle_data
 
 #endif
 

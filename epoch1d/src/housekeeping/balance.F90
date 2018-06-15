@@ -92,7 +92,7 @@ CONTAINS
         IF (IAND(balance_mode, c_lb_x) /= 0 &
             .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
           ! Rebalancing in X
-          ALLOCATE(load_x(nx_global))
+          ALLOCATE(load_x(nx_global + 2 * ng))
           CALL get_load_in_x(load_x)
           CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
         ENDIF
@@ -124,12 +124,12 @@ CONTAINS
 
       ! Do X array separately because we already have global copies
       DEALLOCATE(x)
-      ALLOCATE(x(-2:nx+3))
-      x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
+      ALLOCATE(x(1-ng:nx+ng))
+      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
 
       DEALLOCATE(xb)
-      ALLOCATE(xb(-2:nx+3))
-      xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
+      ALLOCATE(xb(1-ng:nx+ng))
+      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
       ! Recalculate x_grid_mins/maxs so that rebalancing works next time
       DO iproc = 0, nprocx - 1
@@ -218,7 +218,7 @@ CONTAINS
 
     ! Full domain arrays
 
-    ALLOCATE(temp(-2:nx_new+3))
+    ALLOCATE(temp(1-ng:nx_new+ng))
 
     ! Current will be recalculated during the particle push, so there
     ! is no need to copy the contents of the old arrays.
@@ -228,7 +228,7 @@ CONTAINS
     ! a different size.
 
     IF (overriding) THEN
-      ALLOCATE(temp2(-2:nx+3))
+      ALLOCATE(temp2(1-ng:nx+ng))
 
       temp2(0:nx+1) = jx(0:nx+1)
       CALL remap_field(temp2, temp)
@@ -260,44 +260,44 @@ CONTAINS
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
-    ALLOCATE(ex(-2:nx_new+3))
+    ALLOCATE(ex(1-ng:nx_new+ng))
     ex = temp
 
     CALL remap_field(ey, temp)
     DEALLOCATE(ey)
-    ALLOCATE(ey(-2:nx_new+3))
+    ALLOCATE(ey(1-ng:nx_new+ng))
     ey = temp
 
     CALL remap_field(ez, temp)
     DEALLOCATE(ez)
-    ALLOCATE(ez(-2:nx_new+3))
+    ALLOCATE(ez(1-ng:nx_new+ng))
     ez = temp
 
     CALL remap_field(bx, temp)
     DEALLOCATE(bx)
-    ALLOCATE(bx(-2:nx_new+3))
+    ALLOCATE(bx(1-ng:nx_new+ng))
     bx = temp
 
     CALL remap_field(by, temp)
     DEALLOCATE(by)
-    ALLOCATE(by(-2:nx_new+3))
+    ALLOCATE(by(1-ng:nx_new+ng))
     by = temp
 
     CALL remap_field(bz, temp)
     DEALLOCATE(bz)
-    ALLOCATE(bz(-2:nx_new+3))
+    ALLOCATE(bz(1-ng:nx_new+ng))
     bz = temp
 
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%migrate%fluid) THEN
         CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(-2:nx_new+3))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_energy(1-ng:nx_new+ng))
         species_list(ispecies)%migrate%fluid_energy = temp
 
         CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
         DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
-        ALLOCATE(species_list(ispecies)%migrate%fluid_density(-2:nx_new+3))
+        ALLOCATE(species_list(ispecies)%migrate%fluid_density(1-ng:nx_new+ng))
         species_list(ispecies)%migrate%fluid_density = temp
       ENDIF
     ENDDO
@@ -305,22 +305,22 @@ CONTAINS
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)
       DEALLOCATE(cpml_psi_eyx)
-      ALLOCATE(cpml_psi_eyx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_eyx(1-ng:nx_new+ng))
       cpml_psi_eyx = temp
 
       CALL remap_field(cpml_psi_byx, temp)
       DEALLOCATE(cpml_psi_byx)
-      ALLOCATE(cpml_psi_byx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_byx(1-ng:nx_new+ng))
       cpml_psi_byx = temp
 
       CALL remap_field(cpml_psi_ezx, temp)
       DEALLOCATE(cpml_psi_ezx)
-      ALLOCATE(cpml_psi_ezx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_ezx(1-ng:nx_new+ng))
       cpml_psi_ezx = temp
 
       CALL remap_field(cpml_psi_bzx, temp)
       DEALLOCATE(cpml_psi_bzx)
-      ALLOCATE(cpml_psi_bzx(-2:nx_new+3))
+      ALLOCATE(cpml_psi_bzx(1-ng:nx_new+ng))
       cpml_psi_bzx = temp
 
       CALL deallocate_cpml_helpers
@@ -347,7 +347,7 @@ CONTAINS
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
-        ALLOCATE(r4temp_sum(-2:nx_new+3, nspec_local))
+        ALLOCATE(r4temp_sum(1-ng:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field_r4(&
@@ -357,7 +357,7 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %r4array(-2:nx_new+3, nspec_local))
+            %r4array(1-ng:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%r4array = r4temp_sum
 
@@ -365,7 +365,7 @@ CONTAINS
       ELSE
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
-        ALLOCATE(temp_sum(-2:nx_new+3, nspec_local))
+        ALLOCATE(temp_sum(1-ng:nx_new+ng, nspec_local))
 
         DO i = 1, nspec_local
           CALL remap_field(&
@@ -375,7 +375,7 @@ CONTAINS
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
-            %array(-2:nx_new+3, nspec_local))
+            %array(1-ng:nx_new+ng, nspec_local))
 
         io_block_list(io)%averaged_data(id)%array = temp_sum
 
@@ -395,7 +395,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: n_new, cdim
     INTEGER :: i
 
-    n_new = SHAPE(field_out) - 2 * 3
+    n_new = SHAPE(field_out) - 2 * ng
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
@@ -418,7 +418,7 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: n_new, cdim
     INTEGER :: i
 
-    n_new = SHAPE(field_out) - 2 * 3
+    n_new = SHAPE(field_out) - 2 * ng
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
@@ -768,7 +768,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
-        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num)
+        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num) + ng
 
         load(cell) = load(cell) + 1
         current => current%next
@@ -796,13 +796,13 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
 
-    sz = SIZE(load)
+    sz = SIZE(load) - 2 * ng
     maxs = sz
 
     load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
@@ -876,6 +876,7 @@ CONTAINS
     TYPE(particle), INTENT(IN) :: part
     INTEGER :: get_particle_processor
     INTEGER :: iproc, coords(c_ndims)
+    REAL(num) :: minpos, maxpos
 
     get_particle_processor = -1
     coords = -1
@@ -884,8 +885,17 @@ CONTAINS
     ! just don't care
 
     DO iproc = 0, nprocx - 1
-      IF (part%part_pos >= x_grid_mins(iproc) - dx / 2.0_num &
-          .AND. part%part_pos < x_grid_maxs(iproc) + dx / 2.0_num) THEN
+      IF (iproc == 0) THEN
+        minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
+      ELSE
+        minpos = x_grid_mins(iproc) - dx * 0.5_num
+      ENDIF
+      IF (iproc == nprocx - 1) THEN
+        maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
+      ELSE
+        maxpos = x_grid_maxs(iproc) + dx * 0.5_num
+      ENDIF
+      IF (part%part_pos >= minpos .AND. part%part_pos < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
       ENDIF

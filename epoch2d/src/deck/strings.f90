@@ -104,11 +104,11 @@ CONTAINS
     INTEGER :: f
     REAL(num) :: as_real_simple
     REAL(num) :: value = 0.0_num
-    CHARACTER :: char
+    CHARACTER :: chr
 
     f = 1
-    char = str_in(1:1)
-    IF (char >= '0' .AND. char <= '9' .OR. char == '.') THEN
+    chr = str_in(1:1)
+    IF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
@@ -124,11 +124,11 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_integer_simple, value = 0
     INTEGER :: f
-    CHARACTER :: char
+    CHARACTER :: chr
 
     f = 1
-    char = str_in(1:1)
-    IF (char >= '0' .AND. char <= '9') THEN
+    chr = str_in(1:1)
+    IF (chr >= '0' .AND. chr <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
@@ -144,11 +144,11 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER(i8) :: as_long_integer_simple, value = 0
     INTEGER :: f
-    CHARACTER :: char
+    CHARACTER :: chr
 
     f = 1
-    char = str_in(1:1)
-    IF (char >= '0' .AND. char <= '9') THEN
+    chr = str_in(1:1)
+    IF (chr >= '0' .AND. chr <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
     ENDIF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
@@ -209,7 +209,7 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_bc
 
-    as_bc = -1
+    as_bc = c_bc_null
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'periodic')) THEN
       as_bc = c_bc_periodic

@@ -35,7 +35,7 @@ CONTAINS
     CHARACTER(*), INTENT(OUT) :: str_out
     LOGICAL, INTENT(OUT) :: got_file
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos, delimiter, c
+    INTEGER :: str_len, chr, pos, delimiter, c
 
     str_len = LEN(str_in)
     pos = -1
@@ -47,10 +47,10 @@ CONTAINS
 
     delimiter = c
 
-    DO char = 2, str_len
-      c = ICHAR(str_in(char:char))
+    DO chr = 2, str_len
+      c = ICHAR(str_in(chr:chr))
       IF (c == delimiter) THEN
-        pos = char
+        pos = chr
         EXIT
       ENDIF
     ENDDO
@@ -73,16 +73,16 @@ CONTAINS
     CHARACTER(*), INTENT(OUT) :: str_out
     INTEGER, INTENT(OUT) :: int_out
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: str_len, char, pos, c
+    INTEGER :: str_len, chr, pos, c
 
     str_len = LEN(str_in)
     pos = -1
 
-    DO char = 1, str_len
-      c = ICHAR(str_in(char:char))
+    DO chr = 1, str_len
+      c = ICHAR(str_in(chr:chr))
       ! ACHAR(48)-ACHAR(57) = '0'-'9'
       IF (c > 47 .AND. c < 58) THEN
-        pos = char
+        pos = chr
         EXIT
       ENDIF
     ENDDO
@@ -110,7 +110,7 @@ CONTAINS
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err == c_err_none) &
-        CALL evaluate_at_point_to_array(output, 0, 2, array, err)
+        CALL evaluate_to_array(output, 2, array, err)
     real1 = array(1)
     real2 = array(2)
     CALL deallocate_stack(output)
@@ -131,7 +131,7 @@ CONTAINS
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err == c_err_none) &
-        CALL evaluate_at_point_to_array(output, 0, ndim, array, err)
+        CALL evaluate_to_array(output, ndim, array, err)
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_vector
@@ -171,7 +171,7 @@ CONTAINS
     CALL tokenize(str_tmp, output, err)
     IF (err == c_err_none) THEN
       NULLIFY(array)
-      CALL evaluate_and_return_all(output, 0, ndim, array, err)
+      CALL evaluate_and_return_all(output, ndim, array, err)
     ENDIF
     CALL deallocate_stack(output)
 
@@ -261,11 +261,14 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(OUT) :: data_out
     TYPE(primitive_stack) :: output
     INTEGER :: ix
+    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
+
     DO ix = x1, x2
-      data_out(ix-x1+1) = evaluate_at_point(output, ix, err)
+      parameters%pack_ix = ix
+      data_out(ix-x1+1) = evaluate_with_parameters(output, parameters, err)
     ENDDO
     CALL deallocate_stack(output)
 
@@ -318,5 +321,43 @@ CONTAINS
     WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
 
   END FUNCTION as_real_print
+
+
+
+  FUNCTION as_time(value, err)
+
+    CHARACTER(LEN=*), INTENT(IN) :: value
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: as_time
+
+    IF (str_cmp(value, 'start')) THEN
+      as_time = 0.0_num
+      RETURN
+    ENDIF
+
+    IF (str_cmp(value, 'end')) THEN
+      as_time = t_end
+      RETURN
+    ENDIF
+
+    as_time = as_real(value, err)
+
+  END FUNCTION as_time
+
+
+
+  FUNCTION as_time_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    REAL(num) :: res
+
+    res = as_time(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
+
+    WRITE(du,'(A,G18.11)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_time_print
 
 END MODULE strings_advanced

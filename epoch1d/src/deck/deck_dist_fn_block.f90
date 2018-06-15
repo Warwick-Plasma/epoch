@@ -181,6 +181,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'output_deltaf')) THEN
+      working_block%output_deltaf = as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode /= c_err_none) RETURN
@@ -250,6 +255,14 @@ CONTAINS
       IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_zx_angle) = .TRUE.
       working_block%restrictions(:,c_dir_zx_angle) = (/work1, work2/)
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'restrict_mod_p')) THEN
+      CALL split_range(value, work1, work2, errcode)
+      IF (errcode /= c_err_none) RETURN
+      working_block%use_restrictions(c_dir_mod_p) = .TRUE.
+      working_block%restrictions(:,c_dir_mod_p) = (/work1, work2/)
       RETURN
     ENDIF
 

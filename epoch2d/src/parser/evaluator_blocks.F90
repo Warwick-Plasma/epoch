@@ -154,9 +154,10 @@ CONTAINS
 
 
 
-  SUBROUTINE do_constant(opcode, simplify, ix, iy, err)
+  SUBROUTINE do_constant(opcode, simplify, parameters, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix, iy
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: err_simplify
@@ -174,37 +175,53 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_x) THEN
-      CALL push_on_eval(x(ix))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(x(parameters%pack_ix))
+      ELSE
+        CALL push_on_eval(parameters%pack_pos(1))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_xb) THEN
-      CALL push_on_eval(xb(ix))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(xb(parameters%pack_ix))
+      ELSE
+        CALL push_on_eval(parameters%pack_pos(1))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_ix) THEN
-      CALL push_on_eval(REAL(ix, num))
+      CALL push_on_eval(REAL(parameters%pack_ix, num))
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_y) THEN
-      CALL push_on_eval(y(iy))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(y(parameters%pack_iy))
+      ELSE
+        CALL push_on_eval(parameters%pack_pos(2))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_yb) THEN
-      CALL push_on_eval(yb(iy))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(yb(parameters%pack_iy))
+      ELSE
+        CALL push_on_eval(parameters%pack_pos(2))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_iy) THEN
-      CALL push_on_eval(REAL(iy, num))
+      CALL push_on_eval(REAL(parameters%pack_iy, num))
       err = err_simplify
       RETURN
     ENDIF
@@ -225,32 +242,52 @@ CONTAINS
     ENDIF
 
     IF (opcode == c_const_r_xy) THEN
-      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
+      ELSE
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_r_xz) THEN
-      CALL push_on_eval(ABS(x(ix)))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(ABS(x(parameters%pack_ix)))
+      ELSE
+        CALL push_on_eval(ABS(parameters%pack_pos(1)))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_r_yz) THEN
-      CALL push_on_eval(ABS(y(iy)))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(ABS(y(parameters%pack_iy)))
+      ELSE
+        CALL push_on_eval(ABS(parameters%pack_pos(2)))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_const_r_xyz) THEN
-      CALL push_on_eval(SQRT(x(ix)**2 + y(iy)**2))
+      IF (parameters%use_grid_position) THEN
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
+      ELSE
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
+      ENDIF
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode >= c_const_custom_lowbound) THEN
       ! Check for custom constants
-      val = custom_constant(opcode, ix, iy, err)
+      val = custom_constant(opcode, parameters, err)
       IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN
@@ -411,6 +448,11 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_dir_mod_p) THEN
+      CALL push_on_eval(REAL(c_dir_mod_p, num))
+      RETURN
+    ENDIF
+
     IF (opcode == c_const_dir_en) THEN
       CALL push_on_eval(REAL(c_dir_en, num))
       RETURN
@@ -543,22 +585,65 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (opcode == c_const_maxwell_solver_yee) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_yee, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe_x) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_x, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe_y) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_y, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_lehe_z) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_lehe_z, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_cowan) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_cowan, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_pukhov) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_pukhov, num))
+      RETURN
+    ENDIF
+
+    IF (opcode == c_const_maxwell_solver_custom) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_custom, num))
+      RETURN
+    ENDIF
+
     err = c_err_unknown_element
 
   END SUBROUTINE do_constant
 
 
 
-  SUBROUTINE do_functions(opcode, simplify, ix, iy, err)
+  SUBROUTINE do_functions(opcode, simplify, parameters, err)
 
-    INTEGER, INTENT(IN) :: opcode, ix, iy
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
     REAL(num), DIMENSION(4) :: values
-    REAL(num) :: val
+    REAL(num) :: val, val_local
     INTEGER :: count, ipoint, ipoint_val, n, err_simplify
     REAL(num), DIMENSION(:), ALLOCATABLE :: var_length_values
     REAL(num) :: point, t0, p0, p1, x0, x1
+    INTEGER :: ix, iy, ispec
+#include "particle_head.inc"
 
     err = c_err_none
     err_simplify = c_err_none
@@ -567,59 +652,161 @@ CONTAINS
 
     IF (opcode == c_func_rho) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%density(ix, iy))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%density(ix, iy)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %density(cell_x+ix, cell_y+iy)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempx) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 1))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 1)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 1)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempy) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 2))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 2)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 2)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempz) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(initial_conditions(NINT(values(1)))%temp(ix, iy, 3))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 3)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 3)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempx_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 1))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 1)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 1)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempy_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 2))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 2)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 2)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode == c_func_tempz_ev) THEN
       CALL get_values(1, values)
-      CALL push_on_eval(kb / ev &
-          * initial_conditions(NINT(values(1)))%temp(ix, iy, 3))
+      ispec = NINT(values(1))
+      IF (parameters%use_grid_position) THEN
+        ix = parameters%pack_ix; iy = parameters%pack_iy
+        val_local = species_list(ispec)%initial_conditions%temp(ix, iy, 3)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          val_local = val_local + gx(ix) * gy(iy) &
+              * species_list(ispec)%initial_conditions&
+              %temp(cell_x+ix, cell_y+iy, 3)
+        ENDDO
+        ENDDO
+      ENDIF
+      CALL push_on_eval(kb / ev * val_local)
       err = err_simplify
       RETURN
     ENDIF
 
     IF (opcode >= c_func_custom_lowbound) THEN
       ! Check for custom functions
-      val = custom_function(opcode, ix, iy, err)
+      val = custom_function(opcode, parameters, err)
       IF (IAND(err, c_err_unknown_element) == 0) CALL push_on_eval(val)
       err = err_simplify
       RETURN

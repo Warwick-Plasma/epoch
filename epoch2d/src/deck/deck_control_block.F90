@@ -30,8 +30,12 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 28 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 32 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
+  ! 3rd alias for ionisation
+  CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
+  INTEGER, PARAMETER :: ionisation_index = 21
+
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
           'nx                       ', &
@@ -69,7 +73,11 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'use_current_correction   ', &
+          'maxwell_solver           ', &
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -107,7 +115,11 @@ MODULE deck_control_block
           'print_constants          ', &
           'allow_missing_restart    ', &
           'print_eta_string         ', &
-          'n_zeros                  ' /)
+          'n_zeros                  ', &
+          'use_current_correction   ', &
+          'maxwell_solver           ', &
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
 
 CONTAINS
 
@@ -122,6 +134,9 @@ CONTAINS
       print_deck_constants = .FALSE.
       allow_missing_restart = .FALSE.
       print_eta_string = .FALSE.
+      use_current_correction = .FALSE.
+      use_particle_count_update = .FALSE.
+      use_accurate_n_zeros = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -135,16 +150,18 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    CHARACTER(LEN=22) :: filename_fmt
+    CHARACTER(LEN=22) :: filename_fmt, str
     INTEGER :: io, iu
 
     IF (n_zeros_control > 0) THEN
-      IF (n_zeros_control < 4) THEN
+      IF (n_zeros_control < n_zeros) THEN
         IF (rank == 0) THEN
+          CALL integer_as_string(n_zeros, str)
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'n_zeros was less than 4 and has been ignored'
+            WRITE(io,*) 'n_zeros was less than ', TRIM(str), &
+                        ' and has been ignored'
           ENDDO
         ENDIF
         n_zeros_control = -1
@@ -165,6 +182,20 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
+    IF (maxwell_solver == c_maxwell_solver_lehe &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_x &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      fng = 2
+      IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+        maxwell_solver = c_maxwell_solver_lehe_x
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Using Lehe solver optimised for the x-direction'
+        ENDDO
+      ENDIF
+    ENDIF
+
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
     IF (deck_state == c_ds_first) RETURN
@@ -173,6 +204,9 @@ CONTAINS
       check_walltime = .TRUE.
       timer_collect = .TRUE.
     ENDIF
+
+    ! use_balance only if threshold is positive
+    IF (dlb_threshold > 0) use_balance = .TRUE.
 
   END SUBROUTINE control_deck_finalise
 
@@ -214,6 +248,11 @@ CONTAINS
       ENDIF
     ENDDO
 
+    ! Adds 3rd alias just for ionisation s vs z issue
+    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
+      elementselected = ionisation_index
+    ENDIF
+
     IF (elementselected == 0) RETURN
 
     IF (control_block_done(elementselected)) THEN
@@ -251,7 +290,6 @@ CONTAINS
       dt_multiplier = as_real_print(value, element, errcode)
     CASE(4*c_ndims+5)
       dlb_threshold = as_real_print(value, element, errcode)
-      use_balance = .TRUE.
     CASE(4*c_ndims+6)
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -334,6 +372,23 @@ CONTAINS
       print_eta_string = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+28)
       n_zeros_control = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+29)
+      use_current_correction = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+30)
+      maxwell_solver = as_integer_print(value, element, errcode)
+      IF (maxwell_solver /= c_maxwell_solver_yee &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_x &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_y &
+          .AND. maxwell_solver /= c_maxwell_solver_cowan &
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov &
+          .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
+        errcode = c_err_bad_value
+      ENDIF
+    CASE(4*c_ndims+31)
+      use_particle_count_update = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+32)
+      use_accurate_n_zeros = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -342,7 +397,7 @@ CONTAINS
 
   FUNCTION control_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, index, io, iu
+    INTEGER :: errcode, idx, io, iu
 
     errcode = c_err_none
 
@@ -358,15 +413,15 @@ CONTAINS
     ! All entries after t_end are optional
     control_block_done(4*c_ndims+4:) = .TRUE.
 
-    DO index = 1, control_block_elements
-      IF (.NOT. control_block_done(index)) THEN
+    DO idx = 1, control_block_elements
+      IF (.NOT. control_block_done(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(index))), &
+                TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
           ENDDO
         ENDIF
@@ -387,6 +442,24 @@ CONTAINS
       errcode = c_err_terminate
     ENDIF
 
+    IF (maxwell_solver /= c_maxwell_solver_yee &
+        .AND. field_order /= 2) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'For "field_order" > 2 only "maxwell_solver = yee"', &
+              ' is supported in this version of EPOCH.'
+        ENDDO
+      ENDIF
+      errcode = c_err_terminate
+    ENDIF
+
+    IF (field_order == 2 .AND. maxwell_solver == c_maxwell_solver_cowan) THEN
+      maxwell_solver = c_maxwell_solver_yee
+    ENDIF
+
   END FUNCTION control_block_check
 
 
@@ -400,7 +473,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: sdf_handle
     LOGICAL :: valid = .TRUE.
 
-    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read, &
+                  handle_errors=.FALSE.)
 
     IF (sdf_handle%error_code == 0) THEN
       CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &

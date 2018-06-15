@@ -17,47 +17,49 @@
 MODULE dist_fn
 
   USE mpi_subtype_control
+  USE particles, ONLY: f0
   USE sdf
 
   IMPLICIT NONE
 
 CONTAINS
 
-  SUBROUTINE attach_dist_fn(block)
+  SUBROUTINE attach_dist_fn(iblock)
 
-    TYPE(distribution_function_block), POINTER :: block
+    TYPE(distribution_function_block), POINTER :: iblock
     TYPE(distribution_function_block), POINTER :: current
 
     current => dist_fns
     IF (.NOT. ASSOCIATED(current)) THEN
       ! This is the first distribution function to add
-      dist_fns => block
+      dist_fns => iblock
       RETURN
     ENDIF
     DO WHILE(ASSOCIATED(current%next))
       current => current%next
     ENDDO
-    current%next => block
+    current%next => iblock
 
   END SUBROUTINE attach_dist_fn
 
 
 
-  SUBROUTINE init_dist_fn(block)
+  SUBROUTINE init_dist_fn(iblock)
 
-    TYPE(distribution_function_block), POINTER :: block
+    TYPE(distribution_function_block), POINTER :: iblock
 
-    block%name = blank
-    block%ndims = -1
-    block%dumpmask = c_io_always
-    block%directions = 0
-    block%ranges = 1.0_num
-    block%resolution = 1
-    block%restrictions = 0.0_num
-    block%use_restrictions = .FALSE.
-    NULLIFY(block%next)
-    ALLOCATE(block%use_species(n_species))
-    block%use_species = .FALSE.
+    iblock%name = blank
+    iblock%ndims = -1
+    iblock%dumpmask = c_io_always
+    iblock%directions = 0
+    iblock%ranges = 1.0_num
+    iblock%resolution = 1
+    iblock%restrictions = 0.0_num
+    iblock%use_restrictions = .FALSE.
+    NULLIFY(iblock%next)
+    ALLOCATE(iblock%use_species(n_species))
+    iblock%use_species = .FALSE.
+    iblock%output_deltaf = .FALSE.
 
   END SUBROUTINE init_dist_fn
 
@@ -102,7 +104,7 @@ CONTAINS
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
               current%restrictions, current%use_restrictions, current%ndims, &
-              convert, errcode)
+              current%output_deltaf, convert, errcode)
 
           ! If there was an error writing the dist_fn then ignore it in future
           IF (errcode /= 0) current%dumpmask = c_io_never
@@ -117,7 +119,7 @@ CONTAINS
 
   SUBROUTINE general_dist_fn(sdf_handle, name, direction, ranges_in, &
       resolution_in, species, restrictions, use_restrictions, curdims, &
-      convert, errcode)
+      output_deltaf, convert, errcode)
 
     TYPE(sdf_file_handle) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: name
@@ -128,6 +130,7 @@ CONTAINS
     REAL(num), DIMENSION(2,c_df_maxdirs), INTENT(IN) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs), INTENT(IN) :: use_restrictions
     INTEGER, INTENT(IN) :: curdims
+    LOGICAL, INTENT(IN) :: output_deltaf
     LOGICAL, INTENT(IN) :: convert
     INTEGER, INTENT(OUT) :: errcode
 
@@ -143,20 +146,25 @@ CONTAINS
     LOGICAL :: use_x, need_reduce
     LOGICAL :: use_xy_angle, use_yz_angle, use_zx_angle
     INTEGER, DIMENSION(c_df_maxdims) :: start_local, global_resolution
+    INTEGER, DIMENSION(c_df_maxdims) :: range_global_min
     INTEGER :: new_type, array_type
 
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
     INTEGER, DIMENSION(c_df_maxdims) :: cell
-    REAL(num) :: part_weight, part_mc, part_mc2, gamma_m1, start
+    REAL(num) :: part_weight, part_mc, part_mc2, part_u2
+    REAL(num) :: gamma_rel, gamma_rel_m1, start
     REAL(num) :: xy_max, yz_max, zx_max
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
+    INTEGER :: rank_local
 
     TYPE(particle), POINTER :: current, next
     CHARACTER(LEN=string_length) :: var_name
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
+    LOGICAL :: proc_outside_range
 
+    proc_outside_range = .FALSE.
     errcode = 0
     ! Update species count if necessary
     IF (io_list(species)%count_update_step < step) THEN
@@ -172,6 +180,7 @@ CONTAINS
     ranges = ranges_in
     resolution = resolution_in
     global_resolution = resolution
+    range_global_min = 0
     parallel = .FALSE.
     start_local = 1
     calc_range = .FALSE.
@@ -192,11 +201,40 @@ CONTAINS
     DO idim = 1, curdims
       IF (direction(idim) == c_dir_x) THEN
         use_x = .TRUE.
-        resolution(idim) = nx
-        ranges(1,idim) = x_grid_min_local - 0.5_num * dx
-        ranges(2,idim) = x_grid_max_local + 0.5_num * dx
-        start_local(idim) = nx_global_min
-        global_resolution(idim) = nx_global
+        IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
+          ! If empty range, use whole domain
+          ranges(1,idim) = x_grid_min_local - 0.5_num * dx
+          ranges(2,idim) = x_grid_max_local + 0.5_num * dx
+          global_resolution(idim) = nx_global
+          start_local(idim) = nx_global_min
+        ELSE
+          ! Else use the range including the requested range, but ending
+          ! on a cell boundary
+          ranges(1,idim) = MAX(ranges(1,idim), x_min)
+          ranges(2,idim) = MIN(ranges(2,idim), x_max)
+          ranges(1,idim) = x_min_local &
+              + FLOOR((ranges(1,idim) - x_min_local) / dx) * dx
+          ranges(2,idim) = x_min_local &
+              + CEILING((ranges(2,idim) - x_min_local) / dx) * dx
+          global_resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
+          range_global_min(idim) = NINT((ranges(1,idim) - x_min) / dx)
+
+          ranges(1,idim) = MAX(ranges(1,idim), x_grid_min_local - 0.5_num * dx)
+          ranges(2,idim) = MIN(ranges(2,idim), x_grid_max_local + 0.5_num * dx)
+
+          start_local(idim) = nx_global_min &
+              + NINT((ranges(1,idim) - x_min_local) / dx) &
+              - range_global_min(idim)
+        ENDIF
+
+        ! resolution is the number of pts
+        ! ranges guaranteed to include integer number of grid cells
+        resolution(idim) = NINT((ranges(2,idim) - ranges(1,idim)) / dx)
+        IF (resolution(idim) <= 0) THEN
+          proc_outside_range = .TRUE.
+          resolution(idim) = 0
+        ENDIF
+
         dgrid(idim) = dx
         labels(idim) = 'X'
         units(idim)  = 'm'
@@ -222,6 +260,10 @@ CONTAINS
 
       ELSE IF (direction(idim) == c_dir_pz) THEN
         labels(idim) = 'Pz'
+        units(idim)  = 'kg.m/s'
+
+      ELSE IF (direction(idim) == c_dir_mod_p) THEN
+        labels(idim) = '|P|'
         units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) == c_dir_en) THEN
@@ -276,7 +318,9 @@ CONTAINS
         part_mc  = current%mass * c
         part_mc2 = part_mc * c
 #endif
-        gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+        part_u2 = SUM((current%part_p / part_mc)**2)
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
         px = current%part_p(1)
         py = current%part_p(2)
         pz = current%part_p(3)
@@ -289,9 +333,11 @@ CONTAINS
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
           particle_data(c_dir_en) = current%particle_energy
+          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
 #else
           particle_data(c_dir_px:c_dir_pz) = 0.0_num
           particle_data(c_dir_en) = 0.0_num
+          particle_data(c_dir_mod_p) = 0.0_num
 #endif
           ! Can't define gamma for photon so one is as good as anything
           particle_data(c_dir_gamma_m1) = 1.0_num
@@ -299,8 +345,9 @@ CONTAINS
           particle_data(c_dir_px) = px
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
-          particle_data(c_dir_en) = gamma_m1 * part_mc2
-          particle_data(c_dir_gamma_m1) = gamma_m1
+          particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
+          particle_data(c_dir_gamma_m1) = gamma_rel_m1
+          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
         ENDIF
 
         IF (use_xy_angle) THEN
@@ -380,7 +427,12 @@ CONTAINS
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim), num)
     ENDDO
 
-    ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
+    IF (.NOT. proc_outside_range) THEN
+      ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
+    ELSE
+      ! Dummy array
+      ALLOCATE(array(1,1,1))
+    ENDIF
     array = 0.0_num
 
     next => io_list(species)%attached_list%head
@@ -396,7 +448,15 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
       part_weight = current%weight
 #endif
-      gamma_m1 = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num) - 1.0_num
+#ifdef DELTAF_METHOD
+      IF (output_deltaf) THEN
+         part_weight = current%weight &
+             - current%pvol * f0(species, part_mc / c, current%part_p)
+      END IF
+#endif
+      part_u2 = SUM((current%part_p / part_mc)**2)
+      gamma_rel = SQRT(part_u2 + 1.0_num)
+      gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
       px = current%part_p(1)
       py = current%part_p(2)
       pz = current%part_p(3)
@@ -409,9 +469,11 @@ CONTAINS
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
         particle_data(c_dir_en) = current%particle_energy
+        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
 #else
         particle_data(c_dir_px:c_dir_pz) = 0.0_num
         particle_data(c_dir_en) = 0.0_num
+        particle_data(c_dir_mod_p) = 0.0_num
 #endif
         ! Can't define gamma for photon so one is as good as anything
         particle_data(c_dir_gamma_m1) = 1.0_num
@@ -419,8 +481,9 @@ CONTAINS
         particle_data(c_dir_px) = px
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
-        particle_data(c_dir_en) = gamma_m1 * part_mc2
-        particle_data(c_dir_gamma_m1) = gamma_m1
+        particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
+        particle_data(c_dir_gamma_m1) = gamma_rel_m1
+        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
       ENDIF
 
       IF (use_xy_angle) THEN
@@ -467,8 +530,7 @@ CONTAINS
         IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
       ENDDO
-
-      array(cell(1), cell(2), cell(3)) = &
+      IF (.NOT. proc_outside_range) array(cell(1), cell(2), cell(3)) = &
           array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
     ENDDO out2
 
@@ -476,13 +538,20 @@ CONTAINS
     IF (use_x) need_reduce = .FALSE.
 
     IF (need_reduce) THEN
-      ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
+      rank_local = rank
+      IF (.NOT. proc_outside_range) THEN
+        ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
+      ELSE
+        ALLOCATE(array_tmp(1,1,1))
+      ENDIF
       array_tmp = 0.0_num
-      CALL MPI_ALLREDUCE(array, array_tmp, &
+      CALL MPI_REDUCE(array, array_tmp, &
           resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
-          comm, errcode)
+          0, comm, errcode)
       array = array_tmp
       DEALLOCATE(array_tmp)
+    ELSE
+      rank_local = 0
     ENDIF
 
     ! Create grids
@@ -550,9 +619,17 @@ CONTAINS
           global_resolution, start_local)
     ENDIF
 
-    CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-        mpireal, array_type, errcode)
-    CALL MPI_TYPE_COMMIT(array_type, errcode)
+    IF (rank_local == 0) THEN
+      CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+          mpireal, array_type, errcode)
+      CALL MPI_TYPE_COMMIT(array_type, errcode)
+    ELSE
+      CALL MPI_TYPE_FREE(new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, new_type, errcode)
+      CALL MPI_TYPE_COMMIT(new_type, errcode)
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, array_type, errcode)
+      CALL MPI_TYPE_COMMIT(array_type, errcode)
+    ENDIF
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &

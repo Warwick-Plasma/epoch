@@ -22,13 +22,16 @@ MODULE deck
   USE deck_constant_block
   ! Deck Blocks
   USE deck_control_block
+  USE deck_stencil_block
   USE deck_boundaries_block
   USE deck_species_block
+  USE deck_injector_block
   USE deck_io_block
   USE deck_io_global_block
   USE deck_window_block
   USE deck_subset_block
   USE deck_collision_block
+  USE deck_part_from_file_block
 #ifdef PHOTONS
   USE photons
 #endif
@@ -58,9 +61,8 @@ MODULE deck
   LOGICAL :: invalid_block
 
   INTEGER, PARAMETER :: buffer_size = 1024
-  INTEGER, PARAMETER :: filename_length = 64+data_dir_max_length
   TYPE :: file_buffer
-    CHARACTER(LEN=filename_length) :: filename
+    CHARACTER(LEN=c_max_path_length) :: filename
     CHARACTER(LEN=buffer_size), DIMENSION(:), POINTER :: buffer
     CHARACTER(LEN=32) :: md5sum
     INTEGER :: pos, idx, length
@@ -84,9 +86,11 @@ CONTAINS
     CALL control_deck_initialise
     CALL dist_fn_deck_initialise
     CALL fields_deck_initialise
+    CALL injector_deck_initialise
     CALL io_deck_initialise
     CALL io_global_deck_initialise
     CALL laser_deck_initialise
+    CALL stencil_deck_initialise
     CALL subset_deck_initialise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_initialise
@@ -94,6 +98,7 @@ CONTAINS
     CALL qed_deck_initialise
     CALL species_deck_initialise
     CALL window_deck_initialise
+    CALL part_from_file_deck_initialise
 
   END SUBROUTINE deck_initialise
 
@@ -110,15 +115,19 @@ CONTAINS
     CALL control_deck_finalise
     CALL dist_fn_deck_finalise
     CALL fields_deck_finalise
+    CALL injector_deck_finalise
     CALL io_deck_finalise
     CALL io_global_deck_finalise
     CALL laser_deck_finalise
+    CALL stencil_deck_finalise
     CALL subset_deck_finalise
 #ifndef NO_PARTICLE_PROBES
     CALL probe_deck_finalise
 #endif
     CALL qed_deck_finalise
     CALL species_deck_finalise
+    CALL part_from_file_deck_finalise ! Must be called after
+                                      ! species_deck_finalise
     CALL window_deck_finalise
 
   END SUBROUTINE deck_finalise
@@ -149,6 +158,10 @@ CONTAINS
       CALL io_global_block_start
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_start
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      CALL injector_block_start
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      CALL stencil_block_start
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_start
 #ifndef NO_PARTICLE_PROBES
@@ -161,6 +174,8 @@ CONTAINS
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
       CALL window_block_start
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      CALL part_from_file_block_start
     ENDIF
 
   END SUBROUTINE start_block
@@ -192,6 +207,10 @@ CONTAINS
       CALL io_global_block_end
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_end
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      CALL injector_block_end
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      CALL stencil_block_end
     ELSE IF (str_cmp(block_name, 'subset')) THEN
       CALL subset_block_end
 #ifndef NO_PARTICLE_PROBES
@@ -204,6 +223,8 @@ CONTAINS
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
       CALL window_block_end
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      CALL part_from_file_block_end
     ENDIF
 
   END SUBROUTINE end_block
@@ -261,9 +282,13 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       handle_block = laser_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'injector')) THEN
+      handle_block = injector_block_handle_element(block_element, block_value)
+    ELSE IF (str_cmp(block_name, 'stencil')) THEN
+      handle_block = stencil_block_handle_element(block_element, block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'subset')) THEN
-      handle_block = &
-          subset_block_handle_element(block_element, block_value)
+      handle_block = subset_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'probe')) THEN
 #ifndef NO_PARTICLE_PROBES
@@ -281,6 +306,10 @@ CONTAINS
       RETURN
     ELSE IF (str_cmp(block_name, 'window')) THEN
       handle_block = window_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
+      handle_block = &
+          part_from_file_block_handle_element(block_element, block_value)
       RETURN
     ENDIF
 
@@ -321,12 +350,15 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, io_block_check())
     errcode_deck = IOR(errcode_deck, io_global_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
+    errcode_deck = IOR(errcode_deck, injector_block_check())
+    errcode_deck = IOR(errcode_deck, stencil_block_check())
     errcode_deck = IOR(errcode_deck, subset_block_check())
 #ifndef NO_PARTICLE_PROBES
     errcode_deck = IOR(errcode_deck, probe_block_check())
 #endif
     errcode_deck = IOR(errcode_deck, species_block_check())
     errcode_deck = IOR(errcode_deck, window_block_check())
+    errcode_deck = IOR(errcode_deck, part_from_file_block_check())
 
     errcode_deck = IOR(errcode_deck, custom_blocks_check())
 
@@ -403,7 +435,8 @@ CONTAINS
     LOGICAL :: ignore, continuation
     LOGICAL, SAVE :: warn = .TRUE.
     TYPE(string_type), DIMENSION(2) :: deck_values
-    CHARACTER(LEN=filename_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: const_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
     LOGICAL :: exists
@@ -439,6 +472,7 @@ CONTAINS
     ignore = .FALSE.
     continuation = .FALSE.
     status_filename = TRIM(ADJUSTL(data_dir)) // '/deck.status'
+    const_filename = TRIM(ADJUSTL(data_dir)) // '/const.status'
 
     ! rank 0 reads the file and then passes it out to the other nodes using
     ! MPI_BCAST
@@ -495,6 +529,9 @@ CONTAINS
         ELSE
           OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
               iostat=errcode)
+        ENDIF
+        IF (print_deck_constants) THEN
+          OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
         ENDIF
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
@@ -630,8 +667,8 @@ CONTAINS
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
               IF (flip > 1) THEN
-                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) // &
-                    ' = ' // TRIM(deck_values(2)%value(1:pos-1))
+                WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) &
+                    // ' = ' // TRIM(deck_values(2)%value(1:pos-1))
               ELSE
                 WRITE(io,*) 'Whilst reading ', &
                     TRIM(deck_values(1)%value(1:pos-1))
@@ -677,7 +714,7 @@ CONTAINS
            fbuf%md5sum = sdf_md5_append(fbuf%buffer(i)(1:buffer_size))
         ENDDO
         fbuf%md5sum = sdf_md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
-        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append("")
+        IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append('')
       ENDIF
     ELSE
       DO
@@ -724,7 +761,8 @@ CONTAINS
     ENDIF
 
 #ifndef NO_IO
-    IF (first_call) CLOSE(du)
+    CLOSE(du)
+    CLOSE(duc)
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
@@ -779,7 +817,7 @@ CONTAINS
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
           ENDDO
-        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) .NE. 0) THEN
+        ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)

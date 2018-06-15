@@ -1,0 +1,62 @@
+begin:control
+  nx = 240
+  ny = nx/3
+  nz = ny
+
+  # final time of simulation
+  t_end = 75 * femto
+
+  # size of domain
+  x_min = -12 * micron
+  x_max = -x_min
+  y_min = x_min
+  y_max = x_max
+  z_min = x_min
+  z_max = x_max
+
+  stdout_frequency = 10
+
+  maxwell_solver = pukhov
+end:control
+
+
+begin:boundaries
+  bc_x_min = cpml_laser
+  bc_x_max = cpml_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+end:boundaries
+
+
+begin:constant
+  lambda0 = 0.5 * micron
+  theta = 0.0
+end:constant
+
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = 1.0e15
+  lambda = lambda0 * cos(theta)
+  # phase = -2.0 * pi * y * sin(theta) / lambda0
+  # pol_angle = 0 # pi / 2.0
+  profile = gauss(r_yz,0,4*micron)
+  t_profile = gauss(time,8*femto,1.8*femto)
+end:laser
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 25 * femto
+
+  # Properties on grid
+  grid = always
+  #ex = always
+  ey = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
+end:output

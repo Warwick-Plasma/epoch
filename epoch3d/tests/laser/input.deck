@@ -1,0 +1,56 @@
+begin:control
+  nx = 140
+  ny = nx
+  nz = nx
+
+  # final time of simulation
+  t_end = 50 * femto
+
+  # size of domain
+  x_min = -10 * micron
+  x_max = -x_min
+  y_min = x_min
+  y_max = x_max
+  z_min = x_min
+  z_max = x_max
+
+  stdout_frequency = 10
+end:control
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+end:boundaries
+
+
+begin:constant
+  lambda0 = 1.06 * micron
+  theta = pi / 8.0
+end:constant
+
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = 1.0e15
+  lambda = lambda0 * cos(theta)
+  phase = -2.0 * pi * y * tan(theta) / lambda0
+  # pol_angle = 0 # pi / 2.0
+  profile = gauss(r_yz, 0, 4*micron)
+  # t_profile = gauss(time,4*femto,6*femto)
+end:laser
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 25 * femto
+
+  # Properties on grid
+  grid = always
+  ex = always
+  #bx = always
+end:output

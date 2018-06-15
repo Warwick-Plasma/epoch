@@ -20,10 +20,12 @@ MODULE utilities
   IMPLICIT NONE
 
   INTERFACE grow_array
-    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_string_array
+    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_string_array, &
+                     grow_real_array2d, grow_integer_array2d
   END INTERFACE grow_array
 
   PRIVATE :: grow_real_array, grow_integer_array, grow_string_array
+  PRIVATE :: grow_real_array2d, grow_integer_array2d
 
 CONTAINS
 
@@ -43,6 +45,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
@@ -72,6 +77,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
@@ -101,6 +109,9 @@ CONTAINS
     ENDDO
 
     new_size = 2 * old_size
+    IF (new_size < idx) THEN
+      new_size = idx + 1
+    ENDIF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
@@ -111,6 +122,106 @@ CONTAINS
     DEALLOCATE(tmp_array)
 
   END SUBROUTINE grow_string_array
+
+
+
+  SUBROUTINE grow_real_array2d(array, idx, idy)
+
+    REAL(num), DIMENSION(:,:), POINTER :: array
+    INTEGER, INTENT(IN) :: idx, idy
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: tmp_array
+    INTEGER :: old_size(2), new_size(2), i, j, idxy, idir
+
+    old_size = SHAPE(array)
+    IF (idx /= old_size(1)) THEN
+      IF (idy /= old_size(2)) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'grow_real_array2d can only grow an array in one dimension'
+        RETURN
+      ENDIF
+      idir = 1
+      idxy = idx
+    ELSE
+      idir = 2
+      idxy = idy
+    ENDIF
+
+    IF (idxy <= old_size(idir)) RETURN
+
+    new_size = old_size
+    ALLOCATE(tmp_array(old_size(1),old_size(2)))
+    DO j = 1, old_size(2)
+    DO i = 1, old_size(1)
+      tmp_array(i,j) = array(i,j)
+    ENDDO
+    ENDDO
+
+    new_size(idir) = 2 * old_size(idir)
+    IF (new_size(idir) < idxy) THEN
+      new_size(idir) = idxy + 1
+    ENDIF
+    DEALLOCATE(array)
+    ALLOCATE(array(new_size(1),new_size(2)))
+
+    DO j = 1, old_size(2)
+    DO i = 1, old_size(1)
+      array(i,j) = tmp_array(i,j)
+    ENDDO
+    ENDDO
+
+    DEALLOCATE(tmp_array)
+
+  END SUBROUTINE grow_real_array2d
+
+
+
+  SUBROUTINE grow_integer_array2d(array, idx, idy)
+
+    INTEGER, DIMENSION(:,:), POINTER :: array
+    INTEGER, INTENT(IN) :: idx, idy
+    INTEGER, DIMENSION(:,:), ALLOCATABLE :: tmp_array
+    INTEGER :: old_size(2), new_size(2), i, j, idxy, idir
+
+    old_size = SHAPE(array)
+    IF (idx /= old_size(1)) THEN
+      IF (idy /= old_size(2)) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'grow_integer_array2d can only grow an array in one dimension'
+        RETURN
+      ENDIF
+      idir = 1
+      idxy = idx
+    ELSE
+      idir = 2
+      idxy = idy
+    ENDIF
+
+    IF (idxy <= old_size(idir)) RETURN
+
+    new_size = old_size
+    ALLOCATE(tmp_array(old_size(1),old_size(2)))
+    DO j = 1, old_size(2)
+    DO i = 1, old_size(1)
+      tmp_array(i,j) = array(i,j)
+    ENDDO
+    ENDDO
+
+    new_size(idir) = 2 * old_size(idir)
+    IF (new_size(idir) < idxy) THEN
+      new_size(idir) = idxy + 1
+    ENDIF
+    DEALLOCATE(array)
+    ALLOCATE(array(new_size(1),new_size(2)))
+
+    DO j = 1, old_size(2)
+    DO i = 1, old_size(1)
+      array(i,j) = tmp_array(i,j)
+    ENDDO
+    ENDDO
+
+    DEALLOCATE(tmp_array)
+
+  END SUBROUTINE grow_integer_array2d
 
 
 

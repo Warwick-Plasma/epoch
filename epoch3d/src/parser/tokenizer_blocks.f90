@@ -213,6 +213,7 @@ CONTAINS
     IF (str_cmp(name, 'dir_xy_angle')) as_constant = c_const_dir_xy_angle
     IF (str_cmp(name, 'dir_yz_angle')) as_constant = c_const_dir_yz_angle
     IF (str_cmp(name, 'dir_zx_angle')) as_constant = c_const_dir_zx_angle
+    IF (str_cmp(name, 'dir_mod_p')) as_constant = c_const_dir_mod_p
 
     IF (as_constant == c_const_x .AND. stagger(c_dir_x,tokenize_stagger)) &
         as_constant = c_const_xb
@@ -220,6 +221,15 @@ CONTAINS
         as_constant = c_const_yb
     IF (as_constant == c_const_z .AND. stagger(c_dir_z,tokenize_stagger)) &
         as_constant = c_const_zb
+
+    IF (str_cmp(name, 'yee')) as_constant = c_const_maxwell_solver_yee
+    IF (str_cmp(name, 'cowan')) as_constant = c_const_maxwell_solver_cowan
+    IF (str_cmp(name, 'pukhov')) as_constant = c_const_maxwell_solver_pukhov
+    IF (str_cmp(name, 'lehe_x')) as_constant = c_const_maxwell_solver_lehe_x
+    IF (str_cmp(name, 'lehe_y')) as_constant = c_const_maxwell_solver_lehe_y
+    IF (str_cmp(name, 'lehe_z')) as_constant = c_const_maxwell_solver_lehe_z
+    IF (str_cmp(name, 'lehe')) as_constant = c_const_maxwell_solver_lehe
+    IF (str_cmp(name, 'custom')) as_constant = c_const_maxwell_solver_custom
 
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant

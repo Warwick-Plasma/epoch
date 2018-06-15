@@ -40,8 +40,14 @@ MODULE setup
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #ifndef NO_IO
-  CHARACTER(LEN=11+data_dir_max_length), SAVE :: stat_file
+  CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
+  LOGICAL :: got_x_grid_min = .FALSE.
+  LOGICAL :: got_y_grid_min = .FALSE.
+  LOGICAL :: got_z_grid_min = .FALSE.
+  REAL(num) :: x_grid_min_val
+  REAL(num) :: y_grid_min_val
+  REAL(num) :: z_grid_min_val
 
 CONTAINS
 
@@ -164,17 +170,14 @@ CONTAINS
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
     x_grid_min = x_min - dx * cpml_thickness
-    x_grid_max = x_max + dx * cpml_thickness
 
     length_y = y_max - y_min
     dy = length_y / REAL(ny_global-2*cpml_thickness, num)
     y_grid_min = y_min - dy * cpml_thickness
-    y_grid_max = y_max + dy * cpml_thickness
 
     length_z = z_max - z_min
     dz = length_z / REAL(nz_global-2*cpml_thickness, num)
     z_grid_min = z_min - dz * cpml_thickness
-    z_grid_max = z_max + dz * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -183,28 +186,34 @@ CONTAINS
     yb_min = y_grid_min
     zb_min = z_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
-    x_grid_max = x_grid_max - dx / 2.0_num
     y_grid_min = y_grid_min + dy / 2.0_num
-    y_grid_max = y_grid_max - dy / 2.0_num
     z_grid_min = z_grid_min + dz / 2.0_num
-    z_grid_max = z_grid_max - dz / 2.0_num
+
+    IF (got_x_grid_min) x_grid_min = x_grid_min_val
+    IF (got_y_grid_min) y_grid_min = y_grid_min_val
+    IF (got_z_grid_min) z_grid_min = z_grid_min_val
 
     ! Setup global grid
-    DO ix = -2, nx_global + 3
+    DO ix = 1-ng, nx_global + ng
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
-    DO iy = -2, ny_global + 3
+    x_grid_max = x_global(nx_global)
+
+    DO iy = 1-ng, ny_global + ng
       y_global(iy) = y_grid_min + (iy - 1) * dy
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
-    DO iz = -2, nz_global + 3
+    y_grid_max = y_global(ny_global)
+
+    DO iz = 1-ng, nz_global + ng
       z_global(iz) = z_grid_min + (iz - 1) * dz
       zb_global(iz) = zb_min + (iz - 1) * dz
       zb_offset_global(iz) = zb_global(iz)
     ENDDO
+    z_grid_max = z_global(nz_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
@@ -234,13 +243,13 @@ CONTAINS
     z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
 
     ! Setup local grid
-    x(-2:nx+3) = x_global(nx_global_min-3:nx_global_max+3)
-    y(-2:ny+3) = y_global(ny_global_min-3:ny_global_max+3)
-    z(-2:nz+3) = z_global(nz_global_min-3:nz_global_max+3)
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
+    z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
 
-    xb(-2:nx+3) = xb_global(nx_global_min-3:nx_global_max+3)
-    yb(-2:ny+3) = yb_global(ny_global_min-3:ny_global_max+3)
-    zb(-2:nz+3) = zb_global(nz_global_min-3:nz_global_max+3)
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
+    zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
 
   END SUBROUTINE setup_grid
 
@@ -322,10 +331,10 @@ CONTAINS
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
-          ALLOCATE(avg%r4array(-2:nx+3,-2:ny+3,-2:nz+3,nspec_local))
+          ALLOCATE(avg%r4array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,nspec_local))
           avg%r4array = 0.0_num
         ELSE
-          ALLOCATE(avg%array(-2:nx+3,-2:ny+3,-2:nz+3,nspec_local))
+          ALLOCATE(avg%array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng,nspec_local))
           avg%array = 0.0_num
         ENDIF
 
@@ -376,6 +385,7 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_z_min)
       NULLIFY(species_list(ispecies)%ext_temp_z_max)
       NULLIFY(species_list(ispecies)%secondary_list)
+      species_list(ispecies)%bc_particle = c_bc_null
     ENDDO
 
     DO ispecies = 1, n_species
@@ -405,6 +415,7 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_energy_factor = 1.0_num
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
+      species_list(ispecies)%fill_ghosts = .FALSE.
 #ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif
@@ -421,26 +432,26 @@ CONTAINS
 
     INTEGER :: nx0, nx1, ny0, ny1, nz0, nz1
 
-    ALLOCATE(ex_x_min(-2:ny+3,-2:nz+3), ex_x_max(-2:ny+3,-2:nz+3))
-    ALLOCATE(ey_x_min(-2:ny+3,-2:nz+3), ey_x_max(-2:ny+3,-2:nz+3))
-    ALLOCATE(ez_x_min(-2:ny+3,-2:nz+3), ez_x_max(-2:ny+3,-2:nz+3))
-    ALLOCATE(bx_x_min(-2:ny+3,-2:nz+3), bx_x_max(-2:ny+3,-2:nz+3))
-    ALLOCATE(by_x_min(-2:ny+3,-2:nz+3), by_x_max(-2:ny+3,-2:nz+3))
-    ALLOCATE(bz_x_min(-2:ny+3,-2:nz+3), bz_x_max(-2:ny+3,-2:nz+3))
+    ALLOCATE(ex_x_min(1-ng:ny+ng,1-ng:nz+ng), ex_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(ey_x_min(1-ng:ny+ng,1-ng:nz+ng), ey_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(ez_x_min(1-ng:ny+ng,1-ng:nz+ng), ez_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(bx_x_min(1-ng:ny+ng,1-ng:nz+ng), bx_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(by_x_min(1-ng:ny+ng,1-ng:nz+ng), by_x_max(1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(bz_x_min(1-ng:ny+ng,1-ng:nz+ng), bz_x_max(1-ng:ny+ng,1-ng:nz+ng))
 
-    ALLOCATE(ex_y_min(-2:nx+3,-2:nz+3), ex_y_max(-2:nx+3,-2:nz+3))
-    ALLOCATE(ey_y_min(-2:nx+3,-2:nz+3), ey_y_max(-2:nx+3,-2:nz+3))
-    ALLOCATE(ez_y_min(-2:nx+3,-2:nz+3), ez_y_max(-2:nx+3,-2:nz+3))
-    ALLOCATE(bx_y_min(-2:nx+3,-2:nz+3), bx_y_max(-2:nx+3,-2:nz+3))
-    ALLOCATE(by_y_min(-2:nx+3,-2:nz+3), by_y_max(-2:nx+3,-2:nz+3))
-    ALLOCATE(bz_y_min(-2:nx+3,-2:nz+3), bz_y_max(-2:nx+3,-2:nz+3))
+    ALLOCATE(ex_y_min(1-ng:nx+ng,1-ng:nz+ng), ex_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(ey_y_min(1-ng:nx+ng,1-ng:nz+ng), ey_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(ez_y_min(1-ng:nx+ng,1-ng:nz+ng), ez_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(bx_y_min(1-ng:nx+ng,1-ng:nz+ng), bx_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(by_y_min(1-ng:nx+ng,1-ng:nz+ng), by_y_max(1-ng:nx+ng,1-ng:nz+ng))
+    ALLOCATE(bz_y_min(1-ng:nx+ng,1-ng:nz+ng), bz_y_max(1-ng:nx+ng,1-ng:nz+ng))
 
-    ALLOCATE(ex_z_min(-2:nx+3,-2:ny+3), ex_z_max(-2:nx+3,-2:ny+3))
-    ALLOCATE(ey_z_min(-2:nx+3,-2:ny+3), ey_z_max(-2:nx+3,-2:ny+3))
-    ALLOCATE(ez_z_min(-2:nx+3,-2:ny+3), ez_z_max(-2:nx+3,-2:ny+3))
-    ALLOCATE(bx_z_min(-2:nx+3,-2:ny+3), bx_z_max(-2:nx+3,-2:ny+3))
-    ALLOCATE(by_z_min(-2:nx+3,-2:ny+3), by_z_max(-2:nx+3,-2:ny+3))
-    ALLOCATE(bz_z_min(-2:nx+3,-2:ny+3), bz_z_max(-2:nx+3,-2:ny+3))
+    ALLOCATE(ex_z_min(1-ng:nx+ng,1-ng:ny+ng), ex_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(ey_z_min(1-ng:nx+ng,1-ng:ny+ng), ey_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(ez_z_min(1-ng:nx+ng,1-ng:ny+ng), ez_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(bx_z_min(1-ng:nx+ng,1-ng:ny+ng), bx_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(by_z_min(1-ng:nx+ng,1-ng:ny+ng), by_z_max(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(bz_z_min(1-ng:nx+ng,1-ng:ny+ng), bz_z_max(1-ng:nx+ng,1-ng:ny+ng))
 
     nx0 = 1
     nx1 = nx
@@ -609,7 +620,7 @@ CONTAINS
   SUBROUTINE set_plasma_frequency_dt
 
     INTEGER :: ispecies, ix, iy, iz
-    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2
+    REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
 
     IF (ic_from_restart) RETURN
 
@@ -622,17 +633,36 @@ CONTAINS
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        DO iz = 1, nz
-        DO iy = 1, ny
-        DO ix = 1, nx
-          omega2 = fac1 * initial_conditions(ispecies)%density(ix,iy,iz) &
-              + fac2 * MAXVAL(initial_conditions(ispecies)%temp(ix,iy,iz,:))
-          IF (omega2 <= c_tiny) CYCLE
-          omega = SQRT(omega2)
-          IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-        ENDDO ! ix
-        ENDDO ! iy
-        ENDDO ! iz
+        IF (species_list(ispecies)%initial_conditions%density_max > 0) THEN
+          DO iz = 1, nz
+          DO iy = 1, ny
+          DO ix = 1, nx
+            clipped_dens = MIN(&
+                species_list(ispecies)%initial_conditions%density(ix,iy,iz), &
+                species_list(ispecies)%initial_conditions%density_max)
+            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(&
+                species_list(ispecies)%initial_conditions%temp(ix,iy,iz,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+          ENDDO ! iz
+        ELSE
+          DO iz = 1, nz
+          DO iy = 1, ny
+          DO ix = 1, nx
+            omega2 = fac1 &
+                * species_list(ispecies)%initial_conditions%density(ix,iy,iz) &
+                + fac2 * MAXVAL(&
+                species_list(ispecies)%initial_conditions%temp(ix,iy,iz,:))
+            IF (omega2 <= c_tiny) CYCLE
+            omega = SQRT(omega2)
+            IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
+          ENDDO ! ix
+          ENDDO ! iy
+          ENDDO ! iz
+        ENDIF
       ENDIF
     ENDDO
 
@@ -648,13 +678,68 @@ CONTAINS
   SUBROUTINE set_dt        ! sets CFL limited step
 
     INTEGER :: io
+    REAL(num) :: dt_solver
 
     CALL set_plasma_frequency_dt
     CALL set_laser_dt
 
-    dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+    IF (maxwell_solver == c_maxwell_solver_yee) THEN
+      ! Default maxwell solver with field_order = 2, 4 or 6
+      ! cfl is a function of field_order
+      dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
+      ! R. Lehe, PhD Thesis (2014)
+      dt = MIN(dx, dy * dz / SQRT(dy**2 + dz**2)) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      dt = MIN(dy, dx * dz / SQRT(dx**2 + dz**2)) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_z) THEN
+      dt = MIN(dz, dx * dy / SQRT(dx**2 + dy**2)) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
+        .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
+      ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
+      ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
+      dt = MIN(dx, dy, dz) / c
+    ENDIF
+
+    IF (any_open) THEN
+      dt_solver = dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      dt = dt_custom
+      IF (dt_multiplier < 1.0_num) THEN
+        IF (rank == 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Custom maxwell solver is used with custom timestep specified'
+          PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
+          PRINT*, 'unity in order to ensure the correct time step.'
+          PRINT*, 'Overriding dt_multiplier now.'
+        ENDIF
+        dt_multiplier = 1.0_num
+      ENDIF
+    ENDIF
+
+    dt_solver = dt
+
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
     IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
+
+    IF (maxwell_solver /= c_maxwell_solver_yee .AND. dt < dt_solver) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Time step "dt_plasma_frequency" or "dt_laser" is smaller than'
+        PRINT*, 'time step given by CFL condition, making steps shorter ', &
+            'than intended.'
+        PRINT*, 'This may have an adverse effect on dispersion properties!'
+        PRINT*, 'Increase grid resolution to fix this.'
+      ENDIF
+    ENDIF
+
     dt = dt_multiplier * dt
 
     IF (.NOT. any_average) RETURN
@@ -668,10 +753,10 @@ CONTAINS
       IF (io_block_list(io)%dt_min_average > 0 &
           .AND. io_block_list(io)%dt_min_average < dt) THEN
         IF (rank == 0) THEN
-          PRINT*,'*** WARNING ***'
-          PRINT*,'Time step is too small to satisfy "nstep_average"'
-          PRINT*,'Averaging will occur over fewer time steps than specified'
-          PRINT*,'Set "dt_multiplier" less than ', &
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Time step is too small to satisfy "nstep_average"'
+          PRINT*, 'Averaging will occur over fewer time steps than specified'
+          PRINT*, 'Set "dt_multiplier" less than ', &
               dt_multiplier * io_block_list(io)%dt_min_average / dt, &
               ' to fix this'
         ENDIF
@@ -805,10 +890,14 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
     INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    REAL(num) :: window_offset, offset_x_min, full_x_min, offset_x_max
 
     got_full = .FALSE.
     npart_global = 0
     step = -1
+
+    full_x_min = 0.0_num
+    offset_x_min = 0.0_num
 
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
@@ -1021,6 +1110,20 @@ CONTAINS
             CALL sdf_read_srl(sdf_handle, file_numbers)
           ENDIF
         ENDIF
+
+        CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
+            block_id, ndims, 'laser_x_min_phase', 'x_min')
+        CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
+            block_id, ndims, 'laser_x_max_phase', 'x_max')
+        CALL read_laser_phases(sdf_handle, n_laser_y_min, laser_y_min, &
+            block_id, ndims, 'laser_y_min_phase', 'y_min')
+        CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
+            block_id, ndims, 'laser_y_max_phase', 'y_max')
+        CALL read_laser_phases(sdf_handle, n_laser_z_min, laser_z_min, &
+            block_id, ndims, 'laser_z_min_phase', 'z_min')
+        CALL read_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
+            block_id, ndims, 'laser_z_max_phase', 'z_max')
+
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1028,6 +1131,15 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_from_restart)
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
+        ELSE IF (str_cmp(block_id, 'x_grid_min')) THEN
+          got_x_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, x_grid_min_val)
+        ELSE IF (str_cmp(block_id, 'y_grid_min')) THEN
+          got_y_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, y_grid_min_val)
+        ELSE IF (str_cmp(block_id, 'z_grid_min')) THEN
+          got_z_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, z_grid_min_val)
         ELSE IF (block_id(1:7) == 'weight/') THEN
           CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies == 0) CYClE
@@ -1052,17 +1164,34 @@ CONTAINS
           ENDDO
         ENDIF
       CASE(c_blocktype_plain_mesh)
-        IF (.NOT.got_full) THEN
-          IF (str_cmp(block_id, 'grid') &
-              .OR. str_cmp(block_id, 'grid_full')) THEN
-            CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+        IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
+          CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
+          IF (.NOT.got_full) THEN
             x_min = extents(1)
             x_max = extents(c_ndims+1)
             y_min = extents(2)
             y_max = extents(c_ndims+2)
             z_min = extents(3)
             z_max = extents(c_ndims+3)
-            IF (str_cmp(block_id, 'grid_full')) got_full = .TRUE.
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+            dy = (y_max - y_min) / ny_global
+            y_min = y_min + dy * cpml_thickness
+            y_max = y_max - dy * cpml_thickness
+            dz = (z_max - z_min) / nz_global
+            z_min = z_min + dz * cpml_thickness
+            z_max = z_max - dz * cpml_thickness
+
+            IF (str_cmp(block_id, 'grid_full')) THEN
+              got_full = .TRUE.
+              full_x_min = extents(1)
+            ELSE
+              ! Offset grid is offset only in x
+              offset_x_min = extents(1)
+              offset_x_max = extents(c_ndims+1)
+            ENDIF
           ENDIF
         ENDIF
       CASE(c_blocktype_point_mesh)
@@ -1287,7 +1416,7 @@ CONTAINS
 #endif
 
         ELSE IF (block_id(1:14) == 'trident depth/') THEN
-#ifdef TRIDENT_PHOTONS
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_optical_depth_trident)
 #else
@@ -1307,12 +1436,56 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+    IF (use_offset_grid) THEN
+      window_offset = full_x_min - offset_x_min
+      CALL shift_particles_to_window(window_offset)
+    ENDIF
+
     CALL setup_grid
+
+    IF (use_offset_grid) THEN
+      CALL create_moved_window(offset_x_min, window_offset)
+    ENDIF
+
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE read_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
+      block_id_in, ndims, block_id_compare, direction_name)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    INTEGER, INTENT(IN) :: laser_count
+    TYPE(laser_block), POINTER :: laser_base_pointer
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
+    CHARACTER(LEN=*), INTENT(IN) :: direction_name
+    REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
+    INTEGER, DIMENSION(4) :: dims
+
+    IF (str_cmp(block_id_in, block_id_compare)) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      IF (ndims /= 1 .OR. dims(1) /= laser_count) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of laser phases on ', TRIM(direction_name), &
+            ' does not match number of lasers.'
+        PRINT*, 'Lasers will be populated in order, but correct operation ', &
+            'is not guaranteed'
+      ENDIF
+
+      ALLOCATE(laser_phases(dims(1)))
+      CALL sdf_read_srl(sdf_handle, laser_phases)
+      CALL setup_laser_phases(laser_base_pointer, laser_phases)
+      DEALLOCATE(laser_phases)
+    ENDIF
+
+  END SUBROUTINE read_laser_phases
 
 
 
@@ -1613,5 +1786,43 @@ CONTAINS
   END FUNCTION it_optical_depth_trident
 #endif
 #endif
+
+
+
+  SUBROUTINE shift_particles_to_window(window_offset)
+
+    REAL(num), INTENT(IN) :: window_offset
+    TYPE(particle), POINTER :: current
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle_species), POINTER :: species
+    INTEGER :: ispecies
+
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+      partlist => species%attached_list
+      current => partlist%head
+
+      DO WHILE(ASSOCIATED(current))
+        current%part_pos(1) = current%part_pos(1) + window_offset
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+  END SUBROUTINE shift_particles_to_window
+
+
+
+  SUBROUTINE create_moved_window(x_min, window_offset)
+
+    REAL(num), INTENT(IN) :: x_min, window_offset
+    INTEGER :: ix
+
+    DO ix = 1 - ng, nx_global + ng
+      xb_offset_global(ix) = xb_offset_global(ix) - window_offset
+    ENDDO
+    window_shift(1) = window_offset
+
+  END SUBROUTINE
 
 END MODULE setup

@@ -104,7 +104,7 @@ CONTAINS
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
-    REAL(num) :: root, dtfac, gamma, third, igamma
+    REAL(num) :: root, dtfac, gamma_rel, part_u2, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
     REAL(num) :: hy_iy, xfac1, yfac1, yfac2
     INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
@@ -116,6 +116,7 @@ CONTAINS
 #endif
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
+    REAL(num) :: gamma_rel_m1
 #endif
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_tracer_species
@@ -129,6 +130,9 @@ CONTAINS
 #else
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
+#endif
+#ifdef DELTAF_METHOD
+    REAL(num) :: weight_back
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -349,8 +353,9 @@ CONTAINS
         part_uz = uzp + cmratio * ez_part
 
         ! Calculate particle velocity from particle momentum
-        gamma = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
-        igamma = 1.0_num / gamma
+        part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+        gamma_rel = SQRT(part_u2 + 1.0_num)
+        igamma = 1.0_num / gamma_rel
         root = dtco2 * igamma
 
         delta_x = part_ux * root
@@ -402,6 +407,15 @@ CONTAINS
           ! Use t+1.5 dt so that can update J to t+dt at 2nd order
           part_x = part_x + delta_x
           part_y = part_y + delta_y
+
+          ! Delta-f calcuation: subtract background from
+          ! calculated current.
+#ifdef DELTAF_METHOD
+          weight_back = current%pvol * f0(ispecies, part_mc / c, current%part_p)
+          fcx = idty * (part_weight - weight_back)
+          fcy = idtx * (part_weight - weight_back)
+          fcz = idxy * (part_weight - weight_back)
+#endif
 
 #ifdef PARTICLE_SHAPE_TOPHAT
           cell_x_r = part_x * idx - 0.5_num
@@ -486,13 +500,15 @@ CONTAINS
           ! the system. These particles are copied into a separate part of the
           ! output file.
 
+          gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
+
           current_probe => species_list(ispecies)%attached_probes
 
           ! Cycle through probes
           DO WHILE(ASSOCIATED(current_probe))
             ! Note that this is the energy of a single REAL particle in the
             ! pseudoparticle, NOT the energy of the pseudoparticle
-            probe_energy = (gamma - 1.0_num) * part_mc2
+            probe_energy = gamma_rel_m1 * part_mc2
 
             ! Unidirectional probe
             IF (probe_energy > current_probe%ek_min) THEN
@@ -520,6 +536,7 @@ CONTAINS
 #endif
         current => next
       ENDDO
+      CALL current_bcs(species=ispecies)
     ENDDO
 
     IF (.NOT.use_field_ionisation) THEN
@@ -529,7 +546,56 @@ CONTAINS
       IF (smooth_currents) CALL smooth_current()
     END IF
 
+    IF (use_current_correction) THEN
+      jx = jx - initial_jx
+      jy = jy - initial_jy
+      jz = jz - initial_jz
+    END IF
+
   END SUBROUTINE push_particles
+
+
+
+  ! Background distribution function used for delta-f calculations.
+  ! Specialise to a drifting (tri)-Maxwellian to simplify and ensure
+  ! zero density/current divergence.
+  ! Can effectively switch off deltaf method by setting zero background density.
+
+  FUNCTION f0(ispecies, mass, p)
+
+    INTEGER, INTENT(IN) :: ispecies
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(:), INTENT(IN) :: p
+    REAL(num) :: f0
+    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
+    REAL(num) :: f0_exponent, norm, two_kb_mass, two_pi_kb_mass3
+    TYPE(particle_species), POINTER :: species
+
+    species => species_list(ispecies)
+
+    IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
+       two_kb_mass = 2.0_num * kb * mass
+       two_pi_kb_mass3 = (pi * two_kb_mass)**3
+
+       Tx = species%initial_conditions%temp_back(1)
+       Ty = species%initial_conditions%temp_back(2)
+       Tz = species%initial_conditions%temp_back(3)
+       driftx  = species%initial_conditions%drift_back(1)
+       drifty  = species%initial_conditions%drift_back(2)
+       driftz  = species%initial_conditions%drift_back(3)
+       density = species%initial_conditions%density_back
+       f0_exponent = ((p(1) - driftx)**2 / Tx &
+                    + (p(2) - drifty)**2 / Ty &
+                    + (p(3) - driftz)**2 / Tz) / two_kb_mass
+       norm = density / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+       f0 = norm * EXP(-f0_exponent)
+    ELSE
+       f0 = 0.0_num
+    ENDIF
+
+  END FUNCTION f0
+
+
 
 #ifdef PHOTONS
   SUBROUTINE push_photons(ispecies)

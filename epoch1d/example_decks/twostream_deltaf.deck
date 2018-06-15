@@ -1,0 +1,146 @@
+begin:constant
+  background_density = 1e20
+  background_temp = 1e8
+  frac_beam = 1e-3
+  ion_mass_e = 1836.2
+  mass_ion = me * ion_mass_e
+  pt_ion      = sqrt(2 * mass_ion * kb * background_temp)
+  pt_electron = sqrt(2 * me * kb * background_temp)
+  vel_ion = sqrt(2 * kb * background_temp / mass_ion)
+  lambda_db = sqrt(epsilon0 * kb * background_temp / background_density / qe^2)
+  grid_spacing = lambda_db * 0.5
+  nxgrid = 300
+  x_length = nxgrid * grid_spacing
+  simtime = 10 * grid_spacing * 9.0 / vel_ion
+  diagtime = simtime * 0.01
+
+  simtime_ij = x_length / vel_ion
+  simtime_od = 1e-12
+  diagtimeq = grid_spacing * 10 / vel_ion
+end:constant
+
+
+begin:control
+  nx = nxgrid
+  npart = nx * 300.0
+
+  # final time of simulation
+  t_end = simtime
+
+  # size of domain
+  x_min = 0.0
+  x_max = nx * grid_spacing
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+end:boundaries
+
+
+begin:species
+  name = proton
+  charge = 1.0
+  mass = ion_mass_e
+  frac = 0.4
+  density = background_density
+  temp = 1e8
+  density_back = density(proton)
+  temp_back = 1e8
+end:species
+
+
+begin:species
+  name = electron
+  charge = -1.0
+  mass = 1.0
+  frac = 0.3
+  temp = 1e8
+  density = background_density * (1.0 - frac_beam)
+  drift_x = 0.0 - frac_beam * 5.0 * pt_electron
+  density_back = density(electron)
+  temp_back = 1e8
+  drift_x_back = 0.0 - frac_beam * 5.0 * pt_electron
+end:species
+
+
+begin:species
+  name = electron_beam
+  charge = -1.0
+  mass = 1.0
+  frac = 0.3
+  temp = 1e7
+  density = background_density * frac_beam
+  drift_x = (1.0 - frac_beam) * 5.0 * pt_electron
+  density_back = 0.0
+  temp_back = background_temp
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = diagtime
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 100
+  force_final_to_be_restartable = T
+
+  # Properties at particle positions
+  particles = full
+  particle_weight = full
+
+  # Properties on grid
+  grid = always
+  ey = always
+  ex = always
+  ekbar = always
+  charge_density = full
+  number_density = always + species
+
+  #Extended IO
+  distribution_functions = always
+end:output
+
+
+begin:dist_fn
+  name = x_px
+  ndims = 2
+
+  direction1 = dir_x
+  direction2 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-3.0e-22, 3.0e-22)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 100
+
+  include_species:electron
+  include_species:proton
+  include_species:electron_beam
+  output_deltaf = F
+end:dist_fn
+
+
+begin:dist_fn
+  name = x_px_deltaf
+  ndims = 2
+
+  direction1 = dir_x
+  direction2 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-3.0e-22, 3.0e-22)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 100
+
+  include_species:electron
+  include_species:proton
+  include_species:electron_beam
+  output_deltaf = T
+end:dist_fn

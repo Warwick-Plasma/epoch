@@ -33,15 +33,21 @@ CONTAINS
     INTEGER :: cell_x, cell_y, cell_z
     TYPE(particle), POINTER :: current, next
     INTEGER(i8) :: local_count
+    INTEGER :: i0, i1
+
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
       local_count = species_list(ispecies)%attached_list%count
       CALL MPI_ALLREDUCE(local_count, species_list(ispecies)%global_count, &
           1, MPI_INTEGER8, MPI_SUM, comm, errcode)
-      ALLOCATE(species_list(ispecies)%secondary_list(nx,ny,nz))
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      ALLOCATE(species_list(ispecies) &
+          %secondary_list(i0:nx+i1,i0:ny+i1,i0:nz+i1))
+      DO iz = i0, nz + i1
+        DO iy = i0, ny + i1
+          DO ix = i0, nx + i1
             CALL create_empty_partlist(&
                 species_list(ispecies)%secondary_list(ix,iy,iz))
           ENDDO
@@ -50,9 +56,15 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz) + 1
+#else
         cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
         cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
         cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
+#endif
 
         CALL remove_particle_from_partlist(&
             species_list(ispecies)%attached_list, current)
@@ -70,11 +82,16 @@ CONTAINS
   SUBROUTINE reattach_particles_to_mainlist
 
     INTEGER :: ispecies, ix, iy, iz
+    INTEGER :: i0, i1
+
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      DO iz = i0, nz + i1
+        DO iy = i0, ny + i1
+          DO ix = i0, nx + i1
             CALL append_partlist(species_list(ispecies)%attached_list, &
                 species_list(ispecies)%secondary_list(ix,iy,iz))
           ENDDO
@@ -118,6 +135,11 @@ CONTAINS
     TYPE(particle), POINTER :: current, new_particle
     TYPE(particle_list) :: append_list
     REAL(num) :: jitter_x, jitter_y, jitter_z
+    INTEGER :: i0, i1
+
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
+    i1 = 1 - i0
 
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%split) CYCLE
@@ -127,9 +149,9 @@ CONTAINS
 
       CALL create_empty_partlist(append_list)
 
-      DO iz = 1, nz
-        DO iy = 1, ny
-          DO ix = 1, nx
+      DO iz = i0, nz + i1
+        DO iy = i0, ny + i1
+          DO ix = i0, nx + i1
             count = species_list(ispecies)%secondary_list(ix,iy,iz)%count
             IF (count > 0 .AND. count <= npart_per_cell_min) THEN
               current => species_list(ispecies)%secondary_list(ix,iy,iz)%head

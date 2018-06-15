@@ -19,10 +19,10 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
+  USE shared_data
 
   IMPLICIT NONE
 
-  LOGICAL, SAVE :: window_started
   REAL(num), ALLOCATABLE :: density(:), temperature(:,:), drift(:,:)
   REAL(num), SAVE :: window_shift_fraction
 
@@ -30,16 +30,12 @@ CONTAINS
 
   SUBROUTINE initialise_window
 
-#ifdef PER_SPECIES_WEIGHT
-    INTEGER :: ierr
-#endif
-
     IF (.NOT. move_window) RETURN
 
 #ifndef PER_SPECIES_WEIGHT
-    ALLOCATE(density(-2:ny+3))
-    ALLOCATE(temperature(-2:ny+3, 1:3))
-    ALLOCATE(drift(-2:ny+3, 1:3))
+    ALLOCATE(density(0:ny+1))
+    ALLOCATE(temperature(0:ny+1, 1:3))
+    ALLOCATE(drift(0:ny+1, 1:3))
     window_started = .FALSE.
 #else
     IF (rank == 0) THEN
@@ -67,7 +63,8 @@ CONTAINS
   SUBROUTINE shift_window(window_shift_cells)
 
     INTEGER, INTENT(IN) :: window_shift_cells
-    INTEGER :: iwindow
+    INTEGER :: iwindow, ix, iproc
+    REAL(num) :: xb_min
 
     ! Shift the window round one cell at a time.
     ! Inefficient, but it works
@@ -75,20 +72,31 @@ CONTAINS
       CALL insert_particles
 
       ! Shift the box around
-      x_grid_min = x_grid_min + dx
-      x_grid_max = x_grid_max + dx
-      x_grid_mins = x_grid_mins + dx
-      x_grid_maxs = x_grid_maxs + dx
-      x_grid_min_local = x_grid_min_local + dx
-      x_grid_max_local = x_grid_max_local + dx
-      x_min = x_min + dx
-      x_max = x_max + dx
-      x_min_local = x_min_local + dx
-      x_max_local = x_max_local + dx
+      x_grid_min = x_global(1) + dx
+      xb_min = xb_global(1) + dx
+      x_min = xb_min + dx * cpml_thickness
 
-      x = x + dx
-      x_global = x_global + dx
-      xb_global = xb_global + dx
+      ! Setup global grid
+      DO ix = 1-ng, nx_global + ng
+        x_global(ix) = x_grid_min + (ix - 1) * dx
+        xb_global(ix) = xb_min + (ix - 1) * dx
+      ENDDO
+      x_grid_max = x_global(nx_global)
+      x_max = xb_global(nx_global+1) - dx * cpml_thickness
+
+      DO iproc = 0, nprocx-1
+        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+      ENDDO
+
+      x_grid_min_local = x_grid_mins(x_coords)
+      x_grid_max_local = x_grid_maxs(x_coords)
+
+      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
       CALL remove_particles
 
@@ -116,8 +124,20 @@ CONTAINS
     CALL shift_field(jy, jng)
     CALL shift_field(jz, jng)
 
+    IF (cpml_boundaries) THEN
+      CALL shift_field(cpml_psi_eyx, ng)
+      CALL shift_field(cpml_psi_ezx, ng)
+      CALL shift_field(cpml_psi_byx, ng)
+      CALL shift_field(cpml_psi_bzx, ng)
+
+      CALL shift_field(cpml_psi_exy, ng)
+      CALL shift_field(cpml_psi_ezy, ng)
+      CALL shift_field(cpml_psi_bxy, ng)
+      CALL shift_field(cpml_psi_bzy, ng)
+    ENDIF
+
     IF (x_max_boundary) THEN
-      DO j = -2, ny+3
+      DO j = 1-ng, ny+ng
         ! Fix incoming field cell.
         ex(nx,j)   = ex_x_max(j)
         ex(nx+1,j) = ex_x_max(j)
@@ -133,6 +153,20 @@ CONTAINS
         by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
         bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
       ENDDO
+
+      IF (cpml_boundaries) THEN
+        DO j = 1-ng, ny+ng
+          cpml_psi_eyx(nx:nx+1,j) = cpml_psi_eyx(nx,j)
+          cpml_psi_ezx(nx:nx+1,j) = cpml_psi_ezx(nx,j)
+          cpml_psi_byx(nx:nx+1,j) = cpml_psi_byx(nx,j)
+          cpml_psi_bzx(nx:nx+1,j) = cpml_psi_bzx(nx,j)
+
+          cpml_psi_exy(nx:nx+1,j) = cpml_psi_exy(nx,j)
+          cpml_psi_ezy(nx:nx+1,j) = cpml_psi_ezy(nx,j)
+          cpml_psi_bxy(nx:nx+1,j) = cpml_psi_bxy(nx,j)
+          cpml_psi_bzy(nx:nx+1,j) = cpml_psi_bzy(nx,j)
+        ENDDO
+      ENDIF
     ENDIF
 
   END SUBROUTINE shift_fields
@@ -163,12 +197,12 @@ CONTAINS
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, isuby
-    INTEGER(i8) :: ipart, npart_per_cell, n0
-    REAL(num) :: cell_y_r, cell_frac_y, cy2
-    INTEGER :: cell_y
+    INTEGER(i8) :: ipart, npart_per_cell, n_frac
+    REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num) :: temp_local, drift_local, npart_frac
-    REAL(num) :: weight_local
+    REAL(num) :: weight_local, x0, dmin, dmax, wdata
+    TYPE(parameter_pack) :: parameters
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -176,11 +210,11 @@ CONTAINS
     IF (.NOT.x_max_boundary) RETURN
 
     IF (nproc > 1) THEN
-      IF (SIZE(density) /= ny+6) THEN
+      IF (SIZE(density) /= ny+2) THEN
         DEALLOCATE(density, temperature, drift)
-        ALLOCATE(density(-2:ny+3))
-        ALLOCATE(temperature(-2:ny+3, 1:3))
-        ALLOCATE(drift(-2:ny+3, 1:3))
+        ALLOCATE(density(0:ny+1))
+        ALLOCATE(temperature(0:ny+1, 1:3))
+        ALLOCATE(drift(0:ny+1, 1:3))
       ENDIF
     ENDIF
 
@@ -190,44 +224,48 @@ CONTAINS
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
       npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
-      IF (npart_frac > 0) THEN
-        n0 = 0
-      ELSE
-        n0 = 1
-      ENDIF
 
+      dmin = species_list(ispecies)%initial_conditions%density_min
+      dmax = species_list(ispecies)%initial_conditions%density_max
+
+      parameters%pack_ix = nx
       DO i = 1, 3
-        DO iy = -2, ny+3
-          temperature(iy,i) = evaluate_at_point( &
-              species_list(ispecies)%temperature_function(i), nx, iy, errcode)
-          drift(iy,i) = evaluate_at_point( &
-              species_list(ispecies)%drift_function(i), nx, iy, errcode)
+        DO iy = 0, ny+1
+          parameters%pack_iy = iy
+          temperature(iy,i) = evaluate_with_parameters( &
+              species_list(ispecies)%temperature_function(i), &
+              parameters, errcode)
+          drift(iy,i) = evaluate_with_parameters( &
+              species_list(ispecies)%drift_function(i), parameters, errcode)
         ENDDO
       ENDDO
-      DO iy = -2, ny+3
-        density(iy) = evaluate_at_point( &
-            species_list(ispecies)%density_function, nx, iy, errcode)
-        IF (density(iy) > initial_conditions(ispecies)%density_max) &
-            density(iy) = initial_conditions(ispecies)%density_max
+      DO iy = 0, ny+1
+        parameters%pack_iy = iy
+        density(iy) = evaluate_with_parameters( &
+            species_list(ispecies)%density_function, parameters, errcode)
+        IF (density(iy) > dmax) density(iy) = dmax
+        IF (density(iy) < dmin) density(iy) = 0.0_num
       ENDDO
 
+      x0 = x_grid_max + 0.5_num * dx
       DO iy = 1, ny
-        IF (density(iy) < initial_conditions(ispecies)%density_min) CYCLE
-        DO ipart = n0, npart_per_cell
-          ! Place extra particle based on probability
-          IF (ipart == 0) THEN
-            IF (npart_frac < random()) CYCLE
-          ENDIF
+        IF (density(iy) < dmin) CYCLE
+
+        ! Place extra particle based on probability
+        n_frac = 0
+        IF (npart_frac > 0.0_num) THEN
+          IF (random() < npart_frac) n_frac = 1
+        ENDIF
+
+        wdata = dx * dy / (npart_per_cell + n_frac)
+
+        DO ipart = 1, npart_per_cell + n_frac
           CALL create_particle(current)
-          current%part_pos(1) = x_grid_max + dx + (random() - 0.5_num) * dx
-          current%part_pos(2) = y(iy) + (random() - 0.5_num) * dy
+          cell_frac_y = 0.5_num - random()
+          current%part_pos(1) = x0 + random() * dx
+          current%part_pos(2) = y(iy) - cell_frac_y * dy
 
           ! Always use the triangle particle weighting for simplicity
-          cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
-          cell_y = FLOOR(cell_y_r + 0.5_num)
-          cell_frac_y = REAL(cell_y, num) - cell_y_r
-          cell_y = cell_y + 1
-
           cy2 = cell_frac_y**2
           gy(-1) = 0.5_num * (0.25_num + cy2 + cell_frac_y)
           gy( 0) = 0.75_num - cy2
@@ -237,8 +275,8 @@ CONTAINS
             temp_local = 0.0_num
             drift_local = 0.0_num
             DO isuby = -1, 1
-              temp_local = temp_local + gy(isuby) * temperature(cell_y+isuby, i)
-              drift_local = drift_local + gy(isuby) * drift(cell_y+isuby, i)
+              temp_local = temp_local + gy(isuby) * temperature(iy+isuby, i)
+              drift_local = drift_local + gy(isuby) * drift(iy+isuby, i)
             ENDDO
             current%part_p(i) = momentum_from_temperature(&
                 species_list(ispecies)%mass, temp_local, drift_local)
@@ -246,10 +284,10 @@ CONTAINS
 
           weight_local = 0.0_num
           DO isuby = -1, 1
-            weight_local = weight_local + gy(isuby) * dx * dy &
-                / species_list(ispecies)%npart_per_cell * density(cell_y+isuby)
+            weight_local = weight_local + gy(isuby) * density(iy+isuby)
           ENDDO
-          current%weight = weight_local
+
+          current%weight = weight_local * wdata
 #ifdef PARTICLE_DEBUG
           current%processor = rank
           current%processor_at_t0 = rank
@@ -295,9 +333,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
-    INTEGER :: window_shift_cells
-#else
-    INTEGER :: ierr
+    INTEGER :: window_shift_cells, errcode
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -307,7 +343,7 @@ CONTAINS
       IF (time >= window_start_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
-        CALL setup_particle_boundaries
+        CALL setup_boundaries
         IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.
       ENDIF
@@ -315,6 +351,7 @@ CONTAINS
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
+      IF (use_window_stack) window_v_x = evaluate(window_v_x_stack, errcode)
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once

@@ -39,22 +39,27 @@ CONTAINS
 
     INTEGER :: i, errcode
     REAL(num) :: dc
+    LOGICAL :: const_is_open
 
     IF (.NOT.print_deck_constants) RETURN
     IF (rank /= 0) RETURN
 
     IF (deck_state == c_ds_first) THEN
-      WRITE(du,*) "Constant block values after first pass:"
+      WRITE(du,*) 'Constant block values after first pass:'
     ELSE
-      WRITE(du,*) "Constant block values after second pass:"
+      WRITE(du,*) 'Constant block values after second pass:'
     ENDIF
     WRITE(du,*)
 
+    INQUIRE(unit=duc, opened=const_is_open)
+
     DO i = 1, n_deck_constants
       errcode = 0
-      dc = evaluate_at_point(deck_constant_list(i)%execution_stream, &
-          1, 1, 1, errcode)
+      dc = evaluate(deck_constant_list(i)%execution_stream, errcode)
       WRITE(du,'("  ", A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      IF (const_is_open) THEN
+        WRITE(duc,'(A, " = ", G18.11)') TRIM(deck_constant_list(i)%name), dc
+      ENDIF
     ENDDO
 
   END SUBROUTINE constant_deck_finalise
@@ -80,7 +85,7 @@ CONTAINS
     INTEGER :: ix, io, iu
     TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: buffer
     TYPE(primitive_stack) :: temp
-    TYPE(stack_element) :: block
+    TYPE(stack_element) :: iblock
 
     errcode = c_err_none
 
@@ -94,9 +99,9 @@ CONTAINS
     ! If we're here then then named constant doesn't yet exist, so create it
 
     ! First issue a warning message if the name overrides a built-in one
-    CALL load_block(element, block)
-    IF (block%ptype /= c_pt_bad .AND. block%ptype /= c_pt_null &
-        .AND. block%ptype /= c_pt_default_constant) THEN
+    CALL load_block(element, iblock)
+    IF (iblock%ptype /= c_pt_bad .AND. iblock%ptype /= c_pt_null &
+        .AND. iblock%ptype /= c_pt_default_constant) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)

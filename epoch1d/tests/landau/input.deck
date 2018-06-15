@@ -1,0 +1,96 @@
+begin:control
+  nx = 400
+  npart = 3200
+
+  # final time of simulation
+  t_end = 3.0e-1
+
+  # size of domain
+  x_start = 0
+  x_end = 5.0e5
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+end:boundaries
+
+
+begin:constant
+  temp = 27300
+  dens = 1
+end:constant
+
+
+begin:species
+  name = electrons
+  charge = -1
+  mass = 1.0
+  frac = 0.5
+  temp_x = temp
+  density = dens + 0.8*dens * sin(2*pi*x/lengthx)
+  density_min = 0.0
+end:species
+
+
+begin:species
+  name = protons
+  charge = 1
+  mass = 1836.2
+  frac = 0.5
+  temp_x = temp_x(electrons)
+  density = density(electrons)
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 21e-3
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 1
+  dump_last = F
+
+  # Properties at particle positions
+  #particles = always
+  #px = always
+  #particle_weight = always
+
+  # Properties on grid
+  grid = always
+  ex = always
+  #ey = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
+  #jx = always
+  #ekbar = always
+  #mass_density = never + species
+  charge_density = always
+  number_density = always + species
+  #temperature = always + species
+
+  # extended io
+  distribution_functions = always
+end:output
+
+
+begin:dist_fn
+  name = x_px
+  ndims = 2
+
+  direction1 = dir_x
+  direction2 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-10e-24, 10e-24)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 200
+
+  include_species:electrons
+  include_species:protons
+end:dist_fn

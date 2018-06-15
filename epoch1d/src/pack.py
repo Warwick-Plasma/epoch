@@ -50,6 +50,7 @@ def stripped(s):
         s = s.encode('ascii', 'ignore').decode()
     return s.strip()
 
+
 if got_argparse:
     argp = argparse.ArgumentParser(
         description="Pack source code for writing to SDF output")
@@ -201,17 +202,18 @@ def print_integer(name, value):
 
 def get_bytes_checksum(files):
     global checksum_type
+    import codecs
     if not generate_checksum:
         checksum_type = ''
         return ''
     cksum = hashlib.new('sha256')
     for name in files:
-        f = open(name)
-        while True:
-            data = f.read(cksum.block_size)
-            if not data:
-                break
-            cksum.update(data.encode('utf-8'))
+        with codecs.open(name, encoding='utf-8') as f:
+            while True:
+                data = f.read(cksum.block_size)
+                if not data:
+                    break
+                cksum.update(data.encode('utf-8'))
     checksum_type = 'sha256'
     return cksum.hexdigest()
 

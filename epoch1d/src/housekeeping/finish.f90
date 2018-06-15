@@ -26,6 +26,7 @@ MODULE finish
   USE collisions
   USE dist_fn
   USE ionise
+  USE injectors
 
   IMPLICIT NONE
 
@@ -71,7 +72,6 @@ CONTAINS
 
     DEALLOCATE(io_block_list, STAT=stat)
     DEALLOCATE(io_list_data, STAT=stat)
-    DEALLOCATE(initial_conditions, STAT=stat)
     DEALLOCATE(file_prefixes, STAT=stat)
     DEALLOCATE(file_numbers, STAT=stat)
 
@@ -95,6 +95,7 @@ CONTAINS
     CALL deallocate_ionisation
     CALL deallocate_partlists
     CALL deallocate_eval_stack
+    CALL deallocate_injectors
 
     CALL MPI_COMM_FREE(comm, errcode)
 

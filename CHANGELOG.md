@@ -1,4 +1,254 @@
-v4.7.6 to v4.8.0 2016-04-17
+## v4.11.0 to v4.12.0
+
+ * Fixes for exact restarts
+
+ * Apply reflecting particle BCs when conduct is specified
+
+ * Fix moving window for fractional particles per cell
+
+ * Don't average ppc diagnostic over shape function
+
+ * Added average particle weight diagnostic
+
+ * Replaced PARTICLE_COUNT_UPDATE Makefile DEFINE with
+   "use_particle_count_update" control block flag
+
+ * Added "use_accurate_n_zeros" control block flag to enable finding the
+   exact number of output that are generated
+
+ * Prevent duplicated final dump
+
+ * Added "use_flux_maxwellian" option to the injector block
+
+ * Added warnings for BCs that are incompatible with moving windows
+
+ * Added y,z versions of the Lehe Maxwell solver
+
+ * Added "stencil" block for specifying a Maxwell solver with custom
+   coefficients
+
+ * Various bugfixes
+
+ * Updated the SDF submodule:
+   SDF/FORTRAN
+   - Improve Fortran error handling
+
+   SDF/utilities
+   - Added support for SDF_BLOCKTYPE_POINT_DERIVED to sdffilter
+   - Make sdffilter print all point mesh components
+   - Return non-zero code for unsupported blocks in sdffilter
+   - Fixed station file column order in sdffilter
+   - Return an error for failed python builds
+
+   SDF/VisIt
+   - Add an option for disabling obstacle boundaries in VisIt
+   - Don't generate boundary meshes when requested in VisIt
+
+
+## v4.10.0 to v4.11.0 (2018-04-13)
+
+ * Added time dependent moving window
+
+ * Added multiple RNG states
+
+ * Fixed F2003 extension in shared_data
+
+ * Fixed errors in derived variable ouput for photons
+
+ * Fix bug in grow_array in 2D
+
+ * If print_const is used, output constant values into a separate file
+
+ * Allow CPML with moving window
+
+ * Added COMPILER=auto option to automatically detect compiler
+
+ * Added time dependent moving window
+
+ * Fix pack.sh script for non-bash shells
+
+ * Added issue templates
+
+ * Changed the Make rule from hector to archer
+
+ * Fixed lasers so that positions work as expected
+
+ * Fixed #1691, compilation error with older gfortran
+
+ * Updated mediawiki links to the new location
+
+ * Updated SDF submodule
+   SDF/FORTRAN
+   - Fix pack.sh script for non-bash shells
+
+   SDF/IDL
+   - Functions to read key-val pair file into struct
+   - Rename main function
+   - Added licensing header
+   - Uppercase keywords
+   - Correct indentation
+   - General tidy
+
+   SDF/Matlab
+   - Read name-value pairs into structure
+   - Removed DOS linefeed characters
+   - Added license header
+   - Tidied up a little
+
+   SDF/utilities
+   - Script to read name-val pairs from file into dict
+   - Fix float vs int ordering
+   - Made PEP8 compliant
+
+   SDF/VisIt
+   - Fix build script for VisIt-2.13 and 2.13.1 on macOS
+
+
+## v4.9.0 to v4.10.0 (2018-03-13)
+
+ * Added time varying particle injectors
+
+ * Add per species particle boundaries You can now specify bc_x_min and
+   bc_x_max to a species block. This overrides the global boundaries for that
+   species
+
+ * Fixes #1567 with moving window and offset_grid Bug 1567: UNLOCATABLE
+   PARTICLE with restart dump and moving window Shift particles back to true
+   position and adjust offset grid
+
+ * Bugfix for assigning particle IDs
+
+ * Various fixes for compiling with DEFINES flags
+
+ * Added particles_per_cell diagnostic
+
+ * Fixed missing ierror argument to MPI_ALLGATHER This fixes issue #1636
+
+ * Fix PER_PARTICLE_CHARGE and fractional particles Previously 'fractional'
+   particles were not given mass or charge giving segfault if ppc did not
+   evenly divide by number of cells
+
+ * Added CONTRIBUTING.md guide
+
+ * Updated SDF
+   SDF/FORTRAN
+   - Fix PGI build on OSX
+   - Work around a PGI floating point bug.
+   - Fixed unix_seconds for Jan and Feb of leap years
+   - Fully initialise sdf_file_handle
+   - Changed FPE generation in error handler
+   - Fix count of leap years since 1970
+   - Check for broken OpenMPI 2.1.1 and 2.1.2
+
+   SDF/utilities
+   - Added support for string-type namevalue pairs
+   - Avoid duplicated dictionary names
+   - Made build of sdf2ascii optional (off by default)
+   - Removed unhelpful dimension squashing
+   - Removed mmap option from python reader
+
+   SDF/VisIt
+   - Added test for compatible g++ version
+
+
+## v4.8.0 to v4.9.0 (2017-07-28)
+
+ * Add alternative field solvers for the Maxwell equations.
+   The following stencils are implemented lehe: R. Lehe
+   et al., Phys. Rev. Special Topics 16, 021301 (2013) pukhov: A. Pukhov,
+   Journal of Plasma Physics 61, 425-433 (1999) cowan: Cowan et al., Phys.
+   Rev. ST Accel. Beams 16, 041303 (2013) The solvers can be selected in the
+   control section of the input deck via
+     maxwell_solver = {yee, lehe, cowan. pukhov}
+
+   The default value is
+     maxwell_solver = yee
+
+   In the 1D-case Pukhov and Cowan reduce to Yee. In the 2D-case Pukhov and
+   Cowan are identical, so Cowan reduces to Pukhov because Pukhov is older. In
+   the 3D-case all solvers are implemented separately.
+
+ * Added ability to read initial particle setup from a file
+   This adds a "particles" custom particle loader block block works in
+   conjunction with species block and must target a valid species block in
+   order to load particles.  Particle data is loaded from RAW binary files,
+   similar to the "fields" block, with one file per particle parameter and
+   ordering assumed preserved across files.
+
+ * Added a delta-f implementation of EPOCH.
+
+ * Added automated continuous integration testing
+
+ * Improved accuracy of relativistic kinetic energy calculation
+
+ * Drive lasers using the integrated phase history rather than sin(omega*t).
+   This is the same for first order in time but differs for higher order
+   terms. See the discussion in issue #1468
+
+ * Added the capability to set the frequency of lasers as a time dependent
+   parameter in the input deck.
+
+ * Added method for subtracting initial current (issues #1422 and #347)
+   This adds the "use_current_correction" flag to the control block which will subtract any initial current from the simulation.
+
+ * Add the input deck aliases for the alternative spellings:
+   "field_ionization", "ionization_energies", "ionization_electron_species"
+   and "collisional_ionization" (issue #1361)
+
+ * Add |p| (mod_p) as distribution function direction (issue #1356)
+
+ * Allow subsets to be applied to field variables (issue #1523)
+
+ * Allow distribution functions to output spatial subsections if the range
+   keyword is set. (issue #1525)
+
+ * Add colour output for the EPOCH banner
+
+ * Allow {y,z}_data variable to be present in 1d and 2d decks
+
+ * Enable build of the VisIt SDF reader on Windows machines
+
+Bugfixes:
+
+ * Fixed a typo in deallocation of yb,zb
+
+ * Fixed regression in restart code (issue #1358)
+
+ * Fixed SEGFAULT when using field ionisation (issue #1407)
+
+ * Use Rayleigh distribution for sampling in the thermal boundary conditions
+
+ * Ensure plasma frequency calculation respects density_max (issue #1475)
+
+ * Allow restarting of code with time varying laser frequency
+
+ * Fix bug that in recording Trident electrons (issue #1512)
+
+ * Disable load-balancer for dlb_threshold <= 0 (issue #1417)
+
+ * Fix long filename path lengths (issue #1452)
+
+ * Fix parallel loading of particles for the TOPHAT shape function (issue #287)
+
+ * Fix current boundary conditions for thermal boundaries (issue #1542)
+
+ * Prevent SEGFAULT when averaging with multiple output blocks by only
+   allowing one average per variable. (issue #1529)
+
+ * Change phase to inject laser properly at angle (issue #1538)
+
+ * Fix secondary_list size when using field ionisation
+
+ * Fixed missing c_dir_z in evalutor_blocks
+
+ * Various minor bugfixes
+
+ * Close files in VisIt after use (issue #1357)
+
+ * Fixed the VisIt SDF reader build script for VisIt 2.7.{2,3}, 2.12.x
+
+
+## v4.7.6 to v4.8.0 (2016-04-17)
 
  * Corrections for various issues in EPOCH's collisions
 
@@ -19,7 +269,7 @@ v4.7.6 to v4.8.0 2016-04-17
  * Stagger grid when evaluating field components (issue #1337)
 
 
-v4.7.0 to v4.7.6 2016-02-12
+## v4.7.0 to v4.7.6 (2016-02-12)
 
  * Fixed typo in check_qed_variable() routine
 
@@ -40,7 +290,7 @@ v4.7.0 to v4.7.6 2016-02-12
  * Moved the Changelog to the top-level directory
 
 
-v4.6.0 to v4.7.0 2015-11-23
+## v4.6.0 to v4.7.0 (2015-11-23)
 
  * Fixed build status URL
 
@@ -156,7 +406,7 @@ v4.6.0 to v4.7.0 2015-11-23
    - Store string properties as unicode for python3
 
 
-v4.5.0 to v4.6.0 2015-09-18
+## v4.5.0 to v4.6.0 (2015-09-18)
 
  * Exit with error if no valid COMPILER specified
 
@@ -261,7 +511,7 @@ v4.5.0 to v4.6.0 2015-09-18
    - Fix some memory leaks.
 
 
-v4.4.2 to v4.5.0 2015-06-19
+## v4.4.2 to v4.5.0 (2015-06-19)
 
  * Fixed COMMIT file generation scripts.
 
@@ -577,7 +827,7 @@ v4.4.2 to v4.5.0 2015-06-19
    - Added error message to build script.
 
 
-10-01-2015 Changes for version 4.4.2
+## v4.3.0 to v4.4.2 (2015-01-10)
 
  * Added data reduction for grid-based variables.
    This change adds the integer parameters "skip_{x,y,z}" and "skip" to the
@@ -788,7 +1038,7 @@ Bugfixes:
  * Various small bugfixes and corrections.
 
 
-24-01-2014 Changes for version 4.3
+## v4.2.0 to v4.3.0 (2014-01-21)
 
  * Added 'restart' dumpmask constant.
 
@@ -1505,7 +1755,8 @@ Bugfixes:
 
  * Updated MatLab and IDL readers for new file revision.
 
-24-01-2014 Changes for version 4.2
+
+## v4.1.0 to v4.2.0 (2013-02-23)
 
  * Allow the data directory to contain a '/' character.
 
@@ -1548,7 +1799,8 @@ Bugfixes:
    block. To avoid this problem, we use the untruncated version of the
    string to request the shortened version from the SDF library
 
-24-01-2014 Changes for version 4.1
+
+## v4.0.0 to v4.1.0 (2013-01-24)
 
  * Changed the default for "dump_first" back to "T".
 
@@ -1701,7 +1953,8 @@ Bugfixes:
 
  * Various other minor bugfixes and tweaks
 
-25-07-2012 Changes for version 4.0
+
+## v3.1.0 to v4.0.0 (2012-07-24)
 
 Additions and changes:
 
@@ -2334,7 +2587,8 @@ Bugfixes:
 
  * Various other tidying and bugfixing
 
-23-06-2011 Changes for version 3.1
+
+## v3.0.0 to v3.1.0 (2011-06-23)
 
 Syntax changes:
 
@@ -2467,7 +2721,8 @@ Bugfixes:
 
  * Various other tidying and bugfixing
 
-25-02-2011 Changes for version 3.0
+
+## v2.3.0 to v3.0.0 (2011-02-28)
 
 Syntax changes:
 
@@ -2594,7 +2849,8 @@ Additions and changes:
 
  * Various bugfixes
 
-28-09-2010 Changes for version 2.3
+
+## v2.2.0 to v2.3.0 (2010-09-28)
 
  * Added optional "use_random_seed" flag.
    If this boolean flag is set to true in the control block of the
@@ -2639,7 +2895,8 @@ Additions and changes:
 
  * Added CFD reader for Matlab.
 
-13-08-2010 Changes for version 2.2
+
+## v2.1.0 to v2.2.0 (2010-08-13)
 
  * The fields_external and species_external blocks have been removed.
    This functionality is now obtained by passing the external filename
@@ -2786,7 +3043,7 @@ Additions and changes:
  * Allow grids which cannot be exactly divided across processes.
 
 
-16-04-2010 Changes for version 2.1
+## v2.0.0 to v2.1.0 (2010-04-16)
 
  * Various minor bug fixes.
 
@@ -2810,4 +3067,3 @@ Additions and changes:
    39 continuation lines.
 
  * Dump files at end of timestep.
-
