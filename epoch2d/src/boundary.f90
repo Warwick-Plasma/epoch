@@ -520,7 +520,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i,:) = array(i,:) - array(-i,:)
@@ -537,7 +537,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i,:) = array(nn-i,:) - array(nn+i,:)
@@ -556,7 +556,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (y_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(:,i) = array(:,i) - array(:,-i)
@@ -573,7 +573,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (y_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(:,nn-i) = array(:,nn-i) - array(:,nn+i)
