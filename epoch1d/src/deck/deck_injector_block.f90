@@ -115,6 +115,13 @@ CONTAINS
 
     IF (str_cmp(element, 't_end')) THEN
       working_injector%t_end = as_time_print(value, element, errcode)
+      working_injector%has_t_end = .TRUE.
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'use_flux_maxwellian')) THEN
+      working_injector%use_flux_injector = as_logical_print(value, element, &
+          errcode)
       RETURN
     ENDIF
 

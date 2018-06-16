@@ -564,10 +564,11 @@ CONTAINS
 
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
-    INTEGER :: ispecies, ix, iy, spec_start, spec_end
+    INTEGER :: ispecies, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
-#include "particle_head.inc"
+    REAL(num) :: cell_x_r, cell_y_r
+    INTEGER :: cell_x, cell_y
 
     data_array = 0.0_num
 
@@ -582,35 +583,94 @@ CONTAINS
     ENDIF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
 
       DO WHILE (ASSOCIATED(current))
-#include "particle_to_grid.inc"
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
+#else
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx + 0.5_num
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy + 0.5_num
+#endif
+        cell_x = FLOOR(cell_x_r) + 1
+        cell_y = FLOOR(cell_y_r) + 1
 
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          data_array(cell_x+ix, cell_y+iy) = &
-              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy)
-        ENDDO
-        ENDDO
+        data_array(cell_x,cell_y) = data_array(cell_x,cell_y) + 1.0_num
 
         current => current%next
       ENDDO
-      CALL calc_boundary(data_array, ispecies)
-    ENDDO
-
-    CALL calc_boundary(data_array)
-
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     ENDDO
 
   END SUBROUTINE calc_ppc
+
+
+
+  SUBROUTINE calc_average_weight(data_array, current_species)
+
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: part_count
+    INTEGER :: ispecies, spec_start, spec_end
+    TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
+    REAL(num) :: cell_x_r, cell_y_r
+    INTEGER :: cell_x, cell_y
+
+    data_array = 0.0_num
+
+    spec_start = current_species
+    spec_end = current_species
+    spec_sum = .FALSE.
+
+    IF (current_species <= 0) THEN
+      spec_start = 1
+      spec_end = n_species
+      spec_sum = .TRUE.
+    ENDIF
+
+    ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
+    part_count = 0.0_num
+
+    DO ispecies = spec_start, spec_end
+#ifndef NO_TRACER_PARTICLES
+      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+#endif
+      current => io_list(ispecies)%attached_list%head
+      wdata = io_list(ispecies)%weight
+
+      DO WHILE (ASSOCIATED(current))
+#ifndef PER_SPECIES_WEIGHT
+        wdata = current%weight
+#endif
+
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy
+#else
+        cell_x_r = (current%part_pos(1) - x_grid_min_local) / dx + 0.5_num
+        cell_y_r = (current%part_pos(2) - y_grid_min_local) / dy + 0.5_num
+#endif
+        cell_x = FLOOR(cell_x_r) + 1
+        cell_y = FLOOR(cell_y_r) + 1
+
+        data_array(cell_x,cell_y) = data_array(cell_x,cell_y) + wdata
+        part_count(cell_x,cell_y) = part_count(cell_x,cell_y) + 1.0_num
+
+        current => current%next
+      ENDDO
+    ENDDO
+
+    data_array = data_array / MAX(part_count, c_tiny)
+
+    DEALLOCATE(part_count)
+
+  END SUBROUTINE calc_average_weight
 
 
 

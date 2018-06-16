@@ -42,6 +42,10 @@ MODULE setup
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
+  LOGICAL :: got_x_grid_min = .FALSE.
+  LOGICAL :: got_y_grid_min = .FALSE.
+  REAL(num) :: x_grid_min_val
+  REAL(num) :: y_grid_min_val
 
 CONTAINS
 
@@ -158,12 +162,10 @@ CONTAINS
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
     x_grid_min = x_min - dx * cpml_thickness
-    x_grid_max = x_max + dx * cpml_thickness
 
     length_y = y_max - y_min
     dy = length_y / REAL(ny_global-2*cpml_thickness, num)
     y_grid_min = y_min - dy * cpml_thickness
-    y_grid_max = y_max + dy * cpml_thickness
 
     ! Shift grid to cell centres.
     ! At some point the grid may be redefined to be node centred.
@@ -171,9 +173,10 @@ CONTAINS
     xb_min = x_grid_min
     yb_min = y_grid_min
     x_grid_min = x_grid_min + dx / 2.0_num
-    x_grid_max = x_grid_max - dx / 2.0_num
     y_grid_min = y_grid_min + dy / 2.0_num
-    y_grid_max = y_grid_max - dy / 2.0_num
+
+    IF (got_x_grid_min) x_grid_min = x_grid_min_val
+    IF (got_y_grid_min) y_grid_min = y_grid_min_val
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -181,11 +184,14 @@ CONTAINS
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
     ENDDO
+    x_grid_max = x_global(nx_global)
+
     DO iy = 1-ng, ny_global + ng
       y_global(iy) = y_grid_min + (iy - 1) * dy
       yb_global(iy) = yb_min + (iy - 1) * dy
       yb_offset_global(iy) = yb_global(iy)
     ENDDO
+    y_grid_max = y_global(ny_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
@@ -610,15 +616,31 @@ CONTAINS
     IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
-      dt = cfl * dx * dy / c / SQRT(dx**2 + dy**2)
+      dt = cfl * dx * dy / SQRT(dx**2 + dy**2) / c
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / c / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2))
-
-    ELSE IF (maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       dt = MIN(dx, dy) / c
+    ENDIF
+
+    IF (any_open) THEN
+      dt_solver = dx * dy / SQRT(dx**2 + dy**2) / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      dt = dt_custom
+      IF (dt_multiplier < 1.0_num) THEN
+        IF (rank == 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Custom maxwell solver is used with custom timestep specified'
+          PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
+          PRINT*, 'unity in order to ensure the correct time step.'
+          PRINT*, 'Overriding dt_multiplier now.'
+        ENDIF
+        dt_multiplier = 1.0_num
+      ENDIF
     ENDIF
 
     dt_solver = dt
@@ -792,6 +814,9 @@ CONTAINS
     got_full = .FALSE.
     npart_global = 0
     step = -1
+
+    full_x_min = 0.0_num
+    offset_x_min = 0.0_num
 
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
@@ -1021,6 +1046,12 @@ CONTAINS
           CALL sdf_read_srl(sdf_handle, dt_from_restart)
         ELSE IF (str_cmp(block_id, 'window_shift_fraction')) THEN
           CALL sdf_read_srl(sdf_handle, window_shift_fraction)
+        ELSE IF (str_cmp(block_id, 'x_grid_min')) THEN
+          got_x_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, x_grid_min_val)
+        ELSE IF (str_cmp(block_id, 'y_grid_min')) THEN
+          got_y_grid_min = .TRUE.
+          CALL sdf_read_srl(sdf_handle, y_grid_min_val)
         ELSE IF (block_id(1:7) == 'weight/') THEN
           CALL find_species_by_blockid(block_id, ispecies)
           IF (ispecies == 0) CYClE
@@ -1052,6 +1083,14 @@ CONTAINS
             x_max = extents(c_ndims+1)
             y_min = extents(2)
             y_max = extents(c_ndims+2)
+
+            dx = (x_max - x_min) / nx_global
+            x_min = x_min + dx * cpml_thickness
+            x_max = x_max - dx * cpml_thickness
+            dy = (y_max - y_min) / ny_global
+            y_min = y_min + dy * cpml_thickness
+            y_max = y_max - dy * cpml_thickness
+
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
               full_x_min = extents(1)
@@ -1283,10 +1322,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
-    window_offset = full_x_min - offset_x_min
-    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
+    IF (use_offset_grid) THEN
+      window_offset = full_x_min - offset_x_min
+      CALL shift_particles_to_window(window_offset)
+    ENDIF
+
     CALL setup_grid
-    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
+
+    IF (use_offset_grid) THEN
+      CALL create_moved_window(offset_x_min, window_offset)
+    ENDIF
+
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'

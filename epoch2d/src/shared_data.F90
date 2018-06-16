@@ -123,10 +123,14 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_never = 2**10
 
   ! Maxwell Solvers
+  INTEGER, PARAMETER :: c_maxwell_solver_custom = -1
   INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
   INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 2
-  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 1
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 4
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 5
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -394,8 +398,12 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 102
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_x = 102
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_y = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
+  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
+  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -559,6 +567,14 @@ MODULE shared_data
 #endif
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    REAL(num) :: work_x
+    REAL(num) :: work_y
+    REAL(num) :: work_z
+    REAL(num) :: work_x_total
+    REAL(num) :: work_y_total
+    REAL(num) :: work_z_total
 #endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
@@ -740,7 +756,18 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc         = 50
   INTEGER, PARAMETER :: c_dump_part_proc0        = 51
   INTEGER, PARAMETER :: c_dump_ppc               = 52
-  INTEGER, PARAMETER :: num_vars_to_dump         = 52
+  INTEGER, PARAMETER :: c_dump_average_weight    = 53
+#ifdef WORK_DONE_INTEGRATED
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 54
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 55
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 56
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 57
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 58
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 59
+  INTEGER, PARAMETER :: num_vars_to_dump         = 59
+#else
+  INTEGER, PARAMETER :: num_vars_to_dump         = 53
+#endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -941,6 +968,8 @@ MODULE shared_data
   LOGICAL :: neutral_background = .TRUE.
   LOGICAL :: use_random_seed = .FALSE.
   LOGICAL :: use_particle_lists = .FALSE.
+  LOGICAL :: use_particle_count_update = .FALSE.
+  LOGICAL :: use_accurate_n_zeros = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
@@ -989,11 +1018,12 @@ MODULE shared_data
   LOGICAL :: use_multiphoton, use_bsi
 
   INTEGER :: maxwell_solver = c_maxwell_solver_yee
+  REAL(num) :: dt_custom
 
   !----------------------------------------------------------------------------
   ! Moving window
   !----------------------------------------------------------------------------
-  LOGICAL :: move_window, inject_particles
+  LOGICAL :: move_window, inject_particles, window_started
   TYPE(primitive_stack), SAVE :: window_v_x_stack
   LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
@@ -1041,6 +1071,7 @@ MODULE shared_data
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
+  LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
@@ -1072,12 +1103,14 @@ MODULE shared_data
     INTEGER :: species
     INTEGER(i8) :: npart_per_cell
     REAL(num) :: density_min
+    LOGICAL :: use_flux_injector
 
     TYPE(primitive_stack) :: density_function
     TYPE(primitive_stack) :: temperature_function(3)
     TYPE(primitive_stack) :: drift_function(3)
 
     REAL(num) :: t_start, t_end
+    LOGICAL :: has_t_end
     REAL(num), DIMENSION(:), POINTER :: depth, dt_inject
 
     TYPE(injector_block), POINTER :: next

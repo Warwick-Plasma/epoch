@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 30 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 32 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -71,7 +71,9 @@ MODULE deck_control_block
           'print_eta_string         ', &
           'n_zeros                  ', &
           'use_current_correction   ', &
-          'maxwell_solver           ' /)
+          'maxwell_solver           ', &
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -107,7 +109,9 @@ MODULE deck_control_block
           'print_eta_string         ', &
           'n_zeros                  ', &
           'use_current_correction   ', &
-          'maxwell_solver           ' /)
+          'maxwell_solver           ', &
+          'use_particle_count_update', &
+          'use_accurate_n_zeros     ' /)
 
 CONTAINS
 
@@ -123,6 +127,8 @@ CONTAINS
       allow_missing_restart = .FALSE.
       print_eta_string = .FALSE.
       use_current_correction = .FALSE.
+      use_particle_count_update = .FALSE.
+      use_accurate_n_zeros = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -136,16 +142,18 @@ CONTAINS
 
   SUBROUTINE control_deck_finalise
 
-    CHARACTER(LEN=22) :: filename_fmt
+    CHARACTER(LEN=22) :: filename_fmt, str
     INTEGER :: io, iu
 
     IF (n_zeros_control > 0) THEN
-      IF (n_zeros_control < 4) THEN
+      IF (n_zeros_control < n_zeros) THEN
         IF (rank == 0) THEN
+          CALL integer_as_string(n_zeros, str)
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'n_zeros was less than 4 and has been ignored'
+            WRITE(io,*) 'n_zeros was less than ', TRIM(str), &
+                        ' and has been ignored'
           ENDDO
         ENDIF
         n_zeros_control = -1
@@ -166,8 +174,10 @@ CONTAINS
       CALL check_valid_restart
     ENDIF
 
-    IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    IF (maxwell_solver == c_maxwell_solver_lehe &
+        .OR. maxwell_solver == c_maxwell_solver_lehe_x) THEN
       fng = 2
+      maxwell_solver = c_maxwell_solver_lehe_x
     ENDIF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
@@ -344,10 +354,16 @@ CONTAINS
       maxwell_solver = as_integer_print(value, element, errcode)
       IF (maxwell_solver /= c_maxwell_solver_yee &
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
+          .AND. maxwell_solver /= c_maxwell_solver_lehe_x &
           .AND. maxwell_solver /= c_maxwell_solver_cowan &
-          .AND. maxwell_solver /= c_maxwell_solver_pukhov) THEN
+          .AND. maxwell_solver /= c_maxwell_solver_pukhov &
+          .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
         errcode = c_err_bad_value
       ENDIF
+    CASE(4*c_ndims+31)
+      use_particle_count_update = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+32)
+      use_accurate_n_zeros = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element
@@ -433,7 +449,8 @@ CONTAINS
     TYPE(sdf_file_handle) :: sdf_handle
     LOGICAL :: valid = .TRUE.
 
-    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
+    CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read, &
+                  handle_errors=.FALSE.)
 
     IF (sdf_handle%error_code == 0) THEN
       CALL sdf_read_header(sdf_handle, step, time, code_name, code_io_version, &

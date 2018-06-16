@@ -26,6 +26,7 @@ MODULE finish
   USE collisions
   USE dist_fn
   USE ionise
+  USE injectors
 
   IMPLICIT NONE
 
@@ -94,6 +95,7 @@ CONTAINS
     CALL deallocate_ionisation
     CALL deallocate_partlists
     CALL deallocate_eval_stack
+    CALL deallocate_injectors
 
     CALL MPI_COMM_FREE(comm, errcode)
 
