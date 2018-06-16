@@ -1,4 +1,4 @@
-## v4.11.0 to v4.12.0
+## v4.11.0 to v4.12.0 (2018-06-16)
 
  * Fixes for exact restarts
 
