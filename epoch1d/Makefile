@@ -249,6 +249,9 @@ DEFINES := $(DEFINE)
 # that has to be calculated every time step. This will slow down the simulation!
 #DEFINES += $(D)WORK_DONE_INTEGRATED
 
+# Higuera-Cary push
+#DEFINES += $(D)HC_PUSH
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.

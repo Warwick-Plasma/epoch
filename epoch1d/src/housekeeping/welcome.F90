@@ -147,6 +147,9 @@ CONTAINS
 #ifdef WORK_DONE_INTEGRATED
     found = .TRUE.
 #endif
+#ifdef HC_PUSH
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -241,6 +244,10 @@ CONTAINS
 #ifdef WORK_DONE_INTEGRATED
     defines = IOR(defines, c_def_work_done_integrated)
     WRITE(*,*) 'Work done on each particle -DWORK_DONE_INTEGRATED'
+#endif
+#ifdef HC_PUSH
+    defines = IOR(defines, c_def_hc_push)
+    WRITE(*,*) 'Higuera-Cary particle push -DHC_PUSH'
 #endif
     WRITE(*,*) '*************************************************************'
 

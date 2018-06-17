@@ -236,6 +236,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_deltaf_method = 2**20
   INTEGER(i8), PARAMETER :: c_def_deltaf_debug = 2**21
   INTEGER(i8), PARAMETER :: c_def_work_done_integrated = 2**22
+  INTEGER(i8), PARAMETER :: c_def_hc_push = 2**23
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
