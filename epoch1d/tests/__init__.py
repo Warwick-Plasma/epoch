@@ -47,5 +47,6 @@ class SimTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        subprocess.call('make clean', shell=True)
+        if not "NOCLEAN" in os.environ:
+            subprocess.call('make clean', shell=True)
         os.chdir('..')

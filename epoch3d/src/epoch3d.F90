@@ -62,7 +62,7 @@ PROGRAM pic
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
-  REAL(num) :: runtime, dt0, dt_store
+  REAL(num) :: runtime, dt_store
 
   step = 0
   time = 0.0_num
@@ -127,6 +127,7 @@ PROGRAM pic
   CALL set_dt
   CALL set_maxwell_solver
   CALL deallocate_ic
+  CALL update_particle_count
 
   CALL after_load
 
@@ -143,13 +144,9 @@ PROGRAM pic
   CALL efield_bcs
 
   IF (ic_from_restart) THEN
-    dt0 = dt
-    dt_store = dt
-    IF (dt_from_restart > 0) dt0 = dt_from_restart
-    dt = dt0 / 2.0_num
-    time = time + dt
+    IF (dt_from_restart > 0) dt = dt_from_restart
+    time = time + dt / 2.0_num
     CALL update_eb_fields_final
-    dt = dt_store
     CALL moving_window
   ELSE
     dt_store = dt
@@ -158,6 +155,7 @@ PROGRAM pic
     CALL bfield_final_bcs
     dt = dt_store
   ENDIF
+  CALL count_n_zeros
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
@@ -217,6 +215,7 @@ PROGRAM pic
       ENDIF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
+      CALL update_particle_count
     ENDIF
 
     CALL check_for_stop_condition(halt, force_dump)
@@ -229,18 +228,6 @@ PROGRAM pic
     CALL update_eb_fields_final
 
     CALL moving_window
-
-    ! This section ensures that the particle count for the species_list
-    ! objects is accurate. This makes some things easier, but increases
-    ! communication
-#ifdef PARTICLE_COUNT_UPDATE
-    DO ispecies = 1, n_species
-      CALL MPI_ALLREDUCE(species_list(ispecies)%attached_list%count, &
-          species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
-          comm, errcode)
-      species_list(ispecies)%count_update_step = step
-    ENDDO
-#endif
   ENDDO
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_start

@@ -27,7 +27,7 @@ MODULE random_generator
     INTEGER :: w = 916191069
   END TYPE random_state_type
 
-  TYPE(random_state_type), TARGET :: global_random
+  TYPE(random_state_type), TARGET, SAVE :: global_random
 
 CONTAINS
 

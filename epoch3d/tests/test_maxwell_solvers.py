@@ -171,14 +171,16 @@ class test_maxwell_solvers(SimTest):
             vg_sim = np.polyfit(data[:, 0], data[:, 1], 1)[0]
 
             # For reference, right here, right now the following line prints
-            # yee 278063216.199 281017561.535 0.0105130274401
-            # lehe_x 309906708.166 311627789.852 0.00552287614236
-            # pukhov 291194893.733 292363351.796 0.00399659552364
-            # cowan 291194899.701 292363351.796 0.00399657510981
-            print(solver, vg_sim, vg[solver],
-                  abs(vg_sim-vg[solver])/vg[solver])
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.02)
+            # pukhov 291961761.344 292363351.796 0.001373600521
+            # yee    279231545.324 281017561.535 0.006355532378
+            # cowan  291962719.038 292363351.796 0.001370324821
+            # lehe_x 311952693.446 311627789.852 0.001042601480
+
+            print('{:6} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
+                  vg[solver], abs(vg_sim-vg[solver])/vg[solver]))
+
+            assert np.isclose(vg_sim, vg[solver], rtol=0.007)
 
 
 if __name__ == '__main__':

@@ -36,7 +36,9 @@ CONTAINS
     injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
+    injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
+    injector%use_flux_injector = .FALSE.
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:ny+ng))
@@ -98,6 +100,42 @@ CONTAINS
 
 
 
+  SUBROUTINE deallocate_injectors
+
+    CALL deallocate_injector_list(injector_x_min)
+    CALL deallocate_injector_list(injector_x_max)
+    CALL deallocate_injector_list(injector_y_min)
+    CALL deallocate_injector_list(injector_y_max)
+
+  END SUBROUTINE deallocate_injectors
+
+
+
+  SUBROUTINE deallocate_injector_list(list)
+
+    TYPE(injector_block), POINTER :: list
+    TYPE(injector_block), POINTER :: current, next
+    INTEGER :: i
+
+    current => list
+    DO WHILE(ASSOCIATED(current))
+      next => current%next
+      IF (current%density_function%init) &
+          CALL deallocate_stack(current%density_function)
+      DO i = 1, 3
+        IF (current%temperature_function(i)%init) &
+            CALL deallocate_stack(current%temperature_function(i))
+        IF (current%drift_function(i)%init) &
+            CALL deallocate_stack(current%drift_function(i))
+      ENDDO
+      DEALLOCATE(current)
+      current => next
+    ENDDO
+
+  END SUBROUTINE deallocate_injector_list
+
+
+
   SUBROUTINE run_injectors
 
     TYPE(injector_block), POINTER :: current
@@ -153,9 +191,18 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
-    LOGICAL :: first_inject
+    REAL(num), DIMENSION(3) :: dir_mult
+    LOGICAL :: first_inject, flux_fn
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
+
+    ! If you have a moving window that has started moving then unless you
+    ! EXPLICITLY give a t_end value to the injector stop the injector
+    IF (move_window .AND. window_started .AND. .NOT. injector%has_t_end) &
+        RETURN
+
+    flux_fn = .FALSE.
+    dir_mult = 1.0_num
 
     IF (direction == c_bd_x_min) THEN
       parameters%pack_ix = 0
@@ -165,6 +212,10 @@ CONTAINS
       dir_index = 1
       bdy_pos = x_min
       bdy_space = -dx
+      IF (injector%use_flux_injector) THEN
+        flux_fn = .TRUE.
+        dir_mult(dir_index) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_x_max) THEN
       parameters%pack_ix = nx
       nel = (/ny/)
@@ -173,6 +224,10 @@ CONTAINS
       dir_index = 1
       bdy_pos = x_max
       bdy_space = dx
+      IF (injector%use_flux_injector) THEN
+        flux_fn = .TRUE.
+        dir_mult(dir_index) = -1.0_num
+      END IF
     ELSE IF (direction == c_bd_y_min) THEN
       parameters%pack_iy = 0
       nel = (/nx/)
@@ -181,6 +236,10 @@ CONTAINS
       dir_index = 2
       bdy_pos = y_min
       bdy_space = -dy
+      IF (injector%use_flux_injector) THEN
+        flux_fn = .TRUE.
+        dir_mult(dir_index) = 1.0_num
+      END IF
     ELSE IF (direction == c_bd_y_max) THEN
       parameters%pack_iy = ny
       nel = (/nx/)
@@ -189,6 +248,10 @@ CONTAINS
       dir_index = 2
       bdy_pos = y_max
       bdy_space = dy
+      IF (injector%use_flux_injector) THEN
+        flux_fn = .TRUE.
+        dir_mult(dir_index) = -1.0_num
+      END IF
     ELSE
       RETURN
     ENDIF
@@ -271,8 +334,13 @@ CONTAINS
             temperature, drift)
 
         DO idir = 1, 3
-          new%part_p(idir) = momentum_from_temperature(mass, &
-              temperature(idir), drift(idir))
+          IF (flux_fn) THEN
+            new%part_p(idir) = flux_momentum_from_temperature(mass, &
+                temperature(idir), drift(idir)) * dir_mult(idir)
+          ELSE
+            new%part_p(idir) = momentum_from_temperature(mass, &
+                temperature(idir), drift(idir))
+          ENDIF
         ENDDO
 #ifdef PER_PARTICLE_CHARGE_MASS
         new%charge = species_list(injector%species)%charge

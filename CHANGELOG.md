@@ -1,3 +1,112 @@
+## v4.11.0 to v4.12.0 (2018-06-16)
+
+ * Fixes for exact restarts
+
+ * Apply reflecting particle BCs when conduct is specified
+
+ * Fix moving window for fractional particles per cell
+
+ * Don't average ppc diagnostic over shape function
+
+ * Added average particle weight diagnostic
+
+ * Replaced PARTICLE_COUNT_UPDATE Makefile DEFINE with
+   "use_particle_count_update" control block flag
+
+ * Added "use_accurate_n_zeros" control block flag to enable finding the
+   exact number of output that are generated
+
+ * Prevent duplicated final dump
+
+ * Added "use_flux_maxwellian" option to the injector block
+
+ * Added warnings for BCs that are incompatible with moving windows
+
+ * Added y,z versions of the Lehe Maxwell solver
+
+ * Added "stencil" block for specifying a Maxwell solver with custom
+   coefficients
+
+ * Added "work_{x,y,z}" and "work_{x,y,z}_total" dumpmasks for tracking the
+   work done on each particle by the electric field.
+
+ * Various bugfixes
+
+ * Updated the SDF submodule:
+   SDF/FORTRAN
+   - Improve Fortran error handling
+
+   SDF/utilities
+   - Added support for SDF_BLOCKTYPE_POINT_DERIVED to sdffilter
+   - Make sdffilter print all point mesh components
+   - Return non-zero code for unsupported blocks in sdffilter
+   - Fixed station file column order in sdffilter
+   - Return an error for failed python builds
+
+   SDF/VisIt
+   - Add an option for disabling obstacle boundaries in VisIt
+   - Don't generate boundary meshes when requested in VisIt
+
+
+## v4.10.0 to v4.11.0 (2018-04-13)
+
+ * Added time dependent moving window
+
+ * Added multiple RNG states
+
+ * Fixed F2003 extension in shared_data
+
+ * Fixed errors in derived variable ouput for photons
+
+ * Fix bug in grow_array in 2D
+
+ * If print_const is used, output constant values into a separate file
+
+ * Allow CPML with moving window
+
+ * Added COMPILER=auto option to automatically detect compiler
+
+ * Added time dependent moving window
+
+ * Fix pack.sh script for non-bash shells
+
+ * Added issue templates
+
+ * Changed the Make rule from hector to archer
+
+ * Fixed lasers so that positions work as expected
+
+ * Fixed #1691, compilation error with older gfortran
+
+ * Updated mediawiki links to the new location
+
+ * Updated SDF submodule
+   SDF/FORTRAN
+   - Fix pack.sh script for non-bash shells
+
+   SDF/IDL
+   - Functions to read key-val pair file into struct
+   - Rename main function
+   - Added licensing header
+   - Uppercase keywords
+   - Correct indentation
+   - General tidy
+
+   SDF/Matlab
+   - Read name-value pairs into structure
+   - Removed DOS linefeed characters
+   - Added license header
+   - Tidied up a little
+
+   SDF/utilities
+   - Script to read name-val pairs from file into dict
+   - Fix float vs int ordering
+   - Made PEP8 compliant
+
+   SDF/VisIt
+   - Fix build script for VisIt-2.13 and 2.13.1 on macOS
+
+
 ## v4.9.0 to v4.10.0 (2018-03-13)
 
  * Added time varying particle injectors

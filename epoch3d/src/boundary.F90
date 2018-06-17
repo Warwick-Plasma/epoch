@@ -37,16 +37,21 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    any_open = .FALSE.
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
       IF (bc_field(i) == c_bc_other) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_cpml_laser &
           .OR. bc_field(i) == c_bc_cpml_outflow) cpml_boundaries = .TRUE.
-      IF (bc_field(i) == c_bc_simple_laser) add_laser(i) = .TRUE.
+      IF (bc_field(i) == c_bc_simple_laser) THEN
+        add_laser(i) = .TRUE.
+        any_open = .TRUE.
+      ENDIF
 
       ! Note: reflecting EM boundaries not yet implemented.
       IF (bc_field(i) == c_bc_reflect) bc_field(i) = c_bc_clamp
       IF (bc_field(i) == c_bc_open) bc_field(i) = c_bc_simple_outflow
+      IF (bc_field(i) == c_bc_simple_outflow) any_open = .TRUE.
     ENDDO
 
     error = .FALSE.
@@ -77,7 +82,8 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
-    IF (boundary == c_bc_other) boundary = c_bc_reflect
+    IF (boundary == c_bc_other .OR. boundary == c_bc_conduct) &
+        boundary = c_bc_reflect
 
     ! Note, for laser bcs to work, the main bcs must be set IN THE CODE to
     ! simple_laser (or outflow) and the field bcs to c_bc_clamp. Particles
@@ -736,7 +742,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(i,:,:) = array(i,:,:) - array(-i,:,:)
@@ -753,7 +759,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(nn-i,:,:) = array(nn-i,:,:) - array(nn+i,:,:)
@@ -772,7 +778,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (y_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(:,i,:) = array(:,i,:) - array(:,-i,:)
@@ -789,7 +795,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (y_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(:,nn-i,:) = array(:,nn-i,:) - array(:,nn+i,:)
@@ -808,7 +814,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (z_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
           array(:,:,i) = array(:,:,i) - array(:,:,-i)
@@ -825,7 +831,7 @@ CONTAINS
     n = n + 1
     bc = bc_species(n)
     IF (z_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
-      IF (flip_dir == n/2 + 1) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
           array(:,:,nn-i) = array(:,:,nn-i) - array(:,:,nn+i)
@@ -1002,7 +1008,7 @@ CONTAINS
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
 
-    CALL particle_clear_bcs(array, ng)
+    IF (PRESENT(species)) CALL particle_clear_bcs(array, ng)
 
   END SUBROUTINE particle_periodic_bcs
 

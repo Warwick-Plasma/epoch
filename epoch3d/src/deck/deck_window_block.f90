@@ -35,7 +35,72 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    IF (move_window) need_random_state = .TRUE.
+    INTEGER :: i, bc(2)
+    LOGICAL :: warn
+
+    IF (.NOT.move_window) RETURN
+
+    need_random_state = .TRUE.
+
+    IF (deck_state /= c_ds_first .OR. rank /= 0) RETURN
+
+    ! Issue warnings about unsupported boundary conditions
+
+    bc(1) = bc_x_min_after_move
+    bc(2) = bc_x_max_after_move
+
+    warn = .FALSE.
+    DO i = 1, 2
+      IF (bc(i) == c_bc_simple_laser &
+          .OR. bc(i) == c_bc_cpml_laser &
+          .OR. bc(i) == c_bc_cpml_outflow) THEN
+        warn = .TRUE.
+      ENDIF
+    ENDDO
+
+    IF (warn) THEN
+      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
+          'conditions for ', 'an X boundary after the moving window ', &
+          'begins. These boundary conditions are ', 'not compatible with ', &
+          'moving windows and are unlikely to give correct results.'
+    ENDIF
+
+    warn = .FALSE.
+    DO i = 2, 2*c_ndims
+      IF (bc_field(i) == c_bc_simple_laser &
+          .OR. bc_field(i) == c_bc_cpml_laser &
+          .OR. bc_field(i) == c_bc_cpml_outflow) THEN
+        warn = .TRUE.
+      ENDIF
+    ENDDO
+
+    IF (warn) THEN
+      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
+          'conditions for ', 'the Y or Z boundaries. These boundary ', &
+          'conditions are not fully compatible ', 'with moving windows and ', &
+          'might give incorrect results.'
+    ENDIF
+
+    IF (n_custom_loaders > 0) THEN
+      PRINT*, 'WARNING: you have specified particle loading from file in ', &
+          'conjunction with ', 'moving windows. The file contents will be ', &
+          'ignored for new particles entering ', 'the domain once the ', &
+          'window begins to move.'
+    ENDIF
+
+    warn = .FALSE.
+    CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
+    CALL check_injector_boundary(x_max_boundary, injector_x_max, warn)
+    CALL check_injector_boundary(y_min_boundary, injector_y_min, warn)
+    CALL check_injector_boundary(y_max_boundary, injector_y_max, warn)
+    CALL check_injector_boundary(z_min_boundary, injector_z_min, warn)
+    CALL check_injector_boundary(z_max_boundary, injector_z_max, warn)
+
+    IF (warn) THEN
+      PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
+          'the moving window. ', 'These are not fully compatible with ', &
+          'moving windows and are likely to give ', 'incorrect results.'
+    ENDIF
 
   END SUBROUTINE window_deck_finalise
 
@@ -77,6 +142,7 @@ CONTAINS
       CALL tokenize(value, window_v_x_stack, errcode)
       ! evaluate it once to check that it's a valid block
       window_v_x = evaluate(window_v_x_stack, errcode)
+      CALL deallocate_stack(window_v_x_stack)
       use_window_stack = window_v_x_stack%is_time_varying
       RETURN
     ENDIF
@@ -110,5 +176,27 @@ CONTAINS
     errcode = c_err_none
 
   END FUNCTION window_block_check
+
+
+
+  SUBROUTINE check_injector_boundary(bc, injector, warn)
+
+    LOGICAL, INTENT(IN) :: bc
+    TYPE(injector_block), POINTER :: injector
+    LOGICAL, INTENT(INOUT) :: warn
+    TYPE(injector_block), POINTER :: current
+
+    IF (.NOT.bc .OR. warn) RETURN
+
+    current => injector_x_min
+    DO WHILE(ASSOCIATED(current))
+      IF (current%has_t_end) THEN
+        warn = .TRUE.
+        RETURN
+      ENDIF
+      current => current%next
+    ENDDO
+
+  END SUBROUTINE check_injector_boundary
 
 END MODULE deck_window_block

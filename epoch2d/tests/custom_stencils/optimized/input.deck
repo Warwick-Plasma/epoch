@@ -1,0 +1,73 @@
+begin:control
+  nx = 240
+  ny = nx/3
+
+  # final time of simulation
+  t_end = 75 * femto
+
+  # size of domain
+  x_min = -12 * micron
+  x_max = -x_min
+  y_min = x_min
+  y_max = x_max
+
+  stdout_frequency = 10
+
+  maxwell_solver = custom
+  dt_multiplier = 1
+end:control
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+
+begin:constant
+  lambda0 = 0.5 * micron
+  theta = 0.0
+end:constant
+
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = 1.0e15
+  lambda = lambda0 * cos(theta)
+  # phase = -2.0 * pi * y * sin(theta) / lambda0
+  # pol_angle = 0 # pi / 2.0
+  profile = gauss(y,0,4*micron)
+  t_profile = gauss(time,8*femto,1.8*femto)
+end:laser
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = 25 * femto
+
+  # Properties on grid
+  grid = always
+  #ex = always
+  ey = always
+  #ez = always
+  #bx = always
+  #by = always
+  #bz = always
+end:output
+
+
+begin:stencil
+  # These coefficients have been calculated with
+  # optimize_stencil.py version 0.2+1.g0d913ee
+
+  # using the command line
+  # "optimize_stencil.py --Y 3 --dt-multiplier 0.99"
+
+  dt = 0.9082126568805592 * dx / c
+  betaxy = 0.04075757835916255
+  betayx = 0.04075757835916255
+  deltax = -0.04142032920970152
+  deltay = -0.20827814817872584
+end:stencil

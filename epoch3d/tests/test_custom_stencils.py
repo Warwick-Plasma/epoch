@@ -1,0 +1,216 @@
+#!/usr/bin/env python
+
+# Copyright (C) 2017 Alexander Blinne <A.Blinne@gsi.de>,
+# Stephan Kuschel <Stephan.Kuschel@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os.path as osp
+import unittest
+import platform
+
+import numpy as np
+import matplotlib; matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import sdf
+
+from . import SimTest
+
+
+micron = 1e-6
+femto = 1e-15
+c = 2.99792458e8  # m/s
+
+# check that these correspond to input deck!
+
+nx = 240
+ny = nx//3
+nz = nx//3
+
+x_min = -12 * micron
+x_max = -x_min
+y_min = x_min
+y_max = x_max
+z_min = x_min
+z_max = x_max
+
+dt_multiplier = 0.99
+
+lambda_l = 0.5 * micron
+x0 = -12.0 * micron  # m
+t0 = 8 * femto  # s
+
+# derived quantities from the above
+k_l = 2*np.pi/lambda_l
+dx = (x_max-x_min)/nx
+dy = (y_max-y_min)/ny
+dz = (z_max-z_min)/nz
+
+dt_lehe   = dt_multiplier \
+          * 1.0/np.sqrt(max(1.0/dx**2, 1.0/dy**2 + 1.0/dz**2)) / c
+dt_yee    = dt_multiplier * dx * dy * dz \
+          / np.sqrt((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+dt_pukhov = dt_multiplier * min(dx, dy, dz)/c
+dt_cowan  = dt_pukhov
+
+vg_lehe   = c*(1.0 + 2.0*(1.0-c*dt_lehe/dx)*(k_l*dx/2.0)**2)
+vg_yee    = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
+vg_pukhov = c*np.cos(k_l*dx/2.0) \
+          / np.sqrt(1-(c*dt_pukhov/dx*np.sin(k_l*dx/2.0))**2)
+vg_cowan  = c*np.cos(k_l*dx/2.0) \
+          / np.sqrt(1-(c*dt_cowan/dx*np.sin(k_l*dx/2.0))**2)
+
+dt = dict()
+dt['optimized'] = 0.8661145061674279 * dx / c
+dt['optimized_xaxis'] = 0.9295140399069998 * dx / c
+dt['optimized_xaxis_soft'] = 0.9493391116848393 * dx / c
+
+vg = dict()
+# calculate_omega.py --dim 3 --Y 3 --Z 3 --dt-multiplier 0.99 --params
+# 0.8661145061674279 0.03739407994958153 0.03739457628015302
+# 0.016829085115575494 -0.06126939775259932 -0.209906582294693
+# -0.20990862719271147 --physical-dx 1e-7 --laser-wavelength 5e-7
+vg['optimized'] = 1.0713226616321112 * c
+
+# calculate_omega.py --dim 3 --Y 3 --Z 3 --dt-multiplier 0.99 --params
+# 0.9295140399069998 0.06206699313270464 0.061941306316956116
+# 0.012390616588515941 -0.027853812168922895 -0.36879330113309167
+# -0.3683227241252498 --physical-dx 1e-7 --laser-wavelength 5e-7
+vg['optimized_xaxis'] = 1.0292921094462912 * c
+
+# calculate_omega.py --dim 3 --Y 3 --Z 3 --dt-multiplier 0.99 --params
+# 0.9493391116848393 0.06041451023625669 0.06030251774679948
+# -0.017481592735549903 -0.02187397991068981 -0.3160037968338166
+# -0.3149437496680533 --physical-dx 1e-7 --laser-wavelength 5e-7
+vg['optimized_xaxis_soft'] = 1.025605542868642 * c
+
+
+def xt3(sdffile, key='Electric Field/Ey'):
+    t = sdffile['Header']['time']
+    xaxis = sdffile[key].grid_mid.data[0]
+    data = sdffile[key].data
+    b = np.sum(data**2)
+    if b > 0 and t > 0:
+        x = np.sum(xaxis[:, np.newaxis, np.newaxis]*data**2)/b
+    else:
+        x = None
+
+    return t, x
+
+
+class test_custom_stencils(SimTest):
+    solvers = ['optimized', 'optimized_xaxis', 'optimized_xaxis_soft']
+
+    @classmethod
+    def setUpClass(cls):
+        super(test_custom_stencils, cls).setUpClass()
+
+        dumps = cls.dumps = {}
+        for solver in cls.solvers:
+            l = dumps.setdefault(solver, [])
+            for dump in [osp.join(solver, '{:04d}.sdf'.format(i))
+                         for i in range(4)]:
+                l.append(sdf.read(dump, dict=True))
+
+    def test_createplot(self):
+        if platform.system() == 'Darwin':
+            print('macosx backend')
+            plt.switch_backend('macosx')
+
+        for solver in self.solvers:
+            key = 'Electric Field/Ey'
+            fig, axarr = plt.subplots(1, 3, figsize=(10, 4))
+            axarr[0].set_ylabel(r'y [${\mu}\mathrm{m}$]')
+            dumps = self.dumps[solver][1:]
+            for (dump, ax) in zip(dumps, np.ravel(axarr)):
+                array = dump[key].data[:, nz//2, :]
+                xaxis = dump[key].grid_mid.data[0]*1e6
+                yaxis = dump[key].grid_mid.data[1]*1e6
+                im = ax.imshow(array.T, extent=[min(xaxis), max(xaxis),
+                                                min(yaxis), max(yaxis)])
+                im.set_clim([-1e11, 1e11])
+                t = dump['Header']['time']
+                dx = np.asscalar(dump[key].grid_mid.data[0][1]
+                                 - dump[key].grid_mid.data[0][0])
+
+                vg_yee = c*np.cos(k_l*dx/2.0) \
+                    / np.sqrt(1-(c*dt[solver]/dx*np.sin(k_l*dx/2.0))**2)
+
+                x = (x0 + c*(t-t0))*1e6
+                x_this = (x0 + vg[solver]*(t-t0))*1e6
+                x_yee = (x0 + vg_yee*(t-t0))*1e6
+                t, x_sim = xt3(dump)
+                x_sim *= 1e6
+
+                if x > 0:
+                    ax.plot([x, x], [min(yaxis), 0.9*min(yaxis)],
+                            color='k', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x, x], [0.9*max(yaxis), max(yaxis)],
+                            color='k', linestyle='-', linewidth=2, alpha=0.25)
+
+                    ax.plot([x_this, x_this], [min(yaxis), 0.9*min(yaxis)],
+                            color='b', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_this, x_this], [0.9*max(yaxis), max(yaxis)],
+                            color='b', linestyle='-', linewidth=2, alpha=0.25)
+
+                    ax.plot([x_sim, x_sim], [min(yaxis), 0.9*min(yaxis)],
+                            color='w', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_sim, x_sim], [0.9*max(yaxis), max(yaxis)],
+                            color='w', linestyle='-', linewidth=2, alpha=0.25)
+
+                    ax.plot([x_yee, x_yee], [min(yaxis), 0.9*min(yaxis)],
+                            color='r', linestyle='-', linewidth=2, alpha=0.25)
+                    ax.plot([x_yee, x_yee], [0.9*max(yaxis), max(yaxis)],
+                            color='r', linestyle='-', linewidth=2, alpha=0.25)
+
+                ax.set_title('{:2.1f} fs'.format(t*1e15))
+                ax.set_xlabel(r'x [${\mu}\mathrm{m}$]')
+                ax.axis([min(xaxis), max(xaxis), min(yaxis), max(yaxis)])
+
+            if solver == 'optimized':
+                title = 'Opt'
+            elif solver == 'optimized_xaxis_soft':
+                title = 'Opt xaxis_soft'
+            elif solver == 'optimized_xaxis':
+                title = 'Opt xaxis'
+
+            fig.suptitle(key+', c*dt/dx={:0.03f}'.format(c * dt[solver] / dx))
+
+            fig.tight_layout()
+            fig.savefig(key.replace('/', '_') + '_' + title + '.png', dpi=320)
+
+    def test_group_velocity(self):
+        tx = {}
+        for solver in self.solvers:
+            tx[solver] = np.array([xt3(dump)
+                                   for dump in self.dumps[solver][1:]])
+        print(tx)
+
+        for solver, data in tx.items():
+            vg_sim = np.polyfit(data[:, 0], data[:, 1], 1)[0]
+
+            # For reference, right here, right now the following line prints
+
+            # optimized_xaxis_soft 307269136.793 307468806.635 0.000649398695
+            # optimized            320424292.475 321174454.042 0.002335682546
+            # optimized_xaxis      308261456.168 308574011.491 0.001012902290
+
+            print('{:20} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
+                  vg[solver], abs(vg_sim-vg[solver])/vg[solver]))
+
+            assert np.isclose(vg_sim, vg[solver], rtol=0.003)
+
+
+if __name__ == '__main__':
+    unittest.main()
