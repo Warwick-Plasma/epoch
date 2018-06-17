@@ -138,6 +138,15 @@ CONTAINS
 #ifdef NO_IO
     found = .TRUE.
 #endif
+#ifdef DELTAF_METHOD
+    found = .TRUE.
+#endif
+#ifdef DELTAF_DEBUG
+    found = .TRUE.
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    found = .TRUE.
+#endif
 #ifdef HC_PUSH
     found = .TRUE.
 #endif
@@ -223,6 +232,18 @@ CONTAINS
 #ifdef NO_IO
     ! There is no need to add a c_def for this since no I/O occurs.
     WRITE(*,*) 'Perform no I/O -DNO_IO'
+#endif
+#ifdef DELTAF_METHOD
+    defines = IOR(defines, c_def_deltaf_method)
+    WRITE(*,*) 'Delta-f method -DDELTAF_METHOD'
+#endif
+#ifdef DELTAF_DEBUG
+    defines = IOR(defines, c_def_deltaf_debug)
+    WRITE(*,*) 'Delta-f debugging -DDELTAF_DEBUG'
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    defines = IOR(defines, c_def_work_done_integrated)
+    WRITE(*,*) 'Work done on each particle -DWORK_DONE_INTEGRATED'
 #endif
 #ifdef HC_PUSH
     defines = IOR(defines, c_def_hc_push)

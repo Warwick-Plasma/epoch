@@ -686,18 +686,42 @@ CONTAINS
     IF (maxwell_solver == c_maxwell_solver_yee) THEN
       ! Default maxwell solver with field_order = 2, 4 or 6
       ! cfl is a function of field_order
-      dt = cfl * dx * dy * dz / c / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2)
+      dt = cfl * dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe, PhD Thesis (2014)
-      dt = 1.0_num / c &
-          / SQRT(MAX(1.0_num / dx**2, 1.0_num / dy**2 + 1.0_num / dz**2))
+      dt = MIN(dx, dy * dz / SQRT(dy**2 + dz**2)) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_y) THEN
+      dt = MIN(dy, dx * dz / SQRT(dx**2 + dz**2)) / c
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_z) THEN
+      dt = MIN(dz, dx * dy / SQRT(dx**2 + dy**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
       dt = MIN(dx, dy, dz) / c
+    ENDIF
+
+    IF (any_open) THEN
+      dt_solver = dx * dy * dz / SQRT((dx*dy)**2 + (dy*dz)**2 + (dz*dx)**2) / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      dt = dt_custom
+      IF (dt_multiplier < 1.0_num) THEN
+        IF (rank == 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Custom maxwell solver is used with custom timestep specified'
+          PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
+          PRINT*, 'unity in order to ensure the correct time step.'
+          PRINT*, 'Overriding dt_multiplier now.'
+        ENDIF
+        dt_multiplier = 1.0_num
+      ENDIF
     ENDIF
 
     dt_solver = dt
@@ -871,6 +895,9 @@ CONTAINS
     got_full = .FALSE.
     npart_global = 0
     step = -1
+
+    full_x_min = 0.0_num
+    offset_x_min = 0.0_num
 
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
@@ -1409,10 +1436,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
-    window_offset = full_x_min - offset_x_min
-    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
+    IF (use_offset_grid) THEN
+      window_offset = full_x_min - offset_x_min
+      CALL shift_particles_to_window(window_offset)
+    ENDIF
+
     CALL setup_grid
-    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
+
+    IF (use_offset_grid) THEN
+      CALL create_moved_window(offset_x_min, window_offset)
+    ENDIF
+
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'

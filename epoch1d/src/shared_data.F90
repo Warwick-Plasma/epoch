@@ -123,10 +123,14 @@ MODULE constants
   INTEGER, PARAMETER :: c_io_never = 2**10
 
   ! Maxwell Solvers
+  INTEGER, PARAMETER :: c_maxwell_solver_custom = -1
   INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
   INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 2
-  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 1
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 4
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 5
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
@@ -229,7 +233,10 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_prefetch = 2**17
   INTEGER(i8), PARAMETER :: c_def_mpi_debug = 2**18
   INTEGER(i8), PARAMETER :: c_def_parser_checking = 2**19
-  INTEGER(i8), PARAMETER :: c_def_hc_push = 2**20
+  INTEGER(i8), PARAMETER :: c_def_deltaf_method = 2**20
+  INTEGER(i8), PARAMETER :: c_def_deltaf_debug = 2**21
+  INTEGER(i8), PARAMETER :: c_def_work_done_integrated = 2**22
+  INTEGER(i8), PARAMETER :: c_def_hc_push = 2**23
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -395,8 +402,12 @@ MODULE shared_parser_data
 
   INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 102
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_x = 102
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_y = 103
+  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
+  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
+  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
+  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
@@ -560,6 +571,14 @@ MODULE shared_data
 #endif
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    REAL(num) :: work_x
+    REAL(num) :: work_y
+    REAL(num) :: work_z
+    REAL(num) :: work_x_total
+    REAL(num) :: work_y_total
+    REAL(num) :: work_z_total
 #endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
@@ -737,7 +756,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 47
   INTEGER, PARAMETER :: c_dump_ppc               = 48
   INTEGER, PARAMETER :: c_dump_average_weight    = 49
+#ifdef WORK_DONE_INTEGRATED
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 50
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 51
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 52
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 53
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 54
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 55
+  INTEGER, PARAMETER :: num_vars_to_dump         = 55
+#else
   INTEGER, PARAMETER :: num_vars_to_dump         = 49
+#endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -968,6 +997,7 @@ MODULE shared_data
   LOGICAL :: use_multiphoton, use_bsi
 
   INTEGER :: maxwell_solver = c_maxwell_solver_yee
+  REAL(num) :: dt_custom
 
   !----------------------------------------------------------------------------
   ! Moving window
@@ -1018,6 +1048,7 @@ MODULE shared_data
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
+  LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
   ! domain and loadbalancing

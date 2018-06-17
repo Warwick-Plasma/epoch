@@ -1,4 +1,4 @@
-## v4.11.0 to v4.12.0
+## v4.11.0 to v4.12.0 (2018-06-16)
 
  * Fixes for exact restarts
 
@@ -15,6 +15,37 @@
 
  * Added "use_accurate_n_zeros" control block flag to enable finding the
    exact number of output that are generated
+
+ * Prevent duplicated final dump
+
+ * Added "use_flux_maxwellian" option to the injector block
+
+ * Added warnings for BCs that are incompatible with moving windows
+
+ * Added y,z versions of the Lehe Maxwell solver
+
+ * Added "stencil" block for specifying a Maxwell solver with custom
+   coefficients
+
+ * Added "work_{x,y,z}" and "work_{x,y,z}_total" dumpmasks for tracking the
+   work done on each particle by the electric field.
+
+ * Various bugfixes
+
+ * Updated the SDF submodule:
+   SDF/FORTRAN
+   - Improve Fortran error handling
+
+   SDF/utilities
+   - Added support for SDF_BLOCKTYPE_POINT_DERIVED to sdffilter
+   - Make sdffilter print all point mesh components
+   - Return non-zero code for unsupported blocks in sdffilter
+   - Fixed station file column order in sdffilter
+   - Return an error for failed python builds
+
+   SDF/VisIt
+   - Add an option for disabling obstacle boundaries in VisIt
+   - Don't generate boundary meshes when requested in VisIt
 
 
 ## v4.10.0 to v4.11.0 (2018-04-13)

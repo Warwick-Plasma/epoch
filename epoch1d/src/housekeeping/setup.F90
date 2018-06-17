@@ -548,6 +548,25 @@ CONTAINS
 
     ENDIF
 
+    IF (any_open) THEN
+      dt_solver = dx / c
+      dt = MIN(dt, dt_solver)
+    ENDIF
+
+    IF (maxwell_solver == c_maxwell_solver_custom) THEN
+      dt = dt_custom
+      IF (dt_multiplier < 1.0_num) THEN
+        IF (rank == 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Custom maxwell solver is used with custom timestep specified'
+          PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
+          PRINT*, 'unity in order to ensure the correct time step.'
+          PRINT*, 'Overriding dt_multiplier now.'
+        ENDIF
+        dt_multiplier = 1.0_num
+      ENDIF
+    ENDIF
+
     dt_solver = dt
 
     IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
@@ -719,6 +738,9 @@ CONTAINS
     got_full = .FALSE.
     npart_global = 0
     step = -1
+
+    full_x_min = 0.0_num
+    offset_x_min = 0.0_num
 
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
@@ -1194,10 +1216,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
-    window_offset = full_x_min - offset_x_min
-    IF(use_offset_grid) CALL shift_particles_to_window(window_offset)
+    IF (use_offset_grid) THEN
+      window_offset = full_x_min - offset_x_min
+      CALL shift_particles_to_window(window_offset)
+    ENDIF
+
     CALL setup_grid
-    IF(use_offset_grid) CALL create_moved_window(offset_x_min, window_offset)
+
+    IF (use_offset_grid) THEN
+      CALL create_moved_window(offset_x_min, window_offset)
+    ENDIF
+
     CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'

@@ -35,8 +35,8 @@ CONTAINS
     INTEGER(i8) :: local_count
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
@@ -56,9 +56,15 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz) + 1
+#else
         cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
         cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
         cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
+#endif
 
         CALL remove_particle_from_partlist(&
             species_list(ispecies)%attached_list, current)
@@ -78,8 +84,8 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
@@ -131,8 +137,8 @@ CONTAINS
     REAL(num) :: jitter_x, jitter_y, jitter_z
     INTEGER :: i0, i1
 
-    i0 = 1
-    IF (use_field_ionisation) i0 = 0
+    i0 = -1
+    IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
     DO ispecies = 1, n_species

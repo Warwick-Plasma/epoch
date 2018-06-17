@@ -343,8 +343,8 @@ CONTAINS
       IF (z_max_boundary) iz_max = iz_max + png
     ENDIF
 
-    nx_e = ix_max - ix_min
-    ny_e = iy_max - iy_min
+    nx_e = ix_max - ix_min + 1
+    ny_e = iy_max - iy_min + 1
 
     num_valid_cells_local = 0
     DO iz = iz_min, iz_max
@@ -695,7 +695,7 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     ! For the TOPHAT shape function, particles can be located on a
     ! neighbouring process
-    ALLOCATE(rpart_in_cell(-2:nx+3,-2:ny+3,-2:nz+3))
+    ALLOCATE(rpart_in_cell(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
     rpart_in_cell = npart_in_cell
     CALL processor_summation_bcs(rpart_in_cell, ng)

@@ -118,12 +118,14 @@ class test_maxwell_solvers(SimTest):
             vg_sim = np.polyfit(data[:, 0], data[:, 1], 1)[0]
 
             # For reference, right here, right now the following line prints
-            # yee 291329547.371 292363351.796 0.00353602604066
-            # lehe_x 310055314.605 311627789.85156083 0.00504600455477
-            print(solver, vg_sim, vg[solver],
-                  abs(vg_sim-vg[solver])/vg[solver])
 
-            assert np.isclose(vg_sim, vg[solver], rtol=0.01)
+            # yee    298540658.530 292363351.796 0.021128868224
+            # lehe_x 313164075.045 311627789.852 0.004929872249
+
+            print('{:6} {:.3f} {:.3f} {:.12f}'.format(solver, vg_sim,
+                  vg[solver], abs(vg_sim-vg[solver])/vg[solver]))
+
+            assert np.isclose(vg_sim, vg[solver], rtol=0.022)
 
 
 if __name__ == '__main__':
