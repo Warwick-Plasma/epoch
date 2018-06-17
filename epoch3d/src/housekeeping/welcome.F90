@@ -138,6 +138,15 @@ CONTAINS
 #ifdef NO_IO
     found = .TRUE.
 #endif
+#ifdef DELTAF_METHOD
+    found = .TRUE.
+#endif
+#ifdef DELTAF_DEBUG
+    found = .TRUE.
+#endif
+#ifdef WORK_DONE_INTEGRATED
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
