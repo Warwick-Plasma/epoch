@@ -1,3 +1,9 @@
+## v4.12.0 to v4.14.0
+
+ * Added the Higuera-Cary relativistic particle push. This is enabled by
+   compiling with the flag -DHC_PUSH
+
+
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
  * Fixes for exact restarts
