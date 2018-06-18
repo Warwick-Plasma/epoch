@@ -11,8 +11,7 @@ test_ubuntu_gfortran:
   except:
     - master@EPOCH/epoch
   script:
-    - export COMPILER=gfortran
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=gfortran scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
     - gfortran
@@ -24,8 +23,7 @@ test_ubuntu_intel:
   except:
     - master@EPOCH/epoch
   script:
-    - export COMPILER=intel
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=intel scripts/run-tests-epoch-all.sh -b
   tags:
     - ubuntu
     - intel
@@ -37,7 +35,6 @@ test_osx:
   except:
     - master@EPOCH/epoch
   script:
-    - export COMPILER=gfortran
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=gfortran scripts/run-tests-epoch-all.sh -b
   tags:
     - osx
