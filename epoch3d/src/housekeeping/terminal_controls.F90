@@ -15,7 +15,7 @@
 
 MODULE terminal_controls
 
-#ifdef USE_ISATTY
+#ifndef NO_USE_ISATTY
   USE, INTRINSIC :: iso_fortran_env
   USE iso_c_binding, ONLY: c_int
 
@@ -52,7 +52,7 @@ CONTAINS
   SUBROUTINE set_term_attr(controlcode)
 
     INTEGER, INTENT(IN) :: controlcode
-#ifdef USE_ISATTY
+#ifndef NO_USE_ISATTY
     LOGICAL, SAVE :: first = .TRUE.
     LOGICAL, SAVE :: tty = .FALSE.
     INTEGER(KIND=c_int) :: istty

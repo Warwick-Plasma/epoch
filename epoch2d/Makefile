@@ -236,8 +236,8 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
-# Use compiler extension ISATTY to enable coloured welcome banner
-#DEFINES += $(D)USE_ISATTY
+# Disable the use of isatty C call to enable coloured welcome banner
+#DEFINES += $(D)NO_USE_ISATTY
 
 # Compile the delta-f version of EPOCH
 #DEFINES += $(D)DELTAF_METHOD
