@@ -20,6 +20,9 @@
    Setting the flag to true enables one set of arrays per species.
    The default value is false.
 
+ * Replaced non-standard ISATTY intrinsic function with a call to the
+   POSIX C-library function "isatty"
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
