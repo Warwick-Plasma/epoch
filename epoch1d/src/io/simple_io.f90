@@ -37,7 +37,8 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, subarray, fh, i, tsz
+    INTEGER :: subtype, subarray, fh, i
+    INTEGER(KIND=MPI_COUNT_KIND) :: tsz
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
@@ -53,7 +54,7 @@ CONTAINS
     subarray = create_current_field_subarray(ng)
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
-      CALL MPI_TYPE_SIZE(subtype, tsz, errcode)
+      CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
       IF (MOD(sz-offset, tsz) /= 0) THEN
         PRINT*, '*** WARNING ***'
         PRINT*, 'Binary input file "' // TRIM(filename) // '"', ' does not ', &

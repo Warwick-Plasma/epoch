@@ -813,7 +813,7 @@ CONTAINS
     INTEGER :: len1, len2, olen, i
 
     len1 = LEN_TRIM(str_in)
-    len2 = LEN(str_out)
+    len2 = LEN_TRIM(str_out)
     olen = MIN(len1,len2)
     IF (olen > 0) THEN
       str_out(1:olen) = str_in(1:olen)
