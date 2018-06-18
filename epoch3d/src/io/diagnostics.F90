@@ -389,6 +389,8 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
             'laser_z_max_phase')
 
+        CALL write_id_starts(sdf_handle)
+
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
               'time_prev/'//TRIM(io_block_list(io)%name), &
@@ -934,6 +936,31 @@ CONTAINS
     ENDIF
 
   END SUBROUTINE write_laser_phases
+
+
+
+  SUBROUTINE write_id_starts(sdf_handle)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: id_starts
+    INTEGER(i8) :: start_local
+    INTEGER :: ierr
+
+    ALLOCATE(id_starts(1:nproc+1))
+
+    start_local = INT(highest_id, i8)
+    CALL MPI_GATHER(start_local, 1, MPI_INTEGER8, id_starts(2), 1, &
+        MPI_INTEGER8, 0, comm, ierr)
+
+    id_starts = n_cpu_bits
+
+    CALL sdf_write_srl(sdf_handle, "id_starts", "id_starts", id_starts, 0)
+
+    DEALLOCATE(id_starts)
+#endif
+
+  END SUBROUTINE write_id_starts
 
 
 

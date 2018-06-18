@@ -129,6 +129,8 @@ PROGRAM pic
   CALL deallocate_ic
   CALL update_particle_count
 
+  CALL after_load
+
   npart_global = 0
   DO ispecies = 1, n_species
     npart_global = npart_global + species_list(ispecies)%count

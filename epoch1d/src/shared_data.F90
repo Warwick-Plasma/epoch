@@ -256,6 +256,12 @@ MODULE constants
 
   INTEGER, PARAMETER :: stat_unit = 20
 
+#ifdef PARTICLE_ID4
+    INTEGER, PARAMETER :: idkind = i4
+#else
+    INTEGER, PARAMETER :: idkind = i8
+#endif
+
 END MODULE constants
 
 
@@ -564,10 +570,8 @@ MODULE shared_data
     INTEGER :: processor
     INTEGER :: processor_at_t0
 #endif
-#ifdef PARTICLE_ID4
-    INTEGER :: id
-#elif PARTICLE_ID
-    INTEGER(i8) :: id
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    INTEGER(idkind) :: id
 #endif
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
@@ -588,6 +592,12 @@ MODULE shared_data
 #endif
 #endif
   END TYPE particle
+
+  ! Particle ID generation
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+  INTEGER(idkind) :: id_exemplar, cpu_id, highest_id
+#endif
+  INTEGER :: n_cpu_bits
 
   ! Data for migration between species
   TYPE particle_species_migration

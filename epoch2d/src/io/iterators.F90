@@ -351,11 +351,6 @@ CONTAINS
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
-#if defined(PARTICLE_ID4)
-      IF (param == c_dump_part_id) THEN
-        CALL generate_particle_ids(current_list)
-      ENDIF
-#endif
     ENDIF
 
     part_count = 0
@@ -390,11 +385,6 @@ CONTAINS
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)
-#if defined(PARTICLE_ID4)
-        IF (param == c_dump_part_id .AND. ASSOCIATED(current_list)) THEN
-          CALL generate_particle_ids(current_list)
-        ENDIF
-#endif
       ENDIF
     ENDDO
     npoint_it = part_count
@@ -420,7 +410,6 @@ CONTAINS
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
-      CALL generate_particle_ids(current_list)
     ENDIF
 
     part_count = 0
@@ -433,9 +422,6 @@ CONTAINS
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)
-        IF (ASSOCIATED(current_list)) THEN
-          CALL generate_particle_ids(current_list)
-        ENDIF
       ENDIF
     ENDDO
     npoint_it = part_count
