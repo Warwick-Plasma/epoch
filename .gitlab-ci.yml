@@ -35,7 +35,7 @@ test_ubuntu_pgi:
   except:
     - master@EPOCH/epoch
   script:
-    - COMPILER=pgi scripts/run-tests-epoch-all.sh -b
+    - COMPILER=pgi MODE=debug scripts/run-tests-epoch-all.sh -b
   tags:
     - ubuntu
     - pgi
@@ -47,6 +47,6 @@ test_osx:
   except:
     - master@EPOCH/epoch
   script:
-    - COMPILER=gfortran scripts/run-tests-epoch-all.sh -b
+    - COMPILER=gfortran MODE=debug scripts/run-tests-epoch-all.sh -b
   tags:
     - osx
