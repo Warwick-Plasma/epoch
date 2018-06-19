@@ -35,7 +35,7 @@ CONTAINS
     INTEGER(i8) :: local_count
     INTEGER :: i0, i1
 
-    i0 = -1
+    i0 = 1-ng
     IF (use_field_ionisation) i0 = -2
     i1 = 1 - i0
 
