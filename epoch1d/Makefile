@@ -50,7 +50,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -stand f03
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -69,7 +69,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -std=f2003
 
   GNUVER := $(shell gfortran -dumpversion | head -1 \
       | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
@@ -86,7 +86,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
 
   ifeq ($(strip $(MODE)),debug)
-    FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
+    FFLAGS = -O0 -g -std=f2003 -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
 
@@ -236,8 +236,8 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
-# Use compiler extension ISATTY to enable coloured welcome banner
-#DEFINES += $(D)USE_ISATTY
+# Disable the use of isatty C call to enable coloured welcome banner
+#DEFINES += $(D)NO_USE_ISATTY
 
 # Compile the delta-f version of EPOCH
 #DEFINES += $(D)DELTAF_METHOD

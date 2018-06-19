@@ -150,6 +150,9 @@ CONTAINS
 #ifdef HC_PUSH
     found = .TRUE.
 #endif
+#ifdef NO_USE_ISATTY
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -248,6 +251,11 @@ CONTAINS
 #ifdef HC_PUSH
     defines = IOR(defines, c_def_hc_push)
     WRITE(*,*) 'Higuera-Cary particle push -DHC_PUSH'
+#endif
+#ifdef NO_USE_ISATTY
+    WRITE(*,*) 'Disable isatty C-call -DNO_USE_ISATTY'
+#else
+    defines = IOR(defines, c_def_use_isatty)
 #endif
     WRITE(*,*) '*************************************************************'
 
