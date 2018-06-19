@@ -284,6 +284,7 @@ CONTAINS
       RETURN
     ELSE IF (str_cmp(block_name, 'injector')) THEN
       handle_block = injector_block_handle_element(block_element, block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'stencil')) THEN
       handle_block = stencil_block_handle_element(block_element, block_value)
       RETURN

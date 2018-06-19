@@ -63,12 +63,11 @@ CONTAINS
     ENDIF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
-        PRINT*
-        PRINT*, 'Maxwell solver set to the following parameters:'
-        PRINT*, 'alpha=', alphax
-        PRINT*, 'delta=', deltax
-        PRINT*, 'c*dt/dx=', dt * c / dx
-        PRINT*
+      PRINT*, 'Maxwell solver set to the following parameters:'
+      PRINT'(A9, 1F14.9)', 'alpha =', alphax
+      PRINT'(A9, 1F14.9)', 'delta =', deltax
+      PRINT'(A9, 1F14.9)', 'c*dt/dx = ', dt * c / dx
+      PRINT*
     ENDIF
 
   END SUBROUTINE set_maxwell_solver

@@ -126,11 +126,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_maxwell_solver_custom = -1
   INTEGER, PARAMETER :: c_maxwell_solver_yee = 0
   INTEGER, PARAMETER :: c_maxwell_solver_lehe = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 1
-  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 2
-  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 3
-  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 4
-  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 5
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_x = 2
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_y = 3
+  INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 4
+  INTEGER, PARAMETER :: c_maxwell_solver_cowan = 5
+  INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 6
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
