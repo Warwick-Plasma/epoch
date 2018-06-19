@@ -28,6 +28,18 @@ test_ubuntu_intel:
     - ubuntu
     - intel
 
+test_ubuntu_pgi:
+  only:
+    - branches@EPOCH/epoch
+    - web
+  except:
+    - master@EPOCH/epoch
+  script:
+    - COMPILER=pgi scripts/run-tests-epoch-all.sh -b
+  tags:
+    - ubuntu
+    - pgi
+
 test_osx:
   only:
     - branches@EPOCH/epoch
