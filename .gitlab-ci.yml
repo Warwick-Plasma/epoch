@@ -28,6 +28,18 @@ test_ubuntu_intel:
     - ubuntu
     - intel
 
+test_ubuntu_pgi:
+  only:
+    - branches@EPOCH/epoch
+    - web
+  except:
+    - master@EPOCH/epoch
+  script:
+    - COMPILER=pgi MODE=debug scripts/run-tests-epoch-all.sh -b
+  tags:
+    - ubuntu
+    - pgi
+
 test_osx:
   only:
     - branches@EPOCH/epoch
@@ -35,6 +47,6 @@ test_osx:
   except:
     - master@EPOCH/epoch
   script:
-    - COMPILER=gfortran scripts/run-tests-epoch-all.sh -b
+    - COMPILER=gfortran MODE=debug scripts/run-tests-epoch-all.sh -b
   tags:
     - osx
