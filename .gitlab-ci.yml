@@ -5,24 +5,36 @@ before_script:
   - git submodule update --recursive --init SDF
 
 test_ubuntu_gfortran:
+  only:
+    - branches@EPOCH/epoch
+    - web
+  except:
+    - master@EPOCH/epoch
   script:
-    - export COMPILER=gfortran
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=gfortran scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
     - gfortran
 
 test_ubuntu_intel:
+  only:
+    - branches@EPOCH/epoch
+    - web
+  except:
+    - master@EPOCH/epoch
   script:
-    - export COMPILER=intel
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=intel scripts/run-tests-epoch-all.sh -b
   tags:
     - ubuntu
     - intel
 
 test_osx:
+  only:
+    - branches@EPOCH/epoch
+    - web
+  except:
+    - master@EPOCH/epoch
   script:
-    - export COMPILER=gfortran
-    - scripts/run-tests-epoch-all.sh
+    - COMPILER=gfortran scripts/run-tests-epoch-all.sh -b
   tags:
     - osx
