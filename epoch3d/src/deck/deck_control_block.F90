@@ -197,11 +197,14 @@ CONTAINS
       fng = 2
       IF (maxwell_solver == c_maxwell_solver_lehe) THEN
         maxwell_solver = c_maxwell_solver_lehe_x
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Using Lehe solver optimised for the x-direction'
-        ENDDO
+        IF (rank == 0 .AND. deck_state == c_ds_first) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Using Lehe solver optimised for the x-direction'
+            WRITE(io,*)
+          ENDDO
+        ENDIF
       ENDIF
     ENDIF
 
