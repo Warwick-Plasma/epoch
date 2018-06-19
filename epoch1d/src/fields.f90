@@ -55,7 +55,7 @@ CONTAINS
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
       alphax = 1.0_num - 3.0_num * deltax
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe et al., Phys. Rev. ST Accel. Beams 16, 021301 (2013)
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)

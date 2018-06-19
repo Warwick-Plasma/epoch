@@ -542,7 +542,7 @@ CONTAINS
       ! cfl is a function of field_order
       dt = cfl * dx / c
 
-    ELSE IF (maxwell_solver == c_maxwell_solver_lehe) THEN
+    ELSE IF (maxwell_solver == c_maxwell_solver_lehe_x) THEN
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
 
