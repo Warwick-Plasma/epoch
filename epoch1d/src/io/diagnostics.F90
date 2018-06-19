@@ -809,6 +809,8 @@ CONTAINS
           file_numbers(iprefix)-1, time, step
         CALL flush_stat_file()
       ENDIF
+
+      IF (force) EXIT
     ENDDO
 
     DEALLOCATE(dump_point_grid)
@@ -1167,6 +1169,7 @@ CONTAINS
 
     IF (first_call(iprefix)) first_call(iprefix) = .FALSE.
 
+    IF (force) iomask = IOR(iomask, io_block_list(1)%dumpmask)
     iodumpmask(1,:) = iomask
 
   END SUBROUTINE io_test
