@@ -783,12 +783,12 @@ CONTAINS
       ENDDO
 
       IF (IAND(iomask(c_dump_dist_fns), code) /= 0) THEN
-        CALL write_dist_fns(sdf_handle, code)
+        CALL write_dist_fns(sdf_handle, code, iomask(c_dump_dist_fns))
       ENDIF
 
 #ifndef NO_PARTICLE_PROBES
       IF (IAND(iomask(c_dump_probes), code) /= 0) THEN
-        CALL write_probes(sdf_handle, code)
+        CALL write_probes(sdf_handle, code, iomask(c_dump_probes))
       ENDIF
 #endif
 

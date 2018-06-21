@@ -82,10 +82,10 @@ CONTAINS
 
 
 
-  SUBROUTINE write_dist_fns(sdf_handle, code)
+  SUBROUTINE write_dist_fns(sdf_handle, code, mask)
 
     TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, INTENT(IN) :: code
+    INTEGER, INTENT(IN) :: code, mask
 
     INTEGER :: ispecies, errcode
     TYPE(distribution_function_block), POINTER :: current
@@ -98,7 +98,7 @@ CONTAINS
         DO ispecies = 1, n_species
           IF (.NOT. current%use_species(ispecies)) CYCLE
 
-          convert = (IAND(IOR(dumpmask(c_dump_dist_fns),current%dumpmask), &
+          convert = (IAND(IOR(mask,current%dumpmask), &
                           c_io_dump_single) /= 0)
 
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
