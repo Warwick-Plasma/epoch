@@ -699,26 +699,46 @@ CONTAINS
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, convert, labels, units)
       DEALLOCATE(grid1)
-      new_type = create_1d_array_subtype(mpireal, resolution, &
-          global_resolution, start_local)
+      IF(convert) THEN
+        new_type = create_1d_array_subtype(MPI_REAL4, resolution, &
+            global_resolution, start_local)
+      ELSE
+        new_type = create_1d_array_subtype(mpireal, resolution, &
+            global_resolution, start_local)
+      ENDIF
     ELSE IF (curdims == 2) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, convert, labels, units)
       DEALLOCATE(grid1, grid2)
-      new_type = create_2d_array_subtype(mpireal, resolution, &
-          global_resolution, start_local)
+      IF(convert) THEN
+        new_type = create_2d_array_subtype(MPI_REAL4, resolution, &
+            global_resolution, start_local)
+      ELSE
+        new_type = create_2d_array_subtype(mpireal, resolution, &
+            global_resolution, start_local)
+      ENDIF
     ELSE IF (curdims == 3) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, grid3, convert, labels, &
           units)
       DEALLOCATE(grid1, grid2, grid3)
-      new_type = create_3d_array_subtype(mpireal, resolution, &
-          global_resolution, start_local)
+      IF(convert) THEN
+        new_type = create_3d_array_subtype(MPI_REAL4, resolution, &
+            global_resolution, start_local)
+      ELSE
+        new_type = create_3d_array_subtype(mpireal, resolution, &
+            global_resolution, start_local)
+      ENDIF
     ENDIF
 
     IF (rank_local == 0) THEN
-      CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-          mpireal, array_type, errcode)
+      IF(convert) THEN
+        CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+            MPI_REAL4, array_type, errcode)
+      ELSE
+        CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
+            mpireal, array_type, errcode)
+      ENDIF
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ELSE
       CALL MPI_TYPE_FREE(new_type, errcode)
