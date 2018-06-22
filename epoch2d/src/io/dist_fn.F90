@@ -82,10 +82,10 @@ CONTAINS
 
 
 
-  SUBROUTINE write_dist_fns(sdf_handle, code)
+  SUBROUTINE write_dist_fns(sdf_handle, code, mask)
 
     TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, INTENT(IN) :: code
+    INTEGER, INTENT(IN) :: code, mask
 
     INTEGER :: ispecies, errcode
     TYPE(distribution_function_block), POINTER :: current
@@ -98,8 +98,7 @@ CONTAINS
         DO ispecies = 1, n_species
           IF (.NOT. current%use_species(ispecies)) CYCLE
 
-          convert = (IAND(IOR(dumpmask(c_dump_dist_fns),current%dumpmask), &
-                          c_io_dump_single) /= 0)
+          convert = (IAND(IOR(mask,current%dumpmask), c_io_dump_single) /= 0)
 
           CALL general_dist_fn(sdf_handle, current%name, current%directions, &
               current%ranges, current%resolution, ispecies, &
@@ -158,6 +157,7 @@ CONTAINS
     REAL(num) :: xy_max, yz_max, zx_max
     REAL(num), PARAMETER :: pi2 = 2.0_num * pi
     INTEGER :: rank_local
+    INTEGER :: mpireal_new
 
     TYPE(particle), POINTER :: current, next
     CHARACTER(LEN=string_length) :: var_name
@@ -650,30 +650,36 @@ CONTAINS
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
     ENDIF
 
+    IF (convert) THEN
+      mpireal_new = MPI_REAL4
+    ELSE
+      mpireal_new = mpireal
+    ENDIF
+
     IF (curdims == 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, convert, labels, units)
       DEALLOCATE(grid1)
-      new_type = create_1d_array_subtype(mpireal, resolution, &
+      new_type = create_1d_array_subtype(mpireal_new, resolution, &
           global_resolution, start_local)
     ELSE IF (curdims == 2) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, convert, labels, units)
       DEALLOCATE(grid1, grid2)
-      new_type = create_2d_array_subtype(mpireal, resolution, &
+      new_type = create_2d_array_subtype(mpireal_new, resolution, &
           global_resolution, start_local)
     ELSE IF (curdims == 3) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
           'Grid/' // TRIM(var_name), grid1, grid2, grid3, convert, labels, &
           units)
       DEALLOCATE(grid1, grid2, grid3)
-      new_type = create_3d_array_subtype(mpireal, resolution, &
+      new_type = create_3d_array_subtype(mpireal_new, resolution, &
           global_resolution, start_local)
     ENDIF
 
     IF (rank_local == 0) THEN
       CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
-          mpireal, array_type, errcode)
+          mpireal_new, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
     ELSE
       CALL MPI_TYPE_FREE(new_type, errcode)
