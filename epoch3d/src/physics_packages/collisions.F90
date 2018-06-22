@@ -389,7 +389,8 @@ CONTAINS
             CALL append_partlist( &
                 species_list(jspecies)%secondary_list(ix,iy,iz), ionising_e)
             CALL append_partlist( &
-                species_list(jspecies)%secondary_list(ix,iy,iz), ejected_e)
+                species_list(species_list(ispecies)%release_species)&
+                %secondary_list(ix,iy,iz), ejected_e)
           ENDDO ! ix
           ENDDO ! iy
           ENDDO ! iz
@@ -427,7 +428,8 @@ CONTAINS
             CALL append_partlist( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), ionising_e)
             CALL append_partlist( &
-                species_list(ispecies)%secondary_list(ix,iy,iz), ejected_e)
+                species_list(species_list(jspecies)%release_species)&
+                %secondary_list(ix,iy,iz), ejected_e)
           ENDDO ! ix
           ENDDO ! iy
           ENDDO ! iz
@@ -1019,7 +1021,8 @@ CONTAINS
     gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     tan_theta_cm = sin_theta &
-        / (gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) / vrabs))
+        / (gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
+        / MAX(vrabs, c_tiny)))
     tan_theta_cm2 = tan_theta_cm**2
 
     sin_theta = SQRT(tan_theta_cm2 / (1 + tan_theta_cm2))
