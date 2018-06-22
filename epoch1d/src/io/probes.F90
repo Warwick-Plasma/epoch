@@ -72,10 +72,10 @@ CONTAINS
 
 
 
-  SUBROUTINE write_probes(sdf_handle, code)
+  SUBROUTINE write_probes(sdf_handle, code, mask)
 
     TYPE(sdf_file_handle) :: sdf_handle
-    INTEGER, INTENT(IN) :: code
+    INTEGER, INTENT(IN) :: code, mask
 
     TYPE(particle_probe), POINTER :: current_probe
     CHARACTER(LEN=string_length) :: probe_name, temp_name
@@ -108,7 +108,7 @@ CONTAINS
         ENDDO
 
         IF (npart_probe_global > 0) THEN
-          convert = (IAND(IOR(dumpmask(c_dump_probes),current_probe%dumpmask), &
+          convert = (IAND(IOR(mask,current_probe%dumpmask), &
                           c_io_dump_single) /= 0)
 
           probe_name =  TRIM(ADJUSTL(current_probe%name))
