@@ -1115,6 +1115,7 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_electron
+      species_list(species_id)%electron = .TRUE.
       RETURN
     ENDIF
 
@@ -1154,6 +1155,7 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_electron
       species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%electron = .TRUE.
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_electron_species = species_id
 #else
@@ -1168,6 +1170,7 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_electron
       species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%electron = .TRUE.
 #ifdef PHOTONS
       breit_wheeler_electron_species = species_id
 #else
