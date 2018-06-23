@@ -52,13 +52,13 @@ CONTAINS
       IF (c == delimiter) THEN
         pos = chr
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (pos < 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
-    ENDIF
+    END IF
 
     got_file = .TRUE.
     str_out = str_in(2:pos-1)
@@ -84,13 +84,13 @@ CONTAINS
       IF (c > 47 .AND. c < 58) THEN
         pos = chr
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (pos < 0) THEN
       err = IOR(err, c_err_bad_value)
       RETURN
-    ENDIF
+    END IF
 
     str_out = str_in(1:pos-1)
     int_out = as_integer_simple(str_in(pos:str_len), err)
@@ -156,9 +156,9 @@ CONTAINS
       IF (c == '(') THEN
         found = .TRUE.
         EXIT
-      ENDIF
+      END IF
       IF (c /= ' ' .AND. IACHAR(c) /= 9) EXIT
-    ENDDO
+    END DO
 
     CALL initialise_stack(output)
     IF (found) THEN
@@ -166,13 +166,13 @@ CONTAINS
     ELSE
       ! If parenthesis not found, create a new string
       str_tmp = '(' // TRIM(ADJUSTL(str_in)) // ')'
-    ENDIF
+    END IF
 
     CALL tokenize(str_tmp, output, err)
     IF (err == c_err_none) THEN
       NULLIFY(array)
       CALL evaluate_and_return_all(output, ndim, array, err)
-    ENDIF
+    END IF
     CALL deallocate_stack(output)
 
   END SUBROUTINE get_allocated_array_rnum
@@ -275,9 +275,9 @@ CONTAINS
           parameters%pack_ix = ix
           data_out(ix-x1+1, iy-y1+1, iz-z1+1) = &
               evaluate_with_parameters(output, parameters, err)
-        ENDDO
-      ENDDO
-    ENDDO
+        END DO
+      END DO
+    END DO
     CALL deallocate_stack(output)
 
   END SUBROUTINE evaluate_string_in_space
@@ -341,12 +341,12 @@ CONTAINS
     IF (str_cmp(value, 'start')) THEN
       as_time = 0.0_num
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(value, 'end')) THEN
       as_time = t_end
       RETURN
-    ENDIF
+    END IF
 
     as_time = as_real(value, err)
 

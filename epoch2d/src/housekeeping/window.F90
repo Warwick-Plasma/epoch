@@ -41,7 +41,7 @@ CONTAINS
     IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
-    ENDIF
+    END IF
     CALL abort_code(c_err_pp_options_missing)
 #endif
 
@@ -80,14 +80,14 @@ CONTAINS
       DO ix = 1-ng, nx_global + ng
         x_global(ix) = x_grid_min + (ix - 1) * dx
         xb_global(ix) = xb_min + (ix - 1) * dx
-      ENDDO
+      END DO
       x_grid_max = x_global(nx_global)
       x_max = xb_global(nx_global+1) - dx * cpml_thickness
 
       DO iproc = 0, nprocx-1
         x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
         x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      ENDDO
+      END DO
 
       x_grid_min_local = x_grid_mins(x_coords)
       x_grid_max_local = x_grid_maxs(x_coords)
@@ -102,7 +102,7 @@ CONTAINS
 
       ! Shift fields around
       CALL shift_fields
-    ENDDO
+    END DO
 
   END SUBROUTINE shift_window
 
@@ -134,7 +134,7 @@ CONTAINS
       CALL shift_field(cpml_psi_ezy, ng)
       CALL shift_field(cpml_psi_bxy, ng)
       CALL shift_field(cpml_psi_bzy, ng)
-    ENDIF
+    END IF
 
     IF (x_max_boundary) THEN
       DO j = 1-ng, ny+ng
@@ -152,7 +152,7 @@ CONTAINS
         bx(nx,j)   = 0.5_num * (bx(nx-1,j) + bx(nx+1,j))
         by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
         bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
-      ENDDO
+      END DO
 
       IF (cpml_boundaries) THEN
         DO j = 1-ng, ny+ng
@@ -165,9 +165,9 @@ CONTAINS
           cpml_psi_ezy(nx:nx+1,j) = cpml_psi_ezy(nx,j)
           cpml_psi_bxy(nx:nx+1,j) = cpml_psi_bxy(nx,j)
           cpml_psi_bzy(nx:nx+1,j) = cpml_psi_bzy(nx,j)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE shift_fields
 
@@ -183,8 +183,8 @@ CONTAINS
     DO j = 1-ng, ny+ng
     DO i = 1-ng, nx+ng-1
       field(i,j) = field(i+1,j)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
     CALL field_bc(field, ng)
 
@@ -215,8 +215,8 @@ CONTAINS
         ALLOCATE(density(0:ny+1))
         ALLOCATE(temperature(0:ny+1, 1:3))
         ALLOCATE(drift(0:ny+1, 1:3))
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     errcode = c_err_none
 
@@ -237,15 +237,15 @@ CONTAINS
               parameters, errcode)
           drift(iy,i) = evaluate_with_parameters( &
               species_list(ispecies)%drift_function(i), parameters, errcode)
-        ENDDO
-      ENDDO
+        END DO
+      END DO
       DO iy = 0, ny+1
         parameters%pack_iy = iy
         density(iy) = evaluate_with_parameters( &
             species_list(ispecies)%density_function, parameters, errcode)
         IF (density(iy) > dmax) density(iy) = dmax
         IF (density(iy) < dmin) density(iy) = 0.0_num
-      ENDDO
+      END DO
 
       x0 = x_grid_max + 0.5_num * dx
       DO iy = 1, ny
@@ -255,7 +255,7 @@ CONTAINS
         n_frac = 0
         IF (npart_frac > 0.0_num) THEN
           IF (random() < npart_frac) n_frac = 1
-        ENDIF
+        END IF
 
         wdata = dx * dy / (npart_per_cell + n_frac)
 
@@ -277,15 +277,15 @@ CONTAINS
             DO isuby = -1, 1
               temp_local = temp_local + gy(isuby) * temperature(iy+isuby, i)
               drift_local = drift_local + gy(isuby) * drift(iy+isuby, i)
-            ENDDO
+            END DO
             current%part_p(i) = momentum_from_temperature(&
                 species_list(ispecies)%mass, temp_local, drift_local)
-          ENDDO
+          END DO
 
           weight_local = 0.0_num
           DO isuby = -1, 1
             weight_local = weight_local + gy(isuby) * density(iy+isuby)
-          ENDDO
+          END DO
 
           current%weight = weight_local * wdata
 #ifdef PARTICLE_DEBUG
@@ -293,11 +293,11 @@ CONTAINS
           current%processor_at_t0 = rank
 #endif
           CALL add_particle_to_partlist(append_list, current)
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
-    ENDDO
+    END DO
 
   END SUBROUTINE insert_particles
 
@@ -318,11 +318,11 @@ CONTAINS
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
-          ENDIF
+          END IF
           current => next
-        ENDDO
-      ENDDO
-    ENDIF
+        END DO
+      END DO
+    END IF
 
   END SUBROUTINE remove_particles
 #endif
@@ -346,8 +346,8 @@ CONTAINS
         CALL setup_boundaries
         IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
@@ -359,17 +359,17 @@ CONTAINS
         window_shift_real = REAL(window_shift_cells, num)
         IF (use_offset_grid) THEN
           window_shift(1) = window_shift(1) + window_shift_real * dx
-        ENDIF
+        END IF
         CALL shift_window(window_shift_cells)
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 #else
     IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
-    ENDIF
+    END IF
     CALL abort_code(c_err_pp_options_missing)
 #endif
 

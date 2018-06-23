@@ -88,10 +88,10 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) '"probe" block does not have a "name" entry.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_required_element_not_set)
-    ENDIF
+    END IF
 
     discard = .FALSE.
     IF (got_point) THEN
@@ -103,9 +103,9 @@ CONTAINS
             WRITE(io,*) 'Both "x1", etc. and "point" were used in probe ', &
                 'block, "' // TRIM(working_probe%name) // '".'
             WRITE(io,*) 'Only "point" and "normal" will be used.'
-          ENDDO
-        ENDIF
-      ENDIF
+          END DO
+        END IF
+      END IF
       IF (.NOT. got_normal) discard = .TRUE.
     ELSE
       IF (got_x /= 2**ndim-1) THEN
@@ -119,8 +119,8 @@ CONTAINS
         working_probe%normal = (/ r1(2), -r1(1) /)
 
         IF (SUM(ABS(working_probe%normal)) <= c_tiny) discard = .TRUE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (discard) THEN
       IF (rank == 0) THEN
@@ -138,20 +138,20 @@ CONTAINS
               IF (IAND(got_x,2**i) == 0) THEN
                 scount = scount + 1
                 sarr(scount) = i + 1
-              ENDIF
-            ENDDO
+              END IF
+            END DO
             IF (scount > 1) THEN
               DO i = 1, scount-2
                 WRITE(io,'(A)',ADVANCE='NO') ' "' // xs(sarr(i)) // '",'
-              ENDDO
+              END DO
               WRITE(io,*) '"' // xs(sarr(scount-1)) // '" and "' &
                   // xs(sarr(scount)) // '" not specified.'
             ELSE
               WRITE(io,*) '"' // xs(sarr(scount)) // '" not specified.'
-            ENDIF
-          ENDIF
-        ENDDO
-      ENDIF
+            END IF
+          END IF
+        END DO
+      END IF
 
       DEALLOCATE(working_probe)
       NULLIFY(working_probe)
@@ -161,7 +161,7 @@ CONTAINS
           working_probe%normal / SQRT(SUM(working_probe%normal**2))
 
       CALL attach_probe(working_probe)
-    ENDIF
+    END IF
 
   END SUBROUTINE probe_block_end
 
@@ -182,43 +182,43 @@ CONTAINS
     IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
       working_probe%dumpmask = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'point') .OR. str_cmp(element, 'probe_point')) THEN
       got_point = .TRUE.
       CALL get_vector(value, working_probe%point, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'normal')) THEN
       got_normal = .TRUE.
       CALL get_vector(value, working_probe%normal, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'x1')) THEN
       got_x = IOR(got_x,2**0)
       working_probe%point(1) = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'y1')) THEN
       got_x = IOR(got_x,2**1)
       working_probe%point(2) = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'x2')) THEN
       got_x = IOR(got_x,2**2)
       point2(1) = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'y2')) THEN
       got_x = IOR(got_x,2**3)
       point2(2) = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
@@ -233,30 +233,30 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to attach probe to non existant species ', &
                   ispecies
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           errcode = c_err_bad_value
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'ek_min')) THEN
       working_probe%ek_min = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'ek_max')) THEN
       working_probe%ek_max = as_real_print(value, element, errcode)
       IF (working_probe%ek_max < 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'name')) THEN
       got_name = .TRUE.
       working_probe%name = TRIM(value)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 

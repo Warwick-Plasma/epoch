@@ -55,22 +55,22 @@ CONTAINS
           .OR. bc(i) == c_bc_cpml_laser &
           .OR. bc(i) == c_bc_cpml_outflow) THEN
         warn = .TRUE.
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (warn) THEN
       PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
           'conditions for ', 'an X boundary after the moving window ', &
           'begins. These boundary conditions are ', 'not compatible with ', &
           'moving windows and are unlikely to give correct results.'
-    ENDIF
+    END IF
 
     IF (n_custom_loaders > 0) THEN
       PRINT*, 'WARNING: you have specified particle loading from file in ', &
           'conjunction with ', 'moving windows. The file contents will be ', &
           'ignored for new particles entering ', 'the domain once the ', &
           'window begins to move.'
-    ENDIF
+    END IF
 
     warn = .FALSE.
     CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
@@ -80,7 +80,7 @@ CONTAINS
       PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
           'the moving window. ', 'These are not fully compatible with ', &
           'moving windows and are likely to give ', 'incorrect results.'
-    ENDIF
+    END IF
 
   END SUBROUTINE window_deck_finalise
 
@@ -115,7 +115,7 @@ CONTAINS
     IF (str_cmp(element, 'move_window')) THEN
       move_window = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'window_v_x')) THEN
       CALL initialise_stack(window_v_x_stack)
@@ -125,24 +125,24 @@ CONTAINS
       CALL deallocate_stack(window_v_x_stack)
       use_window_stack = window_v_x_stack%is_time_varying
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'window_start_time')) THEN
       window_start_time = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'bc_x_min_after_move') &
         .OR. str_cmp(element, 'xbc_left_after_move')) THEN
       bc_x_min_after_move = as_bc_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'bc_x_max_after_move') &
         .OR. str_cmp(element, 'xbc_right_after_move')) THEN
       bc_x_max_after_move = as_bc_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -173,9 +173,9 @@ CONTAINS
       IF (current%has_t_end) THEN
         warn = .TRUE.
         RETURN
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
   END SUBROUTINE check_injector_boundary
 

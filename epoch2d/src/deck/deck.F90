@@ -176,7 +176,7 @@ CONTAINS
       CALL window_block_start
     ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
       CALL part_from_file_block_start
-    ENDIF
+    END IF
 
   END SUBROUTINE start_block
 
@@ -225,7 +225,7 @@ CONTAINS
       CALL window_block_end
     ELSE IF (str_cmp(block_name, 'particles_from_file')) THEN
       CALL part_from_file_block_end
-    ENDIF
+    END IF
 
   END SUBROUTINE end_block
 
@@ -247,12 +247,12 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The block name "deo" is deprecated.'
           WRITE(io,*) 'Please use the block name "constant" instead.'
-        ENDDO
+        END DO
         deo_warn = .FALSE.
-      ENDIF
+      END IF
       handle_block = constant_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
+    END IF
 
     ! Test for known blocks
     IF (str_cmp(block_name, 'boundaries')) THEN
@@ -312,7 +312,7 @@ CONTAINS
       handle_block = &
           part_from_file_block_handle_element(block_element, block_value)
       RETURN
-    ENDIF
+    END IF
 
     handle_block = c_err_unknown_block
     ! Pass through to the custom block
@@ -343,7 +343,7 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_qed_variables())
 #endif
       errcode_deck = IOR(errcode_deck, qed_block_check())
-    ENDIF
+    END IF
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())
     errcode_deck = IOR(errcode_deck, dist_fn_block_check())
@@ -374,8 +374,8 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Not all required elements of input deck specified.'
           WRITE(io,*) 'Please fix input deck and rerun code'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
     ELSE
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -383,9 +383,9 @@ CONTAINS
           WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
             // ' to load particles'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE check_compulsory_blocks
 
@@ -415,10 +415,10 @@ CONTAINS
         IF (rank == 0) THEN
           WRITE(*,*) '*** ERROR ***'
           WRITE(*,*) 'Unable to open lun for input deck read'
-        ENDIF
+        END IF
         CALL abort_code(c_err_io_error)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     get_free_lun = lun
 
@@ -486,15 +486,15 @@ CONTAINS
         NULLIFY(fbuf%buffer)
       ELSE
         fbuf => file_buffer_head
-      ENDIF
+      END IF
 
       DO WHILE (ASSOCIATED(fbuf%next))
         fbuf => fbuf%next
         IF (fbuf%filename == deck_filename) THEN
           already_parsed = .TRUE.
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       IF (.NOT. already_parsed) THEN
         ALLOCATE(fbuf%next)
         nbuffers = nbuffers + 1
@@ -505,7 +505,7 @@ CONTAINS
         fbuf%length = 1
         NULLIFY(fbuf%next)
         ALLOCATE(fbuf%buffer(fbuf%length))
-      ENDIF
+      END IF
 
       ! Check whether or not the input deck file requested exists
       INQUIRE(file=deck_filename, exist=exists)
@@ -515,7 +515,7 @@ CONTAINS
             // '" does not exist.'
         PRINT *, 'Create the file and rerun the code.'
         CALL abort_code(c_err_io_error)
-      ENDIF
+      END IF
 
       ! Get a free lun. Don't use a constant lun to allow for recursion
       lun = get_free_lun()
@@ -530,14 +530,14 @@ CONTAINS
         ELSE
           OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
               iostat=errcode)
-        ENDIF
+        END IF
         IF (print_deck_constants) THEN
           OPEN(unit=duc, status='REPLACE', file=const_filename, iostat=errcode)
-        ENDIF
+        END IF
 
         WRITE(du,'(a,i3)') 'Deck state:', deck_state
         WRITE(du,*)
-      ENDIF
+      END IF
 #endif
       deck_values(1)%value = ''
       deck_values(2)%value = ''
@@ -561,7 +561,7 @@ CONTAINS
           got_eof = .TRUE.
         ELSE
           got_eor = .FALSE.
-        ENDIF
+        END IF
 
 10      IF (.NOT. already_parsed) THEN
           ! Store character in a buffer so that we can write the input deck
@@ -573,7 +573,7 @@ CONTAINS
           ELSE
             fbuf%buffer(fbuf%idx)(fbuf%pos:fbuf%pos) = ACHAR(0)  ! null
             fbuf%pos = fbuf%pos - 1
-          ENDIF
+          END IF
 
           ! If we reached the end of the character string then move to the next
           ! element of the array
@@ -583,21 +583,21 @@ CONTAINS
               ALLOCATE(tmp_buffer(fbuf%length))
               DO i = 1,fbuf%length
                 tmp_buffer(i) = fbuf%buffer(i)
-              ENDDO
+              END DO
               DEALLOCATE(fbuf%buffer)
               ALLOCATE(fbuf%buffer(2*fbuf%length))
               DO i = 1,fbuf%length
                 fbuf%buffer(i) = tmp_buffer(i)
-              ENDDO
+              END DO
               DEALLOCATE(tmp_buffer)
               fbuf%length = 2*fbuf%length
-            ENDIF
+            END IF
             fbuf%pos = 1
             fbuf%idx = fbuf%idx + 1
           ELSE
             fbuf%pos = fbuf%pos + 1
-          ENDIF
-        ENDIF
+          END IF
+        END IF
 
         IF (continuation .AND. warn) THEN
           IF (u1 /= ' ' .AND. u1 /= ACHAR(9)) THEN ! ACHAR(9) = tab
@@ -609,11 +609,11 @@ CONTAINS
                 WRITE(io,*) 'Extra characters after continuation line in', &
                     ' input deck.'
                 WRITE(io,*)
-              ENDDO
-            ENDIF
+              END DO
+            END IF
             warn = .FALSE.
-          ENDIF
-        ENDIF
+          END IF
+        END IF
 
         ! If the character is a # or \ then ignore the rest of the line
         IF (u1 == '#') THEN
@@ -621,7 +621,7 @@ CONTAINS
         ELSE IF (u1 == ACHAR(92)) THEN ! ACHAR(92) = '\'
           ignore = .TRUE.
           continuation = .TRUE.
-        ENDIF
+        END IF
 
         ! If not in comment mode then use the character
         IF (.NOT. ignore) THEN
@@ -636,8 +636,8 @@ CONTAINS
               slen = slen + 1
               u0 = u1
               IF (pos > string_length) pos = string_length
-            ENDIF
-          ENDIF
+            END IF
+          END IF
 
           ! If it's equals or : then you're parsing the other part of the
           ! expression
@@ -645,8 +645,8 @@ CONTAINS
             flip = 2
             pos = 1
             slen = 1
-          ENDIF
-        ENDIF
+          END IF
+        END IF
 
         ! If got_eor is .TRUE. then you've reached the end of the line, so
         ! reset comment and continuation states
@@ -655,9 +655,9 @@ CONTAINS
           IF (continuation) THEN
             got_eor = .FALSE.
             f = 0
-          ENDIF
+          END IF
           continuation = .FALSE.
-        ENDIF
+        END IF
 
         ! If you've not read a blank line then
         IF (got_eor .AND. pos > 1) THEN
@@ -673,13 +673,13 @@ CONTAINS
               ELSE
                 WRITE(io,*) 'Whilst reading ', &
                     TRIM(deck_values(1)%value(1:pos-1))
-              ENDIF
+              END IF
               WRITE(io,*) 'String value too long. Please increase the size ', &
                   'of "string_length" in ','shared_data.F90 to be at least ', &
                   TRIM(len_string)
-            ENDDO
+            END DO
             CALL abort_code(c_err_io_error)
-          ENDIF
+          END IF
           elements = elements+1
           flip = 1
           pos = 1
@@ -699,24 +699,24 @@ CONTAINS
           ignore = .FALSE.
           continuation = .FALSE.
           u0 = ' '
-        ENDIF
+        END IF
         IF (got_eof) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, comm, errcode)
           CLOSE(lun)
           EXIT
-        ENDIF
+        END IF
         terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) /= 0
         IF (terminate) EXIT
-      ENDDO
+      END DO
 
       IF (.NOT. already_parsed) THEN
         CALL sdf_md5_init()
         DO i = 1, fbuf%idx - 1
            fbuf%md5sum = sdf_md5_append(fbuf%buffer(i)(1:buffer_size))
-        ENDDO
+        END DO
         fbuf%md5sum = sdf_md5_append(fbuf%buffer(fbuf%idx)(1:fbuf%pos-1))
         IF (MOD(fbuf%pos-1, 64) == 0) fbuf%md5sum = sdf_md5_append('')
-      ENDIF
+      END IF
     ELSE
       DO
         errcode_deck = c_err_none
@@ -733,13 +733,13 @@ CONTAINS
         deck_values(2)%value = ''
         terminate = terminate .OR. IAND(errcode_deck, c_err_terminate) /= 0
         IF (terminate) EXIT
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     CALL MPI_BARRIER(comm, errcode)
 !!$    IF (.NOT. first_call)  THEN
 !!$       RETURN
-!!$    ENDIF
+!!$    END IF
 
     ! Don't check compulsory blocks if going to bomb anyway, just stinks up
     ! the output file
@@ -753,13 +753,13 @@ CONTAINS
         WRITE(io,*)
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'The code cannot parse the input deck sufficiently to run.'
-      ENDDO
+      END DO
       WRITE(*, *) 'Please read the output file "', TRIM(status_filename), &
           '" to check for errors.'
 #ifndef NO_IO
       WRITE(du,*) 'Please read this file and correct any errors mentioned.'
 #endif
-    ENDIF
+    END IF
 
 #ifndef NO_IO
     CLOSE(du)
@@ -790,11 +790,11 @@ CONTAINS
         WRITE(du,*)
         WRITE(du,*) 'Importing "' // TRIM(ADJUSTL(value)) // '" file'
         WRITE(du,*)
-      ENDIF
+      END IF
 #endif
       CALL read_deck(TRIM(ADJUSTL(value)), .FALSE., deck_state)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'begin')) THEN
       errcode_deck = handle_block(value, blank, blank)
@@ -816,7 +816,7 @@ CONTAINS
                 // 'please recompile with the'
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
-          ENDDO
+          END DO
         ELSE IF (IAND(errcode_deck, c_err_pp_options_wrong) /= 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
@@ -830,7 +830,7 @@ CONTAINS
                 // 'please recompile without the'
             WRITE(io,*) TRIM(extended_error_string) // ' option'
             WRITE(io,*)
-          ENDDO
+          END DO
         ELSE
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
@@ -838,9 +838,9 @@ CONTAINS
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Unknown block "' // TRIM(value) &
                 // '" in input deck, ignoring', deck_state
-          ENDDO
-        ENDIF
-      ENDIF
+          END DO
+        END IF
+      END IF
       CALL start_block(value)
       err_count = 0
       current_block_name = value
@@ -848,12 +848,12 @@ CONTAINS
       IF (rank == rank_check) THEN
         WRITE(du,*) 'Beginning "' // TRIM(ADJUSTL(value)) // '" block'
         WRITE(du,*)
-      ENDIF
+      END IF
 #endif
       ! Reset errcode_deck here because reporting c_err_unknown_element is OK
       errcode_deck = c_err_none
       RETURN
-    ENDIF
+    END IF
     IF (str_cmp(element, 'end')) THEN
       CALL end_block(current_block_name)
       invalid_block = .TRUE.
@@ -866,11 +866,11 @@ CONTAINS
           WRITE(du,*) '*** WARNING ***'
           WRITE(du,*) 'Block "' // TRIM(ADJUSTL(value)) // '" contains errors'
           WRITE(du,*)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 #endif
       RETURN
-    ENDIF
+    END IF
 
     ! Check invalid block to limit amount of rubbish that appears
     ! If the input deck is invalid
@@ -884,13 +884,13 @@ CONTAINS
               // TRIM(element) // '" is invalid and cannot be parsed.'
           WRITE(io,*) 'Code will terminate'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
       RETURN
     ELSE
       errcode_deck = handle_block(current_block_name, element, value)
-    ENDIF
+    END IF
 
 #ifndef NO_IO
     IF (errcode_deck == c_err_none) THEN
@@ -898,7 +898,7 @@ CONTAINS
           WRITE(du, *) ACHAR(9), 'Element ', TRIM(ADJUSTL(element)), '=', &
               TRIM(ADJUSTL(value)), ' handled OK'
       RETURN
-    ENDIF
+    END IF
 #endif
     ! Test for error conditions
     ! If an error is fatal then set terminate to .TRUE.
@@ -912,9 +912,9 @@ CONTAINS
               // '" in input deck.'
           WRITE(io,*) 'Code will continue to run, but behaviour is undefined'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
     IF (IAND(errcode_deck, c_err_preset_element) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -925,9 +925,9 @@ CONTAINS
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using first value in deck'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
     IF (IAND(errcode_deck, c_err_preset_element_use_later) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -938,9 +938,9 @@ CONTAINS
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using last value in deck'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
     IF (IAND(errcode_deck, c_err_bad_value) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -951,10 +951,10 @@ CONTAINS
               // TRIM(element) // '" is'
           WRITE(io,*) 'invalid or could not be parsed. Code will terminate.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
-    ENDIF
+    END IF
     IF (IAND(errcode_deck, c_err_warn_bad_value) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -966,9 +966,9 @@ CONTAINS
           WRITE(io,*) 'invalid or could not be parsed. Code will use', &
               ' default value.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
     IF (IAND(errcode_deck, c_err_required_element_not_set) /= 0) THEN
       IF (rank == rank_check) THEN
@@ -982,10 +982,10 @@ CONTAINS
               // TRIM(extended_error_string) // '" has'
           WRITE(io,*) 'not been set. Code will terminate'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
-    ENDIF
+    END IF
     IF (IAND(errcode_deck, c_err_pp_options_missing) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -1000,9 +1000,9 @@ CONTAINS
               // 'please recompile with the'
           WRITE(io,*) TRIM(extended_error_string) // ' option'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
     IF (IAND(errcode_deck, c_err_generic_warning) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -1011,9 +1011,9 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) TRIM(extended_error_string)
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
     IF (IAND(errcode_deck, c_err_generic_error) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -1022,10 +1022,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) TRIM(extended_error_string)
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
-    ENDIF
+    END IF
     IF (IAND(errcode_deck, c_err_other) /= 0) THEN
       IF (rank == rank_check) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -1037,10 +1037,10 @@ CONTAINS
           WRITE(io,*) 'Good for you. Just because of that, the code will ' &
               // 'terminate.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode_deck = IOR(errcode_deck, c_err_terminate)
-    ENDIF
+    END IF
 
     err_count = err_count+1
 
@@ -1064,15 +1064,15 @@ CONTAINS
             'EPOCH input deck: ' // TRIM(fbuf%filename), &
             fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), &
             'text/plain', 'md5', fbuf%md5sum)
-      ENDDO
+      END DO
     ELSE
       ! These calls are required since sdf_write_datablock() is a collective
       ! operation
       DO i = 1,nbuffers
         CALL sdf_write_datablock(handle, 'input_deck/', 'EPOCH input deck: ', &
             buffer, buffer(1), 'text/plain', 'md5', '')
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE write_input_decks
 
@@ -1093,7 +1093,7 @@ CONTAINS
       DEALLOCATE(fbuf, STAT=stat)
 
       fbuf => next
-    ENDDO
+    END DO
 
     DEALLOCATE(file_buffer_head, STAT=stat)
 

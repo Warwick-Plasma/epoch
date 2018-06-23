@@ -67,7 +67,7 @@ CONTAINS
       laser%current_integral_phase = phases(ilas)
       ilas = ilas + 1
       laser => laser%next
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_laser_phases
 
@@ -102,42 +102,42 @@ CONTAINS
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
       current => next
-    ENDDO
+    END DO
 
   END SUBROUTINE deallocate_lasers
 
@@ -169,7 +169,7 @@ CONTAINS
     ELSE IF (boundary == c_bd_z_max) THEN
       n_laser_z_max = n_laser_z_max + 1
       CALL attach_laser_to_list(laser_z_max, laser)
-    ENDIF
+    END IF
 
   END SUBROUTINE attach_laser
 
@@ -219,7 +219,7 @@ CONTAINS
       laser_time_profile = evaluate_with_parameters(laser%time_function, &
           parameters, err)
       RETURN
-    ENDIF
+    END IF
 
     laser_time_profile = custom_laser_time_profile(laser)
 
@@ -243,8 +243,8 @@ CONTAINS
             parameters%pack_iy = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       CASE(c_bd_y_min, c_bd_y_max)
         DO j = 1,nz
           parameters%pack_iz = j
@@ -252,8 +252,8 @@ CONTAINS
             parameters%pack_ix = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       CASE(c_bd_z_min, c_bd_z_max)
         DO j = 1,ny
           parameters%pack_iy = j
@@ -261,8 +261,8 @@ CONTAINS
             parameters%pack_ix = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
     END SELECT
 
   END SUBROUTINE laser_update_phase
@@ -286,8 +286,8 @@ CONTAINS
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
                     err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       CASE(c_bd_y_min, c_bd_y_max)
         DO j = 1,nz
           parameters%pack_iz = j
@@ -296,8 +296,8 @@ CONTAINS
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
                     err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       CASE(c_bd_z_min, c_bd_z_max)
         DO j = 1,ny
           parameters%pack_iy = j
@@ -306,8 +306,8 @@ CONTAINS
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
                     err)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
     END SELECT
 
   END SUBROUTINE laser_update_profile
@@ -345,9 +345,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
@@ -357,9 +357,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
@@ -369,9 +369,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
@@ -381,9 +381,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
@@ -393,9 +393,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
@@ -405,9 +405,9 @@ CONTAINS
             + current%omega * dt
       ELSE
         current%current_integral_phase = current%omega * time
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
   END SUBROUTINE update_laser_omegas
 
@@ -424,11 +424,11 @@ CONTAINS
       current => list
       DO WHILE(ASSOCIATED(current%next))
         current => current%next
-      ENDDO
+      END DO
       current%next => laser
     ELSE
       list => laser
-    ENDIF
+    END IF
 
   END SUBROUTINE attach_laser_to_list
 
@@ -445,7 +445,7 @@ CONTAINS
       ALLOCATE(array(1-ng:nx+ng, 1-ng:nz+ng))
     ELSE IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
       ALLOCATE(array(1-ng:nx+ng, 1-ng:ny+ng))
-    ENDIF
+    END IF
 
   END SUBROUTINE allocate_with_boundary
 
@@ -463,42 +463,42 @@ CONTAINS
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
       current => current%next
-    ENDDO
+    END DO
 
     ! Need at least two iterations per laser period
     ! (Nyquist)
@@ -521,7 +521,7 @@ CONTAINS
     laserpos = 1
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_x_min_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -551,12 +551,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     bz(laserpos-1, 1:ny, 1:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ey_x_min(1:ny, 1:nz) + c * bz_x_min(1:ny, 1:nz)) &
@@ -579,8 +579,8 @@ CONTAINS
         CALL calc_absorption(c_bd_x_min, lasers=laser_x_min)
       ELSE
         CALL calc_absorption(c_bd_x_min)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_x_min
 
@@ -599,7 +599,7 @@ CONTAINS
     laserpos = nx
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_x_max_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -629,12 +629,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     bz(laserpos, 1:ny, 1:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ey_x_max(1:ny, 1:nz) - c * bz_x_max(1:ny, 1:nz)) &
@@ -657,8 +657,8 @@ CONTAINS
         CALL calc_absorption(c_bd_x_max, lasers=laser_x_max)
       ELSE
         CALL calc_absorption(c_bd_x_max)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_x_max
 
@@ -677,7 +677,7 @@ CONTAINS
     laserpos = 1
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_y_min_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -707,12 +707,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     bx(1:nx, laserpos-1, 1:nz) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ez_y_min(1:nx, 1:nz) + c * bx_y_min(1:nx, 1:nz)) &
@@ -735,8 +735,8 @@ CONTAINS
         CALL calc_absorption(c_bd_y_min, lasers=laser_y_min)
       ELSE
         CALL calc_absorption(c_bd_y_min)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_y_min
 
@@ -755,7 +755,7 @@ CONTAINS
     laserpos = ny
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_y_max_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -785,12 +785,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     bx(1:nx, laserpos, 1:nz) = sum * (-4.0_num * source1 &
         - 2.0_num * (ez_y_max(1:nx, 1:nz) - c * bx_y_max(1:nx, 1:nz)) &
@@ -813,8 +813,8 @@ CONTAINS
         CALL calc_absorption(c_bd_y_max, lasers=laser_y_max)
       ELSE
         CALL calc_absorption(c_bd_y_max)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_y_max
 
@@ -833,7 +833,7 @@ CONTAINS
     laserpos = 1
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_z_min_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -863,12 +863,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     by(1:nx, 1:ny, laserpos-1) = sum * ( 4.0_num * source1 &
         + 2.0_num * (ex_z_min(1:nx, 1:ny) + c * by_z_min(1:nx, 1:ny)) &
@@ -891,8 +891,8 @@ CONTAINS
         CALL calc_absorption(c_bd_z_min, lasers=laser_z_min)
       ELSE
         CALL calc_absorption(c_bd_z_min)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_z_min
 
@@ -911,7 +911,7 @@ CONTAINS
     laserpos = nz
     IF (bc_field(n) == c_bc_cpml_laser) THEN
       laserpos = cpml_z_max_laser_idx
-    ENDIF
+    END IF
     dtc2 = dt * c**2
     lx = dtc2 / dx
     ly = dtc2 / dy
@@ -941,12 +941,12 @@ CONTAINS
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
             source2(i,j) = source2(i,j) + base * SIN(current%pol_angle)
-          ENDDO
-          ENDDO
-        ENDIF
+          END DO
+          END DO
+        END IF
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     by(1:nx, 1:ny, laserpos) = sum * (-4.0_num * source1 &
         - 2.0_num * (ex_z_max(1:nx, 1:ny) - c * by_z_max(1:nx, 1:ny)) &
@@ -969,8 +969,8 @@ CONTAINS
         CALL calc_absorption(c_bd_z_max, lasers=laser_z_max)
       ELSE
         CALL calc_absorption(c_bd_z_max)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE outflow_bcs_z_max
 
@@ -1004,7 +1004,7 @@ CONTAINS
         IF (bd == c_bd_x_max) THEN
           dir = -1.0_num
           ibc = nx
-        ENDIF
+        END IF
 
         e1 = 0.5_num  * (ey(ibc  , 0:ny-1, 1:nz  ) + ey(ibc, 1:ny  , 1:nz  ))
         e2 = 0.5_num  * (ez(ibc  , 1:ny  , 0:nz-1) + ez(ibc, 1:ny  , 1:nz  ))
@@ -1023,7 +1023,7 @@ CONTAINS
         IF (bd == c_bd_y_max) THEN
           dir = -1.0_num
           ibc = ny
-        ENDIF
+        END IF
 
         e1 = 0.5_num  * (ez(1:nx  , ibc  , 0:nz-1) + ez(1:nx  , ibc, 1:nz  ))
         e2 = 0.5_num  * (ex(0:nx-1, ibc  , 1:nz  ) + ex(1:nx  , ibc, 1:nz  ))
@@ -1042,7 +1042,7 @@ CONTAINS
         IF (bd == c_bd_z_max) THEN
           dir = -1.0_num
           ibc = nz
-        ENDIF
+        END IF
 
         e1 = 0.5_num  * (ex(0:nx-1, 1:ny  , ibc  ) + ex(1:nx  , 1:ny  , ibc))
         e2 = 0.5_num  * (ey(1:nx  , 0:ny-1, ibc  ) + ey(1:nx  , 1:ny  , ibc))
@@ -1072,14 +1072,14 @@ CONTAINS
         DO jcell = 1, nn
         DO icell = 1, mm
           laser_inject_sum = laser_inject_sum + current%profile(icell, jcell)**2
-        ENDDO
-        ENDDO
+        END DO
+        END DO
         t_env = laser_time_profile(current)
         lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
         laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
         current => current%next
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     DEALLOCATE(e1, e2, b1, b2)
 

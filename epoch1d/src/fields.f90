@@ -42,7 +42,7 @@ CONTAINS
       cfl = 6.0_num / 7.0_num
     ELSE
       cfl = 120.0_num / 149.0_num
-    ENDIF
+    END IF
 
   END SUBROUTINE set_field_order
 
@@ -60,7 +60,7 @@ CONTAINS
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       alphax = 1.0_num - 3.0_num * deltax
-    ENDIF
+    END IF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
       PRINT*, 'Maxwell solver set to the following parameters:'
@@ -68,7 +68,7 @@ CONTAINS
       PRINT'(A9, 1F14.9)', 'delta =', deltax
       PRINT'(A9, 1F14.9)', 'c*dt/dx = ', dt * c / dx
       PRINT*
-    ENDIF
+    END IF
 
   END SUBROUTINE set_maxwell_solver
 
@@ -96,7 +96,7 @@ CONTAINS
           ez(ix) = ez(ix) &
               + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
-        ENDDO
+        END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -118,7 +118,7 @@ CONTAINS
               + cx1 * (by(ix  ) - by(ix-1)) &
               + cx2 * (by(ix+1) - by(ix-2)) &
               - fac * jz(ix)
-        ENDDO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -144,8 +144,8 @@ CONTAINS
               + cx2 * (by(ix+1) - by(ix-2)) &
               + cx3 * (by(ix+2) - by(ix-3)) &
               - fac * jz(ix)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
@@ -163,7 +163,7 @@ CONTAINS
           ez(ix) = ez(ix) &
               + cx1 * (by(ix  ) - by(ix-1)) &
               - fac * jz(ix)
-        ENDDO
+        END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -184,7 +184,7 @@ CONTAINS
               + cx1 * (by(ix  ) - by(ix-1)) &
               + cx2 * (by(ix+1) - by(ix-2)) &
               - fac * jz(ix)
-        ENDDO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -209,9 +209,9 @@ CONTAINS
               + cx2 * (by(ix+1) - by(ix-2)) &
               + cx3 * (by(ix+2) - by(ix-3)) &
               - fac * jz(ix)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE update_e_field
 
@@ -235,7 +235,7 @@ CONTAINS
 
             bz(ix) = bz(ix) &
                 - cx1 * (ey(ix+1) - ey(ix  ))
-          ENDDO
+          END DO
         ELSE
           DO ix = 1, nx
             cx1 = hdtx / cpml_kappa_bx(ix)
@@ -247,8 +247,8 @@ CONTAINS
             bz(ix) = bz(ix) &
                 - cx1 * (alphax * (ey(ix+1) - ey(ix  ))  &
                        + deltax * (ey(ix+2) - ey(ix-1)))
-          ENDDO
-        ENDIF
+          END DO
+        END IF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -265,7 +265,7 @@ CONTAINS
           bz(ix) = bz(ix) &
               - cx1 * (ey(ix+1) - ey(ix  )) &
               - cx2 * (ey(ix+2) - ey(ix-1))
-        ENDDO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -286,8 +286,8 @@ CONTAINS
               - cx1 * (ey(ix+1) - ey(ix  )) &
               - cx2 * (ey(ix+2) - ey(ix-1)) &
               - cx3 * (ey(ix+3) - ey(ix-2))
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
@@ -301,7 +301,7 @@ CONTAINS
 
             bz(ix) = bz(ix) &
                 - cx1 * (ey(ix+1) - ey(ix  ))
-          ENDDO
+          END DO
         ELSE
           DO ix = 1, nx
             by(ix) = by(ix) &
@@ -311,8 +311,8 @@ CONTAINS
             bz(ix) = bz(ix) &
                 - cx1 * (alphax * (ey(ix+1) - ey(ix  ))  &
                        + deltax * (ey(ix+2) - ey(ix-1)))
-          ENDDO
-        ENDIF
+          END DO
+        END IF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -328,7 +328,7 @@ CONTAINS
           bz(ix) = bz(ix) &
               - cx1 * (ey(ix+1) - ey(ix  )) &
               - cx2 * (ey(ix+2) - ey(ix-1))
-        ENDDO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -348,9 +348,9 @@ CONTAINS
               - cx1 * (ey(ix+1) - ey(ix  )) &
               - cx2 * (ey(ix+2) - ey(ix-1)) &
               - cx3 * (ey(ix+3) - ey(ix-2))
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE update_b_field
 

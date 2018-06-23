@@ -73,7 +73,7 @@ CONTAINS
       DO n = 1, 3
         CALL deallocate_stack(species_list(i)%temperature_function(n))
         CALL deallocate_stack(species_list(i)%drift_function(n))
-      ENDDO
+      END DO
       CALL destroy_partlist(species_list(i)%attached_list)
       DEALLOCATE(species_list(i)%ext_temp_x_min, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_x_max, STAT=stat)
@@ -81,7 +81,7 @@ CONTAINS
       DEALLOCATE(species_list(i)%ext_temp_y_max, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_min, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_max, STAT=stat)
-    ENDDO
+    END DO
 
     DEALLOCATE(species_list, STAT=stat)
 
@@ -93,12 +93,12 @@ CONTAINS
     DO i = 1, n_subsets
       DEALLOCATE(subset_list(i)%dumpmask, STAT=stat)
       DEALLOCATE(subset_list(i)%use_species, STAT=stat)
-    ENDDO
+    END DO
     DEALLOCATE(subset_list, STAT=stat)
 
     DO i = 1, n_deck_constants
       CALL deallocate_stack(deck_constant_list(i)%execution_stream)
-    ENDDO
+    END DO
     DEALLOCATE(deck_constant_list, STAT=stat)
 
     CALL deallocate_input_deck_buffer

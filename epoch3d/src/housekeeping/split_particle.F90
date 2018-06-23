@@ -50,9 +50,9 @@ CONTAINS
           DO ix = i0, nx + i1
             CALL create_empty_partlist(&
                 species_list(ispecies)%secondary_list(ix,iy,iz))
-          ENDDO
-        ENDDO
-      ENDDO
+          END DO
+        END DO
+      END DO
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         next => current%next
@@ -72,8 +72,8 @@ CONTAINS
             species_list(ispecies)%secondary_list(cell_x,cell_y,cell_z), &
             current)
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
   END SUBROUTINE reorder_particles_to_grid
 
@@ -94,11 +94,11 @@ CONTAINS
           DO ix = i0, nx + i1
             CALL append_partlist(species_list(ispecies)%attached_list, &
                 species_list(ispecies)%secondary_list(ix,iy,iz))
-          ENDDO
-        ENDDO
-      ENDDO
+          END DO
+        END DO
+      END DO
       DEALLOCATE(species_list(ispecies)%secondary_list)
-    ENDDO
+    END DO
 
     CALL particle_bcs
 
@@ -116,8 +116,8 @@ CONTAINS
       IF (species_list(ispecies)%split) THEN
         use_split = .TRUE.
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     use_particle_lists = use_particle_lists .OR. use_split
     IF (use_split) need_random_state = .TRUE.
@@ -183,14 +183,14 @@ CONTAINS
                 current%part_pos(2) = current%part_pos(2) - jitter_y
                 current%part_pos(3) = current%part_pos(3) - jitter_z
                 current => current%next
-              ENDDO
-            ENDIF
-          ENDDO
-        ENDDO
-      ENDDO
+              END DO
+            END IF
+          END DO
+        END DO
+      END DO
 
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
-    ENDDO
+    END DO
 #endif
 
   END SUBROUTINE split_particles

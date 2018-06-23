@@ -60,13 +60,13 @@ CONTAINS
       IF (.NOT. ASSOCIATED(current)) THEN
         species_list(i)%attached_probes => probe
         CYCLE
-      ENDIF
+      END IF
       DO WHILE(ASSOCIATED(current%next))
         current => current%next
-      ENDDO
+      END DO
       ! Now at the last element in the list
       current%next => probe
-    ENDDO
+    END DO
 
   END SUBROUTINE attach_probe
 
@@ -94,7 +94,7 @@ CONTAINS
         IF (IAND(current_probe%dumpmask, code) == 0) THEN
           current_probe => current_probe%next
           CYCLE
-        ENDIF
+        END IF
 
         current_list => current_probe%sampled_particles
 
@@ -105,7 +105,7 @@ CONTAINS
         DO i = 1, nproc
           IF (rank == i-1) part_probe_offset = npart_probe_global
           npart_probe_global = npart_probe_global + npart_probe_per_proc(i)
-        ENDDO
+        END DO
 
         IF (npart_probe_global > 0) THEN
           convert = (IAND(IOR(mask,current_probe%dumpmask), &
@@ -153,13 +153,13 @@ CONTAINS
 #endif
 
           CALL destroy_partlist(current_probe%sampled_particles)
-        ENDIF
+        END IF
         current_probe => current_probe%next
 
-      ENDDO
+      END DO
 
       NULLIFY(current_probe)
-    ENDDO
+    END DO
 
     DEALLOCATE(npart_probe_per_proc)
 
@@ -181,14 +181,14 @@ CONTAINS
 
     IF (start)  THEN
       cur => current_list%head
-    ENDIF
+    END IF
     part_count = 0
 
     DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
       part_count = part_count+1
       array(part_count) = cur%part_pos(direction) - window_shift(direction)
       cur => cur%next
-    ENDDO
+    END DO
 
     npoint_it = part_count
 
@@ -210,7 +210,7 @@ CONTAINS
 
     IF (start)  THEN
       cur => current_list%head
-    ENDIF
+    END IF
     part_count = 0
 
     SELECT CASE (param)
@@ -220,7 +220,7 @@ CONTAINS
         part_count = part_count+1
         array(part_count) = cur%weight
         cur => cur%next
-      ENDDO
+      END DO
 #endif
 
     CASE (c_dump_part_px)
@@ -229,7 +229,7 @@ CONTAINS
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next
-      ENDDO
+      END DO
 
     CASE (c_dump_part_py)
       ndim = 2
@@ -237,7 +237,7 @@ CONTAINS
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next
-      ENDDO
+      END DO
 
     CASE (c_dump_part_pz)
       ndim = 3
@@ -245,7 +245,7 @@ CONTAINS
         part_count = part_count + 1
         array(part_count) = cur%part_p(ndim)
         cur => cur%next
-      ENDDO
+      END DO
 
     END SELECT
 

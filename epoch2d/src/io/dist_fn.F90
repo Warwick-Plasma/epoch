@@ -34,10 +34,10 @@ CONTAINS
       ! This is the first distribution function to add
       dist_fns => iblock
       RETURN
-    ENDIF
+    END IF
     DO WHILE(ASSOCIATED(current%next))
       current => current%next
-    ENDDO
+    END DO
     current%next => iblock
 
   END SUBROUTINE attach_dist_fn
@@ -76,7 +76,7 @@ CONTAINS
       DEALLOCATE(current%use_species, STAT=stat)
       DEALLOCATE(current)
       current => next
-    ENDDO
+    END DO
 
   END SUBROUTINE deallocate_dist_fns
 
@@ -107,10 +107,10 @@ CONTAINS
 
           ! If there was an error writing the dist_fn then ignore it in future
           IF (errcode /= 0) current%dumpmask = c_io_never
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
   END SUBROUTINE write_dist_fns
 
@@ -173,7 +173,7 @@ CONTAINS
           io_list(species)%count, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
       io_list(species)%count_update_step = step
-    ENDIF
+    END IF
 
     IF (io_list(species)%count < 1) RETURN
 
@@ -228,7 +228,7 @@ CONTAINS
           start_local(idim) = nx_global_min &
               + NINT((ranges(1,idim) - x_min_local) / dx) &
               - range_global_min(idim)
-        ENDIF
+        END IF
 
         ! resolution is the number of pts
         ! ranges guaranteed to include integer number of grid cells
@@ -236,7 +236,7 @@ CONTAINS
         IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
           resolution(idim) = 0
-        ENDIF
+        END IF
 
         dgrid(idim) = dx
         labels(idim) = 'X'
@@ -270,7 +270,7 @@ CONTAINS
           start_local(idim) = ny_global_min &
               + NINT((ranges(1,idim) - y_min_local) / dy) &
               - range_global_min(idim)
-        ENDIF
+        END IF
 
         ! resolution is the number of pts
         ! ranges guaranteed to include integer number of grid cells
@@ -278,7 +278,7 @@ CONTAINS
         IF (resolution(idim) <= 0) THEN
           proc_outside_range = .TRUE.
           resolution(idim) = 0
-        ENDIF
+        END IF
 
         dgrid(idim) = dy
         labels(idim) = 'Y'
@@ -286,14 +286,14 @@ CONTAINS
         parallel(idim) = .TRUE.
         CYCLE
 
-      ENDIF
+      END IF
 
       ! If we're here then this must be a momentum space direction
       ! So determine which momentum space directions are needed
       IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
         calc_range(idim) = .TRUE.
         calc_ranges = .TRUE.
-      ENDIF
+      END IF
 
       IF (direction(idim) == c_dir_px) THEN
         labels(idim) = 'Px'
@@ -338,12 +338,12 @@ CONTAINS
         IF (rank == 0) THEN
           WRITE(*,*) '*** WARNING ***'
           WRITE(*,*) 'Unable to write dist_fn. Ignoring.'
-        ENDIF
+        END IF
         errcode = 1
         RETURN
 
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Calculate range for directions where needed
     IF (calc_ranges) THEN
@@ -351,8 +351,8 @@ CONTAINS
         IF (calc_range(idim)) THEN
           ranges(1,idim) =  HUGE(1.0_num) * 0.4_num
           ranges(2,idim) = -HUGE(1.0_num) * 0.4_num
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       next => io_list(species)%attached_list%head
 
       out1: DO WHILE(ASSOCIATED(next))
@@ -393,7 +393,7 @@ CONTAINS
           particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
           particle_data(c_dir_gamma_m1) = gamma_rel_m1
           particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
-        ENDIF
+        END IF
 
         IF (use_xy_angle) THEN
           p = SQRT(px**2 + py**2)
@@ -402,7 +402,7 @@ CONTAINS
           theta = ASIN(py / p)
           IF (px < 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
           particle_data(c_dir_xy_angle) = theta
-        ENDIF
+        END IF
 
         IF (use_yz_angle) THEN
           p = SQRT(py**2 + pz**2)
@@ -411,7 +411,7 @@ CONTAINS
           theta = ASIN(pz / p)
           IF (py < 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
           particle_data(c_dir_yz_angle) = theta
-        ENDIF
+        END IF
 
         IF (use_zx_angle) THEN
           p = SQRT(pz**2 + px**2)
@@ -420,7 +420,7 @@ CONTAINS
           theta = ASIN(px / p)
           IF (pz < 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
           particle_data(c_dir_zx_angle) = theta
-        ENDIF
+        END IF
 
         DO idim = 1, curdims
           IF (calc_range(idim)) THEN
@@ -429,14 +429,14 @@ CONTAINS
                   .AND. (particle_data(idir) < restrictions(1,idir) &
                   .OR. particle_data(idir) > restrictions(2,idir))) &
                       CYCLE out1
-            ENDDO
+            END DO
 
             current_data = particle_data(direction(idim))
             IF (current_data < ranges(1,idim)) ranges(1,idim) = current_data
             IF (current_data > ranges(2,idim)) ranges(2,idim) = current_data
-          ENDIF
-        ENDDO
-      ENDDO out1
+          END IF
+        END DO
+      END DO out1
 
       DO idim = 1, curdims
         IF (.NOT. parallel(idim)) THEN
@@ -447,9 +447,9 @@ CONTAINS
           CALL MPI_ALLREDUCE(ranges(2,idim), temp_data, 1, mpireal, MPI_MAX, &
               comm, errcode)
           ranges(2,idim) = temp_data
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     DO idim = 1, curdims
       ! Fix so that if distribution function is zero then it picks an arbitrary
@@ -457,7 +457,7 @@ CONTAINS
       IF (ABS(ranges(1,idim) - ranges(2,idim)) <= c_tiny) THEN
         ranges(1,idim) = -1.0_num
         ranges(2,idim) = 1.0_num
-      ENDIF
+      END IF
 
       IF (direction(idim) == c_dir_xy_angle) THEN
         xy_max = ranges(2,idim)
@@ -465,19 +465,19 @@ CONTAINS
         yz_max = ranges(2,idim)
       ELSE IF (direction(idim) == c_dir_zx_angle) THEN
         zx_max = ranges(2,idim)
-      ENDIF
+      END IF
 
       ! Calculate grid spacing
       IF (.NOT. parallel(idim)) dgrid(idim) = &
           (ranges(2,idim) - ranges(1,idim)) / REAL(resolution(idim), num)
-    ENDDO
+    END DO
 
     IF (.NOT. proc_outside_range) THEN
       ALLOCATE(array(resolution(1), resolution(2), resolution(3)))
     ELSE
       ! Dummy array
       ALLOCATE(array(1,1,1))
-    ENDIF
+    END IF
     array = 0.0_num
 
     next => io_list(species)%attached_list%head
@@ -529,7 +529,7 @@ CONTAINS
         particle_data(c_dir_en) = gamma_rel_m1 * part_mc2
         particle_data(c_dir_gamma_m1) = gamma_rel_m1
         particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
-      ENDIF
+      END IF
 
       IF (use_xy_angle) THEN
         p = SQRT(px**2 + py**2)
@@ -539,7 +539,7 @@ CONTAINS
         IF (px < 0.0_num) theta = SIGN(1.0_num,py) * pi - theta
         IF ((theta + pi2) < xy_max) theta = theta + pi2
         particle_data(c_dir_xy_angle) = theta
-      ENDIF
+      END IF
 
       IF (use_yz_angle) THEN
         p = SQRT(py**2 + pz**2)
@@ -549,7 +549,7 @@ CONTAINS
         IF (py < 0.0_num) theta = SIGN(1.0_num,pz) * pi - theta
         IF ((theta + pi2) < yz_max) theta = theta + pi2
         particle_data(c_dir_yz_angle) = theta
-      ENDIF
+      END IF
 
       IF (use_zx_angle) THEN
         p = SQRT(pz**2 + px**2)
@@ -559,14 +559,14 @@ CONTAINS
         IF (pz < 0.0_num) theta = SIGN(1.0_num,px) * pi - theta
         IF ((theta + pi2) < zx_max) theta = theta + pi2
         particle_data(c_dir_zx_angle) = theta
-      ENDIF
+      END IF
 
       DO idir = 1, c_df_maxdirs
         IF (use_restrictions(idir) &
             .AND. (particle_data(idir) < restrictions(1,idir) &
             .OR. particle_data(idir) > restrictions(2,idir))) &
                 CYCLE out2
-      ENDDO
+      END DO
 
       cell = 1
       DO idim = 1, curdims
@@ -574,10 +574,10 @@ CONTAINS
         cell(idim) = FLOOR((current_data - ranges(1,idim)) / dgrid(idim)) + 1
         IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
-      ENDDO
+      END DO
       IF (.NOT. proc_outside_range) array(cell(1), cell(2), cell(3)) = &
           array(cell(1), cell(2), cell(3)) + part_weight ! * real_space_area
-    ENDDO out2
+    END DO out2
 
     need_reduce = .TRUE.
     IF (use_x .AND. use_y) need_reduce = .FALSE.
@@ -593,7 +593,7 @@ CONTAINS
         ALLOCATE(array_tmp(resolution(1), resolution(2), resolution(3)))
       ELSE
         ALLOCATE(array_tmp(1,1,1))
-      ENDIF
+      END IF
       array_tmp = 0.0_num
       CALL MPI_REDUCE(array, array_tmp, &
           resolution(1)*resolution(2)*resolution(3), mpireal, MPI_SUM, &
@@ -604,30 +604,30 @@ CONTAINS
       CALL MPI_COMM_FREE(comm_new, errcode)
     ELSE
       rank_local = 0
-    ENDIF
+    END IF
 
     ! Create grids
     ALLOCATE(grid1(global_resolution(1)))
     start = ranges(1,1) + 0.5_num * dgrid(1)
     DO idir = 1, global_resolution(1)
       grid1(idir) = start + (idir - 1) * dgrid(1)
-    ENDDO
+    END DO
 
     IF (curdims >= 2) THEN
       ALLOCATE(grid2(global_resolution(2)))
       start = ranges(1,2) + 0.5_num * dgrid(2)
       DO idir = 1, global_resolution(2)
         grid2(idir) = start + (idir - 1) * dgrid(2)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (curdims >= 3) THEN
       ALLOCATE(grid3(global_resolution(3)))
       start = ranges(1,3) + 0.5_num * dgrid(3)
       DO idir = 1, global_resolution(3)
         grid3(idir) = start + (idir - 1) * dgrid(3)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     var_name = TRIM(name) // '/' // TRIM(io_list(species)%name)
 
@@ -644,17 +644,17 @@ CONTAINS
         CALL sdf_write_srl_plain_mesh(sdf_handle, &
             'grid_full/' // TRIM(var_name), 'Grid_Full/' // TRIM(var_name), &
             grid1, grid2, grid3, convert, labels, units)
-      ENDIF
+      END IF
       IF (parallel(1)) grid1 = grid1 - ranges(1,1)
       IF (parallel(2)) grid2 = grid2 - ranges(1,2)
       IF (parallel(3)) grid3 = grid3 - ranges(1,3)
-    ENDIF
+    END IF
 
     IF (convert) THEN
       mpireal_new = MPI_REAL4
     ELSE
       mpireal_new = mpireal
-    ENDIF
+    END IF
 
     IF (curdims == 1) THEN
       CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid/' // TRIM(var_name), &
@@ -675,7 +675,7 @@ CONTAINS
       DEALLOCATE(grid1, grid2, grid3)
       new_type = create_3d_array_subtype(mpireal_new, resolution, &
           global_resolution, start_local)
-    ENDIF
+    END IF
 
     IF (rank_local == 0) THEN
       CALL MPI_TYPE_CONTIGUOUS(resolution(1) * resolution(2) * resolution(3), &
@@ -687,7 +687,7 @@ CONTAINS
       CALL MPI_TYPE_COMMIT(new_type, errcode)
       CALL MPI_TYPE_CONTIGUOUS(0, mpireal, array_type, errcode)
       CALL MPI_TYPE_COMMIT(array_type, errcode)
-    ENDIF
+    END IF
 
     CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
         'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution, &

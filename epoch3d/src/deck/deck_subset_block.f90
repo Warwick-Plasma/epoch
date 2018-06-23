@@ -48,8 +48,8 @@ CONTAINS
       DO i = 1, n_subsets
         ALLOCATE(subset_list(i)%use_species(n_species))
         subset_list(i)%use_species = .FALSE.
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE subset_deck_initialise
 
@@ -64,7 +64,7 @@ CONTAINS
 
       DO i = 1, n_subsets
         subset_list(i)%name = subset_names(i)
-      ENDDO
+      END DO
       DEALLOCATE(subset_names)
     ELSE
       DEALLOCATE(subset_blocks)
@@ -81,11 +81,11 @@ CONTAINS
             PRINT*, 'Skip and spatial restrictions specified for ', &
                 TRIM(subset_list(i)%name), &
                 ': field variables will not be trimmmed'
-          ENDIF
+          END IF
           subset_list(i)%space_restrictions = .FALSE.
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
   END SUBROUTINE subset_deck_finalise
 
@@ -116,11 +116,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Restriction block number ', TRIM(id_string), &
               ' has no "name" element.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       check_block = c_err_missing_elements
-    ENDIF
+    END IF
 
   END SUBROUTINE subset_block_end
 
@@ -139,13 +139,13 @@ CONTAINS
       IF (got_name) THEN
         errcode = c_err_preset_element
         RETURN
-      ENDIF
+      END IF
       got_name = .TRUE.
       IF (deck_state /= c_ds_first) RETURN
       CALL grow_array(subset_blocks, current_block)
       subset_blocks(current_block) = subset_number_from_name(value)
       RETURN
-    ENDIF
+    END IF
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -154,170 +154,170 @@ CONTAINS
           as_real_print(value, element, errcode)
       subset_list(subset_id)%use_random = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gamma_min')) THEN
       subset_list(subset_id)%gamma_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_gamma_min = .TRUE.
       subset_list(subset_id)%use_gamma = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gamma_max')) THEN
       subset_list(subset_id)%gamma_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_gamma_max = .TRUE.
       subset_list(subset_id)%use_gamma = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'x_min')) THEN
       subset_list(subset_id)%x_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_x_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'x_max')) THEN
       subset_list(subset_id)%x_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_x_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'y_min')) THEN
       subset_list(subset_id)%y_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_y_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'y_max')) THEN
       subset_list(subset_id)%y_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_y_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'z_min')) THEN
       subset_list(subset_id)%z_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_z_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'z_max')) THEN
       subset_list(subset_id)%z_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_z_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'px_min')) THEN
       subset_list(subset_id)%px_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_px_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'px_max')) THEN
       subset_list(subset_id)%px_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_px_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'py_min')) THEN
       subset_list(subset_id)%py_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_py_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'py_max')) THEN
       subset_list(subset_id)%py_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_py_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'pz_min')) THEN
       subset_list(subset_id)%pz_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_pz_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'pz_max')) THEN
       subset_list(subset_id)%pz_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_pz_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'weight_min')) THEN
       subset_list(subset_id)%weight_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_weight_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'weight_max')) THEN
       subset_list(subset_id)%weight_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_weight_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'charge_min')) THEN
       subset_list(subset_id)%charge_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_charge_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'charge_max')) THEN
       subset_list(subset_id)%charge_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_charge_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'mass_min')) THEN
       subset_list(subset_id)%mass_min = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_mass_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'mass_max')) THEN
       subset_list(subset_id)%mass_max = as_real_print(value, element, errcode)
       subset_list(subset_id)%use_mass_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'id_min')) THEN
       subset_list(subset_id)%id_min = as_integer_print(value, element, errcode)
       subset_list(subset_id)%use_id_min = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'id_max')) THEN
       subset_list(subset_id)%id_max = as_integer_print(value, element, errcode)
       subset_list(subset_id)%use_id_max = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dumpmask')) THEN
       subset_list(subset_id)%mask = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'skip')) THEN
       subset_list(subset_id)%skip_dir = &
           as_integer_print(value, element, errcode) + 1
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'skip_x')) THEN
       subset_list(subset_id)%skip_dir(1) = &
           as_integer_print(value, element, errcode) + 1
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'skip_y')) THEN
       subset_list(subset_id)%skip_dir(2) = &
           as_integer_print(value, element, errcode) + 1
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'skip_z')) THEN
       subset_list(subset_id)%skip_dir(3) = &
           as_integer_print(value, element, errcode) + 1
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
@@ -331,13 +331,13 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to apply subset to non existant ', &
                   'species ', ispecies
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           errcode = c_err_bad_value
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -365,8 +365,8 @@ CONTAINS
       IF (str_cmp(name, subset_names(i))) THEN
         subset_number_from_name = i
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
     n_subsets = n_subsets + 1
     CALL grow_array(subset_names, n_subsets)
     subset_names(n_subsets) = TRIM(name)
@@ -438,7 +438,7 @@ CONTAINS
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_subsets
 

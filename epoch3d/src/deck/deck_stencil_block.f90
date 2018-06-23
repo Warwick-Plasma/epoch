@@ -34,7 +34,7 @@ CONTAINS
 
     IF (deck_state == c_ds_first) THEN
       dt_set = .FALSE.
-    ENDIF
+    END IF
 
   END SUBROUTINE stencil_deck_initialise
 
@@ -70,68 +70,68 @@ CONTAINS
     IF (str_cmp(element, 'betaxy')) THEN
       betaxy = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betayx')) THEN
       betayx = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betaxz')) THEN
       betaxz = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betazx')) THEN
       betazx = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betayz')) THEN
       betayz = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betazy')) THEN
       betazy = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammax')) THEN
       gammax = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammay')) THEN
       gammay = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammaz')) THEN
       gammaz = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltax')) THEN
       deltax = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltay')) THEN
       deltay = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltaz')) THEN
       deltaz = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dt')) THEN
       dt_custom = as_real_print(value, element, errcode)
       dt_set = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -149,7 +149,7 @@ CONTAINS
 
     IF (.NOT. dt_set) THEN
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
   END FUNCTION stencil_block_check
 

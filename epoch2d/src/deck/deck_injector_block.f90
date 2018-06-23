@@ -87,7 +87,7 @@ CONTAINS
       boundary_set = .TRUE.
       CALL init_injector(boundary, working_injector)
       RETURN
-    ENDIF
+    END IF
 
     IF (.NOT. boundary_set) THEN
       IF (rank == 0) THEN
@@ -95,101 +95,101 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Cannot set injector properties before boundary is set'
-        ENDDO
+        END DO
         CALL abort_code(c_err_required_element_not_set)
-      ENDIF
+      END IF
       extended_error_string = 'boundary'
       errcode = c_err_required_element_not_set
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'species')) THEN
       working_injector%species = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 't_start')) THEN
       working_injector%t_start = as_time_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 't_end')) THEN
       working_injector%t_end = as_time_print(value, element, errcode)
       working_injector%has_t_end = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'use_flux_maxwellian')) THEN
       working_injector%use_flux_injector = as_logical_print(value, element, &
           errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'npart_per_cell')) THEN
       working_injector%npart_per_cell = as_integer_print(value, element, &
           errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'density_min')) THEN
       working_injector%density_min = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'density')) THEN
       CALL initialise_stack(working_injector%density_function)
       CALL tokenize(value, working_injector%density_function, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'temp_x')) THEN
       i = 1
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'temp_y')) THEN
       i = 2
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'temp_z')) THEN
       i = 3
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'temp')) THEN
       DO i = 1, 3
         CALL initialise_stack(working_injector%temperature_function(i))
         CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      ENDDO
+      END DO
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'drift_x')) THEN
       i = 1
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'drift_y')) THEN
       i = 2
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'drift_z')) THEN
       i = 3
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -210,28 +210,28 @@ CONTAINS
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => injector_x_max
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => injector_y_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => injector_y_max
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     IF (error /= 0) THEN
       IF (rank == 0) THEN
@@ -242,10 +242,10 @@ CONTAINS
               WRITE(io,*) 'Must define a species for every injector'
           IF (IAND(error, 2) /= 0) &
               WRITE(io,*) 'Must define a density for every injector'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
   END FUNCTION injector_block_check
 

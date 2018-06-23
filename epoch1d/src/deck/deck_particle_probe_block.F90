@@ -82,10 +82,10 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) '"probe" block does not have a "name" entry.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_required_element_not_set)
-    ENDIF
+    END IF
 
     discard = .NOT.(got_point .AND. got_normal)
 
@@ -97,8 +97,8 @@ CONTAINS
           WRITE(io,*) 'Position of probe "' // TRIM(working_probe%name) &
               // '" ', 'not fully specified. ', 'It will be discarded.'
           WRITE(io,*) 'Both "point" and "normal" are required.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       DEALLOCATE(working_probe)
       NULLIFY(working_probe)
@@ -107,7 +107,7 @@ CONTAINS
       working_probe%normal = SIGN(1.0_num, working_probe%normal)
 
       CALL attach_probe(working_probe)
-    ENDIF
+    END IF
 
   END SUBROUTINE probe_block_end
 
@@ -128,19 +128,19 @@ CONTAINS
     IF (str_cmp(element, 'dumpmask') .OR. str_cmp(element, 'dump')) THEN
       working_probe%dumpmask = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'point') .OR. str_cmp(element, 'probe_point')) THEN
       got_point = .TRUE.
       working_probe%point = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'normal')) THEN
       got_normal = .TRUE.
       working_probe%normal = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'left_to_right')) THEN
       got_normal = as_logical_print(value, element, errcode)
@@ -148,10 +148,10 @@ CONTAINS
         working_probe%normal = 1.0_num
       ELSE
         working_probe%normal = -1.0_num
-      ENDIF
+      END IF
       got_normal = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'include_species') &
         .OR. str_cmp(element, 'probe_species')) THEN
@@ -166,30 +166,30 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to attach probe to non existant species ', &
                   ispecies
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           errcode = c_err_bad_value
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'ek_min')) THEN
       working_probe%ek_min = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'ek_max')) THEN
       working_probe%ek_max = as_real_print(value, element, errcode)
       IF (working_probe%ek_max < 0) working_probe%ek_max = HUGE(1.0_num)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'name')) THEN
       got_name = .TRUE.
       working_probe%name = TRIM(value)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
