@@ -127,7 +127,7 @@ CONTAINS
       simplify_deck = .TRUE.
       print_deck_constants = .FALSE.
       allow_missing_restart = .FALSE.
-      print_eta_string = .FALSE.
+      print_eta_string = .TRUE.
       use_current_correction = .FALSE.
       use_particle_count_update = .FALSE.
       use_accurate_n_zeros = .FALSE.
