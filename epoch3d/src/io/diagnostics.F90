@@ -237,8 +237,16 @@ CONTAINS
       IF (rank == 0 .AND. stdout_frequency > 0 &
           .AND. MOD(step, stdout_frequency) == 0) THEN
         timer_walltime = MPI_WTIME()
-        elapsed_time = old_elapsed_time + timer_walltime - walltime_start
-        CALL create_timestring(elapsed_time, timestring)
+        elapsed_time = timer_walltime - walltime_start
+
+        IF (reset_walltime) THEN
+          CALL create_timestring(elapsed_time, timestring)
+          elapsed_time = elapsed_time + old_elapsed_time
+        ELSE
+          elapsed_time = elapsed_time + old_elapsed_time
+          CALL create_timestring(elapsed_time, timestring)
+        END IF
+
         IF (print_eta_string) THEN
           eta_timestring = ''
           IF (time > 0.0_num) THEN
