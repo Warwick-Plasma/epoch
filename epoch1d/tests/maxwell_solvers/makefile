@@ -1,4 +1,3 @@
-
 default:
 	$(MAKE) -C yee
 	$(MAKE) -C lehe_x
@@ -6,4 +5,3 @@ default:
 clean:
 	$(MAKE) -C yee    clean
 	$(MAKE) -C lehe_x clean
-
