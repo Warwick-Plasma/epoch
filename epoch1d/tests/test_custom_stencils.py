@@ -49,10 +49,10 @@ t0 = 8 * femto  # s
 k_l = 2*np.pi/lambda_l
 dx = (x_max-x_min)/nx
 
-dt = dt_multiplier * dx / c
+dt_yee = dt_multiplier * dx / c
 
-vg_lehe = c*(1.0 + 2.0*(1.0-c*dt/dx)*(k_l*dx/2.0)**2)
-vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt/dx*np.sin(k_l*dx/2.0))**2)
+vg_lehe = c*(1.0 + 2.0*(1.0-c*dt_yee/dx)*(k_l*dx/2.0)**2)
+vg_yee = c*np.cos(k_l*dx/2.0)/np.sqrt(1-(c*dt_yee/dx*np.sin(k_l*dx/2.0))**2)
 
 # calculate_omega.py --dim 2 --symmetric --params 0.95 0.125
 # -0.013364149548965119 --physical-dx 1e-7 --laser-wavelength 5e-7
@@ -74,7 +74,8 @@ def xt(sdffile, key='Electric Field/Ey'):
 
 
 class test_custom_stencils(SimTest):
-    solvers = ['lehe_x', 'lehe_custom', 'optimized']
+    solvers = ['optimized']
+    #solvers = ['lehe_x', 'lehe_custom', 'optimized']
 
     @classmethod
     def setUpClass(cls):
@@ -95,24 +96,16 @@ class test_custom_stencils(SimTest):
         key = 'Electric Field/Ey'
         fig, axarr = plt.subplots(2, 4, figsize=(16, 9))
 
-        for (dump_id, ax) in enumerate(np.ravel(axarr)):
-            data_lehe_custom = self.dumps['lehe_custom'][dump_id]
-            data_lehe_x = self.dumps['lehe_x'][dump_id]
-            data_optimized = self.dumps['optimized'][dump_id]
-
-            axis = data_optimized[key].grid_mid.data[0]*1e6
-            array_optimized = data_optimized[key].data
-            array_lehe_x = data_lehe_x[key].data
-            array_lehe_custom = data_lehe_custom[key].data
-            array_optimized = data_optimized[key].data
-            ax.plot(axis, array_lehe_x, label='Lehe (Builtin)', linewidth=1)
-            ax.plot(axis, array_lehe_custom, label='Lehe (Custom)',
-                    linewidth=1, linestyle='dotted')
-            ax.plot(axis, array_optimized, label='Optimized', linewidth=1)
-            ax.set_title('{:2.1f} fs'.format(
-                         data_optimized['Header']['time']*1e15))
+        for i, ax in enumerate(np.ravel(axarr)):
+            dump0 = self.dumps[self.solvers[0]][i]
+            axis = dump0[key].grid_mid.data[0]*1e6
+            for solver in self.solvers:
+                array = self.dumps[solver][i][key].data
+                ax.plot(axis, array, label=solver, linewidth=1)
+            ax.set_title('{:2.1f} fs'.format(dump0['Header']['time']*1e15))
             ax.set_xlabel(r'x [${\mu}\mathrm{m}$]')
-            ax.legend()
+            ax.legend(loc='best')
+
         fig.suptitle(key)
 
         fig.tight_layout()
