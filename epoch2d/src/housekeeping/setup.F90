@@ -1074,6 +1074,8 @@ CONTAINS
               EXIT
             END IF
           END DO
+        ELSE IF (str_cmp(block_id, 'elapsed_time')) THEN
+          CALL sdf_read_srl(sdf_handle, old_elapsed_time)
         END IF
       CASE(c_blocktype_plain_mesh)
         IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
