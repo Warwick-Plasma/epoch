@@ -58,7 +58,7 @@ CONTAINS
       IF (.NOT.use_old) timer_walltime = MPI_WTIME()
     ELSE
       timer_walltime = MPI_WTIME()
-    ENDIF
+    END IF
 
     timer_first(id) = timer_walltime
 
@@ -79,7 +79,7 @@ CONTAINS
     ELSE
       timer_average(id) = avg_weight1 * timer_time(id) &
           + avg_weight2 * timer_average(id)
-    ENDIF
+    END IF
 
   END SUBROUTINE timer_stop
 
@@ -94,7 +94,7 @@ CONTAINS
       first = .FALSE.
       timer_avg_first(c_timer_step) = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     timer_time(id) = timer_time(c_timer_step) - timer_time(c_timer_io) &
         - timer_time(c_timer_balance)
@@ -105,7 +105,7 @@ CONTAINS
     ELSE
       timer_average(id) = avg_weight1 * timer_time(id) &
           + avg_weight2 * timer_average(id)
-    ENDIF
+    END IF
 
     timer_first = 0.0_num
     timer_time = 0.0_num

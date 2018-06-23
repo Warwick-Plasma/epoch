@@ -46,8 +46,8 @@ CONTAINS
       gf = gx(ix) * gy(iy)
       temp_local = temp_local + gf * temperature(cell_x+ix, cell_y+iy)
       drift_local = drift_local + gf * drift(cell_x+ix, cell_y+iy)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
   END SUBROUTINE params_local
 #endif
@@ -128,8 +128,8 @@ CONTAINS
 
         current => current%next
         ipart = ipart + 1
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 #endif
 
   END SUBROUTINE deltaf_load

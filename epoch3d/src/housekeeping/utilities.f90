@@ -42,18 +42,18 @@ CONTAINS
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
       tmp_array(i) = array(i)
-    ENDDO
+    END DO
 
     new_size = 2 * old_size
     IF (new_size < idx) THEN
       new_size = idx + 1
-    ENDIF
+    END IF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
     DO i = 1, old_size
       array(i) = tmp_array(i)
-    ENDDO
+    END DO
 
     DEALLOCATE(tmp_array)
 
@@ -74,18 +74,18 @@ CONTAINS
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
       tmp_array(i) = array(i)
-    ENDDO
+    END DO
 
     new_size = 2 * old_size
     IF (new_size < idx) THEN
       new_size = idx + 1
-    ENDIF
+    END IF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
     DO i = 1, old_size
       array(i) = tmp_array(i)
-    ENDDO
+    END DO
 
     DEALLOCATE(tmp_array)
 
@@ -106,18 +106,18 @@ CONTAINS
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
       tmp_array(i) = array(i)
-    ENDDO
+    END DO
 
     new_size = 2 * old_size
     IF (new_size < idx) THEN
       new_size = idx + 1
-    ENDIF
+    END IF
     DEALLOCATE(array)
     ALLOCATE(array(new_size))
 
     DO i = 1, old_size
       array(i) = tmp_array(i)
-    ENDDO
+    END DO
 
     DEALLOCATE(tmp_array)
 
@@ -138,13 +138,13 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'grow_real_array2d can only grow an array in one dimension'
         RETURN
-      ENDIF
+      END IF
       idir = 1
       idxy = idx
     ELSE
       idir = 2
       idxy = idy
-    ENDIF
+    END IF
 
     IF (idxy <= old_size(idir)) RETURN
 
@@ -153,21 +153,21 @@ CONTAINS
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
       tmp_array(i,j) = array(i,j)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
     new_size(idir) = 2 * old_size(idir)
     IF (new_size(idir) < idxy) THEN
       new_size(idir) = idxy + 1
-    ENDIF
+    END IF
     DEALLOCATE(array)
     ALLOCATE(array(new_size(1),new_size(2)))
 
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
       array(i,j) = tmp_array(i,j)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
     DEALLOCATE(tmp_array)
 
@@ -188,13 +188,13 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'grow_integer_array2d can only grow an array in one dimension'
         RETURN
-      ENDIF
+      END IF
       idir = 1
       idxy = idx
     ELSE
       idir = 2
       idxy = idy
-    ENDIF
+    END IF
 
     IF (idxy <= old_size(idir)) RETURN
 
@@ -203,21 +203,21 @@ CONTAINS
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
       tmp_array(i,j) = array(i,j)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
     new_size(idir) = 2 * old_size(idir)
     IF (new_size(idir) < idxy) THEN
       new_size(idir) = idxy + 1
-    ENDIF
+    END IF
     DEALLOCATE(array)
     ALLOCATE(array(new_size(1),new_size(2)))
 
     DO j = 1, old_size(2)
     DO i = 1, old_size(1)
       array(i,j) = tmp_array(i,j)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
 
     DEALLOCATE(tmp_array)
 
@@ -239,9 +239,9 @@ CONTAINS
       IF (newcode == 0) THEN
         newcode = i
         EXIT
-      ENDIF
+      END IF
       newcode = newcode / 2
-    ENDDO
+    END DO
 
     CALL MPI_ABORT(MPI_COMM_WORLD, newcode, ierr)
 

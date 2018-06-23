@@ -33,8 +33,8 @@ CONTAINS
       ELSE
         factorial = HUGE(0.0_num)
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
     RETURN
 
   END FUNCTION factorial
@@ -207,8 +207,8 @@ CONTAINS
       ELSE
         gamma_fn = c_largest_number
         RETURN
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 !----------------------------------------------------------------------
 !  Argument is positive
 !----------------------------------------------------------------------
@@ -221,7 +221,7 @@ CONTAINS
       ELSE
         gamma_fn = c_largest_number
         RETURN
-      ENDIF
+      END IF
     ELSEIF (y < 12.0_num) THEN
       y1 = y
       IF (y < 1.0_num) THEN
@@ -237,7 +237,7 @@ CONTAINS
         n = INT(y) - 1
         y = y - REAL(n, num)
         z = y - 1.0_num
-      ENDIF
+      END IF
 !----------------------------------------------------------------------
 !  Evaluate approximation for 1.0 < argument < 2.0
 !----------------------------------------------------------------------
@@ -246,7 +246,7 @@ CONTAINS
       DO i = 1, 8
          xnum = (xnum + p(i)) * z
          xden = xden * z + q(i)
-      ENDDO
+      END DO
       res = xnum / xden + 1.0_num
       IF (y1 < y) THEN
 !----------------------------------------------------------------------
@@ -260,8 +260,8 @@ CONTAINS
         DO i = 1, n
           res = res * y
           y = y + 1.0_num
-        ENDDO
-      ENDIF
+        END DO
+      END IF
     ELSE
 !----------------------------------------------------------------------
 !  Evaluate for argument >= 12.0,
@@ -271,15 +271,15 @@ CONTAINS
         sum = c(7)
         DO i = 1, 6
           sum = sum / ysq + c(i)
-        ENDDO
+        END DO
         sum = sum / y - y + sqrtpi
         sum = sum + (y - 0.5_num) * LOG(y)
         res = EXP(sum)
       ELSE
         gamma_fn = c_largest_number
         RETURN
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 !----------------------------------------------------------------------
 !  Final adjustments and return
 !----------------------------------------------------------------------
@@ -491,7 +491,7 @@ CONTAINS
       IF (enu > 0.5_num) THEN
         k = 1
         enu = enu - 1.0_num
-      ENDIF
+      END IF
       twonu = enu + enu
       iend = nb + k - 1
       c = enu * enu
@@ -510,7 +510,7 @@ CONTAINS
           d2 = c * d2 + p(i+1)
           t1 = c * t1 + q(i)
           t2 = c * t2 + q(i+1)
-        ENDDO
+        END DO
         d1 = enu * d1
         t1 = enu * t1
         f1 = LOG(ex)
@@ -526,17 +526,17 @@ CONTAINS
         DO i = 1, 4
           d1 = c * d1 + r(i)
           t1 = c * t1 + s(i)
-        ENDDO
+        END DO
         IF (ABS(f1) <= 0.5_num) THEN
           f1 = f1 * f1
           d2 = 0.0_num
           DO i = 1, 6
             d2 = f1 * d2 + t(i)
-          ENDDO
+          END DO
           d2 = f0 + f0 * f1 * d2
         ELSE
           d2 = SINH(f1) / enu
-        ENDIF
+        END IF
         f0 = d2 - enu * d1 / (t1 * p0)
         IF (ex <= tinyx) THEN
 !--------------------------------------------------------------------
@@ -556,16 +556,16 @@ CONTAINS
             IF (bk(1) >= c / ratio) THEN
               rkbesl = bk(nb)
               RETURN
-            ENDIF
+            END IF
             bk(1) = ratio * bk(1) / ex
             twonu = twonu + 2.0_num
             ratio = twonu
-          ENDIF
+          END IF
           ncalc = 1
           IF (nb == 1) THEN
             rkbesl = bk(nb)
             RETURN
-          ENDIF
+          END IF
 !--------------------------------------------------------------------
 !  Calculate  K(ALPHA+L,X)/K(ALPHA+L-1,X),  L  =  1, 2, ... , NB-1
 !--------------------------------------------------------------------
@@ -574,20 +574,20 @@ CONTAINS
             IF (ratio >= c)  THEN
               rkbesl = bk(nb)
               RETURN
-            ENDIF
+            END IF
             bk(i) = ratio / ex
             twonu = twonu + 2.0_num
             ratio = twonu
-          ENDDO
+          END DO
           ncalc = 1
           DO i = 2, nb
             IF (bk(ncalc) >= c_largest_number / bk(i)) THEN
               rkbesl = bk(nb)
               RETURN
-            ENDIF
+            END IF
             bk(i) = bk(ncalc) * bk(i)
             ncalc = i
-          ENDDO
+          END DO
           rkbesl = bk(nb)
           RETURN
         ELSE
@@ -618,16 +618,16 @@ CONTAINS
             bk1 = bk1 + t1
             bk2 = bk2 + t2
             run = (ABS(t1 / (f1 + bk1)) > eps) .OR. (ABS(t2 / (f2 + bk2)) > eps)
-          ENDDO
+          END DO
           bk1 = f1 + bk1
           bk2 = 2.0_num * (f2 + bk2) / ex
           IF (ize == 2) THEN
             d1 = EXP(ex)
             bk1 = bk1 * d1
             bk2 = bk2 * d1
-          ENDIF
+          END IF
           wminf = estf(1) * ex + estf(2)
-        ENDIF
+        END IF
       ELSEIF (eps * ex > 1.0_num) THEN
 !--------------------------------------------------------------------
 !  X > 1/EPS
@@ -636,7 +636,7 @@ CONTAINS
         bk1 = 1.0_num / (d * SQRT(ex))
         DO i = 1, nb
           bk(i) = bk1
-        ENDDO
+        END DO
         rkbesl = bk(nb)
         RETURN
       ELSE
@@ -659,7 +659,7 @@ CONTAINS
             d1 = d1 - 2.0_num
             d2 = d2 - d1
             ratio = (d3 + d2) / (twox + d1 - ratio)
-          ENDDO
+          END DO
 !--------------------------------------------------------------------
 !  Calculation of I(|ALPHA|,X) and I(|ALPHA|+1,X) by backward
 !    recurrence and K(ALPHA,X) from the wronskian
@@ -679,14 +679,14 @@ CONTAINS
             f2 = f2 / ex + f1
             f1 = f0
             f0 = f2
-          ENDDO
+          END DO
           f1 = (d3 + 2.0_num) * f0 / ex + f1
           d1 = 0.0_num
           t1 = 1.0_num
           DO i = 1, 7
             d1 = c * d1 + p(i)
             t1 = c * t1 + q(i)
-          ENDDO
+          END DO
           p0 = EXP(c * (a + c * (p(8) - c * d1 / t1) - log(ex))) / ex
           f2 = (c + 0.5_num - ratio) * f1 / ex
           bk1 = p0 + (d3 * f0 - f2 + f0 + blpha) / (f2 + f1 + f0) * p0
@@ -708,17 +708,17 @@ CONTAINS
             d2 = d2 - d1
             ratio = (d3 + d2) / (twox + d1 - ratio)
             blpha = (ratio + ratio * blpha) / dm
-          ENDDO
+          END DO
           bk1 = 1.0_num / ((d + d * blpha) * SQRT(ex))
           IF (ize == 1) bk1 = bk1 * EXP(-ex)
           wminf = estf(5) * (ex - ABS(ex - estf(7))) + estf(6)
-        ENDIF
+        END IF
 !--------------------------------------------------------------------
 !  Calculation of K(ALPHA+1,X) from K(ALPHA,X) and
 !    K(ALPHA+1,X)/K(ALPHA,X)
 !--------------------------------------------------------------------
         bk2 = bk1 + bk1 * (enu + 0.5_num - ratio) / ex
-      ENDIF
+      END IF
 !--------------------------------------------------------------------
 !  Calculation of 'NCALC', K(ALPHA+I,X), I  =  0, 1, ... , NCALC-1,
 !  K(ALPHA+I,X)/K(ALPHA+I-1,X), I  =  NCALC, NCALC+1, ... , NB-1
@@ -728,13 +728,13 @@ CONTAINS
       IF (iend == 0) THEN
         rkbesl = bk(nb)
         RETURN
-      ENDIF
+      END IF
       j = 2 - k
       IF (j > 0) bk(j) = bk2
       IF (iend == 1) THEN
         rkbesl = bk(nb)
         RETURN
-      ENDIF
+      END IF
       m = MIN(INT(wminf - enu), iend)
       itemp = 1
       DO i = 2, m
@@ -747,12 +747,12 @@ CONTAINS
         itemp = i
         j = j + 1
         IF (j > 0) bk(j) = bk2
-      ENDDO
+      END DO
       m = itemp
       IF (m == iend) THEN
         rkbesl = bk(nb)
         RETURN
-      ENDIF
+      END IF
       ratio = bk2 / bk1
       mplus1 = m + 1
       ncalc = -1
@@ -766,26 +766,26 @@ CONTAINS
           IF (bk2 >= c_largest_number / ratio) THEN
             rkbesl = bk(nb)
             RETURN
-          ENDIF
+          END IF
           bk2 = ratio * bk2
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       ncalc = MAX(mplus1 - k, 1)
       IF (ncalc == 1) bk(1) = bk2
       IF (nb == 1) THEN
         rkbesl = bk(nb)
         RETURN
-      ENDIF
+      END IF
       j = ncalc + 1
       DO i = j, nb
         IF (bk(ncalc) >= c_largest_number / bk(i)) THEN
           rkbesl = bk(nb)
           RETURN
-        ENDIF
+        END IF
         bk(i) = bk(ncalc) * bk(i)
         ncalc = i
-      ENDDO
-    ENDIF
+      END DO
+    END IF
     rkbesl = bk(nb)
     RETURN
 !---------- Last line of rkbesl ----------

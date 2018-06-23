@@ -74,11 +74,11 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'name not set for "dist_fn" block.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_missing_elements)
       RETURN
-    ENDIF
+    END IF
 
     IF (working_block%ndims == -1) THEN
       IF (rank == 0) THEN
@@ -87,11 +87,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'ndims not set for "dist_fn" block "' &
               // TRIM(working_block%name) // '"'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_missing_elements)
       RETURN
-    ENDIF
+    END IF
 
     IF (ndims > working_block%ndims) THEN
       IF (rank == 0) THEN
@@ -102,11 +102,11 @@ CONTAINS
               // TRIM(working_block%name) // '"'
           WRITE(io,*) 'exceed the number of dimensions for the ', &
               'distribution function.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_bad_value)
       RETURN
-    ENDIF
+    END IF
 
     DO i = 1, working_block%ndims
       dir = working_block%directions(i)
@@ -131,7 +131,7 @@ CONTAINS
       IF (r2 < -pi) r2 = r2 + pi2
       IF (r2 <=  r1) r2 = r2 + pi2
       working_block%ranges(2,i) = r2
-    ENDDO
+    END DO
 
     CALL attach_dist_fn(working_block)
 
@@ -157,7 +157,7 @@ CONTAINS
       working_block%name = value
       got_name = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'ndims')) THEN
       work = as_integer_print(value, element, errcode)
@@ -169,22 +169,22 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Distribution functions can only be 1D, 2D or 3D'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         errcode = c_err_bad_value
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dumpmask')) THEN
       working_block%dumpmask = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'output_deltaf')) THEN
       working_block%output_deltaf = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_x')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -192,7 +192,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_x) = .TRUE.
       working_block%restrictions(:,c_dir_x) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_y')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -200,7 +200,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_y) = .TRUE.
       working_block%restrictions(:,c_dir_y) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_z')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -208,7 +208,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_z) = .TRUE.
       working_block%restrictions(:,c_dir_z) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_px')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -216,7 +216,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_px) = .TRUE.
       working_block%restrictions(:,c_dir_px) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_py')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -224,7 +224,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_py) = .TRUE.
       working_block%restrictions(:,c_dir_py) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_pz')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -232,7 +232,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_pz) = .TRUE.
       working_block%restrictions(:,c_dir_pz) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_en')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -240,7 +240,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_en) = .TRUE.
       working_block%restrictions(:,c_dir_en) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_gamma_m1')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -248,7 +248,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_gamma_m1) = .TRUE.
       working_block%restrictions(:,c_dir_gamma_m1) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_xy_angle')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -256,7 +256,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_xy_angle) = .TRUE.
       working_block%restrictions(:,c_dir_xy_angle) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_yz_angle')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -264,7 +264,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_yz_angle) = .TRUE.
       working_block%restrictions(:,c_dir_yz_angle) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_zx_angle')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -272,7 +272,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_zx_angle) = .TRUE.
       working_block%restrictions(:,c_dir_zx_angle) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'restrict_mod_p')) THEN
       CALL split_range(value, work1, work2, errcode)
@@ -280,7 +280,7 @@ CONTAINS
       working_block%use_restrictions(c_dir_mod_p) = .TRUE.
       working_block%restrictions(:,c_dir_mod_p) = (/work1, work2/)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'include_species')) THEN
       ispecies = as_integer_print(value, element, errcode)
@@ -294,13 +294,13 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Unable to apply dist_fn to non existant species ', &
                   ispecies
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           errcode = c_err_bad_value
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     CALL split_off_int(element, part1, part2, errcode)
     IF (part2 > ndims) ndims = part2
@@ -308,13 +308,13 @@ CONTAINS
     IF (errcode /= c_err_none) THEN
       errcode = c_err_unknown_element
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(part1, 'direction')) THEN
       working_block%directions(part2) = &
           as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(part1, 'range')) THEN
       CALL split_range(TRIM(value), work1, work2, errcode)
@@ -322,17 +322,17 @@ CONTAINS
         errcode = IAND(errcode, NOT(c_err_bad_value))
         errcode = IOR(errcode, c_err_warn_bad_value)
         RETURN
-      ENDIF
+      END IF
       working_block%ranges(1,part2) = work1
       working_block%ranges(2,part2) = work2
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(part1, 'resolution')) THEN
       working_block%resolution(part2) = &
           as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 

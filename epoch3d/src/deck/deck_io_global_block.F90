@@ -56,20 +56,20 @@ CONTAINS
     IF (got_dump_first) THEN
       DO i = 1, n_io_blocks
         io_block_list(i)%dump_first = dump_first
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (got_dump_last) THEN
       DO i = 1, n_io_blocks
         io_block_list(i)%dump_last = dump_last
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (got_dump_first_after_restart) THEN
       DO i = 1, n_io_blocks
         io_block_list(i)%dump_first_after_restart = dump_first_after_restart
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE io_global_deck_finalise
 
@@ -88,10 +88,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'You cannot use an "output_global" block in ', &
               'conjunction with ', 'unnamed "output" blocks.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_preset_element)
-    ENDIF
+    END IF
 
   END SUBROUTINE io_global_block_start
 
@@ -115,67 +115,67 @@ CONTAINS
     IF (str_cmp(element, 'force_first_to_be_restartable')) THEN
       force_first_to_be_restartable = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'force_final_to_be_restartable') &
         .OR. str_cmp(element, 'force_last_to_be_restartable')) THEN
       force_final_to_be_restartable = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'use_offset_grid')) THEN
       use_offset_grid = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'time_start')) THEN
       time_start = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'time_stop')) THEN
       time_stop = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'nstep_start')) THEN
       nstep_start = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'nstep_stop')) THEN
       nstep_stop = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dump_first')) THEN
       got_dump_first = .TRUE.
       dump_first = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dump_last') &
         .OR. str_cmp(element, 'dump_final')) THEN
       got_dump_last = .TRUE.
       dump_last = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dump_first_after_restart')) THEN
       got_dump_first_after_restart = .TRUE.
       dump_first_after_restart = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'sdf_buffer_size')) THEN
       sdf_buffer_size = as_long_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'filesystem')) THEN
       filesystem = TRIM(value) // ':'
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 

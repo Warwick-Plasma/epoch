@@ -46,7 +46,7 @@ CONTAINS
     ELSEIF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
         .OR. chr == '/' .OR. chr == '*' .OR. chr == '^') THEN
       char_type = c_char_opcode
-    ENDIF
+    END IF
 
   END FUNCTION char_type
 
@@ -69,7 +69,7 @@ CONTAINS
       iblock%value = 0
       iblock%numerical_data = 0.0_num
       RETURN
-    ENDIF
+    END IF
 
     work = as_constant(name)
     IF (work /= 0) THEN
@@ -77,7 +77,7 @@ CONTAINS
       iblock%ptype = c_pt_constant
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_deck_constant(name)
     IF (work /= 0) THEN
@@ -85,7 +85,7 @@ CONTAINS
       iblock%ptype = c_pt_deck_constant
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_default_constant(name)
     IF (work /= 0) THEN
@@ -93,7 +93,7 @@ CONTAINS
       iblock%ptype = c_pt_default_constant
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_operator(name)
     IF (work /= 0) THEN
@@ -101,7 +101,7 @@ CONTAINS
       iblock%ptype = c_pt_operator
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_function(name)
     IF (work /= 0) THEN
@@ -109,7 +109,7 @@ CONTAINS
       iblock%ptype = c_pt_function
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_parenthesis(name)
     IF (work /= 0) THEN
@@ -117,7 +117,7 @@ CONTAINS
       iblock%ptype = c_pt_parenthesis
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_species(name)
     IF (work /= 0) THEN
@@ -125,7 +125,7 @@ CONTAINS
       iblock%ptype = c_pt_species
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     work = as_subset(name)
     IF (work /= 0) THEN
@@ -133,14 +133,14 @@ CONTAINS
       iblock%ptype = c_pt_subset
       iblock%value = work
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(name, ',')) THEN
       iblock%ptype = c_pt_separator
       iblock%value = 0
       iblock%numerical_data = 0.0_num
       RETURN
-    ENDIF
+    END IF
 
     value = as_real_simple(name, work)
     IF (IAND(work, c_err_bad_value) == 0) THEN
@@ -148,7 +148,7 @@ CONTAINS
       iblock%ptype = c_pt_variable
       iblock%value = 0
       iblock%numerical_data = value
-    ENDIF
+    END IF
 
   END SUBROUTINE load_block
 
@@ -163,11 +163,11 @@ CONTAINS
 
     IF (str_cmp(name, '(')) THEN
       as_parenthesis = c_paren_left_bracket
-    ENDIF
+    END IF
 
     IF (str_cmp(name, ')')) THEN
       as_parenthesis = c_paren_right_bracket
-    ENDIF
+    END IF
 
   END FUNCTION as_parenthesis
 
@@ -197,7 +197,7 @@ CONTAINS
     IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'deallocate_stack not initialised'
-    ENDIF
+    END IF
 
     stack%stack_point = 0
     stack%stack_size = 0
@@ -242,15 +242,15 @@ CONTAINS
       stack%entries(1:old_size) = old_buffer(1:old_size)
       DO i = old_stack_point+1,stack%stack_size
         CALL initialise_stack_element(stack%entries(i))
-      ENDDO
+      END DO
       DEALLOCATE(old_buffer)
-    ENDIF
+    END IF
 
     n = old_stack_point + 1
     DO i = 1,append%stack_point
       stack%entries(n) = append%entries(i)
       n = n + 1
-    ENDDO
+    END DO
 
     IF (append%is_time_varying) stack%is_time_varying = .TRUE.
 
@@ -272,7 +272,7 @@ CONTAINS
     IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'push_to_stack not initialised'
-    ENDIF
+    END IF
 
     IF (stack%stack_point > stack%stack_size) THEN
       old_size = stack%stack_size
@@ -282,9 +282,9 @@ CONTAINS
       stack%entries(1:old_size) = old_buffer(1:old_size)
       DO i = old_size+1,stack%stack_size
         CALL initialise_stack_element(stack%entries(i))
-      ENDDO
+      END DO
       DEALLOCATE(old_buffer)
-    ENDIF
+    END IF
 
     stack%entries(stack%stack_point) = value
 
@@ -310,7 +310,7 @@ CONTAINS
     IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'pop_to_null not initialised'
-    ENDIF
+    END IF
 
     stack%stack_point = stack%stack_point - 1
 
@@ -326,7 +326,7 @@ CONTAINS
     IF (.NOT.stack%init .AND. rank == 0) THEN
       PRINT*,'*** WARNING ***'
       PRINT*,'pop_from_stack not initialised'
-    ENDIF
+    END IF
 
     value = stack%entries(stack%stack_point)
     stack%stack_point = stack%stack_point - 1
@@ -344,7 +344,7 @@ CONTAINS
     IF (stack%stack_point-offset <= 0) THEN
       PRINT *, 'Unable to snoop stack', stack%stack_point
       STOP
-    ENDIF
+    END IF
 
     value = stack%entries(stack%stack_point-offset)
 
@@ -411,8 +411,8 @@ CONTAINS
         current_pointer = 2
         current(1:1) = expression(i:i)
         current_type = ptype
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
 #ifndef RPN_DECK
     CALL tokenize_subexpression_infix(current, iblock, stack, output, err)
@@ -423,7 +423,7 @@ CONTAINS
 
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
-    ENDDO
+    END DO
     CALL deallocate_stack(stack)
 
     ! Check to see if the expression varies in time
@@ -433,9 +433,9 @@ CONTAINS
         IF (output%entries(i)%value == c_const_time) THEN
           output%is_time_varying = .TRUE.
           EXIT
-        ENDIF
-      ENDIF
-    ENDDO
+        END IF
+      END IF
+    END DO
 
     CALL stack_sanity_check(output)
 
@@ -470,26 +470,26 @@ CONTAINS
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
-        ENDDO
+        END DO
         CALL check_deprecated(current)
         CALL abort_code(c_err_bad_value)
-      ENDIF
+      END IF
       err = c_err_bad_value
       CALL deallocate_stack(stack)
       RETURN
-    ENDIF
+    END IF
 
     IF (iblock%ptype == c_pt_deck_constant) THEN
       const = deck_constant_list(iblock%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (iblock%ptype /= c_pt_parenthesis &
         .AND. iblock%ptype /= c_pt_null) THEN
       last_block_type = iblock%ptype
-    ENDIF
+    END IF
 
     IF (iblock%ptype == c_pt_variable &
         .OR. iblock%ptype == c_pt_constant &
@@ -497,7 +497,7 @@ CONTAINS
         .OR. iblock%ptype == c_pt_species &
         .OR. iblock%ptype == c_pt_subset) THEN
       CALL push_to_stack(output, iblock)
-    ENDIF
+    END IF
 
     IF (iblock%ptype == c_pt_parenthesis) THEN
       IF (iblock%value == c_paren_left_bracket) THEN
@@ -513,20 +513,20 @@ CONTAINS
               CALL stack_snoop(stack, block2, 0)
               IF (block2%ptype == c_pt_function) THEN
                 CALL add_function_to_stack(block2%value, stack, output)
-              ENDIF
-            ENDIF
+              END IF
+            END IF
             EXIT
           ELSE
             CALL pop_to_stack(stack, output)
-          ENDIF
-        ENDDO
-      ENDIF
-    ENDIF
+          END IF
+        END DO
+      END IF
+    END IF
 
     IF (iblock%ptype == c_pt_function) THEN
       ! Just push functions straight onto the stack
       CALL push_to_stack(stack, iblock)
-    ENDIF
+    END IF
 
     IF (iblock%ptype == c_pt_separator) THEN
       DO
@@ -537,11 +537,11 @@ CONTAINS
           IF (block2%value /= c_paren_left_bracket) THEN
             PRINT *, 'Bad function expression'
             STOP
-          ENDIF
+          END IF
           EXIT
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     IF (iblock%ptype == c_pt_operator) THEN
       DO
@@ -550,7 +550,7 @@ CONTAINS
           ! leave loop
           CALL push_to_stack(stack, iblock)
           EXIT
-        ENDIF
+        END IF
         ! stack is not empty so check precedence etc.
         CALL stack_snoop(stack, block2, 0)
         IF (block2%ptype /= c_pt_operator) THEN
@@ -569,7 +569,7 @@ CONTAINS
             ELSE
               CALL push_to_stack(stack, iblock)
               EXIT
-            ENDIF
+            END IF
           ELSE
             IF (opcode_precedence(iblock%value) &
                 < opcode_precedence(block2%value)) THEN
@@ -578,11 +578,11 @@ CONTAINS
             ELSE
               CALL push_to_stack(stack, iblock)
               EXIT
-            ENDIF
-          ENDIF
-        ENDIF
-      ENDDO
-    ENDIF
+            END IF
+          END IF
+        END IF
+      END DO
+    END IF
 
   END SUBROUTINE tokenize_subexpression_infix
 
@@ -613,27 +613,27 @@ CONTAINS
         WRITE(io,*)
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
-      ENDDO
+      END DO
       CALL abort_code(c_err_bad_value)
       err = c_err_bad_value
       CALL deallocate_stack(stack)
       RETURN
-    ENDIF
+    END IF
 
     IF (iblock%ptype /= c_pt_parenthesis &
         .AND. iblock%ptype /= c_pt_null) THEN
       last_block_type = iblock%ptype
       IF (debug_mode) PRINT *, 'Setting', iblock%ptype, TRIM(current)
-    ENDIF
+    END IF
 
     IF (iblock%ptype == c_pt_deck_constant) THEN
       const = deck_constant_list(iblock%value)
       DO ipoint = 1, const%execution_stream%stack_point
         CALL push_to_stack(output, const%execution_stream%entries(ipoint))
-      ENDDO
+      END DO
     ELSE IF (iblock%ptype /= c_pt_null) THEN
       CALL push_to_stack(output, iblock)
-    ENDIF
+    END IF
 
   END SUBROUTINE tokenize_subexpression_rpn
 
@@ -674,18 +674,18 @@ CONTAINS
       CALL copy_stack(species_list(id)%drift_function(2), func_stack)
     ELSE IF (opcode == c_func_driftz) THEN
       CALL copy_stack(species_list(id)%drift_function(3), func_stack)
-    ENDIF
+    END IF
 
     IF (func_stack%stack_point > 0) THEN
       CALL pop_to_null(output)
       CALL pop_to_null(stack)
       DO i = 1, func_stack%stack_point
         CALL push_to_stack(output, func_stack%entries(i))
-      ENDDO
+      END DO
       CALL deallocate_stack(func_stack)
     ELSE
       CALL pop_to_stack(stack, output)
-    ENDIF
+    END IF
 
   END SUBROUTINE add_function_to_stack
 
@@ -705,8 +705,8 @@ CONTAINS
         PRINT *, 'Text :', TRIM(token_list%entries(i)%text)
 #endif
         PRINT *, '---------------'
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE display_tokens
 
@@ -754,18 +754,18 @@ CONTAINS
           CALL do_sanity_check(iblock%value, err)
         ELSE
           CALL do_functions(iblock%value, .FALSE., parameters, err)
-        ENDIF
+        END IF
       ELSE
         ! Not yet implemented. Reset the stack and exit
         CALL eval_reset()
         RETURN
-      ENDIF
+      END IF
 
       IF (err /= c_err_none) THEN
         CALL MPI_ABORT(MPI_COMM_WORLD, err, ierr)
         STOP
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE stack_sanity_check
 

@@ -34,7 +34,7 @@ CONTAINS
     IF (deck_state == c_ds_first) THEN
       qed_table_location = 'src/physics_packages/TABLES'
       use_radiation_reaction = .TRUE.
-    ENDIF
+    END IF
 #endif
 
   END SUBROUTINE qed_deck_initialise
@@ -57,10 +57,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to find QED tables in the ', &
               'directory "' // TRIM(qed_table_location) // '"'
-        ENDDO
+        END DO
         CALL abort_code(c_err_io_error)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (use_qed) need_random_state = .TRUE.
 #else
@@ -71,10 +71,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to set "use_qed=T" in the "qed" block.'
           WRITE(io,*) 'Please recompile with the -DPHOTONS preprocessor flag.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_pp_options_missing)
-    ENDIF
+    END IF
 #endif
 
   END SUBROUTINE qed_deck_finalise
@@ -105,44 +105,44 @@ CONTAINS
     IF (str_cmp(element, 'use_qed') .OR. str_cmp(element, 'qed')) THEN
       use_qed = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
 #ifdef PHOTONS
     IF (str_cmp(element, 'qed_start_time')) THEN
       qed_start_time = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'produce_photons')) THEN
       produce_photons = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'use_radiation_reaction')) THEN
       use_radiation_reaction = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'photon_energy_min') &
         .OR. str_cmp(element, 'min_photon_energy')) THEN
       photon_energy_min = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'produce_pairs')) THEN
       produce_pairs = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'qed_table_location')) THEN
       qed_table_location = TRIM(ADJUSTL(value))
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'photon_dynamics')) THEN
       photon_dynamics = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 #endif
@@ -171,10 +171,10 @@ CONTAINS
             'produce_pairs=T. Without ', 'photon motion, pair ', &
             'creation will be incorrect.'
           WRITE(io,*) 'Code will terminate.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_bad_value + c_err_terminate
-    ENDIF
+    END IF
 #endif
 
   END FUNCTION qed_block_check

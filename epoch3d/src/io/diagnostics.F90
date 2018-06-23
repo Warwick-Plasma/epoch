@@ -98,7 +98,7 @@ CONTAINS
       nstep_prev = step
 
       file_numbers(iprefix) = file_numbers(iprefix) + 1
-    ENDDO
+    END DO
 
   END SUBROUTINE test_output
 
@@ -133,11 +133,11 @@ CONTAINS
     prefix_first_call = .TRUE.
     DO i = 1,n_io_blocks+2
       file_list(i)%count = 0
-    ENDDO
+    END DO
 
     DO i = 1,n_io_blocks
       CALL copy_io_block(io_block_list(i), io_block_orig(i))
-    ENDDO
+    END DO
 
     step_orig = step
     time_orig = time
@@ -167,11 +167,11 @@ CONTAINS
         step_interval = INT(step_interval * dt_interval / (time1 - time0), i8)
         IF (step_interval < 0 .OR. time1 - time_start >= total_time) THEN
           EXIT
-        ENDIF
+        END IF
         time0 = time1
         istep = 0
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     CALL test_output
 
@@ -182,7 +182,7 @@ CONTAINS
       CALL copy_io_block(io_block_orig(i), io_block_list(i))
       IF (file_numbers(i) > n_dumps) n_dumps = file_numbers(i)
       file_numbers(i) = file_numbers_orig(i)
-    ENDDO
+    END DO
 
     DEALLOCATE(file_list)
     DEALLOCATE(prefix_first_call)
@@ -192,7 +192,7 @@ CONTAINS
     IF (n_dumps > 1) THEN
       n_dumps = n_dumps - 1
       n_zeros = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
-    ENDIF
+    END IF
 
   END SUBROUTINE count_n_zeros
 
@@ -244,19 +244,19 @@ CONTAINS
           IF (time > 0.0_num) THEN
             elapsed_time = (t_end - time) * elapsed_time / time
             CALL create_timestring(elapsed_time, eta_timestring)
-          ENDIF
+          END IF
           WRITE(*, '(''Time'', g14.6, '', iteration'', i9, '' after'', &
               & a, '', ETA'',a)') time, step, timestring, eta_timestring
         ELSE
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
-        ENDIF
+        END IF
         IF (skipped_any_set) &
             WRITE(*, *) 'One or more subset ranges were empty: their ', &
                 'fields were not output.'
         skipped_any_set = .FALSE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (n_io_blocks <= 0) RETURN
 
@@ -272,7 +272,7 @@ CONTAINS
       prefix_first_call = first_call
       DO i = 1,n_io_blocks+2
         file_list(i)%count = 0
-      ENDDO
+      END DO
       first_call = .FALSE.
       ! Setting a large output buffer for point data can often make
       ! output much faster.
@@ -280,7 +280,7 @@ CONTAINS
       CALL sdf_set_point_array_size(sdf_buffer_size)
       sdf_max_string_length = sdf_get_max_string_length()
       max_string_length = MIN(sdf_max_string_length, c_max_string_length)
-    ENDIF
+    END IF
 
     dims = (/nx_global, ny_global, nz_global/)
 
@@ -291,7 +291,7 @@ CONTAINS
       ALLOCATE(dump_point_grid(n_species))
     ELSE
       ALLOCATE(dump_point_grid(1))
-    ENDIF
+    END IF
 
     DO iprefix = 1,SIZE(file_prefixes)
       CALL io_test(iprefix, step, print_arrays, force, prefix_first_call)
@@ -307,9 +307,9 @@ CONTAINS
             CALL timer_start(c_timer_io)
           ELSE
             CALL timer_start(c_timer_io, .TRUE.)
-          ENDIF
-        ENDIF
-      ENDIF
+          END IF
+        END IF
+      END IF
 
       ! Increase n_zeros if needed
 
@@ -320,17 +320,17 @@ CONTAINS
         IF (rn > io) THEN
           nval = i - 1
           EXIT
-        ENDIF
+        END IF
         rn = rn * 10
-      ENDDO
+      END DO
 
       IF (nval > n_zeros) THEN
         IF (rank == 0) THEN
           WRITE(*,*) '*** WARNING ***'
           WRITE(*,*) 'n_zeros increased to enable further output'
-        ENDIF
+        END IF
         n_zeros = nval
-      ENDIF
+      END IF
 
       ! Allows a maximum of 10^999 output dumps, should be enough for anyone
       ! (feel free to laugh when this isn't the case)
@@ -372,7 +372,7 @@ CONTAINS
         IF (move_window .AND. window_started) THEN
           CALL sdf_write_srl(sdf_handle, 'window_shift_fraction', &
               'Window Shift Fraction', window_shift_fraction)
-        ENDIF
+        END IF
         CALL sdf_write_srl(sdf_handle, 'x_grid_min', &
             'Minimum grid position', x_grid_min)
 
@@ -400,14 +400,14 @@ CONTAINS
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
               io_block_list(io)%nstep_prev)
-        ENDDO
+        END DO
 
         DO ispecies = 1, n_species
           species => io_list(ispecies)
           CALL sdf_write_srl(sdf_handle, 'nppc/' // TRIM(species%name), &
               'Particles/Particles Per Cell/' // TRIM(species%name), &
               species%npart_per_cell)
-        ENDDO
+        END DO
 
         CALL sdf_write_srl(sdf_handle, 'file_prefixes', &
             'Output File Stem Names', file_prefixes)
@@ -423,8 +423,8 @@ CONTAINS
           CALL sdf_write_srl(sdf_handle, 'random_states', 'Random States', &
               random_states_per_proc)
           DEALLOCATE(random_states_per_proc)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       iomask = iodumpmask(1,:)
 
@@ -479,13 +479,13 @@ CONTAINS
             'CPML/Bx_z', 'A/m^2', c_stagger_cell_centre, cpml_psi_bxz)
         CALL write_field(c_dump_cpml_psi_byz, code, 'cpml_psi_byz', &
             'CPML/By_z', 'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
-      ENDIF
+      END IF
 
       IF (n_subsets > 0) THEN
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       DO isubset = 1, n_subsets + 1
         done_species_offset_init = .FALSE.
@@ -507,9 +507,9 @@ CONTAINS
                 .OR. IAND(code, c_io_restartable) /= 0) THEN
               CALL sdf_write_srl(sdf_handle, 'weight/' // TRIM(species%name), &
                   'Particles/Weight/' // TRIM(species%name), species%weight)
-            ENDIF
-          ENDDO
-        ENDIF
+            END IF
+          END DO
+        END IF
 #endif
 
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -527,9 +527,9 @@ CONTAINS
                 .OR. IAND(code, c_io_restartable) /= 0) THEN
               CALL sdf_write_srl(sdf_handle, 'charge/' // TRIM(species%name), &
                   'Particles/Charge/' // TRIM(species%name), species%charge)
-            ENDIF
-          ENDDO
-        ENDIF
+            END IF
+          END DO
+        END IF
 
         IF (IAND(iomask(c_dump_part_mass), code) /= 0) THEN
           CALL build_species_subset
@@ -540,9 +540,9 @@ CONTAINS
                 .OR. IAND(code, c_io_restartable) /= 0) THEN
               CALL sdf_write_srl(sdf_handle, 'mass/' // TRIM(species%name), &
                   'Particles/Mass/' // TRIM(species%name), species%mass)
-            ENDIF
-          ENDDO
-        ENDIF
+            END IF
+          END DO
+        END IF
 #endif
         CALL write_particle_variable(c_dump_part_px, code, &
             'Px', 'kg.m/s', it_output_real)
@@ -657,12 +657,12 @@ CONTAINS
           DO i = 1, n_species
             CALL append_partlist(species_list(i)%attached_list, &
                 io_list(i)%attached_list)
-          ENDDO
+          END DO
           DO i = 1, n_species
             CALL create_empty_partlist(io_list(i)%attached_list)
-          ENDDO
-        ENDIF
-      ENDDO
+          END DO
+        END IF
+      END DO
 
       io_list => species_list
       iomask = iodumpmask(1,:)
@@ -687,8 +687,8 @@ CONTAINS
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid_full', &
               'Grid/Grid_Full', xb_global(1:nx_global+1), &
               yb_global(1:ny_global+1), zb_global(1:nz_global+1), convert)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       dumped_skip_dir = 0
       dumped = 1
@@ -715,11 +715,11 @@ CONTAINS
                 TRIM(temp_name), xb_offset_global(ranges(1,1):ranges(2,1)), &
                 yb_offset_global(ranges(1,2):ranges(2,2)), &
                 zb_offset_global(ranges(1,3):ranges(2,3)), convert)
-          ENDIF
+          END IF
         ELSE
           DO i = 1, io - 1
             dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
-          ENDDO
+          END DO
           IF (dumped == 0) CYCLE
           dumped = 0
 
@@ -734,7 +734,7 @@ CONTAINS
 
           DO i = 1, rn
             x_reduced(i) = r0 + (i - 1) * dr
-          ENDDO
+          END DO
 
           dir = 2
           rn = sub%n_global(dir) + 1
@@ -745,7 +745,7 @@ CONTAINS
 
           DO i = 1, rn
             y_reduced(i) = r0 + (i - 1) * dr
-          ENDDO
+          END DO
 
           dir = 3
           rn = sub%n_global(dir) + 1
@@ -756,7 +756,7 @@ CONTAINS
 
           DO i = 1, rn
             z_reduced(i) = r0 + (i - 1) * dr
-          ENDDO
+          END DO
 
           IF (.NOT. use_offset_grid) THEN
             temp_block_id = 'grid/r_' // TRIM(sub%name)
@@ -791,7 +791,7 @@ CONTAINS
 
             DO i = 1, rn
               x_reduced(i) = r0 + (i - 1) * dr
-            ENDDO
+            END DO
 
             dir = 2
             rn = sub%n_global(dir) + 1
@@ -801,7 +801,7 @@ CONTAINS
 
             DO i = 1, rn
               y_reduced(i) = r0 + (i - 1) * dr
-            ENDDO
+            END DO
 
             dir = 3
             rn = sub%n_global(dir) + 1
@@ -811,25 +811,25 @@ CONTAINS
 
             DO i = 1, rn
               z_reduced(i) = r0 + (i - 1) * dr
-            ENDDO
+            END DO
 
             CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
                 TRIM(temp_name), x_reduced, y_reduced, z_reduced, convert)
-          ENDIF
+          END IF
 
           DEALLOCATE(x_reduced, y_reduced, z_reduced)
-        ENDIF
+        END IF
         sub%dump_field_grid = .FALSE.
-      ENDDO
+      END DO
 
       IF (IAND(iomask(c_dump_dist_fns), code) /= 0) THEN
         CALL write_dist_fns(sdf_handle, code, iomask(c_dump_dist_fns))
-      ENDIF
+      END IF
 
 #ifndef NO_PARTICLE_PROBES
       IF (IAND(iomask(c_dump_probes), code) /= 0) THEN
         CALL write_probes(sdf_handle, code, iomask(c_dump_probes))
-      ENDIF
+      END IF
 #endif
 
       IF (dump_input_decks) CALL write_input_decks(sdf_handle)
@@ -845,12 +845,12 @@ CONTAINS
           laser_absorbed = laser_absorbed / laser_injected
         ELSE
           laser_absorbed = 0.0_num
-        ENDIF
+        END IF
         CALL sdf_write_srl(sdf_handle, 'laser_enTotal', &
             'Absorption/Total Laser Energy Injected (J)', laser_injected)
         CALL sdf_write_srl(sdf_handle, 'abs_frac', &
             'Absorption/Fraction of Laser Energy Absorbed (%)', laser_absorbed)
-      ENDIF
+      END IF
 
       IF (IAND(iomask(c_dump_total_energy_sum), code) /= 0) THEN
         CALL calc_total_energy_sum
@@ -859,7 +859,7 @@ CONTAINS
             'Total Particle Energy in Simulation (J)', total_particle_energy)
         CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
             'Total Field Energy in Simulation (J)', total_field_energy)
-      ENDIF
+      END IF
 
       ! close the file
       CALL sdf_close(sdf_handle)
@@ -869,25 +869,25 @@ CONTAINS
           IF (io_block_list(io)%dump) THEN
             dump_type = TRIM(io_block_list(io)%name)
             CALL append_filename(dump_type, filename, io)
-          ENDIF
-        ENDDO
+          END IF
+        END DO
         IF (IAND(code, c_io_restartable) /= 0) THEN
           dump_type = 'restart'
           CALL append_filename(dump_type, filename, n_io_blocks+1)
-        ENDIF
+        END IF
         IF (IAND(code, c_io_full) /= 0) THEN
           dump_type = 'full'
           CALL append_filename(dump_type, filename, n_io_blocks+2)
-        ENDIF
+        END IF
         IF (iprefix > 1) dump_type = TRIM(file_prefixes(iprefix))
         WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
           & g20.12, '' and iteration'', i7)') dump_type, &
           file_numbers(iprefix)-1, time, step
         CALL flush_stat_file()
-      ENDIF
+      END IF
 
       IF (force) EXIT
-    ENDDO
+    END DO
 
     DEALLOCATE(dump_point_grid)
 
@@ -901,8 +901,8 @@ CONTAINS
     IF (reset_ejected) THEN
       DO i = 1, n_species
         CALL destroy_partlist(ejected_list(i)%attached_list)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (timer_collect) CALL timer_stop(c_timer_io)
 
@@ -930,12 +930,12 @@ CONTAINS
         laser_phases(ilas) = current_laser%current_integral_phase
         ilas = ilas + 1
         current_laser => current_laser%next
-      ENDDO
+      END DO
 
       CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
           laser_count, laser_phases, 0)
       DEALLOCATE(laser_phases)
-    ENDIF
+    END IF
 
   END SUBROUTINE write_laser_phases
 
@@ -992,9 +992,9 @@ CONTAINS
           PRINT*, 'Either shorten the ', TRIM(shorten), ' name or increase ', &
               'the size of "c_max_string_length" ', 'to at least ', &
               TRIM(len_string)
-        ENDIF
-      ENDIF
-    ENDIF
+        END IF
+      END IF
+    END IF
 
   END SUBROUTINE check_name_length
 
@@ -1024,7 +1024,7 @@ CONTAINS
     ELSE
       ALLOCATE(list%tail%next)
       list%tail => list%tail%next
-    ENDIF
+    END IF
 
     IF (list%count > 0) THEN
       lcur  => list%head
@@ -1032,8 +1032,8 @@ CONTAINS
       DO i = 2,list%count
         lcur  => lcur%next
         IF (TRIM(lcur%text) == TRIM(filename)) RETURN
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     list%count = list%count + 1
     list%tail%text = TRIM(filename)
@@ -1042,7 +1042,7 @@ CONTAINS
       OPEN(unit=lu, status='OLD', position='APPEND', file=listfile, iostat=ierr)
     ELSE
       OPEN(unit=lu, status='NEW', file=listfile, iostat=errcode)
-    ENDIF
+    END IF
 
     WRITE(lu,'(a)') TRIM(filename)
     CLOSE(lu)
@@ -1068,7 +1068,7 @@ CONTAINS
       list%count = list%count + 1
       ALLOCATE(list%tail%next)
       list%tail => list%tail%next
-    ENDDO
+    END DO
     CLOSE(lu)
 
   END SUBROUTINE setup_file_list
@@ -1089,11 +1089,11 @@ CONTAINS
             next => current%next
             IF (ASSOCIATED(current)) DEALLOCATE(current, STAT=stat)
             current => next
-          ENDDO
-        ENDIF
-      ENDDO
+          END DO
+        END IF
+      END DO
       DEALLOCATE(file_list, STAT=stat)
-    ENDIF
+    END IF
     DEALLOCATE(iodumpmask, STAT=stat)
     DEALLOCATE(dumped_skip_dir, STAT=stat)
     DEALLOCATE(prefix_first_call, STAT=stat)
@@ -1126,7 +1126,7 @@ CONTAINS
       last_call = .TRUE.
     ELSE
       last_call = .FALSE.
-    ENDIF
+    END IF
 
     DO io = 1, n_io_blocks
       io_block_list(io)%dump = .FALSE.
@@ -1142,25 +1142,25 @@ CONTAINS
       IF (force) THEN
         io_block_list(io)%dump = .TRUE.
         restart_flag = .TRUE.
-      ENDIF
+      END IF
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
           IF (step >= io_block_list(io)%dump_at_nsteps(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_nsteps(is) = HUGE(1)
-          ENDIF
-        ENDDO
-      ENDIF
+          END IF
+        END DO
+      END IF
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_times)
           IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
-          ENDIF
-        ENDDO
-      ENDIF
+          END IF
+        END DO
+      END IF
 
       ! Work out the time that the next dump will occur based on the
       ! current timestep
@@ -1172,7 +1172,7 @@ CONTAINS
         nstep_next = io_block_list(io)%nstep_prev &
             + io_block_list(io)%nstep_snapshot
         t1 = time + dt * (nstep_next - step)
-      ENDIF
+      END IF
 
       IF (t0 < t1) THEN
         ! Next I/O dump based on dt_snapshot
@@ -1183,7 +1183,7 @@ CONTAINS
             t0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
             IF (t0 > time) EXIT
             io_block_list(io)%time_prev = t0
-          ENDDO
+          END DO
           dump = .TRUE.
           IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
           IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
@@ -1194,7 +1194,7 @@ CONTAINS
           IF (dump .AND. step < nstep_start) dump = .FALSE.
           IF (dump .AND. step > nstep_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
-        ENDIF
+        END IF
       ELSE
         ! Next I/O dump based on nstep_snapshot
         time_first = t1
@@ -1206,7 +1206,7 @@ CONTAINS
                 + io_block_list(io)%nstep_snapshot
             IF (nstep_next > step) EXIT
             io_block_list(io)%nstep_prev = nstep_next
-          ENDDO
+          END DO
           dump = .TRUE.
           IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
           IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
@@ -1217,8 +1217,8 @@ CONTAINS
           IF (dump .AND. step < nstep_start) dump = .FALSE.
           IF (dump .AND. step > nstep_stop)  dump = .FALSE.
           IF (dump) io_block_list(io)%dump = .TRUE.
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       io_block_list(io)%average_time_start = &
           time_first - io_block_list(io)%average_time
@@ -1235,10 +1235,10 @@ CONTAINS
           DO is = 1, n_subsets
             iodumpmask(1+is,:) = &
                 IOR(iodumpmask(1+is,:), subset_list(is)%dumpmask(io,:))
-          ENDDO
-        ENDIF
-      ENDIF
-    ENDDO
+          END DO
+        END IF
+      END IF
+    END DO
 
     DO io = 1, n_io_blocks
       IF (.NOT. io_block_list(io)%any_average) CYCLE
@@ -1248,10 +1248,10 @@ CONTAINS
           av_block = averaged_var_block(id)
           IF (IAND(io_block_list(io)%dumpmask(id), c_io_averaged) /= 0) THEN
             CALL average_field(id, io_block_list(av_block)%averaged_data(id))
-          ENDIF
-        ENDDO
-      ENDIF
-    ENDDO
+          END IF
+        END DO
+      END IF
+    END DO
 
     IF (MOD(file_numbers(1), restart_dump_every) == 0 &
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
@@ -1261,12 +1261,12 @@ CONTAINS
     IF (force) THEN
       restart_flag = .TRUE.
       print_arrays = .TRUE.
-    ENDIF
+    END IF
 
     IF (.NOT.restart_flag .AND. .NOT.new_style_io_block) THEN
       dump_source_code = .FALSE.
       dump_input_decks = .FALSE.
-    ENDIF
+    END IF
 
     IF (first_call(iprefix)) first_call(iprefix) = .FALSE.
 
@@ -1320,7 +1320,7 @@ CONTAINS
           CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_mass_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1328,7 +1328,7 @@ CONTAINS
           CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_charge_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1336,7 +1336,7 @@ CONTAINS
           CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_number_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1344,7 +1344,7 @@ CONTAINS
           CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_ppc)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1352,7 +1352,7 @@ CONTAINS
           CALL calc_ppc(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_average_weight)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1360,7 +1360,7 @@ CONTAINS
           CALL calc_average_weight(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -1368,7 +1368,7 @@ CONTAINS
           CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
               + REAL(array * dt, r4)
-        ENDDO
+        END DO
         DEALLOCATE(array)
       END SELECT
     ELSE
@@ -1399,52 +1399,52 @@ CONTAINS
         DO ispecies = 1, n_species_local
           CALL calc_ekbar(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_mass_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_mass_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_charge_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_charge_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_number_density)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_number_density(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_ppc)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_ppc(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_average_weight)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_average_weight(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
-        ENDDO
+        END DO
         DEALLOCATE(array)
       END SELECT
-    ENDIF
+    END IF
 
   END SUBROUTINE average_field
 
@@ -1493,15 +1493,15 @@ CONTAINS
         subarray = subarray_field_big_r4
       ELSE
         subarray = subarray_field_r4
-      ENDIF
+      END IF
     ELSE
       subtype  = subtype_field
       IF (id == c_dump_jx .OR. id == c_dump_jy .OR. id == c_dump_jz) THEN
         subarray = subarray_field_big
       ELSE
         subarray = subarray_field
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     ! Output unaveraged data if:
     !  1. This is a restart dump and a restart variable
@@ -1528,11 +1528,11 @@ CONTAINS
           IF (ranges(2,i) <= ranges(1,i)) THEN
             skip_this_set = .TRUE.
             skipped_any_set = .TRUE.
-          ENDIF
-        ENDDO
+          END IF
+        END DO
         IF (skip_this_set) THEN
           CYCLE
-        ENDIF
+        END IF
         new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
             ranges(2,3) - ranges(1,3) /)
         ranges = cell_local_ranges(global_ranges(sub))
@@ -1544,7 +1544,7 @@ CONTAINS
         ELSE
           rsubtype  = sub%subtype
           rsubarray = sub%subarray
-        ENDIF
+        END IF
         temp_grid_id = 'grid/' // TRIM(sub%name)
         CALL check_name_length('subset', TRIM(name) &
             // '/Core_' // TRIM(sub%name))
@@ -1558,15 +1558,15 @@ CONTAINS
         IF (i1 < i0) THEN
           i0 = 1
           i1 = i0
-        ENDIF
+        END IF
         IF (j1 < j0) THEN
           j0 = 1
           j1 = j0
-        ENDIF
+        END IF
         IF (k1 < k0) THEN
           k0 = 1
           k1 = k0
-        ENDIF
+        END IF
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, &
@@ -1579,7 +1579,7 @@ CONTAINS
         ! times in the same output file
         DO i = 1, io - 1
           dumped = dumped + SUM(dumped_skip_dir(:,i) - sub%skip_dir)
-        ENDDO
+        END DO
         IF (dumped == 0) CYCLE
         dumped = 0
 
@@ -1599,11 +1599,11 @@ CONTAINS
             DO i = 1, rnx
               reduced(i,j,k) = array(ii,jj,kk)
               ii = ii + sub%skip_dir(1)
-            ENDDO
+            END DO
             jj = jj + sub%skip_dir(2)
-          ENDDO
+          END DO
           kk = kk + sub%skip_dir(3)
-        ENDDO
+        END DO
 
         IF (convert) THEN
           rsubtype  = sub%subtype_r4
@@ -1611,7 +1611,7 @@ CONTAINS
         ELSE
           rsubtype  = sub%subtype
           rsubarray = sub%subarray
-        ENDIF
+        END IF
 
         temp_grid_id = 'grid/r_' // TRIM(sub%name)
         temp_block_id = TRIM(block_id) // '/r_' // TRIM(sub%name)
@@ -1627,8 +1627,8 @@ CONTAINS
         dump_skipped = .TRUE.
         sub%dump_field_grid = .TRUE.
         DEALLOCATE(reduced)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (IAND(mask, code) == 0) RETURN
 
@@ -1637,7 +1637,7 @@ CONTAINS
           TRIM(name), TRIM(units), dims, stagger, 'grid', array, &
           subtype, subarray, convert)
       dump_field_grid = .TRUE.
-    ENDIF
+    END IF
 
     ! Dump averages
     DO io = 1, n_io_blocks
@@ -1667,12 +1667,12 @@ CONTAINS
             avg%array(:,:,:,1), subtype_field, subarray_field)
 
         avg%array = 0.0_num
-      ENDIF
+      END IF
 
       dump_field_grid = .TRUE.
       avg%real_time = 0.0_num
       avg%started = .FALSE.
-    ENDDO
+    END DO
 
   END SUBROUTINE write_field
 
@@ -1733,7 +1733,7 @@ CONTAINS
     ELSE
       subtype  = subtype_field
       subarray = subarray_field
-    ENDIF
+    END IF
 
     dims = (/nx_global, ny_global, nz_global/)
 
@@ -1754,8 +1754,8 @@ CONTAINS
       ELSE
         rsubtype  = sub%subtype
         rsubarray = sub%subarray
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
@@ -1766,14 +1766,14 @@ CONTAINS
           IF (ranges(2,i) <= ranges(1,i)) THEN
             skipped_any_set = .TRUE.
             RETURN
-          ENDIF
-        ENDDO
+          END IF
+        END DO
         new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
             ranges(2,3) - ranges(1,3) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_no_ng = cell_section_ranges(ranges) + ng + 1
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (dump_sum) THEN
       IF (isubset == 1) THEN
@@ -1787,7 +1787,7 @@ CONTAINS
             // '/s_' // TRIM(sub%name)
         temp_name = 'Derived/' // TRIM(name) &
             // '/Subset_' // TRIM(sub%name)
-      ENDIF
+      END IF
 
       CALL func(array, 0)
 
@@ -1806,11 +1806,11 @@ CONTAINS
             DO i = 1, rnx
               reduced(i,j,k) = array(ii,jj,kk)
               ii = ii + sub%skip_dir(1)
-            ENDDO
+            END DO
             jj = jj + sub%skip_dir(2)
-          ENDDO
+          END DO
           kk = kk + sub%skip_dir(3)
-        ENDDO
+        END DO
 
         IF (convert) THEN
           rsubtype  = sub%subtype_r4
@@ -1818,7 +1818,7 @@ CONTAINS
         ELSE
           rsubtype  = sub%subtype
           rsubarray = sub%subarray
-        ENDIF
+        END IF
 
         CALL check_name_length('subset', TRIM(temp_name) // '/Reduced')
 
@@ -1840,15 +1840,15 @@ CONTAINS
         IF (i1 < i0) THEN
           i0 = 1
           i1 = i0
-        ENDIF
+        END IF
         IF (j1 < j0) THEN
           j0 = 1
           j1 = j0
-        ENDIF
+        END IF
         IF (k1 < k0) THEN
           k0 = 1
           k1 = k0
-        ENDIF
+        END IF
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
@@ -1859,8 +1859,8 @@ CONTAINS
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype, subarray, convert)
         dump_field_grid = .TRUE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (dump_species .AND. dump_skipped) THEN
       rnx = sub%n_local(1)
@@ -1875,7 +1875,7 @@ CONTAINS
       ELSE
         rsubtype  = sub%subtype
         rsubarray = sub%subarray
-      ENDIF
+      END IF
 
       temp_grid_id = 'grid/r_' // TRIM(sub%name)
 
@@ -1905,18 +1905,18 @@ CONTAINS
             DO i = 1, rnx
               reduced(i,j,k) = array(ii,jj,kk)
               ii = ii + sub%skip_dir(1)
-            ENDDO
+            END DO
             jj = jj + sub%skip_dir(2)
-          ENDDO
+          END DO
           kk = kk + sub%skip_dir(3)
-        ENDDO
+        END DO
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
             TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
 
         sub%dump_field_grid = .TRUE.
-      ENDDO
+      END DO
     ELSEIF (dump_species) THEN
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
@@ -1939,15 +1939,15 @@ CONTAINS
           IF (i1 < i0) THEN
             i0 = 1
             i1 = i0
-          ENDIF
+          END IF
           IF (j1 < j0) THEN
             j0 = 1
             j1 = j0
-          ENDIF
+          END IF
           IF (k1 < k0) THEN
             k0 = 1
             k1 = k0
-          ENDIF
+          END IF
 
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
@@ -1958,9 +1958,9 @@ CONTAINS
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
           dump_field_grid = .TRUE.
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     IF (ALLOCATED(reduced)) DEALLOCATE(reduced)
 
@@ -1987,7 +1987,7 @@ CONTAINS
               TRIM(units), dims, stagger, 'grid', &
               avg%r4array(:,:,:,1), subtype_field_r4, subarray_field_r4)
           dump_field_grid = .TRUE.
-        ENDIF
+        END IF
 
         IF (avg%n_species > 0) THEN
           DO ispecies = 1, avg%n_species
@@ -2006,8 +2006,8 @@ CONTAINS
                 avg%r4array(:,:,:,ispecies+avg%species_sum), &
                 subtype_field_r4, subarray_field_r4)
             dump_field_grid = .TRUE.
-          ENDDO
-        ENDIF
+          END DO
+        END IF
 
         avg%r4array = 0.0_num
       ELSE
@@ -2020,7 +2020,7 @@ CONTAINS
               TRIM(units), dims, stagger, 'grid', &
               avg%array(:,:,:,1), subtype_field, subarray_field)
           dump_field_grid = .TRUE.
-        ENDIF
+        END IF
 
         IF (avg%n_species > 0) THEN
           DO ispecies = 1, avg%n_species
@@ -2039,15 +2039,15 @@ CONTAINS
                 avg%array(:,:,:,ispecies+avg%species_sum), &
                 subtype_field, subarray_field)
             dump_field_grid = .TRUE.
-          ENDDO
-        ENDIF
+          END DO
+        END IF
 
         avg%array = 0.0_num
-      ENDIF
+      END IF
 
       avg%real_time = 0.0_num
       avg%started = .FALSE.
-    ENDDO
+    END DO
 
   END SUBROUTINE write_nspecies_field
 
@@ -2098,7 +2098,7 @@ CONTAINS
     ELSE
       subtype  = subtype_field
       subarray = subarray_field
-    ENDIF
+    END IF
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global, nz_global/)
@@ -2108,7 +2108,7 @@ CONTAINS
     ELSE
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
-    ENDIF
+    END IF
 
     IF (dump_skipped) THEN
       rnx = sub%n_local(1)
@@ -2123,7 +2123,7 @@ CONTAINS
       ELSE
         rsubtype  = sub%subtype
         rsubarray = sub%subarray
-      ENDIF
+      END IF
 
       temp_grid_id = 'grid/r_' // TRIM(sub%name)
 
@@ -2148,16 +2148,16 @@ CONTAINS
             DO i = 1, rnx
               reduced(i,j,k) = array(ii,jj,kk)
               ii = ii + sub%skip_dir(1)
-            ENDDO
+            END DO
             jj = jj + sub%skip_dir(2)
-          ENDDO
+          END DO
           kk = kk + sub%skip_dir(3)
-        ENDDO
+        END DO
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
             TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-      ENDDO
+      END DO
 
       sub%dump_field_grid = .TRUE.
       DEALLOCATE(reduced)
@@ -2176,9 +2176,9 @@ CONTAINS
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype, subarray, convert)
-      ENDDO
+      END DO
       dump_field_grid = .TRUE.
-    ENDIF
+    END IF
 
     ! Flux variables not currently averaged
 
@@ -2232,7 +2232,7 @@ CONTAINS
     ELSE
       subtype  = subtype_field
       subarray = subarray_field
-    ENDIF
+    END IF
 
     ndirs = SIZE(fluxdir)
     dims = (/nx_global, ny_global, nz_global/)
@@ -2247,7 +2247,7 @@ CONTAINS
     ELSE
       sub => subset_list(isubset-1)
       dump_skipped = sub%skip
-    ENDIF
+    END IF
 
     CALL build_species_subset
 
@@ -2264,7 +2264,7 @@ CONTAINS
       ELSE
         rsubtype  = sub%subtype
         rsubarray = sub%subarray
-      ENDIF
+      END IF
 
       idir = 1
       CALL check_name_length('dir tag', &
@@ -2293,16 +2293,16 @@ CONTAINS
             DO i = 1, rnx
               reduced(i,j,k) = array(ii,jj,kk)
               ii = ii + sub%skip_dir(1)
-            ENDDO
+            END DO
             jj = jj + sub%skip_dir(2)
-          ENDDO
+          END DO
           kk = kk + sub%skip_dir(3)
-        ENDDO
+        END DO
 
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
             TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-      ENDDO
+      END DO
 
       sub%dump_field_grid = .TRUE.
     ELSEIF (dump_sum) THEN
@@ -2320,9 +2320,9 @@ CONTAINS
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
             TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
             subtype, subarray, convert)
-      ENDDO
+      END DO
       dump_field_grid = .TRUE.
-    ENDIF
+    END IF
 
     IF (dump_species .AND. dump_skipped) THEN
       rnx = sub%n_local(1)
@@ -2337,7 +2337,7 @@ CONTAINS
       ELSE
         rsubtype  = sub%subtype
         rsubarray = sub%subarray
-      ENDIF
+      END IF
 
       temp_grid_id = 'grid/r_' // TRIM(sub%name)
 
@@ -2373,18 +2373,18 @@ CONTAINS
               DO i = 1, rnx
                 reduced(i,j,k) = array(ii,jj,kk)
                 ii = ii + sub%skip_dir(1)
-              ENDDO
+              END DO
               jj = jj + sub%skip_dir(2)
-            ENDDO
+            END DO
             kk = kk + sub%skip_dir(3)
-          ENDDO
+          END DO
 
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
               TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-        ENDDO
+        END DO
         sub%dump_field_grid = .TRUE.
-      ENDDO
+      END DO
     ELSEIF (dump_species) THEN
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
@@ -2407,10 +2407,10 @@ CONTAINS
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
               TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
               subtype, subarray, convert)
-        ENDDO
+        END DO
         dump_field_grid = .TRUE.
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (ALLOCATED(reduced)) DEALLOCATE(reduced)
 
@@ -2433,7 +2433,7 @@ CONTAINS
     IF (isubset == 1) THEN
       io_list => species_list
       RETURN
-    ENDIF
+    END IF
 
     io_list => io_list_data
 
@@ -2448,7 +2448,7 @@ CONTAINS
       IF (.NOT. subset_list(l)%use_species(i)) THEN
         io_list(i)%dumpmask = c_io_never
         CYCLE
-      ENDIF
+      END IF
 
       part_mc = c * species_list(i)%mass
 
@@ -2465,7 +2465,7 @@ CONTAINS
               .AND. gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
           IF (subset_list(l)%use_gamma_max &
               .AND. gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
-        ENDIF
+        END IF
 
         IF (subset_list(l)%use_x_min &
             .AND. current%part_pos(1) < subset_list(l)%x_min) &
@@ -2557,17 +2557,17 @@ CONTAINS
           random_num = random()
           IF (random_num > subset_list(l)%random_fraction) &
               use_particle = .FALSE.
-        ENDIF
+        END IF
 
         IF (use_particle) THEN
           ! Move particle to io_list
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(io_list(i)%attached_list, current)
-        ENDIF
+        END IF
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
   END SUBROUTINE build_species_subset
 
@@ -2600,14 +2600,14 @@ CONTAINS
       DO i = 1, nproc
         IF (rank == i-1) species_offset(ispecies) = species_count
         species_count = species_count + npart_species_per_proc(i)
-      ENDDO
+      END DO
       spec%count = species_count
       spec%count_update_step = step
       npart_global = npart_global + species_count
 
       CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
           'CPU split/' // TRIM(spec%name), npart_species_per_proc)
-    ENDDO
+    END DO
 
     IF (track_ejected_particles &
         .AND. .NOT.ALLOCATED(ejected_offset)) THEN
@@ -2623,14 +2623,14 @@ CONTAINS
         DO i = 1, nproc
           IF (rank == i-1) ejected_offset(ispecies) = species_count
           species_count = species_count + npart_species_per_proc(i)
-        ENDDO
+        END DO
         spec%count = species_count
         spec%count_update_step = step
 
         CALL sdf_write_cpu_split(sdf_handle, 'cpu/' // TRIM(spec%name), &
             'CPU split/' // TRIM(spec%name), npart_species_per_proc)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     DEALLOCATE(npart_species_per_proc)
 
@@ -2675,9 +2675,9 @@ CONTAINS
               TRIM(current_species%name), &
               io_list(ispecies)%count, c_dimension_3d, &
               it_output_position, species_offset(ispecies), convert)
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     IF (isubset /= 1) RETURN
 
@@ -2702,8 +2702,8 @@ CONTAINS
             TRIM(current_species%name), &
             ejected_list(ispecies)%count, c_dimension_3d, &
             it_output_position, ejected_offset(ispecies), convert)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE write_particle_grid
 
@@ -2755,9 +2755,9 @@ CONTAINS
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, id_in, species_offset(ispecies), convert)
           dump_point_grid(ispecies) = .TRUE.
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     id = c_dump_ejected_particles
     mask = iomask(id)
@@ -2782,8 +2782,8 @@ CONTAINS
             TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, id_in, ejected_offset(ispecies), convert)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE write_particle_variable_num
 
@@ -2836,9 +2836,9 @@ CONTAINS
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, id_in, species_offset(ispecies), convert)
           dump_point_grid(ispecies) = .TRUE.
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     id = c_dump_ejected_particles
     mask = iomask(id)
@@ -2863,8 +2863,8 @@ CONTAINS
             TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, id_in, ejected_offset(ispecies), convert)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE write_particle_variable_i4
 #endif
@@ -2918,9 +2918,9 @@ CONTAINS
               TRIM(units), io_list(ispecies)%count, temp_block_id, &
               iterator, id_in, species_offset(ispecies), convert)
           dump_point_grid(ispecies) = .TRUE.
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     id = c_dump_ejected_particles
     mask = iomask(id)
@@ -2945,8 +2945,8 @@ CONTAINS
             TRIM(current_species%name), &
             TRIM(units), ejected_list(ispecies)%count, temp_block_id, &
             iterator, id_in, ejected_offset(ispecies), convert)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE write_particle_variable_i8
 #endif
@@ -2966,7 +2966,7 @@ CONTAINS
     DO i = 1, LEN(string_out)
       idx = INDEX(upr, string_out(i:i))
       IF (idx /= 0) string_out(i:i) = lwr(idx:idx)
-    ENDDO
+    END DO
 
   END FUNCTION lowercase
 
@@ -3018,10 +3018,10 @@ CONTAINS
             // TRIM(varstring)
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
-      ENDIF
+      END IF
       IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
-    ENDIF
+    END IF
 
     var = hours
     varstring = ' hour'
@@ -3032,10 +3032,10 @@ CONTAINS
             // TRIM(varstring)
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
-      ENDIF
+      END IF
       IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
-    ENDIF
+    END IF
 
     var = minutes
     varstring = ' minute'
@@ -3046,10 +3046,10 @@ CONTAINS
             // TRIM(varstring)
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // TRIM(varstring)
-      ENDIF
+      END IF
       IF (var > 1) timestring = TRIM(timestring) // 's'
       string_started = .TRUE.
-    ENDIF
+    END IF
 
     var = seconds
     varstring = ' seconds'
@@ -3062,8 +3062,8 @@ CONTAINS
       ELSE
         timestring = TRIM(timestring) // TRIM(intstring) // '.' &
             // TRIM(fracstring) // TRIM(varstring)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE create_full_timestring
 
@@ -3104,7 +3104,7 @@ CONTAINS
     IF (halt) THEN
       force_dump = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     IF (check_stop_frequency < 0) RETURN
 
@@ -3124,8 +3124,8 @@ CONTAINS
           got_stop_condition = .TRUE.
           force_dump = .TRUE.
           PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       ! Next check if stop file exists
       OPEN(unit=lu, status='OLD', iostat=ierr, &
@@ -3145,14 +3145,14 @@ CONTAINS
           CLOSE(lu, status='DELETE')
         ELSE
           got_stop_file = .FALSE.
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       IF (got_stop_file) PRINT*,'Stopping because "STOP" file has been found.'
 
       buffer(1) = got_stop_condition
       buffer(2) = force_dump
-    ENDIF
+    END IF
 
     CALL MPI_BCAST(buffer, 2, MPI_LOGICAL, 0, comm, errcode)
     got_stop_condition = buffer(1)
@@ -3193,7 +3193,7 @@ CONTAINS
         ALLOCATE(completed(nproc-1))
         completed = .FALSE.
         first = .FALSE.
-      ENDIF
+      END IF
       wall0 = walltime
       timeout = 2.0_num * timer_average(c_timer_step)
       DO
@@ -3209,20 +3209,20 @@ CONTAINS
                   MPI_STATUS_IGNORE, errcode)
             ELSE
               all_completed = .FALSE.
-            ENDIF
-          ENDIF
-        ENDDO
+            END IF
+          END IF
+        END DO
         IF (all_completed) THEN
           DEALLOCATE(completed)
           msg = -1
           DO i = 1,nproc-1
             CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, errcode)
             CALL MPI_REQUEST_FREE(request, errcode)
-          ENDDO
+          END DO
           halt = all_completed
           PRINT*,'Stopping because "stop_at_walltime" has been exceeded.'
           RETURN
-        ENDIF
+        END IF
         walltime = MPI_WTIME()
         IF (walltime - wall0 > timeout) THEN
           msg = 1
@@ -3231,19 +3231,19 @@ CONTAINS
               CALL MPI_ISEND(msg, 1, MPI_INTEGER, i, tag, comm, request, &
                   errcode)
               CALL MPI_REQUEST_FREE(request, errcode)
-            ENDIF
-          ENDDO
+            END IF
+          END DO
           RETURN
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       RETURN
-    ENDIF
+    END IF
 
     IF (yet_to_sync) THEN
       CALL MPI_ISEND(0, 0, MPI_INTEGER, 0, tag, comm, request, errcode)
       CALL MPI_REQUEST_FREE(request, errcode)
       yet_to_sync = .FALSE.
-    ENDIF
+    END IF
     CALL MPI_RECV(msg, 1, MPI_INTEGER, 0, tag, comm, &
         MPI_STATUS_IGNORE, errcode)
     IF (msg < 0) all_completed = .TRUE.
@@ -3271,7 +3271,7 @@ CONTAINS
           'EPOCH source code', epoch_bytes, &
           epoch_bytes_padding, epoch_bytes_mimetype, &
           epoch_bytes_checksum_type, epoch_bytes_checksum)
-    ENDIF
+    END IF
 
     IF (SIZE(epoch_bytes) == 1 .AND. SIZE(epoch_diff_bytes) > 1) THEN
       n = n + 1
@@ -3280,7 +3280,7 @@ CONTAINS
           'EPOCH repository differences', epoch_diff_bytes, &
           epoch_diff_bytes_padding, epoch_diff_bytes_mimetype, &
           epoch_diff_bytes_checksum_type, epoch_diff_bytes_checksum)
-    ENDIF
+    END IF
 
     n = n + 1
     CALL sdf_safe_copy_id(h, 'epoch_source/info', stitched_ids(n))
@@ -3296,7 +3296,7 @@ CONTAINS
     ! Prevent truncation warning
     DO i = 1, 6
       string_array(i)(h%string_length:512) = ACHAR(0)
-    ENDDO
+    END DO
 
     CALL sdf_write_namevalue(h, stitched_ids(n), &
         'EPOCH repository information', &
@@ -3336,7 +3336,7 @@ CONTAINS
       trim_string = string(1:c_max_string_length)
     ELSE
       trim_string = TRIM(string)
-    ENDIF
+    END IF
 
   END FUNCTION trim_string
 

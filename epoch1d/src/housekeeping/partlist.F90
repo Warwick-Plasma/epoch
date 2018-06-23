@@ -117,7 +117,7 @@ CONTAINS
     DO WHILE (ASSOCIATED(current) .AND. ipart < n_elements)
       ipart = ipart+1
       current => current%next
-    ENDDO
+    END DO
     partlist%head => a_particle
     partlist%tail => current
     partlist%count = ipart
@@ -146,8 +146,8 @@ CONTAINS
       current => current%next
       IF (ASSOCIATED(current)) THEN
         IF (ASSOCIATED(current%prev, TARGET=tail)) EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     partlist%count = ipart
 
@@ -168,7 +168,7 @@ CONTAINS
       CALL create_particle(new_particle)
       CALL add_particle_to_partlist(partlist, new_particle)
       NULLIFY(new_particle)
-    ENDDO
+    END DO
 
   END SUBROUTINE create_allocated_partlist
 
@@ -193,7 +193,7 @@ CONTAINS
 #endif
       CALL add_particle_to_partlist(partlist, new_particle)
       NULLIFY(new_particle)
-    ENDDO
+    END DO
 
   END SUBROUTINE create_filled_partlist
 
@@ -214,14 +214,14 @@ CONTAINS
         .AND. .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = 0
       RETURN
-    ENDIF
+    END IF
 
     ! List with head or tail but not both is broken
     IF (.NOT. ASSOCIATED(partlist%head) &
         .OR. .NOT. ASSOCIATED(partlist%tail)) THEN
       test_partlist = -1
       RETURN
-    ENDIF
+    END IF
 
     ! Having head and tail elements which are not the end of a list are OK for
     ! unsafe partlists
@@ -240,8 +240,8 @@ CONTAINS
         ! This tests if we've just jumped to the tail element
         ! Allows testing of unsafe partlists
         IF (ASSOCIATED(current%prev, TARGET=partlist%tail)) EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (test_ct /= partlist%count) test_partlist = IOR(test_partlist, 4)
 
@@ -263,7 +263,7 @@ CONTAINS
       DEALLOCATE(new_particle)
       new_particle => next
       ipart = ipart+1
-    ENDDO
+    END DO
 
     CALL create_empty_partlist(partlist)
 
@@ -292,13 +292,13 @@ CONTAINS
       IF (rank == 0) &
           PRINT *, 'Unable to append partlists because one is not safe'
       RETURN
-    ENDIF
+    END IF
 
     IF (ASSOCIATED(head%tail)) THEN
       head%tail%next => tail%head
     ELSE
       head%head => tail%head
-    ENDIF
+    END IF
     IF (ASSOCIATED(tail%head)) tail%head%prev => head%tail
     IF (ASSOCIATED(tail%tail)) head%tail => tail%tail
     head%count = head%count + tail%count
@@ -330,7 +330,7 @@ CONTAINS
       partlist%head => new_particle
       partlist%tail => new_particle
       RETURN
-    ENDIF
+    END IF
 
     partlist%tail%next => new_particle
     new_particle%prev => partlist%tail
@@ -599,7 +599,7 @@ CONTAINS
     IF (.NOT. compare_particles) THEN
       CALL display_particle(part1)
       CALL display_particle(part2)
-    ENDIF
+    END IF
 
   END FUNCTION compare_particles
 
@@ -621,11 +621,11 @@ CONTAINS
       PRINT *, 'Size of data array does not match specified on', rank, &
           npart_in_data, SIZE(array)
       RETURN
-    ENDIF
+    END IF
     IF (partlist%count /= npart_in_data) THEN
       PRINT *, 'Size of data array does not match partlist on', rank
       RETURN
-    ENDIF
+    END IF
 
     ALLOCATE(a_particle)
 
@@ -635,9 +635,9 @@ CONTAINS
       IF (.NOT. compare_particles(a_particle, current)) THEN
         PRINT *, 'BAD PARTICLE ', ipart, 'on', rank
         RETURN
-      ENDIF
+      END IF
       current => current%next
-    ENDDO
+    END DO
 
     DEALLOCATE(a_particle)
 
@@ -667,7 +667,7 @@ CONTAINS
       CALL pack_particle(array(cpos:cpos+nvar-1), current)
       ipart = ipart + 1
       current => current%next
-    ENDDO
+    END DO
 
     CALL MPI_SEND(array, nsend, mpireal, dest, tag, comm, errcode)
 
@@ -773,7 +773,7 @@ CONTAINS
       data_send(cpos:cpos+nvar-1) = packed_particle_data
       ipart = ipart + 1
       current => current%next
-    ENDDO
+    END DO
 
     ! No longer need the sending partlist, so destroy it to save some memory
     CALL destroy_partlist(partlist_send)
@@ -822,7 +822,7 @@ CONTAINS
           species_list(ispecies)%count, 1, MPI_INTEGER8, MPI_SUM, &
           comm, errcode)
       species_list(ispecies)%count_update_step = step
-    ENDDO
+    END DO
 
     update = use_particle_count_update
 

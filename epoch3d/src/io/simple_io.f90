@@ -48,7 +48,7 @@ CONTAINS
       IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_bad_value)
       RETURN
-    ENDIF
+    END IF
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray(ng)
@@ -73,7 +73,7 @@ CONTAINS
     CALL field_bc(array, ng)
     DO i = 1, 2*c_ndims
       CALL field_zero_gradient(array, c_stagger_centre, i)
-    ENDDO
+    END DO
 
   END SUBROUTINE load_single_array_from_file
 
@@ -107,10 +107,10 @@ CONTAINS
       IF (rank == 0) THEN
         PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
-      ENDIF
+      END IF
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -119,7 +119,7 @@ CONTAINS
       IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
@@ -129,7 +129,7 @@ CONTAINS
       PRINT *, 'Length (less offset) of ', TRIM(filename), &
           ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
-    ENDIF
+    END IF
 
     total_records = (filesize - offset - tail) / typesize
     records = INT(total_records / nproc, i4)
@@ -140,7 +140,7 @@ CONTAINS
     ELSE
       disp = offset + (records + 1) * remainder * typesize &
           + records * (rank - remainder) * typesize
-    ENDIF
+    END IF
 
     ALLOCATE(array(records))
 
@@ -177,10 +177,10 @@ CONTAINS
       IF (rank == 0) THEN
         PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
-      ENDIF
+      END IF
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -189,7 +189,7 @@ CONTAINS
       IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
@@ -199,7 +199,7 @@ CONTAINS
       PRINT *, 'Length (less offset) of ', TRIM(filename), &
           ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
-    ENDIF
+    END IF
 
     total_records = (filesize - offset - tail) / typesize
     records = INT(total_records / nproc, i4)
@@ -210,7 +210,7 @@ CONTAINS
     ELSE
       disp = offset + (records + 1) * remainder * typesize &
           + records * (rank - remainder) * typesize
-    ENDIF
+    END IF
 
     ALLOCATE(array(records))
 
@@ -247,10 +247,10 @@ CONTAINS
       IF (rank == 0) THEN
         PRINT *, '*** DEVELOPER WARNING ***'
         PRINT *, 'Unknown MPI_DATATYPE passed'
-      ENDIF
+      END IF
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -259,7 +259,7 @@ CONTAINS
       IF (rank == 0) PRINT *, 'file ', TRIM(filename), ' does not exist.'
       err = IOR(err, c_err_io_error)
       RETURN
-    ENDIF
+    END IF
 
     CALL MPI_FILE_GET_SIZE(fh, filesize, errcode)
 
@@ -269,7 +269,7 @@ CONTAINS
       PRINT *, 'Length (less offset) of ', TRIM(filename), &
           ' not an integer multiple of datasize'
       PRINT *, 'Corrupt data?'
-    ENDIF
+    END IF
 
     total_records = (filesize - offset - tail) / typesize
     records = INT(total_records / nproc, i4)
@@ -280,7 +280,7 @@ CONTAINS
     ELSE
       disp = offset + (records + 1) * remainder * typesize &
           + records * (rank - remainder) * typesize
-    ENDIF
+    END IF
 
     ALLOCATE(array(records))
 

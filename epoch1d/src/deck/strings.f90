@@ -40,7 +40,7 @@ CONTAINS
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
-    ENDIF
+    END IF
     WRITE(numfmt, '(''(I'', I6.6, '')'')') n_nums
     WRITE(string, numfmt) int_in
 
@@ -60,7 +60,7 @@ CONTAINS
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
-    ENDIF
+    END IF
     WRITE(numfmt, '(''(I'', I9.9, '')'')') n_nums
     WRITE(string, numfmt) int_in
 
@@ -81,15 +81,15 @@ CONTAINS
 
     IF (test_len > 0) THEN
       IF (IACHAR(str_test(test_len:test_len)) == 0) test_len = test_len - 1
-    ENDIF
+    END IF
     IF (in_len > 0) THEN
       IF (IACHAR(str_trim(in_len:in_len)) == 0) in_len = in_len - 1
-    ENDIF
+    END IF
 
     IF (test_len /= in_len) THEN
       str_cmp = .FALSE.
       RETURN
-    ENDIF
+    END IF
 
     str_cmp = (str_trim(1:test_len) == str_test(1:test_len))
 
@@ -110,7 +110,7 @@ CONTAINS
     chr = str_in(1:1)
     IF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
-    ENDIF
+    END IF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_real_simple = value
 
@@ -130,7 +130,7 @@ CONTAINS
     chr = str_in(1:1)
     IF (chr >= '0' .AND. chr <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
-    ENDIF
+    END IF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_integer_simple = value
 
@@ -150,7 +150,7 @@ CONTAINS
     chr = str_in(1:1)
     IF (chr >= '0' .AND. chr <= '9') THEN
       READ(unit=str_in, fmt=*, iostat=f) value
-    ENDIF
+    END IF
     IF (f /= 0) err = IOR(err, c_err_bad_value)
     as_long_integer_simple = value
 
@@ -187,11 +187,11 @@ CONTAINS
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'T')) THEN
       as_logical = .TRUE.
       RETURN
-    ENDIF
+    END IF
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'F')) THEN
       as_logical = .FALSE.
       RETURN
-    ENDIF
+    END IF
 
     err = IOR(err, c_err_bad_value)
 
@@ -210,52 +210,52 @@ CONTAINS
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'periodic')) THEN
       as_bc = c_bc_periodic
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'simple_laser')) THEN
       as_bc = c_bc_simple_laser
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'simple_outflow')) THEN
       as_bc = c_bc_simple_outflow
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'other')) THEN
       as_bc = c_bc_other
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'reflect')) THEN
       as_bc = c_bc_reflect
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'conduct')) THEN
       as_bc = c_bc_conduct
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'open')) THEN
       as_bc = c_bc_open
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'thermal')) THEN
       as_bc = c_bc_thermal
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_laser')) THEN
       as_bc = c_bc_cpml_laser
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_outflow')) THEN
       as_bc = c_bc_cpml_outflow
       RETURN
-    ENDIF
+    END IF
 
     err = IOR(err, c_err_bad_value)
 
@@ -274,11 +274,11 @@ CONTAINS
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'decomposed')) THEN
       as_domain = c_do_decomposed
       RETURN
-    ENDIF
+    END IF
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'full')) THEN
       as_domain = c_do_full
       RETURN
-    ENDIF
+    END IF
 
     err = IOR(err, c_err_bad_value)
 

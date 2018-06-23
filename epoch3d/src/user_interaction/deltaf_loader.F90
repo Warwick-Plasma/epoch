@@ -49,9 +49,9 @@ CONTAINS
           + gf * temperature(cell_x+ix, cell_y+iy, cell_z+iz)
       drift_local = drift_local &
           + gf * drift(cell_x+ix, cell_y+iy, cell_z+iz)
-    ENDDO
-    ENDDO
-    ENDDO
+    END DO
+    END DO
+    END DO
 
   END SUBROUTINE params_local
 #endif
@@ -132,8 +132,8 @@ CONTAINS
 
         current => current%next
         ipart = ipart + 1
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 #endif
 
   END SUBROUTINE deltaf_load

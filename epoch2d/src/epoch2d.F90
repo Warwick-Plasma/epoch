@@ -87,9 +87,9 @@ PROGRAM pic
     ELSE
       PRINT*, 'Specify output directory'
       READ(*,'(A)') data_dir
-    ENDIF
+    END IF
     CALL cleanup_stop_files
-  ENDIF
+  END IF
 
   CALL MPI_BCAST(data_dir, c_max_path_length, MPI_CHARACTER, 0, comm, errcode)
 
@@ -119,7 +119,7 @@ PROGRAM pic
     ! auto_load particles
     CALL auto_load
     time = 0.0_num
-  ENDIF
+  END IF
 
   CALL custom_particle_load
   CALL manual_load
@@ -134,7 +134,7 @@ PROGRAM pic
   npart_global = 0
   DO ispecies = 1, n_species
     npart_global = npart_global + species_list(ispecies)%count
-  ENDDO
+  END DO
 
   ! .TRUE. to over_ride balance fraction check
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
@@ -154,7 +154,7 @@ PROGRAM pic
     time = time + dt
     CALL bfield_final_bcs
     dt = dt_store
-  ENDIF
+  END IF
   CALL count_n_zeros
 
   ! Setup particle migration between species
@@ -179,13 +179,13 @@ PROGRAM pic
       CALL timer_stop(c_timer_step)
       CALL timer_reset
       timer_first(c_timer_step) = timer_walltime
-    ENDIF
+    END IF
 
     push = (time >= particle_push_start_time)
 #ifdef PHOTONS
     IF (push .AND. use_qed .AND. time > qed_start_time) THEN
       CALL qed_update_optical_depth()
-    ENDIF
+    END IF
 #endif
 
     CALL update_eb_fields_half
@@ -205,18 +205,18 @@ PROGRAM pic
             CALL collisional_ionisation
           ELSE
             CALL particle_collisions
-          ENDIF
-        ENDIF
+          END IF
+        END IF
 
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
         CALL reattach_particles_to_mainlist
-      ENDIF
+      END IF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
       CALL update_particle_count
-    ENDIF
+    END IF
 
     CALL check_for_stop_condition(halt, force_dump)
     IF (halt) EXIT
@@ -228,7 +228,7 @@ PROGRAM pic
     CALL update_eb_fields_final
 
     CALL moving_window
-  ENDDO
+  END DO
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_start
 
@@ -241,7 +241,7 @@ PROGRAM pic
   IF (rank == 0) THEN
     CALL create_full_timestring(runtime, timestring)
     WRITE(*,*) 'Final runtime of core = ' // TRIM(timestring)
-  ENDIF
+  END IF
 
   CALL finalise
 

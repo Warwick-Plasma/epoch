@@ -49,7 +49,7 @@ CONTAINS
     IF (sendcounts(iproc) > 0) THEN
       CALL partlist_send_nocount(pointers_send(iproc), iproc)
       CALL destroy_partlist(pointers_send(iproc))
-    ENDIF
+    END IF
 
   END SUBROUTINE do_sendpart
 
@@ -62,7 +62,7 @@ CONTAINS
     IF (recvcounts(iproc) > 0) THEN
       CALL partlist_recv_nocount(pointers_recv(iproc), iproc, &
           recvcounts(iproc))
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recvpart
 
@@ -75,7 +75,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in1d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send1d
 
@@ -89,7 +89,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out1d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv1d
 
@@ -102,7 +102,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in2d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send2d
 
@@ -116,7 +116,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out2d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv2d
 
@@ -129,7 +129,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in3d, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send3d
 
@@ -143,7 +143,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out3d, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv3d
 
@@ -156,7 +156,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in1dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send1dr4
 
@@ -170,7 +170,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out1dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv1dr4
 
@@ -183,7 +183,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in2dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send2dr4
 
@@ -197,7 +197,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out2dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv2dr4
 
@@ -210,7 +210,7 @@ CONTAINS
 
     IF (sendtypes(iproc) /= 0) THEN
       CALL MPI_SEND(field_in3dr4, 1, sendtypes(iproc), iproc, tag, comm, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_send3dr4
 
@@ -224,7 +224,7 @@ CONTAINS
     IF (recvtypes(iproc) /= 0) THEN
       CALL MPI_RECV(field_out3dr4, 1, recvtypes(iproc), iproc, tag, comm, &
           MPI_STATUS_IGNORE, ierr)
-    ENDIF
+    END IF
 
   END SUBROUTINE do_recv3dr4
 
@@ -373,7 +373,7 @@ CONTAINS
     DO i = 0, nodd - 1
       evnlist(i) = 2 * i
       oddlist(i) = 2 * i + 1
-    ENDDO
+    END DO
     IF (nevn /= nodd) evnlist(nevn-1) = nproc - 1
 
     DO WHILE(nodd > 0)
@@ -382,47 +382,47 @@ CONTAINS
         IF (oddlist(i) == rank) THEN
           is_evn = .FALSE.
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       IF (is_evn) THEN
         DO i = 0, nodd - 1
           iproc = oddlist(i)
           CALL do_send(iproc)
-        ENDDO
+        END DO
 
         DO i = 0, nodd - 1
           iproc = oddlist(i)
           CALL do_recv(iproc)
-        ENDDO
+        END DO
 
         nodd = nevn / 2
         nevn = (nevn + 1) / 2
         DO i = 0, nodd - 1
           evnlist(i) = evnlist(2*i)
           oddlist(i) = evnlist(2*i+1)
-        ENDDO
+        END DO
         IF (nevn /= nodd) evnlist(nevn-1) = evnlist(2*nevn-2)
       ELSE
         DO i = 0, nevn - 1
           iproc = evnlist(i)
           CALL do_recv(iproc)
-        ENDDO
+        END DO
 
         DO i = 0, nevn - 1
           iproc = evnlist(i)
           CALL do_send(iproc)
-        ENDDO
+        END DO
 
         nevn = (nodd + 1) / 2
         nodd = nodd / 2
         DO i = 0, nodd - 1
           evnlist(i) = oddlist(2*i)
           oddlist(i) = oddlist(2*i+1)
-        ENDDO
+        END DO
         IF (nevn /= nodd) evnlist(nevn-1) = oddlist(2*nevn-2)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DEALLOCATE(evnlist)
     DEALLOCATE(oddlist)

@@ -63,9 +63,9 @@ CONTAINS
         PRINT*,'Simulation domain is too small.'
         PRINT*,'There must be at least ' // TRIM(str) &
             // ' cells in each direction.'
-      ENDIF
+      END IF
       CALL abort_code(c_err_bad_setup)
-    ENDIF
+    END IF
 
     reset = .FALSE.
     IF (MAX(nprocx,1) * MAX(nprocy,1) > nproc) THEN
@@ -73,7 +73,7 @@ CONTAINS
       IF (rank == 0) THEN
         PRINT*,'*** WARNING ***'
         PRINT*,'Requested domain split exceeds CPUs. Ignoring'
-      ENDIF
+      END IF
     ELSE IF (nprocx > 0 .OR. nprocy > 0) THEN
       ! Sanity check
       IF (nprocx == 0) nprocx = nproc / nprocy
@@ -88,22 +88,22 @@ CONTAINS
             dir = 'x'
           ELSE IF (nysplit < ng) THEN
             dir = 'y'
-          ENDIF
+          END IF
           PRINT*,'*** WARNING ***'
           PRINT'('' Requested domain split gives less than '', I1, &
               &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
-        ENDIF
-      ENDIF
-    ENDIF
+        END IF
+      END IF
+    END IF
 
     IF (reset) THEN
       IF (rank == 0) THEN
         PRINT *, 'Unable to use requested processor subdivision. Using ' &
             // 'default division.'
-      ENDIF
+      END IF
       nprocx = 0
       nprocy = 0
-    ENDIF
+    END IF
 
     IF (nprocx * nprocy == 0) THEN
       DO WHILE (nproc > 1)
@@ -126,8 +126,8 @@ CONTAINS
             nprocx = ix
             nprocy = iy
             minarea = area
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         IF (nprocx > 0) EXIT
 
@@ -135,8 +135,8 @@ CONTAINS
         ! number of processors and try again.
 
         nproc = nproc - 1
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     IF (nproc_orig /= nproc) THEN
       IF (.NOT.allow_cpu_reduce) THEN
@@ -145,16 +145,16 @@ CONTAINS
           PRINT*,'*** ERROR ***'
           PRINT*,'Cannot split the domain using the requested number of CPUs.'
           PRINT*,'Try reducing the number of CPUs to ',TRIM(str)
-        ENDIF
+        END IF
         CALL abort_code(c_err_bad_setup)
         STOP
-      ENDIF
+      END IF
       IF (rank == 0) THEN
         CALL integer_as_string(nproc, str)
         PRINT*,'*** WARNING ***'
         PRINT*,'Cannot split the domain using the requested number of CPUs.'
         PRINT*,'Reducing the number of CPUs to ',TRIM(str)
-      ENDIF
+      END IF
       ranges(1,1) = nproc
       ranges(2,1) = nproc_orig - 1
       ranges(3,1) = 1
@@ -165,11 +165,11 @@ CONTAINS
       IF (comm == MPI_COMM_NULL) THEN
         CALL MPI_FINALIZE(errcode)
         STOP
-      ENDIF
+      END IF
       CALL MPI_GROUP_FREE(oldgroup, errcode)
       CALL MPI_GROUP_FREE(newgroup, errcode)
       CALL MPI_COMM_FREE(old_comm, errcode)
-    ENDIF
+    END IF
 
     dims = (/nprocy, nprocx/)
     CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
@@ -189,9 +189,9 @@ CONTAINS
         IF (species_list(idim)%bc_particle(c_bd_x_min) == c_bc_periodic) THEN
           periods(c_ndims) = .TRUE.
           EXIT
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     IF (bc_field(c_bd_y_min) == c_bc_periodic) THEN
       periods(c_ndims-1) = .TRUE.
@@ -200,9 +200,9 @@ CONTAINS
         IF (species_list(idim)%bc_particle(c_bd_y_min) == c_bc_periodic) THEN
           periods(c_ndims-1) = .TRUE.
           EXIT
-        ENDIF
-      ENDDO
-    ENDIF
+        END IF
+      END DO
+    END IF
 
     old_comm = comm
     CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
@@ -218,7 +218,7 @@ CONTAINS
 
     IF (rank == 0) THEN
       PRINT *, 'Processor subdivision is ', (/nprocx, nprocy/)
-    ENDIF
+    END IF
 
     x_coords = coordinates(c_ndims)
     x_min_boundary = .FALSE.
@@ -246,10 +246,10 @@ CONTAINS
           IF ((test_coords(idim) < 0 &
               .OR. test_coords(idim) >= dims(idim)) &
               .AND. .NOT. periods(idim)) op = .FALSE.
-        ENDDO
+        END DO
         IF (op) CALL MPI_CART_RANK(comm, test_coords, neighbour(ix,iy), errcode)
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
   END SUBROUTINE setup_communicator
 
@@ -286,12 +286,12 @@ CONTAINS
       cell_x_min(1) = 1
       DO idim = 2, nprocx
         cell_x_min(idim) = cell_x_max(idim-1) + 1
-      ENDDO
+      END DO
 
       cell_y_min(1) = 1
       DO idim = 2, nprocy
         cell_y_min(idim) = cell_y_max(idim-1) + 1
-      ENDDO
+      END DO
     ELSE
       nx0 = nx_global / nprocx
       ny0 = ny_global / nprocy
@@ -303,32 +303,32 @@ CONTAINS
         nxp = (nx0 + 1) * nprocx - nx_global
       ELSE
         nxp = nprocx
-      ENDIF
+      END IF
 
       IF (ny0 * nprocy /= ny_global) THEN
         nyp = (ny0 + 1) * nprocy - ny_global
       ELSE
         nyp = nprocy
-      ENDIF
+      END IF
 
       DO idim = 1, nxp
         cell_x_min(idim) = (idim - 1) * nx0 + 1
         cell_x_max(idim) = idim * nx0
-      ENDDO
+      END DO
       DO idim = nxp + 1, nprocx
         cell_x_min(idim) = nxp * nx0 + (idim - nxp - 1) * (nx0 + 1) + 1
         cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
-      ENDDO
+      END DO
 
       DO idim = 1, nyp
         cell_y_min(idim) = (idim - 1) * ny0 + 1
         cell_y_max(idim) = idim * ny0
-      ENDDO
+      END DO
       DO idim = nyp + 1, nprocy
         cell_y_min(idim) = nyp * ny0 + (idim - nyp - 1) * (ny0 + 1) + 1
         cell_y_max(idim) = nyp * ny0 + (idim - nyp) * (ny0 + 1)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     nx_global_min = cell_x_min(x_coords+1)
     nx_global_max = cell_x_max(x_coords+1)
@@ -371,10 +371,10 @@ CONTAINS
         NULLIFY(species_list(1)%prev, species_list(n_species)%next)
     DO ispecies = 1, n_species-1
       species_list(ispecies)%next => species_list(ispecies+1)
-    ENDDO
+    END DO
     DO ispecies = 2, n_species
       species_list(ispecies)%prev => species_list(ispecies-1)
-    ENDDO
+    END DO
     DO ispecies = 1, n_species
       species_list(ispecies)%id = ispecies
 #ifndef NO_PARTICLE_PROBES
@@ -386,17 +386,17 @@ CONTAINS
 
       IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1-ng:ny+ng,1:3))
-      ENDIF
+      END IF
       IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1-ng:ny+ng,1:3))
-      ENDIF
+      END IF
       IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_min(1-ng:nx+ng,1:3))
-      ENDIF
+      END IF
       IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_y_max(1-ng:nx+ng,1:3))
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     CALL allocate_ic
 
@@ -423,7 +423,7 @@ CONTAINS
           & ''s on '', i4, '' process elements.'')') hours, minutes, seconds, &
           nproc
 #endif
-    ENDIF
+    END IF
 
     CALL MPI_BARRIER(comm, errcode)
 
@@ -510,7 +510,7 @@ CONTAINS
       PRINT*, 'Communicator MPI_COMM_WORLD'
     ELSE
       PRINT*, 'Communicator ', comm, '(Not MPI_COMM_WORLD)'
-    ENDIF
+    END IF
 
     ! Deliberately raise a divide-by-zero error
     tmp1 = 0.0
