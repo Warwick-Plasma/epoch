@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 33 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 34 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -78,7 +78,8 @@ MODULE deck_control_block
           'maxwell_solver           ', &
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
-          'bits_in_cpu_id           ' /)
+          'bits_in_cpu_id           ', &
+          'reset_walltime           ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -121,7 +122,8 @@ MODULE deck_control_block
           'maxwell_solver           ', &
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
-          'bits_in_cpu_id           ' /)
+          'bits_in_cpu_id           ', &
+          'reset_walltime           ' /)
 
 CONTAINS
 
@@ -135,10 +137,11 @@ CONTAINS
       simplify_deck = .TRUE.
       print_deck_constants = .FALSE.
       allow_missing_restart = .FALSE.
-      print_eta_string = .FALSE.
+      print_eta_string = .TRUE.
       use_current_correction = .FALSE.
       use_particle_count_update = .FALSE.
       use_accurate_n_zeros = .FALSE.
+      reset_walltime = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -396,6 +399,8 @@ CONTAINS
       use_accurate_n_zeros = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+33)
       n_cpu_bits = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+34)
+      reset_walltime = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

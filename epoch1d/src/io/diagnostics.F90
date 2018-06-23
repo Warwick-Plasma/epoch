@@ -238,7 +238,15 @@ CONTAINS
           .AND. MOD(step, stdout_frequency) == 0) THEN
         timer_walltime = MPI_WTIME()
         elapsed_time = timer_walltime - walltime_start
-        CALL create_timestring(elapsed_time, timestring)
+
+        IF (reset_walltime) THEN
+          CALL create_timestring(elapsed_time, timestring)
+          elapsed_time = elapsed_time + old_elapsed_time
+        ELSE
+          elapsed_time = elapsed_time + old_elapsed_time
+          CALL create_timestring(elapsed_time, timestring)
+        END IF
+
         IF (print_eta_string) THEN
           eta_timestring = ''
           IF (time > 0.0_num) THEN
@@ -362,6 +370,10 @@ CONTAINS
           c_compile_flags, defines, c_compile_date, run_date)
       CALL sdf_write_cpu_split(sdf_handle, 'cpu_rank', 'CPUs/Original rank', &
           cell_x_max)
+
+      timer_walltime = MPI_WTIME()
+      elapsed_time = old_elapsed_time + timer_walltime - walltime_start
+      CALL sdf_write_srl(sdf_handle, 'elapsed_time', 'Wall-time', elapsed_time)
 
       file_numbers(iprefix) = file_numbers(iprefix) + 1
 

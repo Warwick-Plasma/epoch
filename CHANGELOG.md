@@ -17,6 +17,11 @@
 
  * Added sanity check for binary file size
 
+ * Fixed the ETA string on restart
+
+ * Added control block option "reset_walltime" to reset the walltime
+   to zero when restarting
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
