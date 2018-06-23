@@ -1160,6 +1160,7 @@ MODULE shared_data
 
   REAL(num) :: walltime_start, real_walltime_start
   REAL(num) :: stop_at_walltime
+  REAL(num) :: old_elapsed_time = 0.0_num
   INTEGER :: stdout_frequency, check_stop_frequency
   LOGICAL :: check_walltime, print_eta_string
 
