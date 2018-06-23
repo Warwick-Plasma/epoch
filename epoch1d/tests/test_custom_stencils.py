@@ -74,7 +74,8 @@ def xt(sdffile, key='Electric Field/Ey'):
 
 
 class test_custom_stencils(SimTest):
-    solvers = ['lehe_x', 'lehe_custom', 'optimized']
+    solvers = ['optimized']
+    #solvers = ['lehe_x', 'lehe_custom', 'optimized']
 
     @classmethod
     def setUpClass(cls):

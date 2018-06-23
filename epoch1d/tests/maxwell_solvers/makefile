@@ -1,4 +1,7 @@
 default:
+	$(MAKE) -C lehe_x
+
+full:
 	$(MAKE) -C yee
 	$(MAKE) -C lehe_x
 

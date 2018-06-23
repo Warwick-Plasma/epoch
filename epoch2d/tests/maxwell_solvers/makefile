@@ -1,4 +1,8 @@
 default:
+	$(MAKE) -C lehe_x
+	$(MAKE) -C pukhov
+
+full:
 	$(MAKE) -C yee
 	$(MAKE) -C lehe_x
 	$(MAKE) -C pukhov

@@ -98,7 +98,8 @@ def xt2(sdffile, key='Electric Field/Ey'):
 
 
 class test_custom_stencils(SimTest):
-    solvers = ['optimized', 'optimized_symm', 'optimized_xaxis']
+    #solvers = ['optimized', 'optimized_symm', 'optimized_xaxis']
+    solvers = ['optimized']
 
     @classmethod
     def setUpClass(cls):
