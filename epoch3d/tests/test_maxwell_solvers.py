@@ -86,7 +86,8 @@ def xt3(sdffile, key='Electric Field/Ey'):
 
 
 class test_maxwell_solvers(SimTest):
-    solvers = ['yee', 'lehe_x', 'pukhov', 'cowan']
+    #solvers = ['yee', 'lehe_x', 'pukhov', 'cowan']
+    solvers = ['lehe_x', 'cowan']
 
     @classmethod
     def setUpClass(cls):
