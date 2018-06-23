@@ -57,7 +57,7 @@ CONTAINS
       DO ix = sf_min, sf_max
         temp_local = temp_local + gx(ix) * temperature(cell_x+ix)
         drift_local = drift_local + gx(ix) * drift(cell_x+ix)
-      ENDDO
+      END DO
 
       IF (direction == c_dir_x) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, drift_local)
@@ -70,7 +70,7 @@ CONTAINS
 
       current => current%next
       ipart = ipart + 1
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_particle_temperature
 

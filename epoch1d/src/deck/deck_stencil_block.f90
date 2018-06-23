@@ -34,7 +34,7 @@ CONTAINS
 
     IF (deck_state == c_ds_first) THEN
       dt_set = .FALSE.
-    ENDIF
+    END IF
 
   END SUBROUTINE stencil_deck_initialise
 
@@ -72,88 +72,88 @@ CONTAINS
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betayx')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betaxz')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betazx')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betayz')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'betazy')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammax')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammay')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'gammaz')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltax')) THEN
       deltax = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltay')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'deltaz')) THEN
       extended_error_string = 'Stencil element ' &
           // TRIM(element) // ' ignored in 1D code'
       errcode = c_err_generic_warning
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'dt')) THEN
       dt_custom = as_real_print(value, element, errcode)
       dt_set = .TRUE.
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -171,7 +171,7 @@ CONTAINS
 
     IF (.NOT. dt_set) THEN
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
   END FUNCTION stencil_block_check
 

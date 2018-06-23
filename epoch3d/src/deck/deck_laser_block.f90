@@ -90,15 +90,15 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "direction" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "boundary" instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       ! If the boundary has already been set, simply ignore further calls to it
       IF (boundary_set) RETURN
       boundary = as_boundary_print(value, element, errcode)
       boundary_set = .TRUE.
       CALL init_laser(boundary, working_laser)
       RETURN
-    ENDIF
+    END IF
 
     IF (.NOT. boundary_set) THEN
       IF (rank == 0) THEN
@@ -106,32 +106,32 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Cannot set laser properties before boundary is set'
-        ENDDO
+        END DO
         CALL abort_code(c_err_required_element_not_set)
-      ENDIF
+      END IF
       extended_error_string = 'boundary'
       errcode = c_err_required_element_not_set
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'amp')) THEN
       working_laser%amp = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     ! SI (W/m^2)
     IF (str_cmp(element, 'irradiance') .OR. str_cmp(element, 'intensity')) THEN
       working_laser%amp = SQRT(as_real_print(value, element, errcode) &
           / (c*epsilon0/2.0_num))
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'irradiance_w_cm2') &
         .OR. str_cmp(element, 'intensity_w_cm2')) THEN
       working_laser%amp = SQRT(as_real_print(value, element, errcode) &
           / (c*epsilon0/2.0_num)) * 100_num
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'omega') .OR. str_cmp(element, 'freq')) THEN
       IF (rank == 0 .AND. str_cmp(element, 'freq')) THEN
@@ -140,8 +140,8 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Element "freq" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "omega" instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL initialise_stack(working_laser%omega_function)
       CALL tokenize(value, working_laser%omega_function, errcode)
       working_laser%omega = 0.0_num
@@ -151,9 +151,9 @@ CONTAINS
         working_laser%use_omega_function = .TRUE.
       ELSE
         CALL deallocate_stack(working_laser%omega_function)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'frequency')) THEN
       CALL initialise_stack(working_laser%omega_function)
@@ -165,9 +165,9 @@ CONTAINS
         working_laser%use_omega_function = .TRUE.
       ELSE
         CALL deallocate_stack(working_laser%omega_function)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'lambda')) THEN
       CALL initialise_stack(working_laser%omega_function)
@@ -179,9 +179,9 @@ CONTAINS
         working_laser%use_omega_function = .TRUE.
       ELSE
         CALL deallocate_stack(working_laser%omega_function)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'profile')) THEN
       CALL initialise_stack(working_laser%profile_function)
@@ -192,9 +192,9 @@ CONTAINS
         working_laser%use_profile_function = .TRUE.
       ELSE
         CALL deallocate_stack(working_laser%profile_function)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'phase')) THEN
       CALL initialise_stack(working_laser%phase_function)
@@ -205,19 +205,19 @@ CONTAINS
         working_laser%use_phase_function = .TRUE.
       ELSE
         CALL deallocate_stack(working_laser%phase_function)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 't_start')) THEN
       working_laser%t_start = as_time_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 't_end')) THEN
       working_laser%t_end = as_time_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 't_profile')) THEN
       working_laser%use_time_function = .TRUE.
@@ -226,24 +226,24 @@ CONTAINS
       ! evaluate it once to check that it's a valid block
       dummy = evaluate(working_laser%time_function, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'pol_angle')) THEN
       working_laser%pol_angle = as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'pol')) THEN
       ! Convert from degrees to radians
       working_laser%pol_angle = &
           pi * as_real_print(value, element, errcode) / 180.0_num
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'id')) THEN
       working_laser%id = as_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -265,42 +265,42 @@ CONTAINS
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_min
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
       current => current%next
-    ENDDO
+    END DO
 
     IF (IAND(error, 1) /= 0) THEN
       IF (rank == 0) THEN
@@ -308,10 +308,10 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define a "lambda" or "omega" for every laser.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
     IF (IAND(error, 2) /= 0) THEN
       IF (rank == 0) THEN
@@ -319,10 +319,10 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define an "amp" or "irradiance" for every laser.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
   END FUNCTION laser_block_check
 

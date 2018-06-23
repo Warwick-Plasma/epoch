@@ -138,13 +138,13 @@ CONTAINS
 
     DO i = 1, count
       values(count-i+1) = pop_off_eval()
-    ENDDO
+    END DO
 
     IF (flag /= 0) THEN
       eval_stack_nvalues = count
       eval_stack_stack_point = eval_stack_stack_point + count
       flag = 0
-    ENDIF
+    END IF
 
   END SUBROUTINE get_values
 
@@ -155,7 +155,7 @@ CONTAINS
     IF (eval_stack_nvalues > 0) THEN
       eval_stack_nvalues = eval_stack_nvalues + 1
       eval_stack_stack_point = eval_stack_stack_point + 1
-    ENDIF
+    END IF
 
   END SUBROUTINE stack_point_fix
 

@@ -97,7 +97,7 @@ CONTAINS
     ! 'Warm-up' the generator by cycling through a few times
     DO i = 1, 1000
       dummy = random(state)
-    ENDDO
+    END DO
 
   END SUBROUTINE random_init
 
@@ -140,13 +140,13 @@ CONTAINS
         w = rand1**2 + rand2**2
 
         IF (w > c_tiny .AND. w < 1.0D0) EXIT
-      ENDDO
+      END DO
 
       w = SQRT((-2.0D0 * LOG(w)) / w)
 
       random_box_muller = rand1 * w * stdev + mu_val
       cached_random_value = rand2 * w
-    ENDIF
+    END IF
 
   END FUNCTION random_box_muller
 

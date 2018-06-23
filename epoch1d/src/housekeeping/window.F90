@@ -38,7 +38,7 @@ CONTAINS
     IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
-    ENDIF
+    END IF
     CALL abort_code(c_err_pp_options_missing)
 #endif
 
@@ -73,14 +73,14 @@ CONTAINS
       DO ix = 1-ng, nx_global + ng
         x_global(ix) = x_grid_min + (ix - 1) * dx
         xb_global(ix) = xb_min + (ix - 1) * dx
-      ENDDO
+      END DO
       x_grid_max = x_global(nx_global)
       x_max = xb_global(nx_global+1) - dx * cpml_thickness
 
       DO iproc = 0, nprocx-1
         x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
         x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      ENDDO
+      END DO
 
       x_grid_min_local = x_grid_mins(x_coords)
       x_grid_max_local = x_grid_maxs(x_coords)
@@ -95,7 +95,7 @@ CONTAINS
 
       ! Shift fields around
       CALL shift_fields
-    ENDDO
+    END DO
 
   END SUBROUTINE shift_window
 
@@ -120,7 +120,7 @@ CONTAINS
       CALL shift_field(cpml_psi_ezx, ng)
       CALL shift_field(cpml_psi_byx, ng)
       CALL shift_field(cpml_psi_bzx, ng)
-    ENDIF
+    END IF
 
     IF (x_max_boundary) THEN
       ! Fix incoming field cell.
@@ -143,8 +143,8 @@ CONTAINS
         cpml_psi_ezx(nx:nx+1) = cpml_psi_ezx(nx)
         cpml_psi_byx(nx:nx+1) = cpml_psi_byx(nx)
         cpml_psi_bzx(nx:nx+1) = cpml_psi_bzx(nx)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE shift_fields
 
@@ -159,7 +159,7 @@ CONTAINS
     ! Shift field to the left by one cell
     DO i = 1-ng, nx+ng-1
       field(i) = field(i+1)
-    ENDDO
+    END DO
 
     CALL field_bc(field, ng)
 
@@ -198,7 +198,7 @@ CONTAINS
             species_list(ispecies)%temperature_function(i), parameters, errcode)
         drift(i) = evaluate_with_parameters( &
             species_list(ispecies)%drift_function(i), parameters, errcode)
-      ENDDO
+      END DO
       density = evaluate_with_parameters( &
           species_list(ispecies)%density_function, parameters, errcode)
       IF (density > dmax) density = dmax
@@ -210,7 +210,7 @@ CONTAINS
       n_frac = 0
       IF (npart_frac > 0.0_num) THEN
         IF (random() < npart_frac) n_frac = 1
-      ENDIF
+      END IF
 
       wdata = dx / (npart_per_cell + n_frac)
 
@@ -219,7 +219,7 @@ CONTAINS
         ! Place extra particle based on probability
         IF (ipart == 0) THEN
           IF (npart_frac < random()) CYCLE
-        ENDIF
+        END IF
         CALL create_particle(current)
         current%part_pos = x0 + random() * dx
 
@@ -228,7 +228,7 @@ CONTAINS
           drift_local = drift(i)
           current%part_p(i) = momentum_from_temperature(&
               species_list(ispecies)%mass, temp_local, drift_local)
-        ENDDO
+        END DO
 
         current%weight = density * wdata
 #ifdef PARTICLE_DEBUG
@@ -236,10 +236,10 @@ CONTAINS
         current%processor_at_t0 = rank
 #endif
         CALL add_particle_to_partlist(append_list, current)
-      ENDDO
+      END DO
 
       CALL append_partlist(species_list(ispecies)%attached_list, append_list)
-    ENDDO
+    END DO
 
   END SUBROUTINE insert_particles
 
@@ -260,11 +260,11 @@ CONTAINS
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
             DEALLOCATE(current)
-          ENDIF
+          END IF
           current => next
-        ENDDO
-      ENDDO
-    ENDIF
+        END DO
+      END DO
+    END IF
 
   END SUBROUTINE remove_particles
 #endif
@@ -288,8 +288,8 @@ CONTAINS
         CALL setup_boundaries
         IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
@@ -301,17 +301,17 @@ CONTAINS
         window_shift_real = REAL(window_shift_cells, num)
         IF (use_offset_grid) THEN
           window_shift = window_shift + window_shift_real * dx
-        ENDIF
+        END IF
         CALL shift_window(window_shift_cells)
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 #else
     IF (rank == 0) THEN
       WRITE(*,*) 'moving windows only available when using', &
           ' per particle weighting'
-    ENDIF
+    END IF
     CALL abort_code(c_err_pp_options_missing)
 #endif
 

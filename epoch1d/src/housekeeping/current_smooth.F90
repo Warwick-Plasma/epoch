@@ -65,14 +65,14 @@ CONTAINS
       DO isubx = sf_min, sf_max
         w1 = weight_fn(isubx)
         val = val + array(ix+isubx) * w1
-      ENDDO
+      END DO
       wk_array(ix) = val
-    ENDDO
+    END DO
 #else
     DO ix = 1, nx
       wk_array(ix) = 0.5_num * array(ix) &
           + (array(ix-1) + array(ix+1)) * 0.25_num
-    ENDDO
+    END DO
 #endif
     array(1:nx) = wk_array
 

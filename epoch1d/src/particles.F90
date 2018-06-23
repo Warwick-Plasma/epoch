@@ -164,7 +164,7 @@ CONTAINS
         IF (photon_dynamics) CALL push_photons(ispecies)
 #endif
         CYCLE
-      ENDIF
+      END IF
 #ifndef NO_PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
@@ -452,9 +452,9 @@ CONTAINS
             jx(cx) = jx(cx) + jxh
             jy(cx) = jy(cx) + jyh
             jz(cx) = jz(cx) + jzh
-          ENDDO
+          END DO
 #ifndef NO_TRACER_PARTICLES
-        ENDIF
+        END IF
 #endif
 #ifndef NO_PARTICLE_PROBES
         IF (probes_for_species) THEN
@@ -488,18 +488,18 @@ CONTAINS
                   CALL add_particle_to_partlist(&
                       current_probe%sampled_particles, particle_copy)
                   NULLIFY(particle_copy)
-                ENDIF
+                END IF
 
-              ENDIF
-            ENDIF
+              END IF
+            END IF
             current_probe => current_probe%next
-          ENDDO
-        ENDIF
+          END DO
+        END IF
 #endif
         current => next
-      ENDDO
+      END DO
       CALL current_bcs(species=ispecies)
-    ENDDO
+    END DO
 
     IF (.NOT.use_field_ionisation) THEN
       CALL current_bcs
@@ -553,7 +553,7 @@ CONTAINS
        f0 = norm * EXP(-f0_exponent)
     ELSE
        f0 = 0.0_num
-    ENDIF
+    END IF
 
   END FUNCTION f0
 
@@ -628,17 +628,17 @@ CONTAINS
                 CALL add_particle_to_partlist(&
                     current_probe%sampled_particles, particle_copy)
                 NULLIFY(particle_copy)
-              ENDIF
+              END IF
 
-            ENDIF
-          ENDIF
+            END IF
+          END IF
           current_probe => current_probe%next
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 #endif
 
       current => current%next
-    ENDDO
+    END DO
 
   END SUBROUTINE push_photons
 #endif

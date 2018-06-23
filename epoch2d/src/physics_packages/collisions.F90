@@ -114,8 +114,8 @@ CONTAINS
         IF (user_factor > 0) THEN
           collide_species = .TRUE.
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       IF (.NOT.collide_species) CYCLE
 
@@ -132,8 +132,8 @@ CONTAINS
       DO ix = 1, nx
         p_list1 => species_list(ispecies)%secondary_list(ix,iy)
         CALL shuffle_particle_list_random(p_list1)
-      ENDDO ! ix
-      ENDDO ! iy
+      END DO ! ix
+      END DO ! iy
 
       DO jspecies = 1, n_species
         ! Currently no support for photon collisions so just cycle round
@@ -158,7 +158,7 @@ CONTAINS
               q1, q2, m1)
         ELSE
           log_lambda = coulomb_log
-        ENDIF
+        END IF
 
         DO iy = 1, ny
         DO ix = 1, nx
@@ -174,11 +174,11 @@ CONTAINS
                 m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
                 itemp(ix,iy), jtemp(ix,iy), log_lambda(ix,iy), &
                 user_factor)
-          ENDIF
-        ENDDO ! ix
-        ENDDO ! iy
-      ENDDO ! jspecies
-    ENDDO ! ispecies
+          END IF
+        END DO ! ix
+        END DO ! iy
+      END DO ! jspecies
+    END DO ! ispecies
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
@@ -208,9 +208,9 @@ CONTAINS
       DO ispecies = 1, n_species
         p_list1 => species_list(ispecies)%secondary_list(ix,iy)
         CALL shuffle_particle_list_random(p_list1)
-      ENDDO
-    ENDDO ! ix
-    ENDDO ! iy
+      END DO
+    END DO ! ix
+    END DO ! iy
 
     ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng))
@@ -240,7 +240,7 @@ CONTAINS
       IF (ABS(species_list(ispecies)%charge) <= c_tiny) THEN
         IF (.NOT. species_list(ispecies)%ionise) CYCLE
         use_coulomb_log_auto_i = .FALSE.
-      ENDIF
+      END IF
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
       CALL calc_coll_ekbar(iekbar, ispecies)
@@ -266,10 +266,10 @@ CONTAINS
         n2 = species_list(ispecies)%n
         DO WHILE(species_list(ion_species)%ionise)
           ion_species = species_list(ion_species)%ionise_to_species
-        ENDDO
+        END DO
         q_full = species_list(ion_species)%charge
         ion_species = species_list(ispecies)%ionise_to_species
-      ENDIF
+      END IF
 
       DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
@@ -282,7 +282,7 @@ CONTAINS
           IF (.NOT. (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise)) CYCLE
           use_coulomb_log_auto = .FALSE.
-        ENDIF
+        END IF
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor <= 0) CYCLE
 
@@ -310,10 +310,10 @@ CONTAINS
           n2 = species_list(ion_species)%n
           DO WHILE(species_list(ion_species)%ionise)
             ion_species = species_list(ion_species)%ionise_to_species
-          ENDDO
+          END DO
           q_full = species_list(ion_species)%charge
           ion_species = species_list(jspecies)%ionise_to_species
-        ENDIF
+        END IF
 
         IF (coulomb_log_auto) THEN
           IF (use_coulomb_log_auto) THEN
@@ -321,7 +321,7 @@ CONTAINS
                 q1, q2, m1)
           ELSE
             log_lambda = 0
-          ENDIF
+          END IF
           IF (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise) THEN
             e_log_lambda = calc_coulomb_log(iekbar, e_temp, idens, &
@@ -332,11 +332,11 @@ CONTAINS
             e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, &
                 jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
-          ENDIF
+          END IF
         ELSE
           log_lambda = coulomb_log
           e_log_lambda = coulomb_log
-        ENDIF
+        END IF
 
         IF (ispecies == jspecies) THEN
           DO iy = 1, ny
@@ -345,8 +345,8 @@ CONTAINS
                 species_list(ispecies)%secondary_list(ix,iy), &
                 m1, q1, w1, idens(ix,iy), itemp(ix,iy), &
                 log_lambda(ix,iy), user_factor)
-          ENDDO ! ix
-          ENDDO ! iy
+          END DO ! ix
+          END DO ! iy
         ELSE IF (species_list(ispecies)%ionise &
             .AND. species_list(jspecies)%electron) THEN
           DO iy = 1, ny
@@ -365,7 +365,7 @@ CONTAINS
                   e_dens(ix,iy), jdens(ix,iy), &
                   e_temp(ix,iy), jtemp(ix,iy), e_log_lambda(ix,iy), &
                   e_user_factor)
-            ENDIF
+            END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q1) > c_tiny) THEN
@@ -375,15 +375,15 @@ CONTAINS
                   m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
                   itemp(ix,iy), jtemp(ix,iy), log_lambda(ix,iy), &
                   user_factor)
-            ENDIF
+            END IF
             ! Put ions and electrons into respective lists
             CALL append_partlist( &
                 species_list(jspecies)%secondary_list(ix,iy), ionising_e)
             CALL append_partlist( &
                 species_list(species_list(ispecies)%release_species)&
                 %secondary_list(ix,iy), ejected_e)
-          ENDDO ! ix
-          ENDDO ! iy
+          END DO ! ix
+          END DO ! iy
         ELSE IF (species_list(ispecies)%electron &
             .AND. species_list(jspecies)%ionise) THEN
           DO iy = 1, ny
@@ -402,7 +402,7 @@ CONTAINS
                   idens(ix,iy), e_dens(ix,iy), &
                   itemp(ix,iy), e_temp(ix,iy), e_log_lambda(ix,iy), &
                   e_user_factor)
-            ENDIF
+            END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q2) > c_tiny) THEN
@@ -412,15 +412,15 @@ CONTAINS
                   m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
                   itemp(ix,iy), jtemp(ix,iy), log_lambda(ix,iy), &
                   user_factor)
-            ENDIF
+            END IF
             ! Put electrons into respective lists
             CALL append_partlist( &
                 species_list(ispecies)%secondary_list(ix,iy), ionising_e)
             CALL append_partlist( &
                 species_list(species_list(jspecies)%release_species)&
                 %secondary_list(ix,iy), ejected_e)
-          ENDDO ! ix
-          ENDDO ! iy
+          END DO ! ix
+          END DO ! iy
         ELSE
           DO iy = 1, ny
           DO ix = 1, nx
@@ -430,11 +430,11 @@ CONTAINS
                 m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
                 itemp(ix,iy), jtemp(ix,iy), log_lambda(ix,iy), &
                 user_factor)
-          ENDDO ! ix
-          ENDDO ! iy
-        ENDIF
-      ENDDO ! jspecies
-    ENDDO ! ispecies
+          END DO ! ix
+          END DO ! iy
+        END IF
+      END DO ! jspecies
+    END DO ! ispecies
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
@@ -495,7 +495,7 @@ CONTAINS
       factor = factor + MIN(electron%weight, ion%weight)
       electron => electron%next
       ion => ion%next
-    ENDDO
+    END DO
 
     electron => electrons%head
     ion => ions%head
@@ -514,13 +514,13 @@ CONTAINS
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
-        ENDIF
+        END IF
         denominator = ion%part_p(1) * DCOS(rot_y) + ion%part_p(3) * DSIN(rot_y)
         IF (ABS(denominator) > c_tiny) THEN
           rot_z = DATAN(-ion%part_p(2) / denominator)
         ELSE
           rot_z = pi / 2.0_num
-        ENDIF
+        END IF
         ! Rotate electron momentum into ion frame to simplify Lorentz transform
         e_p_rot = (/ (electron%part_p(1) * DCOS(rot_y) + electron%part_p(3) &
             * DSIN(rot_y)) * DCOS(rot_z) - electron%part_p(2) * DSIN(rot_z), &
@@ -550,7 +550,7 @@ CONTAINS
         e_p2_i = DOT_PRODUCT(electron%part_p, electron%part_p)
         e_ke_i = c * (SQRT(e_p2_i + e_mass * e_rest) - e_mass * c) / ev
         e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / c**2))
-      ENDIF
+      END IF
       ! Must enforce that electrons with insufficient kinetic energies cannot
       ! cause ionisation, as all cross sectional models used show massively
       ! increasing electron impact ionisation cross section as kinetic energy
@@ -577,7 +577,7 @@ CONTAINS
           eiics = 0.0_num
           DO i = 1, 7
             eiics = eiics + b_bell(n1,l,i) * (1.0_num - 1.0_num/red_inc)**i
-          ENDDO
+          END DO
           ! BELL cross section (cm^2)
           eiics = (a_bell(n1,l) * LOG(red_inc) + eiics) / (e_ke_i &
               * ionisation_energy)
@@ -603,7 +603,7 @@ CONTAINS
               - LOG(t) / (t + 1.0_num) * (1.0_num + 2.0_num * tp) &
               / (1.0_num + 0.5_num * tp)**2 &
               + bp**2 / (1.0_num + 0.5_num * tp)**2 * (t - 1.0_num) / 2.0_num)
-        ENDIF
+        END IF
         IF (random() < 1.0_num - EXP(prob_factor * eiics * e_v_i)) THEN
           ! Mark ionisation as occurring
           was_ionised(MOD(k - 1, ion_count) + 1) = .TRUE.
@@ -634,17 +634,17 @@ CONTAINS
                 - e_mass * e_rest) / e_p2_i) * electron%part_p
             ELSE
               electron%part_p = e_p_rot
-            ENDIF
+            END IF
           ELSE
             electron%part_p = SQRT(((ev / c * (e_ke_i - ion%weight &
                 / electron%weight * ionisation_energy + e_rest_ev))**2 &
                 - e_mass * e_rest) / e_p2_i) * electron%part_p
-          ENDIF
-        ENDIF
-      ENDIF
+          END IF
+        END IF
+      END IF
       ion => ion%next
       electron => electron%next
-    ENDDO
+    END DO
 
     ! restore the tail of the lists
     NULLIFY(electrons%tail%next)
@@ -659,8 +659,8 @@ CONTAINS
         IF (lost_ke(k)) THEN
           CALL remove_particle_from_partlist(electrons, electron)
           CALL add_particle_to_partlist(ionising_e, electron)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       IF (k <= ion_count) THEN
         next_ion => ion%next
         IF (was_ionised(k)) THEN
@@ -683,11 +683,11 @@ CONTAINS
           CALL add_particle_to_partlist(ejected_e, ejected_electron)
           CALL remove_particle_from_partlist(ions, ion)
           CALL add_particle_to_partlist(ionised, ion)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       electron => next_e
       ion => next_ion
-    ENDDO
+    END DO
 
     DEALLOCATE(lost_ke, was_ionised)
 
@@ -735,7 +735,7 @@ CONTAINS
       CALL prefetch_particle(current)
       CALL prefetch_particle(impact)
 #endif
-    ENDDO
+    END DO
     np = np + current%weight
     factor = factor + MIN(current%weight, impact%weight)
 
@@ -744,7 +744,7 @@ CONTAINS
       factor = factor + MIN(current%weight, impact%next%weight)
       np = np + impact%weight
       factor = factor + MIN(impact%weight, impact%next%weight)
-    ENDIF
+    END IF
 
     factor = user_factor * np / factor
 #endif
@@ -760,7 +760,7 @@ CONTAINS
       CALL prefetch_particle(current)
       CALL prefetch_particle(impact)
 #endif
-    ENDDO
+    END DO
 
     IF (MOD(icount, 2_i8) == 0) THEN
       CALL scatter(current, impact, mass, mass, charge, charge, &
@@ -776,7 +776,7 @@ CONTAINS
       impact => current%next
       CALL scatter(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
-    ENDIF
+    END IF
 
   END SUBROUTINE intra_species_collisions
 
@@ -827,7 +827,7 @@ CONTAINS
       DO k = 1, icount
         np = np + current%weight
         current => current%next
-      ENDDO
+      END DO
 
       current => p_list1%head
       impact => p_list2%head
@@ -840,7 +840,7 @@ CONTAINS
         CALL prefetch_particle(current)
         CALL prefetch_particle(impact)
 #endif
-      ENDDO
+      END DO
 #endif
 
       current => p_list1%head
@@ -855,12 +855,12 @@ CONTAINS
         CALL prefetch_particle(current)
         CALL prefetch_particle(impact)
 #endif
-      ENDDO
+      END DO
 
       ! restore the tail of the lists
       NULLIFY(p_list1%tail%next)
       NULLIFY(p_list2%tail%next)
-    ENDIF
+    END IF
 
   END SUBROUTINE inter_species_collisions
 
@@ -999,7 +999,7 @@ CONTAINS
     ELSE
       sin_theta = delta / SQRT(1.0_num + delta**2)
       cos_theta = sin_theta / delta
-    ENDIF
+    END IF
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
@@ -1040,7 +1040,7 @@ CONTAINS
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
     ELSEIF (w2 > w1) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
-    ENDIF
+    END IF
 
     ! Update particle properties
     current%part_p = p5
@@ -1084,10 +1084,10 @@ CONTAINS
         velocity_collisions = 0.0_num
       ELSE
         velocity_collisions = numerator / denominator
-      ENDIF
+      END IF
     ELSE
       velocity_collisions = 0.0_num
-    ENDIF
+    END IF
 
   END FUNCTION velocity_collisions
 
@@ -1104,7 +1104,7 @@ CONTAINS
           * (2.0_num * pi * q0 * itemp)**1.5_num)
     ELSE
       temperature_collisions = 0.0_num
-    ENDIF
+    END IF
 
   END FUNCTION temperature_collisions
 
@@ -1130,7 +1130,7 @@ CONTAINS
         manheimer_collisions = 0.0_num
       ELSE
         manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_tiny)
-      ENDIF
+      END IF
     ELSE
       IF (ek <= 0.0_num) THEN
         manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
@@ -1138,8 +1138,8 @@ CONTAINS
         slow = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
         fast = 3.9d-6 / (SQRT(ek**3) + c_tiny)
         manheimer_collisions = slow / (1.0_num + slow / fast)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
     manheimer_collisions = manheimer_collisions * jdens * log_lambda &
         * (q2 / q0)**2 * 1.0d-6
 
@@ -1184,7 +1184,7 @@ CONTAINS
       ! Correcting for the loss in energy by adding a perpendicular
       ! momentum correction
       p_scat = p_after + delta_p * (c2 * COS(phi) + c3 * SIN(phi))
-    ENDIF
+    END IF
 
   END SUBROUTINE weighted_particles_correction
 
@@ -1219,7 +1219,7 @@ CONTAINS
       c1 = (/ 1.0_num, 0.0_num, 0.0_num /)
       c2 = (/ 0.0_num, 1.0_num, 0.0_num /)
       c3 = (/ 0.0_num, 0.0_num, 1.0_num /)
-    ENDIF
+    END IF
 
   END SUBROUTINE new_coords
 
@@ -1247,7 +1247,7 @@ CONTAINS
       ! and reallocation
       coll_sort_array_size = (11 * p_num) / 10 + 10
       ALLOCATE(coll_sort_array(coll_sort_array_size))
-    ENDIF
+    END IF
 
     ! Copy all the particle pointers into the array and create random
     ! sort indices
@@ -1255,7 +1255,7 @@ CONTAINS
     DO i = 1,p_num
       coll_sort_array(i)%particle => particle1
       particle1 => particle1%next
-    ENDDO
+    END DO
 
     ! Shuffle particles using Durstenfeld's algorithm
     DO idx = p_num,2,-1
@@ -1263,7 +1263,7 @@ CONTAINS
       particle1 => coll_sort_array(idx)%particle
       coll_sort_array(idx)%particle => coll_sort_array(swap_idx)%particle
       coll_sort_array(swap_idx)%particle => particle1
-    ENDDO
+    END DO
 
     ! Finally we have to copy back to the list
     ! Do head first
@@ -1278,7 +1278,7 @@ CONTAINS
 
       particle1%prev => particle2
       particle2%next => particle1
-    ENDDO
+    END DO
 
     ! Finally set the tail (at the end of the loop, particle is pointing to
     ! the tail)
@@ -1313,9 +1313,9 @@ CONTAINS
         dB = 2.0_num * pi * h_bar / (SQRT(gamm**2 - 1.0_num) * m1 * c)
         bmin = MAX(b0, dB)
         calc_coulomb_log(i,j) = MAX(1.0_num, LOG(bmax / bmin))
-      ENDIF
-    ENDDO
-    ENDDO
+      END IF
+    END DO
+    END DO
 
   END FUNCTION calc_coulomb_log
 
@@ -1360,20 +1360,20 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
-    ENDDO ! jx
-    ENDDO ! jy
+      END DO
+    END DO ! jx
+    END DO ! jy
 
     CALL calc_boundary(data_array)
 
     data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_coll_number_density
 
@@ -1436,12 +1436,12 @@ CONTAINS
               meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO
-        ENDDO
+        END DO
+        END DO
         current => current%next
-      ENDDO
-    ENDDO ! jx
-    ENDDO ! jy
+      END DO
+    END DO ! jx
+    END DO ! jy
 
     CALL calc_boundary(meanx)
     CALL calc_boundary(meany)
@@ -1481,12 +1481,12 @@ CONTAINS
               + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO
-        ENDDO
+        END DO
+        END DO
         current => current%next
-      ENDDO
-    ENDDO ! jx
-    ENDDO ! jy
+      END DO
+    END DO ! jx
+    END DO ! jy
 
     CALL calc_boundary(sigma)
     CALL calc_boundary(part_count)
@@ -1558,7 +1558,7 @@ CONTAINS
 #else
           wdata = 0.0_num
 #endif
-        ENDIF
+        END IF
 
 #include "particle_to_grid.inc"
 
@@ -1568,13 +1568,13 @@ CONTAINS
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
-    ENDDO ! jx
-    ENDDO ! jy
+      END DO
+    END DO ! jx
+    END DO ! jy
 
     CALL calc_boundary(data_array)
     CALL calc_boundary(part_count)
@@ -1582,7 +1582,7 @@ CONTAINS
     data_array = data_array / MAX(part_count, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_coll_ekbar
 
@@ -1705,7 +1705,7 @@ CONTAINS
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
-    ENDDO
+    END DO
 
     WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
     WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
@@ -1758,7 +1758,7 @@ CONTAINS
       ELSE
         CALL scatter(part2, part1, mass2, mass1, charge2, charge1, wt2, wt1, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      ENDIF
+      END IF
 
       p1 = part1%part_p
       p2 = part2%part_p
@@ -1768,7 +1768,7 @@ CONTAINS
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
-    ENDDO
+    END DO
 
     WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
     WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
@@ -1826,7 +1826,7 @@ CONTAINS
 
       p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
-    ENDDO
+    END DO
 
     WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
     WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
@@ -1879,7 +1879,7 @@ CONTAINS
       ELSE
         CALL scatter(part2, part1, mass2, mass1, charge2, charge1, wt2, wt1, &
             density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      ENDIF
+      END IF
 
       p1 = part1%part_p
       p2 = part2%part_p
@@ -1889,7 +1889,7 @@ CONTAINS
 
       p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
-    ENDDO
+    END DO
 
     WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
     WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
@@ -1954,7 +1954,7 @@ CONTAINS
         part%weight = random() + 1e-10_num
 
         part => part%next
-      ENDDO
+      END DO
 
       part => partlist2%head
       DO WHILE (ASSOCIATED(part))
@@ -1966,7 +1966,7 @@ CONTAINS
         part%weight = random() + 1e-10_num
 
         part => part%next
-      ENDDO
+      END DO
 
       ! call scattering routine
       CALL inter_species_collisions(partlist1, partlist2, &
@@ -1993,7 +1993,7 @@ CONTAINS
         IF (part%coll_count > histo1max) histo1max = part%coll_count
         histo1(part%coll_count) = histo1(part%coll_count) + 1
         part => part%next
-      ENDDO
+      END DO
 
 !      WRITE(*,'(''  Particle List 2: '',I10)') partlist2%count
 
@@ -2003,18 +2003,18 @@ CONTAINS
         IF (part%coll_count > histo2max) histo2max = part%coll_count
         histo2(part%coll_count) = histo2(part%coll_count) + 1
         part => part%next
-      ENDDO
+      END DO
 
 ! only need to output if something is wrong
 !      WRITE(*,*) '  Histogram 1'
 !      DO j = 1, histo1max
 !        WRITE(*,'(''    '',I4,'': '',I10)') j, histo1(j)
-!      ENDDO
+!      END DO
 !
 !      WRITE(*,*) '  Histogram 2'
 !      DO j = 1, histo2max
 !        WRITE(*,'(''    '',I4,'': '',I10)') j, histo2(j)
-!      ENDDO
+!      END DO
 
       ! performing check on histograms
 
@@ -2035,29 +2035,29 @@ CONTAINS
         ELSE
           histo1(2) = histo1(2) - cnt1
           histo2(2) = histo2(2) - cnt1
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       ! now check that both arrays are zero
       error = 0
       DO j = 1, histo1max
         IF (histo1(j) /= 0) error = error + 1
-      ENDDO
+      END DO
       DO j = 1, histo2max
         IF (histo2(j) /= 0) error = error + 1
-      ENDDO
+      END DO
 
       IF (error > 0) THEN
         WRITE(*,*) '  Error in inter species collisions'
         WRITE(*,'(''    Iteration:   '',I10)') i
         WRITE(*,'(''    List counts: '',I10,'', '',I10)') cnt1, cnt2
         STOP
-      ENDIF
+      END IF
 
       ! free particle list
       CALL destroy_partlist(partlist1)
       CALL destroy_partlist(partlist2)
-    ENDDO
+    END DO
 
     WRITE(*,*) '  SUCCESS!'
     WRITE(*,'(''    Number of iterations:   '',I10)') N
@@ -2114,7 +2114,7 @@ CONTAINS
         part%weight = random() + 1e-10_num
 
         part => part%next
-      ENDDO
+      END DO
 
       ! call scattering routine
       CALL intra_species_collisions(partlist, mass, charge, &
@@ -2133,13 +2133,13 @@ CONTAINS
         IF (part%coll_count > histo_max) histo_max = part%coll_count
         histo(part%coll_count) = histo(part%coll_count) + 1
         part => part%next
-      ENDDO
+      END DO
 
 ! only need to output if something is wrong
 !      WRITE(*,*) '  Histogram'
 !      DO j = 1, histo_max
 !        WRITE(*,'(''    '',I4,'': '',I10)') j, histo(j)
-!      ENDDO
+!      END DO
 
       ! performing check on histograms
 
@@ -2150,18 +2150,18 @@ CONTAINS
       error = 0
       DO j = 1, histo_max
         IF (histo(j) /= 0) error = error + 1
-      ENDDO
+      END DO
 
       IF (error > 0) THEN
         WRITE(*,*) '  Error in intra species collisions'
         WRITE(*,'(''    Iteration:   '',I10)') i
         WRITE(*,'(''    List count: '',I10)') partlist%count
         STOP
-      ENDIF
+      END IF
 
       ! free particle list
       CALL destroy_partlist(partlist)
-    ENDDO
+    END DO
 
     WRITE(*,*) '  SUCCESS!'
     WRITE(*,'(''    Number of iterations:   '',I10)') N
@@ -2219,7 +2219,7 @@ CONTAINS
           IF (.NOT. ASSOCIATED(part)) WRITE(*,*) '    !!not associated!!'
           part%coll_count = INT(j)
           part => part%next
-        ENDDO
+        END DO
 
         ! now shuffle
         CALL shuffle_particle_list_random(partlist)
@@ -2232,10 +2232,10 @@ CONTAINS
           if (maxp(j) < part%coll_count) maxp(j) = part%coll_count
           std_dev(j) = std_dev(j) + part%coll_count**2
           part => part%next
-        ENDDO
+        END DO
 
         CALL destroy_partlist(partlist)
-      ENDDO
+      END DO
 
       WRITE(*,'(''   Statistics ('',I10,'' runs)'')') N
       WRITE(*,*) '    avg        std_dev       min        max'
@@ -2243,9 +2243,9 @@ CONTAINS
         WRITE(*,'(''    '',F10.5,''    '',F10.5,''    '',I10,''    '',I10)') &
             histo(i) / N, SQRT(std_dev(i) / N - (histo(i) / N)**2), &
             minp(i), maxp(i)
-      ENDDO
+      END DO
 
-    ENDDO
+    END DO
 
     DEALLOCATE(histo)
 

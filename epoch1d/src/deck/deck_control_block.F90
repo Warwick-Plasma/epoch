@@ -134,7 +134,7 @@ CONTAINS
       stop_at_walltime = -1.0_num
       restart_filename = ''
       n_zeros_control = -1
-    ENDIF
+    END IF
 
   END SUBROUTINE control_deck_initialise
 
@@ -154,31 +154,31 @@ CONTAINS
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'n_zeros was less than ', TRIM(str), &
                         ' and has been ignored'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         n_zeros_control = -1
       ELSE
         n_zeros = n_zeros_control
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (ic_from_restart) THEN
       IF (TRIM(restart_filename) == '') THEN
         WRITE(filename_fmt, '(''(i'', i3.3, ''.'', i3.3, '', ".sdf")'')') &
             n_zeros, n_zeros
         WRITE(restart_filename, filename_fmt) restart_number
-      ENDIF
+      END IF
       full_restart_filename = TRIM(filesystem) &
           // TRIM(data_dir) // '/' // TRIM(restart_filename)
 
       CALL check_valid_restart
-    ENDIF
+    END IF
 
     IF (maxwell_solver == c_maxwell_solver_lehe &
         .OR. maxwell_solver == c_maxwell_solver_lehe_x) THEN
       fng = 2
       maxwell_solver = c_maxwell_solver_lehe_x
-    ENDIF
+    END IF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
 
@@ -187,7 +187,7 @@ CONTAINS
     IF (stop_at_walltime >= 0.0_num) THEN
       check_walltime = .TRUE.
       timer_collect = .TRUE.
-    ENDIF
+    END IF
 
     ! use_balance only if threshold is positive
     IF (dlb_threshold > 0) use_balance = .TRUE.
@@ -229,20 +229,20 @@ CONTAINS
           .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Adds 3rd alias just for ionisation s vs z issue
     IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
       elementselected = ionisation_index
-    ENDIF
+    END IF
 
     IF (elementselected == 0) RETURN
 
     IF (control_block_done(elementselected)) THEN
       errcode = c_err_preset_element
       RETURN
-    ENDIF
+    END IF
 
     control_block_done(elementselected) = .TRUE.
     errcode = c_err_none
@@ -273,8 +273,8 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The "icfile" option is no longer supported.'
           WRITE(io,*) 'Please use the "import" directive instead'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_bad_value)
     CASE(4*c_ndims+7)
       isnum = .TRUE.
@@ -284,13 +284,13 @@ CONTAINS
         IF (c < '0' .OR. c > '9') THEN
           isnum = .FALSE.
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       IF (isnum) THEN
         restart_number = as_integer_print(value, element, errcode)
       ELSE
         restart_filename = TRIM(str_tmp)
-      ENDIF
+      END IF
       ic_from_restart = .TRUE.
     CASE(4*c_ndims+8)
       neutral_background = as_logical_print(value, element, errcode)
@@ -301,7 +301,7 @@ CONTAINS
         errcode = c_err_bad_value
       ELSE
         CALL set_field_order(field_order)
-      ENDIF
+      END IF
     CASE(4*c_ndims+10)
       stdout_frequency = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+11)
@@ -335,8 +335,8 @@ CONTAINS
         IF (ierr == 0) THEN
           READ(lu,*,iostat=ierr) stop_at_walltime
           CLOSE(lu)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
     CASE(4*c_ndims+24)
       simplify_deck = as_logical_print(value, element, errcode)
@@ -359,7 +359,7 @@ CONTAINS
           .AND. maxwell_solver /= c_maxwell_solver_pukhov &
           .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
         errcode = c_err_bad_value
-      ENDIF
+      END IF
     CASE(4*c_ndims+31)
       use_particle_count_update = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+32)
@@ -398,11 +398,11 @@ CONTAINS
             WRITE(io,*) 'Required control block element ', &
                 TRIM(ADJUSTL(control_block_name(idx))), &
                 ' absent. Please create this entry in the input deck'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         errcode = c_err_missing_elements
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (.NOT. neutral_background) THEN
       IF (rank == 0) THEN
@@ -412,10 +412,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The option "neutral_background=F" is not supported', &
               ' in this version of EPOCH.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_terminate
-    ENDIF
+    END IF
 
     IF (maxwell_solver /= c_maxwell_solver_yee &
         .AND. field_order /= 2) THEN
@@ -426,15 +426,15 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'For "field_order" > 2 only "maxwell_solver = yee"', &
               ' is supported in this version of EPOCH.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_terminate
-    ENDIF
+    END IF
 
     IF (maxwell_solver == c_maxwell_solver_cowan &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
       maxwell_solver = c_maxwell_solver_yee
-    ENDIF
+    END IF
 
   END FUNCTION control_block_check
 
@@ -458,7 +458,7 @@ CONTAINS
       CALL sdf_close(sdf_handle)
     ELSE
       restart_flag = .FALSE.
-    ENDIF
+    END IF
 
     IF (.NOT. restart_flag) THEN
       valid = .FALSE.
@@ -467,11 +467,11 @@ CONTAINS
           PRINT*, '*** ERROR ***'
           PRINT*, 'SDF file ', TRIM(full_restart_filename), &
               ' is not a restart dump. Unable to continue.'
-        ENDIF
+        END IF
         CALL abort_code(c_err_io_error)
         STOP
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (valid .AND. .NOT.str_cmp(code_name, 'Epoch1d')) THEN
       valid = .FALSE.
@@ -480,19 +480,19 @@ CONTAINS
           PRINT*, '*** ERROR ***'
           PRINT*, 'SDF restart file was not generated by Epoch1d. Unable to ', &
               'continue.'
-        ENDIF
+        END IF
         CALL abort_code(c_err_io_error)
         STOP
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (.NOT. valid) THEN
       ic_from_restart = .FALSE.
       IF (rank == 0) THEN
         PRINT*, '*** WARNING ***'
         PRINT*, 'No valid restart dump found. Using initial conditions instead.'
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE check_valid_restart
 

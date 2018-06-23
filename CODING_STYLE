@@ -28,7 +28,7 @@ Lines must not contain trailing whitespace.
 
 Lines must not contain tab characters.
 
-Use 'ENDIF' and 'ENDDO' instead of 'END IF' and 'END DO'.
+Use 'END IF' and 'END DO' instead of 'ENDIF' and 'ENDDO'.
 
 Use F90-style binary operators instead of F77 ones. eg. use '=='
 instead of '.EQ.'.

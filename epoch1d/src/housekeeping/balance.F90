@@ -95,8 +95,8 @@ CONTAINS
           ALLOCATE(load_x(nx_global + 2 * ng))
           CALL get_load_in_x(load_x)
           CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
 
@@ -135,7 +135,7 @@ CONTAINS
       DO iproc = 0, nprocx - 1
         x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
         x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      ENDDO
+      END DO
 
       ! Set the lengths of the current domain so that the particle balancer
       ! works properly
@@ -144,7 +144,7 @@ CONTAINS
 
       x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
       x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-    ENDIF
+    END IF
 
     ! Redistribute the particles onto their new processors
     CALL distribute_particles
@@ -158,9 +158,9 @@ CONTAINS
         DO WHILE(ASSOCIATED(current))
           current%processor_at_t0 = rank
           current => current%next
-        ENDDO
-      ENDDO
-    ENDIF
+        END DO
+      END DO
+    END IF
 #endif
 
     npart_local = get_total_local_particles()
@@ -180,14 +180,14 @@ CONTAINS
     ELSE
       balance_check_frequency = &
           MIN(balance_check_frequency * 2, maximum_check_frequency)
-    ENDIF
+    END IF
 
     IF (rank == 0) THEN
       PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
           &'', improvement:'', F6.3, '', next: '', i8)', &
           balance_frac, balance_frac_final, balance_improvement, &
           (step + balance_check_frequency)
-    ENDIF
+    END IF
 
     use_exact_restart = .FALSE.
 
@@ -256,7 +256,7 @@ CONTAINS
       ALLOCATE(jx(1-jng:nx_new+jng))
       ALLOCATE(jy(1-jng:nx_new+jng))
       ALLOCATE(jz(1-jng:nx_new+jng))
-    ENDIF
+    END IF
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
@@ -299,8 +299,8 @@ CONTAINS
         DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
         ALLOCATE(species_list(ispecies)%migrate%fluid_density(1-ng:nx_new+ng))
         species_list(ispecies)%migrate%fluid_density = temp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)
@@ -325,7 +325,7 @@ CONTAINS
 
       CALL deallocate_cpml_helpers
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2))
-    ENDIF
+    END IF
 
     DEALLOCATE(temp)
 
@@ -353,7 +353,7 @@ CONTAINS
           CALL remap_field_r4(&
               io_block_list(io)%averaged_data(id)%r4array(:,i), &
               r4temp_sum(:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
@@ -371,7 +371,7 @@ CONTAINS
           CALL remap_field(&
               io_block_list(io)%averaged_data(id)%array(:,i), &
               temp_sum(:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
@@ -380,8 +380,8 @@ CONTAINS
         io_block_list(io)%averaged_data(id)%array = temp_sum
 
         DEALLOCATE(temp_sum)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE redistribute_fields
 
@@ -399,7 +399,7 @@ CONTAINS
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
-    ENDDO
+    END DO
 
     CALL redistribute_field_1d(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
@@ -422,7 +422,7 @@ CONTAINS
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
-    ENDDO
+    END DO
 
     CALL redistribute_field_1d_r4(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
@@ -459,7 +459,7 @@ CONTAINS
 
     DO i = 1, nd
       our_coords(i) = coordinates(cdim(i))
-    ENDDO
+    END DO
 
     nprocs(1) = SIZE(old_cell_min1)
 
@@ -480,7 +480,7 @@ CONTAINS
 
     DO i = 1,nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 1
     type_min(n) = old_min(n)
@@ -491,7 +491,7 @@ CONTAINS
     DO iproc = 1, nprocs(n)-1
       IF (new_cell_min1(iproc) <= old_min(n) &
           .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = iproc - 1
@@ -517,20 +517,20 @@ CONTAINS
         DO i = 1,nd
           old_0(i) = start(i) - ng
           old_1(i) = old_0(i) + n_local(i) - 1
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       n = 1
       IF (type_max(n) == old_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = new_cell_min1(iproc)
-    ENDDO
+    END DO
 
     ! Create array of recvtypes
 
     DO i = 1,nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 1
     type_min(n) = new_min(n)
@@ -541,7 +541,7 @@ CONTAINS
     DO iproc = 1, nprocs(n)-1
       IF (old_cell_min1(iproc) <= new_min(n) &
           .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = iproc - 1
@@ -566,25 +566,25 @@ CONTAINS
         ! Just copy the region rather than using MPI.
         DO i = 1,nd
           new_0(i) = start(i) - ng
-        ENDDO
+        END DO
         DO i = old_0(1),old_1(1)
           inew = new_0(1) + i - old_0(1)
           field_out(inew) = field_in(i)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       n = 1
       IF (type_max(n) == new_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = old_cell_min1(iproc)
-    ENDDO
+    END DO
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
-    ENDDO
+    END DO
 
     DEALLOCATE(sendtypes)
     DEALLOCATE(recvtypes)
@@ -619,7 +619,7 @@ CONTAINS
 
     DO i = 1, nd
       our_coords(i) = coordinates(cdim(i))
-    ENDDO
+    END DO
 
     nprocs(1) = SIZE(old_cell_min1)
 
@@ -640,7 +640,7 @@ CONTAINS
 
     DO i = 1,nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 1
     type_min(n) = old_min(n)
@@ -651,7 +651,7 @@ CONTAINS
     DO iproc = 1, nprocs(n)-1
       IF (new_cell_min1(iproc) <= old_min(n) &
           .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = iproc - 1
@@ -677,20 +677,20 @@ CONTAINS
         DO i = 1,nd
           old_0(i) = start(i) - ng
           old_1(i) = old_0(i) + n_local(i) - 1
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       n = 1
       IF (type_max(n) == old_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = new_cell_min1(iproc)
-    ENDDO
+    END DO
 
     ! Create array of recvtypes
 
     DO i = 1,nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 1
     type_min(n) = new_min(n)
@@ -701,7 +701,7 @@ CONTAINS
     DO iproc = 1, nprocs(n)-1
       IF (old_cell_min1(iproc) <= new_min(n) &
           .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = iproc - 1
@@ -726,25 +726,25 @@ CONTAINS
         ! Just copy the region rather than using MPI.
         DO i = 1,nd
           new_0(i) = start(i) - ng
-        ENDDO
+        END DO
         DO i = old_0(1),old_1(1)
           inew = new_0(1) + i - old_0(1)
           field_out(inew) = field_in(i)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       n = 1
       IF (type_max(n) == new_max(n)) EXIT
       iproc = iproc + 1
       type_min(n) = old_cell_min1(iproc)
-    ENDDO
+    END DO
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
-    ENDDO
+    END DO
 
     DEALLOCATE(sendtypes)
     DEALLOCATE(recvtypes)
@@ -772,8 +772,8 @@ CONTAINS
 
         load(cell) = load(cell) + 1
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Now have local densities, so add using MPI
     sz = SIZE(load)
@@ -815,7 +815,7 @@ CONTAINS
       IF (nextra > 0) THEN
         nextra = nextra - 1
         CYCLE
-      ENDIF
+      END IF
       total_old = total
       total = total + load(idim)
       IF (total >= load_per_proc_ideal) THEN
@@ -825,19 +825,19 @@ CONTAINS
           maxs(proc) = idim - 1
         ELSE
           maxs(proc) = idim
-        ENDIF
+        END IF
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
         nextra = old - maxs(proc) + ng
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
-        ENDIF
+        END IF
         proc = proc + 1
         IF (proc == nproc) EXIT
         total = 0
         old = maxs(proc-1)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
     maxs(nproc) = sz
 
     ! Sanity check. Must be one cell of separation between each endpoint.
@@ -846,24 +846,24 @@ CONTAINS
     DO proc = nproc-1, 1, -1
       IF (old - maxs(proc) < ng) THEN
         maxs(proc) = old - ng
-      ENDIF
+      END IF
       old = maxs(proc)
-    ENDDO
+    END DO
 
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
       IF (maxs(proc) - old < ng) THEN
         maxs(proc) = old + ng
-      ENDIF
+      END IF
       old = maxs(proc)
-    ENDDO
+    END DO
 
     ! Set mins
     mins(1) = 1
     DO proc = 2, nproc
       mins(proc) = maxs(proc-1) + 1
-    ENDDO
+    END DO
 
   END SUBROUTINE calculate_breaks
 
@@ -889,22 +889,22 @@ CONTAINS
         minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
       ELSE
         minpos = x_grid_mins(iproc) - dx * 0.5_num
-      ENDIF
+      END IF
       IF (iproc == nprocx - 1) THEN
         maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
       ELSE
         maxpos = x_grid_maxs(iproc) + dx * 0.5_num
-      ENDIF
+      END IF
       IF (part%part_pos >= minpos .AND. part%part_pos < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (MINVAL(coords) < 0) THEN
       WRITE(*,*) 'UNLOCATABLE PARTICLE', coords
       RETURN
-    ENDIF
+    END IF
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor /= rank) PRINT *,
 
@@ -932,7 +932,7 @@ CONTAINS
       DO iproc = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc))
         CALL create_empty_partlist(pointers_recv(iproc))
-      ENDDO
+      END DO
 
       DO WHILE(ASSOCIATED(current))
         next => current%next
@@ -941,7 +941,7 @@ CONTAINS
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
           CALL abort_code(c_err_bad_value)
           STOP
-        ENDIF
+        END IF
 #ifdef PARTICLE_DEBUG
         current%processor = part_proc
 #endif
@@ -949,13 +949,13 @@ CONTAINS
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)
-        ENDIF
+        END IF
         current => next
-      ENDDO
+      END DO
 
       DO iproc = 0, nproc - 1
         sendcounts(iproc) = pointers_send(iproc)%count
-      ENDDO
+      END DO
 
       CALL MPI_ALLTOALL(sendcounts, 1, MPI_INTEGER8, recvcounts, 1, &
           MPI_INTEGER8, comm, errcode)
@@ -965,8 +965,8 @@ CONTAINS
       DO iproc = 0, nproc - 1
         CALL append_partlist(species_list(ispecies)%attached_list, &
             pointers_recv(iproc))
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     DEALLOCATE(sendcounts, recvcounts)
     DEALLOCATE(pointers_send, pointers_recv)

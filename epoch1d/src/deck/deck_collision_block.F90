@@ -40,7 +40,7 @@ CONTAINS
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
       CALL setup_collisions
-    ENDIF
+    END IF
 
   END SUBROUTINE collision_deck_initialise
 
@@ -60,12 +60,12 @@ CONTAINS
           IF (coll_pairs(i,j) > 0) THEN
             use_collisions = .TRUE.
             EXIT
-          ENDIF
-        ENDDO
-      ENDDO
+          END IF
+        END DO
+      END DO
       use_particle_lists = use_particle_lists .OR. use_collisions
       need_random_state = .TRUE.
-    ENDIF
+    END IF
 
   END SUBROUTINE collision_deck_finalise
 
@@ -95,14 +95,14 @@ CONTAINS
     IF (str_cmp(element, 'collide')) THEN
       IF (deck_state /= c_ds_first) THEN
         CALL set_collision_matrix(TRIM(ADJUSTL(value)), errcode)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'use_collisions')) THEN
       use_collisions = as_logical_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'coulomb_log')) THEN
       IF (str_cmp(value, 'auto')) THEN
@@ -110,9 +110,9 @@ CONTAINS
       ELSE
         coulomb_log_auto = .FALSE.
         coulomb_log = as_real_print(value, element, errcode)
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'collisional_ionisation') &
         .OR. str_cmp(element, 'collisional_ionization')) THEN
@@ -124,12 +124,12 @@ CONTAINS
         IF (as_logical_print(value, element, errcode)) THEN
           errcode = c_err_pp_options_wrong
           extended_error_string = '-DPER_SPECIES_WEIGHT'
-        ENDIF
+        END IF
         use_collisional_ionisation = .FALSE.
 #endif
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -166,14 +166,14 @@ CONTAINS
       IF (c == ' ')  THEN
         pos = chr
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (pos < str_len) THEN
       str_out = TRIM(ADJUSTL(str_in(pos+1:str_len)))
     ELSE
       str_out = ''
-    ENDIF
+    END IF
 
     token_out = TRIM(str_in(1:pos))
 
@@ -195,12 +195,12 @@ CONTAINS
     IF (str_cmp(TRIM(str_in), 'all')) THEN
       coll_pairs = 1.0_num
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(TRIM(str_in), 'none')) THEN
       coll_pairs = -1.0_num
       RETURN
-    ENDIF
+    END IF
 
     CALL get_token(str_in, tstr1, species1, errcode)
     IF (errcode /= 0) RETURN
@@ -222,7 +222,7 @@ CONTAINS
     ELSE
       collstate = as_real(tstr2, errcode)
       IF (errcode /= 0) RETURN
-    ENDIF
+    END IF
 
     IF (coll_pairs_touched(sp1, sp2) .AND. rank == 0) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
@@ -235,8 +235,8 @@ CONTAINS
         WRITE(io,*) 'Collisions will only be carried out once per species pair.'
         WRITE(io,*) 'Later specifications will always override earlier ones.'
         WRITE(io,*)
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
     coll_pairs(sp1, sp2) = collstate
 !    coll_pairs(sp2, sp1) = collstate
