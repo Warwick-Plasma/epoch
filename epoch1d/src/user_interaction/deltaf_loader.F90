@@ -23,7 +23,7 @@ MODULE deltaf_loader
   IMPLICIT NONE
 
   REAL(num), PARAMETER :: threshold = 0.5
-  REAL(num), PARAMETER :: temp_fac = 4.0 
+  REAL(num), PARAMETER :: temp_fac = 4.0
 
 CONTAINS
 
@@ -111,7 +111,7 @@ CONTAINS
       species => species_list(ispecies)
       partlist => species%attached_list
       current => partlist%head
-      
+
       IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
 
       mass = species%mass
@@ -135,8 +135,8 @@ CONTAINS
         CALL params_local(current, species%initial_conditions%temp(:,3), &
             species%initial_conditions%drift(:,3), Tz, driftz)
 
-        ! To allow temperatures to be zero in y or z direction, 
-        f0_exponent = 0 
+        ! To allow temperatures to be zero in y or z direction,
+        f0_exponent = 0
         normalisation_term = 1
         if (Tx .ne. 0) then
              f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
@@ -161,8 +161,8 @@ CONTAINS
         ! We want to calculate the distribution of markers.
         distribution = EXP(-f0_exponent) * npart_per_cell * idx &
             / SQRT(normalisation_term)
-  
-        !WRITE (*,*) 'O', two_kb_mass, Tx, Ty, Tz 
+
+        !WRITE (*,*) 'O', two_kb_mass, Tx, Ty, Tz
         !WRITE (*,*) distribution,f0_exponent, &
         !   & npart_per_cell*idx,SQRT(normalisation_term)
         current%pvol = 1.0_num / distribution
@@ -217,11 +217,11 @@ CONTAINS
       current => partlist%head
 
       iend=LEN(TRIM(species%name))
-      twot = (species%name(iend-1:iend) == '2t') 
- 
+      twot = (species%name(iend-1:iend) == '2t')
+
       ! Only perform operation if the species uses delta_f method
       IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
-      IF(rank==0) THEN 
+      IF(rank==0) THEN
         IF(twot) THEN
            WRITE (*,*) 'Delta-f load (tail resolving) of species ',TRIM(species%name)
         ELSE
@@ -242,7 +242,7 @@ CONTAINS
         IF(twot) THEN
            CALL f_dist(current, species, f0_2, density, temp_fac)
            CALL f_dist(current, species, f0_1, density, 1.0_num)
-           distribution = (npart_per_cell/density) * idx & 
+           distribution = (npart_per_cell/density) * idx &
              & *(threshold*f0_1+(1.0-threshold)*f0_2)
         ELSE
            CALL f_dist(current, species, f0_1, density, 1.0_num)
@@ -270,13 +270,13 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     TYPE(particle), POINTER :: current
     REAL(num), INTENT(OUT) :: distribution, density
-    REAL(num), INTENT(IN)  :: temp_fac 
+    REAL(num), INTENT(IN)  :: temp_fac
     REAL(num), PARAMETER :: two_kb = 2.0_num * kb
     REAL(num) :: mass, two_kb_mass, f0_exponent, normalisation_term
     REAL(num) :: Tx,Ty,Tz,driftx,drifty,driftz
 #ifdef PER_PARTICLE_CHARGE_MASS
         mass = current%mass
-#else 
+#else
         mass = species%mass
 #endif
         two_kb_mass = two_kb * mass
@@ -292,7 +292,7 @@ CONTAINS
         Tx = Tx * temp_fac
         Ty = Ty * temp_fac
         Tz = Tz * temp_fac
-        ! To allow temperatures to be zero in y or z direction, 
+        ! To allow temperatures to be zero in y or z direction,
         f0_exponent = 0
         normalisation_term = 1
         if (Tx .ne. 0) then
@@ -312,7 +312,7 @@ CONTAINS
         ! We want to calculate the distribution of markers.
         distribution = density * EXP(-f0_exponent)  / SQRT(normalisation_term)
 
-  END SUBROUTINE 
+  END SUBROUTINE
 
 ! Load a proportion of markers with one temperature, rest with a second
 ! temperature.
@@ -328,7 +328,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
     species => species_list(ispecies)
-    
+
     iend=LEN(TRIM(species%name))
     twot = (species%name(iend-1:iend) == '2t')
 
@@ -339,7 +339,7 @@ CONTAINS
     ipart = 0
     DO WHILE(ipart < partlist%count)
       IF (random() < threshold) THEN
-         tfac = temp_fac 
+         tfac = temp_fac
       ELSE
          tfac = 1.0
       END IF

@@ -834,7 +834,7 @@ MODULE shared_data
 
     ! Whether to output deltaf or totalf
     LOGICAL :: output_deltaf
-    ! Whether to output phase space volume (testing deltaf numerics) 
+    ! Whether to output phase space volume (testing deltaf numerics)
     LOGICAL :: output_pvol
 
     ! Pointer to next distribution function

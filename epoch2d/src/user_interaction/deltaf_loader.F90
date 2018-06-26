@@ -101,7 +101,7 @@ CONTAINS
             species%initial_conditions%drift(:,:,3), Tz, driftz)
 
         ! To allow temperatures to be zero (for cases where deltaf not used or ignorable dir)
-        f0_exponent = 0 
+        f0_exponent = 0
         normalisation_term = 1
         if (Tx .ne. 0) then
              f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
