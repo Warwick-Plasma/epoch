@@ -95,6 +95,169 @@ CONTAINS
 
 
 
+  ! The initial particle distribution function f according to initial conditions.
+  ! (temp_fac!=1 allows a scaled version for the tail-resolving method)
+
+  SUBROUTINE f_dist(current, species, distribution, density, temp_fac)
+
+    TYPE(particle_species), POINTER :: species
+    TYPE(particle), POINTER :: current
+    REAL(num), INTENT(OUT) :: distribution, density
+    REAL(num), INTENT(IN)  :: temp_fac
+    REAL(num), PARAMETER :: two_kb = 2.0_num * kb
+    REAL(num) :: mass, two_kb_mass, two_pi_kb_mass
+    REAL(num) :: f0_exponent, normalisation_term
+    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+    mass = current%mass
+#else
+    mass = species%mass
+#endif
+    two_kb_mass = two_kb * mass
+    two_pi_kb_mass = pi * two_kb_mass
+    CALL params_local(current, species%initial_conditions%temp(:,1), &
+        species%initial_conditions%drift(:,1), Tx, driftx)
+    CALL params_local(current, species%initial_conditions%temp(:,2), &
+        species%initial_conditions%drift(:,2), Ty, drifty)
+    CALL params_local(current, species%initial_conditions%temp(:,3), &
+        species%initial_conditions%drift(:,3), Tz, driftz)
+    CALL density_local(current, species%initial_conditions%density(:), &
+        density)
+
+    Tx = Tx * temp_fac
+    Ty = Ty * temp_fac
+    Tz = Tz * temp_fac
+    ! To allow temperatures to be zero in y or z direction,
+    f0_exponent = 0
+    normalisation_term = 1
+    IF (Tx /= 0) THEN
+      f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
+      normalisation_term = normalisation_term * two_pi_kb_mass * Tx
+    END IF
+    IF (Ty /= 0) THEN
+      f0_exponent = f0_exponent + (current%part_p(2) - drifty)**2 / Ty
+      normalisation_term = normalisation_term * two_pi_kb_mass * Ty
+    END IF
+    IF (Tz /= 0) THEN
+      f0_exponent = f0_exponent + (current%part_p(3) - driftz)**2 / Tz
+      normalisation_term = normalisation_term * two_pi_kb_mass * Tz
+    END IF
+    f0_exponent = f0_exponent / two_kb_mass
+
+    ! We want to calculate the distribution of markers.
+    distribution = density * EXP(-f0_exponent)  / SQRT(normalisation_term)
+
+  END SUBROUTINE f_dist
+
+
+
+  ! Load a proportion of markers with one temperature, rest with a second
+  ! temperature.
+  SUBROUTINE twotemp_loadv
+
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart
+    INTEGER :: ispecies
+    REAL(num) :: tfac
+    TYPE(particle_species), POINTER :: species
+    LOGICAL :: twot
+    INTEGER :: iend
+
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+
+      iend = LEN(TRIM(species%name))
+      twot = (species%name(iend-1:iend) == '2t')
+
+      IF (ABS(species%initial_conditions%density_back) <= c_tiny .OR. twot) &
+          CYCLE
+
+      partlist => species%attached_list
+      current => partlist%head
+      ipart = 0
+      DO WHILE(ipart < partlist%count)
+        IF (random() < threshold) THEN
+          tfac = temp_fac
+        ELSE
+          tfac = 1.0_num
+        END IF
+
+        CALL set_single_particle_temperature(&
+            species_list(ispecies)%initial_conditions%temp(:,1), c_dir_x, &
+            species, current, &
+            species_list(ispecies)%initial_conditions%drift(:,1), tfac)
+        CALL set_single_particle_temperature(&
+            species_list(ispecies)%initial_conditions%temp(:,2), c_dir_y, &
+            species, current, &
+            species_list(ispecies)%initial_conditions%drift(:,2), tfac)
+        CALL set_single_particle_temperature(&
+            species_list(ispecies)%initial_conditions%temp(:,3), c_dir_z, &
+            species, current, &
+            species_list(ispecies)%initial_conditions%drift(:,3), tfac)
+
+        current => current%next
+        ipart = ipart + 1
+      END DO
+    END DO
+
+  END SUBROUTINE twotemp_loadv
+
+
+
+  SUBROUTINE set_single_particle_temperature(temperature, direction, &
+      part_species, current, drift, tfac)
+
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: temperature
+    INTEGER, INTENT(IN) :: direction
+    TYPE(particle_species), POINTER :: part_species
+    TYPE(particle), POINTER, INTENT(INOUT) :: current
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: drift
+    REAL(num), INTENT(IN) :: tfac
+    REAL(num) :: mass, temp_local, drift_local, gf
+    INTEGER :: ix, i
+
+#include "particle_head.inc"
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+    mass = current%mass
+#else
+    mass = part_species%mass
+#endif
+
+    ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+
+    temp_local = 0.0_num
+    drift_local = 0.0_num
+    DO ix = sf_min, sf_max
+      i = cell_x + ix
+      gf = gx(ix)
+      temp_local = temp_local + gf * temperature(i)
+      drift_local = drift_local + gf * drift(i)
+    END DO
+    temp_local = temp_local * tfac
+
+    IF (direction == c_dir_x) THEN
+      current%part_p(1) = &
+          momentum_from_temperature(mass, temp_local, drift_local)
+    END IF
+
+    IF (direction == c_dir_y) THEN
+      current%part_p(2) = &
+          momentum_from_temperature(mass, temp_local, drift_local)
+    END IF
+
+    IF (direction == c_dir_z) THEN
+      current%part_p(3) = &
+          momentum_from_temperature(mass, temp_local, drift_local)
+    END IF
+
+  END SUBROUTINE set_single_particle_temperature
+
+
+
   SUBROUTINE deltaf_load
 
 #ifdef DELTAF_METHOD
@@ -276,168 +439,5 @@ CONTAINS
 #endif
 
   END SUBROUTINE deltaf_load_twotemp
-
-
-
-  ! The initial particle distribution function f according to initial conditions.
-  ! (temp_fac!=1 allows a scaled version for the tail-resolving method)
-
-  SUBROUTINE f_dist(current, species, distribution, density, temp_fac)
-
-    TYPE(particle_species), POINTER :: species
-    TYPE(particle), POINTER :: current
-    REAL(num), INTENT(OUT) :: distribution, density
-    REAL(num), INTENT(IN)  :: temp_fac
-    REAL(num), PARAMETER :: two_kb = 2.0_num * kb
-    REAL(num) :: mass, two_kb_mass, two_pi_kb_mass
-    REAL(num) :: f0_exponent, normalisation_term
-    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
-
-#ifdef PER_PARTICLE_CHARGE_MASS
-    mass = current%mass
-#else
-    mass = species%mass
-#endif
-    two_kb_mass = two_kb * mass
-    two_pi_kb_mass = pi * two_kb_mass
-    CALL params_local(current, species%initial_conditions%temp(:,1), &
-        species%initial_conditions%drift(:,1), Tx, driftx)
-    CALL params_local(current, species%initial_conditions%temp(:,2), &
-        species%initial_conditions%drift(:,2), Ty, drifty)
-    CALL params_local(current, species%initial_conditions%temp(:,3), &
-        species%initial_conditions%drift(:,3), Tz, driftz)
-    CALL density_local(current, species%initial_conditions%density(:), &
-        density)
-
-    Tx = Tx * temp_fac
-    Ty = Ty * temp_fac
-    Tz = Tz * temp_fac
-    ! To allow temperatures to be zero in y or z direction,
-    f0_exponent = 0
-    normalisation_term = 1
-    IF (Tx /= 0) THEN
-      f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
-      normalisation_term = normalisation_term * two_pi_kb_mass * Tx
-    END IF
-    IF (Ty /= 0) THEN
-      f0_exponent = f0_exponent + (current%part_p(2) - drifty)**2 / Ty
-      normalisation_term = normalisation_term * two_pi_kb_mass * Ty
-    END IF
-    IF (Tz /= 0) THEN
-      f0_exponent = f0_exponent + (current%part_p(3) - driftz)**2 / Tz
-      normalisation_term = normalisation_term * two_pi_kb_mass * Tz
-    END IF
-    f0_exponent = f0_exponent / two_kb_mass
-
-    ! We want to calculate the distribution of markers.
-    distribution = density * EXP(-f0_exponent)  / SQRT(normalisation_term)
-
-  END SUBROUTINE f_dist
-
-
-
-  ! Load a proportion of markers with one temperature, rest with a second
-  ! temperature.
-  SUBROUTINE twotemp_loadv
-
-    TYPE(particle_list), POINTER :: partlist
-    TYPE(particle), POINTER :: current
-    INTEGER(i8) :: ipart
-    INTEGER :: ispecies
-    REAL(num) :: tfac
-    TYPE(particle_species), POINTER :: species
-    LOGICAL :: twot
-    INTEGER :: iend
-
-    DO ispecies = 1, n_species
-      species => species_list(ispecies)
-
-      iend = LEN(TRIM(species%name))
-      twot = (species%name(iend-1:iend) == '2t')
-
-      IF (ABS(species%initial_conditions%density_back) <= c_tiny .OR. twot) &
-          CYCLE
-
-      partlist => species%attached_list
-      current => partlist%head
-      ipart = 0
-      DO WHILE(ipart < partlist%count)
-        IF (random() < threshold) THEN
-          tfac = temp_fac
-        ELSE
-          tfac = 1.0_num
-        END IF
-
-        CALL set_single_particle_temperature(&
-            species_list(ispecies)%initial_conditions%temp(:,1), c_dir_x, &
-            species, current, &
-            species_list(ispecies)%initial_conditions%drift(:,1), tfac)
-        CALL set_single_particle_temperature(&
-            species_list(ispecies)%initial_conditions%temp(:,2), c_dir_y, &
-            species, current, &
-            species_list(ispecies)%initial_conditions%drift(:,2), tfac)
-        CALL set_single_particle_temperature(&
-            species_list(ispecies)%initial_conditions%temp(:,3), c_dir_z, &
-            species, current, &
-            species_list(ispecies)%initial_conditions%drift(:,3), tfac)
-
-        current => current%next
-        ipart = ipart + 1
-      END DO
-    END DO
-
-  END SUBROUTINE twotemp_loadv
-
-
-
-  SUBROUTINE set_single_particle_temperature(temperature, direction, &
-      part_species, current, drift, tfac)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: temperature
-    INTEGER, INTENT(IN) :: direction
-    TYPE(particle_species), POINTER :: part_species
-    TYPE(particle), POINTER, INTENT(INOUT) :: current
-    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: drift
-    REAL(num), INTENT(IN) :: tfac
-    REAL(num) :: mass, temp_local, drift_local, gf
-    INTEGER :: ix, i
-
-#include "particle_head.inc"
-
-#ifdef PER_PARTICLE_CHARGE_MASS
-    mass = current%mass
-#else
-    mass = part_species%mass
-#endif
-
-    ! Assume that temperature is cell centred
-#include "particle_to_grid.inc"
-
-    temp_local = 0.0_num
-    drift_local = 0.0_num
-    DO ix = sf_min, sf_max
-      i = cell_x + ix
-      gf = gx(ix)
-      temp_local = temp_local + gf * temperature(i)
-      drift_local = drift_local + gf * drift(i)
-    END DO
-    temp_local = temp_local * tfac
-
-    IF (direction == c_dir_x) THEN
-      current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
-    END IF
-
-    IF (direction == c_dir_y) THEN
-      current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
-    END IF
-
-    IF (direction == c_dir_z) THEN
-      current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
-    END IF
-
-  END SUBROUTINE set_single_particle_temperature
 
 END MODULE deltaf_loader
