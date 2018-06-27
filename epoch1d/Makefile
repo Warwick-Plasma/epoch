@@ -240,7 +240,7 @@ DEFINES := $(DEFINE)
 #DEFINES += $(D)USE_ISATTY
 
 # Compile the delta-f version of EPOCH
-DEFINES += $(D)DELTAF_METHOD
+#DEFINES += $(D)DELTAF_METHOD
 
 # Debugging option for delta-f
 #DEFINES += $(D)DELTAF_DEBUG
