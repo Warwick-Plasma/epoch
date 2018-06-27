@@ -130,15 +130,15 @@ CONTAINS
     ! To allow temperatures to be zero in y or z direction,
     f0_exponent = 0
     normalisation_term = 1
-    IF (Tx /= 0) THEN
+    IF (ABS(Tx) > c_tiny) THEN
       f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
       normalisation_term = normalisation_term * two_pi_kb_mass * Tx
     END IF
-    IF (Ty /= 0) THEN
+    IF (ABS(Ty) > c_tiny) THEN
       f0_exponent = f0_exponent + (current%part_p(2) - drifty)**2 / Ty
       normalisation_term = normalisation_term * two_pi_kb_mass * Ty
     END IF
-    IF (Tz /= 0) THEN
+    IF (ABS(Tz) > c_tiny) THEN
       f0_exponent = f0_exponent + (current%part_p(3) - driftz)**2 / Tz
       normalisation_term = normalisation_term * two_pi_kb_mass * Tz
     END IF
@@ -316,15 +316,15 @@ CONTAINS
         ! ignorable dir)
         f0_exponent = 0
         normalisation_term = 1
-        IF (Tx /= 0) THEN
+        IF (ABS(Tx) > c_tiny) THEN
           f0_exponent = f0_exponent + (current%part_p(1) - driftx)**2 / Tx
           normalisation_term = normalisation_term * two_pi_kb_mass * Tx
         END IF
-        IF (Ty /= 0) THEN
+        IF (ABS(Ty) > c_tiny) THEN
           f0_exponent = f0_exponent + (current%part_p(2) - drifty)**2 / Ty
           normalisation_term = normalisation_term * two_pi_kb_mass * Ty
         END IF
-        IF (Tz /= 0) THEN
+        IF (ABS(Tz) > c_tiny) THEN
           f0_exponent = f0_exponent + (current%part_p(3) - driftz)**2 / Tz
           normalisation_term = normalisation_term * two_pi_kb_mass * Tz
         END IF
