@@ -549,7 +549,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num), DIMENSION(c_ndims) :: part_pos
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(DELTAF_METHOD)
     REAL(num) :: weight
 #endif
 #ifdef DELTAF_METHOD
@@ -844,6 +844,8 @@ MODULE shared_data
 
     ! Whether to output deltaf or totalf
     LOGICAL :: output_deltaf
+    ! Whether to output phase space volume (testing deltaf numerics)
+    LOGICAL :: output_pvol
 
     ! Pointer to next distribution function
     TYPE(distribution_function_block), POINTER :: next

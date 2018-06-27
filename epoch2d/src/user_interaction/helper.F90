@@ -107,7 +107,7 @@ CONTAINS
       END DO
     END IF
 
-    CALL deltaf_load
+    CALL deltaf_load_twotemp
 
   END SUBROUTINE auto_load
 
