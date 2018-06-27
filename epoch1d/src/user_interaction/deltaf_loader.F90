@@ -91,7 +91,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE density_local
-#endif
 
 
 
@@ -255,6 +254,7 @@ CONTAINS
     END IF
 
   END SUBROUTINE set_single_particle_temperature
+#endif
 
 
 
@@ -381,6 +381,8 @@ CONTAINS
     ! Check
     ! that this is OK for a Maxwellian load by setting f0 = f0_back,
     ! and making sure the weights cancel.
+
+    CALL twotemp_loadv
 
     idx = 1.0_num / dx
 

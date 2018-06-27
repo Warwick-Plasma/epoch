@@ -99,7 +99,6 @@ CONTAINS
       END DO
     END IF
 
-    CALL twotemp_loadv
     CALL deltaf_load_twotemp
 
   END SUBROUTINE auto_load
