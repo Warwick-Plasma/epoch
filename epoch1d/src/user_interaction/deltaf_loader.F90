@@ -35,7 +35,7 @@ CONTAINS
   SUBROUTINE params_local(current, temperature, drift, temp_local, drift_local)
 
     TYPE(particle), POINTER, INTENT(IN) :: current
-    REAL(num), DIMENSION(-2:), INTENT(IN) :: temperature, drift
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: temperature, drift
     REAL(num), INTENT(INOUT) :: temp_local, drift_local
     REAL(num) :: gf
     INTEGER :: ix, i
@@ -61,7 +61,7 @@ CONTAINS
   SUBROUTINE density_local(current, density, dens_local)
 
     TYPE(particle), POINTER, INTENT(IN) :: current
-    REAL(num), DIMENSION(-2:), INTENT(IN) :: density
+    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: density
     REAL(num), INTENT(INOUT) :: dens_local
     INTEGER :: ix, i
 
