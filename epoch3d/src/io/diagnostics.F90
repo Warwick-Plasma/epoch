@@ -41,6 +41,7 @@ MODULE diagnostics
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
+  CHARACTER(LEN=*), PARAMETER :: request_dump_file = 'DUMP'
 
   TYPE(sdf_file_handle) :: sdf_handle
   INTEGER(i8), ALLOCATABLE :: species_offset(:)
@@ -48,6 +49,9 @@ MODULE diagnostics
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   LOGICAL :: dump_field_grid, skipped_any_set
+  LOGICAL :: got_request_dump_name = .FALSE.
+  LOGICAL :: got_request_dump_restart = .FALSE.
+  CHARACTER(LEN=string_length) :: request_dump_name = ''
   LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   LOGICAL, ALLOCATABLE, SAVE :: prefix_first_call(:)
   INTEGER :: isubset
@@ -1205,6 +1209,12 @@ CONTAINS
         END IF
       END IF
 
+      IF (got_request_dump_name) THEN
+        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
+          io_block_list(io)%dump = .TRUE.
+        END IF
+      END IF
+
       io_block_list(io)%average_time_start = &
           time_first - io_block_list(io)%average_time
 
@@ -1238,6 +1248,14 @@ CONTAINS
       END IF
     END DO
 
+    IF (got_request_dump_restart) THEN
+      restart_flag = .TRUE.
+      print_arrays = .TRUE.
+      dump_source_code = .TRUE.
+      dump_input_decks = .TRUE.
+      iomask = IOR(iomask, io_block_list(1)%dumpmask)
+    END IF
+
     IF (MOD(file_numbers(1), restart_dump_every) == 0 &
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
     IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
@@ -1257,6 +1275,9 @@ CONTAINS
 
     IF (force) iomask = IOR(iomask, io_block_list(1)%dumpmask)
     iodumpmask(1,:) = iomask
+
+    got_request_dump_name = .FALSE.
+    got_request_dump_restart = .FALSE.
 
   END SUBROUTINE io_test
 
@@ -3068,6 +3089,10 @@ CONTAINS
         file=TRIM(data_dir) // '/' // TRIM(stop_file_nodump), iostat=ierr)
     IF (ierr == 0) CLOSE(lu, status='DELETE')
 
+    OPEN(unit=lu, status='OLD', &
+        file=TRIM(data_dir) // '/' // TRIM(request_dump_file), iostat=ierr)
+    IF (ierr == 0) CLOSE(lu, status='DELETE')
+
   END SUBROUTINE cleanup_stop_files
 
 
@@ -3077,7 +3102,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: halt, force_dump
     INTEGER :: ierr
     INTEGER, SAVE :: check_counter = 0
-    LOGICAL :: buffer(2), got_stop_condition, got_stop_file
+    LOGICAL :: buffer(4), got_stop_condition, got_stop_file
     REAL(num) :: walltime
 
     IF (check_stop_frequency <= 0 .AND. .NOT.check_walltime) RETURN
@@ -3130,6 +3155,21 @@ CONTAINS
           CLOSE(lu, status='DELETE')
         ELSE
           got_stop_file = .FALSE.
+          ! If no stop files are found, check if a dump file was requested
+          OPEN(unit=lu, status='OLD', iostat=ierr, &
+              file=TRIM(data_dir) // '/' // TRIM(request_dump_file))
+          IF (ierr == 0) THEN
+            READ(lu,'(A)',iostat=ierr) request_dump_name
+            IF (ierr == 0) THEN
+              got_request_dump_name = .TRUE.
+            ELSE
+              got_request_dump_restart = .TRUE.
+            END IF
+            CLOSE(lu, status='DELETE')
+          ELSE
+            got_request_dump_name = .FALSE.
+            got_request_dump_restart = .FALSE.
+          END IF
         END IF
       END IF
 
@@ -3137,11 +3177,20 @@ CONTAINS
 
       buffer(1) = got_stop_condition
       buffer(2) = force_dump
+      buffer(3) = got_request_dump_name
+      buffer(4) = got_request_dump_restart
     END IF
 
-    CALL MPI_BCAST(buffer, 2, MPI_LOGICAL, 0, comm, errcode)
+    CALL MPI_BCAST(buffer, 4, MPI_LOGICAL, 0, comm, errcode)
     got_stop_condition = buffer(1)
     force_dump = buffer(2)
+    got_request_dump_name = buffer(3)
+    got_request_dump_restart = buffer(4)
+
+    IF (got_request_dump_name) THEN
+      CALL MPI_BCAST(request_dump_name, string_length, MPI_CHARACTER, 0, &
+                     comm, errcode)
+    END IF
 
     IF (got_stop_condition) halt = .TRUE.
 
