@@ -10,6 +10,9 @@
  * Added control block option "reset_walltime" to reset the walltime
    to zero when restarting
 
+ * Added the ability to request output dumps at runtime by touching a file
+   named "DUMP"
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
