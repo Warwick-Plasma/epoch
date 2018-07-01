@@ -51,6 +51,7 @@ CONTAINS
 
   SUBROUTINE deallocate_window
 
+    IF (use_window_stack) CALL deallocate_stack(window_v_x_stack)
     IF (ALLOCATED(density)) DEALLOCATE(density)
     IF (ALLOCATED(temperature)) DEALLOCATE(temperature)
     IF (ALLOCATED(drift)) DEALLOCATE(drift)
@@ -372,7 +373,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
-    INTEGER :: window_shift_cells, errcode
+    INTEGER :: window_shift_cells, errcode = 0
 #endif
 
     IF (.NOT. move_window) RETURN
