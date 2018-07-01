@@ -48,6 +48,8 @@ CONTAINS
 
   SUBROUTINE deallocate_window
 
+    IF (use_window_stack) CALL deallocate_stack(window_v_x_stack)
+
   END SUBROUTINE deallocate_window
 
 
