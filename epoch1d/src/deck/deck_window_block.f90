@@ -118,12 +118,14 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'window_v_x')) THEN
+      window_expression = .TRUE.
       CALL initialise_stack(window_v_x_stack)
       CALL tokenize(value, window_v_x_stack, errcode)
       ! evaluate it once to check that it's a valid block
       window_v_x = evaluate(window_v_x_stack, errcode)
       use_window_stack = window_v_x_stack%is_time_varying
       IF (.NOT.use_window_stack) CALL deallocate_stack(window_v_x_stack)
+      window_expression = .FALSE.
       RETURN
     END IF
 
