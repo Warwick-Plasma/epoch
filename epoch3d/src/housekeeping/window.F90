@@ -373,7 +373,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
-    INTEGER :: window_shift_cells, errcode
+    INTEGER :: window_shift_cells, errcode = 0
 #endif
 
     IF (.NOT. move_window) RETURN
