@@ -31,6 +31,9 @@ CONTAINS
 
   SUBROUTINE constant_deck_initialise
 
+    n_deck_constants = 0
+    IF (ALLOCATED(deck_constant_list)) DEALLOCATE(deck_constant_list)
+
   END SUBROUTINE constant_deck_initialise
 
 

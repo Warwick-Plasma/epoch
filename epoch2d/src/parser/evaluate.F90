@@ -303,14 +303,16 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: nvalues
 
-    IF (err == c_err_other) THEN
-      err = c_err_none
+    IF (err == c_err_other .OR. err == c_err_window) THEN
       ! Operator just pushed a bogus value to stack, so we'll ignore it
       eval_stack_stack_point = eval_stack_stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, iblock)
-      IF (iblock%value == c_const_time) sl_tail%stack%is_time_varying = .TRUE.
+      IF (iblock%value == c_const_time .OR. err == c_err_window) THEN
+        sl_tail%stack%is_time_varying = .TRUE.
+      ENDIF
+      err = c_err_none
       RETURN
     END IF
 

@@ -23,6 +23,8 @@ MODULE evaluator_blocks
 
   IMPLICIT NONE
 
+  LOGICAL :: window_expression = .FALSE.
+
 CONTAINS
 
   SUBROUTINE do_species(opcode, err)
@@ -160,13 +162,22 @@ CONTAINS
     TYPE(parameter_pack), INTENT(IN) :: parameters
     LOGICAL, INTENT(IN) :: simplify
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: err_simplify
+    INTEGER :: err_simplify, err_simplify_window, err_simplify_xt
     REAL(num) :: val
 
     err = c_err_none
     err_simplify = c_err_none
+    err_simplify_window = c_err_none
+    err_simplify_xt = c_err_none
 
-    IF (simplify) err_simplify = c_err_other
+    IF (simplify) THEN
+      err_simplify = c_err_other
+      err_simplify_xt = c_err_other
+      IF (window_expression) THEN
+        err_simplify_xt = c_err_window
+        err_simplify_window = c_err_window
+      ENDIF
+    ENDIF
 
     IF (opcode == c_const_time) THEN
       CALL push_on_eval(time)
@@ -180,7 +191,7 @@ CONTAINS
       ELSE
         CALL push_on_eval(parameters%pack_pos(1))
       END IF
-      err = err_simplify
+      err = err_simplify_xt
       RETURN
     END IF
 
@@ -190,7 +201,7 @@ CONTAINS
       ELSE
         CALL push_on_eval(parameters%pack_pos(1))
       END IF
-      err = err_simplify
+      err = err_simplify_xt
       RETURN
     END IF
 
@@ -249,7 +260,7 @@ CONTAINS
         CALL push_on_eval(&
             SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
       END IF
-      err = err_simplify
+      err = err_simplify_xt
       RETURN
     END IF
 
@@ -259,7 +270,7 @@ CONTAINS
       ELSE
         CALL push_on_eval(ABS(parameters%pack_pos(1)))
       END IF
-      err = err_simplify
+      err = err_simplify_xt
       RETURN
     END IF
 
@@ -281,7 +292,7 @@ CONTAINS
         CALL push_on_eval(&
             SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
       END IF
-      err = err_simplify
+      err = err_simplify_xt
       RETURN
     END IF
 
@@ -505,11 +516,13 @@ CONTAINS
 
     IF (opcode == c_const_x_min) THEN
       CALL push_on_eval(x_min)
+      err = err_simplify_window
       RETURN
     END IF
 
     IF (opcode == c_const_x_max) THEN
       CALL push_on_eval(x_max)
+      err = err_simplify_window
       RETURN
     END IF
 
