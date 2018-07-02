@@ -25,6 +25,11 @@
  * Added the ability to request output dumps at runtime by touching a file
    named "DUMP"
 
+ * Made the x-coordinate a time-dependent input deck variable when the moving
+   window is enabled
+
+ * Added "window_stop_time" parameter to the window block
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 

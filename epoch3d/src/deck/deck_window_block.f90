@@ -154,6 +154,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'window_stop_time')) THEN
+      window_stop_time = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'bc_x_min_after_move') &
         .OR. str_cmp(element, 'xbc_left_after_move')) THEN
       bc_x_min_after_move = as_bc_print(value, element, errcode)
