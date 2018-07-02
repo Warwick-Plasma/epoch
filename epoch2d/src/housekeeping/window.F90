@@ -341,7 +341,7 @@ CONTAINS
 
 #ifndef PER_SPECIES_WEIGHT
     IF (.NOT. window_started) THEN
-      IF (time >= window_start_time) THEN
+      IF (time >= window_start_time .AND. time < window_stop_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
         CALL setup_boundaries
@@ -352,7 +352,9 @@ CONTAINS
 
     ! If we have a moving window then update the window position
     IF (window_started) THEN
+      IF (time >= window_stop_time) RETURN
       IF (use_window_stack) window_v_x = evaluate(window_v_x_stack, errcode)
+      IF (window_v_x <= 0.0_num) RETURN
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once
