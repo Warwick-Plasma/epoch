@@ -1057,7 +1057,7 @@ MODULE shared_data
   TYPE(primitive_stack), SAVE :: window_v_x_stack
   LOGICAL :: use_window_stack
   REAL(num) :: window_v_x
-  REAL(num) :: window_start_time
+  REAL(num) :: window_start_time, window_stop_time
   INTEGER :: bc_x_min_after_move
   INTEGER :: bc_x_max_after_move
   REAL(num), DIMENSION(3) :: window_shift
