@@ -176,8 +176,8 @@ CONTAINS
       IF (window_expression) THEN
         err_simplify_xt = c_err_window
         err_simplify_window = c_err_window
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     IF (opcode == c_const_time) THEN
       CALL push_on_eval(time)

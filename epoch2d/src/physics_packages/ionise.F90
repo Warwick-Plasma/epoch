@@ -570,7 +570,7 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -611,7 +611,7 @@ CONTAINS
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -839,7 +839,7 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -880,7 +880,7 @@ CONTAINS
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -1111,7 +1111,7 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -1143,7 +1143,7 @@ CONTAINS
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -1355,7 +1355,7 @@ CONTAINS
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -1387,7 +1387,7 @@ CONTAINS
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI

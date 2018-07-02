@@ -687,7 +687,7 @@ CONTAINS
             d1 = c * d1 + p(i)
             t1 = c * t1 + q(i)
           END DO
-          p0 = EXP(c * (a + c * (p(8) - c * d1 / t1) - log(ex))) / ex
+          p0 = EXP(c * (a + c * (p(8) - c * d1 / t1) - LOG(ex))) / ex
           f2 = (c + 0.5_num - ratio) * f1 / ex
           bk1 = p0 + (d3 * f0 - f2 + f0 + blpha) / (f2 + f1 + f0) * p0
           IF (ize == 1) bk1 = bk1 * EXP(-ex)
