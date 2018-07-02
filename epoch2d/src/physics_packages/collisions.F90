@@ -2228,8 +2228,8 @@ CONTAINS
         part => partlist%head
         DO j = 1, plist_length
           histo(j) = histo(j) + part%coll_count
-          if (minp(j) > part%coll_count) minp(j) = part%coll_count
-          if (maxp(j) < part%coll_count) maxp(j) = part%coll_count
+          IF (minp(j) > part%coll_count) minp(j) = part%coll_count
+          IF (maxp(j) < part%coll_count) maxp(j) = part%coll_count
           std_dev(j) = std_dev(j) + part%coll_count**2
           part => part%next
         END DO
