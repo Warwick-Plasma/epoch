@@ -29,6 +29,8 @@ CONTAINS
 
   SUBROUTINE window_deck_initialise
 
+    window_stop_time = c_largest_number
+
   END SUBROUTINE window_deck_initialise
 
 
