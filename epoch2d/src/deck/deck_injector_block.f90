@@ -160,6 +160,7 @@ CONTAINS
       i = 3
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      RETURN
     END IF
 
     IF (str_cmp(element, 'temp')) THEN
