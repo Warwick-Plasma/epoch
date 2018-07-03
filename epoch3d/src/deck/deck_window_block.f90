@@ -129,9 +129,9 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
+    LOGICAL, SAVE :: alloc = .FALSE.
 
     errcode = c_err_none
-    IF (deck_state /= c_ds_first) RETURN
     IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'move_window')) THEN
@@ -141,12 +141,17 @@ CONTAINS
 
     IF (str_cmp(element, 'window_v_x')) THEN
       window_expression = .TRUE.
+      IF (alloc) CALL deallocate_stack(window_v_x_stack)
       CALL initialise_stack(window_v_x_stack)
+      alloc = .TRUE.
       CALL tokenize(value, window_v_x_stack, errcode)
       ! evaluate it once to check that it's a valid block
       window_v_x = evaluate(window_v_x_stack, errcode)
       use_window_stack = window_v_x_stack%is_time_varying
-      IF (.NOT.use_window_stack) CALL deallocate_stack(window_v_x_stack)
+      IF (.NOT.use_window_stack) THEN
+        CALL deallocate_stack(window_v_x_stack)
+        alloc = .FALSE.
+      END IF
       window_expression = .FALSE.
       RETURN
     END IF
