@@ -381,7 +381,7 @@ datatidy:
 	@rm -rf Data/*
 
 tarball:
-	@cd ..; sh make_tarball.sh
+	@cd ..; sh ./scripts/make_tarball.sh
 
 visit:
 	@cd $(SDF)/../VisIt; ./build
