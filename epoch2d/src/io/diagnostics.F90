@@ -211,7 +211,7 @@ CONTAINS
     CHARACTER(LEN=c_max_path_length) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type, temp_name
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    REAL(num) :: elapsed_time, dr, r0
+    REAL(num) :: eta_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced, y_reduced
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
@@ -254,8 +254,8 @@ CONTAINS
         IF (print_eta_string) THEN
           eta_timestring = ''
           IF (time > 0.0_num) THEN
-            elapsed_time = (t_end - time) * elapsed_time / time
-            CALL create_timestring(elapsed_time, eta_timestring)
+            eta_time = (t_end - time) * elapsed_time / time
+            CALL create_timestring(eta_time, eta_timestring)
           END IF
           WRITE(*, '(''Time'', g14.6, '', iteration'', i9, '' after'', &
               & a, '', ETA'',a)') time, step, timestring, eta_timestring
@@ -1109,6 +1109,15 @@ CONTAINS
           IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
+          END IF
+        END DO
+      END IF
+
+      IF (ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+        DO is = 1, SIZE(io_block_list(io)%dump_at_walltimes)
+          IF (elapsed_time >= io_block_list(io)%dump_at_walltimes(is)) THEN
+            io_block_list(io)%dump = .TRUE.
+            io_block_list(io)%dump_at_walltimes(is) = HUGE(1.0_num)
           END IF
         END DO
       END IF

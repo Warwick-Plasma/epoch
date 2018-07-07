@@ -792,6 +792,7 @@ MODULE shared_data
     REAL(num) :: dt_average, dt_min_average, average_time, average_time_start
     REAL(num) :: time_start, time_stop
     REAL(num), POINTER :: dump_at_times(:)
+    REAL(num), POINTER :: dump_at_walltimes(:)
     INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
@@ -1193,6 +1194,7 @@ MODULE shared_data
 
   REAL(num) :: walltime_started, real_walltime_start
   REAL(num) :: stop_at_walltime
+  REAL(num) :: elapsed_time = 0.0_num
   REAL(num) :: old_elapsed_time = 0.0_num
   INTEGER :: stdout_frequency, check_stop_frequency
   LOGICAL :: check_walltime, print_eta_string, reset_walltime

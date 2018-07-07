@@ -1218,6 +1218,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+    ! Reset dump_at_walltimes
+    DO i = 1, n_io_blocks
+      IF (ASSOCIATED(io_block_list(i)%dump_at_walltimes)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_walltimes)
+          IF (old_elapsed_time >= io_block_list(i)%dump_at_walltimes(is)) THEN
+            io_block_list(i)%dump_at_walltimes(is) = HUGE(1.0_num)
+          END IF
+        END DO
+      END IF
+    END DO
+
     IF (use_offset_grid) THEN
       window_offset = full_x_min - offset_x_min
       CALL shift_particles_to_window(window_offset)
