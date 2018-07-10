@@ -883,7 +883,7 @@ CONTAINS
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_mag, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
-    REAL(num) :: vrabs
+    REAL(num) :: vrabs, denominator
     REAL(num) :: nu, ran1, ran2
     !REAL(num) :: m_red
 
@@ -992,13 +992,15 @@ CONTAINS
     vcr = -v4
     gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
-    tan_theta_cm = sin_theta &
-        / (gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
-        / MAX(vrabs, c_tiny)))
-    tan_theta_cm2 = tan_theta_cm**2
-
-    sin_theta = SQRT(tan_theta_cm2 / (1.0_num + tan_theta_cm2))
-    cos_theta = SQRT(1.0_num / (1.0_num + tan_theta_cm2))
+    denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
+        / MAX(vrabs, c_tiny))
+    IF (ABS(denominator) > SQRT(c_tiny)) THEN
+      tan_theta_cm = sin_theta / denominator
+      tan_theta_cm2 = tan_theta_cm**2
+    ELSE
+      tan_theta_cm = c_largest_number
+      tan_theta_cm2 = c_largest_number
+    END IF
 
     ! Post-collision momenta in COM frame
     p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
