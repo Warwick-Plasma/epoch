@@ -28,6 +28,7 @@ MODULE read_support
   INTEGER, PARAMETER :: num = r8
   INTEGER, PARAMETER :: mpireal = MPI_DOUBLE_PRECISION
   INTEGER, PARAMETER :: c_max_string_length = 64
+  INTEGER, PARAMETER :: c_ndims = 2
 
   REAL(num), DIMENSION(:,:), POINTER :: current_array
   INTEGER :: current_var, rank
@@ -63,47 +64,37 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: global_dims
     INTEGER, INTENT(IN) :: rank, n_procs
     INTEGER, DIMENSION(:), INTENT(OUT) :: local_sizes, local_starts
-    INTEGER, DIMENSION(2) :: dims
-    INTEGER :: ierr, nproc_x, nproc_y, sz_x, sz_y
+    INTEGER, DIMENSION(:), ALLOCATABLE :: dims
+    INTEGER :: ierr, i, nproc, sz
 
     ! Work out this processors piece of domain
+    ALLOCATE(dims(c_ndims))
 
     dims = 0
-    CALL MPI_Dims_create(n_procs, 2, dims, ierr)
-
-    ! Number of processors in x direction
-    nproc_x = dims(1)
-    ! Number of processors in y direction
-    nproc_y = dims(2)
-
-    ! Size per processor in x
-    sz_x = global_dims(1) / nproc_x
-
-    ! Size per processor in y
-    sz_y = global_dims(2) / nproc_y
+    CALL MPI_Dims_create(n_procs, c_ndims, dims, ierr)
 
     local_sizes = 0
     local_starts = 0
 
-    IF (MOD(rank, nproc_x) == 0) THEN
-      ! First processor takes excess cells
-      local_starts(1) = 0
-      local_sizes(1) = global_dims(1) - MAX(sz_x * (nproc_x - 1), 0)
-    ELSE
-      ! Others take exactly sz_x by sz_y chunks
-      local_sizes(1) = sz_x
-      local_starts(1) = sz_x * MOD(rank, nproc_x)
-    END IF
+    DO i = 1, c_ndims
+      ! Number of processors in x direction
+      nproc = dims(i)
 
-    IF (MOD(rank, nproc_y) == 0) THEN
-      ! First processor takes excess cells
-      local_starts(2) = 0
-      local_sizes(2) = global_dims(2) - MAX(sz_y * (nproc_y - 1), 0)
-    ELSE
-      ! Others take exactly sz_x by sz_y chunks
-      local_sizes(2) = sz_y
-      local_starts(2) = sz_y * MOD(rank, nproc_y)
-    END IF
+      ! Size per processor in x
+      sz = global_dims(i) / nproc
+
+      IF (MOD(rank, nproc) == 0) THEN
+        ! First processor takes excess cells
+        local_starts(i) = 0
+        local_sizes(i) = global_dims(i) - MAX(sz * (nproc - 1), 0)
+      ELSE
+        ! Others take exact chunks
+        local_sizes(i) = sz
+        local_starts(i) = sz * MOD(rank, nproc)
+      END IF
+    END DO
+
+    DEALLOCATE(dims)
 
   END SUBROUTINE
 
@@ -116,20 +107,24 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(IN) :: n_global, n_local, starts
     INTEGER, INTENT(IN) :: mpi_basetype
     INTEGER, INTENT(OUT) :: mpitype, mpi_noghost
-    INTEGER, DIMENSION(4) :: local_starts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: local_starts
     INTEGER :: errcode
+
+    ALLOCATE(local_starts(c_ndims))
 
     local_starts = 0
 
     ! MPI type for processors section of global array
-    CALL MPI_TYPE_CREATE_SUBARRAY(2, n_global, n_local, &
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
         starts, MPI_ORDER_FORTRAN, mpi_basetype, mpitype, errcode)
     CALL MPI_Type_commit(mpitype, errcode)
 
     ! MPI type which would be used if we had ghost cells to add/remove
-    CALL MPI_TYPE_CREATE_SUBARRAY(2, n_local, n_local, &
+    CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_local, n_local, &
         local_starts, MPI_ORDER_FORTRAN, mpi_basetype, mpi_noghost, errcode)
     CALL MPI_Type_commit(mpi_noghost, errcode)
+
+    DEALLOCATE(local_starts)
 
   END SUBROUTINE
 
@@ -203,6 +198,15 @@ CONTAINS
       STOP
     END IF
 
+    ! Check for the correct dimensionality
+    IF (ndims /= c_ndims) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Wrong number of dimensions'
+      END IF
+      STOP
+    END IF
+
     CALL sdf_read_plain_variable_info(sdf_handle, dims, units, mesh_id, stagger)
 
     IF (rank == 0) THEN
@@ -226,7 +230,8 @@ CONTAINS
 
     IF (rank == 0) PRINT*, 'Grid name is ', mesh_id
 
-    ALLOCATE(grid_x(dims(1)+1), grid_y(dims(2)+1))
+    ALLOCATE(grid_x(dims(1)+1))
+    ALLOCATE(grid_y(dims(2)+1))
 
     grid_x = 0.0_num
     grid_y = 0.0_num
