@@ -175,6 +175,24 @@ MODULE read_support
     END IF
 
     CALL sdf_read_block_header(sdf_handle, id, name, blocktype, ndims, datatype)
+
+    IF (blocktype /= c_blocktype_plain_variable) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Wrong blocktype'
+      END IF
+      STOP
+    END IF
+
+    ! Single precision data has datatype c_datatype_real4
+    IF (datatype /= c_datatype_real8) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Wrong datatype'
+      END IF
+      STOP
+    END IF
+
     CALL sdf_read_plain_variable_info(sdf_handle, dims, units, mesh_id, stagger)
 
     IF(rank == 0) THEN
@@ -182,9 +200,6 @@ MODULE read_support
       PRINT*, "Ndims ", ndims
       PRINT*, "Dims ", dims(1:ndims)
     ENDIF
-
-    !Single precision data has datatype c_datatype_real4
-    IF (rank == 0 .AND. datatype .NE. c_datatype_real8) PRINT*, 'Wrong datatype'
 
     CALL MPI_Comm_size(MPI_COMM_WORLD, total_procs, ierr)
     CALL dims_for_rank(dims, rank, &
@@ -306,6 +321,8 @@ MODULE read_support
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
 
+        IF (blocktype /= c_blocktype_point_variable) CYCLE
+
         CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
 
         !To read only selected variables, select the names here
@@ -345,13 +362,13 @@ MODULE read_support
       STOP
     ENDIF
 
-    IF (rank == 0) PRINT*, 'Found ', vars_per_species-1, ' particle variables'
+    IF (rank == 0) PRINT*, 'Found ', vars_per_species, ' particle variables'
 
     CALL MPI_Comm_size(MPI_COMM_WORLD, total_procs, ierr)
     CALL particles_for_rank(npart, rank, total_procs, npart_proc, start)
 
     !Allocate arrays
-    ALLOCATE(particle_data(npart_proc, vars_per_species+1))
+    ALLOCATE(particle_data(npart_proc, vars_per_species+2))
 
     CALL sdf_seek_start(sdf_handle)
     CALL create_particle_type(npart_proc, total_procs, mpitype)
@@ -364,9 +381,11 @@ MODULE read_support
     DO iblock = 1, nblocks
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
+
+        IF (blocktype /= c_blocktype_point_mesh) CYCLE
+
         CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
-        IF(TRIM(species_id) == species_name .AND. &
-            blocktype == c_blocktype_point_mesh) THEN
+        IF(TRIM(species_id) == species_name) THEN
 
           !Read this procs grid
           CALL sdf_read_point_mesh(sdf_handle, npart_proc, &
@@ -385,11 +404,12 @@ MODULE read_support
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
 
+        IF (blocktype /= c_blocktype_point_variable) CYCLE
+
         CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
             units, species_id)
-        !To read only selected variables, select the names here. These must match line 296
-        IF(TRIM(species_id) == species_name .AND. &
-            blocktype == c_blocktype_point_variable) THEN
+        !To read only selected variables, select the names here. These must match line 313
+        IF(TRIM(species_id) == species_name) THEN
 
           !Read this procs particles
           CALL sdf_read_point_variable(sdf_handle, npart_proc, &
