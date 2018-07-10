@@ -15,7 +15,7 @@
 
 MODULE read_support
 
-  USE shared_data
+  USE mpi
   USE sdf
 
 
@@ -23,8 +23,15 @@ MODULE read_support
 
   PUBLIC :: mpi_setup_for_read, read_field_data_r8, read_particle_data
 
+  INTEGER, PARAMETER :: r4  = SELECTED_REAL_KIND(r=30)
+  INTEGER, PARAMETER :: r8  = SELECTED_REAL_KIND(r=300)
+  INTEGER, PARAMETER :: i8  = SELECTED_INT_KIND(18) ! 8-byte 2^63 ~ 10^18
+  INTEGER, PARAMETER :: num = r8
+  INTEGER, PARAMETER :: mpireal = MPI_DOUBLE_PRECISION
+  INTEGER, PARAMETER :: c_max_string_length = 64
+
   REAL(num), DIMENSION(:,:), POINTER :: current_array
-  INTEGER :: current_var
+  INTEGER :: current_var, rank
 
   CONTAINS
 
@@ -32,11 +39,6 @@ MODULE read_support
     !Do the basic MPI setup ops
 
     INTEGER :: ierr
-    INTEGER, PARAMETER :: r4  = SELECTED_REAL_KIND(r=30)
-    INTEGER, PARAMETER :: r8  = SELECTED_REAL_KIND(r=300)
-
-    realsize = 8
-    mpireal = MPI_REAL8
 
     CALL MPI_Init(ierr)
     CALL MPI_Comm_rank(MPI_COMM_WORLD, rank, ierr)
@@ -117,6 +119,8 @@ MODULE read_support
   END SUBROUTINE
 
   SUBROUTINE read_field_data_r8(filename, block_id, field_data, grid_x, grid_y)
+
+    USE sdf_job_info
     !Read field data in double precision
     !I check the datatype, but do nothing to convert it if wrong, instead returning
 
@@ -127,6 +131,7 @@ MODULE read_support
     !Swap these to single precision for data in single precision
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: field_data
     REAL(num), DIMENSION(:), ALLOCATABLE :: grid_x, grid_y
+    REAL(num) :: time
 
     INTEGER, DIMENSION(4) :: dims
     TYPE(sdf_file_handle) :: sdf_handle
@@ -140,6 +145,8 @@ MODULE read_support
     INTEGER, DIMENSION(4) :: local_sizes, local_starts
 
     INTEGER :: mpitype, mpi_noghost
+    INTEGER :: step
+    TYPE(jobid_type) :: jobid
 
     CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
 
@@ -240,6 +247,8 @@ MODULE read_support
 
 
   SUBROUTINE read_particle_data(filename, species_name, particle_data)
+
+    USE sdf_job_info
     !Read all particle data for named species into data array
     !First two columns will be 2-D grid data
     !Next will be one per particle variable
@@ -249,6 +258,7 @@ MODULE read_support
     !Read however many particle variables are present
     !Target property so we can properly use the iterators
     REAL(num), DIMENSION(:, :), ALLOCATABLE, TARGET :: particle_data
+    REAL(num) :: time
 
     CHARACTER(LEN=c_id_length) :: block_id, mesh_id
     CHARACTER(LEN=c_id_length) :: name
@@ -266,6 +276,8 @@ MODULE read_support
 
     INTEGER, DIMENSION(4) :: local_sizes, local_starts
     INTEGER :: mpitype
+    INTEGER :: step
+    TYPE(jobid_type) :: jobid
 
 
     CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
@@ -367,7 +379,7 @@ MODULE read_support
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
 
-        !To read only selected variables, select the names here. These must match line 275
+        !To read only selected variables, select the names here. These must match line 291
         IF(TRIM(sdf_handle%current_block%species_id) == species_name .AND. &
             sdf_handle%current_block%blocktype == c_blocktype_point_variable) THEN
 
@@ -439,7 +451,7 @@ MODULE read_support
     INTEGER, DIMENSION(3) :: lengths, types
     INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
-    INTEGER :: i, mpitype, basetype, typesize
+    INTEGER :: i, mpitype, basetype, typesize, errcode
 
     npart_local = npart_in
 
@@ -493,7 +505,6 @@ PROGRAM read_sdf
 
   !Read an SDF file in parallel to enable more complex analysis
 
-  USE mpi_subtype_control
   USE read_support
   USE sdf
 

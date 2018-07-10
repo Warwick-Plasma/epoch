@@ -401,9 +401,9 @@ sdfutilsclean:
 
 sdf_reader_example: $(BINDIR)/sdf_reader_example
 
-$(BINDIR)/sdf_reader_example: sdf_reader_example.f90 $(SDFMOD) shared_data.o mpi_subtype_control.o
+$(BINDIR)/sdf_reader_example: sdf_reader_example.f90 $(SDFMOD)
 	@mkdir -p $(BINDIR) $(OBJDIR)
-	$(FC) -o $@ $< $(LDFLAGS) $(OBJDIR)/shared_data.o $(OBJDIR)/mpi_subtype_control.o
+	$(FC) -o $@ $< $(LDFLAGS)
 
 $(OBJFILES): | $(OBJDIR)
 
