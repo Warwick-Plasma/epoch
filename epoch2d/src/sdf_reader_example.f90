@@ -125,7 +125,7 @@ MODULE read_support
     !I check the datatype, but do nothing to convert it if wrong, instead returning
 
     CHARACTER(LEN=c_max_string_length), INTENT(IN) :: filename
-    CHARACTER(LEN=c_id_length) :: block_id
+    CHARACTER(LEN=c_id_length) :: block_id, mesh_id, id, units
     CHARACTER(LEN=c_id_length) :: name
 
     !Swap these to single precision for data in single precision
@@ -140,7 +140,7 @@ MODULE read_support
     LOGICAL :: restart_flag, found
 
     CHARACTER(LEN=c_id_length) :: code_name
-    INTEGER :: blocktype, datatype, code_io_version
+    INTEGER :: blocktype, datatype, code_io_version, stagger
 
     INTEGER, DIMENSION(4) :: local_sizes, local_starts
 
@@ -174,17 +174,20 @@ MODULE read_support
       STOP
     END IF
 
+    CALL sdf_read_block_header(sdf_handle, id, name, blocktype, ndims, datatype)
+    CALL sdf_read_plain_variable_info(sdf_handle, dims, units, mesh_id, stagger)
+
     IF(rank == 0) THEN
-      PRINT*, "Type is ", sdf_handle%current_block%datatype
-      PRINT*, "Ndims ", sdf_handle%current_block%ndims
-      PRINT*, "Dims ", sdf_handle%current_block%dims
+      PRINT*, "Type is ", datatype
+      PRINT*, "Ndims ", ndims
+      PRINT*, "Dims ", dims(1:ndims)
     ENDIF
 
     !Single precision data has datatype c_datatype_real4
-    IF (rank == 0 .AND. sdf_handle%current_block%datatype .NE. c_datatype_real8) PRINT*, 'Wrong datatype'
+    IF (rank == 0 .AND. datatype .NE. c_datatype_real8) PRINT*, 'Wrong datatype'
 
     CALL MPI_Comm_size(MPI_COMM_WORLD, total_procs, ierr)
-    CALL dims_for_rank(sdf_handle%current_block%dims, rank, &
+    CALL dims_for_rank(dims, rank, &
         total_procs, local_sizes, local_starts)
 
     PRINT*, "Posn ", rank, " sizes: ", local_sizes, ' starts: ', local_starts
@@ -193,25 +196,25 @@ MODULE read_support
     field_data = 0.0_num
 
     !Pass MPI_REAL4 for single precision data
-    CALL create_field_types(sdf_handle%current_block%dims, local_sizes, &
+    CALL create_field_types(dims, local_sizes, &
         local_starts, mpitype, mpi_noghost, mpi_real)
 
     CALL sdf_read_plain_variable(sdf_handle, field_data, &
         mpitype, mpi_noghost)
 
-    IF (rank == 0) PRINT*, 'Grid name is ', sdf_handle%current_block%mesh_id
+    IF (rank == 0) PRINT*, 'Grid name is ', mesh_id
 
-    ALLOCATE(grid_x(sdf_handle%current_block%dims(1)+1), grid_y(sdf_handle%current_block%dims(2)+1))
+    ALLOCATE(grid_x(dims(1)+1), grid_y(dims(2)+1))
 
     grid_x = 0.0_num
     grid_y = 0.0_num
 
-    found = sdf_find_block_by_id(sdf_handle, sdf_handle%current_block%mesh_id)
+    found = sdf_find_block_by_id(sdf_handle, mesh_id)
 
     IF (.NOT. found) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
-        PRINT*, 'Block not found: ', TRIM(sdf_handle%current_block%mesh_id)
+        PRINT*, 'Block not found: ', TRIM(mesh_id)
       END IF
       STOP
     END IF
@@ -260,13 +263,13 @@ MODULE read_support
     REAL(num), DIMENSION(:, :), ALLOCATABLE, TARGET :: particle_data
     REAL(num) :: time
 
-    CHARACTER(LEN=c_id_length) :: block_id, mesh_id
+    CHARACTER(LEN=c_id_length) :: block_id, mesh_id, species_id, units
     CHARACTER(LEN=c_id_length) :: name
 
     TYPE(sdf_file_handle) :: sdf_handle
 
     INTEGER :: nblocks, ndims, string_len, total_procs, ierr, nvar
-    INTEGER :: vars_per_species, iblock, data_len
+    INTEGER :: vars_per_species, iblock, data_len, geometry
     INTEGER(i8) :: npart, npart_proc, start
 
     LOGICAL :: restart_flag, found
@@ -303,11 +306,13 @@ MODULE read_support
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
 
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+
         !To read only selected variables, select the names here
-        IF(TRIM(sdf_handle%current_block%species_id) == species_name) THEN
+        IF(TRIM(species_id) == species_name) THEN
             vars_per_species = vars_per_species + 1
             IF(blocktype == c_blocktype_point_mesh) &
-                mesh_id = sdf_handle%current_block%id
+                mesh_id = block_id
         ENDIF
     ENDDO
 
@@ -359,14 +364,15 @@ MODULE read_support
     DO iblock = 1, nblocks
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
-        IF(TRIM(sdf_handle%current_block%species_id) == species_name .AND. &
-            sdf_handle%current_block%blocktype == c_blocktype_point_mesh) THEN
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+        IF(TRIM(species_id) == species_name .AND. &
+            blocktype == c_blocktype_point_mesh) THEN
 
           !Read this procs grid
           CALL sdf_read_point_mesh(sdf_handle, npart_proc, &
               mpitype, it_part_mesh)
           IF(rank == 0) PRINT*, 'Columns 1 to 2 are ', &
-              sdf_handle%current_block%id
+              block_id
         ENDIF
     ENDDO
 
@@ -379,15 +385,17 @@ MODULE read_support
         CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
             ndims, datatype)
 
-        !To read only selected variables, select the names here. These must match line 291
-        IF(TRIM(sdf_handle%current_block%species_id) == species_name .AND. &
-            sdf_handle%current_block%blocktype == c_blocktype_point_variable) THEN
+        CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
+            units, species_id)
+        !To read only selected variables, select the names here. These must match line 296
+        IF(TRIM(species_id) == species_name .AND. &
+            blocktype == c_blocktype_point_variable) THEN
 
           !Read this procs particles
           CALL sdf_read_point_variable(sdf_handle, npart_proc, &
               mpitype, it_part_arr)
           IF(rank == 0) PRINT*, 'Column ', current_var, ' is ', &
-              sdf_handle%current_block%id
+              block_id
           current_var = current_var + 1
         ENDIF
     ENDDO
