@@ -18,7 +18,6 @@ MODULE read_support
   USE mpi
   USE sdf
 
-
   IMPLICIT NONE
 
   PUBLIC :: mpi_setup_for_read, read_field_data_r8, read_particle_data
@@ -33,11 +32,11 @@ MODULE read_support
   REAL(num), DIMENSION(:,:), POINTER :: current_array
   INTEGER :: current_var, rank
 
-  CONTAINS
+CONTAINS
 
   SUBROUTINE mpi_setup_for_read
-    !Do the basic MPI setup ops
 
+    ! Do the basic MPI setup ops
     INTEGER :: ierr
 
     CALL MPI_Init(ierr)
@@ -45,107 +44,109 @@ MODULE read_support
 
   END SUBROUTINE mpi_setup_for_read
 
-  SUBROUTINE dims_for_rank(global_dims, rank, n_procs, local_sizes, local_starts)
-    !Get dimensions of global array belonging to this rank
 
-    INTEGER, DIMENSION(4) :: global_dims
+
+  SUBROUTINE dims_for_rank(global_dims, rank, n_procs, local_sizes, &
+                           local_starts)
+
+    ! Get dimensions of global array belonging to this rank
+    INTEGER, DIMENSION(:), INTENT(IN) :: global_dims
+    INTEGER, INTENT(IN) :: rank, n_procs
+    INTEGER, DIMENSION(:), INTENT(OUT) :: local_sizes, local_starts
     INTEGER, DIMENSION(2) :: dims
-    INTEGER, DIMENSION(4), INTENT(OUT) :: local_sizes, local_starts
-    INTEGER :: rank, n_procs, ierr, nproc_x, nproc_y, sz_x, sz_y
+    INTEGER :: ierr, nproc_x, nproc_y, sz_x, sz_y
 
-    !Work out this processors piece of domain
+    ! Work out this processors piece of domain
 
     dims = 0
     CALL MPI_Dims_create(n_procs, 2, dims, ierr)
 
-    !Number of processors in x direction
+    ! Number of processors in x direction
     nproc_x = dims(1)
-    !Number of processors in y direction
+    ! Number of processors in y direction
     nproc_y = dims(2)
 
-    !Size per processor in x
-    sz_x = global_dims(1)/nproc_x
+    ! Size per processor in x
+    sz_x = global_dims(1) / nproc_x
 
-    !Size per processor in y
-    sz_y = global_dims(2)/nproc_y
+    ! Size per processor in y
+    sz_y = global_dims(2) / nproc_y
 
     local_sizes = 0
     local_starts = 0
 
-    IF( MOD(rank, nproc_x) == 0 ) THEN
-      !First processor takes excess cells
+    IF (MOD(rank, nproc_x) == 0) THEN
+      ! First processor takes excess cells
       local_starts(1) = 0
-      local_sizes(1) = global_dims(1) - MAX(sz_x*(nproc_x-1), 0)
+      local_sizes(1) = global_dims(1) - MAX(sz_x * (nproc_x - 1), 0)
     ELSE
-      !Others take exactly sz_x by sz_y chunks
+      ! Others take exactly sz_x by sz_y chunks
       local_sizes(1) = sz_x
       local_starts(1) = sz_x * MOD(rank, nproc_x)
-    ENDIF
+    END IF
 
-    IF( MOD(rank, nproc_y) == 0 ) THEN
-      !First processor takes excess cells
+    IF (MOD(rank, nproc_y) == 0) THEN
+      ! First processor takes excess cells
       local_starts(2) = 0
-      local_sizes(2) = global_dims(2) - MAX(sz_y*(nproc_y-1), 0)
+      local_sizes(2) = global_dims(2) - MAX(sz_y * (nproc_y - 1), 0)
     ELSE
-      !Others take exactly sz_x by sz_y chunks
+      ! Others take exactly sz_x by sz_y chunks
       local_sizes(2) = sz_y
       local_starts(2) = sz_y * MOD(rank, nproc_y)
-    ENDIF
-
+    END IF
 
   END SUBROUTINE
 
 
-  SUBROUTINE create_field_types(n_global, n_local, starts, mpitype, mpi_noghost, mpi_basetype)
-    !Create the MPI types for fields, without ghost cells
-    INTEGER, DIMENSION(4), INTENT(IN) :: n_global, n_local, starts
-    INTEGER, DIMENSION(4) :: local_starts
+
+  SUBROUTINE create_field_types(n_global, n_local, starts, mpi_basetype, &
+                                mpitype, mpi_noghost)
+
+    ! Create the MPI types for fields, without ghost cells
+    INTEGER, DIMENSION(:), INTENT(IN) :: n_global, n_local, starts
     INTEGER, INTENT(IN) :: mpi_basetype
-    INTEGER :: mpitype, mpi_noghost, errcode
+    INTEGER, INTENT(OUT) :: mpitype, mpi_noghost
+    INTEGER, DIMENSION(4) :: local_starts
+    INTEGER :: errcode
 
     local_starts = 0
 
-    !MPI type for processors section of global array
+    ! MPI type for processors section of global array
     CALL MPI_TYPE_CREATE_SUBARRAY(2, n_global, n_local, &
         starts, MPI_ORDER_FORTRAN, mpi_basetype, mpitype, errcode)
     CALL MPI_Type_commit(mpitype, errcode)
 
-    !MPI type which would be used if we had ghost cells to add/remove
+    ! MPI type which would be used if we had ghost cells to add/remove
     CALL MPI_TYPE_CREATE_SUBARRAY(2, n_local, n_local, &
         local_starts, MPI_ORDER_FORTRAN, mpi_basetype, mpi_noghost, errcode)
     CALL MPI_Type_commit(mpi_noghost, errcode)
 
-
   END SUBROUTINE
+
+
 
   SUBROUTINE read_field_data_r8(filename, block_id, field_data, grid_x, grid_y)
 
     USE sdf_job_info
-    !Read field data in double precision
-    !I check the datatype, but do nothing to convert it if wrong, instead returning
+    ! Read field data in double precision
+    ! I check the datatype, but do nothing to convert it if wrong, instead
+    ! returning
 
     CHARACTER(LEN=c_max_string_length), INTENT(IN) :: filename
-    CHARACTER(LEN=c_id_length) :: block_id, mesh_id, id, units
-    CHARACTER(LEN=c_id_length) :: name
+    CHARACTER(LEN=c_id_length), INTENT(IN) :: block_id
+    ! Swap these to single precision for data in single precision
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, INTENT(OUT) :: field_data
+    REAL(num), DIMENSION(:), ALLOCATABLE, INTENT(OUT) :: grid_x, grid_y
 
-    !Swap these to single precision for data in single precision
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: field_data
-    REAL(num), DIMENSION(:), ALLOCATABLE :: grid_x, grid_y
+    CHARACTER(LEN=c_id_length) :: code_name, id, mesh_id, units
+    CHARACTER(LEN=c_max_string_length) :: name
     REAL(num) :: time
-
-    INTEGER, DIMENSION(4) :: dims
-    TYPE(sdf_file_handle) :: sdf_handle
-
+    INTEGER, DIMENSION(4) :: dims, local_sizes, local_starts
+    INTEGER :: blocktype, datatype, code_io_version, step, stagger
+    INTEGER :: mpitype, mpi_noghost
     INTEGER :: nblocks, ndims, string_len, total_procs, ierr
     LOGICAL :: restart_flag, found
-
-    CHARACTER(LEN=c_id_length) :: code_name
-    INTEGER :: blocktype, datatype, code_io_version, stagger
-
-    INTEGER, DIMENSION(4) :: local_sizes, local_starts
-
-    INTEGER :: mpitype, mpi_noghost
-    INTEGER :: step
+    TYPE(sdf_file_handle) :: sdf_handle
     TYPE(jobid_type) :: jobid
 
     CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
@@ -158,9 +159,8 @@ MODULE read_support
 
     IF (rank == 0) THEN
       PRINT*, 'Loading snapshot for time', time
+      PRINT*, 'Input file contains', nblocks, 'blocks'
     END IF
-
-    IF (rank == 0) PRINT*, 'Input file contains', nblocks, 'blocks'
 
     CALL sdf_read_blocklist(sdf_handle)
 
@@ -195,27 +195,24 @@ MODULE read_support
 
     CALL sdf_read_plain_variable_info(sdf_handle, dims, units, mesh_id, stagger)
 
-    IF(rank == 0) THEN
-      PRINT*, "Type is ", datatype
-      PRINT*, "Ndims ", ndims
-      PRINT*, "Dims ", dims(1:ndims)
-    ENDIF
+    IF (rank == 0) THEN
+      PRINT*, 'Type is ', datatype
+      PRINT*, 'Ndims ', ndims
+      PRINT*, 'Dims ', dims(1:ndims)
+    END IF
 
     CALL MPI_Comm_size(MPI_COMM_WORLD, total_procs, ierr)
-    CALL dims_for_rank(dims, rank, &
-        total_procs, local_sizes, local_starts)
+    CALL dims_for_rank(dims, rank, total_procs, local_sizes, local_starts)
 
-    PRINT*, "Posn ", rank, " sizes: ", local_sizes, ' starts: ', local_starts
+    PRINT*, 'Posn ', rank, ' sizes: ', local_sizes, ' starts: ', local_starts
 
     ALLOCATE(field_data(local_sizes(1), local_sizes(2)))
     field_data = 0.0_num
 
-    !Pass MPI_REAL4 for single precision data
-    CALL create_field_types(dims, local_sizes, &
-        local_starts, mpitype, mpi_noghost, mpi_real)
-
-    CALL sdf_read_plain_variable(sdf_handle, field_data, &
+    CALL create_field_types(dims, local_sizes, local_starts, mpireal, &
         mpitype, mpi_noghost)
+
+    CALL sdf_read_plain_variable(sdf_handle, field_data, mpitype, mpi_noghost)
 
     IF (rank == 0) PRINT*, 'Grid name is ', mesh_id
 
@@ -241,62 +238,57 @@ MODULE read_support
   END SUBROUTINE read_field_data_r8
 
 
+
   SUBROUTINE particles_for_rank(npart, rank, n_procs, npart_proc, start)
-    !Work out this ranks number of processors
-    INTEGER(i8) :: npart, npart_proc, npart_proc_gen, start
-    INTEGER :: rank, n_procs, ierr
 
-    !Work out this processors number of particles
-    !Have to handle non divisibility
+    ! Work out this ranks number of processors
+    INTEGER(i8), INTENT(IN) :: npart
+    INTEGER, INTENT(IN) :: rank, n_procs
+    INTEGER(i8), INTENT(OUT) :: npart_proc, start
+    INTEGER(i8) :: npart_proc_gen
 
-    !Size per processor
-    npart_proc_gen = npart/n_procs
+    ! Work out this processors number of particles
+    ! Have to handle non divisibility
 
-    IF( rank == n_procs ) THEN
-      !Last processor takes excess particles to make starts easier
-      npart_proc = npart - MAX(npart_proc_gen * (n_procs-1), 0_i8)
+    ! Size per processor
+    npart_proc_gen = npart / n_procs
+
+    IF (rank == n_procs) THEN
+      ! Last processor takes excess particles to make starts easier
+      npart_proc = npart - MAX(npart_proc_gen * (n_procs - 1), 0_i8)
     ELSE
       npart_proc = npart_proc_gen
-    ENDIF
+    END IF
 
     start = rank * npart_proc_gen + 1
 
   END SUBROUTINE
 
 
+
   SUBROUTINE read_particle_data(filename, species_name, particle_data)
 
     USE sdf_job_info
-    !Read all particle data for named species into data array
-    !First two columns will be 2-D grid data
-    !Next will be one per particle variable
+    ! Read all particle data for named species into data array
+    ! First two columns will be 2-D grid data
+    ! Next will be one per particle variable
     CHARACTER(LEN=c_max_string_length), INTENT(IN) :: filename, species_name
+    ! Swap these to single precision for data in single precision
+    ! Read however many particle variables are present
+    ! Target property so we can properly use the iterators
+    REAL(num), DIMENSION(:,:), ALLOCATABLE, TARGET, INTENT(OUT) :: particle_data
 
-    !Swap these to single precision for data in single precision
-    !Read however many particle variables are present
-    !Target property so we can properly use the iterators
-    REAL(num), DIMENSION(:, :), ALLOCATABLE, TARGET :: particle_data
+    CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, species_id
+    CHARACTER(LEN=c_id_length) :: units
+    CHARACTER(LEN=c_max_string_length) :: name
     REAL(num) :: time
-
-    CHARACTER(LEN=c_id_length) :: block_id, mesh_id, species_id, units
-    CHARACTER(LEN=c_id_length) :: name
-
-    TYPE(sdf_file_handle) :: sdf_handle
-
-    INTEGER :: nblocks, ndims, string_len, total_procs, ierr, nvar
-    INTEGER :: vars_per_species, iblock, data_len, geometry
     INTEGER(i8) :: npart, npart_proc, start
-
+    INTEGER :: nblocks, ndims, string_len, total_procs, ierr
+    INTEGER :: vars_per_species, iblock, step, geometry
+    INTEGER :: blocktype, datatype, code_io_version, mpitype
     LOGICAL :: restart_flag, found
-
-    CHARACTER(LEN=c_id_length) :: code_name
-    INTEGER :: blocktype, datatype, code_io_version
-
-    INTEGER, DIMENSION(4) :: local_sizes, local_starts
-    INTEGER :: mpitype
-    INTEGER :: step
+    TYPE(sdf_file_handle) :: sdf_handle
     TYPE(jobid_type) :: jobid
-
 
     CALL sdf_open(sdf_handle, filename, MPI_COMM_WORLD, c_sdf_read)
 
@@ -308,30 +300,28 @@ MODULE read_support
 
     IF (rank == 0) THEN
       PRINT*, 'Loading snapshot for time', time
+      PRINT*, 'Input file contains', nblocks, 'blocks'
     END IF
-
-    IF (rank == 0) PRINT*, 'Input file contains', nblocks, 'blocks'
 
     CALL sdf_read_blocklist(sdf_handle)
 
     vars_per_species = 0
 
-    !Run through file once to see how many particle variables there are, and how long
+    ! Run through file once to see how many particle variables there are
     DO iblock = 1, nblocks
-        CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
-            ndims, datatype)
+      CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
+          ndims, datatype)
 
-        IF (blocktype /= c_blocktype_point_variable) CYCLE
+      IF (blocktype /= c_blocktype_point_variable) CYCLE
 
-        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+      CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
+          units, species_id)
 
-        !To read only selected variables, select the names here
-        IF(TRIM(species_id) == species_name) THEN
-            vars_per_species = vars_per_species + 1
-            IF(blocktype == c_blocktype_point_mesh) &
-                mesh_id = block_id
-        ENDIF
-    ENDDO
+      ! To read only selected variables, select the names here
+      IF (TRIM(species_id) == species_name) THEN
+        vars_per_species = vars_per_species + 1
+      END IF
+    END DO
 
     IF (vars_per_species <= 1) THEN
       IF (rank == 0) THEN
@@ -339,9 +329,9 @@ MODULE read_support
         PRINT*, 'No variables found for species: ', TRIM(species_name)
       END IF
       STOP
-    ENDIF
+    END IF
 
-    !Get number of particles
+    ! Get number of particles
     found = sdf_find_block_by_id(sdf_handle, mesh_id)
 
     IF (.NOT. found) THEN
@@ -354,113 +344,114 @@ MODULE read_support
 
     CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
-    IF(npart .LE. 0) THEN
+    IF (npart <= 0) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'No particles for species: ', TRIM(species_name)
       END IF
       STOP
-    ENDIF
+    END IF
 
     IF (rank == 0) PRINT*, 'Found ', vars_per_species, ' particle variables'
 
     CALL MPI_Comm_size(MPI_COMM_WORLD, total_procs, ierr)
     CALL particles_for_rank(npart, rank, total_procs, npart_proc, start)
 
-    !Allocate arrays
+    ! Allocate arrays
     ALLOCATE(particle_data(npart_proc, vars_per_species+2))
 
     CALL sdf_seek_start(sdf_handle)
     CALL create_particle_type(npart_proc, total_procs, mpitype)
 
-    !Setup globals for access within it_part
+    ! Setup globals for access within it_part
     current_array => particle_data
 
-    !Read the grid
+    ! Read the grid
     current_var = 1
     DO iblock = 1, nblocks
-        CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
-            ndims, datatype)
+      CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
+          ndims, datatype)
 
-        IF (blocktype /= c_blocktype_point_mesh) CYCLE
+      IF (blocktype /= c_blocktype_point_mesh) CYCLE
 
-        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
-        IF(TRIM(species_id) == species_name) THEN
+      CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
 
-          !Read this procs grid
-          CALL sdf_read_point_mesh(sdf_handle, npart_proc, &
-              mpitype, it_part_mesh)
-          IF(rank == 0) PRINT*, 'Columns 1 to 2 are ', &
-              block_id
-        ENDIF
-    ENDDO
+      IF (TRIM(species_id) == species_name) THEN
+        ! Read this procs grid
+        CALL sdf_read_point_mesh(sdf_handle, npart_proc, mpitype, it_part_mesh)
+        IF (rank == 0) PRINT*, 'Columns 1 to 2 are ', block_id
+      END IF
+    END DO
 
-    !Rewind and read the data
-    !This is inefficient but simplest
+    ! Rewind and read the data
+    ! This is inefficient but simplest
     CALL sdf_seek_start(sdf_handle)
     current_var = 3
-    !Read the data
+    ! Read the data
     DO iblock = 1, nblocks
-        CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
-            ndims, datatype)
+      CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
+          ndims, datatype)
 
-        IF (blocktype /= c_blocktype_point_variable) CYCLE
+      IF (blocktype /= c_blocktype_point_variable) CYCLE
 
-        CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
-            units, species_id)
-        !To read only selected variables, select the names here. These must match line 313
-        IF(TRIM(species_id) == species_name) THEN
+      CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
+          units, species_id)
 
-          !Read this procs particles
-          CALL sdf_read_point_variable(sdf_handle, npart_proc, &
-              mpitype, it_part_arr)
-          IF(rank == 0) PRINT*, 'Column ', current_var, ' is ', &
-              block_id
-          current_var = current_var + 1
-        ENDIF
-    ENDDO
+      ! To read only selected variables, select the names here.
+      ! These must match line 305
+      IF (TRIM(species_id) == species_name) THEN
+        ! Read this procs particles
+        CALL sdf_read_point_variable(sdf_handle, npart_proc, mpitype, &
+            it_part_arr)
+        IF (rank == 0) PRINT*, 'Column ', current_var, ' is ', block_id
+        current_var = current_var + 1
+      END IF
+    END DO
 
     CALL sdf_close(sdf_handle)
 
-
   END SUBROUTINE read_particle_data
 
-  !Particle iterator borrowed from setup and adapted
+
+
+  ! Particle iterator borrowed from setup and adapted
+
   FUNCTION it_part_mesh(array, npart_this_it, start, direction, param)
-    !Iterator for reading grid
-    !Direction denotes x,y,z
+
+    ! Iterator for reading grid
+    ! Direction denotes x,y,z
     REAL(num) :: it_part_mesh
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN) :: direction
     INTEGER, INTENT(IN), OPTIONAL :: param
-
     INTEGER(i8) :: ipart
 
     DO ipart = 1, npart_this_it
       current_array(ipart, current_var+direction-1) = array(ipart)
-
     END DO
 
     it_part_mesh = 0
 
   END FUNCTION it_part_mesh
 
-  !Particle iterator borrowed from setup and adapted
+
+
+  ! Particle iterator borrowed from setup and adapted
+
   FUNCTION it_part_arr(array, npart_this_it, start, param)
-    !Iterator for particle variable
+
+    ! Iterator for particle variable
     REAL(num) :: it_part_arr
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
-
     INTEGER(i8) :: ipart
 
     DO ipart = 1, npart_this_it
       current_array(ipart, current_var) = array(ipart)
-
     END DO
 
     it_part_arr = 0
@@ -468,9 +459,12 @@ MODULE read_support
   END FUNCTION it_part_arr
 
 
-  !Adapted from create_particle_subtypes in mpi_subtype_control
+
+  ! Adapted from create_particle_subtypes in mpi_subtype_control
+
   SUBROUTINE create_particle_type(npart_in, nproc, subtype)
-    !Type for particle reading. Must account for where in data to start
+
+    ! Type for particle reading. Must account for where in data to start
     INTEGER(i8), INTENT(IN) :: npart_in
     INTEGER, INTENT(IN) :: nproc
     INTEGER, INTENT(OUT) :: subtype
@@ -496,7 +490,7 @@ MODULE read_support
     END DO
 
     total_particles = particles_to_skip
-    DO i = rank+1, nproc
+    DO i = rank + 1, nproc
       total_particles = total_particles + npart_each_rank(i)
     END DO
 
@@ -525,32 +519,29 @@ MODULE read_support
 
   END SUBROUTINE create_particle_type
 
-
 END MODULE read_support
+
 
 
 PROGRAM read_sdf
 
-  !Read an SDF file in parallel to enable more complex analysis
+  ! Read an SDF file in parallel to enable more complex analysis
 
   USE read_support
   USE sdf
 
   IMPLICIT NONE
 
-  CHARACTER(LEN=c_max_string_length) :: read_dir = './Data/', filename, species_name
-
+  CHARACTER(LEN=c_max_string_length) :: read_dir = './Data/'
+  CHARACTER(LEN=c_max_string_length) :: filename, species_name
   CHARACTER(LEN=c_id_length) :: block_id
-
   REAL(num), DIMENSION(:,:), ALLOCATABLE :: field_data
+  REAL(num), DIMENSION(:,:), ALLOCATABLE :: particle_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: grid_x, grid_y
-  REAL(num), DIMENSION(:, :), ALLOCATABLE :: particle_data
-  REAL(num), DIMENSION(:), ALLOCATABLE :: particle_grid
-
 
   CALL mpi_setup_for_read
 
-  filename = TRIM(read_dir) //"0010.sdf"
+  filename = TRIM(read_dir) // '0010.sdf'
   PRINT*, filename
 
   block_id = 'ex'
@@ -561,11 +552,12 @@ PROGRAM read_sdf
   PRINT*, MAXVAL(field_data)
   !PRINT*, grid_x
 
-  species_name = "proton"
+  species_name = 'proton'
 
   CALL read_particle_data(filename, species_name, particle_data)
 
-  !Example calc - calculate average column 3 per processor
-  PRINT*, "Average px on rank ", rank, ' is ', SUM(particle_data(:,3))/SIZE(particle_data(:,3))
+  ! Example calc - calculate average column 3 per processor
+  PRINT*, 'Average px on rank ', rank, ' is ', &
+          SUM(particle_data(:,3)) / SIZE(particle_data(:,3))
 
 END PROGRAM read_sdf
