@@ -46,6 +46,16 @@ CONTAINS
 
 
 
+  SUBROUTINE mpi_finish
+
+    INTEGER :: ierr
+
+    CALL MPI_Finalize(ierr)
+
+  END SUBROUTINE mpi_finish
+
+
+
   SUBROUTINE dims_for_rank(global_dims, rank, n_procs, local_sizes, &
                            local_starts)
 
@@ -235,6 +245,9 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
 
+    CALL MPI_Type_free(mpitype, ierr)
+    CALL MPI_Type_free(mpi_noghost, ierr)
+
   END SUBROUTINE read_field_data_r8
 
 
@@ -410,6 +423,8 @@ CONTAINS
 
     CALL sdf_close(sdf_handle)
 
+    CALL MPI_Type_free(mpitype, ierr)
+
   END SUBROUTINE read_particle_data
 
 
@@ -567,5 +582,8 @@ PROGRAM read_sdf
   ! Example calc - calculate average column 3 per processor
   PRINT*, 'Average px on rank ', rank, ' is ', &
           SUM(particle_data(:,3)) / SIZE(particle_data(:,3))
+
+  CALL mpi_finish
+  DEALLOCATE(field_data, grid_x, grid_y, particle_data)
 
 END PROGRAM read_sdf
