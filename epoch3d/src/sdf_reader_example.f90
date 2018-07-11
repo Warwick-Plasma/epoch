@@ -28,7 +28,7 @@ MODULE read_support
   INTEGER, PARAMETER :: num = r8
   INTEGER, PARAMETER :: mpireal = MPI_DOUBLE_PRECISION
   INTEGER, PARAMETER :: c_max_string_length = 64
-  INTEGER, PARAMETER :: c_ndims = 1
+  INTEGER, PARAMETER :: c_ndims = 3
 
   REAL(num), DIMENSION(:,:), POINTER :: current_array
   INTEGER :: current_var, rank
@@ -291,7 +291,7 @@ CONTAINS
 
     USE sdf_job_info
     ! Read all particle data for named species into data array
-    ! First two columns will be 2-D grid data
+    ! First three columns will be 3-D grid data
     ! Next will be one per particle variable
     CHARACTER(LEN=c_max_string_length), INTENT(IN) :: filename, species_name
     ! Swap these to single precision for data in single precision
@@ -344,7 +344,7 @@ CONTAINS
       END IF
     END DO
 
-    IF (vars_per_species <= 1) THEN
+    IF (vars_per_species < 1) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'No variables found for species: ', TRIM(species_name)
@@ -379,7 +379,7 @@ CONTAINS
     CALL particles_for_rank(npart, rank, total_procs, npart_proc, start)
 
     ! Allocate arrays
-    ALLOCATE(particle_data(npart_proc, vars_per_species+2))
+    ALLOCATE(particle_data(npart_proc, vars_per_species+c_ndims))
 
     CALL sdf_seek_start(sdf_handle)
     CALL create_particle_type(npart_proc, total_procs, mpitype)
@@ -400,14 +400,14 @@ CONTAINS
       IF (TRIM(species_id) == species_name) THEN
         ! Read this procs grid
         CALL sdf_read_point_mesh(sdf_handle, npart_proc, mpitype, it_part_mesh)
-        IF (rank == 0) PRINT*, 'Columns 1 to 2 are ', block_id
+        IF (rank == 0) PRINT*, 'Columns 1 to',c_ndims,' are ', block_id
       END IF
     END DO
 
     ! Rewind and read the data
     ! This is inefficient but simplest
     CALL sdf_seek_start(sdf_handle)
-    current_var = 3
+    current_var = c_ndims + 1
     ! Read the data
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
@@ -590,7 +590,7 @@ PROGRAM read_sdf
 
   ! Example calc - calculate average column 3 per processor
   PRINT*, 'Average px on rank ', rank, ' is ', &
-          SUM(particle_data(:,3)) / SIZE(particle_data(:,3))
+          SUM(particle_data(:,4)) / SIZE(particle_data(:,4))
 
   CALL mpi_finish
   DEALLOCATE(field_data, grid_x, grid_y, grid_z, particle_data)

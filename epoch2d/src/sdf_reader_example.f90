@@ -341,7 +341,7 @@ CONTAINS
       END IF
     END DO
 
-    IF (vars_per_species <= 1) THEN
+    IF (vars_per_species < 1) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'No variables found for species: ', TRIM(species_name)
@@ -376,7 +376,7 @@ CONTAINS
     CALL particles_for_rank(npart, rank, total_procs, npart_proc, start)
 
     ! Allocate arrays
-    ALLOCATE(particle_data(npart_proc, vars_per_species+2))
+    ALLOCATE(particle_data(npart_proc, vars_per_species+c_ndims))
 
     CALL sdf_seek_start(sdf_handle)
     CALL create_particle_type(npart_proc, total_procs, mpitype)
@@ -397,14 +397,14 @@ CONTAINS
       IF (TRIM(species_id) == species_name) THEN
         ! Read this procs grid
         CALL sdf_read_point_mesh(sdf_handle, npart_proc, mpitype, it_part_mesh)
-        IF (rank == 0) PRINT*, 'Columns 1 to 2 are ', block_id
+        IF (rank == 0) PRINT*, 'Columns 1 to',c_ndims,' are ', block_id
       END IF
     END DO
 
     ! Rewind and read the data
     ! This is inefficient but simplest
     CALL sdf_seek_start(sdf_handle)
-    current_var = 3
+    current_var = c_ndims+1
     ! Read the data
     DO iblock = 1, nblocks
       CALL sdf_read_next_block_header(sdf_handle, block_id, name, blocktype, &
