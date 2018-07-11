@@ -427,11 +427,15 @@ CONTAINS
     INTEGER, INTENT(IN) :: direction
     INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER(i8) :: ipart
+    INTEGER(i8), SAVE :: ipart_done
+
+    IF (start) ipart_done = 0
 
     DO ipart = 1, npart_this_it
-      current_array(ipart, current_var+direction-1) = array(ipart)
+      current_array(ipart+ipart_done, current_var+direction-1) = array(ipart)
     END DO
 
+    ipart_done = ipart_done + npart_this_it
     it_part_mesh = 0
 
   END FUNCTION it_part_mesh
@@ -449,11 +453,15 @@ CONTAINS
     LOGICAL, INTENT(IN) :: start
     INTEGER, INTENT(IN), OPTIONAL :: param
     INTEGER(i8) :: ipart
+    INTEGER(i8), SAVE :: ipart_done
+
+    IF (start) ipart_done = 0
 
     DO ipart = 1, npart_this_it
-      current_array(ipart, current_var) = array(ipart)
+      current_array(ipart+ipart_done, current_var) = array(ipart)
     END DO
 
+    ipart_done = ipart_done + npart_this_it
     it_part_arr = 0
 
   END FUNCTION it_part_arr
