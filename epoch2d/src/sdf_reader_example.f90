@@ -159,7 +159,15 @@ MODULE read_support
 
     found = sdf_find_block_by_id(sdf_handle, block_id)
 
-    IF(found .AND. rank == 0) THEN
+    IF (.NOT. found) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Block not found: ', TRIM(block_id)
+      END IF
+      STOP
+    END IF
+
+    IF(rank == 0) THEN
       PRINT*, "Type is ", sdf_handle%current_block%datatype
       PRINT*, "Ndims ", sdf_handle%current_block%ndims
       PRINT*, "Dims ", sdf_handle%current_block%dims
@@ -192,6 +200,14 @@ MODULE read_support
     grid_y = 0.0_num
 
     found = sdf_find_block_by_id(sdf_handle, sdf_handle%current_block%mesh_id)
+
+    IF (.NOT. found) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Block not found: ', TRIM(sdf_handle%current_block%mesh_id)
+      END IF
+      STOP
+    END IF
 
     CALL sdf_read_srl_plain_mesh(sdf_handle, grid_x, grid_y)
 
@@ -283,13 +299,33 @@ MODULE read_support
         ENDIF
     ENDDO
 
+    IF (vars_per_species <= 1) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'No variables found for species: ', TRIM(species_name)
+      END IF
+      STOP
+    ENDIF
+
     !Get number of particles
     found = sdf_find_block_by_id(sdf_handle, mesh_id)
+
+    IF (.NOT. found) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Block not found: ', TRIM(mesh_id)
+      END IF
+      STOP
+    END IF
+
     CALL sdf_read_point_mesh_info(sdf_handle, npart)
 
-    IF(npart .LE. 0 .OR. vars_per_species .LE. 1) THEN
-      PRINT*, "Error, no particles or no particle variables"
-      RETURN
+    IF(npart .LE. 0) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'No particles for species: ', TRIM(species_name)
+      END IF
+      STOP
     ENDIF
 
     IF (rank == 0) PRINT*, 'Found ', vars_per_species-1, ' particle variables'
