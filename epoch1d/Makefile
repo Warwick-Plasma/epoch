@@ -421,7 +421,7 @@ collisions.o: collisions.F90 calc_df.o prefetch.o
 current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
-custom_parser.o: custom_parser.f90 shared_data.o
+custom_parser.o: custom_parser.f90 shared_data.o tokenizer_blocks.o stack.o
 deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
   deck_fields_block.o deck_injector_block.o deck_io_block.o \
