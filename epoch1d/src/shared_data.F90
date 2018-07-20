@@ -457,7 +457,6 @@ MODULE shared_parser_data
   INTEGER, PARAMETER :: c_func_driftz = 46
   INTEGER, PARAMETER :: c_func_arctan2 = 47
 
-
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 
   ! This type represents parameters given to the parser.
