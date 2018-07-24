@@ -243,7 +243,7 @@ CONTAINS
       ! Currently no support for collisions involving chargeless particles
       ! unless ionisation occurs
       use_coulomb_log_auto_i = .TRUE.
-      IF (ABS(species_list(ispecies)%charge) >= c_tiny) THEN
+      IF (ABS(species_list(ispecies)%charge) <= c_tiny) THEN
         IF (.NOT. species_list(ispecies)%ionise) CYCLE
         use_coulomb_log_auto_i = .FALSE.
       END IF
@@ -284,7 +284,7 @@ CONTAINS
         ! Currently no support for collisions involving chargeless particles
         ! unless ionisation occurs
         use_coulomb_log_auto = use_coulomb_log_auto_i
-        IF (ABS(species_list(jspecies)%charge) >= c_tiny) THEN
+        IF (ABS(species_list(jspecies)%charge) <= c_tiny) THEN
           IF (.NOT. (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise)) CYCLE
           use_coulomb_log_auto = .FALSE.
@@ -377,7 +377,7 @@ CONTAINS
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (ABS(q1) >= c_tiny) THEN
+            IF (ABS(q1) > c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -416,7 +416,7 @@ CONTAINS
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
-            IF (ABS(q2) >= c_tiny) THEN
+            IF (ABS(q2) > c_tiny) THEN
               CALL inter_species_collisions( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
@@ -524,13 +524,13 @@ CONTAINS
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
       ! Angles for rotation such that ion velocity |v| = v_x
       IF (i_p2 > 0.0_num) THEN
-        IF (ABS(ion%part_p(1)) >= c_tiny) THEN
+        IF (ABS(ion%part_p(1)) > c_tiny) THEN
           rot_y = DATAN(ion%part_p(3) / ion%part_p(1))
         ELSE
           rot_y = pi / 2.0_num
         END IF
         denominator = ion%part_p(1) * DCOS(rot_y) + ion%part_p(3) * DSIN(rot_y)
-        IF (ABS(denominator) >= c_tiny) THEN
+        IF (ABS(denominator) > c_tiny) THEN
           rot_z = DATAN(-ion%part_p(2) / denominator)
         ELSE
           rot_z = pi / 2.0_num
@@ -1030,7 +1030,7 @@ CONTAINS
       tan_theta_cm2 = c_largest_number
     END IF
 
-    sin_theta = SQRT(tan_theta_cm2 / (1 + tan_theta_cm2))
+    sin_theta = SQRT(tan_theta_cm2 / (1.0_num + tan_theta_cm2))
     cos_theta = SQRT(1.0_num / (1.0_num + tan_theta_cm2))
 
     ! Post-collision momenta in COM frame
@@ -1322,7 +1322,7 @@ CONTAINS
     DO k = 1-ng, nz+ng
     DO j = 1-ng, ny+ng
     DO i = 1-ng, nx+ng
-      local_ekbar1 = MAX(ekbar1(i,j,k), 100.0_num)
+      local_ekbar1 = MAX(ekbar1(i,j,k), 100.0_num * q0)
       local_temp2 = MAX(temp2(i,j,k), 100.0_num)
       IF (dens1(i,j,k) <= 1.0_num .OR. dens2(i,j,k) <= 1.0_num) THEN
         calc_coulomb_log(i,j,k) = 1.0_num
@@ -1353,6 +1353,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
+    REAL(num) :: gf
     REAL(num) :: idx
     INTEGER :: ix, iy, iz
     INTEGER :: jx, jy, jz
@@ -1381,9 +1382,9 @@ CONTAINS
         DO iz = sf_min, sf_max
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * gz(iz)
           data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-              + gx(ix) * gy(iy) * gz(iz) * wdata
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
         END DO
         END DO
         END DO
@@ -1541,6 +1542,7 @@ CONTAINS
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
     REAL(num) :: part_w
+    REAL(num) :: gf
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: fac, gamma_rel, gamma_rel_m1
@@ -1601,12 +1603,11 @@ CONTAINS
         DO iz = sf_min, sf_max
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy) * gz(iz)
           data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-              + gx(ix) * gy(iy) * gz(iz) * wdata
+              data_array(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
           part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) &
-              + gx(ix) * gy(iy) * gz(iz) * part_w
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_w
         END DO
         END DO
         END DO
