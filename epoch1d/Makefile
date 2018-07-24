@@ -372,6 +372,7 @@ rm:
 
 clean: tidy
 cleanall: tidy
+	@rm -rf $(BINDIR)
 
 tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
@@ -398,6 +399,12 @@ sdfutilsclean:
 	@cd $(SDF)/../C; make clean
 	@cd $(SDF)/../utilities; ./build -c
 
+sdf_reader_example: $(BINDIR)/sdf_reader_example
+
+$(BINDIR)/sdf_reader_example: sdf_reader_example.f90 $(SDFMOD)
+	@mkdir -p $(BINDIR) $(OBJDIR)
+	$(FC) -o $@ $< $(LDFLAGS)
+
 $(OBJFILES): | $(OBJDIR)
 
 $(OBJDIR):
@@ -408,7 +415,8 @@ commit: FORCE
 
 FORCE:
 
-.PHONY: commit clean cleanall tidy datatidy visit visitclean main FORCE
+.PHONY: commit clean cleanall tidy datatidy visit visitclean main FORCE \
+        sdf_reader_example
 
 # All the dependencies
 
