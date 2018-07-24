@@ -291,6 +291,7 @@ CONTAINS
     IF (str_cmp(name, 'asin'))  as_function = c_func_arcsine
     IF (str_cmp(name, 'acos'))  as_function = c_func_arccosine
     IF (str_cmp(name, 'atan'))  as_function = c_func_arctan
+    IF (str_cmp(name, 'atan2')) as_function = c_func_arctan2
     IF (str_cmp(name, 'sinh'))  as_function = c_func_sinh
     IF (str_cmp(name, 'cosh'))  as_function = c_func_cosh
     IF (str_cmp(name, 'tanh'))  as_function = c_func_tanh

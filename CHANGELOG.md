@@ -18,6 +18,10 @@
 
  * Added "window_stop_time" parameter to the window block
 
+ * Added example SDF reader code
+
+ * Added "atan2" function to the deck parser
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
