@@ -907,6 +907,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_func_arctan2) THEN
+      CALL get_values(2, values)
+      CALL push_on_eval(ATAN2(values(1), values(2)))
+      RETURN
+    END IF
+
     IF (opcode == c_func_neg) THEN
       CALL get_values(1, values)
       CALL push_on_eval(-(values(1)))
