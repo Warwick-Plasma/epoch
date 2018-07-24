@@ -1307,7 +1307,7 @@ CONTAINS
     calc_coulomb_log = 0.0_num
     DO j = 1-ng, ny+ng
     DO i = 1-ng, nx+ng
-      local_ekbar1 = MAX(ekbar1(i,j), 100.0_num)
+      local_ekbar1 = MAX(ekbar1(i,j), 100.0_num * q0)
       local_temp2 = MAX(temp2(i,j), 100.0_num)
       IF (dens1(i,j) <= 1.0_num .OR. dens2(i,j) <= 1.0_num) THEN
         calc_coulomb_log(i,j) = 1.0_num
@@ -1337,6 +1337,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
+    REAL(num) :: gf
     REAL(num) :: idx
     INTEGER :: ix, iy
     INTEGER :: jx, jy
@@ -1363,8 +1364,9 @@ CONTAINS
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy)
           data_array(cell_x+ix, cell_y+iy) = &
-              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+              data_array(cell_x+ix, cell_y+iy) + gf * wdata
         END DO
         END DO
 
@@ -1480,7 +1482,8 @@ CONTAINS
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
           gf = gx(ix) * gy(iy)
-          sigma(cell_x+ix, cell_y+iy) = sigma(cell_x+ix, cell_y+iy) + gf &
+          sigma(cell_x+ix, cell_y+iy) = &
+              sigma(cell_x+ix, cell_y+iy) + gf &
               * ((part_pmx - meanx(cell_x+ix, cell_y+iy))**2 &
               + (part_pmy - meany(cell_x+ix, cell_y+iy))**2 &
               + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
@@ -1511,6 +1514,7 @@ CONTAINS
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
     REAL(num) :: part_w
+    REAL(num) :: gf
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: fac, gamma_rel, gamma_rel_m1
@@ -1569,10 +1573,11 @@ CONTAINS
 
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
+          gf = gx(ix) * gy(iy)
           data_array(cell_x+ix, cell_y+iy) = &
-              data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
+              data_array(cell_x+ix, cell_y+iy) + gf * wdata
           part_count(cell_x+ix, cell_y+iy) = &
-              part_count(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
+              part_count(cell_x+ix, cell_y+iy) + gf * part_w
         END DO
         END DO
 
