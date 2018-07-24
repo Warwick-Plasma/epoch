@@ -318,13 +318,13 @@ CONTAINS
           END IF
           IF (species_list(ispecies)%electron &
               .AND. species_list(jspecies)%ionise) THEN
-            e_log_lambda = calc_coulomb_log(iekbar, e_temp, idens, e_dens, &
-                q1, q_e, m1)
+            e_log_lambda = calc_coulomb_log(iekbar, e_temp, idens, &
+                e_dens, q1, q_e, m1)
             e_user_factor = coll_pairs(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
-            e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, jdens, &
-                q_e, q2, m_e)
+            e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, &
+                jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
           END IF
         ELSE
@@ -1110,7 +1110,6 @@ CONTAINS
 
     ! Manheimer-like collision operator
     ! Valid for e-i and e-e collisions
-
     sc = SQRT(1.0_num - (vrabs / c)**2)
     grm1 = (vrabs / c)**2 / (sc + sc**2)
 
@@ -1322,6 +1321,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
+    REAL(num) :: gf
     REAL(num) :: idx
     INTEGER :: ix
     INTEGER :: jx
@@ -1346,7 +1346,9 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO ix = sf_min, sf_max
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
+          gf = gx(ix)
+          data_array(cell_x+ix) = &
+              data_array(cell_x+ix) + gf * wdata
         END DO
 
         current => current%next
@@ -1411,10 +1413,14 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           gf = gx(ix) * part_w
-          meanx(cell_x+ix) = meanx(cell_x+ix) + gf * part_pmx
-          meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
-          meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+          meanx(cell_x+ix) = &
+              meanx(cell_x+ix) + gf * part_pmx
+          meany(cell_x+ix) = &
+              meany(cell_x+ix) + gf * part_pmy
+          meanz(cell_x+ix) = &
+              meanz(cell_x+ix) + gf * part_pmz
+          part_count(cell_x+ix) = &
+              part_count(cell_x+ix) + gf
         END DO
         current => current%next
       END DO
@@ -1450,11 +1456,13 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           gf = gx(ix)
-          sigma(cell_x+ix) = sigma(cell_x+ix) + gf &
+          sigma(cell_x+ix) = &
+              sigma(cell_x+ix) + gf &
               * ((part_pmx - meanx(cell_x+ix))**2 &
               + (part_pmy - meany(cell_x+ix))**2 &
               + (part_pmz - meanz(cell_x+ix))**2)
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+          part_count(cell_x+ix) = &
+              part_count(cell_x+ix) + gf
         END DO
         current => current%next
       END DO
@@ -1478,6 +1486,7 @@ CONTAINS
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
     REAL(num) :: part_w
+    REAL(num) :: gf
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: fac, gamma_rel, gamma_rel_m1
@@ -1534,8 +1543,11 @@ CONTAINS
 #include "particle_to_grid.inc"
 
         DO ix = sf_min, sf_max
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * part_w
+          gf = gx(ix)
+          data_array(cell_x+ix) = &
+              data_array(cell_x+ix) + gf * wdata
+          part_count(cell_x+ix) = &
+              part_count(cell_x+ix) + gf * part_w
         END DO
 
         current => current%next
