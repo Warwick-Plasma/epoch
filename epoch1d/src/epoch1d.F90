@@ -96,10 +96,10 @@ PROGRAM pic
   ! version check only, exit silently
   IF (TRIM(data_dir) == 'VERSION_INFO') CALL finalise
 
+  CALL register_objects ! custom.f90
   CALL read_deck(deck_file, .TRUE., c_ds_first)
 
   CALL setup_partlists  ! partlist.f90
-  CALL register_objects ! custom.f90
   CALL timer_init
 
   IF (use_exact_restart) CALL read_cpu_split
