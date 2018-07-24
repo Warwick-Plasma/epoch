@@ -577,10 +577,10 @@ CONTAINS
     CASE(27)
       filesystem = TRIM(value) // ':'
     CASE(28)
-      io_block%disabled = as_logical_print(value, element, errcode)
-    CASE(29)
       io_block%dump_first_after_restart = &
           as_logical_print(value, element, errcode)
+    CASE(ov)
+      io_block%disabled = as_logical_print(value, element, errcode)
     END SELECT
 
     IF (style_error == c_err_old_style_ignore) THEN
