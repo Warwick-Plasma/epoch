@@ -241,7 +241,7 @@ CONTAINS
       IF (rank == 0 .AND. stdout_frequency > 0 &
           .AND. MOD(step, stdout_frequency) == 0) THEN
         timer_walltime = MPI_WTIME()
-        elapsed_time = timer_walltime - walltime_start
+        elapsed_time = timer_walltime - walltime_started
 
         IF (reset_walltime) THEN
           CALL create_timestring(elapsed_time, timestring)
@@ -376,7 +376,7 @@ CONTAINS
           cell_x_max)
 
       timer_walltime = MPI_WTIME()
-      elapsed_time = old_elapsed_time + timer_walltime - walltime_start
+      elapsed_time = old_elapsed_time + timer_walltime - walltime_started
       CALL sdf_write_srl(sdf_handle, 'elapsed_time', 'Wall-time', elapsed_time)
 
       file_numbers(iprefix) = file_numbers(iprefix) + 1
