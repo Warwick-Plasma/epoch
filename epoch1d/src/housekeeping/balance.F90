@@ -43,6 +43,7 @@ CONTAINS
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
+    REAL(num) :: max_part
     INTEGER(i8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
@@ -72,7 +73,8 @@ CONTAINS
     CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
         comm, errcode)
     npart_av = REAL(sum_npart, num) / nproc
-    balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
+    max_part = REAL(max_npart, num)
+    balance_frac = (npart_av + SQRT(npart_av)) / (max_part + SQRT(max_part))
     IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) RETURN
 
     last_check = step
@@ -171,7 +173,9 @@ CONTAINS
     CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
         comm, errcode)
     npart_av = REAL(sum_npart, num) / nproc
-    balance_frac_final = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
+    max_part = REAL(max_npart, num)
+    balance_frac_final = (npart_av + SQRT(npart_av)) &
+        / (max_part + SQRT(max_part))
     balance_improvement = (balance_frac_final - balance_frac) / balance_frac
     ! Consider load balancing a success if the load imbalance improved by
     ! more than 5 percent
