@@ -51,7 +51,7 @@ CONTAINS
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
     INTEGER, DIMENSION(c_ndims,2) :: domain
     LOGICAL, SAVE :: first_flag = .TRUE.
-    LOGICAL :: first, restarting
+    LOGICAL :: first_message, restarting
     LOGICAL :: use_redistribute_domain, use_redistribute_particles
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
@@ -67,13 +67,14 @@ CONTAINS
 
     IF (first_flag) THEN
       first_flag = .FALSE.
-      first = .TRUE.
+      first_message = .TRUE.
       use_redistribute_particles = .TRUE.
       IF (ic_from_restart) restarting = .TRUE.
     ELSE
-      first = .FALSE.
+      first_message = .FALSE.
       use_redistribute_particles = .FALSE.
     END IF
+    last_check = step
 
     ! count particles
     npart_local = get_total_local_particles()
@@ -88,9 +89,18 @@ CONTAINS
     npart_av = REAL(sum_npart, num) / nproc
     max_part = REAL(max_npart, num)
     balance_frac = (npart_av + SQRT(npart_av)) / (max_part + SQRT(max_part))
-    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) RETURN
 
-    last_check = step
+    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) THEN
+      balance_check_frequency = &
+          MIN(balance_check_frequency * 2, maximum_check_frequency)
+      IF (rank == 0) THEN
+        PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+              &'', threshold:'', F6.3, '', next: '', i9)', &
+              balance_frac, dlb_threshold, &
+              (step + balance_check_frequency)
+      END IF
+      RETURN
+    END IF
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
@@ -120,21 +130,24 @@ CONTAINS
         IF (balance_improvement > 0.05_num) THEN
           use_redistribute_domain = .TRUE.
           use_redistribute_particles = .TRUE.
+          first_message = .FALSE.
           balance_check_frequency = 1
           IF (rank == 0) THEN
-            PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
-                  &'', improvement:'', F6.3, '', next: '', i8)', &
-                  balance_frac, balance_frac_final, balance_improvement, &
+            PRINT'(''Redistributing.          Balance:'', F6.3, &
+                  &'',     after:'', F6.3, '', next: '', i9)', &
+                  balance_frac, balance_frac_final, &
                   (step + balance_check_frequency)
           END IF
         ELSE
-          balance_check_frequency = &
-              MIN(balance_check_frequency * 2, maximum_check_frequency)
-          IF (rank == 0) THEN
-            PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
-                  &'', skipping, next: '', i8)', &
-                  balance_frac, balance_frac_final, &
-                  (step + balance_check_frequency)
+          IF (.NOT.first_message) THEN
+            balance_check_frequency = &
+                MIN(balance_check_frequency * 2, maximum_check_frequency)
+            IF (rank == 0) THEN
+              PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                    &'',     after:'', F6.3, '', next: '', i9)', &
+                    balance_frac, balance_frac_final, &
+                    (step + balance_check_frequency)
+            END IF
           END IF
         END IF
       END IF
@@ -206,7 +219,7 @@ CONTAINS
     END IF
 #endif
 
-    IF (restarting) THEN
+    IF (first_message) THEN
       npart_local = get_total_local_particles()
 
       CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
@@ -215,19 +228,11 @@ CONTAINS
       max_part = REAL(max_npart, num)
       balance_frac_final = (npart_av + SQRT(npart_av)) &
           / (max_part + SQRT(max_part))
-      balance_improvement = (balance_frac_final - balance_frac) / balance_frac
-
-      ! Consider load balancing a success if the load imbalance improved by
-      ! more than 5 percent
-      IF (balance_improvement > 0.05_num) THEN
-        balance_check_frequency = 1
-      ELSE
-        balance_check_frequency = &
-            MIN(balance_check_frequency * 2, maximum_check_frequency)
-      END IF
+      balance_check_frequency = 1
 
       IF (rank == 0) THEN
-        PRINT'(''Initial load imbalance:'', F6.3, '', next: '', i8)', &
+        PRINT'(''Redistributing.          Balance:'', F6.3, &
+              &'',     next: '', i9)', &
               balance_frac_final, (step + balance_check_frequency)
       END IF
     END IF
