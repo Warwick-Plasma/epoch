@@ -29,7 +29,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   LOGICAL :: overriding
   INTEGER, PARAMETER :: maximum_check_frequency = 200
-  REAL(num) :: npart_av
+  REAL(num) :: load_av
 
 CONTAINS
 
@@ -46,8 +46,8 @@ CONTAINS
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement
-    REAL(num) :: max_part
-    INTEGER(i8) :: npart_local, sum_npart, max_npart
+    REAL(num) :: load_local, load_sum, load_max
+    INTEGER(i8) :: npart_local
     INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
@@ -80,18 +80,17 @@ CONTAINS
 
     ! count particles
     npart_local = get_total_local_particles()
+    load_local = REAL(push_per_field * npart_local + nx * ny, num)
+
+    CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, errcode)
+    CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, errcode)
+
+    load_av = load_sum / nproc
+
+    balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
 
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (.NOT. over_ride .AND. max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
-    max_part = REAL(max_npart, num)
-    balance_frac = (npart_av + SQRT(npart_av)) / (max_part + SQRT(max_part))
-
     IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) THEN
       balance_check_frequency = &
           MIN(balance_check_frequency * 2, maximum_check_frequency)
@@ -256,13 +255,13 @@ CONTAINS
 
     IF (first_message) THEN
       npart_local = get_total_local_particles()
+      load_local = REAL(push_per_field * npart_local + nx * ny, num)
 
-      CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, &
           comm, errcode)
-      IF (max_npart <= 0) RETURN
-      max_part = REAL(max_npart, num)
-      balance_frac_final = (npart_av + SQRT(npart_av)) &
-          / (max_part + SQRT(max_part))
+
+      balance_frac_final = (load_av + SQRT(load_av)) &
+          / (load_max + SQRT(load_max))
       balance_check_frequency = 1
 
       IF (rank == 0) THEN
@@ -1845,17 +1844,17 @@ CONTAINS
   SUBROUTINE calculate_new_load_imbalance(balance_frac_final)
 
     REAL(num), INTENT(OUT) :: balance_frac_final
-    INTEGER(i8), ALLOCATABLE :: npart_per_cpu(:,:)
+    REAL(num), ALLOCATABLE :: load_per_cpu(:,:)
     INTEGER(i8), ALLOCATABLE :: npart_per_cell(:,:)
     INTEGER :: i, i0, i1, ix
     INTEGER :: j, j0, j1, iy
     INTEGER :: ierr
-    REAL(num) :: max_part
+    REAL(num) :: load_max
 
     CALL create_npart_per_cell(npart_per_cell)
 
-    ALLOCATE(npart_per_cpu(nprocx,nprocy))
-    npart_per_cpu = 0
+    ALLOCATE(load_per_cpu(nprocx,nprocy))
+    load_per_cpu = 0.0_num
 
     DO j = 1, nprocy
       j0 = new_cell_y_min(j) - ny_global_min + 1
@@ -1877,7 +1876,8 @@ CONTAINS
 
         DO iy = j0, j1
         DO ix = i0, i1
-          npart_per_cpu(i,j) = npart_per_cpu(i,j) + npart_per_cell(ix,iy)
+          load_per_cpu(i,j) = load_per_cpu(i,j) &
+              + REAL(push_per_field * npart_per_cell(ix,iy) + 1, num)
         END DO
         END DO
       END DO
@@ -1885,14 +1885,14 @@ CONTAINS
 
     DEALLOCATE(npart_per_cell)
 
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE, npart_per_cpu, nprocx * nprocy, &
-                       MPI_INTEGER8, MPI_SUM, comm, ierr)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy, &
+                       mpireal, MPI_SUM, comm, ierr)
 
-    max_part = REAL(MAXVAL(npart_per_cpu), num)
-    balance_frac_final = (npart_av + SQRT(npart_av)) &
-        / (max_part + SQRT(max_part))
+    load_max = MAXVAL(load_per_cpu)
 
-    DEALLOCATE(npart_per_cpu)
+    balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+
+    DEALLOCATE(load_per_cpu)
 
   END SUBROUTINE calculate_new_load_imbalance
 
