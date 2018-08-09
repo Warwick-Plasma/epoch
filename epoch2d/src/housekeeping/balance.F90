@@ -29,6 +29,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   LOGICAL :: overriding
   INTEGER, PARAMETER :: maximum_check_frequency = 200
+  REAL(num) :: npart_av
 
 CONTAINS
 
@@ -44,13 +45,15 @@ CONTAINS
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
-    REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
+    REAL(num) :: balance_frac, balance_frac_final, balance_improvement
     REAL(num) :: max_part
     INTEGER(i8) :: npart_local, sum_npart, max_npart
     INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
     INTEGER, DIMENSION(c_ndims,2) :: domain
+    LOGICAL, SAVE :: first_flag = .TRUE.
+    LOGICAL :: first, restarting
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -59,6 +62,16 @@ CONTAINS
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
     IF (step - last_check < balance_check_frequency) RETURN
+
+    restarting = .FALSE.
+
+    IF (first_flag) THEN
+      first_flag = .FALSE.
+      first = .TRUE.
+      IF (ic_from_restart) restarting = .TRUE.
+    ELSE
+      first = .FALSE.
+    END IF
 
     ! count particles
     npart_local = get_total_local_particles()
@@ -106,6 +119,11 @@ CONTAINS
         CALL get_load_in_y(load_y)
         CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
         DEALLOCATE(load_y)
+      END IF
+
+      IF (.NOT.restarting) THEN
+        CALL calculate_new_load_imbalance(balance_frac_final)
+        balance_improvement = (balance_frac_final - balance_frac) / balance_frac
       END IF
 
       ! Now need to calculate the start and end points for the new domain on
@@ -192,15 +210,18 @@ CONTAINS
     END IF
 #endif
 
-    npart_local = get_total_local_particles()
+    IF (restarting) THEN
+      npart_local = get_total_local_particles()
 
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (max_npart <= 0) RETURN
-    max_part = REAL(max_npart, num)
-    balance_frac_final = (npart_av + SQRT(npart_av)) &
-        / (max_part + SQRT(max_part))
-    balance_improvement = (balance_frac_final - balance_frac) / balance_frac
+      CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
+          comm, errcode)
+      IF (max_npart <= 0) RETURN
+      max_part = REAL(max_npart, num)
+      balance_frac_final = (npart_av + SQRT(npart_av)) &
+          / (max_part + SQRT(max_part))
+      balance_improvement = (balance_frac_final - balance_frac) / balance_frac
+    END IF
+
     ! Consider load balancing a success if the load imbalance improved by
     ! more than 5 percent
     IF (balance_improvement > 0.05_num) THEN
@@ -211,10 +232,15 @@ CONTAINS
     END IF
 
     IF (rank == 0) THEN
-      PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
-          &'', improvement:'', F6.3, '', next: '', i8)', &
-          balance_frac, balance_frac_final, balance_improvement, &
-          (step + balance_check_frequency)
+      IF (restarting) THEN
+        PRINT'(''Initial load imbalance:'', F6.3, '', next: '', i8)', &
+              balance_frac_final, (step + balance_check_frequency)
+      ELSE
+        PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
+              &'', improvement:'', F6.3, '', next: '', i8)', &
+              balance_frac, balance_frac_final, balance_improvement, &
+              (step + balance_check_frequency)
+      END IF
     END IF
 
     use_exact_restart = .FALSE.
@@ -1748,5 +1774,97 @@ CONTAINS
     DEALLOCATE(pointers_send, pointers_recv)
 
   END SUBROUTINE distribute_particles
+
+
+
+  SUBROUTINE create_npart_per_cell(npart_per_cell)
+
+    INTEGER(i8), ALLOCATABLE, INTENT(OUT) :: npart_per_cell(:,:)
+    INTEGER :: ispecies
+    INTEGER :: cell_x, cell_y
+    TYPE(particle), POINTER :: current, next
+    INTEGER :: i0, i1
+
+    i0 = 1 - ng
+    IF (use_field_ionisation) i0 = -ng
+    i1 = 1 - i0
+
+    ALLOCATE(npart_per_cell(i0:nx+i1,i0:ny+i1))
+    npart_per_cell(:,:) = 0
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        next => current%next
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
+#else
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
+#endif
+        npart_per_cell(cell_x,cell_y) = npart_per_cell(cell_x,cell_y) + 1
+
+        current => next
+      END DO
+    END DO
+
+  END SUBROUTINE create_npart_per_cell
+
+
+
+  SUBROUTINE calculate_new_load_imbalance(balance_frac_final)
+
+    REAL(num), INTENT(OUT) :: balance_frac_final
+    INTEGER(i8), ALLOCATABLE :: npart_per_cpu(:,:)
+    INTEGER(i8), ALLOCATABLE :: npart_per_cell(:,:)
+    INTEGER :: i, i0, i1, ix
+    INTEGER :: j, j0, j1, iy
+    INTEGER :: ierr
+    REAL(num) :: max_part
+
+    CALL create_npart_per_cell(npart_per_cell)
+
+    ALLOCATE(npart_per_cpu(nprocx,nprocy))
+    npart_per_cpu = 0
+
+    DO j = 1, nprocy
+      j0 = new_cell_y_min(j) - ny_global_min + 1
+      j1 = new_cell_y_max(j) - ny_global_min + 1
+
+      IF (j1 < 1 .OR. j0 > ny) CYCLE
+
+      j0 = MAX(j0, 1)
+      j1 = MIN(j1, ny)
+
+      DO i = 1, nprocx
+        i0 = new_cell_x_min(i) - nx_global_min + 1
+        i1 = new_cell_x_max(i) - nx_global_min + 1
+
+        IF (i1 < 1 .OR. i0 > nx) CYCLE
+
+        i0 = MAX(i0, 1)
+        i1 = MIN(i1, nx)
+
+        DO iy = j0, j1
+        DO ix = i0, i1
+          npart_per_cpu(i,j) = npart_per_cpu(i,j) + npart_per_cell(ix,iy)
+        END DO
+        END DO
+      END DO
+    END DO
+
+    DEALLOCATE(npart_per_cell)
+
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, npart_per_cpu, nprocx * nprocy, &
+                       MPI_INTEGER8, MPI_SUM, comm, ierr)
+
+    max_part = REAL(MAXVAL(npart_per_cpu), num)
+    balance_frac_final = (npart_av + SQRT(npart_av)) &
+        / (max_part + SQRT(max_part))
+
+    DEALLOCATE(npart_per_cpu)
+
+  END SUBROUTINE calculate_new_load_imbalance
 
 END MODULE balance
