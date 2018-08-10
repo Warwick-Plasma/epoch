@@ -2165,6 +2165,8 @@ CONTAINS
         IF (proc == nproc) EXIT
         total = 0
         old = maxs(proc-1)
+        load_per_proc_ideal = FLOOR(REAL(SUM(load(MIN(idim+1,sz):)), num) &
+            / (nproc - proc + 1) + 0.5d0, i8)
       END IF
     END DO
     maxs(nproc) = sz
