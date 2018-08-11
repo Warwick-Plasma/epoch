@@ -30,11 +30,11 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 33 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 34 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
-  INTEGER, PARAMETER :: ionisation_index = 21
+  INTEGER, PARAMETER :: ionisation_index = 13 + 4 * c_ndims
 
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       control_block_name = (/ &
@@ -78,7 +78,8 @@ MODULE deck_control_block
           'maxwell_solver           ', &
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
-          'reset_walltime           ' /)
+          'reset_walltime           ', &
+          'dlb_maximum_interval     ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -93,7 +94,7 @@ MODULE deck_control_block
           'nsteps                   ', &
           't_end                    ', &
           'dt_multiplier            ', &
-          'dlb_threshold            ', &
+          'balance_threshold        ', &
           'icfile                   ', &
           'restart_snapshot         ', &
           'neutral_background       ', &
@@ -121,7 +122,8 @@ MODULE deck_control_block
           'maxwell_solver           ', &
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
-          'reset_walltime           ' /)
+          'reset_walltime           ', &
+          'balance_maximum_interval ' /)
 
 CONTAINS
 
@@ -145,6 +147,7 @@ CONTAINS
       stop_at_walltime = -1.0_num
       restart_filename = ''
       n_zeros_control = -1
+      dlb_maximum_interval = 500
     END IF
 
   END SUBROUTINE control_deck_initialise
@@ -213,6 +216,7 @@ CONTAINS
 
     ! use_balance only if threshold is positive
     IF (dlb_threshold > 0) use_balance = .TRUE.
+    IF (dlb_maximum_interval < 1) dlb_maximum_interval = HUGE(1)
 
   END SUBROUTINE control_deck_finalise
 
@@ -397,6 +401,8 @@ CONTAINS
       use_accurate_n_zeros = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+33)
       reset_walltime = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+34)
+      dlb_maximum_interval = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

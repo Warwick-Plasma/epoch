@@ -29,7 +29,6 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_z_min, new_cell_z_max
   LOGICAL :: overriding
-  INTEGER, PARAMETER :: maximum_check_frequency = 200
   REAL(num) :: load_av
 
 CONTAINS
@@ -90,7 +89,7 @@ CONTAINS
     ! at t = 0
     IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) THEN
       balance_check_frequency = &
-          MIN(balance_check_frequency * 2, maximum_check_frequency)
+          MIN(balance_check_frequency * 2, dlb_maximum_interval)
       IF (rank == 0) THEN
         PRINT'(''Skipping redistribution. Balance:'', F6.3, &
               &'', threshold:'', F6.3, '', next: '', i9)', &
@@ -163,7 +162,7 @@ CONTAINS
         ELSE
           IF (.NOT.first_message) THEN
             balance_check_frequency = &
-                MIN(balance_check_frequency * 2, maximum_check_frequency)
+                MIN(balance_check_frequency * 2, dlb_maximum_interval)
             IF (rank == 0) THEN
               PRINT'(''Skipping redistribution. Balance:'', F6.3, &
                     &'',     after:'', F6.3, '', next: '', i9)', &
