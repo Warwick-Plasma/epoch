@@ -38,18 +38,13 @@ CONTAINS
     ! calculates where to split the domain and calls other subroutines to
     ! actually rearrange the fields and particles onto the new processors
 
-    ! This is really, really hard to do properly
-    ! So cheat
-
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement
     REAL(num) :: load_local, load_sum, load_max
     INTEGER(i8) :: npart_local
-    INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
-    INTEGER, DIMENSION(c_ndims,2) :: domain
     LOGICAL, SAVE :: first_flag = .TRUE.
     LOGICAL :: first_message, restarting
     LOGICAL :: use_redistribute_domain, use_redistribute_particles
@@ -153,48 +148,7 @@ CONTAINS
     END IF
 
     IF (use_redistribute_domain) THEN
-      ! Now need to calculate the start and end points for the new domain on
-      ! the current processor
-
-      domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
-
-      ! Redistribute the field variables
-      CALL redistribute_fields(domain)
-
-      ! Copy the new lengths into the permanent variables
-      cell_x_min = new_cell_x_min
-      cell_x_max = new_cell_x_max
-
-      ! Set the new nx
-      nx_global_min = cell_x_min(x_coords+1)
-      nx_global_max = cell_x_max(x_coords+1)
-      n_global_min(1) = nx_global_min
-      n_global_max(1) = nx_global_max
-
-      nx = nx_global_max - nx_global_min + 1
-
-      ! Do X array separately because we already have global copies
-      DEALLOCATE(x)
-      ALLOCATE(x(1-ng:nx+ng))
-      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-
-      DEALLOCATE(xb)
-      ALLOCATE(xb(1-ng:nx+ng))
-      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-
-      ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-      DO iproc = 0, nprocx - 1
-        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      END DO
-
-      ! Set the lengths of the current domain so that the particle balancer
-      ! works properly
-      x_grid_min_local = x_grid_mins(x_coords)
-      x_grid_max_local = x_grid_maxs(x_coords)
-
-      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+      CALL redistribute_domain
     END IF
 
     IF (ALLOCATED(new_cell_x_min)) THEN
@@ -241,6 +195,60 @@ CONTAINS
     IF (timer_collect) CALL timer_stop(c_timer_balance)
 
   END SUBROUTINE balance_workload
+
+
+
+  SUBROUTINE redistribute_domain
+
+    INTEGER, DIMENSION(c_ndims,2) :: domain
+    INTEGER :: iproc
+
+    IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
+
+    ! Now need to calculate the start and end points for the new domain on
+    ! the current processor
+
+    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
+
+    ! Redistribute the field variables
+    CALL redistribute_fields(domain)
+
+    ! Copy the new lengths into the permanent variables
+    cell_x_min = new_cell_x_min
+    cell_x_max = new_cell_x_max
+
+    ! Set the new nx
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    n_global_min(1) = nx_global_min
+    n_global_max(1) = nx_global_max
+
+    nx = nx_global_max - nx_global_min + 1
+
+    ! Do X array separately because we already have global copies
+    DEALLOCATE(x)
+    ALLOCATE(x(1-ng:nx+ng))
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+
+    DEALLOCATE(xb)
+    ALLOCATE(xb(1-ng:nx+ng))
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+
+    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
+    DO iproc = 0, nprocx - 1
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    END DO
+
+    ! Set the lengths of the current domain so that the particle balancer
+    ! works properly
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+  END SUBROUTINE redistribute_domain
 
 
 
