@@ -44,8 +44,9 @@ CONTAINS
     INTEGER(i8) :: npart_local
     INTEGER, SAVE :: balance_check_frequency = 1
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
+    INTEGER, SAVE :: last_full_check = -HUGE(1) / 2
     LOGICAL, SAVE :: first_flag = .TRUE.
-    LOGICAL :: first_message, restarting
+    LOGICAL :: first_message, restarting, full_check
     LOGICAL :: use_redistribute_domain, use_redistribute_particles
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
@@ -54,7 +55,13 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    IF (step - last_check < balance_check_frequency) RETURN
+
+    full_check = over_ride
+    IF (step - last_full_check < dlb_force_interval) THEN
+      IF (step - last_check < balance_check_frequency) RETURN
+    ELSE
+      full_check = .TRUE.
+    END IF
 
     restarting = .FALSE.
     use_redistribute_domain = .FALSE.
@@ -83,14 +90,15 @@ CONTAINS
 
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
-    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) THEN
+    IF (.NOT. full_check .AND. balance_frac > dlb_threshold) THEN
       balance_check_frequency = &
           MIN(balance_check_frequency * 2, dlb_maximum_interval)
       IF (rank == 0) THEN
         PRINT'(''Skipping redistribution. Balance:'', F6.3, &
               &'', threshold:'', F6.3, '', next: '', i9)', &
               balance_frac, dlb_threshold, &
-              (step + balance_check_frequency)
+              MIN(step + balance_check_frequency, &
+                  last_full_check + dlb_force_interval)
       END IF
       RETURN
     END IF
@@ -98,7 +106,7 @@ CONTAINS
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
     IF (.NOT.use_exact_restart) THEN
-      overriding = over_ride
+      overriding = full_check
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
@@ -118,6 +126,8 @@ CONTAINS
         CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
         balance_improvement = (balance_frac_final - balance_frac) / balance_frac
 
+        last_full_check = step
+
         ! Consider load balancing a success if the load imbalance improved by
         ! more than 5 percent
         IF (balance_improvement > 0.05_num) THEN
@@ -129,7 +139,8 @@ CONTAINS
             PRINT'(''Redistributing.          Balance:'', F6.3, &
                   &'',     after:'', F6.3, '', next: '', i9)', &
                   balance_frac, balance_frac_final, &
-                  (step + balance_check_frequency)
+                  MIN(step + balance_check_frequency, &
+                      last_full_check + dlb_force_interval)
           END IF
         ELSE
           IF (.NOT.first_message) THEN
@@ -139,7 +150,8 @@ CONTAINS
               PRINT'(''Skipping redistribution. Balance:'', F6.3, &
                     &'',     after:'', F6.3, '', next: '', i9)', &
                     balance_frac, balance_frac_final, &
-                    (step + balance_check_frequency)
+                    MIN(step + balance_check_frequency, &
+                        last_full_check + dlb_force_interval)
             END IF
           END IF
         END IF
@@ -160,7 +172,7 @@ CONTAINS
     ! If running with particle debugging then set the t = 0 processor if
     ! over_ride = true
 #ifdef PARTICLE_DEBUG
-    IF (over_ride) THEN
+    IF (full_check) THEN
       DO ispecies = 1, n_species
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))

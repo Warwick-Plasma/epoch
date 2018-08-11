@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 34 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 35 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -79,7 +79,8 @@ MODULE deck_control_block
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
           'reset_walltime           ', &
-          'dlb_maximum_interval     ' /)
+          'dlb_maximum_interval     ', &
+          'dlb_force_interval       ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -123,7 +124,8 @@ MODULE deck_control_block
           'use_particle_count_update', &
           'use_accurate_n_zeros     ', &
           'reset_walltime           ', &
-          'balance_maximum_interval ' /)
+          'balance_maximum_interval ', &
+          'balance_force_interval   ' /)
 
 CONTAINS
 
@@ -148,6 +150,7 @@ CONTAINS
       restart_filename = ''
       n_zeros_control = -1
       dlb_maximum_interval = 500
+      dlb_force_interval = 2000
     END IF
 
   END SUBROUTINE control_deck_initialise
@@ -217,6 +220,7 @@ CONTAINS
     ! use_balance only if threshold is positive
     IF (dlb_threshold > 0) use_balance = .TRUE.
     IF (dlb_maximum_interval < 1) dlb_maximum_interval = HUGE(1)
+    IF (dlb_force_interval < 1) dlb_force_interval = HUGE(1)
 
   END SUBROUTINE control_deck_finalise
 
@@ -403,6 +407,8 @@ CONTAINS
       reset_walltime = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+34)
       dlb_maximum_interval = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+35)
+      dlb_force_interval = as_integer_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

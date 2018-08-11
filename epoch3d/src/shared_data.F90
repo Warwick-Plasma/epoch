@@ -1105,7 +1105,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   LOGICAL :: use_balance
   REAL(num) :: dlb_threshold
-  INTEGER :: dlb_maximum_interval
+  INTEGER :: dlb_maximum_interval, dlb_force_interval
   INTEGER(i8), PARAMETER :: npart_per_it = 1000000
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_global, y_global, z_global
   REAL(num), DIMENSION(:), ALLOCATABLE :: xb_global, yb_global, zb_global
