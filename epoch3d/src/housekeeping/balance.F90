@@ -232,9 +232,6 @@ CONTAINS
     CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
         comm, errcode)
     IF (max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
     max_part = REAL(max_npart, num)
     balance_frac_final = (npart_av + SQRT(npart_av)) &
         / (max_part + SQRT(max_part))
