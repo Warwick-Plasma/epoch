@@ -121,7 +121,7 @@ CONTAINS
       END IF
 
       IF (.NOT.restarting) THEN
-        CALL calculate_new_load_imbalance(balance_frac_final)
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
         balance_improvement = (balance_frac_final - balance_frac) / balance_frac
 
         ! Consider load balancing a success if the load imbalance improved by
@@ -1059,16 +1059,29 @@ CONTAINS
 
 
 
-  SUBROUTINE calculate_new_load_imbalance(balance_frac_final)
+  SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final)
 
-    REAL(num), INTENT(OUT) :: balance_frac_final
+    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
     REAL(num), ALLOCATABLE :: load_per_cpu(:)
     INTEGER(i8), ALLOCATABLE :: npart_per_cell(:)
+    INTEGER(i8) :: npart_local
     INTEGER :: i, i0, i1, ix
     INTEGER :: ierr
-    REAL(num) :: load_max
+    REAL(num) :: load_local, load_sum, load_max
 
     CALL create_npart_per_cell(npart_per_cell)
+
+    IF (use_injectors) THEN
+      npart_local = SUM(npart_per_cell(1:nx))
+      load_local = REAL(push_per_field * npart_local + nx, num)
+
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, ierr)
+      CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, ierr)
+
+      load_av = load_sum / nproc
+
+      balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+    END IF
 
     ALLOCATE(load_per_cpu(nprocx))
     load_per_cpu = 0.0_num
