@@ -33,6 +33,96 @@ MODULE balance
 
 CONTAINS
 
+  SUBROUTINE get_optimal_layout
+
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_z
+    INTEGER, DIMENSION(:), ALLOCATABLE :: p_x_min, p_x_max
+    INTEGER, DIMENSION(:), ALLOCATABLE :: p_y_min, p_y_max
+    INTEGER, DIMENSION(:), ALLOCATABLE :: p_z_min, p_z_max
+    INTEGER(i8) :: load_local, nload_max, best_load
+    INTEGER :: iproc, ii, jj, np, npx, npy, npz, npyz
+    REAL(num) :: load_av, load_max, balance_frac
+
+    ! On one processor do nothing to save time
+    IF (nproc == 1) RETURN
+    IF (use_exact_restart) RETURN
+
+    ALLOCATE(load_x(nx_global + 2 * ng))
+    ALLOCATE(load_y(ny_global + 2 * ng))
+    ALLOCATE(load_z(nz_global + 2 * ng))
+    CALL get_load(load_x, load_y, load_z, array_load_func)
+
+    load_av = REAL(SUM(load_x(ng+1:nx_global+ng)), num) / nproc
+
+    best_load = 0
+    IF (rank == 0) PRINT*, 'Calculating optimal processor topology'
+
+    DO ii = 1, nproc
+      npx = ii
+      npyz = nproc / npx
+      DO jj = 1, npyz
+        npy = jj
+        npz = npyz / npy
+        IF (npx * npy * npz /= nproc) CYCLE
+        IF (nx_global / npx < ng) CYCLE
+        IF (ny_global / npy < ng) CYCLE
+        IF (nz_global / npz < ng) CYCLE
+
+        ALLOCATE(p_x_min(npx), p_x_max(npx))
+        ALLOCATE(p_y_min(npy), p_y_max(npy))
+        ALLOCATE(p_z_min(npz), p_z_max(npz))
+
+        CALL calculate_breaks(load_x, npx, p_x_min, p_x_max)
+        CALL calculate_breaks(load_y, npy, p_y_min, p_y_max)
+        CALL calculate_breaks(load_z, npz, p_z_min, p_z_max)
+
+        nload_max = 0
+        np = npy * npz
+        DO iproc = 1, npx
+          load_local = SUM(load_x(p_x_min(iproc)+ng:p_x_max(iproc)+ng)) / np
+          IF (load_local > nload_max) nload_max = load_local
+        END DO
+
+        np = npx * npz
+        DO iproc = 1, npy
+          load_local = SUM(load_y(p_y_min(iproc)+ng:p_y_max(iproc)+ng)) / np
+          IF (load_local > nload_max) nload_max = load_local
+        END DO
+
+        np = npx * npy
+        DO iproc = 1, npz
+          load_local = SUM(load_z(p_z_min(iproc)+ng:p_z_max(iproc)+ng)) / np
+          IF (load_local > nload_max) nload_max = load_local
+        END DO
+
+        load_max = REAL(nload_max, num)
+        balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+
+        IF (best_load == 0 .OR. nload_max < best_load) THEN
+          best_load = nload_max
+          nprocx = npx
+          nprocy = npy
+          nprocz = npz
+        END IF
+
+        DEALLOCATE(p_x_min, p_x_max)
+        DEALLOCATE(p_y_min, p_y_max)
+        DEALLOCATE(p_z_min, p_z_max)
+      END DO
+    END DO
+
+    DEALLOCATE(load_x, load_y, load_z)
+
+    IF (rank == 0) THEN
+      PRINT*, 'Processor subdivision is ', (/nprocx, nprocy, nprocz/)
+    END IF
+
+  END SUBROUTINE get_optimal_layout
+
+
+
   SUBROUTINE balance_workload(over_ride)
 
     ! This subroutine determines whether or not the code needs rebalancing,

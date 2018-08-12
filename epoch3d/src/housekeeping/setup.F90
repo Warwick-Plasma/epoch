@@ -1875,8 +1875,15 @@ CONTAINS
     IF (.NOT.use_pre_balance .OR. nproc == 1) RETURN
 
     pre_loading = .TRUE.
+
     CALL auto_load
-    CALL pre_balance_workload
+
+    IF (use_optimal_layout) THEN
+      CALL get_optimal_layout
+    ELSE
+      CALL pre_balance_workload
+    END IF
+
     pre_loading = .FALSE.
 
   END SUBROUTINE pre_load_balance

@@ -244,6 +244,7 @@ CONTAINS
     overriding = .TRUE.
 
     ALLOCATE(load_x(nx_global + 2 * ng))
+
     CALL get_load(load_x, array_load_func)
 
     ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))

@@ -338,7 +338,9 @@ CONTAINS
     nprocdir = dims
 
     IF (rank == 0) THEN
-      PRINT *, 'Processor subdivision is ', (/nprocx, nprocy, nprocz/)
+      IF (.NOT.use_pre_balance .OR. .NOT.use_optimal_layout) THEN
+        PRINT*, 'Processor subdivision is ', (/nprocx, nprocy, nprocz/)
+      END IF
     END IF
 
     x_coords = coordinates(c_ndims)
