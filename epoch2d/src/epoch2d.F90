@@ -159,7 +159,11 @@ PROGRAM pic
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
 
-  IF (rank == 0) PRINT *, 'Equilibrium set up OK, running code'
+  IF (rank == 0) THEN
+    PRINT*
+    PRINT*, 'Equilibrium set up OK, running code'
+    PRINT*
+  END IF
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif

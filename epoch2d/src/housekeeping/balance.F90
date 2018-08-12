@@ -238,6 +238,68 @@ CONTAINS
 
 
 
+  SUBROUTINE pre_balance_workload
+
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
+    REAL(num) :: balance_frac, balance_frac_final, balance_improvement
+    LOGICAL :: use_redistribute_domain
+
+    ! On one processor do nothing to save time
+    IF (nproc == 1 .OR. .NOT.use_pre_balance) RETURN
+
+    overriding = .TRUE.
+
+    ALLOCATE(load_x(nx_global + 2 * ng))
+    ALLOCATE(load_y(ny_global + 2 * ng))
+
+    CALL get_load(load_x, load_y, array_load_func)
+
+    ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
+    ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
+
+    CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+    CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+
+    DEALLOCATE(load_x, load_y)
+
+    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, .TRUE.)
+
+    IF (ALLOCATED(npart_per_cell_array)) DEALLOCATE(npart_per_cell_array)
+
+    balance_improvement = (balance_frac_final - balance_frac) / balance_frac
+
+    ! Consider load balancing a success if the load imbalance improved by
+    ! more than 5 percent
+    IF (balance_improvement > 0.05_num) THEN
+      use_redistribute_domain = .TRUE.
+      IF (rank == 0) THEN
+        PRINT'(''Redistributing.          Balance:'', F6.3, &
+              &'',     after:'', F6.3, '' (pre-load balance)'')', &
+              balance_frac, balance_frac_final
+      END IF
+    ELSE
+      use_redistribute_domain = .FALSE.
+      IF (rank == 0) THEN
+        PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+              &'',     after:'', F6.3, '' (pre-load balance)'')', &
+              balance_frac, balance_frac_final
+      END IF
+    END IF
+
+    IF (use_redistribute_domain) THEN
+      CALL redistribute_domain
+    END IF
+
+    IF (ALLOCATED(new_cell_x_min)) THEN
+      DEALLOCATE(new_cell_x_min, new_cell_x_max)
+      DEALLOCATE(new_cell_y_min, new_cell_y_max)
+    END IF
+
+  END SUBROUTINE pre_balance_workload
+
+
+
   SUBROUTINE redistribute_domain
 
     INTEGER, DIMENSION(c_ndims,2) :: domain
@@ -1757,6 +1819,28 @@ CONTAINS
 
 
 
+  SUBROUTINE array_load_func(load_x, load_y)
+
+    INTEGER(i8), DIMENSION(1-ng:), INTENT(OUT) :: load_x, load_y
+    INTEGER :: ix, iy, ii, jj
+
+    IF (.NOT.ALLOCATED(npart_per_cell_array)) RETURN
+
+    jj = ny_global_min - 1
+    DO iy = 1, ny
+      jj = jj + 1
+      ii = nx_global_min - 1
+      DO ix = 1, nx
+        ii = ii + 1
+        load_x(ii) = load_x(ii) + npart_per_cell_array(ix,iy)
+        load_y(jj) = load_y(jj) + npart_per_cell_array(ix,iy)
+      END DO
+    END DO
+
+  END SUBROUTINE array_load_func
+
+
+
   SUBROUTINE calculate_breaks(load, nproc, mins, maxs)
 
     ! This subroutine calculates the places in a given load profile to split
@@ -2000,17 +2084,25 @@ CONTAINS
 
 
 
-  SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final)
+  SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          get_balance)
 
     REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    LOGICAL, INTENT(IN), OPTIONAL :: get_balance
     REAL(num), ALLOCATABLE :: load_per_cpu(:,:)
     INTEGER(i8) :: npart_local
     INTEGER :: i, i0, i1, ix
     INTEGER :: j, j0, j1, iy
     INTEGER :: ierr
     REAL(num) :: load_local, load_sum, load_max
+    LOGICAL :: original_balance
 
-    IF (use_injectors) THEN
+    original_balance = use_injectors
+    IF (PRESENT(get_balance)) THEN
+      IF (get_balance) original_balance = .TRUE.
+    END IF
+
+    IF (original_balance) THEN
       IF (ALLOCATED(npart_per_cell_array)) THEN
         npart_local = SUM(npart_per_cell_array(1:nx,1:ny))
       ELSE

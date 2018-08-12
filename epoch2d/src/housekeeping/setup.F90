@@ -27,6 +27,7 @@ MODULE setup
   USE window
   USE timer
   USE helper
+  USE balance
   USE sdf
 
   IMPLICIT NONE
@@ -1751,12 +1752,11 @@ CONTAINS
 
   SUBROUTINE pre_load_balance
 
-    LOGICAL, PARAMETER :: use_pre_balance = .TRUE.
-
     IF (.NOT.use_pre_balance .OR. nproc == 1) RETURN
 
     pre_loading = .TRUE.
     CALL auto_load
+    CALL pre_balance_workload
     pre_loading = .FALSE.
 
   END SUBROUTINE pre_load_balance
