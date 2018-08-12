@@ -837,9 +837,13 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos - x_grid_min) / dx) + 1 + ng
+#else
         cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
       END DO
     END DO
