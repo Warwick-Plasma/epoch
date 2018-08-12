@@ -104,6 +104,11 @@ CONTAINS
     nsteps = -1
     t_end = HUGE(1.0_num)
     particles_max_id = 0
+    n_zeros = 4
+
+    laser_inject_local = 0.0_num
+    laser_absorb_local = 0.0_num
+    old_elapsed_time = 0.0_num
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -262,6 +267,13 @@ CONTAINS
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
+
+    cpml_x_min = .FALSE.
+    cpml_x_max = .FALSE.
+    cpml_y_min = .FALSE.
+    cpml_y_max = .FALSE.
+    cpml_z_min = .FALSE.
+    cpml_z_max = .FALSE.
 
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields

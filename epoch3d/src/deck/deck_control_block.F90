@@ -155,6 +155,9 @@ CONTAINS
       use_accurate_n_zeros = .FALSE.
       reset_walltime = .FALSE.
       balance_first = .TRUE.
+      ic_from_restart = .FALSE.
+      neutral_background = .TRUE.
+      use_particle_migration = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -165,6 +168,9 @@ CONTAINS
       nx_global = -1
       ny_global = -1
       nz_global = -1
+      particle_push_start_time = 0.0_num
+      particle_migration_interval = 1
+      maxwell_solver = c_maxwell_solver_yee
     END IF
 
   END SUBROUTINE control_deck_initialise

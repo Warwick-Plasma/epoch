@@ -33,6 +33,7 @@ CONTAINS
     CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
     CALL MPI_COMM_SIZE(comm, nproc, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
+    done_mpi_initialise = .FALSE.
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
