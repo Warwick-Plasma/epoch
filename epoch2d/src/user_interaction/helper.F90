@@ -65,6 +65,11 @@ CONTAINS
 
     CALL set_thermal_bcs
 
+    IF (pre_loading .AND. n_species > 0) THEN
+      ALLOCATE(npart_per_cell_array(nx,ny))
+      npart_per_cell_array = 0
+    END IF
+
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
@@ -79,6 +84,8 @@ CONTAINS
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #endif
+      IF (pre_loading) CYCLE
+
       CALL setup_particle_temperature(&
           species_list(ispecies)%initial_conditions%temp(:,:,1), c_dir_x, &
           species, species_list(ispecies)%initial_conditions%drift(:,:,1))
@@ -89,6 +96,8 @@ CONTAINS
           species_list(ispecies)%initial_conditions%temp(:,:,3), c_dir_z, &
           species, species_list(ispecies)%initial_conditions%drift(:,:,3))
     END DO
+
+    IF (pre_loading) RETURN
 
     IF (rank == 0) THEN
       DO ispecies = 1, n_species
@@ -203,6 +212,19 @@ CONTAINS
     CALL MPI_ALLREDUCE(density_total, density_total_global, 1, mpireal, &
         MPI_SUM, comm, errcode)
     density_average = density_total_global / REAL(num_valid_cells_global, num)
+
+    IF (pre_loading) THEN
+      DO iy = 1, ny
+      DO ix = 1, nx
+        npart_per_cell = NINT(density(ix,iy) / density_average &
+            * npart_per_cell_average)
+        npart_per_cell_array(ix,iy) = &
+            npart_per_cell_array(ix,iy) + INT(npart_per_cell)
+      END DO ! ix
+      END DO ! iy
+
+      RETURN
+    END IF
 
     npart_this_proc_new = 0
     DO iy = 1, ny
@@ -415,6 +437,21 @@ CONTAINS
       species%npart_per_cell = &
           REAL(npart_this_species,num) / num_valid_cells_global
       npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
+    END IF
+
+    IF (pre_loading) THEN
+      IF (npart_per_cell <= 0) RETURN
+
+      DO iy = iy_min, iy_max
+      DO ix = ix_min, ix_max
+        IF (.NOT. load_list(ix,iy)) CYCLE
+
+        npart_per_cell_array(ix,iy) = &
+            npart_per_cell_array(ix,iy) + INT(npart_per_cell)
+      END DO ! ix
+      END DO ! iy
+
+      RETURN
     END IF
 
     partlist => species%attached_list

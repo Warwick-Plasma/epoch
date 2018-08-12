@@ -117,6 +117,7 @@ PROGRAM pic
     CALL restart_data(step)
   ELSE
     ! auto_load particles
+    CALL pre_load_balance
     CALL auto_load
     time = 0.0_num
   END IF

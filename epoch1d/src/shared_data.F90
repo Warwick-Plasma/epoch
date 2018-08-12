@@ -682,6 +682,8 @@ MODULE shared_data
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(num), ALLOCATABLE, DIMENSION(:) :: wk_array
+  INTEGER, ALLOCATABLE, DIMENSION(:) :: npart_per_cell_array
+  LOGICAL :: pre_loading
 
   REAL(num) :: ex_x_min, ex_x_max
   REAL(num) :: ey_x_min, ey_x_max
