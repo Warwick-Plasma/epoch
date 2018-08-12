@@ -53,7 +53,7 @@ CONTAINS
     INTEGER(i8) :: npart_local, sum_npart, max_npart, wk
     INTEGER :: iproc
     INTEGER, SAVE :: balance_check_frequency = 1
-    INTEGER, SAVE :: last_check = -1
+    INTEGER, SAVE :: last_check = -HUGE(1) / 2
     INTEGER, DIMENSION(c_ndims,2) :: domain
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
