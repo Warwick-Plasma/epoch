@@ -114,7 +114,7 @@ CONTAINS
       overriding = full_check
 
       ALLOCATE(load_x(nx_global + 2 * ng))
-      CALL get_load(load_x)
+      CALL get_load(load_x, part_load_func)
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
 
@@ -840,43 +840,60 @@ CONTAINS
 
 
 
-  SUBROUTINE get_load(load)
+  SUBROUTINE get_load(load_x, load_func)
 
     ! Calculate total load across the X direction
 
-    INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: load
-    TYPE(particle), POINTER :: current
-    INTEGER :: cell, ispecies, st
+    INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load_x
+    INTERFACE
+      SUBROUTINE load_func(load_x)
+        USE constants
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load_x
+      END SUBROUTINE load_func
+    END INTERFACE
+    INTEGER :: st
 
-    load = 0
+    load_x = 0
+
+    CALL load_func(load_x)
+
+    ! Now have local densities, so add using MPI
+    st = SIZE(load_x)
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_x, st, MPI_INTEGER8, MPI_SUM, &
+                       comm, errcode)
+
+    ! Adjust the load of pushing one particle relative to the load
+    ! of updating one field cell, then add on the field load.
+    ! The push_per_field factor will be updated automatically in future.
+    load_x = push_per_field * load_x
+    load_x(ng+1:st-ng) = load_x(ng+1:st-ng) + 1
+
+  END SUBROUTINE get_load
+
+
+
+  SUBROUTINE part_load_func(load_x)
+
+    INTEGER(i8), DIMENSION(1-ng:), INTENT(OUT) :: load_x
+    TYPE(particle), POINTER :: current
+    INTEGER :: cell_x, ispecies
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
 #ifdef PARTICLE_SHAPE_TOPHAT
-        cell = FLOOR((current%part_pos - x_grid_min) / dx) + 1 + ng
+        cell_x = FLOOR((current%part_pos - x_grid_min) / dx) + 1
 #else
-        cell = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num) + ng
+        cell_x = FLOOR((current%part_pos - x_grid_min) / dx + 1.5_num)
 #endif
-        load(cell) = load(cell) + 1
+        load_x(cell_x) = load_x(cell_x) + 1
 
         current => current%next
       END DO
     END DO
 
-    ! Now have local densities, so add using MPI
-    st = SIZE(load)
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load, st, MPI_INTEGER8, MPI_SUM, &
-                       comm, errcode)
-
-    ! Adjust the load of pushing one particle relative to the load
-    ! of updating one field cell, then add on the field load.
-    ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * load
-    load(ng+1:st-ng) = load(ng+1:st-ng) + 1
-
-  END SUBROUTINE get_load
+  END SUBROUTINE part_load_func
 
 
 

@@ -422,8 +422,8 @@ FORCE:
 
 # All the dependencies
 
-balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
-  timer.o utilities.o
+balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
+  redblack_module.o timer.o utilities.o
 boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o

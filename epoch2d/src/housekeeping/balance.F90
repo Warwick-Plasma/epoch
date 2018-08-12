@@ -117,7 +117,7 @@ CONTAINS
 
       ALLOCATE(load_x(nx_global + 2 * ng))
       ALLOCATE(load_y(ny_global + 2 * ng))
-      CALL get_load(load_x, load_y)
+      CALL get_load(load_x, load_y, part_load_func)
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
       ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
@@ -1640,36 +1640,25 @@ CONTAINS
 
 
 
-  SUBROUTINE get_load(load_x, load_y)
+  SUBROUTINE get_load(load_x, load_y, load_func)
 
     ! Calculate total load across the X,Y directions
 
     INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load_x, load_y
+    INTERFACE
+      SUBROUTINE load_func(load_x, load_y)
+        USE constants
+        INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load_x, load_y
+      END SUBROUTINE load_func
+    END INTERFACE
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load
-    TYPE(particle), POINTER :: current
-    INTEGER :: cell_x, cell_y, ispecies, st, sx, sy
+    INTEGER :: st, sx, sy
     INTEGER :: i0, i1, j0, j1
 
     load_x = 0
     load_y = 0
 
-    DO ispecies = 1, n_species
-      current => species_list(ispecies)%attached_list%head
-      DO WHILE(ASSOCIATED(current))
-        ! Want global position, so x_grid_min, NOT x_grid_min_local
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx) + 1 + ng
-        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy) + 1 + ng
-#else
-        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
-        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
-#endif
-        load_x(cell_x) = load_x(cell_x) + 1
-        load_y(cell_y) = load_y(cell_y) + 1
-
-        current => current%next
-      END DO
-    END DO
+    CALL load_func(load_x, load_y)
 
     ! Now have local densities, so add using MPI
     sx = SIZE(load_x)
@@ -1698,6 +1687,34 @@ CONTAINS
     DEALLOCATE(load)
 
   END SUBROUTINE get_load
+
+
+
+  SUBROUTINE part_load_func(load_x, load_y)
+
+    INTEGER(i8), DIMENSION(1-ng:), INTENT(OUT) :: load_x, load_y
+    TYPE(particle), POINTER :: current
+    INTEGER :: cell_x, cell_y, ispecies
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        ! Want global position, so x_grid_min, NOT x_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy) + 1
+#else
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num)
+#endif
+        load_x(cell_x) = load_x(cell_x) + 1
+        load_y(cell_y) = load_y(cell_y) + 1
+
+        current => current%next
+      END DO
+    END DO
+
+  END SUBROUTINE part_load_func
 
 
 
