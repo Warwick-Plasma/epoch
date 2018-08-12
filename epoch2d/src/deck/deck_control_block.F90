@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 35 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 36 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -80,7 +80,8 @@ MODULE deck_control_block
           'use_accurate_n_zeros     ', &
           'reset_walltime           ', &
           'dlb_maximum_interval     ', &
-          'dlb_force_interval       ' /)
+          'dlb_force_interval       ', &
+          'balance_first            ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -125,7 +126,8 @@ MODULE deck_control_block
           'use_accurate_n_zeros     ', &
           'reset_walltime           ', &
           'balance_maximum_interval ', &
-          'balance_force_interval   ' /)
+          'balance_force_interval   ', &
+          'balance_first            ' /)
 
 CONTAINS
 
@@ -144,6 +146,7 @@ CONTAINS
       use_particle_count_update = .FALSE.
       use_accurate_n_zeros = .FALSE.
       reset_walltime = .FALSE.
+      balance_first = .TRUE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -409,6 +412,8 @@ CONTAINS
       dlb_maximum_interval = as_integer_print(value, element, errcode)
     CASE(4*c_ndims+35)
       dlb_force_interval = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+36)
+      balance_first = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

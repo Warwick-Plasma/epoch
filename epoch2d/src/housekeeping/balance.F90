@@ -48,7 +48,7 @@ CONTAINS
     INTEGER, SAVE :: last_check = -HUGE(1) / 2
     INTEGER, SAVE :: last_full_check = -HUGE(1) / 2
     LOGICAL, SAVE :: first_flag = .TRUE.
-    LOGICAL :: first_message, restarting, full_check
+    LOGICAL :: first_message, restarting, full_check, attempt_balance
     LOGICAL :: use_redistribute_domain, use_redistribute_particles
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
@@ -67,8 +67,11 @@ CONTAINS
 
     restarting = .FALSE.
     use_redistribute_domain = .FALSE.
+    attempt_balance = use_balance
 
     IF (first_flag) THEN
+      attempt_balance = balance_first
+      IF (use_exact_restart) attempt_balance = .FALSE.
       first_flag = .FALSE.
       first_message = .TRUE.
       use_redistribute_particles = .TRUE.
@@ -107,7 +110,7 @@ CONTAINS
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
-    IF (.NOT.use_exact_restart) THEN
+    IF (attempt_balance) THEN
       overriding = full_check
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
