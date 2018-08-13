@@ -34,6 +34,8 @@
 
  * Added "atan2" function to the deck parser
 
+ * Omit redundant dimension in dist_fn output
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
