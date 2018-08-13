@@ -781,7 +781,10 @@ MODULE shared_data
     REAL(num) :: dt_snapshot, time_prev, time_first
     REAL(num) :: dt_average, dt_min_average, average_time, average_time_start
     REAL(num) :: time_start, time_stop
+    REAL(num) :: walltime_interval, walltime_prev
+    REAL(num) :: walltime_start, walltime_stop
     REAL(num), POINTER :: dump_at_times(:)
+    REAL(num), POINTER :: dump_at_walltimes(:)
     INTEGER, POINTER :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
@@ -799,6 +802,7 @@ MODULE shared_data
   LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
   REAL(num) :: time_start, time_stop
+  REAL(num) :: walltime_start, walltime_stop
   INTEGER :: nstep_start, nstep_stop
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: file_prefixes(:)
   INTEGER, ALLOCATABLE :: file_numbers(:)
@@ -1121,8 +1125,9 @@ MODULE shared_data
   INTEGER(i4) :: run_date
   INTEGER(i8) :: defines
 
-  REAL(num) :: walltime_start, real_walltime_start
+  REAL(num) :: walltime_started, real_walltime_start
   REAL(num) :: stop_at_walltime
+  REAL(num) :: elapsed_time = 0.0_num
   REAL(num) :: old_elapsed_time = 0.0_num
   INTEGER :: stdout_frequency, check_stop_frequency
   LOGICAL :: check_walltime, print_eta_string, reset_walltime
