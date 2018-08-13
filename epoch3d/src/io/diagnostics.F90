@@ -411,6 +411,10 @@ CONTAINS
               'time_prev/'//TRIM(io_block_list(io)%name), &
               io_block_list(io)%time_prev)
           CALL sdf_write_srl(sdf_handle, &
+              'walltime_prev/'//TRIM(io_block_list(io)%name), &
+              'walltime_prev/'//TRIM(io_block_list(io)%name), &
+              io_block_list(io)%walltime_prev)
+          CALL sdf_write_srl(sdf_handle, &
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
               io_block_list(io)%nstep_prev)
@@ -1131,6 +1135,19 @@ CONTAINS
       IF (force) THEN
         io_block_list(io)%dump = .TRUE.
         restart_flag = .TRUE.
+      END IF
+
+      IF (elapsed_time < walltime_start) CYCLE
+      IF (elapsed_time > walltime_stop)  CYCLE
+      IF (elapsed_time < io_block_list(io)%walltime_start) CYCLE
+      IF (elapsed_time > io_block_list(io)%walltime_stop)  CYCLE
+
+      t0 = io_block_list(io)%walltime_interval
+      IF (t0 > 0.0_num) THEN
+        IF (elapsed_time - io_block_list(io)%walltime_prev >= t0) THEN
+          io_block_list(io)%dump = .TRUE.
+          io_block_list(io)%walltime_prev = elapsed_time
+        END IF
       END IF
 
       IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN

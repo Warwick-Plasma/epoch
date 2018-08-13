@@ -27,7 +27,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check, copy_io_block
 
-  INTEGER, PARAMETER :: ov = 30
+  INTEGER, PARAMETER :: ov = 33
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
   INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
@@ -174,6 +174,10 @@ CONTAINS
     io_block_name (i+28) = 'dump_first_after_restart'
     io_block_name (i+29) = 'dump_at_walltimes'
     alternate_name(i+29) = 'walltimes_dump'
+    io_block_name (i+30) = 'walltime_interval'
+    alternate_name(i+30) = 'walltime_snapshot'
+    io_block_name (i+31) = 'walltime_start'
+    io_block_name (i+32) = 'walltime_stop'
     io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
@@ -592,6 +596,12 @@ CONTAINS
     CASE(29)
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_walltimes, errcode)
+    CASE(30)
+      io_block%walltime_interval = as_real_print(value, element, errcode)
+    CASE(31)
+      io_block%walltime_start = as_real_print(value, element, errcode)
+    CASE(32)
+      io_block%walltime_stop = as_real_print(value, element, errcode)
     CASE(ov)
       io_block%disabled = as_logical_print(value, element, errcode)
     END SELECT
@@ -868,6 +878,10 @@ CONTAINS
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
     io_block%disabled = .FALSE.
+    io_block%walltime_interval = -1.0_num
+    io_block%walltime_prev = 0.0_num
+    io_block%walltime_start = -1.0_num
+    io_block%walltime_stop  = HUGE(1.0_num)
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
     NULLIFY(io_block%dump_at_walltimes)

@@ -876,6 +876,7 @@ CONTAINS
       ELSE
         io_block_list(i)%nstep_prev = 0
       END IF
+      io_block_list(i)%walltime_prev = time
       IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
           IF (step >= io_block_list(i)%dump_at_nsteps(is)) THEN
@@ -1071,6 +1072,13 @@ CONTAINS
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(12:), io_block_list(i)%name)) THEN
               CALL sdf_read_srl(sdf_handle, io_block_list(i)%nstep_prev)
+              EXIT
+            END IF
+          END DO
+        ELSE IF (block_id(1:14) == 'walltime_prev/') THEN
+          DO i = 1, n_io_blocks
+            IF (str_cmp(block_id(15:), io_block_list(i)%name)) THEN
+              CALL sdf_read_srl(sdf_handle, io_block_list(i)%walltime_prev)
               EXIT
             END IF
           END DO
