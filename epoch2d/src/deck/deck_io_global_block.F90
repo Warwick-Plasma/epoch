@@ -34,6 +34,8 @@ CONTAINS
 
     time_start  = -1.0_num
     time_stop   = HUGE(1.0_num)
+    walltime_start  = -1.0_num
+    walltime_stop   = HUGE(1.0_num)
     nstep_start = -1
     nstep_stop  = HUGE(1)
     got_dump_first = .FALSE.
@@ -135,6 +137,16 @@ CONTAINS
 
     IF (str_cmp(element, 'time_stop')) THEN
       time_stop = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'walltime_start')) THEN
+      walltime_start = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'walltime_stop')) THEN
+      walltime_stop = as_real_print(value, element, errcode)
       RETURN
     END IF
 

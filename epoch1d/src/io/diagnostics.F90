@@ -211,7 +211,7 @@ CONTAINS
     CHARACTER(LEN=c_max_path_length) :: full_filename
     CHARACTER(LEN=c_max_string_length) :: dump_type, temp_name
     CHARACTER(LEN=c_id_length) :: temp_block_id
-    REAL(num) :: elapsed_time, dr, r0
+    REAL(num) :: eta_time, dr, r0
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
@@ -241,7 +241,7 @@ CONTAINS
       IF (rank == 0 .AND. stdout_frequency > 0 &
           .AND. MOD(step, stdout_frequency) == 0) THEN
         timer_walltime = MPI_WTIME()
-        elapsed_time = timer_walltime - walltime_start
+        elapsed_time = timer_walltime - walltime_started
 
         IF (reset_walltime) THEN
           CALL create_timestring(elapsed_time, timestring)
@@ -254,8 +254,8 @@ CONTAINS
         IF (print_eta_string) THEN
           eta_timestring = ''
           IF (time > 0.0_num) THEN
-            elapsed_time = (t_end - time) * elapsed_time / time
-            CALL create_timestring(elapsed_time, eta_timestring)
+            eta_time = (t_end - time) * elapsed_time / time
+            CALL create_timestring(eta_time, eta_timestring)
           END IF
           WRITE(*, '(''Time'', g14.6, '', iteration'', i9, '' after'', &
               & a, '', ETA'',a)') time, step, timestring, eta_timestring
@@ -376,7 +376,7 @@ CONTAINS
           cell_x_max)
 
       timer_walltime = MPI_WTIME()
-      elapsed_time = old_elapsed_time + timer_walltime - walltime_start
+      elapsed_time = old_elapsed_time + timer_walltime - walltime_started
       CALL sdf_write_srl(sdf_handle, 'elapsed_time', 'Wall-time', elapsed_time)
 
       file_numbers(iprefix) = file_numbers(iprefix) + 1
@@ -404,6 +404,10 @@ CONTAINS
               'time_prev/'//TRIM(io_block_list(io)%name), &
               'time_prev/'//TRIM(io_block_list(io)%name), &
               io_block_list(io)%time_prev)
+          CALL sdf_write_srl(sdf_handle, &
+              'walltime_prev/'//TRIM(io_block_list(io)%name), &
+              'walltime_prev/'//TRIM(io_block_list(io)%name), &
+              io_block_list(io)%walltime_prev)
           CALL sdf_write_srl(sdf_handle, &
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
               'nstep_prev/'//TRIM(io_block_list(io)%name), &
@@ -1086,6 +1090,19 @@ CONTAINS
         restart_flag = .TRUE.
       END IF
 
+      IF (elapsed_time < walltime_start) CYCLE
+      IF (elapsed_time > walltime_stop)  CYCLE
+      IF (elapsed_time < io_block_list(io)%walltime_start) CYCLE
+      IF (elapsed_time > io_block_list(io)%walltime_stop)  CYCLE
+
+      t0 = io_block_list(io)%walltime_interval
+      IF (t0 > 0.0_num) THEN
+        IF (elapsed_time - io_block_list(io)%walltime_prev >= t0) THEN
+          io_block_list(io)%dump = .TRUE.
+          io_block_list(io)%walltime_prev = elapsed_time
+        END IF
+      END IF
+
       IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
           IF (step >= io_block_list(io)%dump_at_nsteps(is)) THEN
@@ -1100,6 +1117,15 @@ CONTAINS
           IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
             io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
+          END IF
+        END DO
+      END IF
+
+      IF (ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+        DO is = 1, SIZE(io_block_list(io)%dump_at_walltimes)
+          IF (elapsed_time >= io_block_list(io)%dump_at_walltimes(is)) THEN
+            io_block_list(io)%dump = .TRUE.
+            io_block_list(io)%dump_at_walltimes(is) = HUGE(1.0_num)
           END IF
         END DO
       END IF

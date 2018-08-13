@@ -165,7 +165,7 @@ PROGRAM pic
   IF (use_qed) CALL setup_qed_module()
 #endif
 
-  walltime_start = MPI_WTIME()
+  walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_field_ionisation) CALL initialise_ionisation
 
@@ -231,7 +231,7 @@ PROGRAM pic
     CALL moving_window
   END DO
 
-  IF (rank == 0) runtime = MPI_WTIME() - walltime_start
+  IF (rank == 0) runtime = MPI_WTIME() - walltime_started
 
 #ifdef PHOTONS
   IF (use_qed) CALL shutdown_qed_module()

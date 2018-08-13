@@ -948,6 +948,7 @@ CONTAINS
       ELSE
         io_block_list(i)%nstep_prev = 0
       END IF
+      io_block_list(i)%walltime_prev = time
       IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
           IF (step >= io_block_list(i)%dump_at_nsteps(is)) THEN
@@ -1145,6 +1146,13 @@ CONTAINS
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(12:), io_block_list(i)%name)) THEN
               CALL sdf_read_srl(sdf_handle, io_block_list(i)%nstep_prev)
+              EXIT
+            END IF
+          END DO
+        ELSE IF (block_id(1:14) == 'walltime_prev/') THEN
+          DO i = 1, n_io_blocks
+            IF (str_cmp(block_id(15:), io_block_list(i)%name)) THEN
+              CALL sdf_read_srl(sdf_handle, io_block_list(i)%walltime_prev)
               EXIT
             END IF
           END DO
@@ -1406,6 +1414,17 @@ CONTAINS
       highest_id = INT(global_max_id, idkind)
     END IF
 #endif
+
+    ! Reset dump_at_walltimes
+    DO i = 1, n_io_blocks
+      IF (ASSOCIATED(io_block_list(i)%dump_at_walltimes)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_walltimes)
+          IF (old_elapsed_time >= io_block_list(i)%dump_at_walltimes(is)) THEN
+            io_block_list(i)%dump_at_walltimes(is) = HUGE(1.0_num)
+          END IF
+        END DO
+      END IF
+    END DO
 
     IF (use_offset_grid) THEN
       window_offset = full_x_min - offset_x_min
