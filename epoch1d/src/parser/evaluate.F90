@@ -50,7 +50,7 @@ CONTAINS
       ! Pop off the final answers
       DO i = n_elements,1,-1
         array(i) = pop_off_eval()
-      ENDDO
+      END DO
 
       CALL simplify_stack(input_stack, err)
 
@@ -60,13 +60,13 @@ CONTAINS
       DO i = 1, n_elements
         IF (ABS(eval_stack_entries(i) - array(i)) > c_tiny) THEN
           PRINT*,i,eval_stack_entries(i),array(i),eval_stack_entries(i)-array(i)
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       DEALLOCATE(array)
     ELSE
       CALL basic_evaluate_standard(input_stack, parameters, err)
-    ENDIF
+    END IF
 
   END SUBROUTINE basic_evaluate
 
@@ -95,14 +95,14 @@ CONTAINS
         CALL do_constant(iblock%value, .FALSE., parameters, err)
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .FALSE., parameters, err)
-      ENDIF
+      END IF
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE basic_evaluate_standard
 
@@ -134,14 +134,14 @@ CONTAINS
         CALL do_constant(iblock%value, .FALSE., parameters, err)
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .FALSE., parameters, err)
-      ENDIF
+      END IF
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE basic_evaluate
 
@@ -160,7 +160,7 @@ CONTAINS
       sl_tmp%prev => sl_tail
       sl_tail%next => sl_tmp
       sl_tail => sl_tmp
-    ENDIF
+    END IF
     sl_size = sl_size + 1
     CALL initialise_stack(sl_tail%stack)
 
@@ -214,14 +214,14 @@ CONTAINS
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .TRUE., parameters, err)
         CALL update_stack_for_block(iblock, err)
-      ENDIF
+      END IF
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! We may now just be left with a list of values on the eval_stack
     ! If so, push them onto sl_tail%stack
@@ -237,7 +237,7 @@ CONTAINS
       DEALLOCATE(sl_tail)
       sl_size = 0
       eval_stack_stack_point = 0
-    ENDIF
+    END IF
 
     CALL deallocate_stack(input_stack)
     input_stack = output_stack
@@ -271,10 +271,10 @@ CONTAINS
         sl_size = sl_size - 1
         sl_part => sl_tail
         sl_tail => sl_tail%prev
-      ENDIF
+      END IF
       n = n - 1
       sp = sp - 1
-    ENDDO
+    END DO
     eval_stack_stack_point = sp
 
     CALL sl_append()
@@ -287,8 +287,8 @@ CONTAINS
         sl_tmp => sl_part%next
         DEALLOCATE(sl_part)
         sl_part => sl_tmp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DEALLOCATE(entries)
     DEALLOCATE(flags)
@@ -303,16 +303,18 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: nvalues
 
-    IF (err == c_err_other) THEN
-      err = c_err_none
+    IF (err == c_err_other .OR. err == c_err_window) THEN
       ! Operator just pushed a bogus value to stack, so we'll ignore it
       eval_stack_stack_point = eval_stack_stack_point - 1
       CALL push_eval_flag()
       CALL sl_append()
       CALL push_to_stack(sl_tail%stack, iblock)
-      IF (iblock%value == c_const_time) sl_tail%stack%is_time_varying = .TRUE.
+      IF (iblock%value == c_const_time .OR. err == c_err_window) THEN
+        sl_tail%stack%is_time_varying = .TRUE.
+      END IF
+      err = c_err_none
       RETURN
-    ENDIF
+    END IF
 
     ! Number of eval_stack entries consumed by operator
     nvalues = eval_stack_nvalues
@@ -348,7 +350,7 @@ CONTAINS
     ! Pop off the final answers
     DO i = MIN(eval_stack_stack_point,n_elements),1,-1
       array(i) = pop_off_eval()
-    ENDDO
+    END DO
 
   END SUBROUTINE evaluate_with_parameters_to_array
 
@@ -391,7 +393,7 @@ CONTAINS
     ! Pop off the final answers
     DO i = n_elements,1,-1
       array(i) = pop_off_eval()
-    ENDDO
+    END DO
 
   END SUBROUTINE evaluate_and_return_all_with_parameters
 
@@ -437,14 +439,14 @@ CONTAINS
         array(1) = array(1) + INT(pop_off_eval())
       ELSE IF (iblock%ptype /= c_pt_operator) THEN
         err = c_err_bad_value
-      ENDIF
+      END IF
 
       IF (err /= c_err_none) THEN
         PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
         CALL abort_code(err)
         STOP
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE evaluate_as_list
 

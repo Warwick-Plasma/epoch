@@ -71,15 +71,15 @@ CONTAINS
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
-        ENDIF
+        END IF
         DO WHILE (ASSOCIATED(current_laser%next))
           IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
-          ENDIF
+          END IF
           current_laser => current_laser%next
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       IF (ASSOCIATED(laser_x_max)) THEN
         current_laser => laser_x_max
@@ -88,15 +88,15 @@ CONTAINS
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
-        ENDIF
+        END IF
         DO WHILE (ASSOCIATED(current_laser%next))
           IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
-          ENDIF
+          END IF
           current_laser => current_laser%next
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       IF (ASSOCIATED(laser_y_min)) THEN
         current_laser => laser_y_min
@@ -105,15 +105,15 @@ CONTAINS
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
-        ENDIF
+        END IF
         DO WHILE (ASSOCIATED(current_laser%next))
           IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
-          ENDIF
+          END IF
           current_laser => current_laser%next
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       IF (ASSOCIATED(laser_y_max)) THEN
         current_laser => laser_y_max
@@ -122,15 +122,15 @@ CONTAINS
         ELSE
           omega = current_laser%omega
           laser_set = .TRUE.
-        ENDIF
+        END IF
         DO WHILE (ASSOCIATED(current_laser%next))
           IF (ABS(current_laser%omega - omega) > c_tiny) THEN
             err_laser = 1
             EXIT
-          ENDIF
+          END IF
           current_laser => current_laser%next
-        ENDDO
-      ENDIF
+        END DO
+      END IF
 
       IF (.NOT. laser_set) err_laser = 2
 
@@ -143,8 +143,8 @@ CONTAINS
               WRITE(io,*) 'Multiphoton ionisation model does not currently'
               WRITE(io,*) 'support lasers of differing frequencies attached to'
               WRITE(io,*) 'the boundaries. Please adjust your input deck.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           CALL abort_code(c_err_bad_setup)
         CASE (2)
           IF (rank == 0) THEN
@@ -154,12 +154,12 @@ CONTAINS
               WRITE(io,*) 'Multiphoton ionisation model requires a single laser'
               WRITE(io,*) 'attached to a boundary. Please adjust your input ', &
                   'deck'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           CALL abort_code(c_err_bad_setup)
         CASE DEFAULT
       END SELECT
-    ENDIF
+    END IF
 
     ALLOCATE(released_mass_fraction(n_species), &
         effective_n_exponent(n_species), adk_scaling(n_species), &
@@ -208,7 +208,7 @@ CONTAINS
           adk_maximum(i) = MAX(adk_scaling(i) / (3.0_num * (2.0_num &
               * effective_n_exponent(i) + species_list(i)%l - 1.5_num)), &
               bsi_threshold(i))
-        ENDIF
+        END IF
 
         IF (use_multiphoton) THEN
           ! Number of photons required for ionisation in multiphoton
@@ -227,7 +227,7 @@ CONTAINS
                 * (2.0_num * k_photons_exponent(i) + 1.0_num)
           ELSE
             multi_constant(i) = 0.0_num
-          ENDIF
+          END IF
 
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
@@ -235,13 +235,13 @@ CONTAINS
             multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
                 / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
                 / multi_constant(i)
-          ENDIF
+          END IF
           ! Energy in K photons
           k_photons_energy(i) = &
               k_photons_exponent(i) * h_bar * omega
           ! Constant used in multiphoton equation
           k_photons_exponent(i) = 4.0_num * k_photons_exponent(i) - 2.0_num
-        ENDIF
+        END IF
 
         ! Constant used in ADK equation
         effective_n_exponent(i) = 2.0_num * effective_n_exponent(i) - 1.5_num
@@ -254,7 +254,7 @@ CONTAINS
               * EXP(adk_scaling(i) / bsi_threshold(i)) * RKBESL(adk_scaling(i) &
               / bsi_threshold(i), 0.5_num, species_list(i)%l + 1, 1, &
               bessel_error) - 1.0_num)
-        ENDIF
+        END IF
 
         IF (use_multiphoton) THEN
           ! The transition between multiphoton and tunnelling is controlled by
@@ -287,14 +287,14 @@ CONTAINS
           ELSE
             smallest_e_mag(i) = (TINY(0.0_num) &
             / MIN(multi_constant(i), 1.0_num))**(1.0 / k_photons_exponent(i))
-          ENDIF
+          END IF
         ELSE
           ! The smallest E we can use in the ADK equation is numerically
           ! determined and so may not be portable; if over/underflow errors
           ! start occurring this might require a smarter solution
           smallest_e_mag(i) = adk_scaling(i) / (0.99472065388909858_num &
               * c_largest_exp)
-        ENDIF
+        END IF
       ELSE
         released_mass_fraction(i) = 0.0_num
         effective_n_exponent(i) = 0.0_num
@@ -307,15 +307,15 @@ CONTAINS
           bsi_threshold(i) = 0.0_num
           adk_maximum(i) = 0.0_num
           adk_bsi_cap(i) = 0.0_num
-        ENDIF
+        END IF
         IF (use_multiphoton) THEN
           keldysh(i) = 0.0_num
           multi_constant(i) = 0.0_num
           k_photons_energy(i) = 0.0_num
           k_photons_exponent(i) = 0.0_num
-        ENDIF
-      ENDIF
-    ENDDO
+        END IF
+      END IF
+    END DO
 
   END SUBROUTINE initialise_ionisation
 
@@ -339,7 +339,7 @@ CONTAINS
       DEALLOCATE(bsi_threshold, STAT=stat)
       DEALLOCATE(adk_maximum, STAT=stat)
       DEALLOCATE(adk_bsi_cap, STAT=stat)
-    ENDIF
+    END IF
 
     IF (use_multiphoton) THEN
       DEALLOCATE(keldysh, STAT=stat)
@@ -347,7 +347,7 @@ CONTAINS
       DEALLOCATE(k_photons_energy, STAT=stat)
       DEALLOCATE(k_photons_exponent, STAT=stat)
       DEALLOCATE(adk_multiphoton_cap, STAT=stat)
-    ENDIF
+    END IF
 
   END SUBROUTINE deallocate_ionisation
 
@@ -368,7 +368,7 @@ CONTAINS
         CALL multiphoton_tunnelling_bsi
       ELSE
         CALL tunnelling_bsi
-      ENDIF
+      END IF
     ELSE
       IF (use_multiphoton) THEN
         CALL multiphoton_tunnelling
@@ -377,8 +377,8 @@ CONTAINS
         ! Tunnelling model from "Tunnel ionization of complex atoms and of
         ! atomic ions in an alternating electromagnetic field" Ammosov et al
         ! Soviet Physics JETP 1986 Vol. 64 Pg. 1191-1194
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     CALL current_bcs
     CALL particle_bcs
@@ -427,7 +427,7 @@ CONTAINS
     ! and to stop electric field at particle being calculated more than once
     DO i = 1, n_species
       CALL create_empty_partlist(ionised_list(i))
-    ENDDO
+    END DO
 
     ! Ionise a species at a time
     DO i = 1, n_species
@@ -565,12 +565,12 @@ CONTAINS
             ! If we got here then the electric field strength was too small for
             ! any ionisation
             EXIT
-          ENDIF
+          END IF
 
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -607,11 +607,11 @@ CONTAINS
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
-            ENDIF
+            END IF
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -623,12 +623,12 @@ CONTAINS
               j_ion = j_ion + k_photons_energy(current_state)
             ELSE
               j_ion = j_ion + species_list(current_state)%ionisation_energy
-            ENDIF
+            END IF
             current_state = species_list(current_state)%ionise_to_species
           ELSE
             time_left = 0.0_num
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
@@ -653,18 +653,18 @@ CONTAINS
                   jy(cell_x1+ix, cell_y2+iy) + gx(ix) * hy(iy) * j_ion(2)
               jz(cell_x1+ix, cell_y1+iy) = &
                   jz(cell_x1+ix, cell_y1+iy) + gx(ix) * gy(iy) * j_ion(3)
-            ENDDO
-            ENDDO
-          ENDIF
-        ENDIF
+            END DO
+            END DO
+          END IF
+        END IF
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Clean up procedure; put ionised ions back into the correct particle lists
     DO i = 1, n_species
       CALL append_partlist(species_list(i)%attached_list, ionised_list(i))
-    ENDDO
+    END DO
     ! Put ionised particles back into partlists
 
   END SUBROUTINE multiphoton_tunnelling_bsi
@@ -709,7 +709,7 @@ CONTAINS
     ! and to stop electric field at particle being calculated more than once
     DO i = 1, n_species
       CALL create_empty_partlist(ionised_list(i))
-    ENDDO
+    END DO
 
     ! Ionise a species at a time
     DO i = 1, n_species
@@ -834,12 +834,12 @@ CONTAINS
             ! If we got here then the electric field strength was too small for
             ! any ionisation
             EXIT
-          ENDIF
+          END IF
 
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -876,11 +876,11 @@ CONTAINS
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
-            ENDIF
+            END IF
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -892,12 +892,12 @@ CONTAINS
               j_ion = j_ion + k_photons_energy(current_state)
             ELSE
               j_ion = j_ion + species_list(current_state)%ionisation_energy
-            ENDIF
+            END IF
             current_state = species_list(current_state)%ionise_to_species
           ELSE
             time_left = 0.0_num
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
@@ -922,18 +922,18 @@ CONTAINS
                   jy(cell_x1+ix, cell_y2+iy) + gx(ix) * hy(iy) * j_ion(2)
               jz(cell_x1+ix, cell_y1+iy) = &
                   jz(cell_x1+ix, cell_y1+iy) + gx(ix) * gy(iy) * j_ion(3)
-            ENDDO
-            ENDDO
-          ENDIF
-        ENDIF
+            END DO
+            END DO
+          END IF
+        END IF
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Clean up procedure; put ionised ions back into the correct particle lists
     DO i = 1, n_species
       CALL append_partlist(species_list(i)%attached_list, ionised_list(i))
-    ENDDO
+    END DO
     ! Put ionised particles back into partlists
 
   END SUBROUTINE multiphoton_tunnelling
@@ -977,7 +977,7 @@ CONTAINS
     ! and to stop electric field at particle being calculated more than once
     DO i = 1, n_species
       CALL create_empty_partlist(ionised_list(i))
-    ENDDO
+    END DO
 
     ! Ionise a species at a time
     DO i = 1, n_species
@@ -1106,12 +1106,12 @@ CONTAINS
             ! If we got here then the electric field strength was too small for
             ! any ionisation
             EXIT
-          ENDIF
+          END IF
 
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -1139,11 +1139,11 @@ CONTAINS
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
-            ENDIF
+            END IF
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -1154,8 +1154,8 @@ CONTAINS
             current_state = species_list(current_state)%ionise_to_species
           ELSE
             time_left = 0.0_num
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
@@ -1180,18 +1180,18 @@ CONTAINS
                   jy(cell_x1+ix, cell_y2+iy) + gx(ix) * hy(iy) * j_ion(2)
               jz(cell_x1+ix, cell_y1+iy) = &
                   jz(cell_x1+ix, cell_y1+iy) + gx(ix) * gy(iy) * j_ion(3)
-            ENDDO
-            ENDDO
-          ENDIF
-        ENDIF
+            END DO
+            END DO
+          END IF
+        END IF
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Clean up procedure; put ionised ions back into the correct particle lists
     DO i = 1, n_species
       CALL append_partlist(species_list(i)%attached_list, ionised_list(i))
-    ENDDO
+    END DO
     ! Put ionised particles back into partlists
 
   END SUBROUTINE tunnelling_bsi
@@ -1235,7 +1235,7 @@ CONTAINS
     ! and to stop electric field at particle being calculated more than once
     DO i = 1, n_species
       CALL create_empty_partlist(ionised_list(i))
-    ENDDO
+    END DO
 
     ! Ionise a species at a time
     DO i = 1, n_species
@@ -1350,12 +1350,12 @@ CONTAINS
             ! If we got here then the electric field strength was too small for
             ! any ionisation
             EXIT
-          ENDIF
+          END IF
 
           sample = random()
           ! Calculate probability of ionisation using a cumulative distribution
           ! function modelling ionisation in a field as an exponential decay
-          IF (sample < 1.0_num - exp(-1.0_num * rate * time_left)) THEN
+          IF (sample < 1.0_num - EXP(-1.0_num * rate * time_left)) THEN
             IF (species_list(current_state)%release_species > 0) THEN
               CALL create_particle(new)
               ! Create electron for release
@@ -1383,11 +1383,11 @@ CONTAINS
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
-            ENDIF
+            END IF
             ! Calculates the time of ionisation using inverse sampling, and
             ! subtracts it from the time step. Ensures diminishing time for
             ! successive ionisations
-            time_left = time_left + log(1.0_num - sample) / rate
+            time_left = time_left + LOG(1.0_num - sample) / rate
             ! Current correction as proposed from Mulser et al 1998, true from
             ! ejection energy <e_j> << m_e*c**2, i.e. sub-relativistic ejection
             ! velocity. This shall be true for all laser gamma factors, as BSI
@@ -1398,8 +1398,8 @@ CONTAINS
             current_state = species_list(current_state)%ionise_to_species
           ELSE
             time_left = 0.0_num
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         ! Finally the ion is moved to the ionised list following multiple
         ! ionisation, and current correction is applied
@@ -1424,18 +1424,18 @@ CONTAINS
                   jy(cell_x1+ix, cell_y2+iy) + gx(ix) * hy(iy) * j_ion(2)
               jz(cell_x1+ix, cell_y1+iy) = &
                   jz(cell_x1+ix, cell_y1+iy) + gx(ix) * gy(iy) * j_ion(3)
-            ENDDO
-            ENDDO
-          ENDIF
-        ENDIF
+            END DO
+            END DO
+          END IF
+        END IF
         current => next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Clean up procedure; put ionised ions back into the correct particle lists
     DO i = 1, n_species
       CALL append_partlist(species_list(i)%attached_list, ionised_list(i))
-    ENDDO
+    END DO
     ! Put ionised particles back into partlists
 
   END SUBROUTINE tunnelling

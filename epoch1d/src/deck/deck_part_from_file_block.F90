@@ -52,7 +52,7 @@ CONTAINS
       n_custom_loaders = 0
       ALLOCATE(loader_block_ids(1))
       ALLOCATE(loader_species(1))
-    ENDIF
+    END IF
 
   END SUBROUTINE part_from_file_deck_initialise
 
@@ -65,10 +65,10 @@ CONTAINS
     IF (deck_state == c_ds_first) THEN
       IF (crosscheck_loader_species() /= c_err_none) THEN
         CALL abort_code(c_err_bad_value)
-      ENDIF
+      END IF
       CALL setup_custom_loaders_list
       RETURN
-    ENDIF
+    END IF
     DEALLOCATE(loader_block_ids)
     DEALLOCATE(loader_species)
 
@@ -87,15 +87,15 @@ CONTAINS
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) '"particles_from_file" block not supported when used ', &
             'with "PER_PARTICLE_CHARGE_MASS"'
-      ENDDO
-    ENDIF
+      END DO
+    END IF
     CALL abort_code(c_err_bad_setup)
 #endif
     current_block_num = current_block_num + 1
     got_species = .FALSE.
     IF (deck_state == c_ds_last) THEN
       current_loader_id = loader_block_ids(current_block_num)
-    ENDIF
+    END IF
 
   END SUBROUTINE part_from_file_block_start
 
@@ -114,10 +114,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Particle block number ', TRIM(id_string), &
               ' has no "species" element.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_block = c_err_missing_elements
-    ENDIF
+    END IF
 
   END SUBROUTINE part_from_file_block_end
 
@@ -138,12 +138,12 @@ CONTAINS
       IF (got_species) THEN
         errcode = c_err_preset_element
         RETURN
-      ENDIF
+      END IF
       got_species = .TRUE.
       IF (deck_state /= c_ds_first) RETURN
       CALL grow_array(loader_block_ids, current_block_num)
       loader_block_ids(current_block_num) = index_by_species(value)
-    ENDIF
+    END IF
 
     ! First pass just setup for each particles_from_file block
     IF (deck_state == c_ds_first) RETURN
@@ -153,7 +153,7 @@ CONTAINS
     IF (str_cmp(element, 'offset')) THEN
       current_offset = as_long_integer_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     ! below here only expect to be dealing with filenames
     CALL get_filename(value, filename, got_filename, filename_error_ignore)
@@ -163,10 +163,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%x_data = TRIM(filename)
         custom_loaders_list(current_loader_id)%x_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'y_data')) THEN
       IF (rank == 0) THEN
@@ -175,10 +175,10 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) '"y_data" was ignored'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'z_data')) THEN
       IF (rank == 0) THEN
@@ -187,10 +187,10 @@ CONTAINS
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) '"z_data" was ignored'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'px_data')) THEN
       IF (got_filename) THEN
@@ -198,10 +198,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%px_data_given = .TRUE.
         custom_loaders_list(current_loader_id)%px_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'py_data')) THEN
       IF (got_filename) THEN
@@ -209,10 +209,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%py_data_given = .TRUE.
         custom_loaders_list(current_loader_id)%py_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'pz_data')) THEN
       IF (got_filename) THEN
@@ -220,10 +220,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%pz_data_given = .TRUE.
         custom_loaders_list(current_loader_id)%pz_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
     IF (str_cmp(element, 'w_data')) THEN
@@ -231,10 +231,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%w_data = TRIM(filename)
         custom_loaders_list(current_loader_id)%w_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 #endif
 #if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
     IF (str_cmp(element, 'id4_data')) THEN
@@ -244,10 +244,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%id_data_4byte = .TRUE.
         custom_loaders_list(current_loader_id)%id_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
     IF (str_cmp(element, 'id8_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%id_data = TRIM(filename)
@@ -255,10 +255,10 @@ CONTAINS
         custom_loaders_list(current_loader_id)%id_data_4byte = .FALSE.
         custom_loaders_list(current_loader_id)%id_data_offset = current_offset
         RETURN
-      ENDIF
+      END IF
       errcode = c_err_bad_value
       RETURN
-    ENDIF
+    END IF
 #endif
 
     ! If we got to here, then element is not specified
@@ -291,10 +291,10 @@ CONTAINS
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
                 ' (species = "', TRIM(species%name), '") ', &
                 'has no "x_data" element.'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         errcode = c_err_missing_elements
-      ENDIF
+      END IF
 
 #if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
       IF (str_cmp(custom_loaders_list(i)%w_data, '')) THEN
@@ -306,12 +306,12 @@ CONTAINS
             WRITE(io,*) 'Particle block number ', TRIM(id_string), &
                 ' (species = "', TRIM(species%name), '") ', &
                 'has no "w_data" element.'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         errcode = c_err_missing_elements
-      ENDIF
+      END IF
 #endif
-    ENDDO
+    END DO
 
   END FUNCTION part_from_file_block_check
 
@@ -327,8 +327,8 @@ CONTAINS
       IF (str_cmp(species, loader_species(i))) THEN
         index_by_species = i
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     n_custom_loaders = n_custom_loaders + 1
     index_by_species = n_custom_loaders
@@ -356,11 +356,11 @@ CONTAINS
             WRITE(io,*) 'Particle block with species "' &
                 // TRIM(loader_species(i)) // '" ', &
                 'must have a matching species defined'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     errcode = c_err_none
 
@@ -398,7 +398,7 @@ CONTAINS
       custom_loaders_list(i)%id_data_offset = 0
       custom_loaders_list(i)%id_data_given = .FALSE.
 #endif
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_custom_loaders_list
 

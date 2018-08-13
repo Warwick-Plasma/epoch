@@ -5,24 +5,70 @@ before_script:
   - git submodule update --recursive --init SDF
 
 test_ubuntu_gfortran:
+  only:
+    - branches@EPOCH/epoch
+    - web
+    - hook
+  except:
+    - master
+    - wip/*
+    - tag
   script:
     - export COMPILER=gfortran
+    - export MPIPROCS=9
     - scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
     - gfortran
 
 test_ubuntu_intel:
+  only:
+    - branches@EPOCH/epoch
+    - web
+    - hook
+  except:
+    - master
+    - wip/*
+    - tag
   script:
     - export COMPILER=intel
-    - scripts/run-tests-epoch-all.sh
+    - scripts/run-tests-epoch-all.sh -b
   tags:
     - ubuntu
     - intel
 
+test_ubuntu_pgi:
+  only:
+    - branches@EPOCH/epoch
+    - web
+    - hook
+  except:
+    - master
+    - wip/*
+    - tag
+  script:
+    - export COMPILER=pgi
+    - scripts/run-tests-epoch-all.sh -b
+  tags:
+    - ubuntu
+    - pgi
+
 test_osx:
+  only:
+    - branches@EPOCH/epoch
+    - web
+    - hook
+  except:
+    - master
+    - wip/*
+    - tag
   script:
     - export COMPILER=gfortran
-    - scripts/run-tests-epoch-all.sh
+    - scripts/run-tests-epoch-all.sh -b
+    - cd epoch1d; make rm; cd ../epoch2d; make rm; cd ../epoch3d; make rm; cd ..
+    - export DEFINE="-DPER_SPECIES_WEIGHT -DPARTICLE_ID -DPHOTONS"
+    - export DEFINE="$DEFINE -DTRIDENT_PHOTONS -DPER_PARTICLE_CHARGE_MASS"
+    - export DEFINE="$DEFINE -DPARSER_CHECKING -DWORK_DONE_INTEGRATED -DHC_PUSH"
+    - scripts/run-tests-epoch-all.sh -b
   tags:
     - osx

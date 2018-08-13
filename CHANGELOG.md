@@ -1,3 +1,52 @@
+## v4.12.0 to v4.14.0 (2018-08-13)
+
+ * Added the Higuera-Cary relativistic particle push. This is enabled by
+   compiling with the flag -DHC_PUSH
+
+ * Added sanity check for binary file size
+
+ * Fixed the ETA string on restart
+
+ * Added control block option "reset_walltime" to reset the walltime
+   to zero when restarting
+
+ * Added the ability to request output dumps at runtime by touching a file
+   named "DUMP"
+
+ * Made the x-coordinate a time-dependent input deck variable when the moving
+   window is enabled
+
+ * Added "window_stop_time" parameter to the window block
+
+ * Added example SDF reader code
+
+ * Added "atan2" function to the deck parser
+
+ * Omit redundant dimension in dist_fn output
+
+ * Modified load balance calculation so that a perfectly balanced problem has
+   a value of one
+
+ * Only redistribute the simulation if it would result in an improvement to
+   the load balance
+
+ * Improvements to the load balancing calculations
+
+ * Added dlb_maximum_interval parameter to the input deck
+
+ * Added dlb_force_interval parameter to the input deck
+
+ * Added balance_first parameter to the input deck
+
+ * Added y and z versions of the bc_x_{min,max}_after_move parameters to
+   the input deck
+
+ * Added "dump_at_walltimes" flag to the io block
+
+ * Added "walltime_interval", "walltime_start" and "walltime_stop" flags to
+   the io block
+
+
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
  * Fixes for exact restarts

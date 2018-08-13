@@ -64,10 +64,10 @@ CONTAINS
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'Cannot determine size of real'
-      ENDIF
+      END IF
       CALL abort_code(c_err_terminate)
       STOP
-    ENDIF
+    END IF
 
     dt_plasma_frequency = 0.0_num
     dt_multiplier = 0.95_num
@@ -168,13 +168,13 @@ CONTAINS
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
       xb_offset_global(ix) = xb_global(ix)
-    ENDDO
+    END DO
     x_grid_max = x_global(nx_global)
 
     DO iproc = 0, nprocx-1
       x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
       x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    ENDDO
+    END DO
 
     x_grid_min_local = x_grid_mins(x_coords)
     x_grid_max_local = x_grid_maxs(x_coords)
@@ -212,8 +212,8 @@ CONTAINS
         io_block_list(i)%dumpmask(c_dump_cpml_psi_ezx) = c_io_never
         io_block_list(i)%dumpmask(c_dump_cpml_psi_byx) = c_io_never
         io_block_list(i)%dumpmask(c_dump_cpml_psi_bzx) = c_io_never
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE after_deck_last
 
@@ -232,8 +232,8 @@ CONTAINS
         dt_min_average = t_end
       ELSE
         dt_min_average = -1.0_num
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DO io = 1, num_vars_to_dump
       ib = averaged_var_block(io)
@@ -245,7 +245,7 @@ CONTAINS
           io_block_list(ib)%dt_min_average = &
               MIN(io_block_list(ib)%dt_min_average, &
               dt_average / REAL(nstep_average, num))
-        ENDIF
+        END IF
 
         mask = io_block_list(ib)%dumpmask(io)
         nspec_local = 0
@@ -263,7 +263,7 @@ CONTAINS
         ELSE
           ALLOCATE(avg%array(1-ng:nx+ng, nspec_local))
           avg%array = 0.0_num
-        ENDIF
+        END IF
 
         avg%species_sum = 0
         avg%n_species = 0
@@ -273,8 +273,8 @@ CONTAINS
             avg%n_species = n_species
         avg%real_time = 0.0_num
         avg%started = .FALSE.
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE setup_data_averaging
 
@@ -309,7 +309,7 @@ CONTAINS
       NULLIFY(species_list(ispecies)%ext_temp_x_max)
       NULLIFY(species_list(ispecies)%secondary_list)
       species_list(ispecies)%bc_particle = c_bc_null
-    ENDDO
+    END DO
 
     DO ispecies = 1, n_species
       CALL initialise_stack(species_list(ispecies)%density_function)
@@ -319,7 +319,7 @@ CONTAINS
         CALL set_stack_zero  (species_list(ispecies)%temperature_function(n))
         CALL initialise_stack(species_list(ispecies)%drift_function(n))
         CALL set_stack_zero  (species_list(ispecies)%drift_function(n))
-      ENDDO
+      END DO
       species_list(ispecies)%electron = .FALSE.
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
@@ -345,7 +345,7 @@ CONTAINS
 #ifndef NO_PARTICLE_PROBES
       NULLIFY(species_list(ispecies)%attached_probes)
 #endif
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_species
 
@@ -395,10 +395,10 @@ CONTAINS
               file=stat_file, iostat=errcode)
         ELSE
           OPEN(unit=stat_unit, status='NEW', file=stat_file, iostat=errcode)
-        ENDIF
+        END IF
       ELSE
         OPEN(unit=stat_unit, status='REPLACE', file=stat_file, iostat=errcode)
-      ENDIF
+      END IF
       IF (errcode /= 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'Cannot create "epoch1d.dat" output file. The most common ' &
@@ -406,7 +406,7 @@ CONTAINS
         PRINT*, 'is that the ouput directory does not exist'
         CALL abort_code(c_err_io_error)
         STOP
-      ENDIF
+      END IF
       IF (ic_from_restart) THEN
         WRITE(stat_unit,*)
         WRITE(stat_unit,*) 'Restarting from ', TRIM(restart_filename)
@@ -414,8 +414,8 @@ CONTAINS
       ELSE
         WRITE(stat_unit,*) ascii_header
         WRITE(stat_unit,*)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 #endif
 
   END SUBROUTINE open_files
@@ -433,7 +433,7 @@ CONTAINS
       CLOSE(unit=stat_unit)
       OPEN(unit=stat_unit, status='OLD', position='APPEND', &
           file=stat_file, iostat=errcode)
-    ENDIF
+    END IF
 #endif
 
   END SUBROUTINE flush_stat_file
@@ -505,7 +505,7 @@ CONTAINS
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-          ENDDO ! ix
+          END DO ! ix
         ELSE
           DO ix = 1, nx
             omega2 = fac1 &
@@ -515,10 +515,10 @@ CONTAINS
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
-          ENDDO ! ix
-        ENDIF
-      ENDIF
-    ENDDO
+          END DO ! ix
+        END IF
+      END IF
+    END DO
 
     CALL MPI_ALLREDUCE(min_dt, dt_plasma_frequency, 1, mpireal, MPI_MIN, &
         comm, errcode)
@@ -546,12 +546,12 @@ CONTAINS
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
 
-    ENDIF
+    END IF
 
     IF (any_open) THEN
       dt_solver = dx / c
       dt = MIN(dt, dt_solver)
-    ENDIF
+    END IF
 
     IF (maxwell_solver == c_maxwell_solver_custom) THEN
       dt = dt_custom
@@ -562,10 +562,10 @@ CONTAINS
           PRINT*, 'in input deck. In this case "dt_multiplier" should be set to'
           PRINT*, 'unity in order to ensure the correct time step.'
           PRINT*, 'Overriding dt_multiplier now.'
-        ENDIF
+        END IF
         dt_multiplier = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     dt_solver = dt
 
@@ -580,8 +580,8 @@ CONTAINS
             'than intended.'
         PRINT*, 'This may have an adverse effect on dispersion properties!'
         PRINT*, 'Increase grid resolution to fix this.'
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     dt = dt_multiplier * dt
 
@@ -602,10 +602,10 @@ CONTAINS
           PRINT*, 'Set "dt_multiplier" less than ', &
               dt_multiplier * io_block_list(io)%dt_min_average / dt, &
               ' to fix this'
-        ENDIF
+        END IF
         io_block_list(io)%dt_min_average = -1
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE set_dt
 
@@ -624,8 +624,8 @@ CONTAINS
       IF (str_cmp(specname(i1:i2), species_list(ispecies)%name)) THEN
         species_number = ispecies
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE find_species_by_blockid
 
@@ -642,8 +642,8 @@ CONTAINS
       IF (str_cmp(species_id, species_list(ispecies)%name)) THEN
         species_number = ispecies
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE find_species_by_id
 
@@ -656,18 +656,18 @@ CONTAINS
     INTEGER :: len1, len2, olen, i
 
     len1 = LEN_TRIM(str_in)
-    len2 = LEN(str_out)
+    len2 = LEN_TRIM(str_out)
     olen = MIN(len1,len2)
     IF (olen > 0) THEN
       str_out(1:olen) = str_in(1:olen)
       DO i = olen+1,len2
         str_out(i:i) = ' '
-      ENDDO
+      END DO
     ELSE
       DO i = 1,len2
         str_out(i:i) = ' '
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE copy_string
 
@@ -687,8 +687,8 @@ CONTAINS
         CALL copy_string(block_id(i1:i2), species_id)
       ELSE
         CALL copy_string('__unknown__', species_id)
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     CALL find_species_by_id(species_id, species_number)
 
@@ -707,7 +707,7 @@ CONTAINS
     DO ii = 1, i2
       IF (name(ii:ii) == '/') RETURN
       i1 = i1 + 1
-    ENDDO
+    END DO
     i1 = 1
 
   END SUBROUTINE strip_species_blockid
@@ -744,7 +744,7 @@ CONTAINS
 
     IF (rank == 0) THEN
       PRINT*,'Attempting to restart from file: ',TRIM(full_restart_filename)
-    ENDIF
+    END IF
 
     CALL sdf_open(sdf_handle, full_restart_filename, comm, c_sdf_read)
 
@@ -756,20 +756,20 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF file ', TRIM(full_restart_filename), &
             ' is not a restart dump. Unable to continue.'
-      ENDIF
+      END IF
       CALL abort_code(c_err_io_error)
       STOP
-    ENDIF
+    END IF
 
     IF (.NOT.str_cmp(code_name, 'Epoch1d')) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF restart file was not generated by Epoch1d. Unable to ', &
             'continue.'
-      ENDIF
+      END IF
       CALL abort_code(c_err_io_error)
       STOP
-    ENDIF
+    END IF
 
     IF (string_len > c_max_string_length) THEN
       IF (rank == 0) THEN
@@ -778,10 +778,10 @@ CONTAINS
         PRINT*, 'SDF file string lengths are too large to read.'
         PRINT*, 'Please increase the size of "c_max_string_length" in ', &
             'shared_data.F90 to ','be at least ',TRIM(len_string)
-      ENDIF
+      END IF
       CALL abort_code(c_err_io_error)
       STOP
-    ENDIF
+    END IF
 
     ! Reset io_block parameters
     DO i = 1, n_io_blocks
@@ -789,32 +789,33 @@ CONTAINS
         io_block_list(i)%dump_first = .TRUE.
       ELSE
         io_block_list(i)%dump_first = .FALSE.
-      ENDIF
+      END IF
       IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
         io_block_list(i)%time_prev = time
       ELSE
         io_block_list(i)%time_prev = 0.0_num
-      ENDIF
+      END IF
       IF (io_block_list(i)%nstep_snapshot > 0) THEN
         io_block_list(i)%nstep_prev = step
       ELSE
         io_block_list(i)%nstep_prev = 0
-      ENDIF
+      END IF
+      io_block_list(i)%walltime_prev = time
       IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
           IF (step >= io_block_list(i)%dump_at_nsteps(is)) THEN
             io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
-          ENDIF
-        ENDDO
-      ENDIF
+          END IF
+        END DO
+      END IF
       IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_times)
           IF (time >= io_block_list(i)%dump_at_times(is)) THEN
             io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
-          ENDIF
-        ENDDO
-      ENDIF
-    ENDDO
+          END IF
+        END DO
+      END IF
+    END DO
 
     nblocks = sdf_read_nblocks(sdf_handle)
     jobid = sdf_read_jobid(sdf_handle)
@@ -826,7 +827,7 @@ CONTAINS
       WRITE(stat_unit,*) ascii_header
       WRITE(stat_unit,*)
 #endif
-    ENDIF
+    END IF
 
     ex = 0.0_num
     ey = 0.0_num
@@ -860,7 +861,7 @@ CONTAINS
         IF (.NOT.use_exact_restart .OR. datatype /= c_datatype_integer8) CYCLE
       ELSE IF (blocktype /= c_blocktype_point_mesh) THEN
         CYCLE
-      ENDIF
+      END IF
 
       CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
       CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
@@ -870,10 +871,10 @@ CONTAINS
             PRINT*, '*** WARNING ***'
             PRINT*, 'Particle species "', TRIM(species_id), &
                 '" from restart dump ', 'not found in input deck. Ignoring.'
-          ENDIF
-        ENDIF
+          END IF
+        END IF
         CYCLE
-      ENDIF
+      END IF
 
       IF (species_found(ispecies)) CYCLE
 
@@ -888,7 +889,7 @@ CONTAINS
         npart = 0
         DO i = 1,dims(1)
           npart = npart + npart_proc(i)
-        ENDDO
+        END DO
         npart_local = npart_proc(rank+1)
         DEALLOCATE(npart_proc)
 
@@ -904,11 +905,11 @@ CONTAINS
         IF (npart_local * nproc /= npart) THEN
           IF (rank < npart - npart_local * nproc) &
               npart_local = npart_local + 1
-        ENDIF
+        END IF
 
         npart_locals(ispecies) = npart_local
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DEALLOCATE(species_found)
 
@@ -921,7 +922,7 @@ CONTAINS
 
       npart_global = npart_global + nparts(ispecies)
       species%count = nparts(ispecies)
-    ENDDO
+    END DO
 
     DEALLOCATE(nparts, npart_locals)
 
@@ -948,11 +949,11 @@ CONTAINS
             IF (rank == 0) THEN
               PRINT*, '*** WARNING ***'
               PRINT*, 'Output file numbers do not agree. Ignoring.'
-            ENDIF
+            END IF
           ELSE
             CALL sdf_read_srl(sdf_handle, file_numbers)
-          ENDIF
-        ENDIF
+          END IF
+        END IF
 
         CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
             block_id, ndims, 'laser_x_min_phase', 'x_min')
@@ -982,16 +983,25 @@ CONTAINS
             IF (str_cmp(block_id(11:), io_block_list(i)%name)) THEN
               CALL sdf_read_srl(sdf_handle, io_block_list(i)%time_prev)
               EXIT
-            ENDIF
-          ENDDO
+            END IF
+          END DO
         ELSE IF (block_id(1:11) == 'nstep_prev/') THEN
           DO i = 1, n_io_blocks
             IF (str_cmp(block_id(12:), io_block_list(i)%name)) THEN
               CALL sdf_read_srl(sdf_handle, io_block_list(i)%nstep_prev)
               EXIT
-            ENDIF
-          ENDDO
-        ENDIF
+            END IF
+          END DO
+        ELSE IF (block_id(1:14) == 'walltime_prev/') THEN
+          DO i = 1, n_io_blocks
+            IF (str_cmp(block_id(15:), io_block_list(i)%name)) THEN
+              CALL sdf_read_srl(sdf_handle, io_block_list(i)%walltime_prev)
+              EXIT
+            END IF
+          END DO
+        ELSE IF (str_cmp(block_id, 'elapsed_time')) THEN
+          CALL sdf_read_srl(sdf_handle, old_elapsed_time)
+        END IF
       CASE(c_blocktype_plain_mesh)
         IF (str_cmp(block_id, 'grid') .OR. str_cmp(block_id, 'grid_full')) THEN
           CALL sdf_read_plain_mesh_info(sdf_handle, geometry, dims, extents)
@@ -1010,9 +1020,9 @@ CONTAINS
               ! Offset grid is offset only in x
               offset_x_min = extents(1)
               offset_x_max = extents(c_ndims+1)
-            ENDIF
-          ENDIF
-        ENDIF
+            END IF
+          END IF
+        END IF
       CASE(c_blocktype_point_mesh)
         CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
 
@@ -1040,10 +1050,10 @@ CONTAINS
             PRINT*, 'Input deck grid: ', TRIM(str1)
             CALL integer_as_string(dims(1), str1)
             PRINT*, 'Restart dump grid: ', TRIM(str1)
-          ENDIF
+          END IF
           CALL abort_code(c_err_bad_setup)
           STOP
-        ENDIF
+        END IF
 
         IF (str_cmp(block_id, 'ex')) THEN
           CALL sdf_read_plain_variable(sdf_handle, ex, &
@@ -1097,7 +1107,7 @@ CONTAINS
           CALL sdf_read_plain_variable(sdf_handle, cpml_psi_bzx, &
               subtype_field, subarray_field)
 
-        ENDIF
+        END IF
 
       CASE(c_blocktype_point_variable)
         CALL sdf_read_point_variable_info(sdf_handle, npart, mesh_id, &
@@ -1112,10 +1122,10 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Malformed restart dump. Number of particle variables', &
                 ' does not match grid.'
-          ENDIF
+          END IF
           CALL abort_code(c_err_io_error)
           STOP
-        ENDIF
+        END IF
 
         iterator_list => species%attached_list%head
         npart_local = species%attached_list%count
@@ -1144,13 +1154,13 @@ CONTAINS
           ELSE
             CALL sdf_read_point_variable(sdf_handle, npart_local, &
                 species_subtypes_i4(ispecies), it_id4)
-          ENDIF
+          END IF
 #else
           IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
             PRINT*, 'Discarding particle IDs.'
             PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
-          ENDIF
+          END IF
 #endif
 
         ELSE IF (block_id(1:7) == 'weight/') THEN
@@ -1162,7 +1172,7 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with per particle weight.'
             PRINT*, 'Please recompile without the -DPER_SPECIES_WEIGHT option.'
-          ENDIF
+          END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
 #endif
@@ -1176,7 +1186,7 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with optical depths.'
             PRINT*, 'Please recompile with the -DPHOTONS option.'
-          ENDIF
+          END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
 #endif
@@ -1190,7 +1200,7 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with QED energies.'
             PRINT*, 'Please recompile with the -DPHOTONS option.'
-          ENDIF
+          END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
 #endif
@@ -1204,28 +1214,39 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with Trident optical depths.'
             PRINT*, 'Please recompile with the -DTRIDENT_PHOTONS option.'
-          ENDIF
+          END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
 #endif
-        ENDIF
+        END IF
       END SELECT
-    ENDDO
+    END DO
 
     CALL sdf_close(sdf_handle)
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+    ! Reset dump_at_walltimes
+    DO i = 1, n_io_blocks
+      IF (ASSOCIATED(io_block_list(i)%dump_at_walltimes)) THEN
+        DO is = 1, SIZE(io_block_list(i)%dump_at_walltimes)
+          IF (old_elapsed_time >= io_block_list(i)%dump_at_walltimes(is)) THEN
+            io_block_list(i)%dump_at_walltimes(is) = HUGE(1.0_num)
+          END IF
+        END DO
+      END IF
+    END DO
+
     IF (use_offset_grid) THEN
       window_offset = full_x_min - offset_x_min
       CALL shift_particles_to_window(window_offset)
-    ENDIF
+    END IF
 
     CALL setup_grid
 
     IF (use_offset_grid) THEN
       CALL create_moved_window(offset_x_min, window_offset)
-    ENDIF
+    END IF
 
     CALL set_thermal_bcs
 
@@ -1257,13 +1278,13 @@ CONTAINS
             ' does not match number of lasers.'
         PRINT*, 'Lasers will be populated in order, but correct operation ', &
             'is not guaranteed'
-      ENDIF
+      END IF
 
       ALLOCATE(laser_phases(dims(1)))
       CALL sdf_read_srl(sdf_handle, laser_phases)
       CALL setup_laser_phases(laser_base_pointer, laser_phases)
       DEALLOCATE(laser_phases)
-    ENDIF
+    END IF
 
   END SUBROUTINE read_laser_phases
 
@@ -1289,20 +1310,20 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF file ', TRIM(full_restart_filename), &
             ' is not a restart dump. Unable to continue.'
-      ENDIF
+      END IF
       CALL abort_code(c_err_io_error)
       STOP
-    ENDIF
+    END IF
 
     IF (.NOT.str_cmp(code_name, 'Epoch1d')) THEN
       IF (rank == 0) THEN
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF restart file was not generated by Epoch1d. Unable to ', &
             'continue.'
-      ENDIF
+      END IF
       CALL abort_code(c_err_io_error)
       STOP
-    ENDIF
+    END IF
 
     nblocks = sdf_read_nblocks(sdf_handle)
 
@@ -1326,12 +1347,12 @@ CONTAINS
             PRINT'('' SDF restart file was generated using'', &
                 & i4,'' CPUs.'')', npx
             PRINT*, 'Ignoring "use_exact_restart" flag.'
-          ENDIF
+          END IF
           use_exact_restart = .FALSE.
-        ENDIF
+        END IF
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     CALL sdf_close(sdf_handle)
 
@@ -1356,7 +1377,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       cur%part_pos = array(ipart)
       cur => cur%next
-    ENDDO
+    END DO
 
     it_part = 0
 
@@ -1376,7 +1397,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%part_p(1) = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_px = 0
 
@@ -1396,7 +1417,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%part_p(2) = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_py = 0
 
@@ -1416,7 +1437,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%part_p(3) = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_pz = 0
 
@@ -1437,7 +1458,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%weight = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_weight = 0
 
@@ -1464,7 +1485,7 @@ CONTAINS
       iterator_list%id = array(ipart)
 #endif
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_id4 = 0
 
@@ -1489,7 +1510,7 @@ CONTAINS
       iterator_list%id = INT(array(ipart),i4)
 #endif
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_id8 = 0
 
@@ -1511,7 +1532,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%optical_depth = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_optical_depth = 0
 
@@ -1531,7 +1552,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%particle_energy = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_qed_energy = 0
 
@@ -1552,7 +1573,7 @@ CONTAINS
     DO ipart = 1, npart_this_it
       iterator_list%optical_depth_tri = array(ipart)
       iterator_list => iterator_list%next
-    ENDDO
+    END DO
 
     it_optical_depth_trident = 0
 
@@ -1579,8 +1600,8 @@ CONTAINS
         current%part_pos = current%part_pos + window_offset
 
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
   END SUBROUTINE shift_particles_to_window
 
@@ -1593,7 +1614,7 @@ CONTAINS
 
     DO ix = 1 - ng, nx_global + ng
       xb_offset_global(ix) = xb_offset_global(ix) - window_offset
-    ENDDO
+    END DO
     window_shift = window_offset
 
   END SUBROUTINE

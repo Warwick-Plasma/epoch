@@ -62,7 +62,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -96,20 +96,20 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
 
     data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_mass_density
 
@@ -146,7 +146,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -190,7 +190,7 @@ CONTAINS
 #else
           wdata = 0.0_num
 #endif
-        ENDIF
+        END IF
 
 #include "particle_to_grid.inc"
 
@@ -200,14 +200,14 @@ CONTAINS
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           wt(cell_x+ix, cell_y+iy) = &
               wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
       CALL calc_boundary(wt, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
     CALL calc_boundary(wt)
@@ -215,7 +215,7 @@ CONTAINS
     data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
     DEALLOCATE(wt)
 
@@ -258,7 +258,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -308,7 +308,7 @@ CONTAINS
           gamma_rel = 1.0_num
           wdata = 0.0_num
 #endif
-        ENDIF
+        END IF
 
         SELECT CASE(direction)
         CASE(-c_dir_x)
@@ -345,14 +345,14 @@ CONTAINS
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
           wt(cell_x+ix, cell_y+iy) = &
               wt(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_w
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
       CALL calc_boundary(wt, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
     CALL calc_boundary(wt)
@@ -360,7 +360,7 @@ CONTAINS
     data_array = data_array / MAX(wt, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
     DEALLOCATE(wt)
 
@@ -385,8 +385,8 @@ CONTAINS
         bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
                          +  bz(ix-1, iy  ) + bz(ix, iy  ))
         data_array(ix,iy) = (ey_cc * bz_cc - ez_cc * by_cc) / mu0
-      ENDDO
-      ENDDO
+      END DO
+      END DO
     CASE(c_dir_y)
       DO iy = 1, ny
       DO ix = 1, nx
@@ -396,8 +396,8 @@ CONTAINS
         bz_cc = 0.25_num * (bz(ix-1, iy-1) + bz(ix, iy-1) &
                          +  bz(ix-1, iy  ) + bz(ix, iy  ))
         data_array(ix,iy) = (ez_cc * bx_cc - ex_cc * bz_cc) / mu0
-      ENDDO
-      ENDDO
+      END DO
+      END DO
     CASE(c_dir_z)
       DO iy = 1, ny
       DO ix = 1, nx
@@ -406,8 +406,8 @@ CONTAINS
         bx_cc = 0.5_num  * (bx(ix  , iy-1) + bx(ix, iy))
         by_cc = 0.5_num  * (by(ix-1, iy  ) + by(ix, iy))
         data_array(ix,iy) = (ex_cc * by_cc - ey_cc * bx_cc) / mu0
-      ENDDO
-      ENDDO
+      END DO
+      END DO
     END SELECT
 
   END SUBROUTINE calc_poynt_flux
@@ -442,7 +442,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -476,20 +476,20 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
 
     data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_charge_density
 
@@ -519,7 +519,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -541,20 +541,20 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
 
     data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_number_density
 
@@ -580,7 +580,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
@@ -602,8 +602,8 @@ CONTAINS
         data_array(cell_x,cell_y) = data_array(cell_x,cell_y) + 1.0_num
 
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
   END SUBROUTINE calc_ppc
 
@@ -632,7 +632,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
     part_count = 0.0_num
@@ -663,8 +663,8 @@ CONTAINS
         part_count(cell_x,cell_y) = part_count(cell_x,cell_y) + 1.0_num
 
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     data_array = data_array / MAX(part_count, c_tiny)
 
@@ -707,7 +707,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -744,15 +744,15 @@ CONTAINS
               meanz(cell_x+ix, cell_y+iy) + gf * part_pmz
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO
-        ENDDO
+        END DO
+        END DO
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(meanx, ispecies)
       CALL calc_boundary(meany, ispecies)
       CALL calc_boundary(meanz, ispecies)
       CALL calc_boundary(part_count, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(meanx)
     CALL calc_boundary(meany)
@@ -793,13 +793,13 @@ CONTAINS
               + (part_pmz - meanz(cell_x+ix, cell_y+iy))**2)
           part_count(cell_x+ix, cell_y+iy) = &
               part_count(cell_x+ix, cell_y+iy) + gf
-        ENDDO
-        ENDDO
+        END DO
+        END DO
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(sigma, ispecies)
       CALL calc_boundary(part_count, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(sigma)
     CALL calc_boundary(part_count)
@@ -843,7 +843,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -862,19 +862,19 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
 
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_on_grid_with_evaluator
 
@@ -909,7 +909,7 @@ CONTAINS
       spec_start = 1
       spec_end = n_species
       spec_sum = .TRUE.
-    ENDIF
+    END IF
 
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
@@ -959,13 +959,13 @@ CONTAINS
         DO ix = sf_min, sf_max
           data_array(cell_x+ix, cell_y+iy) = &
               data_array(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * wdata
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
+      END DO
       CALL calc_boundary(data_array, ispecies)
-    ENDDO
+    END DO
 
     CALL calc_boundary(data_array)
 
@@ -973,7 +973,7 @@ CONTAINS
     data_array = data_array * idx
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    ENDDO
+    END DO
 
   END SUBROUTINE calc_per_species_current
 
@@ -1064,11 +1064,11 @@ CONTAINS
         ELSE
           particle_energy = particle_energy + current%particle_energy * part_w
 #endif
-        ENDIF
+        END IF
 
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! EM field energy
     field_energy = 0.0_num
@@ -1076,8 +1076,8 @@ CONTAINS
     DO i = 1, nx
       field_energy = field_energy + ex(i,j)**2 + ey(i,j)**2 &
           + ez(i,j)**2 + c2 * (bx(i,j)**2 + by(i,j)**2 + bz(i,j)**2)
-    ENDDO
-    ENDDO
+    END DO
+    END DO
     field_energy = 0.5_num * epsilon0 * field_energy * dx * dy
 
     sum_out(1) = particle_energy
@@ -1162,12 +1162,12 @@ CONTAINS
               jy(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_jy
           jz(cell_x+ix, cell_y+iy) = &
               jz(cell_x+ix, cell_y+iy) + gx(ix) * gy(iy) * part_jz
-        ENDDO
-        ENDDO
+        END DO
+        END DO
 
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     sum_out(1) = SUM(jx)
     sum_out(2) = SUM(jy)

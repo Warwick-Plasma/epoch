@@ -147,13 +147,16 @@ CONTAINS
 #ifdef WORK_DONE_INTEGRATED
     found = .TRUE.
 #endif
+#ifdef HC_PUSH
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
       WRITE(*,*) 'The code was compiled with no compile time options'
       WRITE(*,*) '*************************************************************'
       RETURN
-    ENDIF
+    END IF
 
     WRITE(*,*) 'The code was compiled with the following compile time options'
     WRITE(*,*) '*************************************************************'
@@ -242,6 +245,10 @@ CONTAINS
     defines = IOR(defines, c_def_work_done_integrated)
     WRITE(*,*) 'Work done on each particle -DWORK_DONE_INTEGRATED'
 #endif
+#ifdef HC_PUSH
+    defines = IOR(defines, c_def_hc_push)
+    WRITE(*,*) 'Higuera-Cary particle push -DHC_PUSH'
+#endif
     WRITE(*,*) '*************************************************************'
 
   END SUBROUTINE compiler_directives
@@ -284,8 +291,8 @@ CONTAINS
         strmin = i + 1
         strmax = strmin + 4
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Revision
     DO i = strmin, MIN(strmax,strlen)
@@ -295,8 +302,8 @@ CONTAINS
         strmin = i + 1
         strmax = strmin + 4
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Minor revision
     DO i = strmin, MIN(strmax,strlen)
@@ -305,8 +312,8 @@ CONTAINS
         READ(str, '(i9)') c_minor_rev
         strmax = i - 1
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     version_string = c_commit_id(2:strmax)
 
@@ -331,7 +338,7 @@ CONTAINS
       n_nums = 1
     ELSE
       n_nums = 1 + INT(LOG10(REAL(ABS(int_in), num)))
-    ENDIF
+    END IF
     WRITE(numfmt, '(''(I'', I6.6, '')'')') n_nums
     WRITE(string, numfmt) int_in
 

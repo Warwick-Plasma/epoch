@@ -43,8 +43,8 @@ CONTAINS
             .OR. ispecies == photon_species ) THEN
           found = .TRUE.
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       IF (.NOT.found) THEN
         IF (rank == 0) THEN
@@ -55,18 +55,18 @@ CONTAINS
             WRITE(io,*) 'Electron, positron and photon species are either ', &
                 'unspecified or contain no'
             WRITE(io,*) 'particles. QED routines will do nothing.'
-          ENDDO
-        ENDIF
-      ENDIF
-    ENDIF
+          END DO
+        END IF
+      END IF
+    END IF
 
     ! Load the tables for the QED routines
     CALL setup_tables_qed
     IF (.NOT.ic_from_restart) THEN
       DO ispecies = 1, n_species
         CALL initialise_optical_depth(species_list(ispecies))
-      ENDDO
-    ENDIF
+      END DO
+    END IF
 
   END SUBROUTINE setup_qed_module
 
@@ -102,8 +102,8 @@ CONTAINS
       ELSE IF (species_list(ispecies)%species_type == c_species_id_positron &
           .AND. first_positron == -1) THEN
         first_positron = ispecies
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (first_electron < 0 .AND. first_positron < 0) THEN
       IF (rank == 0) THEN
@@ -114,11 +114,11 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:electron" or "identify:positron"'
           WRITE(io,*) 'QED routines require at least one species of ', &
               'electrons or positrons.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_qed_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
     IF (photon_species < 0) THEN
       IF (rank == 0) THEN
@@ -127,11 +127,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No photon species specified. Specify using ', &
               '"identify:photon"'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_qed_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
     ! If you're not producing pairs then you don't have to designate special
     ! electron or positron species so just return
@@ -145,11 +145,11 @@ CONTAINS
           WRITE(io,*) 'To use pair production routines need at least one ', &
               'positron species and one ', 'electron species. Specify ', &
               'using "identify:electron" or "identify:positron"'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_qed_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
     IF (breit_wheeler_positron_species < 0) THEN
       IF (rank == 0) THEN
@@ -160,10 +160,10 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:bw_positron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_positron)%name), ' instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       breit_wheeler_positron_species = first_positron
-    ENDIF
+    END IF
 
 #ifdef TRIDENT_PHOTONS
     IF (trident_positron_species < 0) THEN
@@ -175,10 +175,10 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:trident_positron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_positron)%name), ' instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       trident_positron_species = first_positron
-    ENDIF
+    END IF
 #endif
 
     IF (breit_wheeler_electron_species < 0) THEN
@@ -190,10 +190,10 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:bw_electron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_electron)%name), ' instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       breit_wheeler_electron_species = first_electron
-    ENDIF
+    END IF
 
 #ifdef TRIDENT_PHOTONS
     IF (trident_electron_species < 0) THEN
@@ -205,10 +205,10 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:trident_electron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_electron)%name), ' instead.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       trident_electron_species = first_electron
-    ENDIF
+    END IF
 #endif
   END FUNCTION check_qed_variables
 
@@ -231,7 +231,7 @@ CONTAINS
       ALLOCATE(log_hsokolov(n_sample_h,2))
       DO ieta = 1, n_sample_h
         READ(lu,*) log_hsokolov(ieta,1), log_hsokolov(ieta,2)
-      ENDDO
+      END DO
       CLOSE(unit=lu)
 
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/pairprod.table', &
@@ -241,7 +241,7 @@ CONTAINS
       ALLOCATE(log_omegahat(n_sample_t,2))
       DO ichi = 1, n_sample_t
         READ(lu,*) log_tpair(ichi,1), log_omegahat(ichi,2), log_tpair(ichi,2)
-      ENDDO
+      END DO
       CLOSE(unit=lu)
 
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/ksi_sokolov.table', &
@@ -250,7 +250,7 @@ CONTAINS
       ALLOCATE(p_photon_energy(n_sample_eta,n_sample_chi))
       DO ieta = 1, n_sample_eta
         READ(lu,*) (p_photon_energy(ieta,ichi), ichi=1,n_sample_chi)
-      ENDDO
+      END DO
       CLOSE(unit=lu)
 
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/chimin.table', &
@@ -265,7 +265,7 @@ CONTAINS
       ALLOCATE(log_chi2(n_sample_chi2))
       DO ichi2 = 1, n_sample_chi2
         READ(lu,*) log_chi2(ichi2)
-      ENDDO
+      END DO
       CLOSE(unit=lu)
 
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/epsilon.table', &
@@ -274,7 +274,7 @@ CONTAINS
       ALLOCATE(epsilon_split(n_sample_epsilon))
       DO iepsilon = 1, n_sample_epsilon
         READ(lu,*) epsilon_split(iepsilon)
-      ENDDO
+      END DO
       CLOSE(unit=lu)
 
       OPEN(unit=lu, file=TRIM(qed_table_location)//'/energy_split.table', &
@@ -283,8 +283,8 @@ CONTAINS
       DO ichi2 = 1, n_sample_chi2
         DO iepsilon = 1, n_sample_epsilon
           READ(lu,*) p_energy(ichi2,iepsilon)
-        ENDDO
-      ENDDO
+        END DO
+      END DO
       CLOSE(unit=lu)
 
       ! Pack data for broadcasting to other processes
@@ -313,8 +313,8 @@ CONTAINS
         DO ieta = 1, n_sample_h
           realbuf(n) = log_hsokolov(ieta,i)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       DO ichi = 1, n_sample_t
         realbuf(n) = log_tpair(ichi,1)
@@ -323,7 +323,7 @@ CONTAINS
         n = n + 1
         realbuf(n) = log_omegahat(ichi,2)
         n = n + 1
-      ENDDO
+      END DO
 
       realbuf(n) = etalog_min
       n = n + 1
@@ -334,30 +334,30 @@ CONTAINS
         DO ieta = 1, n_sample_eta
           realbuf(n) = p_photon_energy(ieta,ichi)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       DO ieta = 1, n_sample_eta
         realbuf(n) = chimin_table(ieta)
         n = n + 1
-      ENDDO
+      END DO
 
       DO ichi2 = 1, n_sample_chi2
         realbuf(n) = log_chi2(ichi2)
         n = n + 1
-      ENDDO
+      END DO
 
       DO iepsilon = 1, n_sample_epsilon
         realbuf(n) = epsilon_split(iepsilon)
         n = n + 1
-      ENDDO
+      END DO
 
       DO iepsilon = 1, n_sample_epsilon
         DO ichi2 = 1, n_sample_chi2
           realbuf(n) = p_energy(ichi2,iepsilon)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       CALL MPI_BCAST(realbuf, bufsize, mpireal, 0, comm, errcode)
 
@@ -392,8 +392,8 @@ CONTAINS
         DO ieta = 1, n_sample_h
           log_hsokolov(ieta,i) = realbuf(n)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       ALLOCATE(log_tpair(n_sample_t,2))
       ALLOCATE(log_omegahat(n_sample_t,2))
@@ -404,7 +404,7 @@ CONTAINS
         n = n + 1
         log_omegahat(ichi,2) = realbuf(n)
         n = n + 1
-      ENDDO
+      END DO
 
       etalog_min = realbuf(n)
       n = n + 1
@@ -416,37 +416,37 @@ CONTAINS
         DO ieta = 1, n_sample_eta
           p_photon_energy(ieta,ichi) = realbuf(n)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       ALLOCATE(chimin_table(n_sample_eta))
       DO ieta = 1, n_sample_eta
         chimin_table(ieta) = realbuf(n)
         n = n + 1
-      ENDDO
+      END DO
 
       ALLOCATE(log_chi2(n_sample_chi2))
       DO ichi2 = 1, n_sample_chi2
         log_chi2(ichi2) = realbuf(n)
         n = n + 1
-      ENDDO
+      END DO
 
       ALLOCATE(epsilon_split(n_sample_epsilon))
       DO iepsilon = 1, n_sample_epsilon
         epsilon_split(iepsilon) = realbuf(n)
         n = n + 1
-      ENDDO
+      END DO
 
       ALLOCATE(p_energy(n_sample_chi2,n_sample_epsilon))
       DO iepsilon = 1, n_sample_epsilon
         DO ichi2 = 1, n_sample_chi2
           p_energy(ichi2,iepsilon) = realbuf(n)
           n = n + 1
-        ENDDO
-      ENDDO
+        END DO
+      END DO
 
       DEALLOCATE(realbuf)
-    ENDIF
+    END IF
 
     log_omegahat(:,1) = log_tpair(:,1)
 
@@ -461,8 +461,8 @@ CONTAINS
           / REAL(n_sample_chi-1,num)
       DO ichi = 1, n_sample_chi
         log_chi(ieta,ichi) = chi_min + REAL(ichi-1,num) * chi_dx
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     DEALLOCATE(chimin_table)
 
@@ -503,7 +503,7 @@ CONTAINS
       current%optical_depth_tri = -LOG(1.0_num - p_tau)
 #endif
       current => current%next
-    ENDDO
+    END DO
 
   END SUBROUTINE initialise_optical_depth
 
@@ -562,7 +562,7 @@ CONTAINS
             CALL generate_photon(current, photon_species, eta)
             ! ... and reset optical depth
             current%optical_depth = reset_optical_depth()
-          ENDIF
+          END IF
 
 #ifdef TRIDENT_PHOTONS
           IF (current%optical_depth_tri <= 0.0_num) THEN
@@ -570,10 +570,10 @@ CONTAINS
                 trident_positron_species)
             ! ... and reset optical depth
             current%optical_depth_tri = reset_optical_depth()
-          ENDIF
+          END IF
 #endif
           current => current%next
-        ENDDO
+        END DO
 
       ! and finally photons
       ELSE IF (species_list(ispecies)%species_type == c_species_id_photon &
@@ -597,11 +597,11 @@ CONTAINS
           IF (current%optical_depth <= 0.0_num) THEN
             CALL generate_pair(current, chi_val, photon_species, &
                 breit_wheeler_electron_species, breit_wheeler_positron_species)
-          ENDIF
+          END IF
           current => next_pt
-        ENDDO
-      ENDIF
-    ENDDO
+        END DO
+      END IF
+    END DO
 
   END SUBROUTINE qed_update_optical_depth
 
@@ -886,7 +886,7 @@ CONTAINS
       generating_electron%part_p(1) = dir_x * mag_p
       generating_electron%part_p(2) = dir_y * mag_p
       generating_electron%part_p(3) = dir_z * mag_p
-    ENDIF
+    END IF
 
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
@@ -907,7 +907,7 @@ CONTAINS
 
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
-    ENDIF
+    END IF
 
   END SUBROUTINE generate_photon
 
@@ -1057,9 +1057,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
@@ -1069,13 +1069,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     value_interp = (1.0_num - fx) * values(i1) + fx * values(i2)
 
@@ -1112,9 +1112,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
@@ -1124,13 +1124,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     index_lt = i1
     index_gt = i2
@@ -1151,9 +1151,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
@@ -1163,13 +1163,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     y_lt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
 
@@ -1189,9 +1189,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
@@ -1201,13 +1201,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     y_gt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
 
@@ -1248,9 +1248,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fx = (x_value - x(i1)) / (x(i2) - x(i1))
     ELSE
@@ -1260,13 +1260,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     index_lt = i1
     index_gt = i2
@@ -1287,9 +1287,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
@@ -1299,13 +1299,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     y_lt = (1.0_num - fp) * y(i1) + fp * y(i2)
 
@@ -1325,9 +1325,9 @@ CONTAINS
         ELSE
           i1 = im
           xdif1 = xdifm
-        ENDIF
+        END IF
         IF (i2 - i1 == 1) EXIT
-      ENDDO
+      END DO
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
     ELSE
@@ -1337,13 +1337,13 @@ CONTAINS
             'of the table.'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
-      ENDIF
+      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
         fp = 1.0_num
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
     y_gt = (1.0_num - fp) * y(i1) + fp * y(i2)
 

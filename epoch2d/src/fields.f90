@@ -43,7 +43,7 @@ CONTAINS
       cfl = 6.0_num / 7.0_num
     ELSE
       cfl = 120.0_num / 149.0_num
-    ENDIF
+    END IF
 
   END SUBROUTINE set_field_order
 
@@ -86,18 +86,17 @@ CONTAINS
       deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
-    ENDIF
+    END IF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
-        PRINT*
-        PRINT*, 'Maxwell solver set to the following parameters:'
-        PRINT*, 'alpha=', alphax, alphay
-        PRINT*, 'betax=', betaxy
-        PRINT*, 'betay=', betayx
-        PRINT*, 'delta=', deltax, deltay
-        PRINT*, 'c*dt/dx=', dt * c / dx
-        PRINT*
-    ENDIF
+      PRINT*, 'Maxwell solver set to the following parameters:'
+      PRINT'(A9, 2F14.9)', 'alpha =', alphax, alphay
+      PRINT'(A9, 1F14.9)', 'betax =', betaxy
+      PRINT'(A9, 1F14.9)', 'betay =', betayx
+      PRINT'(A9, 2F14.9)', 'delta =', deltax, deltay
+      PRINT'(A9, 1F14.9)', 'c*dt/dx = ', dt * c / dx
+      PRINT*
+    END IF
 
   END SUBROUTINE set_maxwell_solver
 
@@ -130,8 +129,8 @@ CONTAINS
                 + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
                 - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -161,8 +160,8 @@ CONTAINS
                 - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
                 - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -199,9 +198,9 @@ CONTAINS
                 - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
                 - cy3 * (bx(ix  , iy+2) - bx(ix  , iy-3)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
-      ENDIF
+          END DO
+        END DO
+      END IF
 
       CALL cpml_advance_e_currents(hdt)
     ELSE
@@ -223,8 +222,8 @@ CONTAINS
                 + cx1 * (by(ix  , iy  ) - by(ix-1, iy  )) &
                 - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -252,8 +251,8 @@ CONTAINS
                 - cy1 * (bx(ix  , iy  ) - bx(ix  , iy-1)) &
                 - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -288,10 +287,10 @@ CONTAINS
                 - cy2 * (bx(ix  , iy+1) - bx(ix  , iy-2)) &
                 - cy3 * (bx(ix  , iy+2) - bx(ix  , iy-3)) &
                 - fac * jz(ix, iy)
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDIF
+          END DO
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE update_e_field
 
@@ -322,8 +321,8 @@ CONTAINS
               bz(ix, iy) = bz(ix, iy) &
                   - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                   + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  ))
-            ENDDO
-          ENDDO
+            END DO
+          END DO
         ELSE
           DO iy = 1, ny
             cy1 = hdty / cpml_kappa_by(iy)
@@ -351,9 +350,9 @@ CONTAINS
                          + betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
                                    + ex(ix-1, iy+1) - ex(ix-1, iy  ))  &
                          + deltay * (ex(ix  , iy+2) - ex(ix  , iy-1)))
-            ENDDO
-          ENDDO
-        ENDIF
+            END DO
+          END DO
+        END IF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -380,8 +379,8 @@ CONTAINS
                 - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
                 + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
                 + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1))
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -415,9 +414,9 @@ CONTAINS
                 + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
                 + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1)) &
                 + cy3 * (ex(ix  , iy+3) - ex(ix  , iy-2))
-          ENDDO
-        ENDDO
-      ENDIF
+          END DO
+        END DO
+      END IF
 
       CALL cpml_advance_b_currents(hdt)
     ELSE
@@ -437,8 +436,8 @@ CONTAINS
               bz(ix, iy) = bz(ix, iy) &
                   - cx1 * (ey(ix+1, iy  ) - ey(ix  , iy  )) &
                   + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  ))
-            ENDDO
-          ENDDO
+            END DO
+          END DO
         ELSE
           DO iy = 1, ny
             DO ix = 1, nx
@@ -463,9 +462,9 @@ CONTAINS
                          + betayx * (ex(ix+1, iy+1) - ex(ix+1, iy  )   &
                                    + ex(ix-1, iy+1) - ex(ix-1, iy  ))  &
                          + deltay * (ex(ix  , iy+2) - ex(ix  , iy-1)))
-            ENDDO
-          ENDDO
-        ENDIF
+            END DO
+          END DO
+        END IF
       ELSE IF (field_order == 4) THEN
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
@@ -490,8 +489,8 @@ CONTAINS
                 - cx2 * (ey(ix+2, iy  ) - ey(ix-1, iy  )) &
                 + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
                 + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1))
-          ENDDO
-        ENDDO
+          END DO
+        END DO
       ELSE
         c1 = 75.0_num / 64.0_num
         c2 = -25.0_num / 384.0_num
@@ -523,10 +522,10 @@ CONTAINS
                 + cy1 * (ex(ix  , iy+1) - ex(ix  , iy  )) &
                 + cy2 * (ex(ix  , iy+2) - ex(ix  , iy-1)) &
                 + cy3 * (ex(ix  , iy+3) - ex(ix  , iy-2))
-          ENDDO
-        ENDDO
-      ENDIF
-    ENDIF
+          END DO
+        END DO
+      END IF
+    END IF
 
   END SUBROUTINE update_b_field
 

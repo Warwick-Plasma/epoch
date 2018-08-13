@@ -61,11 +61,11 @@ CONTAINS
         part => partlist%head
       ELSE
         NULLIFY(part)
-      ENDIF
+      END IF
     ELSE
       NULLIFY(partlist)
       NULLIFY(part)
-    ENDIF
+    END IF
 
   END SUBROUTINE start_particle_list
 
@@ -81,7 +81,7 @@ CONTAINS
       part => partlist%head
     ELSE
       NULLIFY(part)
-    ENDIF
+    END IF
 
   END SUBROUTINE advance_particle_list
 

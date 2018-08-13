@@ -45,7 +45,7 @@ CONTAINS
     IF (n_new_func == c_max_new_func) THEN
       register_function = -1
       RETURN
-    ENDIF
+    END IF
     n_new_func = n_new_func+1
     new_func_name(n_new_func)%value = name
     new_func_code(n_new_func) = c_func_custom_lowbound+n_new_func
@@ -63,7 +63,7 @@ CONTAINS
     IF (n_new_constant == c_max_new_const) THEN
       register_constant = -1
       RETURN
-    ENDIF
+    END IF
     n_new_constant = n_new_constant+1
     new_constant_name(n_new_constant)%value = name
     new_constant_code(n_new_constant) = c_const_custom_lowbound+n_new_constant
@@ -86,8 +86,8 @@ CONTAINS
       IF (str_cmp(name, species_list(i)%name)) THEN
         as_species = i
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END FUNCTION as_species
 
@@ -106,8 +106,8 @@ CONTAINS
       IF (str_cmp(name, subset_list(i)%name)) THEN
         as_subset = i
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END FUNCTION as_subset
 
@@ -201,7 +201,7 @@ CONTAINS
     DO i = 1, n_new_constant
       IF (str_cmp(TRIM(name), TRIM(new_constant_name(i)%value))) &
           as_constant = new_constant_code(i)
-    ENDDO
+    END DO
 
   END FUNCTION as_constant
 
@@ -261,9 +261,9 @@ CONTAINS
           WRITE(io,*) 'A default value (set y and z to 0) was used for the ', &
               'constant ', '"' // TRIM(name) // '"'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
   END FUNCTION as_default_constant
 
@@ -281,8 +281,8 @@ CONTAINS
       IF (str_cmp(TRIM(name), TRIM(deck_constant_list(i)%name))) THEN
         as_deck_constant = i
         RETURN
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END FUNCTION as_deck_constant
 
@@ -308,6 +308,7 @@ CONTAINS
     IF (str_cmp(name, 'asin'))  as_function = c_func_arcsine
     IF (str_cmp(name, 'acos'))  as_function = c_func_arccosine
     IF (str_cmp(name, 'atan'))  as_function = c_func_arctan
+    IF (str_cmp(name, 'atan2')) as_function = c_func_arctan2
     IF (str_cmp(name, 'sinh'))  as_function = c_func_sinh
     IF (str_cmp(name, 'cosh'))  as_function = c_func_cosh
     IF (str_cmp(name, 'tanh'))  as_function = c_func_tanh
@@ -343,8 +344,8 @@ CONTAINS
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN
         as_function = new_func_code(i)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END FUNCTION as_function
 
@@ -367,8 +368,8 @@ CONTAINS
         as_operator = c_opcode_plus
       ELSE
         as_operator = c_opcode_unary_plus
-      ENDIF
-    ENDIF
+      END IF
+    END IF
     IF (str_cmp(name, '-'))  THEN
       IF (last_block_type == c_pt_variable &
           .OR. last_block_type == c_pt_constant &
@@ -379,20 +380,20 @@ CONTAINS
         as_operator = c_opcode_minus
       ELSE
         as_operator = c_opcode_unary_minus
-      ENDIF
-    ENDIF
+      END IF
+    END IF
     IF (str_cmp(name, '*')) THEN
       as_operator = c_opcode_times
-    ENDIF
+    END IF
     IF (str_cmp(name, '/')) THEN
       as_operator = c_opcode_divide
-    ENDIF
+    END IF
     IF (str_cmp(name, '^')) THEN
       as_operator = c_opcode_power
-    ENDIF
+    END IF
     IF (str_cmp(name, 'e')) THEN
       as_operator = c_opcode_expo
-    ENDIF
+    END IF
     IF (str_cmp(name, 'lt')) as_operator = c_opcode_lt
     IF (str_cmp(name, 'gt')) as_operator = c_opcode_gt
     IF (str_cmp(name, 'eq')) as_operator = c_opcode_eq
@@ -411,7 +412,7 @@ CONTAINS
       WRITE(*,*) '"' // TRIM(name) // '" is deprecated.'
       WRITE(*,*) 'Use "loge" instead.'
       RETURN
-    ENDIF
+    END IF
 
   END SUBROUTINE check_deprecated
 

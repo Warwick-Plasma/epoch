@@ -44,7 +44,7 @@ CONTAINS
     DO ispecies = 1, n_species
       IF (.NOT. species_list(ispecies)%migrate%fluid) CYCLE
       CALL update_fluid_energy(ispecies)
-    ENDDO
+    END DO
 
     species_list(:)%migrate%done = .FALSE.
 
@@ -52,7 +52,7 @@ CONTAINS
       ! Migration must start with the most energetic end of the chain and work
       ! back
       CALL migration_chain(ispecies)
-    ENDDO
+    END DO
 
   END SUBROUTINE migrate_particles
 
@@ -72,7 +72,7 @@ CONTAINS
     IF (species_list(current_list)%migrate%promoteable) THEN
       next_list = species_list(current_list)%migrate%promote_to_species
       CALL migration_chain(next_list)
-    ENDIF
+    END IF
 
     ! Do promotions and demotions on this species
     IF (species_list(current_list)%migrate%promoteable) &
@@ -155,15 +155,15 @@ CONTAINS
         local_ne = local_ne + gx(ix) * gy(iy) &
             * species_list(from_list)%migrate%fluid_density(cell_x+ix, &
             cell_y+iy)
-      ENDDO
-      ENDDO
+      END DO
+      END DO
 
       IF (part_ke > ke_multiplier * 3.0_num * kb * local_te &
           .AND. local_ne < density_condition) &
           CALL swap_lists(from_list, to_list, current)
 
       current => next
-    ENDDO
+    END DO
 
   END SUBROUTINE promote_particles
 
@@ -211,15 +211,15 @@ CONTAINS
         local_ne = local_ne + gx(ix) * gy(iy) &
             * species_list(to_list)%migrate%fluid_density(cell_x+ix, &
             cell_y+iy)
-      ENDDO
-      ENDDO
+      END DO
+      END DO
 
       IF (part_ke < ke_multiplier * 3.0_num * kb * local_te &
           .AND. local_ne >= density_condition) &
           CALL swap_lists(from_list, to_list, current)
 
       current => next
-    ENDDO
+    END DO
 
   END SUBROUTINE demote_particles
 
@@ -262,9 +262,9 @@ CONTAINS
           WRITE(stdout, *) 'No valid promotion or demotion species specified.'
           WRITE(stdout, *) 'Migration turned off for species ',  &
               TRIM(species_list(ispecies)%name)
-        ENDIF
+        END IF
         CYCLE
-      ENDIF
+      END IF
 
 #ifndef PER_PARTICLE_CHARGE_MASS
       IF (species_list(ispecies)%migrate%promoteable) THEN
@@ -279,9 +279,9 @@ CONTAINS
             WRITE(stdout, *) 'different charge and/or mass.'
             WRITE(stdout, *) 'Promotion turned off for species ',  &
                 TRIM(species_list(ispecies)%name)
-          ENDIF
-        ENDIF
-      ENDIF
+          END IF
+        END IF
+      END IF
 
       IF (species_list(ispecies)%migrate%demoteable) THEN
         IF (ABS(species_list(ispecies)%mass &
@@ -295,15 +295,15 @@ CONTAINS
             WRITE(stdout, *) 'different charge and/or mass.'
             WRITE(stdout, *) 'Demotion turned off for species ',  &
                 TRIM(species_list(ispecies)%name)
-          ENDIF
-        ENDIF
-      ENDIF
+          END IF
+        END IF
+      END IF
 
       IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
           .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
         species_list(ispecies)%migrate%this_species = .FALSE.
         CYCLE
-      ENDIF
+      END IF
 #endif
 
       ! Fluids are 'background' species - species that can be promoted from
@@ -312,7 +312,7 @@ CONTAINS
           species_list(ispecies)%migrate%fluid = .TRUE.
       IF (species_list(ispecies)%migrate%demoteable) &
           species_list(idemote)%migrate%fluid = .TRUE.
-    ENDDO
+    END DO
 
     ! Check for looped migration chains
     DO ispecies = 1, n_species
@@ -328,13 +328,13 @@ CONTAINS
             WRITE(stdout, *) 'Promotion from species ',  &
                 TRIM(species_list(current_list)%name), ' to ', &
                 TRIM(species_list(next_list)%name), ' disabled.'
-          ENDIF
+          END IF
           species_list(current_list)%migrate%promote_to_species = 0
           species_list(current_list)%migrate%promoteable = .FALSE.
         ELSE
           current_list = next_list
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       current_list = ispecies
       DO WHILE(species_list(current_list)%migrate%demoteable)
@@ -346,13 +346,13 @@ CONTAINS
             WRITE(stdout, *) 'Demotion from species ',  &
                 TRIM(species_list(current_list)%name), ' to ', &
                 TRIM(species_list(next_list)%name), ' disabled.'
-          ENDIF
+          END IF
           species_list(current_list)%migrate%demote_to_species = 0
           species_list(current_list)%migrate%demoteable = .FALSE.
         ELSE
           current_list = next_list
-        ENDIF
-      ENDDO
+        END IF
+      END DO
 
       IF ((.NOT. species_list(ispecies)%migrate%promoteable) &
           .AND. (.NOT. species_list(ispecies)%migrate%demoteable)) THEN
@@ -362,9 +362,9 @@ CONTAINS
           WRITE(stdout, *) 'No valid promotion or demotion species specified.'
           WRITE(stdout, *) 'Migration turned off for species ', &
               TRIM(species_list(ispecies)%name)
-        ENDIF
-      ENDIF
-    ENDDO
+        END IF
+      END IF
+    END DO
 
     ! After all that, do we still need migration at all?
     IF (.NOT. ANY(species_list(:)%migrate%this_species)) THEN
@@ -372,10 +372,10 @@ CONTAINS
       IF (rank == 0) THEN
         WRITE(stdout, *) '*** WARNING ***'
         WRITE(stdout, *) 'All particle migration has been disabled.'
-      ENDIF
+      END IF
 
       RETURN
-    ENDIF
+    END IF
 
     ! Need to keep time-averaged temperature and density fields for fluids.
     io_list = species_list
@@ -389,8 +389,8 @@ CONTAINS
             1-ng:ny+ng))
         CALL calc_number_density(species_list(ispecies)%migrate%fluid_density,&
             ispecies)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
   END SUBROUTINE initialise_migration
 

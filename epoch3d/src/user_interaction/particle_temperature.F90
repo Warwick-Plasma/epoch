@@ -61,9 +61,9 @@ CONTAINS
                 * temperature(cell_x+ix, cell_y+iy, cell_z+iz)
             drift_local = drift_local + gx(ix) * gy(iy) * gz(iz) &
                 * drift(cell_x+ix, cell_y+iy, cell_z+iz)
-          ENDDO
-        ENDDO
-      ENDDO
+          END DO
+        END DO
+      END DO
 
       IF (direction == c_dir_x) current%part_p(1) = &
           momentum_from_temperature(mass, temp_local, drift_local)
@@ -76,7 +76,7 @@ CONTAINS
 
       current => current%next
       ipart = ipart + 1
-    ENDDO
+    END DO
 
   END SUBROUTINE setup_particle_temperature
 

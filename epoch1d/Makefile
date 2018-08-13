@@ -249,6 +249,9 @@ DEFINES := $(DEFINE)
 # that has to be calculated every time step. This will slow down the simulation!
 #DEFINES += $(D)WORK_DONE_INTEGRATED
 
+# Higuera-Cary push
+#DEFINES += $(D)HC_PUSH
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
@@ -277,7 +280,7 @@ PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
   $(D)_MACHINE='"$(MACHINE)"' -I$(INCDIR)
 
 FC_INFO := $(shell ${FC} --version 2>/dev/null \
-    || ${FC} -V 2>&1 | grep '[a-zA-Z]' | head -n 1)
+    || ${FC} -V 2>/dev/null | grep '[a-zA-Z]' | head -n 1)
 
 SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
@@ -369,6 +372,7 @@ rm:
 
 clean: tidy
 cleanall: tidy
+	@rm -rf $(BINDIR)
 
 tidy:
 	@rm -rf $(OBJDIR) *~ *.pbs.* *.sh.* $(SRCDIR)/*~ *.log
@@ -378,7 +382,7 @@ datatidy:
 	@rm -rf Data/*
 
 tarball:
-	@cd ..; sh make_tarball.sh
+	@cd ..; sh ./scripts/make_tarball.sh
 
 visit:
 	@cd $(SDF)/../VisIt; ./build
@@ -395,6 +399,12 @@ sdfutilsclean:
 	@cd $(SDF)/../C; make clean
 	@cd $(SDF)/../utilities; ./build -c
 
+sdf_reader_example: $(BINDIR)/sdf_reader_example
+
+$(BINDIR)/sdf_reader_example: sdf_reader_example.f90 $(SDFMOD)
+	@mkdir -p $(BINDIR) $(OBJDIR)
+	$(FC) -o $@ $< $(LDFLAGS)
+
 $(OBJFILES): | $(OBJDIR)
 
 $(OBJDIR):
@@ -405,7 +415,8 @@ commit: FORCE
 
 FORCE:
 
-.PHONY: commit clean cleanall tidy datatidy visit visitclean main FORCE
+.PHONY: commit clean cleanall tidy datatidy visit visitclean main FORCE \
+        sdf_reader_example
 
 # All the dependencies
 
@@ -418,7 +429,7 @@ collisions.o: collisions.F90 calc_df.o prefetch.o
 current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 shared_data.o
 custom_laser.o: custom_laser.f90 shared_data.o
-custom_parser.o: custom_parser.f90 shared_data.o
+custom_parser.o: custom_parser.f90 shared_data.o tokenizer_blocks.o stack.o
 deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
   deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
   deck_fields_block.o deck_injector_block.o deck_io_block.o \

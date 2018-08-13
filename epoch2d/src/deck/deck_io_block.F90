@@ -27,7 +27,7 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check, copy_io_block
 
-  INTEGER, PARAMETER :: ov = 29
+  INTEGER, PARAMETER :: ov = 33
   INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
   INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
@@ -168,6 +168,12 @@ CONTAINS
     io_block_name (i+26) = 'dump_cycle_first_index'
     io_block_name (i+27) = 'filesystem'
     io_block_name (i+28) = 'dump_first_after_restart'
+    io_block_name (i+29) = 'dump_at_walltimes'
+    alternate_name(i+29) = 'walltimes_dump'
+    io_block_name (i+30) = 'walltime_interval'
+    alternate_name(i+30) = 'walltime_snapshot'
+    io_block_name (i+31) = 'walltime_start'
+    io_block_name (i+32) = 'walltime_stop'
     io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
@@ -201,10 +207,10 @@ CONTAINS
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Cannot have multiple unnamed "output" blocks.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           CALL abort_code(c_err_preset_element)
-        ENDIF
+        END IF
 
         ALLOCATE(io_prefixes(n_io_blocks+1))
         nfile_prefixes = 1
@@ -220,8 +226,8 @@ CONTAINS
             io_block_list(i)%prefix_index = 2
             nfile_prefixes = 2
             io_prefixes(2) = 'roll'
-          ENDIF
-        ENDDO
+          END IF
+        END DO
       ! Second pass
       ELSE
         dumps = 1.0_num
@@ -237,10 +243,10 @@ CONTAINS
                 WRITE(io,*) 'Averaging time is longer than t_end, will set', &
                     ' averaging time equal'
                 WRITE(io,*) 'to t_end.'
-              ENDDO
-            ENDIF
+              END DO
+            END IF
             io_block_list(i)%dt_average = t_end
-          ENDIF
+          END IF
 
           IF (io_block_list(i)%dump_cycle_first_index &
                 > io_block_list(i)%dump_cycle) THEN
@@ -251,15 +257,15 @@ CONTAINS
                 WRITE(io,*) '"dump_cycle_first_index" cannot be greater ', &
                     'than "dump_cycle"'
                 WRITE(io,*) 'Resetting to zero.'
-              ENDDO
-            ENDIF
+              END DO
+            END IF
             io_block_list(i)%dump_cycle_first_index = 0
-          ENDIF
+          END IF
 
           IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
             dumps = MAX(dumps, t_end / io_block_list(i)%dt_snapshot)
-          ENDIF
-        ENDDO
+          END IF
+        END DO
 
         n_dumps = FLOOR(dumps)
 
@@ -283,8 +289,8 @@ CONTAINS
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,'(A,I1,A)') ' Estimated value of n_zeros (', n_zeros, &
                     ') has been overidden by input deck'
-              ENDDO
-            ENDIF
+              END DO
+            END IF
             n_zeros = n_zeros_control
           ELSE IF (n_zeros_estimate > n_zeros) THEN
             n_zeros = n_zeros_estimate
@@ -294,17 +300,17 @@ CONTAINS
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,'(A,I1,A)') ' n_zeros changed to ', n_zeros, &
                     ' to accomodate requested number of snapshots'
-              ENDDO
-            ENDIF
-          ENDIF
-        ENDIF
+              END DO
+            END IF
+          END IF
+        END IF
 
         ALLOCATE(file_prefixes(nfile_prefixes))
         ALLOCATE(file_numbers(nfile_prefixes))
         DO i = 1,nfile_prefixes
           file_prefixes(i) = TRIM(io_prefixes(i))
           file_numbers(i) = 0
-        ENDDO
+        END DO
         DEALLOCATE(io_prefixes)
 
 #ifndef NO_IO
@@ -319,10 +325,10 @@ CONTAINS
           list_filename = TRIM(ADJUSTL(data_dir)) // '/restart.visit'
           OPEN(unit=lu, status='UNKNOWN', file=list_filename)
           CLOSE(unit=lu, status='DELETE')
-        ENDIF
+        END IF
 #endif
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE io_deck_finalise
 
@@ -341,8 +347,8 @@ CONTAINS
         io_block_done(num_vars_to_dump+o6) = .TRUE.
         io_block_done(num_vars_to_dump+o7) = .TRUE.
         io_block_done(num_vars_to_dump+o8) = .TRUE.
-      ENDIF
-    ENDIF
+      END IF
+    END IF
 
   END SUBROUTINE io_block_start
 
@@ -365,7 +371,7 @@ CONTAINS
 
     IF (io_block%dumpmask(c_dump_absorption) /= c_io_never) THEN
       dump_absorption = .TRUE.
-    ENDIF
+    END IF
 
     IF (.NOT. got_name) THEN
       IF (new_style_io_block) THEN
@@ -376,12 +382,12 @@ CONTAINS
             WRITE(io,*) 'Cannot mix old and new style output blocks.'
             WRITE(io,*) 'You can either have multiple, named output blocks ', &
                 'or a single unnamed one.'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         CALL abort_code(c_err_bad_value)
-      ENDIF
+      END IF
       io_block%name = 'normal'
-    ENDIF
+    END IF
 
 #ifndef NO_IO
     ! Delete any existing visit file lists
@@ -390,7 +396,7 @@ CONTAINS
           // TRIM(io_block%name) // '.visit'
       OPEN(unit=lu, status='UNKNOWN', file=list_filename)
       CLOSE(unit=lu, status='DELETE')
-    ENDIF
+    END IF
 #endif
     io_block%dumpmask(c_dump_jx) = IOR(io_block%dumpmask(c_dump_jx), c_io_field)
     io_block%dumpmask(c_dump_jy) = IOR(io_block%dumpmask(c_dump_jy), c_io_field)
@@ -399,12 +405,12 @@ CONTAINS
     IF (.NOT.got_dump_source_code) THEN
       IF (io_block%restart .OR. .NOT.new_style_io_block) &
           io_block%dump_source_code = .TRUE.
-    ENDIF
+    END IF
 
     IF (.NOT.got_dump_input_decks) THEN
       IF (io_block%restart .OR. .NOT.new_style_io_block) &
           io_block%dump_input_decks = .TRUE.
-    ENDIF
+    END IF
 
     CALL set_restart_dumpmasks
 
@@ -436,19 +442,19 @@ CONTAINS
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           CALL abort_code(c_err_preset_element)
-        ENDIF
+        END IF
         rolling_restart_io_block = block_number
-      ENDIF
+      END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (io_block%disabled) THEN
       errcode = c_err_none
       RETURN
-    ENDIF
+    END IF
 
     errcode = c_err_unknown_element
 
@@ -459,15 +465,15 @@ CONTAINS
           .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (elementselected == 0) RETURN
 
     IF (io_block_done(elementselected)) THEN
       errcode = c_err_preset_element
       RETURN
-    ENDIF
+    END IF
     io_block_done(elementselected) = .TRUE.
     errcode = c_err_none
     style_error = c_err_none
@@ -482,14 +488,14 @@ CONTAINS
       ELSE
         full_dump_every = as_integer_print(value, element, errcode)
         IF (full_dump_every == 0) full_dump_every = 1
-      ENDIF
+      END IF
     CASE(3)
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
         restart_dump_every = as_integer_print(value, element, errcode)
         IF (restart_dump_every == 0) restart_dump_every = 1
-      ENDIF
+      END IF
     CASE(4)
       IF (new_style_io_block) style_error = c_err_new_style_global
       force_first_to_be_restartable = as_logical_print(value, element, errcode)
@@ -506,8 +512,8 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The "extended_io_file" option is no longer supported.'
           WRITE(io,*) 'Please use the "import" directive instead'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_unknown_element)
     CASE(8)
       io_block%dt_average = as_real_print(value, element, errcode)
@@ -538,11 +544,11 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Output block "' // TRIM(value) &
                   // '" already defined.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           CALL abort_code(c_err_preset_element)
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       io_block%name = value
       got_name = .TRUE.
     CASE(17)
@@ -568,13 +574,13 @@ CONTAINS
           found = .TRUE.
           io_block%prefix_index = i
           EXIT
-        ENDIF
-      ENDDO
+        END IF
+      END DO
       IF (.NOT.found) THEN
         nfile_prefixes = nfile_prefixes + 1
         io_prefixes(nfile_prefixes) = TRIM(value)
         io_block%prefix_index = nfile_prefixes
-      ENDIF
+      END IF
     CASE(26)
       io_block%dump_cycle_first_index = &
           as_integer_print(value, element, errcode)
@@ -583,6 +589,15 @@ CONTAINS
     CASE(28)
       io_block%dump_first_after_restart = &
           as_logical_print(value, element, errcode)
+    CASE(29)
+      IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
+      CALL get_allocated_array(value, io_block%dump_at_walltimes, errcode)
+    CASE(30)
+      io_block%walltime_interval = as_real_print(value, element, errcode)
+    CASE(31)
+      io_block%walltime_start = as_real_print(value, element, errcode)
+    CASE(32)
+      io_block%walltime_stop = as_real_print(value, element, errcode)
     CASE(ov)
       io_block%disabled = as_logical_print(value, element, errcode)
     END SELECT
@@ -598,8 +613,8 @@ CONTAINS
               // '" not ', 'allowed in an unnamed output block.'
           WRITE(io,*) 'It has been ignored.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
     ELSE IF (style_error == c_err_new_style_ignore) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -611,8 +626,8 @@ CONTAINS
               // '" not ', 'allowed in a named output block.'
           WRITE(io,*) 'It has been ignored.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
+        END DO
+      END IF
     ELSE IF (style_error == c_err_new_style_global) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
@@ -624,9 +639,9 @@ CONTAINS
               // '" should be moved to ', 'an "output_global" block.'
           WRITE(io,*) 'Its value will be applied to all output blocks.'
           WRITE(io,*)
-        ENDDO
-      ENDIF
-    ENDIF
+        END DO
+      END IF
+    END IF
 
     IF (elementselected > num_vars_to_dump) RETURN
 
@@ -641,7 +656,7 @@ CONTAINS
         fullmask = mask
       ELSE
         mask = IOR(subset_list(subset)%mask,fullmask)
-      ENDIF
+      END IF
 
       ! If setting dumpmask for features which haven't been compiled
       ! in then issue a warning
@@ -651,7 +666,7 @@ CONTAINS
         errcode = c_err_pp_options_wrong
         extended_error_string = '-NO_DPARTICLE_PROBES'
         mask = c_io_never
-      ENDIF
+      END IF
 #endif
 
 #ifdef PARTICLE_ID4
@@ -663,7 +678,7 @@ CONTAINS
         errcode = c_err_pp_options_missing
         extended_error_string = '-DPARTICLE_ID'
         mask = c_io_never
-      ENDIF
+      END IF
 #endif
 
       ! Setting some flags like species and average
@@ -692,12 +707,12 @@ CONTAINS
               WRITE(io,*) 'Attempting to set per species property for "' &
                   // TRIM(element) // '" which'
               WRITE(io,*) 'does not support this property. Ignoring.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           mask = IAND(mask, NOT(c_io_species))
           mask = IOR(mask, c_io_no_sum)
-        ENDIF
-      ENDIF
+        END IF
+      END IF
 
       IF (IAND(mask, c_io_averaged) /= 0) THEN
         bad = .TRUE.
@@ -730,15 +745,15 @@ CONTAINS
               WRITE(io,*) 'Attempting to set average property for "' &
                   // TRIM(element) // '" which'
               WRITE(io,*) 'does not support this property. Ignoring.'
-            ENDDO
-          ENDIF
+            END DO
+          END IF
           mask = IAND(mask, NOT(c_io_averaged))
         ELSE
           any_average = .TRUE.
           io_block%any_average = .TRUE.
           IF (IAND(mask, c_io_average_single) /= 0 .AND. num /= r4) THEN
             io_block%averaged_data(mask_element)%dump_single = .TRUE.
-          ENDIF
+          END IF
           i = averaged_var_block(mask_element)
           IF (i /= 0 .AND. i /= block_number) THEN
             IF (rank == 0 .AND. .NOT.warning_printed) THEN
@@ -753,21 +768,21 @@ CONTAINS
                 WRITE(io,*) 'If multiple were specified the first averaging ', &
                     'time will be used'
                 WRITE(io,*)
-              ENDDO
+              END DO
               warning_printed = .TRUE.
-            ENDIF
+            END IF
           ELSE
             averaged_var_block(mask_element) = block_number
-          ENDIF
-        ENDIF
-      ENDIF
+          END IF
+        END IF
+      END IF
 
       IF (is == 1) THEN
         io_block%dumpmask(mask_element) = mask
       ELSE
         subset_list(subset)%dumpmask(block_number,mask_element) = mask
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DEALLOCATE(subsets)
 
@@ -799,10 +814,10 @@ CONTAINS
           WRITE(io,*) 'Required output block element ', &
               TRIM(ADJUSTL(io_block_name(i+8))), &
               ' absent. Please create this entry in the input deck'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       errcode = c_err_missing_elements
-    ENDIF
+    END IF
 
     ! Can't check the io_block if it hasn't been allocated.
     IF (n_io_blocks == 0) RETURN
@@ -815,10 +830,10 @@ CONTAINS
           WRITE(io,*) 'Averaging time is longer than dt_snapshot, will set', &
               ' averaging time equal'
           WRITE(io,*) 'to dt_snapshot.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       io_block%dt_average = io_block%dt_snapshot
-    ENDIF
+    END IF
 
   END FUNCTION io_block_check
 
@@ -859,11 +874,16 @@ CONTAINS
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
     io_block%disabled = .FALSE.
+    io_block%walltime_interval = -1.0_num
+    io_block%walltime_prev = 0.0_num
+    io_block%walltime_start = -1.0_num
+    io_block%walltime_stop  = HUGE(1.0_num)
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
+    NULLIFY(io_block%dump_at_walltimes)
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.
-    ENDDO
+    END DO
 
   END SUBROUTINE init_io_block
 
@@ -877,9 +897,10 @@ CONTAINS
     io_block_copy = io_block
     NULLIFY(io_block%dump_at_nsteps)
     NULLIFY(io_block%dump_at_times)
+    NULLIFY(io_block%dump_at_walltimes)
     DO i = 1, num_vars_to_dump
       io_block_copy%averaged_data(i) = io_block%averaged_data(i)
-    ENDDO
+    END DO
 
   END SUBROUTINE copy_io_block
 

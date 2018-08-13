@@ -29,7 +29,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_z_min, new_cell_z_max
   LOGICAL :: overriding
-  INTEGER, PARAMETER :: maximum_check_frequency = 200
+  REAL(num) :: load_av
 
 CONTAINS
 
@@ -39,21 +39,19 @@ CONTAINS
     ! calculates where to split the domain and calls other subroutines to
     ! actually rearrange the fields and particles onto the new processors
 
-    ! This is really, really hard to do properly
-    ! So cheat
-
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_z
-    REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
-    REAL(num) :: balance_frac_x, balance_frac_y, balance_frac_z
-    INTEGER(i8) :: min_x, max_x, min_y, max_y, min_z, max_z
-    INTEGER(i8) :: npart_local, sum_npart, max_npart, wk
-    INTEGER :: iproc
+    REAL(num) :: balance_frac, balance_frac_final, balance_improvement
+    REAL(num) :: load_local, load_sum, load_max
+    INTEGER(i8) :: npart_local
     INTEGER, SAVE :: balance_check_frequency = 1
-    INTEGER, SAVE :: last_check = -1
-    INTEGER, DIMENSION(c_ndims,2) :: domain
+    INTEGER, SAVE :: last_check = -HUGE(1) / 2
+    INTEGER, SAVE :: last_full_check = -HUGE(1) / 2
+    LOGICAL, SAVE :: first_flag = .TRUE.
+    LOGICAL :: first_message, restarting, full_check, attempt_balance
+    LOGICAL :: use_redistribute_domain, use_redistribute_particles
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -61,32 +59,61 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    IF (step - last_check < balance_check_frequency) RETURN
 
-    ! This parameter allows selecting the mode of the autobalancing between
-    ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode = c_lb_all
+    full_check = over_ride
+    IF (step - last_full_check < dlb_force_interval) THEN
+      IF (step - last_check < balance_check_frequency) RETURN
+    ELSE
+      full_check = .TRUE.
+    END IF
+
+    restarting = .FALSE.
+    use_redistribute_domain = .FALSE.
+    attempt_balance = use_balance
+
+    IF (first_flag) THEN
+      attempt_balance = balance_first
+      IF (use_exact_restart) attempt_balance = .FALSE.
+      first_flag = .FALSE.
+      first_message = .TRUE.
+      use_redistribute_particles = .TRUE.
+      IF (ic_from_restart) restarting = .TRUE.
+    ELSE
+      first_message = .FALSE.
+      use_redistribute_particles = .FALSE.
+    END IF
+    last_check = step
 
     ! count particles
     npart_local = get_total_local_particles()
+    load_local = REAL(push_per_field * npart_local + nx * ny * nz, num)
+
+    CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, errcode)
+    CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, errcode)
+
+    load_av = load_sum / nproc
+
+    balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
 
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (.NOT. over_ride .AND. max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
-    balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) RETURN
-
-    last_check = step
+    IF (.NOT. full_check .AND. balance_frac > dlb_threshold) THEN
+      balance_check_frequency = &
+          MIN(balance_check_frequency * 2, dlb_maximum_interval)
+      IF (rank == 0) THEN
+        PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+              &'', threshold:'', F6.3, '', next: '', i9)', &
+              balance_frac, dlb_threshold, &
+              MIN(step + balance_check_frequency, &
+                  last_full_check + dlb_force_interval)
+      END IF
+      RETURN
+    END IF
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
-    IF (.NOT.use_exact_restart) THEN
-      overriding = over_ride
+    IF (attempt_balance) THEN
+      overriding = full_check
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
       ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
@@ -101,230 +128,211 @@ CONTAINS
 
       ! Sweep in X
       IF (nprocx > 1) THEN
-        IF (IAND(balance_mode, c_lb_x) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in X
-          ALLOCATE(load_x(nx_global + 2 * ng))
-          CALL get_load_in_x(load_x)
-          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        ENDIF
-      ENDIF
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global + 2 * ng))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+        DEALLOCATE(load_x)
+      END IF
 
       ! Sweep in Y
       IF (nprocy > 1) THEN
-        IF (IAND(balance_mode, c_lb_y) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in Y
-          ALLOCATE(load_y(ny_global + 2 * ng))
-          CALL get_load_in_y(load_y)
-          CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-        ENDIF
-      ENDIF
+        ! Rebalancing in Y
+        ALLOCATE(load_y(ny_global + 2 * ng))
+        CALL get_load_in_y(load_y)
+        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+        DEALLOCATE(load_y)
+      END IF
 
       ! Sweep in Z
       IF (nprocz > 1) THEN
-        IF (IAND(balance_mode, c_lb_z) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in Z
-          ALLOCATE(load_z(nz_global + 2 * ng))
-          CALL get_load_in_z(load_z)
-          CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
-        ENDIF
-      ENDIF
+        ! Rebalancing in Z
+        ALLOCATE(load_z(nz_global + 2 * ng))
+        CALL get_load_in_z(load_z)
+        CALL calculate_breaks(load_z, nprocz, new_cell_z_min, new_cell_z_max)
+        DEALLOCATE(load_z)
+      END IF
 
-      ! In the autobalancer then determine whether to balance in X, Y or Z
-      ! Is this worth keeping?
-      IF (IAND(balance_mode, c_lb_auto) /= 0 ) THEN
+      IF (.NOT.restarting) THEN
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+        balance_improvement = (balance_frac_final - balance_frac) / balance_frac
 
-        ! Code is auto load balancing
-        max_x = 0
-        min_x = npart_global
-        DO iproc = 1, nprocx
-          wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
-          IF (wk > max_x) max_x = wk
-          IF (wk < min_x) min_x = wk
-        ENDDO
+        last_full_check = step
 
-        max_y = 0
-        min_y = npart_global
-        DO iproc = 1, nprocy
-          wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
-          IF (wk > max_y) max_y = wk
-          IF (wk < min_y) min_y = wk
-        ENDDO
-
-        max_z = 0
-        min_z = npart_global
-        DO iproc = 1, nprocz
-          wk = SUM(load_z(new_cell_z_min(iproc):new_cell_z_max(iproc)))
-          IF (wk > max_z) max_z = wk
-          IF (wk < min_z) min_z = wk
-        ENDDO
-
-        balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
-        balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
-        balance_frac_z = REAL(min_z, num) / REAL(max_z, num)
-
-        IF (balance_frac_x < balance_frac_y) THEN
-          IF (balance_frac_x < balance_frac_z) THEN
-            new_cell_x_min = cell_x_min
-            new_cell_x_max = cell_x_max
-          ELSE
-            new_cell_z_min = cell_z_min
-            new_cell_z_max = cell_z_max
-          ENDIF
+        ! Consider load balancing a success if the load imbalance improved by
+        ! more than 5 percent
+        IF (balance_improvement > 0.05_num) THEN
+          use_redistribute_domain = .TRUE.
+          use_redistribute_particles = .TRUE.
+          first_message = .FALSE.
+          balance_check_frequency = 1
+          IF (rank == 0) THEN
+            PRINT'(''Redistributing.          Balance:'', F6.3, &
+                  &'',     after:'', F6.3, '', next: '', i9)', &
+                  balance_frac, balance_frac_final, &
+                  MIN(step + balance_check_frequency, &
+                      last_full_check + dlb_force_interval)
+          END IF
         ELSE
-          IF (balance_frac_y < balance_frac_z) THEN
-            new_cell_y_min = cell_y_min
-            new_cell_y_max = cell_y_max
-          ELSE
-            new_cell_z_min = cell_z_min
-            new_cell_z_max = cell_z_max
-          ENDIF
-        ENDIF
+          IF (.NOT.first_message) THEN
+            balance_check_frequency = &
+                MIN(balance_check_frequency * 2, dlb_maximum_interval)
+            IF (rank == 0) THEN
+              PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                    &'',     after:'', F6.3, '', next: '', i9)', &
+                    balance_frac, balance_frac_final, &
+                    MIN(step + balance_check_frequency, &
+                        last_full_check + dlb_force_interval)
+            END IF
+          END IF
+        END IF
+      END IF
+    END IF
 
-      ENDIF
+    IF (use_redistribute_domain) THEN
+      CALL redistribute_domain
+    END IF
 
-      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
-      IF (ALLOCATED(load_y)) DEALLOCATE(load_y)
-      IF (ALLOCATED(load_z)) DEALLOCATE(load_z)
-
-      ! Now need to calculate the start and end points for the new domain on
-      ! the current processor
-
-      domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
-      domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
-      domain(3,:) = (/new_cell_z_min(z_coords+1), new_cell_z_max(z_coords+1)/)
-
-      ! Redistribute the field variables
-      CALL redistribute_fields(domain)
-
-      ! Copy the new lengths into the permanent variables
-      cell_x_min = new_cell_x_min
-      cell_x_max = new_cell_x_max
-      cell_y_min = new_cell_y_min
-      cell_y_max = new_cell_y_max
-      cell_z_min = new_cell_z_min
-      cell_z_max = new_cell_z_max
-
-      ! Set the new nx, ny, nz
-      nx_global_min = cell_x_min(x_coords+1)
-      nx_global_max = cell_x_max(x_coords+1)
-      n_global_min(1) = nx_global_min
-      n_global_max(1) = nx_global_max
-
-      ny_global_min = cell_y_min(y_coords+1)
-      ny_global_max = cell_y_max(y_coords+1)
-      n_global_min(2) = ny_global_min
-      n_global_max(2) = ny_global_max
-
-      nz_global_min = cell_z_min(z_coords+1)
-      nz_global_max = cell_z_max(z_coords+1)
-      n_global_min(3) = nz_global_min
-      n_global_max(3) = nz_global_max
-
-      nx = nx_global_max - nx_global_min + 1
-      ny = ny_global_max - ny_global_min + 1
-      nz = nz_global_max - nz_global_min + 1
-
+    IF (ALLOCATED(new_cell_x_min)) THEN
       DEALLOCATE(new_cell_x_min, new_cell_x_max)
       DEALLOCATE(new_cell_y_min, new_cell_y_max)
       DEALLOCATE(new_cell_z_min, new_cell_z_max)
-
-      ! Do X, Y, Z arrays separately because we already have global copies
-      DEALLOCATE(x, y, z)
-      ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
-      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-      y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
-      z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
-
-      DEALLOCATE(xb, yb, zb)
-      ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
-      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-      yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
-      zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
-
-      ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-      DO iproc = 0, nprocx - 1
-        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      ENDDO
-      ! Same for y
-      DO iproc = 0, nprocy - 1
-        y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
-        y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
-      ENDDO
-      ! Same for z
-      DO iproc = 0, nprocz - 1
-        z_grid_mins(iproc) = z_global(cell_z_min(iproc+1))
-        z_grid_maxs(iproc) = z_global(cell_z_max(iproc+1))
-      ENDDO
-
-      ! Set the lengths of the current domain so that the particle balancer
-      ! works properly
-      x_grid_min_local = x_grid_mins(x_coords)
-      x_grid_max_local = x_grid_maxs(x_coords)
-      y_grid_min_local = y_grid_mins(y_coords)
-      y_grid_max_local = y_grid_maxs(y_coords)
-      z_grid_min_local = z_grid_mins(z_coords)
-      z_grid_max_local = z_grid_maxs(z_coords)
-
-      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-      y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
-      y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
-      z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
-      z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
-    ENDIF
+    END IF
 
     ! Redistribute the particles onto their new processors
-    CALL distribute_particles
+    IF (use_redistribute_particles) CALL distribute_particles
 
     ! If running with particle debugging then set the t = 0 processor if
     ! over_ride = true
 #ifdef PARTICLE_DEBUG
-    IF (over_ride) THEN
+    IF (full_check) THEN
       DO ispecies = 1, n_species
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
           current%processor_at_t0 = rank
           current => current%next
-        ENDDO
-      ENDDO
-    ENDIF
+        END DO
+      END DO
+    END IF
 #endif
 
-    npart_local = get_total_local_particles()
+    IF (first_message) THEN
+      npart_local = get_total_local_particles()
+      load_local = REAL(push_per_field * npart_local + nx * ny * nz, num)
 
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
-    balance_frac_final = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-    balance_improvement = (balance_frac_final - balance_frac) / balance_frac
-    ! Consider load balancing a success if the load imbalance improved by
-    ! more than 5 percent
-    IF (balance_improvement > 0.05_num) THEN
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, &
+          comm, errcode)
+
+      balance_frac_final = (load_av + SQRT(load_av)) &
+          / (load_max + SQRT(load_max))
       balance_check_frequency = 1
-    ELSE
-      balance_check_frequency = &
-          MIN(balance_check_frequency * 2, maximum_check_frequency)
-    ENDIF
 
-    IF (rank == 0) THEN
-      PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
-          &'', improvement:'', F6.3, '', next: '', i8)', &
-          balance_frac, balance_frac_final, balance_improvement, &
-          (step + balance_check_frequency)
-    ENDIF
+      IF (rank == 0) THEN
+        PRINT'(''Redistributing.          Balance:'', F6.3, &
+              &'',     next: '', i9)', &
+              balance_frac_final, (step + balance_check_frequency)
+      END IF
+    END IF
 
     use_exact_restart = .FALSE.
 
     IF (timer_collect) CALL timer_stop(c_timer_balance)
 
   END SUBROUTINE balance_workload
+
+
+
+  SUBROUTINE redistribute_domain
+
+    INTEGER, DIMENSION(c_ndims,2) :: domain
+    INTEGER :: iproc
+
+    IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
+
+    ! Now need to calculate the start and end points for the new domain on
+    ! the current processor
+
+    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
+    domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
+    domain(3,:) = (/new_cell_z_min(z_coords+1), new_cell_z_max(z_coords+1)/)
+
+    ! Redistribute the field variables
+    CALL redistribute_fields(domain)
+
+    ! Copy the new lengths into the permanent variables
+    cell_x_min = new_cell_x_min
+    cell_x_max = new_cell_x_max
+    cell_y_min = new_cell_y_min
+    cell_y_max = new_cell_y_max
+    cell_z_min = new_cell_z_min
+    cell_z_max = new_cell_z_max
+
+    ! Set the new nx, ny, nz
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    n_global_min(1) = nx_global_min
+    n_global_max(1) = nx_global_max
+
+    ny_global_min = cell_y_min(y_coords+1)
+    ny_global_max = cell_y_max(y_coords+1)
+    n_global_min(2) = ny_global_min
+    n_global_max(2) = ny_global_max
+
+    nz_global_min = cell_z_min(z_coords+1)
+    nz_global_max = cell_z_max(z_coords+1)
+    n_global_min(3) = nz_global_min
+    n_global_max(3) = nz_global_max
+
+    nx = nx_global_max - nx_global_min + 1
+    ny = ny_global_max - ny_global_min + 1
+    nz = nz_global_max - nz_global_min + 1
+
+    ! Do X, Y, Z arrays separately because we already have global copies
+    DEALLOCATE(x, y, z)
+    ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
+    z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
+
+    DEALLOCATE(xb, yb, zb)
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
+    zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
+
+    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
+    DO iproc = 0, nprocx - 1
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    END DO
+    ! Same for y
+    DO iproc = 0, nprocy - 1
+      y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
+    END DO
+    ! Same for z
+    DO iproc = 0, nprocz - 1
+      z_grid_mins(iproc) = z_global(cell_z_min(iproc+1))
+      z_grid_maxs(iproc) = z_global(cell_z_max(iproc+1))
+    END DO
+
+    ! Set the lengths of the current domain so that the particle balancer
+    ! works properly
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+    y_grid_min_local = y_grid_mins(y_coords)
+    y_grid_max_local = y_grid_maxs(y_coords)
+    z_grid_min_local = z_grid_mins(z_coords)
+    z_grid_max_local = z_grid_maxs(z_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
+    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
+    z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
+    z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
+
+  END SUBROUTINE redistribute_domain
 
 
 
@@ -395,7 +403,7 @@ CONTAINS
       ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
       ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
       ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
-    ENDIF
+    END IF
 
     CALL remap_field(ex, temp)
     DEALLOCATE(ex)
@@ -442,8 +450,8 @@ CONTAINS
             %migrate%fluid_density(1-ng:nx_new+ng, 1-ng:ny_new+ng, &
             1-ng:nz_new+ng))
         species_list(ispecies)%migrate%fluid_density = temp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)
@@ -510,7 +518,7 @@ CONTAINS
       CALL set_cpml_helpers(nx_new, new_domain(1,1), new_domain(1,2), &
           ny_new, new_domain(2,1), new_domain(2,2), &
           nz_new, new_domain(3,1), new_domain(3,2))
-    ENDIF
+    END IF
 
     DEALLOCATE(temp)
 
@@ -539,7 +547,7 @@ CONTAINS
           CALL remap_field_r4(&
               io_block_list(io)%averaged_data(id)%r4array(:,:,:,i), &
               r4temp_sum(:,:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%r4array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
@@ -559,7 +567,7 @@ CONTAINS
           CALL remap_field(&
               io_block_list(io)%averaged_data(id)%array(:,:,:,i), &
               temp_sum(:,:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(io_block_list(io)%averaged_data(id)%array)
         ALLOCATE(io_block_list(io)%averaged_data(id)&
@@ -569,8 +577,8 @@ CONTAINS
         io_block_list(io)%averaged_data(id)%array = temp_sum
 
         DEALLOCATE(temp_sum)
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Slice in X-direction
 
@@ -589,7 +597,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
@@ -604,7 +612,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
@@ -619,7 +627,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
@@ -634,7 +642,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
     DEALLOCATE(ex_x_min)
@@ -715,7 +723,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
@@ -730,7 +738,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
@@ -745,7 +753,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
@@ -760,7 +768,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     CALL remap_field_slice(c_dir_y, ex_y_min, temp_slice)
     DEALLOCATE(ex_y_min)
@@ -841,7 +849,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     current => laser_z_max
     DO WHILE(ASSOCIATED(current))
@@ -856,7 +864,7 @@ CONTAINS
       current%phase = temp_slice
 
       current => current%next
-    ENDDO
+    END DO
 
     injector_current => injector_z_min
     DO WHILE(ASSOCIATED(injector_current))
@@ -871,7 +879,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     injector_current => injector_z_max
     DO WHILE(ASSOCIATED(injector_current))
@@ -886,7 +894,7 @@ CONTAINS
       injector_current%depth = temp_slice
 
       injector_current => injector_current%next
-    ENDDO
+    END DO
 
     CALL remap_field_slice(c_dir_z, ex_z_min, temp_slice)
     DEALLOCATE(ex_z_min)
@@ -960,14 +968,14 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_min(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_x_min)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_x_min(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_min = temp
-      ENDIF
+      END IF
 
       IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) &
@@ -976,15 +984,15 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_max(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_x_max)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_x_max(1-ng:ny_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_x_max = temp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
@@ -998,14 +1006,14 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_min(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_y_min)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_y_min(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_min = temp
-      ENDIF
+      END IF
 
       IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) &
@@ -1014,15 +1022,15 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_max(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_y_max)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_y_max(1-ng:nx_new+ng, 1-ng:nz_new+ng, 3))
 
         species_list(ispecies)%ext_temp_y_max = temp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
@@ -1036,14 +1044,14 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_z, &
               species_list(ispecies)%ext_temp_z_min(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_z_min)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_z_min(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_z_min = temp
-      ENDIF
+      END IF
 
       IF (species_list(ispecies)%bc_particle(c_bd_z_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) &
@@ -1052,15 +1060,15 @@ CONTAINS
         DO i = 1, 3
           CALL remap_field_slice(c_dir_z, &
               species_list(ispecies)%ext_temp_z_max(:,:,i), temp(:,:,i))
-        ENDDO
+        END DO
 
         DEALLOCATE(species_list(ispecies)%ext_temp_z_max)
         ALLOCATE(species_list(ispecies)&
             %ext_temp_z_max(1-ng:nx_new+ng, 1-ng:ny_new+ng, 3))
 
         species_list(ispecies)%ext_temp_z_max = temp
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (ALLOCATED(temp)) DEALLOCATE(temp)
 
@@ -1084,7 +1092,7 @@ CONTAINS
       IF (i == direction) CYCLE
       cdim(n) = c_ndims + 1 - i
       n = n + 1
-    ENDDO
+    END DO
 
     IF (direction == c_dir_x) THEN
       CALL redistribute_field_2d(field_in, field_out, cdim, &
@@ -1098,7 +1106,7 @@ CONTAINS
       CALL redistribute_field_2d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
-    ENDIF
+    END IF
 
     CALL do_field_mpi_with_lengths_slice(field_out, direction, ng, n_new(1), &
         n_new(2))
@@ -1119,7 +1127,7 @@ CONTAINS
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
-    ENDDO
+    END DO
 
     CALL redistribute_field_3d(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
@@ -1145,7 +1153,7 @@ CONTAINS
 
     DO i = 1, c_ndims
       cdim(i) = c_ndims + 1 - i
-    ENDDO
+    END DO
 
     CALL redistribute_field_3d_r4(field_in, field_out, cdim, &
         cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max, &
@@ -1189,7 +1197,7 @@ CONTAINS
 
     DO i = 1, nd
       our_coords(i) = coordinates(cdim(i))
-    ENDDO
+    END DO
 
     nprocs(1) = SIZE(old_cell_min1)
     nprocs(2) = SIZE(old_cell_min2)
@@ -1218,7 +1226,7 @@ CONTAINS
 
     DO i = 1,nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 2
     type_min(n) = old_min(n)
@@ -1229,7 +1237,7 @@ CONTAINS
     DO jproc = 1, nprocs(n)-1
       IF (new_cell_min2(jproc) <= old_min(n) &
           .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = jproc - 1
@@ -1253,7 +1261,7 @@ CONTAINS
       DO iproc = 1, nprocs(n)-1
         IF (new_cell_min1(iproc) <= old_min(n) &
             .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= old_max(n))
         coord(cdim(n)) = iproc - 1
@@ -1279,26 +1287,26 @@ CONTAINS
           DO i = 1,nd
             old_0(i) = start(i) - ng
             old_1(i) = old_0(i) + n_local(i) - 1
-          ENDDO
-        ENDIF
+          END DO
+        END IF
 
         n = 1
         IF (type_max(n) == old_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = new_cell_min1(iproc)
-      ENDDO
+      END DO
 
       n = 2
       IF (type_max(n) == old_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = new_cell_min2(jproc)
-    ENDDO
+    END DO
 
     ! Create array of recvtypes
 
     DO i = 1,nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 2
     type_min(n) = new_min(n)
@@ -1309,7 +1317,7 @@ CONTAINS
     DO jproc = 1, nprocs(n)-1
       IF (old_cell_min2(jproc) <= new_min(n) &
           .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = jproc - 1
@@ -1333,7 +1341,7 @@ CONTAINS
       DO iproc = 1, nprocs(n)-1
         IF (old_cell_min1(iproc) <= new_min(n) &
             .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= new_max(n))
         coord(cdim(n)) = iproc - 1
@@ -1358,34 +1366,34 @@ CONTAINS
           ! Just copy the region rather than using MPI.
           DO i = 1,nd
             new_0(i) = start(i) - ng
-          ENDDO
+          END DO
           DO j = old_0(2),old_1(2)
             jnew = new_0(2) + j - old_0(2)
             DO i = old_0(1),old_1(1)
               inew = new_0(1) + i - old_0(1)
               field_out(inew,jnew) = field_in(i,j)
-            ENDDO
-          ENDDO
-        ENDIF
+            END DO
+          END DO
+        END IF
 
         n = 1
         IF (type_max(n) == new_max(n)) EXIT
         iproc = iproc + 1
         type_min(n) = old_cell_min1(iproc)
-      ENDDO
+      END DO
 
       n = 2
       IF (type_max(n) == new_max(n)) EXIT
       jproc = jproc + 1
       type_min(n) = old_cell_min2(jproc)
-    ENDDO
+    END DO
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
-    ENDDO
+    END DO
 
     DEALLOCATE(sendtypes)
     DEALLOCATE(recvtypes)
@@ -1428,7 +1436,7 @@ CONTAINS
 
     DO i = 1, nd
       our_coords(i) = coordinates(cdim(i))
-    ENDDO
+    END DO
 
     nprocs(1) = SIZE(old_cell_min1)
     nprocs(2) = SIZE(old_cell_min2)
@@ -1465,7 +1473,7 @@ CONTAINS
 
     DO i = 1,nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 3
     type_min(n) = old_min(n)
@@ -1476,7 +1484,7 @@ CONTAINS
     DO kproc = 1, nprocs(n)-1
       IF (new_cell_min3(kproc) <= old_min(n) &
           .AND. new_cell_max3(kproc) >= old_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = kproc - 1
@@ -1500,7 +1508,7 @@ CONTAINS
       DO jproc = 1, nprocs(n)-1
         IF (new_cell_min2(jproc) <= old_min(n) &
             .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= old_max(n))
         coord(cdim(n)) = jproc - 1
@@ -1524,7 +1532,7 @@ CONTAINS
         DO iproc = 1, nprocs(n)-1
           IF (new_cell_min1(iproc) <= old_min(n) &
               .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
-        ENDDO
+        END DO
 
         DO WHILE(type_max(n) <= old_max(n))
           coord(cdim(n)) = iproc - 1
@@ -1550,32 +1558,32 @@ CONTAINS
             DO i = 1,nd
               old_0(i) = start(i) - ng
               old_1(i) = old_0(i) + n_local(i) - 1
-            ENDDO
-          ENDIF
+            END DO
+          END IF
 
           n = 1
           IF (type_max(n) == old_max(n)) EXIT
           iproc = iproc + 1
           type_min(n) = new_cell_min1(iproc)
-        ENDDO
+        END DO
 
         n = 2
         IF (type_max(n) == old_max(n)) EXIT
         jproc = jproc + 1
         type_min(n) = new_cell_min2(jproc)
-      ENDDO
+      END DO
 
       n = 3
       IF (type_max(n) == old_max(n)) EXIT
       kproc = kproc + 1
       type_min(n) = new_cell_min3(kproc)
-    ENDDO
+    END DO
 
     ! Create array of recvtypes
 
     DO i = 1,nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 3
     type_min(n) = new_min(n)
@@ -1586,7 +1594,7 @@ CONTAINS
     DO kproc = 1, nprocs(n)-1
       IF (old_cell_min3(kproc) <= new_min(n) &
           .AND. old_cell_max3(kproc) >= new_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = kproc - 1
@@ -1610,7 +1618,7 @@ CONTAINS
       DO jproc = 1, nprocs(n)-1
         IF (old_cell_min2(jproc) <= new_min(n) &
             .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= new_max(n))
         coord(cdim(n)) = jproc - 1
@@ -1634,7 +1642,7 @@ CONTAINS
         DO iproc = 1, nprocs(n)-1
           IF (old_cell_min1(iproc) <= new_min(n) &
               .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
-        ENDDO
+        END DO
 
         DO WHILE(type_max(n) <= new_max(n))
           coord(cdim(n)) = iproc - 1
@@ -1659,7 +1667,7 @@ CONTAINS
             ! Just copy the region rather than using MPI.
             DO i = 1,nd
               new_0(i) = start(i) - ng
-            ENDDO
+            END DO
             DO k = old_0(3),old_1(3)
               knew = new_0(3) + k - old_0(3)
               DO j = old_0(2),old_1(2)
@@ -1667,35 +1675,35 @@ CONTAINS
                 DO i = old_0(1),old_1(1)
                   inew = new_0(1) + i - old_0(1)
                   field_out(inew,jnew,knew) = field_in(i,j,k)
-                ENDDO
-              ENDDO
-            ENDDO
-          ENDIF
+                END DO
+              END DO
+            END DO
+          END IF
 
           n = 1
           IF (type_max(n) == new_max(n)) EXIT
           iproc = iproc + 1
           type_min(n) = old_cell_min1(iproc)
-        ENDDO
+        END DO
 
         n = 2
         IF (type_max(n) == new_max(n)) EXIT
         jproc = jproc + 1
         type_min(n) = old_cell_min2(jproc)
-      ENDDO
+      END DO
 
       n = 3
       IF (type_max(n) == new_max(n)) EXIT
       kproc = kproc + 1
       type_min(n) = old_cell_min3(kproc)
-    ENDDO
+    END DO
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
-    ENDDO
+    END DO
 
     DEALLOCATE(sendtypes)
     DEALLOCATE(recvtypes)
@@ -1738,7 +1746,7 @@ CONTAINS
 
     DO i = 1, nd
       our_coords(i) = coordinates(cdim(i))
-    ENDDO
+    END DO
 
     nprocs(1) = SIZE(old_cell_min1)
     nprocs(2) = SIZE(old_cell_min2)
@@ -1775,7 +1783,7 @@ CONTAINS
 
     DO i = 1,nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 3
     type_min(n) = old_min(n)
@@ -1786,7 +1794,7 @@ CONTAINS
     DO kproc = 1, nprocs(n)-1
       IF (new_cell_min3(kproc) <= old_min(n) &
           .AND. new_cell_max3(kproc) >= old_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= old_max(n))
       coord(cdim(n)) = kproc - 1
@@ -1810,7 +1818,7 @@ CONTAINS
       DO jproc = 1, nprocs(n)-1
         IF (new_cell_min2(jproc) <= old_min(n) &
             .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= old_max(n))
         coord(cdim(n)) = jproc - 1
@@ -1834,7 +1842,7 @@ CONTAINS
         DO iproc = 1, nprocs(n)-1
           IF (new_cell_min1(iproc) <= old_min(n) &
               .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
-        ENDDO
+        END DO
 
         DO WHILE(type_max(n) <= old_max(n))
           coord(cdim(n)) = iproc - 1
@@ -1860,32 +1868,32 @@ CONTAINS
             DO i = 1,nd
               old_0(i) = start(i) - ng
               old_1(i) = old_0(i) + n_local(i) - 1
-            ENDDO
-          ENDIF
+            END DO
+          END IF
 
           n = 1
           IF (type_max(n) == old_max(n)) EXIT
           iproc = iproc + 1
           type_min(n) = new_cell_min1(iproc)
-        ENDDO
+        END DO
 
         n = 2
         IF (type_max(n) == old_max(n)) EXIT
         jproc = jproc + 1
         type_min(n) = new_cell_min2(jproc)
-      ENDDO
+      END DO
 
       n = 3
       IF (type_max(n) == old_max(n)) EXIT
       kproc = kproc + 1
       type_min(n) = new_cell_min3(kproc)
-    ENDDO
+    END DO
 
     ! Create array of recvtypes
 
     DO i = 1,nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
-    ENDDO
+    END DO
 
     n = 3
     type_min(n) = new_min(n)
@@ -1896,7 +1904,7 @@ CONTAINS
     DO kproc = 1, nprocs(n)-1
       IF (old_cell_min3(kproc) <= new_min(n) &
           .AND. old_cell_max3(kproc) >= new_min(n)) EXIT
-    ENDDO
+    END DO
 
     DO WHILE(type_max(n) <= new_max(n))
       coord(cdim(n)) = kproc - 1
@@ -1920,7 +1928,7 @@ CONTAINS
       DO jproc = 1, nprocs(n)-1
         IF (old_cell_min2(jproc) <= new_min(n) &
             .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
-      ENDDO
+      END DO
 
       DO WHILE(type_max(n) <= new_max(n))
         coord(cdim(n)) = jproc - 1
@@ -1944,7 +1952,7 @@ CONTAINS
         DO iproc = 1, nprocs(n)-1
           IF (old_cell_min1(iproc) <= new_min(n) &
               .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
-        ENDDO
+        END DO
 
         DO WHILE(type_max(n) <= new_max(n))
           coord(cdim(n)) = iproc - 1
@@ -1969,7 +1977,7 @@ CONTAINS
             ! Just copy the region rather than using MPI.
             DO i = 1,nd
               new_0(i) = start(i) - ng
-            ENDDO
+            END DO
             DO k = old_0(3),old_1(3)
               knew = new_0(3) + k - old_0(3)
               DO j = old_0(2),old_1(2)
@@ -1977,35 +1985,35 @@ CONTAINS
                 DO i = old_0(1),old_1(1)
                   inew = new_0(1) + i - old_0(1)
                   field_out(inew,jnew,knew) = field_in(i,j,k)
-                ENDDO
-              ENDDO
-            ENDDO
-          ENDIF
+                END DO
+              END DO
+            END DO
+          END IF
 
           n = 1
           IF (type_max(n) == new_max(n)) EXIT
           iproc = iproc + 1
           type_min(n) = old_cell_min1(iproc)
-        ENDDO
+        END DO
 
         n = 2
         IF (type_max(n) == new_max(n)) EXIT
         jproc = jproc + 1
         type_min(n) = old_cell_min2(jproc)
-      ENDDO
+      END DO
 
       n = 3
       IF (type_max(n) == new_max(n)) EXIT
       kproc = kproc + 1
       type_min(n) = old_cell_min3(kproc)
-    ENDDO
+    END DO
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
     DO i = 0,nproc-1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
-    ENDDO
+    END DO
 
     DEALLOCATE(sendtypes)
     DEALLOCATE(recvtypes)
@@ -2030,12 +2038,16 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx) + 1 + ng
+#else
         cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Now have local densities, so add using MPI
     sz = SIZE(load)
@@ -2045,7 +2057,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + ny_global * nz_global
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + ny_global * nz_global
 
     DEALLOCATE(temp)
 
@@ -2069,12 +2082,16 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_grid_min, NOT y_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy) + 1 + ng
+#else
         cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Now have local densities, so add using MPI
     sz = SIZE(load)
@@ -2084,7 +2101,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + nx_global * nz_global
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + nx_global * nz_global
 
     DEALLOCATE(temp)
 
@@ -2095,7 +2113,7 @@ CONTAINS
   SUBROUTINE get_load_in_z(load)
 
     ! Calculate total load across the Z direction
-    ! Summed in the Y,Z directions
+    ! Summed in the X,Y directions
 
     INTEGER(i8), DIMENSION(:), INTENT(OUT) :: load
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: temp
@@ -2108,12 +2126,16 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so z_grid_min, NOT z_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos(3) - z_grid_min) / dz) + 1 + ng
+#else
         cell = FLOOR((current%part_pos(3) - z_grid_min) / dz + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     ! Now have local densities, so add using MPI
     sz = SIZE(load)
@@ -2123,7 +2145,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + nx_global * ny_global
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + nx_global * ny_global
 
     DEALLOCATE(temp)
 
@@ -2136,7 +2159,7 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(1-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
@@ -2145,7 +2168,7 @@ CONTAINS
     sz = SIZE(load) - 2 * ng
     maxs = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
+    load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
     proc = 1
     total = 0
@@ -2155,7 +2178,7 @@ CONTAINS
       IF (nextra > 0) THEN
         nextra = nextra - 1
         CYCLE
-      ENDIF
+      END IF
       total_old = total
       total = total + load(idim)
       IF (total >= load_per_proc_ideal) THEN
@@ -2165,19 +2188,21 @@ CONTAINS
           maxs(proc) = idim - 1
         ELSE
           maxs(proc) = idim
-        ENDIF
+        END IF
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
         nextra = old - maxs(proc) + ng
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
-        ENDIF
+        END IF
         proc = proc + 1
         IF (proc == nproc) EXIT
         total = 0
         old = maxs(proc-1)
-      ENDIF
-    ENDDO
+        load_per_proc_ideal = FLOOR(REAL(SUM(load(MIN(idim+1,sz):)), num) &
+            / (nproc - proc + 1) + 0.5d0, i8)
+      END IF
+    END DO
     maxs(nproc) = sz
 
     ! Sanity check. Must be one cell of separation between each endpoint.
@@ -2186,24 +2211,24 @@ CONTAINS
     DO proc = nproc-1, 1, -1
       IF (old - maxs(proc) < ng) THEN
         maxs(proc) = old - ng
-      ENDIF
+      END IF
       old = maxs(proc)
-    ENDDO
+    END DO
 
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
       IF (maxs(proc) - old < ng) THEN
         maxs(proc) = old + ng
-      ENDIF
+      END IF
       old = maxs(proc)
-    ENDDO
+    END DO
 
     ! Set mins
     mins(1) = 1
     DO proc = 2, nproc
       mins(proc) = maxs(proc-1) + 1
-    ENDDO
+    END DO
 
   END SUBROUTINE calculate_breaks
 
@@ -2229,56 +2254,56 @@ CONTAINS
         minpos = x_grid_mins(iproc) - dx * (0.5_num + png)
       ELSE
         minpos = x_grid_mins(iproc) - dx * 0.5_num
-      ENDIF
+      END IF
       IF (iproc == nprocx - 1) THEN
         maxpos = x_grid_maxs(iproc) + dx * (0.5_num + png)
       ELSE
         maxpos = x_grid_maxs(iproc) + dx * 0.5_num
-      ENDIF
+      END IF
       IF (part%part_pos(1) >= minpos .AND. part%part_pos(1) < maxpos) THEN
         coords(c_ndims) = iproc
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DO iproc = 0, nprocy - 1
       IF (iproc == 0) THEN
         minpos = y_grid_mins(iproc) - dy * (0.5_num + png)
       ELSE
         minpos = y_grid_mins(iproc) - dy * 0.5_num
-      ENDIF
+      END IF
       IF (iproc == nprocy - 1) THEN
         maxpos = y_grid_maxs(iproc) + dy * (0.5_num + png)
       ELSE
         maxpos = y_grid_maxs(iproc) + dy * 0.5_num
-      ENDIF
+      END IF
       IF (part%part_pos(2) >= minpos .AND. part%part_pos(2) < maxpos) THEN
         coords(c_ndims-1) = iproc
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DO iproc = 0, nprocz - 1
       IF (iproc == 0) THEN
         minpos = z_grid_mins(iproc) - dz * (0.5_num + png)
       ELSE
         minpos = z_grid_mins(iproc) - dz * 0.5_num
-      ENDIF
+      END IF
       IF (iproc == nprocz - 1) THEN
         maxpos = z_grid_maxs(iproc) + dz * (0.5_num + png)
       ELSE
         maxpos = z_grid_maxs(iproc) + dz * 0.5_num
-      ENDIF
+      END IF
       IF (part%part_pos(3) >= minpos .AND. part%part_pos(3) < maxpos) THEN
         coords(c_ndims-2) = iproc
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (MINVAL(coords) < 0) THEN
       WRITE(*,*) 'UNLOCATABLE PARTICLE', coords
       RETURN
-    ENDIF
+    END IF
     CALL MPI_CART_RANK(comm, coords, get_particle_processor, errcode)
     ! IF (get_particle_processor /= rank) PRINT *,
 
@@ -2306,7 +2331,7 @@ CONTAINS
       DO iproc = 0, nproc - 1
         CALL create_empty_partlist(pointers_send(iproc))
         CALL create_empty_partlist(pointers_recv(iproc))
-      ENDDO
+      END DO
 
       DO WHILE(ASSOCIATED(current))
         next => current%next
@@ -2315,7 +2340,7 @@ CONTAINS
           PRINT *, 'Unlocatable particle on processor', rank, current%part_pos
           CALL abort_code(c_err_bad_value)
           STOP
-        ENDIF
+        END IF
 #ifdef PARTICLE_DEBUG
         current%processor = part_proc
 #endif
@@ -2323,13 +2348,13 @@ CONTAINS
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, current)
           CALL add_particle_to_partlist(pointers_send(part_proc), current)
-        ENDIF
+        END IF
         current => next
-      ENDDO
+      END DO
 
       DO iproc = 0, nproc - 1
         sendcounts(iproc) = pointers_send(iproc)%count
-      ENDDO
+      END DO
 
       CALL MPI_ALLTOALL(sendcounts, 1, MPI_INTEGER8, recvcounts, 1, &
           MPI_INTEGER8, comm, errcode)
@@ -2339,12 +2364,134 @@ CONTAINS
       DO iproc = 0, nproc - 1
         CALL append_partlist(species_list(ispecies)%attached_list, &
             pointers_recv(iproc))
-      ENDDO
-    ENDDO
+      END DO
+    END DO
 
     DEALLOCATE(sendcounts, recvcounts)
     DEALLOCATE(pointers_send, pointers_recv)
 
   END SUBROUTINE distribute_particles
+
+
+
+  SUBROUTINE create_npart_per_cell(npart_per_cell)
+
+    INTEGER(i8), ALLOCATABLE, INTENT(OUT) :: npart_per_cell(:,:,:)
+    INTEGER :: ispecies
+    INTEGER :: cell_x, cell_y, cell_z
+    TYPE(particle), POINTER :: current, next
+    INTEGER :: i0, i1
+
+    i0 = 1 - ng
+    IF (use_field_ionisation) i0 = -ng
+    i1 = 1 - i0
+
+    ALLOCATE(npart_per_cell(i0:nx+i1,i0:ny+i1,i0:nz+i1))
+    npart_per_cell(:,:,:) = 0
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        next => current%next
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz) + 1
+#else
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
+        cell_z = FLOOR((current%part_pos(3) - z_grid_min_local) / dz + 1.5_num)
+#endif
+        npart_per_cell(cell_x,cell_y,cell_z) = &
+            npart_per_cell(cell_x,cell_y,cell_z) + 1
+
+        current => next
+      END DO
+    END DO
+
+  END SUBROUTINE create_npart_per_cell
+
+
+
+  SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final)
+
+    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    REAL(num), ALLOCATABLE :: load_per_cpu(:,:,:)
+    INTEGER(i8), ALLOCATABLE :: npart_per_cell(:,:,:)
+    INTEGER(i8) :: npart_local
+    INTEGER :: i, i0, i1, ix
+    INTEGER :: j, j0, j1, iy
+    INTEGER :: k, k0, k1, iz
+    INTEGER :: ierr
+    REAL(num) :: load_local, load_sum, load_max
+
+    CALL create_npart_per_cell(npart_per_cell)
+
+    IF (use_injectors) THEN
+      npart_local = SUM(npart_per_cell(1:nx,1:ny,1:nz))
+      load_local = REAL(push_per_field * npart_local + nx * ny * nz, num)
+
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, ierr)
+      CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, ierr)
+
+      load_av = load_sum / nproc
+
+      balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+    END IF
+
+    ALLOCATE(load_per_cpu(nprocx,nprocy,nprocz))
+    load_per_cpu = 0.0_num
+
+    DO k = 1, nprocz
+      k0 = new_cell_z_min(k) - nz_global_min + 1
+      k1 = new_cell_z_max(k) - nz_global_min + 1
+
+      IF (k1 < 1 .OR. k0 > nz) CYCLE
+
+      k0 = MAX(k0, 1)
+      k1 = MIN(k1, nz)
+
+      DO j = 1, nprocy
+        j0 = new_cell_y_min(j) - ny_global_min + 1
+        j1 = new_cell_y_max(j) - ny_global_min + 1
+
+        IF (j1 < 1 .OR. j0 > ny) CYCLE
+
+        j0 = MAX(j0, 1)
+        j1 = MIN(j1, ny)
+
+        DO i = 1, nprocx
+          i0 = new_cell_x_min(i) - nx_global_min + 1
+          i1 = new_cell_x_max(i) - nx_global_min + 1
+
+          IF (i1 < 1 .OR. i0 > nx) CYCLE
+
+          i0 = MAX(i0, 1)
+          i1 = MIN(i1, nx)
+
+          DO iz = k0, k1
+          DO iy = j0, j1
+          DO ix = i0, i1
+            load_per_cpu(i,j,k) = load_per_cpu(i,j,k) &
+                + REAL(push_per_field * npart_per_cell(ix,iy,iz) + 1, num)
+          END DO
+          END DO
+          END DO
+        END DO
+      END DO
+    END DO
+
+    DEALLOCATE(npart_per_cell)
+
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy * nprocz, &
+                       mpireal, MPI_SUM, comm, ierr)
+
+    load_max = MAXVAL(load_per_cpu)
+
+    balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+
+    DEALLOCATE(load_per_cpu)
+
+  END SUBROUTINE calculate_new_load_imbalance
 
 END MODULE balance

@@ -103,22 +103,22 @@ CONTAINS
           .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
         elementselected = loop
         EXIT
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     IF (elementselected == 0) RETURN
 
     IF (boundary_block_done(elementselected)) THEN
       errcode = c_err_preset_element
       RETURN
-    ENDIF
+    END IF
     boundary_block_done(elementselected) = .TRUE.
     errcode = c_err_none
 
     IF (elementselected <= nbase) THEN
       boundary_block_done(elementselected+  nbase) = .TRUE.
       boundary_block_done(elementselected+2*nbase) = .TRUE.
-    ENDIF
+    END IF
 
     SELECT CASE (elementselected)
     CASE(1)
@@ -169,8 +169,8 @@ CONTAINS
           .AND. .NOT.boundary_block_done(idx+2*nbase)) THEN
         boundary_block_done(idx+  nbase) = .TRUE.
         boundary_block_done(idx+2*nbase) = .TRUE.
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     DO idx = 1, boundary_block_elements - 4
       IF (.NOT. boundary_block_done(idx)) THEN
@@ -182,11 +182,11 @@ CONTAINS
             WRITE(io,*) 'Required boundary block element "' &
                 // TRIM(ADJUSTL(boundary_block_name(idx))) // '" absent.'
             WRITE(io,*) 'Please create this entry in the input deck'
-          ENDDO
-        ENDIF
+          END DO
+        END IF
         errcode = c_err_missing_elements
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Sanity check on periodic boundaries
     error = .FALSE.
@@ -199,7 +199,7 @@ CONTAINS
           .AND. bc_particle(2*idx) /= c_bc_periodic) error = .TRUE.
       IF (bc_particle(2*idx-1) /= c_bc_periodic &
           .AND. bc_particle(2*idx) == c_bc_periodic) error = .TRUE.
-    ENDDO
+    END DO
 
     IF (error) THEN
       IF (rank == 0) THEN
@@ -209,10 +209,10 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Periodic boundaries must be specified on both sides', &
               ' of the domain.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       CALL abort_code(c_err_bad_value)
-    ENDIF
+    END IF
 
   END FUNCTION boundary_block_check
 
