@@ -39,7 +39,10 @@ def plotdump(sdffile, key, ax):
 
 def plotdump2d(sdffile, key, ax):
     data = sdf.read(sdffile, dict=True)
-    array = data[key].data[:, :, 0]
+    if len(data[key].dims) == 3:
+        array = data[key].data[:, :, 0]
+    else:
+        array = data[key].data[:, :]
     ax.imshow(array)
     ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
 
