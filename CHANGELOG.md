@@ -10,7 +10,7 @@
  * Changed FORTRAN standard to 2003
 
 
-## v4.12.0 to v4.14.0
+## v4.12.0 to v4.14.0 (2018-08-13)
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
    compiling with the flag -DHC_PUSH
