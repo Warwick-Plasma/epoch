@@ -114,6 +114,10 @@ CONTAINS
 
     bc_x_min_after_move = bc_field(c_bd_x_min)
     bc_x_max_after_move = bc_field(c_bd_x_max)
+    bc_y_min_after_move = bc_field(c_bd_y_min)
+    bc_y_max_after_move = bc_field(c_bd_y_max)
+    bc_z_min_after_move = bc_field(c_bd_z_min)
+    bc_z_max_after_move = bc_field(c_bd_z_max)
 
   END SUBROUTINE window_block_start
 
@@ -175,6 +179,30 @@ CONTAINS
     IF (str_cmp(element, 'bc_x_max_after_move') &
         .OR. str_cmp(element, 'xbc_right_after_move')) THEN
       bc_x_max_after_move = as_bc_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_y_min_after_move') &
+        .OR. str_cmp(element, 'ybc_down_after_move')) THEN
+      bc_y_min_after_move = as_bc_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_y_max_after_move') &
+        .OR. str_cmp(element, 'ybc_up_after_move')) THEN
+      bc_y_max_after_move = as_bc_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_z_min_after_move') &
+        .OR. str_cmp(element, 'zbc_back_after_move')) THEN
+      bc_z_min_after_move = as_bc_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_z_max_after_move') &
+        .OR. str_cmp(element, 'zbc_front_after_move')) THEN
+      bc_z_max_after_move = as_bc_print(value, element, errcode)
       RETURN
     END IF
 

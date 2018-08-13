@@ -50,6 +50,9 @@
 
  * Added balance_first parameter to the input deck
 
+ * Added y and z versions of the bc_x_{min,max}_after_move parameters to
+   the input deck
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
