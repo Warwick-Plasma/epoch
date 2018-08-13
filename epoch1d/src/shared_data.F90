@@ -137,13 +137,6 @@ MODULE constants
   INTEGER, PARAMETER :: c_do_full = 0
   INTEGER, PARAMETER :: c_do_decomposed = 1
 
-  ! Load balance codes
-  INTEGER, PARAMETER :: c_lb_x = 1
-  INTEGER, PARAMETER :: c_lb_y = 2
-  INTEGER, PARAMETER :: c_lb_z = 4
-  INTEGER, PARAMETER :: c_lb_all = c_lb_x + c_lb_y + c_lb_z
-  INTEGER, PARAMETER :: c_lb_auto = c_lb_all + 1
-
   ! Taken from http://physics.nist.gov/cuu/Constants (05/07/2012)
   REAL(num), PARAMETER :: pi = 3.141592653589793238462643383279503_num
   REAL(num), PARAMETER :: q0 = 1.602176565e-19_num ! C (+/- 3.5e-27)
@@ -965,6 +958,7 @@ MODULE shared_data
   LOGICAL :: use_particle_lists = .FALSE.
   LOGICAL :: use_particle_count_update = .FALSE.
   LOGICAL :: use_accurate_n_zeros = .FALSE.
+  LOGICAL :: use_injectors = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
@@ -1066,8 +1060,9 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! domain and loadbalancing
   !----------------------------------------------------------------------------
-  LOGICAL :: use_balance
+  LOGICAL :: use_balance, balance_first
   REAL(num) :: dlb_threshold
+  INTEGER :: dlb_maximum_interval, dlb_force_interval
   INTEGER(i8), PARAMETER :: npart_per_it = 1000000
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_global
   REAL(num), DIMENSION(:), ALLOCATABLE :: xb_global
@@ -1077,7 +1072,6 @@ MODULE shared_data
   INTEGER, DIMENSION(:), ALLOCATABLE :: old_x_max
   INTEGER :: nx_global_min, nx_global_max
   INTEGER :: n_global_min(c_ndims), n_global_max(c_ndims)
-  INTEGER :: balance_mode
   LOGICAL :: debug_mode
 
   !----------------------------------------------------------------------------
