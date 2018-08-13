@@ -28,7 +28,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   LOGICAL :: overriding
-  INTEGER, PARAMETER :: maximum_check_frequency = 200
+  REAL(num) :: load_av
 
 CONTAINS
 
@@ -38,20 +38,18 @@ CONTAINS
     ! calculates where to split the domain and calls other subroutines to
     ! actually rearrange the fields and particles onto the new processors
 
-    ! This is really, really hard to do properly
-    ! So cheat
-
     LOGICAL, INTENT(IN) :: over_ride
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
-    REAL(num) :: balance_frac, balance_frac_final, balance_improvement, npart_av
-    REAL(num) :: balance_frac_x, balance_frac_y
-    INTEGER(i8) :: min_x, max_x, min_y, max_y
-    INTEGER(i8) :: npart_local, sum_npart, max_npart, wk
-    INTEGER :: iproc
+    REAL(num) :: balance_frac, balance_frac_final, balance_improvement
+    REAL(num) :: load_local, load_sum, load_max
+    INTEGER(i8) :: npart_local
     INTEGER, SAVE :: balance_check_frequency = 1
-    INTEGER, SAVE :: last_check = -1
-    INTEGER, DIMENSION(c_ndims,2) :: domain
+    INTEGER, SAVE :: last_check = -HUGE(1) / 2
+    INTEGER, SAVE :: last_full_check = -HUGE(1) / 2
+    LOGICAL, SAVE :: first_flag = .TRUE.
+    LOGICAL :: first_message, restarting, full_check, attempt_balance
+    LOGICAL :: use_redistribute_domain, use_redistribute_particles
 #ifdef PARTICLE_DEBUG
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
@@ -59,32 +57,61 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    IF (step - last_check < balance_check_frequency) RETURN
 
-    ! This parameter allows selecting the mode of the autobalancing between
-    ! leftsweep, rightsweep, auto(best of leftsweep and rightsweep) or both
-    balance_mode = c_lb_all
+    full_check = over_ride
+    IF (step - last_full_check < dlb_force_interval) THEN
+      IF (step - last_check < balance_check_frequency) RETURN
+    ELSE
+      full_check = .TRUE.
+    END IF
+
+    restarting = .FALSE.
+    use_redistribute_domain = .FALSE.
+    attempt_balance = use_balance
+
+    IF (first_flag) THEN
+      attempt_balance = balance_first
+      IF (use_exact_restart) attempt_balance = .FALSE.
+      first_flag = .FALSE.
+      first_message = .TRUE.
+      use_redistribute_particles = .TRUE.
+      IF (ic_from_restart) restarting = .TRUE.
+    ELSE
+      first_message = .FALSE.
+      use_redistribute_particles = .FALSE.
+    END IF
+    last_check = step
 
     ! count particles
     npart_local = get_total_local_particles()
+    load_local = REAL(push_per_field * npart_local + nx * ny, num)
+
+    CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, errcode)
+    CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, errcode)
+
+    load_av = load_sum / nproc
+
+    balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
 
     ! The over_ride flag allows the code to force a load balancing sweep
     ! at t = 0
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (.NOT. over_ride .AND. max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
-    balance_frac = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-    IF (.NOT. over_ride .AND. balance_frac > dlb_threshold) RETURN
-
-    last_check = step
+    IF (.NOT. full_check .AND. balance_frac > dlb_threshold) THEN
+      balance_check_frequency = &
+          MIN(balance_check_frequency * 2, dlb_maximum_interval)
+      IF (rank == 0) THEN
+        PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+              &'', threshold:'', F6.3, '', next: '', i9)', &
+              balance_frac, dlb_threshold, &
+              MIN(step + balance_check_frequency, &
+                  last_full_check + dlb_force_interval)
+      END IF
+      RETURN
+    END IF
 
     IF (timer_collect) CALL timer_start(c_timer_balance)
 
-    IF (.NOT.use_exact_restart) THEN
-      overriding = over_ride
+    IF (attempt_balance) THEN
+      overriding = full_check
 
       ALLOCATE(new_cell_x_min(nprocx), new_cell_x_max(nprocx))
       ALLOCATE(new_cell_y_min(nprocy), new_cell_y_max(nprocy))
@@ -96,137 +123,74 @@ CONTAINS
 
       ! Sweep in X
       IF (nprocx > 1) THEN
-        IF (IAND(balance_mode, c_lb_x) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in X
-          ALLOCATE(load_x(nx_global + 2 * ng))
-          CALL get_load_in_x(load_x)
-          CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
-        END IF
+        ! Rebalancing in X
+        ALLOCATE(load_x(nx_global + 2 * ng))
+        CALL get_load_in_x(load_x)
+        CALL calculate_breaks(load_x, nprocx, new_cell_x_min, new_cell_x_max)
+        DEALLOCATE(load_x)
       END IF
 
       ! Sweep in Y
       IF (nprocy > 1) THEN
-        IF (IAND(balance_mode, c_lb_y) /= 0 &
-            .OR. IAND(balance_mode, c_lb_auto) /= 0) THEN
-          ! Rebalancing in Y
-          ALLOCATE(load_y(ny_global + 2 * ng))
-          CALL get_load_in_y(load_y)
-          CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
-        END IF
+        ! Rebalancing in Y
+        ALLOCATE(load_y(ny_global + 2 * ng))
+        CALL get_load_in_y(load_y)
+        CALL calculate_breaks(load_y, nprocy, new_cell_y_min, new_cell_y_max)
+        DEALLOCATE(load_y)
       END IF
 
-      ! In the autobalancer then determine whether to balance in X or Y
-      ! Is this worth keeping?
-      IF (IAND(balance_mode, c_lb_auto) /= 0 ) THEN
+      IF (.NOT.restarting) THEN
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+        balance_improvement = (balance_frac_final - balance_frac) / balance_frac
 
-        ! Code is auto load balancing
-        max_x = 0
-        min_x = npart_global
-        DO iproc = 1, nprocx
-          wk = SUM(load_x(new_cell_x_min(iproc):new_cell_x_max(iproc)))
-          IF (wk > max_x) max_x = wk
-          IF (wk < min_x) min_x = wk
-        END DO
+        last_full_check = step
 
-        max_y = 0
-        min_y = npart_global
-        DO iproc = 1, nprocy
-          wk = SUM(load_y(new_cell_y_min(iproc):new_cell_y_max(iproc)))
-          IF (wk > max_y) max_y = wk
-          IF (wk < min_y) min_y = wk
-        END DO
-
-        balance_frac_x = REAL(min_x, num) / REAL(max_x, num)
-        balance_frac_y = REAL(min_y, num) / REAL(max_y, num)
-
-        IF (balance_frac_x < balance_frac_y) THEN
-          new_cell_x_min = cell_x_min
-          new_cell_x_max = cell_x_max
+        ! Consider load balancing a success if the load imbalance improved by
+        ! more than 5 percent
+        IF (balance_improvement > 0.05_num) THEN
+          use_redistribute_domain = .TRUE.
+          use_redistribute_particles = .TRUE.
+          first_message = .FALSE.
+          balance_check_frequency = 1
+          IF (rank == 0) THEN
+            PRINT'(''Redistributing.          Balance:'', F6.3, &
+                  &'',     after:'', F6.3, '', next: '', i9)', &
+                  balance_frac, balance_frac_final, &
+                  MIN(step + balance_check_frequency, &
+                      last_full_check + dlb_force_interval)
+          END IF
         ELSE
-          new_cell_y_min = cell_y_min
-          new_cell_y_max = cell_y_max
+          IF (.NOT.first_message) THEN
+            balance_check_frequency = &
+                MIN(balance_check_frequency * 2, dlb_maximum_interval)
+            IF (rank == 0) THEN
+              PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                    &'',     after:'', F6.3, '', next: '', i9)', &
+                    balance_frac, balance_frac_final, &
+                    MIN(step + balance_check_frequency, &
+                        last_full_check + dlb_force_interval)
+            END IF
+          END IF
         END IF
-
       END IF
+    END IF
 
-      IF (ALLOCATED(load_x)) DEALLOCATE(load_x)
-      IF (ALLOCATED(load_y)) DEALLOCATE(load_y)
+    IF (use_redistribute_domain) THEN
+      CALL redistribute_domain
+    END IF
 
-      ! Now need to calculate the start and end points for the new domain on
-      ! the current processor
-
-      domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
-      domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
-
-      ! Redistribute the field variables
-      CALL redistribute_fields(domain)
-
-      ! Copy the new lengths into the permanent variables
-      cell_x_min = new_cell_x_min
-      cell_x_max = new_cell_x_max
-      cell_y_min = new_cell_y_min
-      cell_y_max = new_cell_y_max
-
-      ! Set the new nx, ny
-      nx_global_min = cell_x_min(x_coords+1)
-      nx_global_max = cell_x_max(x_coords+1)
-      n_global_min(1) = nx_global_min
-      n_global_max(1) = nx_global_max
-
-      ny_global_min = cell_y_min(y_coords+1)
-      ny_global_max = cell_y_max(y_coords+1)
-      n_global_min(2) = ny_global_min
-      n_global_max(2) = ny_global_max
-
-      nx = nx_global_max - nx_global_min + 1
-      ny = ny_global_max - ny_global_min + 1
-
+    IF (ALLOCATED(new_cell_x_min)) THEN
       DEALLOCATE(new_cell_x_min, new_cell_x_max)
       DEALLOCATE(new_cell_y_min, new_cell_y_max)
-
-      ! Do X, Y arrays separately because we already have global copies
-      DEALLOCATE(x, y)
-      ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng))
-      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-      y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
-
-      DEALLOCATE(xb, yb)
-      ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng))
-      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-      yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
-
-      ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-      DO iproc = 0, nprocx - 1
-        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      END DO
-      ! Same for y
-      DO iproc = 0, nprocy - 1
-        y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
-        y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
-      END DO
-
-      ! Set the lengths of the current domain so that the particle balancer
-      ! works properly
-      x_grid_min_local = x_grid_mins(x_coords)
-      x_grid_max_local = x_grid_maxs(x_coords)
-      y_grid_min_local = y_grid_mins(y_coords)
-      y_grid_max_local = y_grid_maxs(y_coords)
-
-      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-      y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
-      y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
     END IF
 
     ! Redistribute the particles onto their new processors
-    CALL distribute_particles
+    IF (use_redistribute_particles) CALL distribute_particles
 
     ! If running with particle debugging then set the t = 0 processor if
     ! over_ride = true
 #ifdef PARTICLE_DEBUG
-    IF (over_ride) THEN
+    IF (full_check) THEN
       DO ispecies = 1, n_species
         current => species_list(ispecies)%attached_list%head
         DO WHILE(ASSOCIATED(current))
@@ -237,30 +201,22 @@ CONTAINS
     END IF
 #endif
 
-    npart_local = get_total_local_particles()
+    IF (first_message) THEN
+      npart_local = get_total_local_particles()
+      load_local = REAL(push_per_field * npart_local + nx * ny, num)
 
-    CALL MPI_ALLREDUCE(npart_local, max_npart, 1, MPI_INTEGER8, MPI_MAX, &
-        comm, errcode)
-    IF (max_npart <= 0) RETURN
-    CALL MPI_ALLREDUCE(npart_local, sum_npart, 1, MPI_INTEGER8, MPI_SUM, &
-        comm, errcode)
-    npart_av = REAL(sum_npart, num) / nproc
-    balance_frac_final = (npart_av + SQRT(npart_av)) / REAL(max_npart, num)
-    balance_improvement = (balance_frac_final - balance_frac) / balance_frac
-    ! Consider load balancing a success if the load imbalance improved by
-    ! more than 5 percent
-    IF (balance_improvement > 0.05_num) THEN
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, &
+          comm, errcode)
+
+      balance_frac_final = (load_av + SQRT(load_av)) &
+          / (load_max + SQRT(load_max))
       balance_check_frequency = 1
-    ELSE
-      balance_check_frequency = &
-          MIN(balance_check_frequency * 2, maximum_check_frequency)
-    END IF
 
-    IF (rank == 0) THEN
-      PRINT'(''Initial load imbalance:'', F6.3, '', final:'', F6.3, &
-          &'', improvement:'', F6.3, '', next: '', i8)', &
-          balance_frac, balance_frac_final, balance_improvement, &
-          (step + balance_check_frequency)
+      IF (rank == 0) THEN
+        PRINT'(''Redistributing.          Balance:'', F6.3, &
+              &'',     next: '', i9)', &
+              balance_frac_final, (step + balance_check_frequency)
+      END IF
     END IF
 
     use_exact_restart = .FALSE.
@@ -268,6 +224,80 @@ CONTAINS
     IF (timer_collect) CALL timer_stop(c_timer_balance)
 
   END SUBROUTINE balance_workload
+
+
+
+  SUBROUTINE redistribute_domain
+
+    INTEGER, DIMENSION(c_ndims,2) :: domain
+    INTEGER :: iproc
+
+    IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
+
+    ! Now need to calculate the start and end points for the new domain on
+    ! the current processor
+
+    domain(1,:) = (/new_cell_x_min(x_coords+1), new_cell_x_max(x_coords+1)/)
+    domain(2,:) = (/new_cell_y_min(y_coords+1), new_cell_y_max(y_coords+1)/)
+
+    ! Redistribute the field variables
+    CALL redistribute_fields(domain)
+
+    ! Copy the new lengths into the permanent variables
+    cell_x_min = new_cell_x_min
+    cell_x_max = new_cell_x_max
+    cell_y_min = new_cell_y_min
+    cell_y_max = new_cell_y_max
+
+    ! Set the new nx, ny
+    nx_global_min = cell_x_min(x_coords+1)
+    nx_global_max = cell_x_max(x_coords+1)
+    n_global_min(1) = nx_global_min
+    n_global_max(1) = nx_global_max
+
+    ny_global_min = cell_y_min(y_coords+1)
+    ny_global_max = cell_y_max(y_coords+1)
+    n_global_min(2) = ny_global_min
+    n_global_max(2) = ny_global_max
+
+    nx = nx_global_max - nx_global_min + 1
+    ny = ny_global_max - ny_global_min + 1
+
+    ! Do X, Y arrays separately because we already have global copies
+    DEALLOCATE(x, y)
+    ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng))
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
+
+    DEALLOCATE(xb, yb)
+    ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng))
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
+
+    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
+    DO iproc = 0, nprocx - 1
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    END DO
+    ! Same for y
+    DO iproc = 0, nprocy - 1
+      y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
+      y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
+    END DO
+
+    ! Set the lengths of the current domain so that the particle balancer
+    ! works properly
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+    y_grid_min_local = y_grid_mins(y_coords)
+    y_grid_max_local = y_grid_maxs(y_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
+    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
+
+  END SUBROUTINE redistribute_domain
 
 
 
@@ -1534,9 +1564,13 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so x_grid_min, NOT x_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos(1) - x_grid_min) / dx) + 1 + ng
+#else
         cell = FLOOR((current%part_pos(1) - x_grid_min) / dx + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
       END DO
     END DO
@@ -1549,7 +1583,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + ny_global
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + ny_global
 
     DEALLOCATE(temp)
 
@@ -1573,9 +1608,13 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         ! Want global position, so y_grid_min, NOT y_grid_min_local
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell = FLOOR((current%part_pos(2) - y_grid_min) / dy) + 1 + ng
+#else
         cell = FLOOR((current%part_pos(2) - y_grid_min) / dy + 1.5_num) + ng
-
+#endif
         load(cell) = load(cell) + 1
+
         current => current%next
       END DO
     END DO
@@ -1588,7 +1627,8 @@ CONTAINS
     ! Adjust the load of pushing one particle relative to the load
     ! of updating one field cell, then add on the field load.
     ! The push_per_field factor will be updated automatically in future.
-    load = push_per_field * temp + nx_global
+    load = push_per_field * temp
+    load(ng+1:sz-ng) = load(ng+1:sz-ng) + nx_global
 
     DEALLOCATE(temp)
 
@@ -1601,7 +1641,7 @@ CONTAINS
     ! This subroutine calculates the places in a given load profile to split
     ! The domain to give the most even subdivision possible
 
-    INTEGER(i8), INTENT(IN), DIMENSION(-ng:) :: load
+    INTEGER(i8), INTENT(IN), DIMENSION(1-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra
@@ -1610,7 +1650,7 @@ CONTAINS
     sz = SIZE(load) - 2 * ng
     maxs = sz
 
-    load_per_proc_ideal = FLOOR((SUM(load) + 0.5d0) / nproc, i8)
+    load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
     proc = 1
     total = 0
@@ -1641,6 +1681,8 @@ CONTAINS
         IF (proc == nproc) EXIT
         total = 0
         old = maxs(proc-1)
+        load_per_proc_ideal = FLOOR(REAL(SUM(load(MIN(idim+1,sz):)), num) &
+            / (nproc - proc + 1) + 0.5d0, i8)
       END IF
     END DO
     maxs(nproc) = sz
@@ -1794,5 +1836,111 @@ CONTAINS
     DEALLOCATE(pointers_send, pointers_recv)
 
   END SUBROUTINE distribute_particles
+
+
+
+  SUBROUTINE create_npart_per_cell(npart_per_cell)
+
+    INTEGER(i8), ALLOCATABLE, INTENT(OUT) :: npart_per_cell(:,:)
+    INTEGER :: ispecies
+    INTEGER :: cell_x, cell_y
+    TYPE(particle), POINTER :: current, next
+    INTEGER :: i0, i1
+
+    i0 = 1 - ng
+    IF (use_field_ionisation) i0 = -ng
+    i1 = 1 - i0
+
+    ALLOCATE(npart_per_cell(i0:nx+i1,i0:ny+i1))
+    npart_per_cell(:,:) = 0
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        next => current%next
+#ifdef PARTICLE_SHAPE_TOPHAT
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
+#else
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
+#endif
+        npart_per_cell(cell_x,cell_y) = npart_per_cell(cell_x,cell_y) + 1
+
+        current => next
+      END DO
+    END DO
+
+  END SUBROUTINE create_npart_per_cell
+
+
+
+  SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final)
+
+    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    REAL(num), ALLOCATABLE :: load_per_cpu(:,:)
+    INTEGER(i8), ALLOCATABLE :: npart_per_cell(:,:)
+    INTEGER(i8) :: npart_local
+    INTEGER :: i, i0, i1, ix
+    INTEGER :: j, j0, j1, iy
+    INTEGER :: ierr
+    REAL(num) :: load_local, load_sum, load_max
+
+    CALL create_npart_per_cell(npart_per_cell)
+
+    IF (use_injectors) THEN
+      npart_local = SUM(npart_per_cell(1:nx,1:ny))
+      load_local = REAL(push_per_field * npart_local + nx * ny, num)
+
+      CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, ierr)
+      CALL MPI_ALLREDUCE(load_local, load_sum, 1, mpireal, MPI_SUM, comm, ierr)
+
+      load_av = load_sum / nproc
+
+      balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+    END IF
+
+    ALLOCATE(load_per_cpu(nprocx,nprocy))
+    load_per_cpu = 0.0_num
+
+    DO j = 1, nprocy
+      j0 = new_cell_y_min(j) - ny_global_min + 1
+      j1 = new_cell_y_max(j) - ny_global_min + 1
+
+      IF (j1 < 1 .OR. j0 > ny) CYCLE
+
+      j0 = MAX(j0, 1)
+      j1 = MIN(j1, ny)
+
+      DO i = 1, nprocx
+        i0 = new_cell_x_min(i) - nx_global_min + 1
+        i1 = new_cell_x_max(i) - nx_global_min + 1
+
+        IF (i1 < 1 .OR. i0 > nx) CYCLE
+
+        i0 = MAX(i0, 1)
+        i1 = MIN(i1, nx)
+
+        DO iy = j0, j1
+        DO ix = i0, i1
+          load_per_cpu(i,j) = load_per_cpu(i,j) &
+              + REAL(push_per_field * npart_per_cell(ix,iy) + 1, num)
+        END DO
+        END DO
+      END DO
+    END DO
+
+    DEALLOCATE(npart_per_cell)
+
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy, &
+                       mpireal, MPI_SUM, comm, ierr)
+
+    load_max = MAXVAL(load_per_cpu)
+
+    balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
+
+    DEALLOCATE(load_per_cpu)
+
+  END SUBROUTINE calculate_new_load_imbalance
 
 END MODULE balance

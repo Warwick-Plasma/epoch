@@ -204,12 +204,15 @@ CONTAINS
     TYPE(injector_block), POINTER :: current
     INTEGER :: error, io, iu
 
+    use_injectors = .FALSE.
+
     errcode = c_err_none
     error = 0
     current => injector_x_min
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
+      IF (error == 0) use_injectors = .TRUE.
       current => current%next
     END DO
 
@@ -217,6 +220,7 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = IOR(error, 1)
       IF (.NOT. current%density_function%init) error = IOR(error, 2)
+      IF (error == 0) use_injectors = .TRUE.
       current => current%next
     END DO
 

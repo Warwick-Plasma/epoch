@@ -24,6 +24,20 @@
 
  * Omit redundant dimension in dist_fn output
 
+ * Modified load balance calculation so that a perfectly balanced problem has
+   a value of one
+
+ * Only redistribute the simulation if it would result in an improvement to
+   the load balance
+
+ * Improvements to the load balancing calculations
+
+ * Added dlb_maximum_interval parameter to the input deck
+
+ * Added dlb_force_interval parameter to the input deck
+
+ * Added balance_first parameter to the input deck
+
 
 ## v4.11.0 to v4.12.0 (2018-06-16)
 
