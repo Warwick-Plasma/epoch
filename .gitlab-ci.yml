@@ -15,6 +15,7 @@ test_ubuntu_gfortran:
     - tag
   script:
     - export COMPILER=gfortran
+    - export MPIPROCS=9
     - scripts/run-tests-epoch-all.sh
   tags:
     - ubuntu
