@@ -344,6 +344,8 @@ CONTAINS
       IF (time >= window_start_time .AND. time < window_stop_time) THEN
         bc_field(c_bd_x_min) = bc_x_min_after_move
         bc_field(c_bd_x_max) = bc_x_max_after_move
+        bc_field(c_bd_y_min) = bc_y_min_after_move
+        bc_field(c_bd_y_max) = bc_y_max_after_move
         CALL setup_boundaries
         IF (.NOT.ic_from_restart) window_shift_fraction = 0.0_num
         window_started = .TRUE.

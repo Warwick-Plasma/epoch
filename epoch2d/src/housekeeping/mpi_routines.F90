@@ -193,7 +193,8 @@ CONTAINS
       END DO
     END IF
 
-    IF (bc_field(c_bd_y_min) == c_bc_periodic) THEN
+    IF (bc_field(c_bd_y_min) == c_bc_periodic &
+        .OR. bc_y_min_after_move == c_bc_periodic) THEN
       periods(c_ndims-1) = .TRUE.
     ELSE
       DO idim = 1, n_species
