@@ -141,7 +141,7 @@ CONTAINS
 
     IF (str_cmp(element, 'window_v_x')) THEN
       window_expression = .TRUE.
-      IF (alloc) CALL deallocate_stack(window_v_x_stack)
+      IF (window_v_x_stack%init) CALL deallocate_stack(window_v_x_stack)
       CALL initialise_stack(window_v_x_stack)
       alloc = .TRUE.
       CALL tokenize(value, window_v_x_stack, errcode)
