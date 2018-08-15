@@ -128,7 +128,12 @@ CONTAINS
       DEALLOCATE(load_x, load_y)
 
       IF (.NOT.restarting) THEN
+        CALL create_npart_per_cell_array
+
         CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+
+        DEALLOCATE(npart_per_cell_array)
+
         balance_improvement = (balance_frac_final - balance_frac) / balance_frac
 
         last_full_check = step
@@ -1958,9 +1963,8 @@ CONTAINS
 
 
 
-  SUBROUTINE create_npart_per_cell(npart_per_cell)
+  SUBROUTINE create_npart_per_cell_array
 
-    INTEGER(i8), ALLOCATABLE, INTENT(OUT) :: npart_per_cell(:,:)
     INTEGER :: ispecies
     INTEGER :: cell_x, cell_y
     TYPE(particle), POINTER :: current, next
@@ -1970,8 +1974,9 @@ CONTAINS
     IF (use_field_ionisation) i0 = -ng
     i1 = 1 - i0
 
-    ALLOCATE(npart_per_cell(i0:nx+i1,i0:ny+i1))
-    npart_per_cell(:,:) = 0
+    IF (.NOT.ALLOCATED(npart_per_cell_array)) &
+        ALLOCATE(npart_per_cell_array(i0:nx+i1,i0:ny+i1))
+    npart_per_cell_array(:,:) = 0
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -1984,13 +1989,14 @@ CONTAINS
         cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
         cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
 #endif
-        npart_per_cell(cell_x,cell_y) = npart_per_cell(cell_x,cell_y) + 1
+        npart_per_cell_array(cell_x,cell_y) = &
+            npart_per_cell_array(cell_x,cell_y) + 1
 
         current => next
       END DO
     END DO
 
-  END SUBROUTINE create_npart_per_cell
+  END SUBROUTINE create_npart_per_cell_array
 
 
 
@@ -1998,17 +2004,18 @@ CONTAINS
 
     REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
     REAL(num), ALLOCATABLE :: load_per_cpu(:,:)
-    INTEGER(i8), ALLOCATABLE :: npart_per_cell(:,:)
     INTEGER(i8) :: npart_local
     INTEGER :: i, i0, i1, ix
     INTEGER :: j, j0, j1, iy
     INTEGER :: ierr
     REAL(num) :: load_local, load_sum, load_max
 
-    CALL create_npart_per_cell(npart_per_cell)
-
     IF (use_injectors) THEN
-      npart_local = SUM(npart_per_cell(1:nx,1:ny))
+      IF (ALLOCATED(npart_per_cell_array)) THEN
+        npart_local = SUM(npart_per_cell_array(1:nx,1:ny))
+      ELSE
+        npart_local = 0
+      END IF
       load_local = REAL(push_per_field * npart_local + nx * ny, num)
 
       CALL MPI_ALLREDUCE(load_local, load_max, 1, mpireal, MPI_MAX, comm, ierr)
@@ -2022,34 +2029,60 @@ CONTAINS
     ALLOCATE(load_per_cpu(nprocx,nprocy))
     load_per_cpu = 0.0_num
 
-    DO j = 1, nprocy
-      j0 = new_cell_y_min(j) - ny_global_min + 1
-      j1 = new_cell_y_max(j) - ny_global_min + 1
+    IF (ALLOCATED(npart_per_cell_array)) THEN
+      DO j = 1, nprocy
+        j0 = new_cell_y_min(j) - ny_global_min + 1
+        j1 = new_cell_y_max(j) - ny_global_min + 1
 
-      IF (j1 < 1 .OR. j0 > ny) CYCLE
+        IF (j1 < 1 .OR. j0 > ny) CYCLE
 
-      j0 = MAX(j0, 1)
-      j1 = MIN(j1, ny)
+        j0 = MAX(j0, 1)
+        j1 = MIN(j1, ny)
 
-      DO i = 1, nprocx
-        i0 = new_cell_x_min(i) - nx_global_min + 1
-        i1 = new_cell_x_max(i) - nx_global_min + 1
+        DO i = 1, nprocx
+          i0 = new_cell_x_min(i) - nx_global_min + 1
+          i1 = new_cell_x_max(i) - nx_global_min + 1
 
-        IF (i1 < 1 .OR. i0 > nx) CYCLE
+          IF (i1 < 1 .OR. i0 > nx) CYCLE
 
-        i0 = MAX(i0, 1)
-        i1 = MIN(i1, nx)
+          i0 = MAX(i0, 1)
+          i1 = MIN(i1, nx)
 
-        DO iy = j0, j1
-        DO ix = i0, i1
-          load_per_cpu(i,j) = load_per_cpu(i,j) &
-              + REAL(push_per_field * npart_per_cell(ix,iy) + 1, num)
-        END DO
-        END DO
-      END DO
-    END DO
+          DO iy = j0, j1
+          DO ix = i0, i1
+            load_per_cpu(i,j) = load_per_cpu(i,j) &
+                + REAL(push_per_field * npart_per_cell_array(ix,iy) + 1, num)
+          END DO ! ix
+          END DO ! iy
+        END DO ! i
+      END DO ! j
+    ELSE
+      DO j = 1, nprocy
+        j0 = new_cell_y_min(j) - ny_global_min + 1
+        j1 = new_cell_y_max(j) - ny_global_min + 1
 
-    DEALLOCATE(npart_per_cell)
+        IF (j1 < 1 .OR. j0 > ny) CYCLE
+
+        j0 = MAX(j0, 1)
+        j1 = MIN(j1, ny)
+
+        DO i = 1, nprocx
+          i0 = new_cell_x_min(i) - nx_global_min + 1
+          i1 = new_cell_x_max(i) - nx_global_min + 1
+
+          IF (i1 < 1 .OR. i0 > nx) CYCLE
+
+          i0 = MAX(i0, 1)
+          i1 = MIN(i1, nx)
+
+          DO iy = j0, j1
+          DO ix = i0, i1
+            load_per_cpu(i,j) = load_per_cpu(i,j) + 1.0_num
+          END DO ! ix
+          END DO ! iy
+        END DO ! i
+      END DO ! j
+    END IF
 
     CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy, &
                        mpireal, MPI_SUM, comm, ierr)
