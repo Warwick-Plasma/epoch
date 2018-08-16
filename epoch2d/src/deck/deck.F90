@@ -1096,6 +1096,7 @@ CONTAINS
     END DO
 
     DEALLOCATE(file_buffer_head, STAT=stat)
+    nbuffers = 0
 
   END SUBROUTINE deallocate_input_deck_buffer
 

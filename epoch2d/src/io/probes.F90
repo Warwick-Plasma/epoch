@@ -16,7 +16,14 @@
 
 MODULE probes
 
-#ifndef NO_PARTICLE_PROBES
+#ifdef NO_PARTICLE_PROBES
+
+CONTAINS
+
+  SUBROUTINE deallocate_probes
+  END SUBROUTINE deallocate_probes
+
+#else
   USE partlist
   USE sdf
 
@@ -69,6 +76,32 @@ CONTAINS
     END DO
 
   END SUBROUTINE attach_probe
+
+
+
+  SUBROUTINE deallocate_probes
+
+    TYPE(particle_probe), POINTER :: current_probe, next
+    INTEGER :: ispecies, j
+
+    DO ispecies = 1, n_species
+      current_probe => species_list(ispecies)%attached_probes
+      DO j = ispecies + 1, n_species
+        IF (ASSOCIATED(current_probe, species_list(j)%attached_probes)) &
+            NULLIFY(species_list(j)%attached_probes)
+      END DO
+      next => current_probe
+      DO WHILE(ASSOCIATED(next))
+        current_probe => next
+        next => current_probe%next
+        IF (ASSOCIATED(current_probe%use_species)) &
+            DEALLOCATE(current_probe%use_species)
+        CALL destroy_partlist(current_probe%sampled_particles)
+        DEALLOCATE(current_probe)
+      END DO
+    END DO
+
+  END SUBROUTINE deallocate_probes
 
 
 

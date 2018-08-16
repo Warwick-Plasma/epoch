@@ -31,8 +31,15 @@ CONTAINS
 
   SUBROUTINE constant_deck_initialise
 
+    INTEGER :: i
+
+    IF (ALLOCATED(deck_constant_list)) THEN
+      DO i = 1, n_deck_constants
+        CALL deallocate_stack(deck_constant_list(i)%execution_stream)
+      END DO
+      DEALLOCATE(deck_constant_list)
+    END IF
     n_deck_constants = 0
-    IF (ALLOCATED(deck_constant_list)) DEALLOCATE(deck_constant_list)
 
   END SUBROUTINE constant_deck_initialise
 
