@@ -27,6 +27,7 @@ MODULE finish
   USE dist_fn
   USE ionise
   USE injectors
+  USE probes
 
   IMPLICIT NONE
 
@@ -68,6 +69,8 @@ CONTAINS
     DEALLOCATE(ex_z_min, ex_z_max, ey_z_min, ey_z_max, ez_z_min, ez_z_max)
     DEALLOCATE(bx_z_min, bx_z_max, by_z_min, by_z_max, bz_z_min, bz_z_max)
 
+    CALL deallocate_probes
+
     DO i = 1, n_species
       CALL deallocate_stack(species_list(i)%density_function)
       DO n = 1, 3
@@ -85,6 +88,12 @@ CONTAINS
 
     DEALLOCATE(species_list, STAT=stat)
 
+    DO i = 1, n_io_blocks
+      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) &
+          DEALLOCATE(io_block_list(i)%dump_at_times, STAT=stat)
+      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) &
+          DEALLOCATE(io_block_list(i)%dump_at_nsteps, STAT=stat)
+    END DO
     DEALLOCATE(io_block_list, STAT=stat)
     DEALLOCATE(io_list_data, STAT=stat)
     DEALLOCATE(file_prefixes, STAT=stat)

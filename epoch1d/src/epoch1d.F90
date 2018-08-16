@@ -58,7 +58,7 @@ PROGRAM pic
 
   INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
-  LOGICAL :: force_dump
+  LOGICAL :: force_dump = .FALSE.
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
