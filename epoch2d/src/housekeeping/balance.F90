@@ -45,8 +45,8 @@ CONTAINS
     REAL(num) :: load_local, load_sum, load_max
     INTEGER(i8) :: npart_local
     INTEGER, SAVE :: balance_check_frequency = 1
-    INTEGER, SAVE :: last_check = -HUGE(1) / 2
-    INTEGER, SAVE :: last_full_check = -HUGE(1) / 2
+    INTEGER, SAVE :: last_check = (1 - HUGE(1)) / 2
+    INTEGER, SAVE :: last_full_check = (1 - HUGE(1)) / 2
     LOGICAL, SAVE :: first_flag = .TRUE.
     LOGICAL :: first_message, restarting, full_check, attempt_balance
     LOGICAL :: use_redistribute_domain, use_redistribute_particles
