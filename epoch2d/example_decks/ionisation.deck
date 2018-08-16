@@ -19,6 +19,15 @@ begin:control
 end:control
 
 
+begin:constant
+  lambda = 1.0 * micron
+  omega = 2.0 * pi * c / lambda
+  den_max = 10.0 * critical(omega)
+  den_preplasma = 1.0e18
+  len_scale = 5.0 * micron
+end:constant
+
+
 begin:boundaries
   bc_x_min = simple_laser
   bc_x_max = simple_outflow
@@ -89,15 +98,6 @@ begin:output
   #extended io
   distribution_functions = always
 end:output
-
-
-begin:constant
-  lambda = 1.0 * micron
-  omega = 2.0 * pi * c / lambda
-  den_max = 10.0 * critical(omega)
-  den_preplasma = 1.0e18
-  len_scale = 5.0 * micron
-end:constant
 
 
 begin:laser

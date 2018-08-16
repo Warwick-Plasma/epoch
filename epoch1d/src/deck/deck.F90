@@ -433,8 +433,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: deck_state_in
     CHARACTER :: u0, u1
     INTEGER :: pos = 1, flip = 1, slen, s, f, elements = 0, lun
+    INTEGER :: line, column
     LOGICAL :: ignore, continuation
     LOGICAL, SAVE :: warn = .TRUE.
+    LOGICAL, SAVE :: warn_ascii = .FALSE.
     TYPE(string_type), DIMENSION(2) :: deck_values
     CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
     CHARACTER(LEN=c_max_path_length) :: const_filename
@@ -542,6 +544,8 @@ CONTAINS
       deck_values(1)%value = ''
       deck_values(2)%value = ''
       slen = 1
+      line = 1
+      column = 0
 
       ! Use non-advancing IO to pop characters off the deck file one at a time
       ! Use basic token parsing to split into two substrings across
@@ -559,8 +563,20 @@ CONTAINS
         IF (f < 0) THEN
           got_eor = .TRUE.
           got_eof = .TRUE.
+          column = 0
+          line = line + 1
         ELSE
           got_eor = .FALSE.
+          column = column + 1
+        END IF
+
+        IF (.NOT.ignore .AND. IACHAR(u1) > 127) THEN
+          IF (rank == rank_check) THEN
+            WRITE(du, '(A,I5,A,I5,A,I5)') 'Line', line, ', column', column, &
+                ', non-ascii character discarded:', IACHAR(u1)
+          END IF
+          warn_ascii = .TRUE.
+          CYCLE
         END IF
 
 10      IF (.NOT. already_parsed) THEN
@@ -629,7 +645,7 @@ CONTAINS
           ! it in the buffer
           ! ACHAR(9) = tab
           IF (u1 /= '=' .AND. u1 /= ACHAR(9) .AND. u1 /= ':' &
-              .AND. f == 0) THEN
+              .AND. u1 /= ACHAR(13) .AND. f == 0) THEN
             IF (u1 /= ' ' .OR. u0 /= ' ') THEN
               deck_values(flip)%value(pos:pos) = u1
               pos = pos + 1
@@ -657,6 +673,8 @@ CONTAINS
             f = 0
           END IF
           continuation = .FALSE.
+          line = line + 1
+          column = 0
         END IF
 
         ! If you've not read a blank line then
@@ -759,6 +777,16 @@ CONTAINS
 #ifndef NO_IO
       WRITE(du,*) 'Please read this file and correct any errors mentioned.'
 #endif
+    END IF
+
+    IF (deck_state == c_ds_first .AND. warn_ascii .AND. rank == 0) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'Non-ascii characters present in the input deck ', &
+            'were discarded'
+      END DO
     END IF
 
 #ifndef NO_IO
@@ -1096,6 +1124,7 @@ CONTAINS
     END DO
 
     DEALLOCATE(file_buffer_head, STAT=stat)
+    nbuffers = 0
 
   END SUBROUTINE deallocate_input_deck_buffer
 

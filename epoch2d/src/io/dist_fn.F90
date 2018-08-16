@@ -693,13 +693,13 @@ CONTAINS
       CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
           'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution(1:1), &
           c_stagger_vertex, 'grid/' // TRIM(var_name), &
-          array(1:global_resolution(1),1,1), new_type, &
+          array(1:resolution(1),1,1), new_type, &
           array_type, convert)
     ELSE IF (curdims == 2) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
           'dist_fn/' // TRIM(var_name), 'npart/cell', global_resolution(1:2), &
           c_stagger_vertex, 'grid/' // TRIM(var_name), &
-          array(1:global_resolution(1),1:global_resolution(2),1), new_type, &
+          array(1:resolution(1),1:resolution(2),1), new_type, &
           array_type, convert)
     ELSE IF (curdims == 3) THEN
       CALL sdf_write_plain_variable(sdf_handle, TRIM(var_name), &
