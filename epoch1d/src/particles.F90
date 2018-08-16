@@ -501,12 +501,10 @@ CONTAINS
       CALL current_bcs(species=ispecies)
     END DO
 
-    IF (.NOT.use_field_ionisation) THEN
-      CALL current_bcs
-      CALL particle_bcs
+    CALL current_bcs
+    CALL particle_bcs
 
-      IF (smooth_currents) CALL smooth_current()
-    END IF
+    IF (smooth_currents) CALL smooth_current()
 
     IF (use_current_correction) THEN
       jx = jx - initial_jx
