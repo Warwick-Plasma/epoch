@@ -867,25 +867,13 @@ CONTAINS
         END IF
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         IF (curr_loader%id_data_given) THEN
-#if defined(PARTICLE_ID4)
           IF (curr_loader%id_data_4byte) THEN
-            new_particle%id = idbuf4(read_count)
+            new_particle%id = INT(idbuf4(read_count), idkind)
           ELSE
-            new_particle%id = INT(idbuf8(read_count), i4)
+            new_particle%id = INT(idbuf8(read_count), idkind)
           END IF
-#else
-          IF (curr_loader%id_data_4byte) THEN
-            new_particle%id = INT(idbuf4(read_count), i8)
-          ELSE
-            new_particle%id = idbuf8(read_count)
-          END IF
-#endif
         ELSE
-#if defined(PARTICLE_ID4)
-          new_particle%id = INT(id_offset + read_count, i4)
-#else
-          new_particle%id = INT(id_offset + read_count, i8)
-#endif
+          new_particle%id = INT(id_offset + read_count, idkind)
         END IF
 #endif
         ! Just being careful

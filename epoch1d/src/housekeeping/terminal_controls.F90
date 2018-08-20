@@ -13,16 +13,24 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#if (defined(__GFORTRAN__) || defined(__INTEL_COMPILER)) && !defined(USE_ISATTY)
-#define USE_ISATTY
-#endif
-
 MODULE terminal_controls
 
+#ifndef NO_USE_ISATTY
   USE, INTRINSIC :: iso_fortran_env
+  USE iso_c_binding, ONLY: c_int
+
+  INTERFACE
+    FUNCTION isatty_c(fd) BIND (C, NAME='isatty')
+      USE iso_c_binding, ONLY: c_int
+      IMPLICIT NONE
+      INTEGER(KIND=c_int) :: fd
+      INTEGER(KIND=c_int) :: isatty_c
+    END FUNCTION isatty_c
+  END INTERFACE
 
   CHARACTER(LEN=5), DIMENSION(12) :: vt100_control = (/'[39m','[30m','[31m',&
       '[32m','[33m','[34m','[35m','[36m','[1m ','[2m ','[4m ','[0m '/)
+#endif
 
   INTEGER, PARAMETER :: c_term_default_colour = 1
   INTEGER, PARAMETER :: c_term_black = 2
@@ -44,13 +52,19 @@ CONTAINS
   SUBROUTINE set_term_attr(controlcode)
 
     INTEGER, INTENT(IN) :: controlcode
-#ifdef USE_ISATTY
+#ifndef NO_USE_ISATTY
     LOGICAL, SAVE :: first = .TRUE.
     LOGICAL, SAVE :: tty = .FALSE.
+    INTEGER(KIND=c_int) :: istty
 
     IF (first) THEN
       first = .FALSE.
-      tty = ISATTY(output_unit)
+      istty = isatty_c(output_unit)
+      IF (istty == 0) THEN
+        tty = .TRUE.
+      ELSE
+        tty = .FALSE.
+      END IF
     END IF
 
     IF (.NOT. tty) RETURN

@@ -50,7 +50,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -stand f03
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -69,7 +69,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -g
+  FFLAGS = -O3 -g -std=f2003
 
   GNUVER := $(shell gfortran -dumpversion | head -1 \
       | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
@@ -86,7 +86,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
 
   ifeq ($(strip $(MODE)),debug)
-    FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
+    FFLAGS = -O0 -g -std=f2003 -Wall -Wextra -pedantic -fbounds-check \
              -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
     #FFLAGS += -ffpe-trap=underflow,denormal
 
@@ -236,8 +236,8 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
-# Use compiler extension ISATTY to enable coloured welcome banner
-#DEFINES += $(D)USE_ISATTY
+# Disable the use of isatty C call to enable coloured welcome banner
+#DEFINES += $(D)NO_USE_ISATTY
 
 # Compile the delta-f version of EPOCH
 #DEFINES += $(D)DELTAF_METHOD
@@ -282,7 +282,7 @@ PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
 FC_INFO := $(shell ${FC} --version 2>/dev/null \
     || ${FC} -V 2>/dev/null | grep '[a-zA-Z]' | head -n 1)
 
-SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
+SRCFILES = balance.F90 boundary.F90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
@@ -422,7 +422,7 @@ FORCE:
 
 balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
   timer.o utilities.o
-boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
+boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
 collisions.o: collisions.F90 calc_df.o prefetch.o

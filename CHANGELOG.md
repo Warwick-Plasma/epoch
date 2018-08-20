@@ -1,3 +1,15 @@
+## v5.0.0
+
+ * Assign particle IDs at creation time. See the user manual for further details
+
+ * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
+
+ * Replaced non-standard ISATTY intrinsic function with a call to the
+   POSIX C-library function "isatty"
+
+ * Changed FORTRAN standard to 2003
+
+
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
