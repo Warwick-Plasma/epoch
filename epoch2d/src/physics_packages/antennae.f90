@@ -68,9 +68,8 @@ MODULE antennae
 
 
   !> Get the currents from the antennae
-  SUBROUTINE generate_antennae_currents(jx, jy, jz)
+  SUBROUTINE generate_antennae_currents
 
-    REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: jx, jy, jz
     TYPE(parameter_pack) :: parameters
     INTEGER :: iant, ix, iy, sz, err, nels
     REAL(num), DIMENSION(:), POINTER :: ranges

@@ -471,14 +471,14 @@ diagnostics.o: diagnostics.F90 calc_df.o deck.o deck_io_block.o dist_fn.o \
   iterators.o probes.o random_generator.o setup.o shared_data.o strings.o \
   timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
-epoch2d.o: epoch2d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
-  fields.o finish.o helper.o ic_module.o injectors.o ionise.o mpi_routines.o \
-  particle_migration.o particles.o photons.o setup.o split_particle.o \
-  welcome.o window.o
+epoch2d.o: epoch2d.F90 antennae.o balance.o calc_df.o collisions.o deck.o \
+  diagnostics.o fields.o finish.o helper.o ic_module.o injectors.o ionise.o \
+  mpi_routines.o particle_migration.o particles.o photons.o setup.o \
+  split_particle.o welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
-fields.o: fields.f90 boundary.o antennae.o
+fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
   ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o

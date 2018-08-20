@@ -32,6 +32,7 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
+  USE antennae
   USE balance
   USE deck
   USE diagnostics
@@ -223,6 +224,9 @@ PROGRAM pic
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
 
+    IF (any_antennae) THEN
+      CALL generate_antennae_currents
+    END IF
     CALL output_routines(step)
     time = time + dt / 2.0_num
 
