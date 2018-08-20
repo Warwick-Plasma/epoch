@@ -282,7 +282,7 @@ PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
 FC_INFO := $(shell ${FC} --version 2>/dev/null \
     || ${FC} -V 2>/dev/null | grep '[a-zA-Z]' | head -n 1)
 
-SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
+SRCFILES = antennae.f90 balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
   deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
@@ -420,6 +420,7 @@ FORCE:
 
 # All the dependencies
 
+antennae.o: antennae.f90 shared_data.o evaluate.o
 balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
   timer.o utilities.o
 boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
@@ -474,7 +475,7 @@ epoch2d.o: epoch2d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
-fields.o: fields.f90 boundary.o
+fields.o: fields.f90 boundary.o antennae.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
   ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o

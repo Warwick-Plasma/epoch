@@ -17,6 +17,7 @@
 MODULE fields
 
   USE boundary
+  USE antennae
 
   IMPLICIT NONE
 
@@ -102,13 +103,14 @@ CONTAINS
 
 
 
-  SUBROUTINE update_e_field
+  SUBROUTINE update_e_field(jx ,jy, jz)
 
     INTEGER :: ix, iy
     REAL(num) :: cpml_x, cpml_y
     REAL(num) :: c1, c2, c3
     REAL(num) :: cx1, cx2, cx3
     REAL(num) :: cy1, cy2, cy3
+    REAL(num), DIMENSION(1-jng:, 1-jng:), INTENT(IN) :: jx, jy, jz
 
     IF (cpml_boundaries) THEN
       IF (field_order == 2) THEN
@@ -533,6 +535,8 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_half
 
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: jx_u, jy_u, jz_u
+
     hdt  = 0.5_num * dt
     hdtx = hdt / dx
     hdty = hdt / dy
@@ -543,7 +547,19 @@ CONTAINS
     fac = hdt / epsilon0
 
     ! Update E field to t+dt/2
-    CALL update_e_field
+    IF (any_antennae) THEN
+      ALLOCATE(jx_u(1-jng:nx+jng, 1-jng:ny+jng), &
+          jy_u(1-jng:nx+jng, 1-jng:ny+jng), &
+          jz_u(1-jng:nx+jng, 1-jng:ny+jng))
+      jx_u = jx
+      jy_u = jy
+      jz_u = jz
+      CALL generate_antennae_currents(jx_u, jy_u, jz_u)
+      CALL update_e_field(jx_u,jy_u,jz_u)
+      DEALLOCATE(jx_u, jy_u, jz_u)
+    ELSE
+      CALL update_e_field(jx,jy,jz)
+    END IF
 
     ! Now have E(t+dt/2), do boundary conditions on E
     CALL efield_bcs
@@ -563,6 +579,8 @@ CONTAINS
 
   SUBROUTINE update_eb_fields_final
 
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: jx_u, jy_u, jz_u
+
     hdt  = 0.5_num * dt
     hdtx = hdt / dx
     hdty = hdt / dy
@@ -576,7 +594,20 @@ CONTAINS
 
     CALL bfield_final_bcs
 
-    CALL update_e_field
+    ! Update E field to t+dt/2
+    IF (any_antennae) THEN
+      ALLOCATE(jx_u(1-jng:nx+jng, 1-jng:ny+jng), &
+          jy_u(1-jng:nx+jng, 1-jng:ny+jng), &
+          jz_u(1-jng:nx+jng, 1-jng:ny+jng))
+      jx_u = jx
+      jy_u = jy
+      jz_u = jz
+      CALL generate_antennae_currents(jx_u, jy_u, jz_u)
+      CALL update_e_field(jx_u,jy_u,jz_u)
+      DEALLOCATE(jx_u, jy_u, jz_u)
+    ELSE
+      CALL update_e_field(jx,jy,jz)
+    END IF
 
     CALL efield_bcs
 
