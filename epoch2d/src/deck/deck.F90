@@ -23,6 +23,7 @@ MODULE deck
   ! Deck Blocks
   USE deck_control_block
   USE deck_stencil_block
+  USE deck_antenna_block
   USE deck_boundaries_block
   USE deck_species_block
   USE deck_injector_block
@@ -89,6 +90,7 @@ CONTAINS
     CALL injector_deck_initialise
     CALL io_deck_initialise
     CALL io_global_deck_initialise
+    CALL antenna_deck_initialise
     CALL laser_deck_initialise
     CALL stencil_deck_initialise
     CALL subset_deck_initialise
@@ -118,6 +120,7 @@ CONTAINS
     CALL injector_deck_finalise
     CALL io_deck_finalise
     CALL io_global_deck_finalise
+    CALL antenna_deck_finalise
     CALL laser_deck_finalise
     CALL stencil_deck_finalise
     CALL subset_deck_finalise
@@ -156,6 +159,8 @@ CONTAINS
       CALL io_block_start
     ELSE IF (str_cmp(block_name, 'output_global')) THEN
       CALL io_global_block_start
+    ELSE IF (str_cmp(block_name, 'antenna')) THEN
+      CALL antenna_block_start
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_start
     ELSE IF (str_cmp(block_name, 'injector')) THEN
@@ -205,6 +210,8 @@ CONTAINS
       CALL io_block_end
     ELSE IF (str_cmp(block_name, 'output_global')) THEN
       CALL io_global_block_end
+    ELSE IF (str_cmp(block_name, 'antenna')) THEN
+      CALL antenna_block_end
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       CALL laser_block_end
     ELSE IF (str_cmp(block_name, 'injector')) THEN
@@ -278,6 +285,9 @@ CONTAINS
       RETURN
     ELSE IF (str_cmp(block_name, 'output_global')) THEN
       handle_block = io_global_block_handle_element(block_element, block_value)
+      RETURN
+    ELSE IF (str_cmp(block_name, 'antenna')) THEN
+      handle_block = antenna_block_handle_element(block_element, block_value)
       RETURN
     ELSE IF (str_cmp(block_name, 'laser')) THEN
       handle_block = laser_block_handle_element(block_element, block_value)

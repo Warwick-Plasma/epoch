@@ -2,6 +2,7 @@ MODULE antennae
 
   USE shared_data
   USE evaluator
+  USE shunt
   IMPLICIT NONE
 
   LOGICAL :: any_antennae = .FALSE.
@@ -20,6 +21,17 @@ MODULE antennae
   SUBROUTINE initialise_antenna(antenna_in)
     TYPE(antenna), INTENT(INOUT) :: antenna_in
     antenna_in%active = .TRUE.
+
+    IF (antenna_in%jx_expression%init) &
+        CALL deallocate_stack(antenna_in%jx_expression)
+    IF (antenna_in%jy_expression%init) &
+        CALL deallocate_stack(antenna_in%jy_expression)
+    IF (antenna_in%jz_expression%init) &
+        CALL deallocate_stack(antenna_in%jz_expression)
+
+    IF (antenna_in%ranges%init) &
+        CALL deallocate_stack(antenna_in%ranges)
+
   END SUBROUTINE initialise_antenna
 
 
@@ -62,23 +74,30 @@ MODULE antennae
     TYPE(parameter_pack) :: parameters
     INTEGER :: iant, ix, iy, sz, err, nels
     REAL(num), DIMENSION(:), POINTER :: ranges
+    LOGICAL :: use_ranges
 
     IF (.NOT. ALLOCATED(antenna_list)) RETURN
     sz = SIZE(antenna_list)
 
-    err = 0
+    err = c_err_none
 
     ranges => NULL()
     DO iant = 1, sz
       IF (.NOT. antenna_list(iant)%active) CYCLE
-      CALL evaluate_and_return_all(antenna_list(iant)%ranges, nels, ranges, err)
-      IF (err /= c_err_none .OR. nels /= c_ndims * 2) CYCLE
+      use_ranges = antenna_list(iant)%ranges%init
+      IF (antenna_list(iant)%ranges%init) THEN
+        CALL evaluate_and_return_all(antenna_list(iant)%ranges, nels, ranges, &
+            err)
+        IF (err /= c_err_none .OR. nels /= c_ndims * 2) CYCLE
+      ELSE
+        ALLOCATE(ranges(c_ndims*2))
+      END IF
       DO iy = 1-ng, ny+ng
-        IF (y(iy) < ranges(c_dir_y * 2 - 1) .OR. &
-            y(iy) > ranges(c_dir_y * 2)) CYCLE
+        IF ((y(iy) < ranges(c_dir_y * 2 - 1) .OR. &
+            y(iy) > ranges(c_dir_y * 2)) .AND. use_ranges) CYCLE
         DO ix = 1-ng, nx+ng
-          IF (x(ix) < ranges(c_dir_x * 2 - 1) .OR. &
-              x(ix) > ranges(c_dir_x * 2)) CYCLE
+          IF ((x(ix) < ranges(c_dir_x * 2 - 1) .OR. &
+              x(ix) > ranges(c_dir_x * 2)) .AND. use_ranges) CYCLE
           parameters%pack_ix = ix
           parameters%pack_iy = iy
           IF(antenna_list(iant)%jx_expression%init) THEN
