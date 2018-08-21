@@ -895,6 +895,8 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
+    PRINT *,'Per species current'
+
     data_array = 0.0_num
     part_q = 0.0_num
     fac = 0.0_num
