@@ -1053,11 +1053,11 @@ CONTAINS
       RETURN
     END IF
 
-    IF (opcode == c_func_at_position) THEN
+    IF (opcode == c_func_in_range) THEN
       CALL get_values(3, values)
       ix = parameters%pack_ix
-      IF (values(1)-values(2)/2 <= values(3) .AND. &
-          values(2)+values(2)/2 >= values(3)) THEN
+      IF (values(1)-values(3)/2 <= values(2) .AND. &
+          values(2)+values(3)/2 >= values(2)) THEN
         CALL push_on_eval(1.0_num)
       ELSE
         CALL push_on_eval(0.0_num)

@@ -340,7 +340,7 @@ CONTAINS
     IF (str_cmp(name, 'by')) as_function = c_func_by
     IF (str_cmp(name, 'bz')) as_function = c_func_bz
     IF (str_cmp(name, 'critical')) as_function = c_func_crit
-    IF (str_cmp(name, 'at_position')) as_function = c_func_at_position
+    IF (str_cmp(name, 'in_range')) as_function = c_func_in_range
 
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN
