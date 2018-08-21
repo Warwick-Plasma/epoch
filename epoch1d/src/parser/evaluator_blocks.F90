@@ -1053,6 +1053,19 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_func_at_position) THEN
+      CALL get_values(1, values)
+      ix = parameters%pack_ix
+      IF (x(ix-1) <= values(1) .AND. x(ix) >= values(1)) THEN
+        CALL push_on_eval(1.0_num)
+      ELSE
+        CALL push_on_eval(0.0_num)
+      END IF
+      err = err_simplify
+      RETURN
+    END IF
+
+
     err = c_err_unknown_element
 
   END SUBROUTINE do_functions

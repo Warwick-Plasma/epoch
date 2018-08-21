@@ -440,7 +440,7 @@ deck.o: deck.F90 custom_deck.o deck_antenna_block.o deck_boundaries_block.o \
   deck_species_block.o deck_stencil_block.o deck_subset_block.o \
   deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
 deck_antenna_block.o: deck_antenna_block.f90 antennae.o evaluate.o shunt.o \
-  shared_data.o
+  strings_advanced.o shared_data.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
