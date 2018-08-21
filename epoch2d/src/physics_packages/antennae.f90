@@ -10,6 +10,9 @@ MODULE antennae
   TYPE :: antenna
     TYPE(primitive_stack) :: jx_expression, jy_expression, jz_expression
     TYPE(primitive_stack) :: ranges
+    TYPE(primitive_stack) :: omega
+    REAL(num) :: omega_value
+    REAL(num) :: phase_history = 0.0_num
     LOGICAL :: active = .FALSE.
   END TYPE antenna
 
@@ -73,6 +76,7 @@ MODULE antennae
     TYPE(parameter_pack) :: parameters
     INTEGER :: iant, ix, iy, sz, err, nels
     REAL(num), DIMENSION(:), POINTER :: ranges
+    REAL(num) :: oscil_dat
     LOGICAL :: use_ranges
 
     IF (.NOT. ALLOCATED(antenna_list)) RETURN
@@ -91,9 +95,23 @@ MODULE antennae
       ELSE
         ALLOCATE(ranges(c_ndims*2))
       END IF
+      IF (antenna_list(iant)%omega%init) THEN
+        IF (antenna_list(iant)%omega%is_time_varying) THEN
+          antenna_list(iant)%phase_history = &
+              antenna_list(iant)%phase_history + &
+              evaluate(antenna_list(iant)%omega, err) * dt
+        ELSE
+          antenna_list(iant)%phase_history = antenna_list(iant)%omega_value &
+              * time
+        END IF
+        oscil_dat = SIN(antenna_list(iant)%phase_history)
+      ELSE
+        oscil_dat = 1.0_num
+      END IF
       DO iy = 1-ng, ny+ng
         IF ((y(iy) < ranges(c_dir_y * 2 - 1) .OR. &
             y(iy) > ranges(c_dir_y * 2)) .AND. use_ranges) CYCLE
+        parameters%pack_iy = iy
         DO ix = 1-ng, nx+ng
           IF ((x(ix) < ranges(c_dir_x * 2 - 1) .OR. &
               x(ix) > ranges(c_dir_x * 2)) .AND. use_ranges) CYCLE
@@ -102,17 +120,17 @@ MODULE antennae
           IF(antenna_list(iant)%jx_expression%init) THEN
             jx(ix,iy) = jx(ix,iy) + evaluate_with_parameters(&
                 antenna_list(iant)%jx_expression, &
-                parameters, err)
+                parameters, err) * oscil_dat
           END IF
           IF(antenna_list(iant)%jy_expression%init) THEN
             jy(ix,iy) = jy(ix,iy) + evaluate_with_parameters(&
                 antenna_list(iant)%jy_expression, &
-                parameters, err)
+                parameters, err) * oscil_dat
           END IF
           IF(antenna_list(iant)%jz_expression%init) THEN
             jz(ix,iy) = jz(ix,iy) + evaluate_with_parameters(&
                 antenna_list(iant)%jz_expression, &
-                parameters, err)
+                parameters, err) * oscil_dat
           END IF
         END DO
       END DO

@@ -19,6 +19,7 @@ MODULE deck_antenna_block
   USE evaluator
   USE shunt
   USE antennae
+  USE strings_advanced
 
   IMPLICIT NONE
   SAVE
@@ -94,6 +95,15 @@ CONTAINS
     IF (str_cmp(element, 'ranges')) THEN
       CALL initialise_stack(working_antenna%ranges)
       CALL tokenize(value, working_antenna%ranges, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'omega')) THEN
+      CALL initialise_stack(working_antenna%omega)
+      CALL tokenize(value, working_antenna%omega, errcode)
+      IF (.NOT. working_antenna%omega%is_time_varying) THEN
+        working_antenna%omega_value = as_real_print(value, element, errcode)
+      END IF
       RETURN
     END IF
 
