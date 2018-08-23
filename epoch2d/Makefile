@@ -447,14 +447,13 @@ deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \
 deck_dist_fn_block.o: deck_dist_fn_block.f90 dist_fn.o strings_advanced.o \
   utilities.o
 deck_fields_block.o: deck_fields_block.f90 simple_io.o strings_advanced.o
-deck_injector_block.o: deck_injector_block.f90 evaluate.o injectors.o shunt.o \
+deck_injector_block.o: deck_injector_block.f90 injectors.o shunt.o \
   strings_advanced.o utilities.o
 deck_io_block.o: deck_io_block.F90 strings_advanced.o utilities.o
 deck_io_global_block.o: deck_io_global_block.F90 strings_advanced.o utilities.o
 deck_laser_block.o: deck_laser_block.f90 laser.o strings_advanced.o utilities.o
 deck_part_from_file_block.o: deck_part_from_file_block.F90 \
-  deck_species_block.o partlist.o setup.o simple_io.o strings_advanced.o \
-  utilities.o
+  deck_species_block.o strings_advanced.o utilities.o
 deck_particle_probe_block.o: deck_particle_probe_block.F90 probes.o \
   strings_advanced.o utilities.o
 deck_qed_block.o: deck_qed_block.F90 strings_advanced.o utilities.o
@@ -465,25 +464,24 @@ deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
 diagnostics.o: diagnostics.F90 calc_df.o constants.o deck.o deck_io_block.o \
-  dist_fn.o iterators.o probes.o random_generator.o setup.o shared_data.o \
-  strings.o timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
+  dist_fn.o iterators.o probes.o setup.o shared_data.o strings.o timer.o \
+  version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch2d.o: epoch2d.F90 balance.o calc_df.o collisions.o deck.o diagnostics.o \
   fields.o finish.o helper.o ic_module.o injectors.o ionise.o mpi_routines.o \
   particle_migration.o particles.o photons.o setup.o split_particle.o \
   welcome.o window.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
-evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
+evaluate.o: evaluate.F90 shunt.o stack.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
 fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
-  ionise.o laser.o partlist.o probes.o setup.o shared_data.o shunt.o window.o
-helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
-  simple_io.o strings.o
+  ionise.o laser.o probes.o setup.o shared_data.o window.o
+helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
-  random_generator.o shared_data.o
+  random_generator.o
 ionise.o: ionise.F90 boundary.o current_smooth.o numerics.o partlist.o \
   random_generator.o utilities.o
 iterators.o: iterators.F90 particle_pointer_advance.o partlist.o
@@ -496,7 +494,7 @@ particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shared_data.o
 particles.o: particles.F90 boundary.o current_smooth.o partlist.o prefetch.o
-partlist.o: partlist.F90 constants.o random_generator.o shared_data.o
+partlist.o: partlist.F90 random_generator.o shared_data.o
 photons.o: photons.F90 partlist.o
 prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
@@ -513,9 +511,9 @@ stack.o: stack.f90 constants.o
 strings.o: strings.f90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 terminal_controls.o: terminal_controls.F90
-timer.o: timer.f90 shared_data.o
+timer.o: timer.f90 constants.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 constants.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
-window.o: window.F90 boundary.o evaluate.o partlist.o shared_data.o
+window.o: window.F90 boundary.o evaluate.o partlist.o

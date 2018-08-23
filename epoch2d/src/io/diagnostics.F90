@@ -26,7 +26,7 @@ MODULE diagnostics
   USE probes
   USE version_data
   USE setup
-  USE random_generator
+  USE deck_io_block
   USE strings
   USE window
   USE timer
@@ -109,8 +109,6 @@ CONTAINS
 
 
   SUBROUTINE count_n_zeros
-
-    USE deck_io_block
 
     INTEGER :: i, step_orig, n_dumps
     REAL(num) :: time_orig

@@ -785,8 +785,6 @@ CONTAINS
 
   SUBROUTINE generate_particle_ids(partlist)
 
-    USE constants
-
     TYPE(particle_list) :: partlist
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(i8), ALLOCATABLE :: nid_all(:)
