@@ -67,6 +67,7 @@ CONTAINS
 
     restarting = .FALSE.
     use_redistribute_domain = .FALSE.
+    use_redistribute_particles = .FALSE.
     attempt_balance = use_balance
 
     IF (first_flag) THEN
@@ -74,11 +75,12 @@ CONTAINS
       IF (use_exact_restart) attempt_balance = .FALSE.
       first_flag = .FALSE.
       first_message = .TRUE.
-      use_redistribute_particles = .TRUE.
-      IF (ic_from_restart) restarting = .TRUE.
+      IF (ic_from_restart) THEN
+        restarting = .TRUE.
+        use_redistribute_particles = .TRUE.
+      END IF
     ELSE
       first_message = .FALSE.
-      use_redistribute_particles = .FALSE.
     END IF
     last_check = step
 
@@ -153,22 +155,34 @@ CONTAINS
           first_message = .FALSE.
           balance_check_frequency = 1
           IF (rank == 0) THEN
-            PRINT'(''Redistributing.          Balance:'', F6.3, &
-                  &'',     after:'', F6.3, '', next: '', i9)', &
-                  balance_frac, balance_frac_final, &
-                  MIN(step + balance_check_frequency, &
-                      last_full_check + dlb_force_interval)
+            IF (use_balance) THEN
+              PRINT'(''Redistributing.          Balance:'', F6.3, &
+                    &'',     after:'', F6.3, '', next: '', i9)', &
+                    balance_frac, balance_frac_final, &
+                    MIN(step + balance_check_frequency, &
+                        last_full_check + dlb_force_interval)
+            ELSE
+              PRINT'(''Redistributing.          Balance:'', F6.3, &
+                    &'',     after:'', F6.3, ''  (initial setup)'')', &
+                    balance_frac, balance_frac_final
+            END IF
           END IF
         ELSE
           IF (.NOT.first_message) THEN
             balance_check_frequency = &
                 MIN(balance_check_frequency * 2, dlb_maximum_interval)
             IF (rank == 0) THEN
-              PRINT'(''Skipping redistribution. Balance:'', F6.3, &
-                    &'',     after:'', F6.3, '', next: '', i9)', &
-                    balance_frac, balance_frac_final, &
-                    MIN(step + balance_check_frequency, &
-                        last_full_check + dlb_force_interval)
+              IF (use_balance) THEN
+                PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                      &'',     after:'', F6.3, '', next: '', i9)', &
+                      balance_frac, balance_frac_final, &
+                      MIN(step + balance_check_frequency, &
+                          last_full_check + dlb_force_interval)
+              ELSE
+                PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                      &'',     after:'', F6.3, ''  (initial setup)'')', &
+                      balance_frac, balance_frac_final
+              END IF
             END IF
           END IF
         END IF
@@ -213,9 +227,15 @@ CONTAINS
       balance_check_frequency = 1
 
       IF (rank == 0) THEN
-        PRINT'(''Redistributing.          Balance:'', F6.3, &
-              &'',     next: '', i9)', &
-              balance_frac_final, (step + balance_check_frequency)
+        IF (use_redistribute_domain .OR. use_redistribute_particles) THEN
+          PRINT'(''Redistributing.          Balance:'', F6.3, &
+                & 18X, '' (initial setup)'')', &
+                balance_frac_final
+        ELSE
+          PRINT'(''Skipping redistribution. Balance:'', F6.3, &
+                & 18X, '' (initial setup)'')', &
+                balance_frac_final
+        END IF
       END IF
     END IF
 
