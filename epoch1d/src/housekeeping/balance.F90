@@ -28,6 +28,7 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_x_min, new_cell_x_max
   LOGICAL :: overriding
   REAL(num) :: load_av
+  INTEGER :: old_comm, old_coordinates(c_ndims)
 
 CONTAINS
 
@@ -232,8 +233,9 @@ CONTAINS
 
 
 
-  SUBROUTINE pre_balance_workload
+  SUBROUTINE pre_balance_workload(old_communicator, old_coords)
 
+    INTEGER, INTENT(IN), OPTIONAL :: old_communicator, old_coords(:)
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement
     LOGICAL :: use_redistribute_domain
@@ -277,7 +279,19 @@ CONTAINS
       END IF
     END IF
 
+    IF (PRESENT(old_communicator)) use_redistribute_domain = .TRUE.
+
     IF (use_redistribute_domain) THEN
+      IF (PRESENT(old_communicator)) THEN
+        old_comm = old_communicator
+        old_coordinates(:) = old_coords(:)
+        DEALLOCATE(x_grid_mins, x_grid_maxs)
+        ALLOCATE(x_grid_mins(0:nprocx-1))
+        ALLOCATE(x_grid_maxs(0:nprocx-1))
+      ELSE
+        old_comm = comm
+        old_coordinates(:) = coordinates(:)
+      END IF
       CALL redistribute_domain
     END IF
 
@@ -630,7 +644,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
@@ -639,13 +653,14 @@ CONTAINS
     ALLOCATE(recvtypes(0:nproc-1))
 
     DO i = 1, nd
-      our_coords(i) = coordinates(cdim(i))
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
     END DO
 
-    old_min(1) = old_cell_min1(our_coords(1)+1)
-    old_max(1) = old_cell_max1(our_coords(1)+1)
-    new_min(1) = new_cell_min1(our_coords(1)+1)
-    new_max(1) = new_cell_max1(our_coords(1)+1)
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
 
     tag = 0
     sendtypes = 0
@@ -708,11 +723,15 @@ CONTAINS
       type_min(n) = new_cell_min1(iproc)
     END DO
 
+    nprocs(1) = SIZE(old_cell_min1)
+
     ! Create array of recvtypes
 
     DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
+
+    coord = old_coordinates
 
     n = 1
     type_min(n) = new_min(n)
@@ -738,7 +757,7 @@ CONTAINS
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
-      CALL MPI_CART_RANK(comm, coord, irank, errcode)
+      CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
 
       IF (rank /= irank) THEN
         recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &
@@ -791,7 +810,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = MPI_REAL4
@@ -800,13 +819,14 @@ CONTAINS
     ALLOCATE(recvtypes(0:nproc-1))
 
     DO i = 1, nd
-      our_coords(i) = coordinates(cdim(i))
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
     END DO
 
-    old_min(1) = old_cell_min1(our_coords(1)+1)
-    old_max(1) = old_cell_max1(our_coords(1)+1)
-    new_min(1) = new_cell_min1(our_coords(1)+1)
-    new_max(1) = new_cell_max1(our_coords(1)+1)
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
 
     tag = 0
     sendtypes = 0
@@ -869,11 +889,15 @@ CONTAINS
       type_min(n) = new_cell_min1(iproc)
     END DO
 
+    nprocs(1) = SIZE(old_cell_min1)
+
     ! Create array of recvtypes
 
     DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
+
+    coord = old_coordinates
 
     n = 1
     type_min(n) = new_min(n)
@@ -899,7 +923,7 @@ CONTAINS
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
-      CALL MPI_CART_RANK(comm, coord, irank, errcode)
+      CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
 
       IF (rank /= irank) THEN
         recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &

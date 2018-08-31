@@ -28,6 +28,7 @@ MODULE setup
   USE timer
   USE helper
   USE balance
+  USE mpi_routines
   USE sdf
 
   IMPLICIT NONE
@@ -1752,14 +1753,30 @@ CONTAINS
 
   SUBROUTINE pre_load_balance
 
+    INTEGER :: npx, npy, ierr
+    INTEGER :: old_comm, old_coords(c_ndims)
+
     IF (.NOT.use_pre_balance .OR. nproc == 1) RETURN
 
+    npx = nprocx
+    npy = nprocy
     pre_loading = .TRUE.
 
     CALL auto_load
 
     IF (use_optimal_layout) THEN
       CALL get_optimal_layout
+
+      IF (npx == nprocx .AND. npy == nprocy) THEN
+        pre_loading = .FALSE.
+        RETURN
+      END IF
+
+      old_coords(:) = coordinates(:)
+      CALL MPI_COMM_DUP(comm, old_comm, ierr)
+      CALL setup_communicator
+      CALL pre_balance_workload(old_comm, old_coords)
+      CALL MPI_COMM_FREE(old_comm, ierr)
     ELSE
       CALL pre_balance_workload
     END IF
