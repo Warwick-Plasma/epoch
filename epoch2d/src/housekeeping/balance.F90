@@ -30,6 +30,8 @@ MODULE balance
   LOGICAL :: overriding
   REAL(num) :: load_av
   INTEGER :: old_comm, old_coordinates(c_ndims)
+  INTEGER :: old_slice_coord, new_slice_coord, slice_dir
+  LOGICAL :: max_boundary
 
 CONTAINS
 
@@ -717,6 +719,8 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:ny_new+ng))
 
+    max_boundary = .FALSE.
+
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
       CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
@@ -731,6 +735,8 @@ CONTAINS
 
       current => current%next
     END DO
+
+    max_boundary = .TRUE.
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
@@ -747,6 +753,8 @@ CONTAINS
       current => current%next
     END DO
 
+    max_boundary = .FALSE.
+
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
@@ -762,6 +770,8 @@ CONTAINS
       injector_current => injector_current%next
     END DO
 
+    max_boundary = .TRUE.
+
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
@@ -776,6 +786,8 @@ CONTAINS
 
       injector_current => injector_current%next
     END DO
+
+    max_boundary = .FALSE.
 
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
     DEALLOCATE(ex_x_min)
@@ -806,6 +818,8 @@ CONTAINS
     DEALLOCATE(bz_x_min)
     ALLOCATE(bz_x_min(1-ng:ny_new+ng))
     bz_x_min = temp_slice
+
+    max_boundary = .TRUE.
 
     CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
     DEALLOCATE(ex_x_max)
@@ -843,6 +857,8 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:nx_new+ng))
 
+    max_boundary = .FALSE.
+
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
@@ -857,6 +873,8 @@ CONTAINS
 
       current => current%next
     END DO
+
+    max_boundary = .TRUE.
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
@@ -873,6 +891,8 @@ CONTAINS
       current => current%next
     END DO
 
+    max_boundary = .FALSE.
+
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
@@ -888,6 +908,8 @@ CONTAINS
       injector_current => injector_current%next
     END DO
 
+    max_boundary = .TRUE.
+
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
@@ -902,6 +924,8 @@ CONTAINS
 
       injector_current => injector_current%next
     END DO
+
+    max_boundary = .FALSE.
 
     CALL remap_field_slice(c_dir_y, ex_y_min, temp_slice)
     DEALLOCATE(ex_y_min)
@@ -932,6 +956,8 @@ CONTAINS
     DEALLOCATE(bz_y_min)
     ALLOCATE(bz_y_min(1-ng:nx_new+ng))
     bz_y_min = temp_slice
+
+    max_boundary = .TRUE.
 
     CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
     DEALLOCATE(ex_y_max)
@@ -971,6 +997,8 @@ CONTAINS
       IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
 
+        max_boundary = .FALSE.
+
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_min(:,i), temp(:,i))
@@ -984,6 +1012,8 @@ CONTAINS
 
       IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
+
+        max_boundary = .TRUE.
 
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
@@ -1005,6 +1035,8 @@ CONTAINS
       IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
 
+        max_boundary = .FALSE.
+
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_min(:,i), temp(:,i))
@@ -1018,6 +1050,8 @@ CONTAINS
 
       IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
+
+        max_boundary = .TRUE.
 
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
@@ -1055,10 +1089,23 @@ CONTAINS
       n = n + 1
     END DO
 
+    old_slice_coord = 0
+    new_slice_coord = 0
+
     IF (direction == c_dir_x) THEN
+      slice_dir = 2
+      IF (max_boundary) THEN
+        old_slice_coord = SIZE(cell_x_min) - 1
+        new_slice_coord = SIZE(new_cell_x_min) - 1
+      END IF
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
     ELSE
+      slice_dir = 1
+      IF (max_boundary) THEN
+        old_slice_coord = SIZE(cell_y_min) - 1
+        new_slice_coord = SIZE(new_cell_y_min) - 1
+      END IF
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
     END IF
@@ -1167,6 +1214,7 @@ CONTAINS
     END DO
 
     coord = coordinates
+    coord(slice_dir) = new_slice_coord
 
     n = 1
     type_min(n) = old_min(n)
@@ -1180,6 +1228,7 @@ CONTAINS
     END DO
 
     DO WHILE(type_max(n) <= old_max(n))
+      IF (old_coordinates(slice_dir) /= old_slice_coord) EXIT
       coord(cdim(n)) = iproc - 1
       type_max(n) = new_cell_max1(iproc)
       IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
@@ -1221,6 +1270,7 @@ CONTAINS
     END DO
 
     coord = old_coordinates
+    coord(slice_dir) = old_slice_coord
 
     n = 1
     type_min(n) = new_min(n)
@@ -1234,6 +1284,7 @@ CONTAINS
     END DO
 
     DO WHILE(type_max(n) <= new_max(n))
+      IF (coordinates(slice_dir) /= new_slice_coord) EXIT
       coord(cdim(n)) = iproc - 1
       type_max(n) = old_cell_max1(iproc)
       IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
