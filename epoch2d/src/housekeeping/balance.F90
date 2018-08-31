@@ -583,55 +583,55 @@ CONTAINS
     ALLOCATE(ex_x_min(1-ng:ny_new+ng))
     ex_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
-    DEALLOCATE(ex_x_max)
-    ALLOCATE(ex_x_max(1-ng:ny_new+ng))
-    ex_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, ey_x_min, temp_slice)
     DEALLOCATE(ey_x_min)
     ALLOCATE(ey_x_min(1-ng:ny_new+ng))
     ey_x_min = temp_slice
-
-    CALL remap_field_slice(c_dir_x, ey_x_max, temp_slice)
-    DEALLOCATE(ey_x_max)
-    ALLOCATE(ey_x_max(1-ng:ny_new+ng))
-    ey_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, ez_x_min, temp_slice)
     DEALLOCATE(ez_x_min)
     ALLOCATE(ez_x_min(1-ng:ny_new+ng))
     ez_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, ez_x_max, temp_slice)
-    DEALLOCATE(ez_x_max)
-    ALLOCATE(ez_x_max(1-ng:ny_new+ng))
-    ez_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, bx_x_min, temp_slice)
     DEALLOCATE(bx_x_min)
     ALLOCATE(bx_x_min(1-ng:ny_new+ng))
     bx_x_min = temp_slice
-
-    CALL remap_field_slice(c_dir_x, bx_x_max, temp_slice)
-    DEALLOCATE(bx_x_max)
-    ALLOCATE(bx_x_max(1-ng:ny_new+ng))
-    bx_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, by_x_min, temp_slice)
     DEALLOCATE(by_x_min)
     ALLOCATE(by_x_min(1-ng:ny_new+ng))
     by_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, by_x_max, temp_slice)
-    DEALLOCATE(by_x_max)
-    ALLOCATE(by_x_max(1-ng:ny_new+ng))
-    by_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, bz_x_min, temp_slice)
     DEALLOCATE(bz_x_min)
     ALLOCATE(bz_x_min(1-ng:ny_new+ng))
     bz_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
+    DEALLOCATE(ex_x_max)
+    ALLOCATE(ex_x_max(1-ng:ny_new+ng))
+    ex_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ey_x_max, temp_slice)
+    DEALLOCATE(ey_x_max)
+    ALLOCATE(ey_x_max(1-ng:ny_new+ng))
+    ey_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ez_x_max, temp_slice)
+    DEALLOCATE(ez_x_max)
+    ALLOCATE(ez_x_max(1-ng:ny_new+ng))
+    ez_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bx_x_max, temp_slice)
+    DEALLOCATE(bx_x_max)
+    ALLOCATE(bx_x_max(1-ng:ny_new+ng))
+    bx_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, by_x_max, temp_slice)
+    DEALLOCATE(by_x_max)
+    ALLOCATE(by_x_max(1-ng:ny_new+ng))
+    by_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, bz_x_max, temp_slice)
     DEALLOCATE(bz_x_max)
@@ -709,55 +709,55 @@ CONTAINS
     ALLOCATE(ex_y_min(1-ng:nx_new+ng))
     ex_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
-    DEALLOCATE(ex_y_max)
-    ALLOCATE(ex_y_max(1-ng:nx_new+ng))
-    ex_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, ey_y_min, temp_slice)
     DEALLOCATE(ey_y_min)
     ALLOCATE(ey_y_min(1-ng:nx_new+ng))
     ey_y_min = temp_slice
-
-    CALL remap_field_slice(c_dir_y, ey_y_max, temp_slice)
-    DEALLOCATE(ey_y_max)
-    ALLOCATE(ey_y_max(1-ng:nx_new+ng))
-    ey_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, ez_y_min, temp_slice)
     DEALLOCATE(ez_y_min)
     ALLOCATE(ez_y_min(1-ng:nx_new+ng))
     ez_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, ez_y_max, temp_slice)
-    DEALLOCATE(ez_y_max)
-    ALLOCATE(ez_y_max(1-ng:nx_new+ng))
-    ez_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, bx_y_min, temp_slice)
     DEALLOCATE(bx_y_min)
     ALLOCATE(bx_y_min(1-ng:nx_new+ng))
     bx_y_min = temp_slice
-
-    CALL remap_field_slice(c_dir_y, bx_y_max, temp_slice)
-    DEALLOCATE(bx_y_max)
-    ALLOCATE(bx_y_max(1-ng:nx_new+ng))
-    bx_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, by_y_min, temp_slice)
     DEALLOCATE(by_y_min)
     ALLOCATE(by_y_min(1-ng:nx_new+ng))
     by_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, by_y_max, temp_slice)
-    DEALLOCATE(by_y_max)
-    ALLOCATE(by_y_max(1-ng:nx_new+ng))
-    by_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, bz_y_min, temp_slice)
     DEALLOCATE(bz_y_min)
     ALLOCATE(bz_y_min(1-ng:nx_new+ng))
     bz_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
+    DEALLOCATE(ex_y_max)
+    ALLOCATE(ex_y_max(1-ng:nx_new+ng))
+    ex_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ey_y_max, temp_slice)
+    DEALLOCATE(ey_y_max)
+    ALLOCATE(ey_y_max(1-ng:nx_new+ng))
+    ey_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ez_y_max, temp_slice)
+    DEALLOCATE(ez_y_max)
+    ALLOCATE(ez_y_max(1-ng:nx_new+ng))
+    ez_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bx_y_max, temp_slice)
+    DEALLOCATE(bx_y_max)
+    ALLOCATE(bx_y_max(1-ng:nx_new+ng))
+    bx_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, by_y_max, temp_slice)
+    DEALLOCATE(by_y_max)
+    ALLOCATE(by_y_max(1-ng:nx_new+ng))
+    by_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, bz_y_max, temp_slice)
     DEALLOCATE(bz_y_max)
