@@ -58,7 +58,7 @@ ifeq ($(strip $(COMPILER)),intel)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
-             -C -g -heap-arrays 64 -warn -fpic
+             -C -g -heap-arrays 64 -warn all -warn errors -fpic
     ifeq ($(strip $(SYSTEM)),Darwin)
       FFLAGS += -Wl,-no_pie
     endif
@@ -86,8 +86,10 @@ ifeq ($(strip $(COMPILER)),gfortran)
   endif
 
   ifeq ($(strip $(MODE)),debug)
-    FFLAGS = -O0 -g -Wall -Wextra -pedantic -fbounds-check \
-             -ffpe-trap=invalid,zero,overflow -Wno-unused-parameter
+    FFLAGS = -O0 -g -Wall -Wextra -pedantic -Wno-unused-parameter \
+             -Wno-integer-division -ffree-line-length-80 -fcheck=all \
+             -fbacktrace -fbounds-check -Werror \
+             -ffpe-trap=invalid,zero,overflow -fbounds-check
     #FFLAGS += -ffpe-trap=underflow,denormal
 
     # gfortran-4.3
