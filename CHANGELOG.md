@@ -6,6 +6,10 @@
    load balancer attempts to calculate the load balance prior to loading
    any particles
 
+ * Added control block option "use_optimal_layout". If set to true then the
+   load balancer attempts to find the best nprocx/y/z split of the domain
+   prior to the initial load balance
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
