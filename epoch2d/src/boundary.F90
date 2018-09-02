@@ -32,7 +32,7 @@ CONTAINS
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max' /)
-    CHARACTER(LEN=2*c_max_string_length) :: species_name
+    CHARACTER(LEN=2*c_max_string_length) :: bc_error
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
@@ -57,10 +57,10 @@ CONTAINS
     error = .FALSE.
     DO ispecies = 1, n_species
       DO i = 1, 2*c_ndims
-        species_name = TRIM(boundary(i)) // ' on species ' &
-            // TRIM(species_list(ispecies)%name)
+        bc_error = 'Unrecognised "' // TRIM(boundary(i)) // '" boundary for ' &
+            // 'species "' // TRIM(species_list(ispecies)%name) // '"'
         error = error .OR. setup_particle_boundary(&
-            species_list(ispecies)%bc_particle(i), species_name)
+            species_list(ispecies)%bc_particle(i), bc_error)
       END DO
     END DO
 
@@ -73,10 +73,10 @@ CONTAINS
 
 
 
-  FUNCTION setup_particle_boundary(boundary, boundary_name) RESULT(error)
+  FUNCTION setup_particle_boundary(boundary, bc_error) RESULT(error)
 
     INTEGER, INTENT(INOUT) :: boundary
-    CHARACTER(LEN=*), INTENT(IN) :: boundary_name
+    CHARACTER(LEN=*), INTENT(IN) :: bc_error
     LOGICAL :: error
 
     ! For some types of boundary, fields and particles are treated in
@@ -108,8 +108,7 @@ CONTAINS
     IF (rank == 0) THEN
       WRITE(*,*)
       WRITE(*,*) '*** ERROR ***'
-      WRITE(*,*) 'Unrecognised particle boundary condition on "', &
-          TRIM(boundary_name), '" boundary.'
+      WRITE(*,*) TRIM(bc_error)
     END IF
     error = .TRUE.
 

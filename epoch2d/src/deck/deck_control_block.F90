@@ -156,6 +156,8 @@ CONTAINS
       n_zeros_control = -1
       dlb_maximum_interval = 500
       dlb_force_interval = 2000
+      nx_global = -1
+      ny_global = -1
     END IF
 
   END SUBROUTINE control_deck_initialise
@@ -214,6 +216,27 @@ CONTAINS
     END IF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
+
+    IF (rank == 0) THEN
+      IF (nx_global < 1) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The mandatory parameter "nx" has not been specified.'
+        END DO
+        CALL abort_code(c_err_missing_elements)
+      END IF
+      IF (ny_global < 1) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The mandatory parameter "ny" has not been specified.'
+        END DO
+        CALL abort_code(c_err_missing_elements)
+      END IF
+    END IF
 
     IF (deck_state == c_ds_first) RETURN
 
