@@ -65,8 +65,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -445,8 +444,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -522,8 +520,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -710,8 +707,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -767,6 +763,7 @@ CONTAINS
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -846,8 +843,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -912,8 +908,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (spec_sum .AND. &
-          io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -1026,7 +1021,6 @@ CONTAINS
 
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (species_list(ispecies)%tracer) CYCLE
 #endif
