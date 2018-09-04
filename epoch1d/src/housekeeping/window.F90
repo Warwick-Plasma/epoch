@@ -19,7 +19,6 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
-  USE shared_data
 
   IMPLICIT NONE
 

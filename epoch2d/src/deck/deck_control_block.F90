@@ -147,6 +147,9 @@ CONTAINS
       use_accurate_n_zeros = .FALSE.
       reset_walltime = .FALSE.
       balance_first = .TRUE.
+      ic_from_restart = .FALSE.
+      neutral_background = .TRUE.
+      use_particle_migration = .FALSE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -154,6 +157,11 @@ CONTAINS
       n_zeros_control = -1
       dlb_maximum_interval = 500
       dlb_force_interval = 2000
+      nx_global = -1
+      ny_global = -1
+      particle_push_start_time = 0.0_num
+      particle_migration_interval = 1
+      maxwell_solver = c_maxwell_solver_yee
     END IF
 
   END SUBROUTINE control_deck_initialise
@@ -212,6 +220,27 @@ CONTAINS
     END IF
 
     IF (.NOT.ic_from_restart) use_exact_restart = .FALSE.
+
+    IF (rank == 0) THEN
+      IF (nx_global < 1) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The mandatory parameter "nx" has not been specified.'
+        END DO
+        CALL abort_code(c_err_missing_elements)
+      END IF
+      IF (ny_global < 1) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'The mandatory parameter "ny" has not been specified.'
+        END DO
+        CALL abort_code(c_err_missing_elements)
+      END IF
+    END IF
 
     IF (deck_state == c_ds_first) RETURN
 

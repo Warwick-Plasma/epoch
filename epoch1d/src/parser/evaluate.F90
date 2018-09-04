@@ -16,9 +16,8 @@
 
 MODULE evaluator
 
-  USE evaluator_blocks
   USE shunt
-  USE utilities
+  USE stack
 
   IMPLICIT NONE
 

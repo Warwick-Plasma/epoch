@@ -583,55 +583,55 @@ CONTAINS
     ALLOCATE(ex_x_min(1-ng:ny_new+ng))
     ex_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
-    DEALLOCATE(ex_x_max)
-    ALLOCATE(ex_x_max(1-ng:ny_new+ng))
-    ex_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, ey_x_min, temp_slice)
     DEALLOCATE(ey_x_min)
     ALLOCATE(ey_x_min(1-ng:ny_new+ng))
     ey_x_min = temp_slice
-
-    CALL remap_field_slice(c_dir_x, ey_x_max, temp_slice)
-    DEALLOCATE(ey_x_max)
-    ALLOCATE(ey_x_max(1-ng:ny_new+ng))
-    ey_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, ez_x_min, temp_slice)
     DEALLOCATE(ez_x_min)
     ALLOCATE(ez_x_min(1-ng:ny_new+ng))
     ez_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, ez_x_max, temp_slice)
-    DEALLOCATE(ez_x_max)
-    ALLOCATE(ez_x_max(1-ng:ny_new+ng))
-    ez_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, bx_x_min, temp_slice)
     DEALLOCATE(bx_x_min)
     ALLOCATE(bx_x_min(1-ng:ny_new+ng))
     bx_x_min = temp_slice
-
-    CALL remap_field_slice(c_dir_x, bx_x_max, temp_slice)
-    DEALLOCATE(bx_x_max)
-    ALLOCATE(bx_x_max(1-ng:ny_new+ng))
-    bx_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, by_x_min, temp_slice)
     DEALLOCATE(by_x_min)
     ALLOCATE(by_x_min(1-ng:ny_new+ng))
     by_x_min = temp_slice
 
-    CALL remap_field_slice(c_dir_x, by_x_max, temp_slice)
-    DEALLOCATE(by_x_max)
-    ALLOCATE(by_x_max(1-ng:ny_new+ng))
-    by_x_max = temp_slice
-
     CALL remap_field_slice(c_dir_x, bz_x_min, temp_slice)
     DEALLOCATE(bz_x_min)
     ALLOCATE(bz_x_min(1-ng:ny_new+ng))
     bz_x_min = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
+    DEALLOCATE(ex_x_max)
+    ALLOCATE(ex_x_max(1-ng:ny_new+ng))
+    ex_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ey_x_max, temp_slice)
+    DEALLOCATE(ey_x_max)
+    ALLOCATE(ey_x_max(1-ng:ny_new+ng))
+    ey_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, ez_x_max, temp_slice)
+    DEALLOCATE(ez_x_max)
+    ALLOCATE(ez_x_max(1-ng:ny_new+ng))
+    ez_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, bx_x_max, temp_slice)
+    DEALLOCATE(bx_x_max)
+    ALLOCATE(bx_x_max(1-ng:ny_new+ng))
+    bx_x_max = temp_slice
+
+    CALL remap_field_slice(c_dir_x, by_x_max, temp_slice)
+    DEALLOCATE(by_x_max)
+    ALLOCATE(by_x_max(1-ng:ny_new+ng))
+    by_x_max = temp_slice
 
     CALL remap_field_slice(c_dir_x, bz_x_max, temp_slice)
     DEALLOCATE(bz_x_max)
@@ -709,55 +709,55 @@ CONTAINS
     ALLOCATE(ex_y_min(1-ng:nx_new+ng))
     ex_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
-    DEALLOCATE(ex_y_max)
-    ALLOCATE(ex_y_max(1-ng:nx_new+ng))
-    ex_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, ey_y_min, temp_slice)
     DEALLOCATE(ey_y_min)
     ALLOCATE(ey_y_min(1-ng:nx_new+ng))
     ey_y_min = temp_slice
-
-    CALL remap_field_slice(c_dir_y, ey_y_max, temp_slice)
-    DEALLOCATE(ey_y_max)
-    ALLOCATE(ey_y_max(1-ng:nx_new+ng))
-    ey_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, ez_y_min, temp_slice)
     DEALLOCATE(ez_y_min)
     ALLOCATE(ez_y_min(1-ng:nx_new+ng))
     ez_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, ez_y_max, temp_slice)
-    DEALLOCATE(ez_y_max)
-    ALLOCATE(ez_y_max(1-ng:nx_new+ng))
-    ez_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, bx_y_min, temp_slice)
     DEALLOCATE(bx_y_min)
     ALLOCATE(bx_y_min(1-ng:nx_new+ng))
     bx_y_min = temp_slice
-
-    CALL remap_field_slice(c_dir_y, bx_y_max, temp_slice)
-    DEALLOCATE(bx_y_max)
-    ALLOCATE(bx_y_max(1-ng:nx_new+ng))
-    bx_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, by_y_min, temp_slice)
     DEALLOCATE(by_y_min)
     ALLOCATE(by_y_min(1-ng:nx_new+ng))
     by_y_min = temp_slice
 
-    CALL remap_field_slice(c_dir_y, by_y_max, temp_slice)
-    DEALLOCATE(by_y_max)
-    ALLOCATE(by_y_max(1-ng:nx_new+ng))
-    by_y_max = temp_slice
-
     CALL remap_field_slice(c_dir_y, bz_y_min, temp_slice)
     DEALLOCATE(bz_y_min)
     ALLOCATE(bz_y_min(1-ng:nx_new+ng))
     bz_y_min = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
+    DEALLOCATE(ex_y_max)
+    ALLOCATE(ex_y_max(1-ng:nx_new+ng))
+    ex_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ey_y_max, temp_slice)
+    DEALLOCATE(ey_y_max)
+    ALLOCATE(ey_y_max(1-ng:nx_new+ng))
+    ey_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, ez_y_max, temp_slice)
+    DEALLOCATE(ez_y_max)
+    ALLOCATE(ez_y_max(1-ng:nx_new+ng))
+    ez_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, bx_y_max, temp_slice)
+    DEALLOCATE(bx_y_max)
+    ALLOCATE(bx_y_max(1-ng:nx_new+ng))
+    bx_y_max = temp_slice
+
+    CALL remap_field_slice(c_dir_y, by_y_max, temp_slice)
+    DEALLOCATE(by_y_max)
+    ALLOCATE(by_y_max(1-ng:nx_new+ng))
+    by_y_max = temp_slice
 
     CALL remap_field_slice(c_dir_y, bz_y_max, temp_slice)
     DEALLOCATE(bz_y_max)
@@ -946,26 +946,27 @@ CONTAINS
       our_coords(i) = coordinates(cdim(i))
     END DO
 
-    nprocs(1) = SIZE(old_cell_min1)
-
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
     new_min(1) = new_cell_min1(our_coords(1)+1)
     new_max(1) = new_cell_max1(our_coords(1)+1)
 
-    nmin(1) = new_cell_min1(1)
-    nmax(1) = new_cell_max1(nprocs(1))
-
     tag = 0
     sendtypes = 0
     recvtypes = 0
-    coord = coordinates
+
+    nprocs(1) = SIZE(new_cell_min1)
+
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
 
     ! Create array of sendtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
     END DO
+
+    coord = coordinates
 
     n = 1
     type_min(n) = old_min(n)
@@ -973,7 +974,7 @@ CONTAINS
 
     ! Find the new processor on which the old x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (new_cell_min1(iproc) <= old_min(n) &
           .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
     END DO
@@ -999,7 +1000,7 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           old_0(i) = start(i) - ng
           old_1(i) = old_0(i) + n_local(i) - 1
         END DO
@@ -1013,7 +1014,7 @@ CONTAINS
 
     ! Create array of recvtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
 
@@ -1023,7 +1024,7 @@ CONTAINS
 
     ! Find the old processor on which the new x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (old_cell_min1(iproc) <= new_min(n) &
           .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
     END DO
@@ -1049,10 +1050,10 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           new_0(i) = start(i) - ng
         END DO
-        DO i = old_0(1),old_1(1)
+        DO i = old_0(1), old_1(1)
           inew = new_0(1) + i - old_0(1)
           field_out(inew) = field_in(i)
         END DO
@@ -1066,7 +1067,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc-1
+    DO i = 0, nproc - 1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     END DO
@@ -1110,9 +1111,6 @@ CONTAINS
       our_coords(i) = coordinates(cdim(i))
     END DO
 
-    nprocs(1) = SIZE(old_cell_min1)
-    nprocs(2) = SIZE(old_cell_min2)
-
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
     new_min(1) = new_cell_min1(our_coords(1)+1)
@@ -1123,21 +1121,25 @@ CONTAINS
     new_min(2) = new_cell_min2(our_coords(2)+1)
     new_max(2) = new_cell_max2(our_coords(2)+1)
 
+    tag = 0
+    sendtypes = 0
+    recvtypes = 0
+
+    nprocs(1) = SIZE(new_cell_min1)
+    nprocs(2) = SIZE(new_cell_min2)
+
     nmin(1) = new_cell_min1(1)
     nmax(1) = new_cell_max1(nprocs(1))
     nmin(2) = new_cell_min2(1)
     nmax(2) = new_cell_max2(nprocs(2))
 
-    tag = 0
-    sendtypes = 0
-    recvtypes = 0
-    coord = coordinates
-
     ! Create array of sendtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
     END DO
+
+    coord = coordinates
 
     n = 2
     type_min(n) = old_min(n)
@@ -1145,7 +1147,7 @@ CONTAINS
 
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
-    DO jproc = 1, nprocs(n)-1
+    DO jproc = 1, nprocs(n) - 1
       IF (new_cell_min2(jproc) <= old_min(n) &
           .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
     END DO
@@ -1169,7 +1171,7 @@ CONTAINS
 
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
-      DO iproc = 1, nprocs(n)-1
+      DO iproc = 1, nprocs(n) - 1
         IF (new_cell_min1(iproc) <= old_min(n) &
             .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
       END DO
@@ -1195,7 +1197,7 @@ CONTAINS
         ELSE
           ! New domain is on the same processor as the old domain.
           ! Just copy the region rather than using MPI.
-          DO i = 1,nd
+          DO i = 1, nd
             old_0(i) = start(i) - ng
             old_1(i) = old_0(i) + n_local(i) - 1
           END DO
@@ -1215,7 +1217,7 @@ CONTAINS
 
     ! Create array of recvtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
 
@@ -1225,7 +1227,7 @@ CONTAINS
 
     ! Find the old processor on which the new y_min resides
     ! This could be sped up by using bisection.
-    DO jproc = 1, nprocs(n)-1
+    DO jproc = 1, nprocs(n) - 1
       IF (old_cell_min2(jproc) <= new_min(n) &
           .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
     END DO
@@ -1249,7 +1251,7 @@ CONTAINS
 
       ! Find the old processor on which the new x_min resides
       ! This could be sped up by using bisection.
-      DO iproc = 1, nprocs(n)-1
+      DO iproc = 1, nprocs(n) - 1
         IF (old_cell_min1(iproc) <= new_min(n) &
             .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
       END DO
@@ -1275,12 +1277,12 @@ CONTAINS
         ELSE
           ! New domain is on the same processor as the old domain.
           ! Just copy the region rather than using MPI.
-          DO i = 1,nd
+          DO i = 1, nd
             new_0(i) = start(i) - ng
           END DO
-          DO j = old_0(2),old_1(2)
+          DO j = old_0(2), old_1(2)
             jnew = new_0(2) + j - old_0(2)
-            DO i = old_0(1),old_1(1)
+            DO i = old_0(1), old_1(1)
               inew = new_0(1) + i - old_0(1)
               field_out(inew,jnew) = field_in(i,j)
             END DO
@@ -1301,7 +1303,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc-1
+    DO i = 0, nproc - 1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     END DO
@@ -1345,9 +1347,6 @@ CONTAINS
       our_coords(i) = coordinates(cdim(i))
     END DO
 
-    nprocs(1) = SIZE(old_cell_min1)
-    nprocs(2) = SIZE(old_cell_min2)
-
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
     new_min(1) = new_cell_min1(our_coords(1)+1)
@@ -1358,21 +1357,25 @@ CONTAINS
     new_min(2) = new_cell_min2(our_coords(2)+1)
     new_max(2) = new_cell_max2(our_coords(2)+1)
 
+    tag = 0
+    sendtypes = 0
+    recvtypes = 0
+
+    nprocs(1) = SIZE(new_cell_min1)
+    nprocs(2) = SIZE(new_cell_min2)
+
     nmin(1) = new_cell_min1(1)
     nmax(1) = new_cell_max1(nprocs(1))
     nmin(2) = new_cell_min2(1)
     nmax(2) = new_cell_max2(nprocs(2))
 
-    tag = 0
-    sendtypes = 0
-    recvtypes = 0
-    coord = coordinates
-
     ! Create array of sendtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
     END DO
+
+    coord = coordinates
 
     n = 2
     type_min(n) = old_min(n)
@@ -1380,7 +1383,7 @@ CONTAINS
 
     ! Find the new processor on which the old y_min resides
     ! This could be sped up by using bisection.
-    DO jproc = 1, nprocs(n)-1
+    DO jproc = 1, nprocs(n) - 1
       IF (new_cell_min2(jproc) <= old_min(n) &
           .AND. new_cell_max2(jproc) >= old_min(n)) EXIT
     END DO
@@ -1404,7 +1407,7 @@ CONTAINS
 
       ! Find the new processor on which the old x_min resides
       ! This could be sped up by using bisection.
-      DO iproc = 1, nprocs(n)-1
+      DO iproc = 1, nprocs(n) - 1
         IF (new_cell_min1(iproc) <= old_min(n) &
             .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
       END DO
@@ -1430,7 +1433,7 @@ CONTAINS
         ELSE
           ! New domain is on the same processor as the old domain.
           ! Just copy the region rather than using MPI.
-          DO i = 1,nd
+          DO i = 1, nd
             old_0(i) = start(i) - ng
             old_1(i) = old_0(i) + n_local(i) - 1
           END DO
@@ -1450,7 +1453,7 @@ CONTAINS
 
     ! Create array of recvtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
 
@@ -1460,7 +1463,7 @@ CONTAINS
 
     ! Find the old processor on which the new y_min resides
     ! This could be sped up by using bisection.
-    DO jproc = 1, nprocs(n)-1
+    DO jproc = 1, nprocs(n) - 1
       IF (old_cell_min2(jproc) <= new_min(n) &
           .AND. old_cell_max2(jproc) >= new_min(n)) EXIT
     END DO
@@ -1484,7 +1487,7 @@ CONTAINS
 
       ! Find the old processor on which the new x_min resides
       ! This could be sped up by using bisection.
-      DO iproc = 1, nprocs(n)-1
+      DO iproc = 1, nprocs(n) - 1
         IF (old_cell_min1(iproc) <= new_min(n) &
             .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
       END DO
@@ -1510,12 +1513,12 @@ CONTAINS
         ELSE
           ! New domain is on the same processor as the old domain.
           ! Just copy the region rather than using MPI.
-          DO i = 1,nd
+          DO i = 1, nd
             new_0(i) = start(i) - ng
           END DO
-          DO j = old_0(2),old_1(2)
+          DO j = old_0(2), old_1(2)
             jnew = new_0(2) + j - old_0(2)
-            DO i = old_0(1),old_1(1)
+            DO i = old_0(1), old_1(1)
               inew = new_0(1) + i - old_0(1)
               field_out(inew,jnew) = field_in(i,j)
             END DO
@@ -1536,7 +1539,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc-1
+    DO i = 0, nproc - 1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     END DO

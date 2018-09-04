@@ -530,26 +530,27 @@ CONTAINS
       our_coords(i) = coordinates(cdim(i))
     END DO
 
-    nprocs(1) = SIZE(old_cell_min1)
-
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
     new_min(1) = new_cell_min1(our_coords(1)+1)
     new_max(1) = new_cell_max1(our_coords(1)+1)
 
-    nmin(1) = new_cell_min1(1)
-    nmax(1) = new_cell_max1(nprocs(1))
-
     tag = 0
     sendtypes = 0
     recvtypes = 0
-    coord = coordinates
+
+    nprocs(1) = SIZE(new_cell_min1)
+
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
 
     ! Create array of sendtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
     END DO
+
+    coord = coordinates
 
     n = 1
     type_min(n) = old_min(n)
@@ -557,7 +558,7 @@ CONTAINS
 
     ! Find the new processor on which the old x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (new_cell_min1(iproc) <= old_min(n) &
           .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
     END DO
@@ -583,7 +584,7 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           old_0(i) = start(i) - ng
           old_1(i) = old_0(i) + n_local(i) - 1
         END DO
@@ -597,7 +598,7 @@ CONTAINS
 
     ! Create array of recvtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
 
@@ -607,7 +608,7 @@ CONTAINS
 
     ! Find the old processor on which the new x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (old_cell_min1(iproc) <= new_min(n) &
           .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
     END DO
@@ -633,10 +634,10 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           new_0(i) = start(i) - ng
         END DO
-        DO i = old_0(1),old_1(1)
+        DO i = old_0(1), old_1(1)
           inew = new_0(1) + i - old_0(1)
           field_out(inew) = field_in(i)
         END DO
@@ -650,7 +651,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc-1
+    DO i = 0, nproc - 1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     END DO
@@ -690,26 +691,27 @@ CONTAINS
       our_coords(i) = coordinates(cdim(i))
     END DO
 
-    nprocs(1) = SIZE(old_cell_min1)
-
     old_min(1) = old_cell_min1(our_coords(1)+1)
     old_max(1) = old_cell_max1(our_coords(1)+1)
     new_min(1) = new_cell_min1(our_coords(1)+1)
     new_max(1) = new_cell_max1(our_coords(1)+1)
 
-    nmin(1) = new_cell_min1(1)
-    nmax(1) = new_cell_max1(nprocs(1))
-
     tag = 0
     sendtypes = 0
     recvtypes = 0
-    coord = coordinates
+
+    nprocs(1) = SIZE(new_cell_min1)
+
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
 
     ! Create array of sendtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
     END DO
+
+    coord = coordinates
 
     n = 1
     type_min(n) = old_min(n)
@@ -717,7 +719,7 @@ CONTAINS
 
     ! Find the new processor on which the old x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (new_cell_min1(iproc) <= old_min(n) &
           .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
     END DO
@@ -743,7 +745,7 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           old_0(i) = start(i) - ng
           old_1(i) = old_0(i) + n_local(i) - 1
         END DO
@@ -757,7 +759,7 @@ CONTAINS
 
     ! Create array of recvtypes
 
-    DO i = 1,nd
+    DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
 
@@ -767,7 +769,7 @@ CONTAINS
 
     ! Find the old processor on which the new x_min resides
     ! This could be sped up by using bisection.
-    DO iproc = 1, nprocs(n)-1
+    DO iproc = 1, nprocs(n) - 1
       IF (old_cell_min1(iproc) <= new_min(n) &
           .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
     END DO
@@ -793,10 +795,10 @@ CONTAINS
       ELSE
         ! New domain is on the same processor as the old domain.
         ! Just copy the region rather than using MPI.
-        DO i = 1,nd
+        DO i = 1, nd
           new_0(i) = start(i) - ng
         END DO
-        DO i = old_0(1),old_1(1)
+        DO i = old_0(1), old_1(1)
           inew = new_0(1) + i - old_0(1)
           field_out(inew) = field_in(i)
         END DO
@@ -810,7 +812,7 @@ CONTAINS
 
     CALL redblack(field_in, field_out, sendtypes, recvtypes)
 
-    DO i = 0,nproc-1
+    DO i = 0, nproc - 1
       IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
       IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
     END DO

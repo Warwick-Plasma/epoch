@@ -16,7 +16,6 @@
 
 MODULE injectors
 
-  USE shared_data
   USE partlist
   USE particle_temperature
   USE evaluator
