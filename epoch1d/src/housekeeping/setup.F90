@@ -100,6 +100,10 @@ CONTAINS
     restart_dump_every = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
+    n_zeros = 4
+    laser_inject_local = 0.0_num
+    laser_absorb_local = 0.0_num
+    old_elapsed_time = 0.0_num
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     particles_max_id = 0
     n_cpu_bits = 0
@@ -256,6 +260,9 @@ CONTAINS
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
+
+    cpml_x_min = .FALSE.
+    cpml_x_max = .FALSE.
 
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields

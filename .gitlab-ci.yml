@@ -48,6 +48,7 @@ test_ubuntu_pgi:
     - tag
   script:
     - export COMPILER=pgi
+    - export MODE=debug
     - scripts/run-tests-epoch-all.sh -b
   tags:
     - ubuntu
@@ -64,6 +65,7 @@ test_osx:
     - tag
   script:
     - export COMPILER=gfortran
+    - export MODE=debug
     - scripts/run-tests-epoch-all.sh -b
     - cd epoch1d; make rm; cd ../epoch2d; make rm; cd ../epoch3d; make rm; cd ..
     - export DEFINE="-DPER_SPECIES_WEIGHT -DPARTICLE_ID -DPHOTONS"

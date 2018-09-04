@@ -18,7 +18,6 @@ MODULE deck_injector_block
 
   USE strings_advanced
   USE shunt
-  USE evaluator
   USE injectors
   USE utilities
 

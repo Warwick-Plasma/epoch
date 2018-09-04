@@ -37,6 +37,7 @@ CONTAINS
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    add_laser(:) = .FALSE.
     any_open = .FALSE.
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
