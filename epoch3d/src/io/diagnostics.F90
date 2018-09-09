@@ -1713,12 +1713,14 @@ CONTAINS
 
 
   SUBROUTINE write_nspecies_field(id, code, block_id, name, units, stagger, &
-      func, array)
+      func, array, fluxdir, dir_tags)
 
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:,:,:), INTENT(OUT) :: array
+    INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: fluxdir
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: dir_tags
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: reduced
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, io, mask
@@ -1736,11 +1738,12 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
-      SUBROUTINE func(data_array, current_species)
+      SUBROUTINE func(data_array, current_species, direction)
         USE constants
         USE shared_data
         REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
+        INTEGER, INTENT(IN), OPTIONAL :: direction
       END SUBROUTINE func
     END INTERFACE
 
@@ -2107,11 +2110,12 @@ CONTAINS
     TYPE(subset), POINTER :: sub
 
     INTERFACE
-      SUBROUTINE func(data_array, direction)
+      SUBROUTINE func(data_array, current_species, direction)
         USE constants
         USE shared_data
         REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-        INTEGER, INTENT(IN) :: direction
+        INTEGER, INTENT(IN) :: current_species
+        INTEGER, INTENT(IN), OPTIONAL :: direction
       END SUBROUTINE func
     END INTERFACE
 
@@ -2245,7 +2249,8 @@ CONTAINS
         USE constants
         USE shared_data
         REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-        INTEGER, INTENT(IN) :: current_species, direction
+        INTEGER, INTENT(IN) :: current_species
+        INTEGER, INTENT(IN), OPTIONAL :: direction
       END SUBROUTINE func
     END INTERFACE
 

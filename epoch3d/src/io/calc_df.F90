@@ -34,10 +34,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_mass_density(data_array, current_species)
+  SUBROUTINE calc_mass_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_m
     ! The data to be weighted onto the grid
@@ -117,10 +118,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_ekbar(data_array, current_species)
+  SUBROUTINE calc_ekbar(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
@@ -232,7 +234,8 @@ CONTAINS
   SUBROUTINE calc_ekflux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
@@ -378,10 +381,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_poynt_flux(data_array, direction)
+  SUBROUTINE calc_poynt_flux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     INTEGER :: ix, iy, iz
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
@@ -434,10 +438,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_charge_density(data_array, current_species)
+  SUBROUTINE calc_charge_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q
     ! The data to be weighted onto the grid
@@ -517,10 +522,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_number_density(data_array, current_species)
+  SUBROUTINE calc_number_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: idx
@@ -584,10 +590,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_ppc(data_array, current_species)
+  SUBROUTINE calc_ppc(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     INTEGER :: ispecies, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
@@ -637,10 +644,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_average_weight(data_array, current_species)
+  SUBROUTINE calc_average_weight(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count
@@ -707,10 +715,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_temperature(sigma, current_species)
+  SUBROUTINE calc_temperature(sigma, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
     ! The weight of a particle
@@ -854,7 +863,8 @@ CONTAINS
   SUBROUTINE calc_per_species_current(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q, part_mc
     REAL(num) :: part_px, part_py, part_pz
@@ -952,10 +962,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jx(data_array, current_species)
+  SUBROUTINE calc_per_species_jx(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_x)
 
@@ -963,10 +974,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jy(data_array, current_species)
+  SUBROUTINE calc_per_species_jy(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_y)
 
@@ -974,10 +986,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jz(data_array, current_species)
+  SUBROUTINE calc_per_species_jz(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_z)
 
