@@ -678,6 +678,7 @@ CONTAINS
       ! Write the cartesian mesh
       IF (IAND(mask, code) /= 0) dump_field_grid = .TRUE.
       IF (IAND(mask, c_io_never) /= 0) dump_field_grid = .FALSE.
+      IF (restart_flag) dump_field_grid = .TRUE.
 
       IF (dump_field_grid) THEN
         IF (.NOT. use_offset_grid) THEN
@@ -1489,7 +1490,6 @@ CONTAINS
     LOGICAL :: skip_this_set
 
     mask = iomask(id)
-    IF (IAND(mask, c_io_never) /= 0) RETURN
 
     ! This is a normal dump and normal output variable
     normal_id = IAND(IAND(code, mask), IOR(c_io_always, c_io_full)) /= 0
@@ -1500,6 +1500,8 @@ CONTAINS
         .OR. IAND(mask, c_io_snapshot) /= 0
 
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
+
+    IF (.NOT.restart_id .AND. IAND(mask, c_io_never) /= 0) RETURN
 
     dims = (/nx_global, ny_global/)
 
@@ -2612,8 +2614,8 @@ CONTAINS
     restart_id = IAND(IAND(code, mask), c_io_restartable) /= 0
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
 
-    IF (IAND(mask, c_io_never) == 0 &
-        .AND. (IAND(mask, code) /= 0 .OR. ANY(dump_point_grid))) THEN
+    IF (restart_id .OR. (IAND(mask, c_io_never) == 0 &
+        .AND. (IAND(mask, code) /= 0 .OR. ANY(dump_point_grid)))) THEN
       CALL build_species_subset
 
       DO ispecies = 1, n_species
@@ -2696,7 +2698,8 @@ CONTAINS
     restart_id = IAND(IAND(code, mask), c_io_restartable) /= 0
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
 
-    IF (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0) THEN
+    IF (restart_id &
+        .OR. (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0)) THEN
       CALL build_species_subset
 
       DO ispecies = 1, n_species
@@ -2777,7 +2780,8 @@ CONTAINS
     restart_id = IAND(IAND(code, mask), c_io_restartable) /= 0
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
 
-    IF (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0) THEN
+    IF (restart_id &
+        .OR. (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0)) THEN
       CALL build_species_subset
 
       DO ispecies = 1, n_species
@@ -2859,7 +2863,8 @@ CONTAINS
     restart_id = IAND(IAND(code, mask), c_io_restartable) /= 0
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
 
-    IF (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0) THEN
+    IF (restart_id &
+        .OR. (IAND(mask, c_io_never) == 0 .AND. IAND(mask, code) /= 0)) THEN
       CALL build_species_subset
 
       DO ispecies = 1, n_species
