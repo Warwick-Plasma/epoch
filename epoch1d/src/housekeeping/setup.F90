@@ -725,7 +725,7 @@ CONTAINS
   SUBROUTINE restart_data(step)
 
     INTEGER, INTENT(OUT) :: step
-    CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
+    CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2
     CHARACTER(LEN=c_id_length) :: species_id
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
@@ -1127,9 +1127,13 @@ CONTAINS
 
         IF (npart /= species%count) THEN
           IF (rank == 0) THEN
+            CALL integer_as_string(species%count, str1)
+            CALL integer_as_string(npart, str2)
             PRINT*, '*** ERROR ***'
-            PRINT*, 'Malformed restart dump. Number of particle variables', &
-                ' does not match grid.'
+            PRINT*, 'Malformed restart dump.'
+            PRINT*, 'Particle grid for species "', TRIM(species%name), &
+                '" has ', TRIM(str1), ' particles'
+            PRINT*, 'but "', TRIM(block_id), '" has ', TRIM(str2)
           END IF
           CALL abort_code(c_err_io_error)
           STOP

@@ -1235,9 +1235,13 @@ CONTAINS
 
         IF (npart /= species%count) THEN
           IF (rank == 0) THEN
+            CALL integer_as_string(species%count, str1)
+            CALL integer_as_string(npart, str2)
             PRINT*, '*** ERROR ***'
-            PRINT*, 'Malformed restart dump. Number of particle variables', &
-                ' does not match grid.'
+            PRINT*, 'Malformed restart dump.'
+            PRINT*, 'Particle grid for species "', TRIM(species%name), &
+                '" has ', TRIM(str1), ' particles'
+            PRINT*, 'but "', TRIM(block_id), '" has ', TRIM(str2)
           END IF
           CALL abort_code(c_err_io_error)
           STOP
