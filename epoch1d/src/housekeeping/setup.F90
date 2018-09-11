@@ -717,7 +717,7 @@ CONTAINS
   SUBROUTINE restart_data(step)
 
     INTEGER, INTENT(OUT) :: step
-    CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1
+    CHARACTER(LEN=c_id_length) :: code_name, block_id, mesh_id, str1, str2
     CHARACTER(LEN=c_id_length) :: species_id
     CHARACTER(LEN=c_max_string_length) :: name, len_string
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
