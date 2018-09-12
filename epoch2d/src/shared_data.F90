@@ -615,7 +615,8 @@ MODULE shared_data
     INTEGER :: mask
     INTEGER, DIMENSION(:,:), POINTER :: dumpmask
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
+    LOGICAL :: use_gamma, use_random
+    LOGICAL :: use_gamma_min, use_gamma_max
     LOGICAL :: use_x_min, use_x_max
     LOGICAL :: use_y_min, use_y_max
     LOGICAL :: use_px_min, use_px_max
@@ -628,22 +629,27 @@ MODULE shared_data
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
     LOGICAL :: time_varying
-    REAL(num) :: gamma_min, gamma_max, random_fraction
-    TYPE(primitive_stack) :: gamma_min_exp, gamma_max_exp, random_fraction_exp
-    REAL(num) :: x_min, x_max, y_min, y_max
+    REAL(num) :: random_fraction
+    REAL(num) :: gamma_min, gamma_max
+    REAL(num) :: x_min, x_max
+    REAL(num) :: y_min, y_max
+    REAL(num) :: px_min, px_max
+    REAL(num) :: py_min, py_max
+    REAL(num) :: pz_min, pz_max
+    REAL(num) :: weight_min, weight_max
+    REAL(num) :: charge_min, charge_max
+    REAL(num) :: mass_min, mass_max
+    INTEGER(i8) :: id_min, id_max
+    TYPE(primitive_stack) :: random_fraction_exp
+    TYPE(primitive_stack) :: gamma_min_exp, gamma_max_exp
     TYPE(primitive_stack) :: x_min_exp, x_max_exp
     TYPE(primitive_stack) :: y_min_exp, y_max_exp
-    REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
     TYPE(primitive_stack) :: px_min_exp, px_max_exp
     TYPE(primitive_stack) :: py_min_exp, py_max_exp
     TYPE(primitive_stack) :: pz_min_exp, pz_max_exp
-    REAL(num) :: weight_min, weight_max
     TYPE(primitive_stack) :: weight_min_exp, weight_max_exp
-    REAL(num) :: charge_min, charge_max
     TYPE(primitive_stack) :: charge_min_exp, charge_max_exp
-    REAL(num) :: mass_min, mass_max
     TYPE(primitive_stack) :: mass_min_exp, mass_max_exp
-    INTEGER(i8) :: id_min, id_max
     TYPE(primitive_stack) :: id_min_exp, id_max_exp
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start

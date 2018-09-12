@@ -553,13 +553,11 @@ CONTAINS
 
     IF (opcode == c_const_y_min) THEN
       CALL push_on_eval(y_min)
-      err = err_simplify
       RETURN
     END IF
 
     IF (opcode == c_const_y_max) THEN
       CALL push_on_eval(y_max)
-      err = err_simplify
       RETURN
     END IF
 

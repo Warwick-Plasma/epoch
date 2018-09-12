@@ -214,6 +214,22 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'y_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'y_max')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'z_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'z_max')) THEN
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'px_min')) THEN
       IF (subset_list(subset_id)%time_varying) THEN
         CALL initialise_stack(subset_list(subset_id)%px_min_exp)
