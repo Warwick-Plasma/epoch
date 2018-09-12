@@ -184,6 +184,8 @@ CONTAINS
     time = time_orig
     DO i = 1,n_io_blocks
       CALL copy_io_block(io_block_orig(i), io_block_list(i))
+    END DO
+    DO i = 1,SIZE(file_prefixes)
       IF (file_numbers(i) > n_dumps) n_dumps = file_numbers(i)
       file_numbers(i) = file_numbers_orig(i)
     END DO
