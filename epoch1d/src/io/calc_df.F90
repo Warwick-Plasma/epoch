@@ -770,69 +770,6 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    ! The data to be weighted onto the grid
-    REAL(num) :: wdata
-    INTEGER :: ispecies, ix, spec_start, spec_end
-    TYPE(particle), POINTER :: current
-    LOGICAL :: spec_sum
-#include "particle_head.inc"
-
-    INTERFACE
-      FUNCTION evaluator(a_particle, species_eval)
-        USE shared_data
-        TYPE(particle), POINTER :: a_particle
-        INTEGER, INTENT(IN) :: species_eval
-        REAL(num) :: evaluator
-      END FUNCTION evaluator
-    END INTERFACE
-
-    data_array = 0.0_num
-
-    spec_start = current_species
-    spec_end = current_species
-    spec_sum = .FALSE.
-
-    IF (current_species <= 0) THEN
-      spec_start = 1
-      spec_end = n_species
-      spec_sum = .TRUE.
-    END IF
-
-    DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
-#endif
-      current => io_list(ispecies)%attached_list%head
-
-      DO WHILE (ASSOCIATED(current))
-#include "particle_to_grid.inc"
-
-        wdata = evaluator(current, ispecies)
-
-        DO ix = sf_min, sf_max
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
-        END DO
-
-        current => current%next
-      END DO
-      CALL calc_boundary(data_array, ispecies)
-    END DO
-
-    CALL calc_boundary(data_array)
-
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    END DO
-
-  END SUBROUTINE calc_on_grid_with_evaluator
-
-
-
   SUBROUTINE calc_per_species_current(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
