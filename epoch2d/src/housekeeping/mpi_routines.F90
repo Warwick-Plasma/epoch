@@ -33,6 +33,7 @@ CONTAINS
     CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
     CALL MPI_COMM_SIZE(comm, nproc, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
+    done_mpi_initialise = .FALSE.
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
@@ -41,12 +42,10 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_communicator
+  SUBROUTINE split_domain
 
-    INTEGER, PARAMETER :: ndims = 2
-    INTEGER :: dims(ndims), idim, old_comm
-    LOGICAL :: periods(ndims), reorder, op, reset
-    INTEGER :: test_coords(ndims)
+    LOGICAL :: reset
+    INTEGER :: old_comm
     INTEGER :: ix, iy
     INTEGER :: nxsplit, nysplit
     INTEGER :: area, minarea
@@ -171,8 +170,21 @@ CONTAINS
       CALL MPI_COMM_FREE(old_comm, errcode)
     END IF
 
+    CALL setup_communicator
+
+  END SUBROUTINE split_domain
+
+
+
+  SUBROUTINE setup_communicator
+
+    INTEGER :: dims(c_ndims), idim, old_comm
+    LOGICAL :: periods(c_ndims), reorder, op
+    INTEGER :: test_coords(c_ndims)
+    INTEGER :: ix, iy
+
     dims = (/nprocy, nprocx/)
-    CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
+    CALL MPI_DIMS_CREATE(nproc, c_ndims, dims, errcode)
 
     periods = .FALSE.
     reorder = .TRUE.
@@ -206,10 +218,11 @@ CONTAINS
     END IF
 
     old_comm = comm
-    CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_CART_CREATE(old_comm, c_ndims, dims, periods, reorder, comm, &
+                         errcode)
     CALL MPI_COMM_FREE(old_comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
-    CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
+    CALL MPI_CART_COORDS(comm, rank, c_ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 1, 1, proc_x_min, proc_x_max, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, proc_y_min, proc_y_max, errcode)
 
@@ -243,7 +256,7 @@ CONTAINS
 
         ! For some stupid reason MPI_CART_RANK returns an error rather than
         ! MPI_PROC_NULL if the coords are out of range.
-        DO idim = 1, ndims
+        DO idim = 1, c_ndims
           IF ((test_coords(idim) < 0 &
               .OR. test_coords(idim) >= dims(idim)) &
               .AND. .NOT. periods(idim)) op = .FALSE.
@@ -264,7 +277,7 @@ CONTAINS
 
     IF (.NOT.cpml_boundaries) cpml_thickness = 0
 
-    CALL setup_communicator
+    CALL split_domain
 
     ALLOCATE(npart_each_rank(nproc))
     ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))

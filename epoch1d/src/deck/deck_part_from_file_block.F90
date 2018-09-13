@@ -17,10 +17,7 @@
 MODULE deck_part_from_file_block
 
   USE strings_advanced
-  USE setup
-  USE simple_io
   USE utilities
-  USE partlist
   USE deck_species_block
 
   IMPLICIT NONE

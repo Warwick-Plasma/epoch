@@ -18,9 +18,7 @@ MODULE helper
 
   USE balance
   USE boundary
-  USE strings
   USE partlist
-  USE calc_df
   USE simple_io
   USE deltaf_loader
 

@@ -49,6 +49,7 @@ CONTAINS
     block_number = 0
     IF (deck_state /= c_ds_first) RETURN
 
+    any_average = .FALSE.
     warning_printed = .FALSE.
     alternate_name = ''
     io_block_name (c_dump_part_grid        ) = 'particles'

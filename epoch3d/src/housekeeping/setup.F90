@@ -109,6 +109,10 @@ CONTAINS
     restart_dump_every = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
+    n_zeros = 4
+    laser_inject_local = 0.0_num
+    laser_absorb_local = 0.0_num
+    old_elapsed_time = 0.0_num
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     particles_max_id = 0
     n_cpu_bits = 0
@@ -321,6 +325,13 @@ CONTAINS
     CALL setup_data_averaging
     CALL setup_split_particles
     CALL setup_field_boundaries
+
+    cpml_x_min = .FALSE.
+    cpml_x_max = .FALSE.
+    cpml_y_min = .FALSE.
+    cpml_y_max = .FALSE.
+    cpml_z_min = .FALSE.
+    cpml_z_max = .FALSE.
 
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields
@@ -1416,9 +1427,13 @@ CONTAINS
 
         IF (npart /= species%count) THEN
           IF (rank == 0) THEN
+            CALL integer_as_string(species%count, str1)
+            CALL integer_as_string(npart, str2)
             PRINT*, '*** ERROR ***'
-            PRINT*, 'Malformed restart dump. Number of particle variables', &
-                ' does not match grid.'
+            PRINT*, 'Malformed restart dump.'
+            PRINT*, 'Particle grid for species "', TRIM(species%name), &
+                '" has ', TRIM(str1), ' particles'
+            PRINT*, 'but "', TRIM(block_id), '" has ', TRIM(str2)
           END IF
           CALL abort_code(c_err_io_error)
           STOP
