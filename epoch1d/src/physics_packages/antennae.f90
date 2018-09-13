@@ -11,8 +11,9 @@ MODULE antennae
     TYPE(primitive_stack) :: jx_expression, jy_expression, jz_expression
     TYPE(primitive_stack) :: ranges
     TYPE(primitive_stack) :: omega
+    REAL(num) :: start_time, stop_time
     REAL(num) :: omega_value
-    REAL(num) :: phase_history = 0.0_num
+    REAL(num) :: phase_history
     LOGICAL :: active = .FALSE.
   END TYPE antenna
 
@@ -34,6 +35,10 @@ MODULE antennae
 
     IF (antenna_in%ranges%init) &
         CALL deallocate_stack(antenna_in%ranges)
+
+    antenna_in%phase_history = 0.0_num
+    antenna_in%start_time = -1.0_num
+    antenna_in%stop_time = c_largest_number
 
   END SUBROUTINE initialise_antenna
 
@@ -87,6 +92,8 @@ MODULE antennae
     ranges => NULL()
     DO iant = 1, sz
       IF (.NOT. antenna_list(iant)%active) CYCLE
+      IF (time < antenna_list(iant)%start_time &
+          .OR. time > antenna_list(iant)%stop_time) CYCLE
       use_ranges = antenna_list(iant)%ranges%init
       IF (antenna_list(iant)%ranges%init) THEN
         CALL evaluate_and_return_all(antenna_list(iant)%ranges, nels, ranges, &
