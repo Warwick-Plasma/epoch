@@ -28,6 +28,7 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
+  USE antennae
 
   IMPLICIT NONE
 
@@ -114,6 +115,7 @@ CONTAINS
     CALL deallocate_partlists
     CALL deallocate_eval_stack
     CALL deallocate_injectors
+    CALL deallocate_antennae
 
     CALL MPI_COMM_FREE(comm, errcode)
 

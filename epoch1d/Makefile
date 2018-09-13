@@ -1,4 +1,4 @@
-# Specify a particular compiler with "make COMPILER=pgi", etc.
+#Specify a particular compiler with "make COMPILER=pgi", etc.
 # Specify debugging flags with "make MODE=debug"
 # If floating-point consistency is required then set the flag "CONS=1"
 #   - This prevents the code from using extended 80-bit precision which is
@@ -467,9 +467,9 @@ deck_stencil_block.o: deck_stencil_block.f90 fields.o strings_advanced.o
 deck_subset_block.o: deck_subset_block.f90 strings_advanced.o utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
-diagnostics.o: diagnostics.F90 calc_df.o deck.o deck_io_block.o dist_fn.o \
-  iterators.o probes.o random_generator.o setup.o shared_data.o strings.o \
-  timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
+diagnostics.o: diagnostics.F90 antennae.o calc_df.o deck.o deck_io_block.o \
+  dist_fn.o iterators.o probes.o random_generator.o setup.o shared_data.o \
+  strings.o timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch1d.o: epoch1d.F90 antennae.o balance.o calc_df.o collisions.o deck.o \
   diagnostics.o fields.o finish.o helper.o ic_module.o injectors.o ionise.o \
@@ -480,8 +480,8 @@ evaluate.o: evaluate.F90 evaluator_blocks.o shunt.o utilities.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o
 fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
-finish.o: finish.f90 collisions.o deck.o diagnostics.o dist_fn.o injectors.o \
-  ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o
+finish.o: finish.f90 antennae.o collisions.o deck.o diagnostics.o dist_fn.o \
+  injectors.o ionise.o laser.o partlist.o setup.o shared_data.o shunt.o window.o
 helper.o: helper.F90 balance.o boundary.o calc_df.o deltaf_loader.o partlist.o \
   simple_io.o strings.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
@@ -505,7 +505,7 @@ prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
-setup.o: setup.F90 fields.o helper.o laser.o mpi_subtype_control.o \
+setup.o: setup.F90 antennae.o fields.o helper.o laser.o mpi_subtype_control.o \
   shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
   window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 shared_data.o

@@ -28,6 +28,7 @@ MODULE setup
   USE timer
   USE helper
   USE sdf
+  USE antennae
 
   IMPLICIT NONE
 
@@ -1112,6 +1113,8 @@ CONTAINS
         CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
             block_id, ndims, 'laser_y_max_phase', 'y_max')
 
+        CALL read_antenna_phases(sdf_handle, block_id, ndims)
+
         CALL read_id_starts(sdf_handle, block_id)
 
       CASE(c_blocktype_constant)
@@ -1476,6 +1479,37 @@ CONTAINS
     END IF
 
   END SUBROUTINE read_laser_phases
+
+
+
+  SUBROUTINE read_antenna_phases(sdf_handle, block_id_in, ndims)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    REAL(num), DIMENSION(:), ALLOCATABLE :: antenna_phases
+    INTEGER, DIMENSION(4) :: dims
+    INTEGER :: iant
+
+    IF (str_cmp(block_id_in, 'antenna_phases')) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      IF (ndims /= 1 .OR. dims(1) /= SIZE(antenna_list)) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of antenna phases does not match number of antennae.'
+        PRINT*, 'Antennae will be populated in order, but correct operation ', &
+            'is not guaranteed'
+      END IF
+
+      ALLOCATE(antenna_phases(dims(1)))
+      CALL sdf_read_srl(sdf_handle, antenna_phases)
+      DO iant = 1, SIZE(antenna_list)
+        antenna_list(iant)%contents%phase_history = antenna_phases(iant)
+      END DO
+      DEALLOCATE(antenna_phases)
+    END IF
+
+  END SUBROUTINE read_antenna_phases
 
 
 

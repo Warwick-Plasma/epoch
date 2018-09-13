@@ -30,6 +30,7 @@ MODULE diagnostics
   USE strings
   USE window
   USE timer
+  USE antennae
 
   IMPLICIT NONE
 
@@ -396,6 +397,8 @@ CONTAINS
             'laser_x_min_phase')
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
+
+        CALL write_antenna_phases(sdf_handle)
 
         CALL write_id_starts(sdf_handle)
 
@@ -884,6 +887,26 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_laser_phases
+
+
+
+  SUBROUTINE write_antenna_phases(sdf_handle)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    REAL(num), DIMENSION(:), ALLOCATABLE :: antenna_phases
+    INTEGER :: iant
+
+    IF (any_antennae) THEN
+      ALLOCATE(antenna_phases(SIZE(antenna_list)))
+      DO iant = 1, SIZE(antenna_list)
+        antenna_phases(iant) = antenna_list(iant)%contents%phase_history
+      END DO
+      CALL sdf_write_srl(sdf_handle, 'antenna_phases', 'antenna_phases', &
+          SIZE(antenna_list), antenna_phases, 0)
+      DEALLOCATE(antenna_phases)
+    END IF
+
+  END SUBROUTINE write_antenna_phases
 
 
 
