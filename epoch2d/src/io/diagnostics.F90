@@ -1276,7 +1276,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ioutput
     TYPE(averaged_data_block) :: avg
-    INTEGER :: n_species_local, ispecies
+    INTEGER :: n_species_local, ispecies, idir, is, nd
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
 
     avg%real_time = avg%real_time + dt
@@ -1365,6 +1365,26 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+      CASE(c_dump_ekflux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          is = (ispecies - 1) / nd - avg%species_sum / nd + 1
+          idir = ispecies - avg%species_sum - (is - 1) * nd
+          CALL calc_ekflux(array, is, idir)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_poynt_flux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_poynt_flux(array, 0, ispecies)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
       END SELECT
     ELSE
       SELECT CASE(ioutput)
@@ -1432,6 +1452,24 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_ekflux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          is = (ispecies - 1) / nd - avg%species_sum / nd + 1
+          idir = ispecies - avg%species_sum - (is - 1) * nd
+          CALL calc_ekflux(array, is, idir)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_poynt_flux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_poynt_flux(array, 0, ispecies)
           avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
@@ -1671,7 +1709,7 @@ CONTAINS
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: dir_tags
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: reduced
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies, io, mask, idir, ndirs
+    INTEGER :: ispecies, io, mask, idir, ndirs, iav
     INTEGER :: i, ii, rnx, j, jj, rny
     INTEGER :: i0, i1, j0, j1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
@@ -2004,7 +2042,7 @@ CONTAINS
         avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
         IF (avg%species_sum > 0 .AND. IAND(mask, c_io_field) == 0) THEN
-          DO idir = 1, ndirs
+          DO idir = 1, avg%species_sum
             IF (PRESENT(dir_tags)) THEN
               CALL check_name_length('dir tag', &
                   'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
@@ -2023,14 +2061,15 @@ CONTAINS
             CALL sdf_write_plain_variable(sdf_handle, &
                 TRIM(temp_block_id), TRIM(temp_name), &
                 TRIM(units), dims, stagger, 'grid', &
-                avg%r4array(:,:,1), subtype_field_r4, subarray_field_r4)
+                avg%r4array(:,:,idir), subtype_field_r4, subarray_field_r4)
           END DO
 
           dump_field_grid = .TRUE.
         END IF
 
         IF (avg%n_species > 0) THEN
-          DO ispecies = 1, avg%n_species
+          iav = avg%species_sum
+          DO ispecies = 1, avg%n_species / ndirs
             IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
             DO idir = 1, ndirs
@@ -2056,10 +2095,10 @@ CONTAINS
                     // '_averaged/' // TRIM(io_list(ispecies)%name)
               END IF
 
+              iav = iav + 1
               CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                   TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                  avg%r4array(:,:,ispecies+avg%species_sum), &
-                  subtype_field_r4, subarray_field_r4)
+                  avg%r4array(:,:,iav), subtype_field_r4, subarray_field_r4)
             END DO
 
             dump_field_grid = .TRUE.
@@ -2071,7 +2110,7 @@ CONTAINS
         avg%array = avg%array / avg%real_time
 
         IF (avg%species_sum > 0 .AND. IAND(mask, c_io_field) == 0) THEN
-          DO idir = 1, ndirs
+          DO idir = 1, avg%species_sum
             IF (PRESENT(dir_tags)) THEN
               CALL check_name_length('dir tag', &
                   'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
@@ -2090,14 +2129,15 @@ CONTAINS
             CALL sdf_write_plain_variable(sdf_handle, &
                 TRIM(temp_block_id), TRIM(temp_name), &
                 TRIM(units), dims, stagger, 'grid', &
-                avg%array(:,:,1), subtype_field, subarray_field)
+                avg%array(:,:,idir), subtype_field, subarray_field)
           END DO
 
           dump_field_grid = .TRUE.
         END IF
 
         IF (avg%n_species > 0) THEN
-          DO ispecies = 1, avg%n_species
+          iav = avg%species_sum
+          DO ispecies = 1, avg%n_species / ndirs
             IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
             DO idir = 1, ndirs
@@ -2123,10 +2163,10 @@ CONTAINS
                     // '_averaged/' // TRIM(io_list(ispecies)%name)
               END IF
 
+              iav = iav + 1
               CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
                   TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                  avg%array(:,:,ispecies+avg%species_sum), &
-                  subtype_field, subarray_field)
+                  avg%array(:,:,iav), subtype_field, subarray_field)
             END DO
 
             dump_field_grid = .TRUE.
