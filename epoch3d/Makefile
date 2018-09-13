@@ -423,7 +423,7 @@ FORCE:
 
 # All the dependencies
 
-antennae.o: antennae.f90 shared_data.o evaluate.o
+antennae.o: antennae.f90 evaluate.o shared_data.o shunt.o
 balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
   timer.o utilities.o
 boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_temperature.o \
@@ -443,7 +443,7 @@ deck.o: deck.F90 custom_deck.o deck_antenna_block.o deck_boundaries_block.o \
   deck_species_block.o deck_stencil_block.o deck_subset_block.o \
   deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
 deck_antenna_block.o: deck_antenna_block.f90 antennae.o evaluate.o shunt.o \
-  strings_advanced.o shared_data.o
+  strings_advanced.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
@@ -477,7 +477,6 @@ epoch3d.o: epoch3d.F90 antennae.o balance.o calc_df.o collisions.o deck.o \
   diagnostics.o fields.o finish.o helper.o ic_module.o injectors.o ionise.o \
   mpi_routines.o particle_migration.o particles.o photons.o setup.o \
   split_particle.o welcome.o window.o
-
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 evaluate.o: evaluate.F90 shunt.o stack.o
 evaluator_blocks.o: evaluator_blocks.F90 custom_parser.o stack.o strings.o

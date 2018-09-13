@@ -423,7 +423,7 @@ FORCE:
 
 # All the dependencies
 
-antennae.o: antennae.f90 shared_data.o evaluate.o
+antennae.o: antennae.f90 evaluate.o shared_data.o shunt.o
 balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
   timer.o utilities.o
 boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_temperature.o \
@@ -443,7 +443,7 @@ deck.o: deck.F90 custom_deck.o deck_antenna_block.o deck_boundaries_block.o \
   deck_species_block.o deck_stencil_block.o deck_subset_block.o \
   deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
 deck_antenna_block.o: deck_antenna_block.f90 antennae.o evaluate.o shunt.o \
-  strings_advanced.o shared_data.o
+  strings_advanced.o
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
@@ -506,9 +506,9 @@ prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
-setup.o: setup.F90 antennae.o fields.o helper.o laser.o mpi_subtype_control.o \
-  shared_data.o shunt.o split_particle.o timer.o version_data.o welcome.o \
-  window.o $(SDFMOD)
+setup.o: setup.F90 antennae.o constants.o fields.o helper.o laser.o \
+  mpi_subtype_control.o shunt.o split_particle.o timer.o version_data.o \
+  welcome.o window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
