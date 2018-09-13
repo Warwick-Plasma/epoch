@@ -17,14 +17,32 @@ MODULE antennae
     LOGICAL :: active = .FALSE.
   END TYPE antenna
 
-  TYPE(antenna), DIMENSION(:), ALLOCATABLE :: antenna_list
+  TYPE :: antenna_holder
+    TYPE(antenna), POINTER :: contents
+  END TYPE antenna_holder
+
+  TYPE(antenna_holder), DIMENSION(:), ALLOCATABLE :: antenna_list
 
   CONTAINS
 
   !> Initialise an antenna
   SUBROUTINE initialise_antenna(antenna_in)
     TYPE(antenna), INTENT(INOUT) :: antenna_in
+
     antenna_in%active = .TRUE.
+    antenna_in%phase_history = 0.0_num
+    antenna_in%start_time = -1.0_num
+    antenna_in%stop_time = c_largest_number
+
+  END SUBROUTINE initialise_antenna
+
+
+
+  !> Routine to clean up an antenna after use
+  SUBROUTINE finalise_antenna(antenna_in)
+    TYPE(antenna), INTENT(INOUT) :: antenna_in
+
+    antenna_in%active = .FALSE.
 
     IF (antenna_in%jx_expression%init) &
         CALL deallocate_stack(antenna_in%jx_expression)
@@ -35,19 +53,17 @@ MODULE antennae
 
     IF (antenna_in%ranges%init) &
         CALL deallocate_stack(antenna_in%ranges)
+    IF (antenna_in%omega%init) &
+        CALL deallocate_stack(antenna_in%omega)
 
-    antenna_in%phase_history = 0.0_num
-    antenna_in%start_time = -1.0_num
-    antenna_in%stop_time = c_largest_number
-
-  END SUBROUTINE initialise_antenna
+  END SUBROUTINE finalise_antenna
 
 
 
   !> Add an antenna to the list of antennae
   SUBROUTINE add_antenna(antenna_in)
-    TYPE(antenna), INTENT(IN) :: antenna_in
-    TYPE(antenna), DIMENSION(:), ALLOCATABLE :: temp
+    TYPE(antenna), INTENT(IN), POINTER :: antenna_in
+    TYPE(antenna_holder), DIMENSION(:), ALLOCATABLE :: temp
     LOGICAL :: copyback
     INTEGER :: sz
 
@@ -64,7 +80,7 @@ MODULE antennae
 
     sz = sz + 1
     ALLOCATE(antenna_list(sz))
-    antenna_list(sz) = antenna_in
+    antenna_list(sz)%contents => antenna_in
 
     IF (copyback) THEN
       antenna_list(1:sz-1) = temp
@@ -83,6 +99,7 @@ MODULE antennae
     REAL(num), DIMENSION(:), POINTER :: ranges
     REAL(num) :: oscil_dat
     LOGICAL :: use_ranges
+    TYPE(antenna), POINTER :: current_antenna
 
     IF (.NOT. ALLOCATED(antenna_list)) RETURN
     sz = SIZE(antenna_list)
@@ -91,27 +108,28 @@ MODULE antennae
 
     ranges => NULL()
     DO iant = 1, sz
-      IF (.NOT. antenna_list(iant)%active) CYCLE
-      IF (time < antenna_list(iant)%start_time &
-          .OR. time > antenna_list(iant)%stop_time) CYCLE
-      use_ranges = antenna_list(iant)%ranges%init
-      IF (antenna_list(iant)%ranges%init) THEN
-        CALL evaluate_and_return_all(antenna_list(iant)%ranges, nels, ranges, &
+      current_antenna => antenna_list(iant)%contents
+      IF (.NOT. current_antenna%active) CYCLE
+      IF (time < current_antenna%start_time &
+          .OR. time > current_antenna%stop_time) CYCLE
+      use_ranges = current_antenna%ranges%init
+      IF (current_antenna%ranges%init) THEN
+        CALL evaluate_and_return_all(current_antenna%ranges, nels, ranges, &
             err)
         IF (err /= c_err_none .OR. nels /= c_ndims * 2) CYCLE
       ELSE
         ALLOCATE(ranges(c_ndims*2))
       END IF
-      IF (antenna_list(iant)%omega%init) THEN
-        IF (antenna_list(iant)%omega%is_time_varying) THEN
-          antenna_list(iant)%phase_history = &
-              antenna_list(iant)%phase_history + &
-              evaluate(antenna_list(iant)%omega, err) * dt
+      IF (current_antenna%omega%init) THEN
+        IF (current_antenna%omega%is_time_varying) THEN
+          current_antenna%phase_history = &
+              current_antenna%phase_history + &
+              evaluate(current_antenna%omega, err) * dt
         ELSE
-          antenna_list(iant)%phase_history = antenna_list(iant)%omega_value &
+          current_antenna%phase_history = current_antenna%omega_value &
               * time
         END IF
-        oscil_dat = SIN(antenna_list(iant)%phase_history)
+        oscil_dat = SIN(current_antenna%phase_history)
       ELSE
         oscil_dat = 1.0_num
       END IF
@@ -127,19 +145,19 @@ MODULE antennae
             IF ((x(ix) < ranges(c_dir_x * 2 - 1) .OR. &
                 x(ix) > ranges(c_dir_x * 2)) .AND. use_ranges) CYCLE
             parameters%pack_ix = ix
-            IF(antenna_list(iant)%jx_expression%init) THEN
+            IF(current_antenna%jx_expression%init) THEN
               jx(ix,iy,iz) = jx(ix,iy,iz) + evaluate_with_parameters(&
-                  antenna_list(iant)%jx_expression, &
+                  current_antenna%jx_expression, &
                   parameters, err) * oscil_dat
             END IF
-            IF(antenna_list(iant)%jy_expression%init) THEN
+            IF(current_antenna%jy_expression%init) THEN
               jy(ix,iy,iz) = jy(ix,iy,iz) + evaluate_with_parameters(&
-                  antenna_list(iant)%jy_expression, &
+                  current_antenna%jy_expression, &
                   parameters, err) * oscil_dat
             END IF
-            IF(antenna_list(iant)%jz_expression%init) THEN
+            IF(current_antenna%jz_expression%init) THEN
               jz(ix,iy,iz) = jz(ix,iy,iz) + evaluate_with_parameters(&
-                  antenna_list(iant)%jz_expression, &
+                  current_antenna%jz_expression, &
                   parameters, err) * oscil_dat
             END IF
           END DO
@@ -155,7 +173,16 @@ MODULE antennae
 
   !> Deallocate antennae
   SUBROUTINE deallocate_antennae
-    IF (ALLOCATED(antenna_list)) DEALLOCATE(antenna_list)
+    INTEGER :: iant
+
+    IF (.NOT. ALLOCATED(antenna_list)) RETURN
+
+    DO iant = 1, SIZE(antenna_list)
+      CALL finalise_antenna(antenna_list(iant)%contents)
+      DEALLOCATE(antenna_list(iant)%contents)
+    END DO
+
+    DEALLOCATE(antenna_list)
   END SUBROUTINE deallocate_antennae
 
 END MODULE antennae

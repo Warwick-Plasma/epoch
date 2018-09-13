@@ -29,7 +29,8 @@ MODULE deck_antenna_block
   PUBLIC :: antenna_block_start, antenna_block_end
   PUBLIC :: antenna_block_handle_element, antenna_block_check
 
-  TYPE(antenna) :: working_antenna
+  TYPE(antenna), POINTER :: working_antenna
+  LOGICAL :: antenna_ok
 
 CONTAINS
 
@@ -48,6 +49,8 @@ CONTAINS
   SUBROUTINE antenna_block_start
 
     IF (deck_state == c_ds_first) RETURN
+    ALLOCATE(working_antenna)
+    antenna_ok = .TRUE.
     CALL initialise_antenna(working_antenna)
 
   END SUBROUTINE antenna_block_start
@@ -57,7 +60,11 @@ CONTAINS
   SUBROUTINE antenna_block_end
 
     IF (deck_state == c_ds_first) RETURN
-    CALL add_antenna(working_antenna)
+    IF (antenna_ok) THEN
+      CALL add_antenna(working_antenna)
+    ELSE
+      DEALLOCATE(working_antenna)
+    END IF
 
   END SUBROUTINE antenna_block_end
 
@@ -66,7 +73,8 @@ CONTAINS
   FUNCTION antenna_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: errcode
+    REAL(num), DIMENSION(:), POINTER :: ranges
+    INTEGER :: errcode, nels
     REAL(num) :: dummy
     INTEGER :: io, iu
 
@@ -95,6 +103,14 @@ CONTAINS
     IF (str_cmp(element, 'ranges')) THEN
       CALL initialise_stack(working_antenna%ranges)
       CALL tokenize(value, working_antenna%ranges, errcode)
+      ranges => NULL()
+      CALL evaluate_and_return_all(working_antenna%ranges, nels, ranges, &
+          errcode)
+      DEALLOCATE(ranges)
+      IF (errcode /= c_err_none .OR. nels /= c_ndims * 2) THEN
+        errcode = IOR(errcode, c_err_bad_value)
+        antenna_ok = .FALSE.
+      END IF
       RETURN
     END IF
 
