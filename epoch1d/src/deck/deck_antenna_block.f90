@@ -74,9 +74,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     REAL(num), DIMENSION(:), POINTER :: ranges
-    INTEGER :: errcode
-    REAL(num) :: dummy
-    INTEGER :: io, iu, nels
+    INTEGER :: errcode, nels
 
     errcode = c_err_none
     IF (deck_state == c_ds_first) RETURN
@@ -142,6 +140,8 @@ CONTAINS
   FUNCTION antenna_block_check() RESULT(errcode)
 
     INTEGER :: errcode
+
+    errcode = c_err_none
 
   END FUNCTION antenna_block_check
 
