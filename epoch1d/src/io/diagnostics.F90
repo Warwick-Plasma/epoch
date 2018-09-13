@@ -2151,11 +2151,11 @@ CONTAINS
         rsubarray = sub%subarray
       END IF
 
+      temp_grid_id = 'grid/r_' // TRIM(sub%name)
+
       idir = 1
       CALL check_name_length('dir tag', &
           'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)))
-
-      temp_grid_id = 'grid/r_' // TRIM(sub%name)
 
       DO idir = 1, ndirs
         temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
@@ -2220,17 +2220,16 @@ CONTAINS
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
         idir = 1
-        CALL check_name_length('species', 'Derived/' // TRIM(name) &
-            // '_' // TRIM(dir_tags(idir)) // '/' &
-            // TRIM(io_list(ispecies)%name))
+        CALL check_name_length('species', &
+            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+            // '/' // TRIM(io_list(ispecies)%name))
 
         DO idir = 1, ndirs
-          temp_block_id = TRIM(block_id) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-          temp_name = 'Derived/' // TRIM(name) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
+          temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+              // '/' // TRIM(io_list(ispecies)%name)
+          temp_name = &
+              'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+              // '/' // TRIM(io_list(ispecies)%name)
 
           CALL check_name_length('subset', &
               TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
@@ -2257,17 +2256,16 @@ CONTAINS
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
         idir = 1
-        CALL check_name_length('species', 'Derived/' // TRIM(name) &
-            // '_' // TRIM(dir_tags(idir)) // '/' &
-            // TRIM(io_list(ispecies)%name))
+        CALL check_name_length('species', &
+            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+            // '/' // TRIM(io_list(ispecies)%name))
 
         DO idir = 1, ndirs
-          temp_block_id = TRIM(block_id) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-          temp_name = 'Derived/' // TRIM(name) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
+          temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+              // '/' // TRIM(io_list(ispecies)%name)
+          temp_name = &
+              'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+              // '/' // TRIM(io_list(ispecies)%name)
 
           CALL func(array, ispecies, fluxdir(idir))
 
