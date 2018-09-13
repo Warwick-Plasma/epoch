@@ -60,11 +60,8 @@ CONTAINS
   SUBROUTINE antenna_block_end
 
     IF (deck_state == c_ds_first) RETURN
-    IF (antenna_ok) THEN
-      CALL add_antenna(working_antenna)
-    ELSE
-      DEALLOCATE(working_antenna)
-    END IF
+    antenna_ok = .TRUE.
+    CALL add_antenna(working_antenna)
 
   END SUBROUTINE antenna_block_end
 
@@ -72,7 +69,7 @@ CONTAINS
 
   FUNCTION antenna_block_handle_element(element, value) RESULT(errcode)
 
-    CHARACTER(*), INTENT(IN) :: element, value
+    CHARACTER(LEN=*), INTENT(IN) :: element, value
     REAL(num), DIMENSION(:), POINTER :: ranges
     INTEGER :: errcode, nels
 

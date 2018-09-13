@@ -69,7 +69,7 @@ CONTAINS
 
   FUNCTION antenna_block_handle_element(element, value) RESULT(errcode)
 
-    CHARACTER(*), INTENT(IN) :: element, value
+    CHARACTER(LEN=*), INTENT(IN) :: element, value
     REAL(num), DIMENSION(:), POINTER :: ranges
     INTEGER :: errcode, nels
 

@@ -102,7 +102,7 @@ CONTAINS
 
 
 
-  SUBROUTINE update_e_field()
+  SUBROUTINE update_e_field
 
     INTEGER :: ix, iy
     REAL(num) :: cpml_x, cpml_y
@@ -576,7 +576,6 @@ CONTAINS
 
     CALL bfield_final_bcs
 
-    ! Update E field to t+dt/2
     CALL update_e_field
 
     CALL efield_bcs

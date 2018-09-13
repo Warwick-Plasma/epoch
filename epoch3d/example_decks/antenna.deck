@@ -17,9 +17,10 @@ begin:control
   stdout_frequency = 10
 end:control
 
+
 begin:antenna
-  jz = if (r_xyz lt 1.0*micron, 1.0e-5, 0.0)
-  ranges = ((-1*micron, 1*micron),(-1*micron,1*micron), (-1*micron, 1*micron))
+  jz = if (r_xyz lt micron, 1.0e-5, 0.0)
+  ranges = ((-micron, micron), (-micron, micron), (-micron, micron))
   omega = 1.0e15
 end:antenna
 

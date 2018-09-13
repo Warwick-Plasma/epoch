@@ -3,11 +3,12 @@ MODULE antennae
   USE shared_data
   USE evaluator
   USE shunt
+
   IMPLICIT NONE
 
   LOGICAL :: any_antennae = .FALSE.
 
-  TYPE :: antenna
+  TYPE antenna
     TYPE(primitive_stack) :: jx_expression, jy_expression, jz_expression
     TYPE(primitive_stack) :: ranges
     TYPE(primitive_stack) :: omega
@@ -17,16 +18,17 @@ MODULE antennae
     LOGICAL :: active = .FALSE.
   END TYPE antenna
 
-  TYPE :: antenna_holder
+  TYPE antenna_holder
     TYPE(antenna), POINTER :: contents
   END TYPE antenna_holder
 
   TYPE(antenna_holder), DIMENSION(:), ALLOCATABLE :: antenna_list
 
-  CONTAINS
+CONTAINS
 
   !> Initialise an antenna
   SUBROUTINE initialise_antenna(antenna_in)
+
     TYPE(antenna), INTENT(INOUT) :: antenna_in
 
     antenna_in%active = .TRUE.
@@ -40,6 +42,7 @@ MODULE antennae
 
   !> Routine to clean up an antenna after use
   SUBROUTINE finalise_antenna(antenna_in)
+
     TYPE(antenna), INTENT(INOUT) :: antenna_in
 
     antenna_in%active = .FALSE.
@@ -62,6 +65,7 @@ MODULE antennae
 
   !> Add an antenna to the list of antennae
   SUBROUTINE add_antenna(antenna_in)
+
     TYPE(antenna), INTENT(IN), POINTER :: antenna_in
     TYPE(antenna_holder), DIMENSION(:), ALLOCATABLE :: temp
     LOGICAL :: copyback
@@ -114,48 +118,45 @@ MODULE antennae
           .OR. time > current_antenna%stop_time) CYCLE
       use_ranges = current_antenna%ranges%init
       IF (current_antenna%ranges%init) THEN
-        CALL evaluate_and_return_all(current_antenna%ranges, nels, ranges, &
-            err)
+        CALL evaluate_and_return_all(current_antenna%ranges, nels, ranges, err)
         IF (err /= c_err_none .OR. nels /= c_ndims * 2) CYCLE
       ELSE
         ALLOCATE(ranges(c_ndims*2))
       END IF
       IF (current_antenna%omega%init) THEN
         IF (current_antenna%omega%is_time_varying) THEN
-          current_antenna%phase_history = &
-              current_antenna%phase_history + &
-              evaluate(current_antenna%omega, err) * dt
+          current_antenna%phase_history = current_antenna%phase_history &
+              + evaluate(current_antenna%omega, err) * dt
         ELSE
-          current_antenna%phase_history = current_antenna%omega_value &
-              * time
+          current_antenna%phase_history = current_antenna%omega_value * time
         END IF
         oscil_dat = SIN(current_antenna%phase_history)
       ELSE
         oscil_dat = 1.0_num
       END IF
       DO iz = 1-ng, nz+ng
-        IF ((z(iz) < ranges(c_dir_z * 2 - 1) .OR. &
-            z(iz) > ranges(c_dir_z * 2)) .AND. use_ranges) CYCLE
+        IF ((z(iz) < ranges(c_dir_z * 2 - 1) &
+            .OR. z(iz) > ranges(c_dir_z * 2)) .AND. use_ranges) CYCLE
         parameters%pack_iz = iz
         DO iy = 1-ng, ny+ng
-          IF ((y(iy) < ranges(c_dir_y * 2 - 1) .OR. &
-              y(iy) > ranges(c_dir_y * 2)) .AND. use_ranges) CYCLE
+          IF ((y(iy) < ranges(c_dir_y * 2 - 1) &
+              .OR. y(iy) > ranges(c_dir_y * 2)) .AND. use_ranges) CYCLE
           parameters%pack_iy = iy
           DO ix = 1-ng, nx+ng
-            IF ((x(ix) < ranges(c_dir_x * 2 - 1) .OR. &
-                x(ix) > ranges(c_dir_x * 2)) .AND. use_ranges) CYCLE
+            IF ((x(ix) < ranges(c_dir_x * 2 - 1) &
+                .OR. x(ix) > ranges(c_dir_x * 2)) .AND. use_ranges) CYCLE
             parameters%pack_ix = ix
-            IF(current_antenna%jx_expression%init) THEN
+            IF (current_antenna%jx_expression%init) THEN
               jx(ix,iy,iz) = jx(ix,iy,iz) + evaluate_with_parameters(&
                   current_antenna%jx_expression, &
                   parameters, err) * oscil_dat
             END IF
-            IF(current_antenna%jy_expression%init) THEN
+            IF (current_antenna%jy_expression%init) THEN
               jy(ix,iy,iz) = jy(ix,iy,iz) + evaluate_with_parameters(&
                   current_antenna%jy_expression, &
                   parameters, err) * oscil_dat
             END IF
-            IF(current_antenna%jz_expression%init) THEN
+            IF (current_antenna%jz_expression%init) THEN
               jz(ix,iy,iz) = jz(ix,iy,iz) + evaluate_with_parameters(&
                   current_antenna%jz_expression, &
                   parameters, err) * oscil_dat
@@ -173,6 +174,7 @@ MODULE antennae
 
   !> Deallocate antennae
   SUBROUTINE deallocate_antennae
+
     INTEGER :: iant
 
     IF (.NOT. ALLOCATED(antenna_list)) RETURN
@@ -183,7 +185,7 @@ MODULE antennae
     END DO
 
     DEALLOCATE(antenna_list)
+
   END SUBROUTINE deallocate_antennae
 
 END MODULE antennae
-

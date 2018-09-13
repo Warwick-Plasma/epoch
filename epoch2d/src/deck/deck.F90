@@ -23,7 +23,6 @@ MODULE deck
   ! Deck Blocks
   USE deck_control_block
   USE deck_stencil_block
-  USE deck_antenna_block
   USE deck_boundaries_block
   USE deck_species_block
   USE deck_injector_block
@@ -38,6 +37,7 @@ MODULE deck
 #endif
   USE deck_qed_block
   ! Initial Condition Blocks
+  USE deck_antenna_block
   USE deck_laser_block
   USE deck_fields_block
   ! Extended IO Blocks
@@ -360,6 +360,7 @@ CONTAINS
     errcode_deck = IOR(errcode_deck, fields_block_check())
     errcode_deck = IOR(errcode_deck, io_block_check())
     errcode_deck = IOR(errcode_deck, io_global_block_check())
+    errcode_deck = IOR(errcode_deck, antenna_block_check())
     errcode_deck = IOR(errcode_deck, laser_block_check())
     errcode_deck = IOR(errcode_deck, injector_block_check())
     errcode_deck = IOR(errcode_deck, stencil_block_check())
