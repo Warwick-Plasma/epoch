@@ -9,6 +9,9 @@
 
  * Changed FORTRAN standard to 2003
 
+ * Added antennae that allow you to specify an external time varying current
+   in the simulation domain
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
