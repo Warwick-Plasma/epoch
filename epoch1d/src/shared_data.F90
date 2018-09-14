@@ -218,8 +218,6 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_func_drifty = 45
   INTEGER, PARAMETER :: c_func_driftz = 46
   INTEGER, PARAMETER :: c_func_arctan2 = 47
-  INTEGER, PARAMETER :: c_func_in_range = 48
-  INTEGER, PARAMETER :: c_func_period = 49
 
   INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
 

@@ -1133,29 +1133,6 @@ CONTAINS
       RETURN
     END IF
 
-    IF (opcode == c_func_in_range) THEN
-      CALL get_values(3, values)
-      IF (values(1) <= values(2) + values(3)/2 .AND. &
-          values(1) >= values(2) - values(3)/2) THEN
-        CALL push_on_eval(1.0_num)
-      ELSE
-        CALL push_on_eval(0.0_num)
-      END IF
-      RETURN
-    END IF
-
-    IF (opcode == c_func_period) THEN
-      CALL get_values(3, values)
-      DO WHILE(values(1) > values(3))
-        values(1) = values(1) - (values(3) - values(2))
-      END DO
-      DO WHILE(values(1) < values(2))
-        values(1) = values(1) + (values(3) - values(2))
-      END DO
-      CALL push_on_eval(values(1))
-      RETURN
-    END IF
-
     err = c_err_unknown_element
 
   END SUBROUTINE do_functions
