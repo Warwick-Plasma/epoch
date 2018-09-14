@@ -119,12 +119,12 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'start_time')) THEN
-      working_antenna%start_time = as_real_print(value, element, errcode)
+      working_antenna%start_time = as_time_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'stop_time')) THEN
-      working_antenna%stop_time = as_real_print(value, element, errcode)
+      working_antenna%stop_time = as_time_print(value, element, errcode)
       RETURN
     END IF
 
