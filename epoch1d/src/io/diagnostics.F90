@@ -636,11 +636,11 @@ CONTAINS
             'jz', 'Jz', 'A/m^2', &
             c_stagger_cell_centre, calc_per_species_jz, array)
 
-        CALL write_nspecies_flux(c_dump_ekflux, code, &
+        CALL write_nspecies_field(c_dump_ekflux, code, &
             'ekflux', 'EkFlux', 'W/m^2', &
             c_stagger_cell_centre, calc_ekflux, array, fluxdir, dir_tags)
 
-        CALL write_field_flux(c_dump_poynt_flux, code, &
+        CALL write_nspecies_field(c_dump_poynt_flux, code, &
             'poynt_flux', 'Poynting Flux', 'W/m^2', &
             c_stagger_cell_centre, calc_poynt_flux, array, fluxdir(1:3), &
             dim_tags)
@@ -1240,7 +1240,7 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ioutput
     TYPE(averaged_data_block) :: avg
-    INTEGER :: n_species_local, ispecies
+    INTEGER :: n_species_local, ispecies, idir, is, nd
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
 
     avg%real_time = avg%real_time + dt
@@ -1326,6 +1326,26 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+      CASE(c_dump_ekflux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          is = (ispecies - 1) / nd - avg%species_sum / nd + 1
+          idir = ispecies - avg%species_sum - (is - 1) * nd
+          CALL calc_ekflux(array, is, idir)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_poynt_flux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_poynt_flux(array, 0, ispecies)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
       END SELECT
     ELSE
       SELECT CASE(ioutput)
@@ -1393,6 +1413,24 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_ekflux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          is = (ispecies - 1) / nd - avg%species_sum / nd + 1
+          idir = ispecies - avg%species_sum - (is - 1) * nd
+          CALL calc_ekflux(array, is, idir)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_poynt_flux)
+        nd = averaged_var_dims(ioutput)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_poynt_flux(array, 0, ispecies)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
@@ -1612,15 +1650,17 @@ CONTAINS
 
 
   SUBROUTINE write_nspecies_field(id, code, block_id, name, units, stagger, &
-      func, array)
+      func, array, fluxdir, dir_tags)
 
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
     INTEGER, INTENT(IN) :: stagger
     REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: fluxdir
+    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: dir_tags
     REAL(num), DIMENSION(:), ALLOCATABLE :: reduced
     INTEGER, DIMENSION(c_ndims) :: dims
-    INTEGER :: ispecies, io, mask
+    INTEGER :: ispecies, io, mask, idir, ndirs, iav
     INTEGER :: i, ii, rnx
     INTEGER :: i0, i1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
@@ -1635,11 +1675,12 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
-      SUBROUTINE func(data_array, current_species)
+      SUBROUTINE func(data_array, current_species, direction)
         USE constants
         USE shared_data
         REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
+        INTEGER, INTENT(IN), OPTIONAL :: direction
       END SUBROUTINE func
     END INTERFACE
 
@@ -1668,6 +1709,11 @@ CONTAINS
       subarray = subarray_field
     END IF
 
+    IF (PRESENT(fluxdir)) THEN
+      ndirs = SIZE(fluxdir)
+    ELSE
+      ndirs = 1
+    END IF
     dims = (/nx_global/)
 
     dump_sum = unaveraged_id &
@@ -1708,70 +1754,85 @@ CONTAINS
     END IF
 
     IF (dump_sum) THEN
-      IF (isubset == 1) THEN
-        temp_block_id = TRIM(block_id)
-        temp_name = 'Derived/' // TRIM(name)
-      ELSE
-        CALL check_name_length('subset', 'Derived/' // TRIM(name) &
-            // '/Subset_' // TRIM(sub%name))
+      DO idir = 1, ndirs
+        IF (PRESENT(dir_tags)) THEN
+          CALL check_name_length('dir tag', &
+              'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)))
 
-        temp_block_id = TRIM(block_id) &
-            // '/s_' // TRIM(sub%name)
-        temp_name = 'Derived/' // TRIM(name) &
-            // '/Subset_' // TRIM(sub%name)
-      END IF
-
-      CALL func(array, 0)
-
-      IF (dump_skipped) THEN
-        rnx = sub%n_local(1)
-
-        ALLOCATE(reduced(rnx))
-
-        ii = sub%n_start(1) + 1
-        DO i = 1, rnx
-          reduced(i) = array(ii)
-          ii = ii + sub%skip_dir(1)
-        END DO
-
-        IF (convert) THEN
-          rsubtype  = sub%subtype_r4
-          rsubarray = sub%subarray_r4
+          temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
+          temp_name = &
+              'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir))
         ELSE
-          rsubtype  = sub%subtype
-          rsubarray = sub%subarray
+          temp_block_id = TRIM(block_id)
+          temp_name = 'Derived/' // TRIM(name)
         END IF
 
-        CALL check_name_length('subset', TRIM(temp_name) // '/Reduced')
+        IF (isubset /= 1) THEN
+          CALL check_name_length('subset', TRIM(temp_name) &
+              // '/Subset_' // TRIM(sub%name))
 
-        temp_grid_id = 'grid/r_' // TRIM(sub%name)
-        temp_block_id = TRIM(temp_block_id) // '/r'
-        temp_name = TRIM(temp_name) // '/Reduced'
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-            TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-
-        sub%dump_field_grid = .TRUE.
-      ELSE IF (dump_part) THEN
-        temp_grid_id = 'grid/' // TRIM(sub%name)
-
-        i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-        IF ( i1 < i0) THEN
-          i0 = 1
-          i1 = i0
+          temp_block_id = TRIM(temp_block_id) &
+              // '/s_' // TRIM(sub%name)
+          temp_name = TRIM(temp_name) &
+              // '/Subset_' // TRIM(sub%name)
         END IF
 
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-            array(i0:i1), rsubtype, rsubarray, convert)
-        sub%dump_field_grid = .TRUE.
-      ELSE
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
-        dump_field_grid = .TRUE.
-      END IF
+        IF (PRESENT(fluxdir)) THEN
+          CALL func(array, 0, fluxdir(idir))
+        ELSE
+          CALL func(array, 0)
+        END IF
+
+        IF (dump_skipped) THEN
+          rnx = sub%n_local(1)
+
+          ALLOCATE(reduced(rnx))
+
+          ii = sub%n_start(1) + 1
+          DO i = 1, rnx
+            reduced(i) = array(ii)
+            ii = ii + sub%skip_dir(1)
+          END DO
+
+          IF (convert) THEN
+            rsubtype  = sub%subtype_r4
+            rsubarray = sub%subarray_r4
+          ELSE
+            rsubtype  = sub%subtype
+            rsubarray = sub%subarray
+          END IF
+
+          CALL check_name_length('subset', TRIM(temp_name) // '/Reduced')
+
+          temp_grid_id = 'grid/r_' // TRIM(sub%name)
+          temp_block_id = TRIM(temp_block_id) // '/r'
+          temp_name = TRIM(temp_name) // '/Reduced'
+
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+              TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
+
+          sub%dump_field_grid = .TRUE.
+        ELSE IF (dump_part) THEN
+          temp_grid_id = 'grid/' // TRIM(sub%name)
+
+          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+          IF (i1 < i0) THEN
+            i0 = 1
+            i1 = i0
+          END IF
+
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
+              array(i0:i1), rsubtype, rsubarray, convert)
+          sub%dump_field_grid = .TRUE.
+        ELSE
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+              subtype, subarray, convert)
+          dump_field_grid = .TRUE.
+        END IF
+      END DO
     END IF
 
     IF (dump_species .AND. dump_skipped) THEN
@@ -1792,65 +1853,104 @@ CONTAINS
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
-        CALL check_name_length('species', &
-            'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name))
+        DO idir = 1, ndirs
+          IF (PRESENT(dir_tags)) THEN
+            CALL check_name_length('dir tag', &
+                'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name))
 
-        temp_block_id = TRIM(block_id) // '/' // TRIM(io_list(ispecies)%name)
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
+            temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name)
+            temp_name = &
+                'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name)
+          ELSE
+            CALL check_name_length('species', &
+                'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name))
 
-        CALL check_name_length('subset', &
-            TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
+            temp_block_id = TRIM(block_id) &
+                // '/' // TRIM(io_list(ispecies)%name)
+            temp_name = &
+                'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
+          END IF
 
-        temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-        temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
+          CALL check_name_length('subset', &
+              TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
 
-        CALL func(array, ispecies)
+          temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
+          temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
 
-        ii = sub%n_start(1) + 1
-        DO i = 1, rnx
-          reduced(i) = array(ii)
-          ii = ii + sub%skip_dir(1)
+          IF (PRESENT(fluxdir)) THEN
+            CALL func(array, ispecies, fluxdir(idir))
+          ELSE
+            CALL func(array, ispecies)
+          END IF
+
+          ii = sub%n_start(1) + 1
+          DO i = 1, rnx
+            reduced(i) = array(ii)
+            ii = ii + sub%skip_dir(1)
+          END DO
+
+          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+              TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+              TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
+
+          sub%dump_field_grid = .TRUE.
         END DO
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-            TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-
-        sub%dump_field_grid = .TRUE.
       END DO
     ELSEIF (dump_species) THEN
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
-        CALL check_name_length('species', &
-            'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name))
+        DO idir = 1, ndirs
+          IF (PRESENT(dir_tags)) THEN
+            CALL check_name_length('dir tag', &
+                'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name))
 
-        temp_block_id = TRIM(block_id) // '/' // TRIM(io_list(ispecies)%name)
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
+            temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name)
+            temp_name = &
+                'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                // '/' // TRIM(io_list(ispecies)%name)
+          ELSE
+            CALL check_name_length('species', &
+                'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name))
 
-        CALL func(array, ispecies)
-        IF (dump_part) THEN
-          ! First subset is main dump so there wont be any restrictions
-          temp_grid_id = 'grid/' // TRIM(sub%name)
-
-          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-          IF ( i1 < i0) THEN
-            i0 = 1
-            i1 = i0
+            temp_block_id = TRIM(block_id) &
+                // '/' // TRIM(io_list(ispecies)%name)
+            temp_name = &
+                'Derived/' // TRIM(name) // '/' // TRIM(io_list(ispecies)%name)
           END IF
 
-          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-              array(i0:i1), rsubtype, rsubarray, convert)
-          sub%dump_field_grid = .TRUE.
-        ELSE
-          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-              subtype, subarray, convert)
-          dump_field_grid = .TRUE.
-        END IF
+          IF (PRESENT(fluxdir)) THEN
+            CALL func(array, ispecies, fluxdir(idir))
+          ELSE
+            CALL func(array, ispecies)
+          END IF
+
+          IF (dump_part) THEN
+            ! First subset is main dump so there wont be any restrictions
+            temp_grid_id = 'grid/' // TRIM(sub%name)
+
+            i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
+            IF (i1 < i0) THEN
+              i0 = 1
+              i1 = i0
+            END IF
+
+            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
+                array(i0:i1), rsubtype, rsubarray, convert)
+            sub%dump_field_grid = .TRUE.
+          ELSE
+            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
+                subtype, subarray, convert)
+            dump_field_grid = .TRUE.
+          END IF
+        END DO
       END DO
     END IF
 
@@ -1873,30 +1973,65 @@ CONTAINS
         avg%r4array = avg%r4array / REAL(avg%real_time, r4)
 
         IF (avg%species_sum > 0 .AND. IAND(mask, c_io_field) == 0) THEN
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(block_id) // '_averaged', &
-              'Derived/' // TRIM(name) // '_averaged', &
-              TRIM(units), dims, stagger, 'grid', &
-              avg%r4array(:,1), subtype_field_r4, subarray_field_r4)
+          DO idir = 1, avg%species_sum
+            IF (PRESENT(dir_tags)) THEN
+              CALL check_name_length('dir tag', &
+                  'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged')
+
+              temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged'
+              temp_name = &
+                  'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged'
+            ELSE
+              temp_block_id = TRIM(block_id) // '_averaged'
+              temp_name = 'Derived/' // TRIM(name) // '_averaged'
+            END IF
+
+            CALL sdf_write_plain_variable(sdf_handle, &
+                TRIM(temp_block_id), TRIM(temp_name), &
+                TRIM(units), dims, stagger, 'grid', &
+                avg%r4array(:,idir), subtype_field_r4, subarray_field_r4)
+          END DO
+
           dump_field_grid = .TRUE.
         END IF
 
         IF (avg%n_species > 0) THEN
-          DO ispecies = 1, avg%n_species
+          iav = avg%species_sum
+          DO ispecies = 1, avg%n_species / ndirs
             IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
-            CALL check_name_length('species', 'Derived/' // TRIM(name) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name))
+            DO idir = 1, ndirs
+              IF (PRESENT(dir_tags)) THEN
+                CALL check_name_length('dir tag', &
+                    'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
 
-            temp_block_id = TRIM(block_id) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name)
-            temp_name = 'Derived/' // TRIM(name) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = &
+                    'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+              ELSE
+                CALL check_name_length('species', &
+                    'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
 
-            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                avg%r4array(:,ispecies+avg%species_sum), &
-                subtype_field_r4, subarray_field_r4)
+                temp_block_id = TRIM(block_id) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = &
+                    'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+              END IF
+
+              iav = iav + 1
+              CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                  TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                  avg%r4array(:,iav), subtype_field_r4, subarray_field_r4)
+            END DO
+
             dump_field_grid = .TRUE.
           END DO
         END IF
@@ -1906,30 +2041,65 @@ CONTAINS
         avg%array = avg%array / avg%real_time
 
         IF (avg%species_sum > 0 .AND. IAND(mask, c_io_field) == 0) THEN
-          CALL sdf_write_plain_variable(sdf_handle, &
-              TRIM(block_id) // '_averaged', &
-              'Derived/' // TRIM(name) // '_averaged', &
-              TRIM(units), dims, stagger, 'grid', &
-              avg%array(:,1), subtype_field, subarray_field)
+          DO idir = 1, avg%species_sum
+            IF (PRESENT(dir_tags)) THEN
+              CALL check_name_length('dir tag', &
+                  'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged')
+
+              temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged'
+              temp_name = &
+                  'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                  // '_averaged'
+            ELSE
+              temp_block_id = TRIM(block_id) // '_averaged'
+              temp_name = 'Derived/' // TRIM(name) // '_averaged'
+            END IF
+
+            CALL sdf_write_plain_variable(sdf_handle, &
+                TRIM(temp_block_id), TRIM(temp_name), &
+                TRIM(units), dims, stagger, 'grid', &
+                avg%array(:,idir), subtype_field, subarray_field)
+          END DO
+
           dump_field_grid = .TRUE.
         END IF
 
         IF (avg%n_species > 0) THEN
-          DO ispecies = 1, avg%n_species
+          iav = avg%species_sum
+          DO ispecies = 1, avg%n_species / ndirs
             IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
-            CALL check_name_length('species', 'Derived/' // TRIM(name) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name))
+            DO idir = 1, ndirs
+              IF (PRESENT(dir_tags)) THEN
+                CALL check_name_length('dir tag', &
+                    'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
 
-            temp_block_id = TRIM(block_id) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name)
-            temp_name = 'Derived/' // TRIM(name) &
-                // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = &
+                    'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+              ELSE
+                CALL check_name_length('species', &
+                    'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name))
 
-            CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
-                avg%array(:,ispecies+avg%species_sum), &
-                subtype_field, subarray_field)
+                temp_block_id = TRIM(block_id) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+                temp_name = &
+                    'Derived/' // TRIM(name) &
+                    // '_averaged/' // TRIM(io_list(ispecies)%name)
+              END IF
+
+              iav = iav + 1
+              CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
+                  TRIM(temp_name), TRIM(units), dims, stagger, 'grid', &
+                  avg%array(:,iav), subtype_field, subarray_field)
+            END DO
+
             dump_field_grid = .TRUE.
           END DO
         END IF
@@ -1942,343 +2112,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE write_nspecies_field
-
-
-
-  SUBROUTINE write_field_flux(id, code, block_id, name, units, stagger, &
-      func, array, fluxdir, dir_tags)
-
-    INTEGER, INTENT(IN) :: id, code
-    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
-    INTEGER, INTENT(IN) :: stagger
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
-    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
-    REAL(num), DIMENSION(:), ALLOCATABLE :: reduced
-    INTEGER :: ndirs, idir, mask
-    INTEGER :: i, ii, rnx
-    INTEGER :: subtype, subarray, rsubtype, rsubarray
-    INTEGER, DIMENSION(c_ndims) :: dims
-    CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
-    CHARACTER(LEN=c_max_string_length) :: temp_name
-    LOGICAL :: convert, normal_id, dump_skipped
-    TYPE(subset), POINTER :: sub
-
-    INTERFACE
-      SUBROUTINE func(data_array, direction)
-        USE constants
-        USE shared_data
-        REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-        INTEGER, INTENT(IN) :: direction
-      END SUBROUTINE func
-    END INTERFACE
-
-    mask = iomask(id)
-    IF (IAND(mask, code) == 0) RETURN
-    IF (IAND(mask, c_io_never) /= 0) RETURN
-
-    ! This is a normal dump and normal output variable
-    normal_id = IAND(IAND(code, mask), IOR(c_io_always, c_io_full)) /= 0
-
-    IF (.NOT.normal_id) RETURN
-
-    convert = IAND(mask, c_io_dump_single) /= 0
-
-    IF (convert) THEN
-      subtype  = subtype_field_r4
-      subarray = subarray_field_r4
-    ELSE
-      subtype  = subtype_field
-      subarray = subarray_field
-    END IF
-
-    ndirs = SIZE(fluxdir)
-    dims = (/nx_global/)
-
-    IF (isubset == 1) THEN
-      dump_skipped = .FALSE.
-    ELSE
-      sub => subset_list(isubset-1)
-      dump_skipped = sub%skip
-    END IF
-
-    IF (dump_skipped) THEN
-      rnx = sub%n_local(1)
-
-      ALLOCATE(reduced(rnx))
-
-      IF (convert) THEN
-        rsubtype  = sub%subtype_r4
-        rsubarray = sub%subarray_r4
-      ELSE
-        rsubtype  = sub%subtype
-        rsubarray = sub%subarray
-      END IF
-
-      temp_grid_id = 'grid/r_' // TRIM(sub%name)
-
-      DO idir = 1, ndirs
-        temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir))
-
-        CALL check_name_length('subset', &
-            TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
-
-        temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-        temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
-
-        CALL func(array, fluxdir(idir))
-
-        ii = sub%n_start(1) + 1
-        DO i = 1, rnx
-          reduced(i) = array(ii)
-          ii = ii + sub%skip_dir(1)
-        END DO
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-            TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-      END DO
-
-      sub%dump_field_grid = .TRUE.
-      DEALLOCATE(reduced)
-    ELSE
-      idir = 1
-      CALL check_name_length('dir tag', &
-          'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)))
-
-      DO idir = 1, ndirs
-        temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir))
-
-        CALL func(array, fluxdir(idir))
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
-      END DO
-      dump_field_grid = .TRUE.
-    END IF
-
-    ! Flux variables not currently averaged
-
-  END SUBROUTINE write_field_flux
-
-
-
-  SUBROUTINE write_nspecies_flux(id, code, block_id, name, units, stagger, &
-      func, array, fluxdir, dir_tags)
-
-    INTEGER, INTENT(IN) :: id, code
-    CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
-    INTEGER, INTENT(IN) :: stagger
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
-    INTEGER, DIMENSION(:), INTENT(IN) :: fluxdir
-    CHARACTER(LEN=*), DIMENSION(:), INTENT(IN) :: dir_tags
-    REAL(num), DIMENSION(:), ALLOCATABLE :: reduced
-    INTEGER :: ispecies, ndirs, idir, mask
-    INTEGER :: i, ii, rnx
-    INTEGER :: subtype, subarray, rsubtype, rsubarray
-    INTEGER, DIMENSION(c_ndims) :: dims
-    CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
-    CHARACTER(LEN=c_max_string_length) :: temp_name
-    LOGICAL :: convert, dump_sum, dump_species, dump_skipped
-    LOGICAL :: normal_id
-    TYPE(subset), POINTER :: sub
-
-    INTERFACE
-      SUBROUTINE func(data_array, current_species, direction)
-        USE constants
-        USE shared_data
-        REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-        INTEGER, INTENT(IN) :: current_species, direction
-      END SUBROUTINE func
-    END INTERFACE
-
-    mask = iomask(id)
-    IF (IAND(mask, code) == 0) RETURN
-    IF (IAND(mask, c_io_never) /= 0) RETURN
-
-    ! This is a normal dump and normal output variable
-    normal_id = IAND(IAND(code, mask), IOR(c_io_always, c_io_full)) /= 0
-
-    IF (.NOT.normal_id) RETURN
-
-    convert = IAND(mask, c_io_dump_single) /= 0
-
-    IF (convert) THEN
-      subtype  = subtype_field_r4
-      subarray = subarray_field_r4
-    ELSE
-      subtype  = subtype_field
-      subarray = subarray_field
-    END IF
-
-    ndirs = SIZE(fluxdir)
-    dims = (/nx_global/)
-
-    dump_sum = IAND(mask, c_io_no_sum) == 0 .AND. IAND(mask, c_io_field) == 0
-    dump_species = IAND(mask, c_io_species) /= 0
-
-    IF (.NOT.dump_sum .AND. .NOT.dump_species) RETURN
-
-    IF (isubset == 1) THEN
-      dump_skipped = .FALSE.
-    ELSE
-      sub => subset_list(isubset-1)
-      dump_skipped = sub%skip
-    END IF
-
-    CALL build_species_subset
-
-    IF (dump_sum .AND. dump_skipped) THEN
-      rnx = sub%n_local(1)
-
-      ALLOCATE(reduced(rnx))
-
-      IF (convert) THEN
-        rsubtype  = sub%subtype_r4
-        rsubarray = sub%subarray_r4
-      ELSE
-        rsubtype  = sub%subtype
-        rsubarray = sub%subarray
-      END IF
-
-      idir = 1
-      CALL check_name_length('dir tag', &
-          'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)))
-
-      temp_grid_id = 'grid/r_' // TRIM(sub%name)
-
-      DO idir = 1, ndirs
-        temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir))
-
-        CALL check_name_length('subset', &
-            TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
-
-        temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-        temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
-
-        CALL func(array, 0, fluxdir(idir))
-
-        ii = sub%n_start(1) + 1
-        DO i = 1, rnx
-          reduced(i) = array(ii)
-          ii = ii + sub%skip_dir(1)
-        END DO
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-            TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-      END DO
-
-      sub%dump_field_grid = .TRUE.
-    ELSEIF (dump_sum) THEN
-      idir = 1
-      CALL check_name_length('dir tag', &
-          'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir)))
-
-      DO idir = 1, ndirs
-        temp_block_id = TRIM(block_id) // '/' // TRIM(dir_tags(idir))
-        temp_name = &
-            'Derived/' // TRIM(name) // '/' // TRIM(dir_tags(idir))
-
-        CALL func(array, 0, fluxdir(idir))
-
-        CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-            subtype, subarray, convert)
-      END DO
-      dump_field_grid = .TRUE.
-    END IF
-
-    IF (dump_species .AND. dump_skipped) THEN
-      rnx = sub%n_local(1)
-
-      IF (.NOT.ALLOCATED(reduced)) ALLOCATE(reduced(rnx))
-
-      IF (convert) THEN
-        rsubtype  = sub%subtype_r4
-        rsubarray = sub%subarray_r4
-      ELSE
-        rsubtype  = sub%subtype
-        rsubarray = sub%subarray
-      END IF
-
-      temp_grid_id = 'grid/r_' // TRIM(sub%name)
-
-      DO ispecies = 1, n_species
-        IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-
-        idir = 1
-        CALL check_name_length('species', 'Derived/' // TRIM(name) &
-            // '_' // TRIM(dir_tags(idir)) // '/' &
-            // TRIM(io_list(ispecies)%name))
-
-        DO idir = 1, ndirs
-          temp_block_id = TRIM(block_id) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-          temp_name = 'Derived/' // TRIM(name) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-
-          CALL check_name_length('subset', &
-              TRIM(temp_name) // '/Reduced_' // TRIM(sub%name))
-
-          temp_block_id = TRIM(temp_block_id) // '/r_' // TRIM(sub%name)
-          temp_name = TRIM(temp_name) // '/Reduced_' // TRIM(sub%name)
-
-          CALL func(array, ispecies, fluxdir(idir))
-
-          ii = sub%n_start(1) + 1
-          DO i = 1, rnx
-            reduced(i) = array(ii)
-            ii = ii + sub%skip_dir(1)
-          END DO
-
-          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
-              TRIM(temp_grid_id), reduced, rsubtype, rsubarray, convert)
-        END DO
-        sub%dump_field_grid = .TRUE.
-      END DO
-    ELSEIF (dump_species) THEN
-      DO ispecies = 1, n_species
-        IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
-
-        idir = 1
-        CALL check_name_length('species', 'Derived/' // TRIM(name) &
-            // '_' // TRIM(dir_tags(idir)) // '/' &
-            // TRIM(io_list(ispecies)%name))
-
-        DO idir = 1, ndirs
-          temp_block_id = TRIM(block_id) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-          temp_name = 'Derived/' // TRIM(name) &
-              // '_' // TRIM(dir_tags(idir)) // '/' &
-              // TRIM(io_list(ispecies)%name)
-
-          CALL func(array, ispecies, fluxdir(idir))
-
-          CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), dims, stagger, 'grid', array, &
-              subtype, subarray, convert)
-        END DO
-        dump_field_grid = .TRUE.
-      END DO
-    END IF
-
-    IF (ALLOCATED(reduced)) DEALLOCATE(reduced)
-
-    ! Flux variables not currently averaged
-
-  END SUBROUTINE write_nspecies_flux
 
 
 

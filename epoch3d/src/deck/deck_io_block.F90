@@ -731,6 +731,7 @@ CONTAINS
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
+        IF (mask_element == c_dump_poynt_flux) bad = .FALSE.
 
         ! Unset 'no_sum' dumpmask for grid variables
         IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
@@ -742,6 +743,7 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_ekflux) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file

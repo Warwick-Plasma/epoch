@@ -312,6 +312,10 @@ CONTAINS
 
     IF (.NOT. any_average) RETURN
 
+    averaged_var_dims = 1
+    averaged_var_dims(c_dump_ekflux) = 6
+    averaged_var_dims(c_dump_poynt_flux) = 3
+
     DO io = 1, n_io_blocks
       IF (io_block_list(io)%any_average) THEN
         dt_min_average = t_end
@@ -340,6 +344,7 @@ CONTAINS
             nspec_local = nspec_local + n_species
 
         IF (nspec_local <= 0) CYCLE
+        nspec_local = nspec_local * averaged_var_dims(io)
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
@@ -353,9 +358,9 @@ CONTAINS
         avg%species_sum = 0
         avg%n_species = 0
         IF (IAND(mask, c_io_no_sum) == 0) &
-            avg%species_sum = 1
+            avg%species_sum = averaged_var_dims(io)
         IF (IAND(mask, c_io_species) /= 0) &
-            avg%n_species = n_species
+            avg%n_species = n_species * averaged_var_dims(io)
         avg%real_time = 0.0_num
         avg%started = .FALSE.
       END IF
