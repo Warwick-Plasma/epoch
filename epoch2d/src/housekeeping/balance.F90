@@ -474,6 +474,7 @@ CONTAINS
           nspec_local = nspec_local + n_species
 
       IF (nspec_local <= 0) CYCLE
+      nspec_local = nspec_local * averaged_var_dims(id)
 
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
         IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE

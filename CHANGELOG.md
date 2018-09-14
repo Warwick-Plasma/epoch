@@ -10,6 +10,11 @@
  * Changed FORTRAN standard to 2003
 
 
+## v4.14.0 to v4.15.0
+
+ * Enabled averaging of poynt_flux and ekflux variables
+
+
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
