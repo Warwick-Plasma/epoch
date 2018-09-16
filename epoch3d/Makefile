@@ -422,8 +422,8 @@ FORCE:
 
 # All the dependencies
 
-balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
-  timer.o utilities.o
+balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
+  redblack_module.o timer.o utilities.o
 boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
   partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
@@ -502,8 +502,9 @@ prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
-setup.o: setup.F90 constants.o fields.o helper.o laser.o mpi_subtype_control.o \
-  shunt.o split_particle.o timer.o version_data.o welcome.o window.o $(SDFMOD)
+setup.o: setup.F90 balance.o constants.o fields.o helper.o laser.o \
+  mpi_subtype_control.o shunt.o split_particle.o timer.o version_data.o \
+  welcome.o window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o

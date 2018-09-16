@@ -2,6 +2,10 @@
 
  * Enabled averaging of poynt_flux and ekflux variables
 
+ * Added control block option "use_pre_balance". If set to true then the
+   load balancer attempts to calculate the load balance prior to loading
+   any particles
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 

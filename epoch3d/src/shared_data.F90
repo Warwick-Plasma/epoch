@@ -712,6 +712,8 @@ MODULE shared_data
   LOGICAL :: smooth_currents
   REAL(num), ALLOCATABLE, DIMENSION(:,:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(r4), ALLOCATABLE, DIMENSION(:,:,:) :: r4array
+  INTEGER, ALLOCATABLE, DIMENSION(:,:,:) :: npart_per_cell_array
+  LOGICAL :: pre_loading
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex_x_min, ex_x_max
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ey_x_min, ey_x_max
@@ -869,6 +871,7 @@ MODULE shared_data
   ! domain and loadbalancing
   !----------------------------------------------------------------------------
   LOGICAL :: use_balance, balance_first
+  LOGICAL :: use_pre_balance
   REAL(num) :: dlb_threshold
   INTEGER :: dlb_maximum_interval, dlb_force_interval
   INTEGER(i8), PARAMETER :: npart_per_it = 1000000
