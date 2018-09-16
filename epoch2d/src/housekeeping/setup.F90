@@ -27,6 +27,7 @@ MODULE setup
   USE window
   USE timer
   USE helper
+  USE balance
   USE sdf
   USE antennae
 
@@ -37,7 +38,7 @@ MODULE setup
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
-  PUBLIC :: read_cpu_split, after_load
+  PUBLIC :: read_cpu_split, after_load, pre_load_balance
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
@@ -1888,5 +1889,18 @@ CONTAINS
     window_shift(1) = window_offset
 
   END SUBROUTINE
+
+
+
+  SUBROUTINE pre_load_balance
+
+    IF (.NOT.use_pre_balance .OR. nproc == 1) RETURN
+
+    pre_loading = .TRUE.
+    CALL auto_load
+    CALL pre_balance_workload
+    pre_loading = .FALSE.
+
+  END SUBROUTINE pre_load_balance
 
 END MODULE setup

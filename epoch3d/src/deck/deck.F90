@@ -391,9 +391,7 @@ CONTAINS
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
-          WRITE(io,*) 'Initial conditions complete and valid. Attempting' &
-            // ' to load particles'
-          WRITE(io,*)
+          WRITE(io,*) 'Initial conditions complete and valid.'
         END DO
       END IF
     END IF

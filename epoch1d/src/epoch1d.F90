@@ -118,6 +118,7 @@ PROGRAM pic
     CALL restart_data(step)
   ELSE
     ! auto_load particles
+    CALL pre_load_balance
     CALL auto_load
     time = 0.0_num
   END IF
@@ -161,7 +162,11 @@ PROGRAM pic
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
 
-  IF (rank == 0) PRINT *, 'Equilibrium set up OK, running code'
+  IF (rank == 0) THEN
+    PRINT*
+    PRINT*, 'Equilibrium set up OK, running code'
+    PRINT*
+  END IF
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
