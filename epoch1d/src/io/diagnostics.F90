@@ -406,9 +406,9 @@ CONTAINS
         IF (sub%use_mass_max) &
             sub%mass_max = evaluate(sub%mass_max_exp, errcode)
         IF (sub%use_id_min) &
-            sub%id_min = evaluate(sub%id_min_exp, errcode)
+            sub%id_min = INT(evaluate(sub%id_min_exp, errcode),i8)
         IF (sub%use_id_max) &
-            sub%id_max = evaluate(sub%id_max_exp, errcode)
+            sub%id_max = INT(evaluate(sub%id_max_exp, errcode),i8)
       END DO
 
       ! open the file
