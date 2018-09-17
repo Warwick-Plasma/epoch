@@ -86,6 +86,12 @@ CONTAINS
     DO i = 1, n_subsets
       DEALLOCATE(subset_list(i)%dumpmask, STAT=stat)
       DEALLOCATE(subset_list(i)%use_species, STAT=stat)
+      IF (.NOT. subset_list(i)%time_varying) CYCLE
+      DO n = 1, c_subset_max
+        IF (subset_list(i)%use_restriction_function(n)) THEN
+          CALL deallocate_stack(subset_list(i)%restriction_function(n))
+        END IF
+      END DO
     END DO
     DEALLOCATE(subset_list, STAT=stat)
 
