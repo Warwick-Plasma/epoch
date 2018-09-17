@@ -78,9 +78,6 @@ CONTAINS
         subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
 
         ! Check for any spatial restrictions in place
-        subset_list(i)%space_restrictions = subset_list(i)%use_x_min &
-            .OR. subset_list(i)%use_x_max .OR. subset_list(i)%use_y_min &
-            .OR. subset_list(i)%use_y_max
         IF (subset_list(i)%skip .AND. subset_list(i)%space_restrictions) THEN
           IF (rank == 0) THEN
             PRINT*, 'Skip and spatial restrictions specified for ', &
@@ -203,6 +200,7 @@ CONTAINS
       END IF
       sub%x_min = as_real_print(value, element, errcode)
       sub%use_x_min = .TRUE.
+      sub%space_restrictions = .TRUE.
       RETURN
     END IF
 
@@ -213,6 +211,7 @@ CONTAINS
       END IF
       sub%x_max = as_real_print(value, element, errcode)
       sub%use_x_max = .TRUE.
+      sub%space_restrictions = .TRUE.
       RETURN
     END IF
 
@@ -223,6 +222,7 @@ CONTAINS
       END IF
       sub%y_min = as_real_print(value, element, errcode)
       sub%use_y_min = .TRUE.
+      sub%space_restrictions = .TRUE.
       RETURN
     END IF
 
@@ -233,6 +233,7 @@ CONTAINS
       END IF
       sub%y_max = as_real_print(value, element, errcode)
       sub%use_y_max = .TRUE.
+      sub%space_restrictions = .TRUE.
       RETURN
     END IF
 
