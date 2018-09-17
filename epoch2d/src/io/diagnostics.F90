@@ -1969,7 +1969,7 @@ CONTAINS
           sub%dump_field_grid = .TRUE.
         END DO
       END DO
-    ELSEIF (dump_species) THEN
+    ELSE IF (dump_species) THEN
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
