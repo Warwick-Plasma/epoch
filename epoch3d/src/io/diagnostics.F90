@@ -371,52 +371,52 @@ CONTAINS
         errcode = 0
         sub => subset_list(isubset)
         IF (.NOT. sub%time_varying) CYCLE
-        IF (sub%use_random) &
-            sub%random_fraction = evaluate(sub%random_fraction_exp, errcode)
+        IF (sub%use_random) sub%random_fraction = &
+            evaluate(sub%random_fraction_function, errcode)
         IF (sub%use_gamma_min) &
-            sub%gamma_min = evaluate(sub%gamma_min_exp, errcode)
+            sub%gamma_min = evaluate(sub%gamma_min_function, errcode)
         IF (sub%use_gamma_max) &
-            sub%gamma_max = evaluate(sub%gamma_max_exp, errcode)
+            sub%gamma_max = evaluate(sub%gamma_max_function, errcode)
         IF (sub%use_x_min) &
-            sub%x_min = evaluate(sub%x_min_exp, errcode)
+            sub%x_min = evaluate(sub%x_min_function, errcode)
         IF (sub%use_x_max) &
-            sub%x_max = evaluate(sub%x_max_exp, errcode)
+            sub%x_max = evaluate(sub%x_max_function, errcode)
         IF (sub%use_y_min) &
-            sub%y_min = evaluate(sub%y_min_exp, errcode)
+            sub%y_min = evaluate(sub%y_min_function, errcode)
         IF (sub%use_y_max) &
-            sub%y_max = evaluate(sub%y_max_exp, errcode)
+            sub%y_max = evaluate(sub%y_max_function, errcode)
         IF (sub%use_z_min) &
-            sub%z_min = evaluate(sub%z_min_exp, errcode)
+            sub%z_min = evaluate(sub%z_min_function, errcode)
         IF (sub%use_z_max) &
-            sub%z_max = evaluate(sub%z_max_exp, errcode)
+            sub%z_max = evaluate(sub%z_max_function, errcode)
         IF (sub%use_px_min) &
-            sub%px_min = evaluate(sub%px_min_exp, errcode)
+            sub%px_min = evaluate(sub%px_min_function, errcode)
         IF (sub%use_px_max) &
-            sub%px_max = evaluate(sub%px_max_exp, errcode)
+            sub%px_max = evaluate(sub%px_max_function, errcode)
         IF (sub%use_py_min) &
-            sub%py_min = evaluate(sub%py_min_exp, errcode)
+            sub%py_min = evaluate(sub%py_min_function, errcode)
         IF (sub%use_py_max) &
-            sub%py_max = evaluate(sub%py_max_exp, errcode)
+            sub%py_max = evaluate(sub%py_max_function, errcode)
         IF (sub%use_pz_min) &
-            sub%pz_min = evaluate(sub%pz_min_exp, errcode)
+            sub%pz_min = evaluate(sub%pz_min_function, errcode)
         IF (sub%use_pz_max) &
-            sub%pz_max = evaluate(sub%pz_max_exp, errcode)
+            sub%pz_max = evaluate(sub%pz_max_function, errcode)
         IF (sub%use_weight_min) &
-            sub%weight_min = evaluate(sub%weight_min_exp, errcode)
+            sub%weight_min = evaluate(sub%weight_min_function, errcode)
         IF (sub%use_weight_max) &
-            sub%weight_max = evaluate(sub%weight_max_exp, errcode)
+            sub%weight_max = evaluate(sub%weight_max_function, errcode)
         IF (sub%use_charge_min) &
-            sub%charge_min = evaluate(sub%charge_min_exp, errcode)
+            sub%charge_min = evaluate(sub%charge_min_function, errcode)
         IF (sub%use_charge_max) &
-            sub%charge_max = evaluate(sub%charge_max_exp, errcode)
+            sub%charge_max = evaluate(sub%charge_max_function, errcode)
         IF (sub%use_mass_min) &
-            sub%mass_min = evaluate(sub%mass_min_exp, errcode)
+            sub%mass_min = evaluate(sub%mass_min_function, errcode)
         IF (sub%use_mass_max) &
-            sub%mass_max = evaluate(sub%mass_max_exp, errcode)
+            sub%mass_max = evaluate(sub%mass_max_function, errcode)
         IF (sub%use_id_min) &
-            sub%id_min = INT(evaluate(sub%id_min_exp, errcode),i8)
+            sub%id_min = INT(evaluate(sub%id_min_function, errcode),i8)
         IF (sub%use_id_max) &
-            sub%id_max = INT(evaluate(sub%id_max_exp, errcode),i8)
+            sub%id_max = INT(evaluate(sub%id_max_function, errcode),i8)
       END DO
 
       ! open the file

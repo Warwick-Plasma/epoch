@@ -640,17 +640,17 @@ MODULE shared_data
     REAL(num) :: charge_min, charge_max
     REAL(num) :: mass_min, mass_max
     INTEGER(i8) :: id_min, id_max
-    TYPE(primitive_stack) :: random_fraction_exp
-    TYPE(primitive_stack) :: gamma_min_exp, gamma_max_exp
-    TYPE(primitive_stack) :: x_min_exp, x_max_exp
-    TYPE(primitive_stack) :: y_min_exp, y_max_exp
-    TYPE(primitive_stack) :: px_min_exp, px_max_exp
-    TYPE(primitive_stack) :: py_min_exp, py_max_exp
-    TYPE(primitive_stack) :: pz_min_exp, pz_max_exp
-    TYPE(primitive_stack) :: weight_min_exp, weight_max_exp
-    TYPE(primitive_stack) :: charge_min_exp, charge_max_exp
-    TYPE(primitive_stack) :: mass_min_exp, mass_max_exp
-    TYPE(primitive_stack) :: id_min_exp, id_max_exp
+    TYPE(primitive_stack) :: random_fraction_function
+    TYPE(primitive_stack) :: gamma_min_function, gamma_max_function
+    TYPE(primitive_stack) :: x_min_function, x_max_function
+    TYPE(primitive_stack) :: y_min_function, y_max_function
+    TYPE(primitive_stack) :: px_min_function, px_max_function
+    TYPE(primitive_stack) :: py_min_function, py_max_function
+    TYPE(primitive_stack) :: pz_min_function, pz_max_function
+    TYPE(primitive_stack) :: weight_min_function, weight_max_function
+    TYPE(primitive_stack) :: charge_min_function, charge_max_function
+    TYPE(primitive_stack) :: mass_min_function, mass_max_function
+    TYPE(primitive_stack) :: id_min_function, id_max_function
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
 

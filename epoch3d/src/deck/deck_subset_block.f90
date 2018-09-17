@@ -167,8 +167,8 @@ CONTAINS
 
     IF (str_cmp(element, 'random_fraction')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%random_fraction_exp)
-        CALL tokenize(value, sub%random_fraction_exp, errcode)
+        CALL initialise_stack(sub%random_fraction_function)
+        CALL tokenize(value, sub%random_fraction_function, errcode)
       END IF
       sub%random_fraction = as_real_print(value, element, errcode)
       sub%use_random = .TRUE.
@@ -177,8 +177,8 @@ CONTAINS
 
     IF (str_cmp(element, 'gamma_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%gamma_min_exp)
-        CALL tokenize(value, sub%gamma_min_exp, errcode)
+        CALL initialise_stack(sub%gamma_min_function)
+        CALL tokenize(value, sub%gamma_min_function, errcode)
       END IF
       sub%gamma_min = as_real_print(value, element, errcode)
       sub%use_gamma_min = .TRUE.
@@ -188,8 +188,8 @@ CONTAINS
 
     IF (str_cmp(element, 'gamma_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%gamma_max_exp)
-        CALL tokenize(value, sub%gamma_max_exp, errcode)
+        CALL initialise_stack(sub%gamma_max_function)
+        CALL tokenize(value, sub%gamma_max_function, errcode)
       END IF
       sub%gamma_max = as_real_print(value, element, errcode)
       sub%use_gamma_max = .TRUE.
@@ -199,8 +199,8 @@ CONTAINS
 
     IF (str_cmp(element, 'x_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%x_min_exp)
-        CALL tokenize(value, sub%x_min_exp, errcode)
+        CALL initialise_stack(sub%x_min_function)
+        CALL tokenize(value, sub%x_min_function, errcode)
       END IF
       sub%x_min = as_real_print(value, element, errcode)
       sub%use_x_min = .TRUE.
@@ -209,8 +209,8 @@ CONTAINS
 
     IF (str_cmp(element, 'x_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%x_max_exp)
-        CALL tokenize(value, sub%x_max_exp, errcode)
+        CALL initialise_stack(sub%x_max_function)
+        CALL tokenize(value, sub%x_max_function, errcode)
       END IF
       sub%x_max = as_real_print(value, element, errcode)
       sub%use_x_max = .TRUE.
@@ -219,8 +219,8 @@ CONTAINS
 
     IF (str_cmp(element, 'y_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%y_min_exp)
-        CALL tokenize(value, sub%y_min_exp, errcode)
+        CALL initialise_stack(sub%y_min_function)
+        CALL tokenize(value, sub%y_min_function, errcode)
       END IF
       sub%y_min = as_real_print(value, element, errcode)
       sub%use_y_min = .TRUE.
@@ -229,8 +229,8 @@ CONTAINS
 
     IF (str_cmp(element, 'y_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%y_max_exp)
-        CALL tokenize(value, sub%y_max_exp, errcode)
+        CALL initialise_stack(sub%y_max_function)
+        CALL tokenize(value, sub%y_max_function, errcode)
       END IF
       sub%y_max = as_real_print(value, element, errcode)
       sub%use_y_max = .TRUE.
@@ -239,8 +239,8 @@ CONTAINS
 
     IF (str_cmp(element, 'z_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%z_min_exp)
-        CALL tokenize(value, sub%z_min_exp, errcode)
+        CALL initialise_stack(sub%z_min_function)
+        CALL tokenize(value, sub%z_min_function, errcode)
       END IF
       sub%z_min = as_real_print(value, element, errcode)
       sub%use_z_min = .TRUE.
@@ -249,8 +249,8 @@ CONTAINS
 
     IF (str_cmp(element, 'z_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%z_max_exp)
-        CALL tokenize(value, sub%z_max_exp, errcode)
+        CALL initialise_stack(sub%z_max_function)
+        CALL tokenize(value, sub%z_max_function, errcode)
       END IF
       sub%z_max = as_real_print(value, element, errcode)
       sub%use_z_max = .TRUE.
@@ -259,8 +259,8 @@ CONTAINS
 
     IF (str_cmp(element, 'px_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%px_min_exp)
-        CALL tokenize(value, sub%px_min_exp, errcode)
+        CALL initialise_stack(sub%px_min_function)
+        CALL tokenize(value, sub%px_min_function, errcode)
       END IF
       sub%px_min = as_real_print(value, element, errcode)
       sub%use_px_min = .TRUE.
@@ -269,8 +269,8 @@ CONTAINS
 
     IF (str_cmp(element, 'px_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%px_max_exp)
-        CALL tokenize(value, sub%px_max_exp, errcode)
+        CALL initialise_stack(sub%px_max_function)
+        CALL tokenize(value, sub%px_max_function, errcode)
       END IF
       sub%px_max = as_real_print(value, element, errcode)
       sub%use_px_max = .TRUE.
@@ -279,8 +279,8 @@ CONTAINS
 
     IF (str_cmp(element, 'py_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%py_min_exp)
-        CALL tokenize(value, sub%py_min_exp, errcode)
+        CALL initialise_stack(sub%py_min_function)
+        CALL tokenize(value, sub%py_min_function, errcode)
       END IF
       sub%py_min = as_real_print(value, element, errcode)
       sub%use_py_min = .TRUE.
@@ -289,8 +289,8 @@ CONTAINS
 
     IF (str_cmp(element, 'py_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%py_max_exp)
-        CALL tokenize(value, sub%py_max_exp, errcode)
+        CALL initialise_stack(sub%py_max_function)
+        CALL tokenize(value, sub%py_max_function, errcode)
       END IF
       sub%py_max = as_real_print(value, element, errcode)
       sub%use_py_max = .TRUE.
@@ -299,8 +299,8 @@ CONTAINS
 
     IF (str_cmp(element, 'pz_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%pz_min_exp)
-        CALL tokenize(value, sub%pz_min_exp, errcode)
+        CALL initialise_stack(sub%pz_min_function)
+        CALL tokenize(value, sub%pz_min_function, errcode)
       END IF
       sub%pz_min = as_real_print(value, element, errcode)
       sub%use_pz_min = .TRUE.
@@ -309,8 +309,8 @@ CONTAINS
 
     IF (str_cmp(element, 'pz_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%pz_max_exp)
-        CALL tokenize(value, sub%pz_max_exp, errcode)
+        CALL initialise_stack(sub%pz_max_function)
+        CALL tokenize(value, sub%pz_max_function, errcode)
       END IF
       sub%pz_max = as_real_print(value, element, errcode)
       sub%use_pz_max = .TRUE.
@@ -319,8 +319,8 @@ CONTAINS
 
     IF (str_cmp(element, 'weight_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%weight_min_exp)
-        CALL tokenize(value, sub%weight_min_exp, errcode)
+        CALL initialise_stack(sub%weight_min_function)
+        CALL tokenize(value, sub%weight_min_function, errcode)
       END IF
       sub%weight_min = as_real_print(value, element, errcode)
       sub%use_weight_min = .TRUE.
@@ -329,8 +329,8 @@ CONTAINS
 
     IF (str_cmp(element, 'weight_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%weight_max_exp)
-        CALL tokenize(value, sub%weight_max_exp, errcode)
+        CALL initialise_stack(sub%weight_max_function)
+        CALL tokenize(value, sub%weight_max_function, errcode)
       END IF
       sub%weight_max = as_real_print(value, element, errcode)
       sub%use_weight_max = .TRUE.
@@ -339,8 +339,8 @@ CONTAINS
 
     IF (str_cmp(element, 'charge_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%charge_min_exp)
-        CALL tokenize(value, sub%charge_min_exp, errcode)
+        CALL initialise_stack(sub%charge_min_function)
+        CALL tokenize(value, sub%charge_min_function, errcode)
       END IF
       sub%charge_min = as_real_print(value, element, errcode)
       sub%use_charge_min = .TRUE.
@@ -349,8 +349,8 @@ CONTAINS
 
     IF (str_cmp(element, 'charge_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%charge_max_exp)
-        CALL tokenize(value, sub%charge_max_exp, errcode)
+        CALL initialise_stack(sub%charge_max_function)
+        CALL tokenize(value, sub%charge_max_function, errcode)
       END IF
       sub%charge_max = as_real_print(value, element, errcode)
       sub%use_charge_max = .TRUE.
@@ -359,8 +359,8 @@ CONTAINS
 
     IF (str_cmp(element, 'mass_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%mass_min_exp)
-        CALL tokenize(value, sub%mass_min_exp, errcode)
+        CALL initialise_stack(sub%mass_min_function)
+        CALL tokenize(value, sub%mass_min_function, errcode)
       END IF
       sub%mass_min = as_real_print(value, element, errcode)
       sub%use_mass_min = .TRUE.
@@ -369,8 +369,8 @@ CONTAINS
 
     IF (str_cmp(element, 'mass_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%mass_max_exp)
-        CALL tokenize(value, sub%mass_max_exp, errcode)
+        CALL initialise_stack(sub%mass_max_function)
+        CALL tokenize(value, sub%mass_max_function, errcode)
       END IF
       sub%mass_max = as_real_print(value, element, errcode)
       sub%use_mass_max = .TRUE.
@@ -379,8 +379,8 @@ CONTAINS
 
     IF (str_cmp(element, 'id_min')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%id_min_exp)
-        CALL tokenize(value, sub%id_min_exp, errcode)
+        CALL initialise_stack(sub%id_min_function)
+        CALL tokenize(value, sub%id_min_function, errcode)
       END IF
       sub%id_min = as_integer_print(value, element, errcode)
       sub%use_id_min = .TRUE.
@@ -389,8 +389,8 @@ CONTAINS
 
     IF (str_cmp(element, 'id_max')) THEN
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%id_max_exp)
-        CALL tokenize(value, sub%id_max_exp, errcode)
+        CALL initialise_stack(sub%id_max_function)
+        CALL tokenize(value, sub%id_max_function, errcode)
       END IF
       sub%id_max = as_integer_print(value, element, errcode)
       sub%use_id_max = .TRUE.
