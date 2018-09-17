@@ -2252,80 +2252,80 @@ CONTAINS
           part_mc = c * current%mass
 #endif
           gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
-          IF (subset_list(l)%use_gamma_min &
-              .AND. gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
-          IF (subset_list(l)%use_gamma_max &
-              .AND. gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
+          IF (subset_list(l)%use_gamma_min) THEN
+            IF (gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
+          END IF
+          IF (subset_list(l)%use_gamma_max) THEN
+            IF (gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
+          END IF
         END IF
 
-        IF (subset_list(l)%use_x_min &
-            .AND. current%part_pos < subset_list(l)%x_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_x_min) THEN
+          IF (current%part_pos < subset_list(l)%x_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_x_max &
-            .AND. current%part_pos > subset_list(l)%x_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_x_max) THEN
+          IF (current%part_pos > subset_list(l)%x_max) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_px_min &
-            .AND. current%part_p(1) < subset_list(l)%px_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_px_min) THEN
+          IF (current%part_p(1) < subset_list(l)%px_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_px_max &
-            .AND. current%part_p(1) > subset_list(l)%px_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_px_max) THEN
+          IF (current%part_p(1) > subset_list(l)%px_max) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_py_min &
-            .AND. current%part_p(2) < subset_list(l)%py_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_py_min) THEN
+          IF (current%part_p(2) < subset_list(l)%py_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_py_max &
-            .AND. current%part_p(2) > subset_list(l)%py_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_py_max) THEN
+          IF (current%part_p(2) > subset_list(l)%py_max) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_pz_min &
-            .AND. current%part_p(3) < subset_list(l)%pz_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_pz_min) THEN
+          IF (current%part_p(3) < subset_list(l)%pz_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_pz_max &
-            .AND. current%part_p(3) > subset_list(l)%pz_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_pz_max) THEN
+          IF (current%part_p(3) > subset_list(l)%pz_max) use_particle = .FALSE.
+        END IF
 
 #ifndef PER_SPECIES_WEIGHT
-        IF (subset_list(l)%use_weight_min &
-            .AND. current%weight < subset_list(l)%weight_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_weight_min) THEN
+          IF (current%weight < subset_list(l)%weight_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_weight_max &
-            .AND. current%weight > subset_list(l)%weight_max) &
-                use_particle = .FALSE.
-
+        IF (subset_list(l)%use_weight_max) THEN
+          IF (current%weight > subset_list(l)%weight_max) use_particle = .FALSE.
+        END IF
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
-        IF (subset_list(l)%use_charge_min &
-            .AND. current%charge < subset_list(l)%charge_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_charge_min) THEN
+          IF (current%charge < subset_list(l)%charge_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_charge_max &
-            .AND. current%charge > subset_list(l)%charge_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_charge_max) THEN
+          IF (current%charge > subset_list(l)%charge_max) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_mass_min &
-            .AND. current%mass < subset_list(l)%mass_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_mass_min) THEN
+          IF (current%mass < subset_list(l)%mass_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_mass_max &
-            .AND. current%mass > subset_list(l)%mass_max) &
-                use_particle = .FALSE.
-
+        IF (subset_list(l)%use_mass_max) THEN
+          IF (current%mass > subset_list(l)%mass_max) use_particle = .FALSE.
+        END IF
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-        IF (subset_list(l)%use_id_min &
-            .AND. current%id < subset_list(l)%id_min) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_id_min) THEN
+          IF (current%id < subset_list(l)%id_min) use_particle = .FALSE.
+        END IF
 
-        IF (subset_list(l)%use_id_max &
-            .AND. current%id > subset_list(l)%id_max) &
-                use_particle = .FALSE.
+        IF (subset_list(l)%use_id_max) THEN
+          IF (current%id > subset_list(l)%id_max) use_particle = .FALSE.
+        END IF
 #endif
 
         IF (subset_list(l)%use_random) THEN
