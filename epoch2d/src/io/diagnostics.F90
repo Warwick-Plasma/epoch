@@ -2290,6 +2290,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
     REAL(num) :: gamma_rel, random_num, part_mc
+    TYPE(subset), POINTER :: sub
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2302,14 +2303,15 @@ CONTAINS
     io_list => io_list_data
 
     l = isubset - 1
+    sub => subset_list(l)
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
-      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' &
+      io_list(i)%name = 'subset_' // TRIM(sub%name) // '/' &
           // TRIM(species_list(i)%name)
       CALL create_empty_partlist(io_list(i)%attached_list)
 
-      IF (.NOT. subset_list(l)%use_species(i)) THEN
+      IF (.NOT. sub%use_species(i)) THEN
         io_list(i)%dumpmask = c_io_never
         CYCLE
       END IF
@@ -2320,99 +2322,98 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
         next => current%next
         use_particle = .TRUE.
-        IF (subset_list(l)%use_gamma) THEN
+        IF (sub%use_gamma) THEN
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = c * current%mass
 #endif
           gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
-          IF (subset_list(l)%use_gamma_min) THEN
-            IF (gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
+          IF (sub%use_gamma_min) THEN
+            IF (gamma_rel < sub%gamma_min) use_particle = .FALSE.
           END IF
-          IF (subset_list(l)%use_gamma_max) THEN
-            IF (gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
+          IF (sub%use_gamma_max) THEN
+            IF (gamma_rel > sub%gamma_max) use_particle = .FALSE.
           END IF
         END IF
 
-        IF (subset_list(l)%use_x_min) THEN
-          IF (current%part_pos(1) < subset_list(l)%x_min) use_particle = .FALSE.
+        IF (sub%use_x_min) THEN
+          IF (current%part_pos(1) < sub%x_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_x_max) THEN
-          IF (current%part_pos(1) > subset_list(l)%x_max) use_particle = .FALSE.
+        IF (sub%use_x_max) THEN
+          IF (current%part_pos(1) > sub%x_max) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_y_min) THEN
-          IF (current%part_pos(2) < subset_list(l)%y_min) use_particle = .FALSE.
+        IF (sub%use_y_min) THEN
+          IF (current%part_pos(2) < sub%y_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_y_max) THEN
-          IF (current%part_pos(2) > subset_list(l)%y_max) use_particle = .FALSE.
+        IF (sub%use_y_max) THEN
+          IF (current%part_pos(2) > sub%y_max) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_px_min) THEN
-          IF (current%part_p(1) < subset_list(l)%px_min) use_particle = .FALSE.
+        IF (sub%use_px_min) THEN
+          IF (current%part_p(1) < sub%px_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_px_max) THEN
-          IF (current%part_p(1) > subset_list(l)%px_max) use_particle = .FALSE.
+        IF (sub%use_px_max) THEN
+          IF (current%part_p(1) > sub%px_max) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_py_min) THEN
-          IF (current%part_p(2) < subset_list(l)%py_min) use_particle = .FALSE.
+        IF (sub%use_py_min) THEN
+          IF (current%part_p(2) < sub%py_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_py_max) THEN
-          IF (current%part_p(2) > subset_list(l)%py_max) use_particle = .FALSE.
+        IF (sub%use_py_max) THEN
+          IF (current%part_p(2) > sub%py_max) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_pz_min) THEN
-          IF (current%part_p(3) < subset_list(l)%pz_min) use_particle = .FALSE.
+        IF (sub%use_pz_min) THEN
+          IF (current%part_p(3) < sub%pz_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_pz_max) THEN
-          IF (current%part_p(3) > subset_list(l)%pz_max) use_particle = .FALSE.
+        IF (sub%use_pz_max) THEN
+          IF (current%part_p(3) > sub%pz_max) use_particle = .FALSE.
         END IF
 
 #ifndef PER_SPECIES_WEIGHT
-        IF (subset_list(l)%use_weight_min) THEN
-          IF (current%weight < subset_list(l)%weight_min) use_particle = .FALSE.
+        IF (sub%use_weight_min) THEN
+          IF (current%weight < sub%weight_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_weight_max) THEN
-          IF (current%weight > subset_list(l)%weight_max) use_particle = .FALSE.
+        IF (sub%use_weight_max) THEN
+          IF (current%weight > sub%weight_max) use_particle = .FALSE.
         END IF
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
-        IF (subset_list(l)%use_charge_min) THEN
-          IF (current%charge < subset_list(l)%charge_min) use_particle = .FALSE.
+        IF (sub%use_charge_min) THEN
+          IF (current%charge < sub%charge_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_charge_max) THEN
-          IF (current%charge > subset_list(l)%charge_max) use_particle = .FALSE.
+        IF (sub%use_charge_max) THEN
+          IF (current%charge > sub%charge_max) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_mass_min) THEN
-          IF (current%mass < subset_list(l)%mass_min) use_particle = .FALSE.
+        IF (sub%use_mass_min) THEN
+          IF (current%mass < sub%mass_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_mass_max) THEN
-          IF (current%mass > subset_list(l)%mass_max) use_particle = .FALSE.
+        IF (sub%use_mass_max) THEN
+          IF (current%mass > sub%mass_max) use_particle = .FALSE.
         END IF
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-        IF (subset_list(l)%use_id_min) THEN
-          IF (current%id < subset_list(l)%id_min) use_particle = .FALSE.
+        IF (sub%use_id_min) THEN
+          IF (current%id < sub%id_min) use_particle = .FALSE.
         END IF
 
-        IF (subset_list(l)%use_id_max) THEN
-          IF (current%id > subset_list(l)%id_max) use_particle = .FALSE.
+        IF (sub%use_id_max) THEN
+          IF (current%id > sub%id_max) use_particle = .FALSE.
         END IF
 #endif
 
-        IF (subset_list(l)%use_random) THEN
+        IF (sub%use_random) THEN
           random_num = random()
-          IF (random_num > subset_list(l)%random_fraction) &
-              use_particle = .FALSE.
+          IF (random_num > sub%random_fraction) use_particle = .FALSE.
         END IF
 
         IF (use_particle) THEN

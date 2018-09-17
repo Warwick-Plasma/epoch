@@ -136,6 +136,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies
+    TYPE(subset), POINTER :: sub
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -161,77 +162,77 @@ CONTAINS
 
     IF (deck_state == c_ds_first) RETURN
 
+    sub => subset_list(subset_id)
+
     IF (str_cmp(element, 'random_fraction')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%random_fraction_exp)
-        CALL tokenize(value, subset_list(subset_id)%random_fraction_exp, &
-            errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%random_fraction_exp)
+        CALL tokenize(value, sub%random_fraction_exp, errcode)
       END IF
-      subset_list(subset_id)%random_fraction = &
-          as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_random = .TRUE.
+      sub%random_fraction = as_real_print(value, element, errcode)
+      sub%use_random = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%gamma_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%gamma_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%gamma_min_exp)
+        CALL tokenize(value, sub%gamma_min_exp, errcode)
       END IF
-      subset_list(subset_id)%gamma_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_gamma_min = .TRUE.
-      subset_list(subset_id)%use_gamma = .TRUE.
+      sub%gamma_min = as_real_print(value, element, errcode)
+      sub%use_gamma_min = .TRUE.
+      sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%gamma_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%gamma_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%gamma_max_exp)
+        CALL tokenize(value, sub%gamma_max_exp, errcode)
       END IF
-      subset_list(subset_id)%gamma_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_gamma_max = .TRUE.
-      subset_list(subset_id)%use_gamma = .TRUE.
+      sub%gamma_max = as_real_print(value, element, errcode)
+      sub%use_gamma_max = .TRUE.
+      sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%x_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%x_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%x_min_exp)
+        CALL tokenize(value, sub%x_min_exp, errcode)
       END IF
-      subset_list(subset_id)%x_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_x_min = .TRUE.
+      sub%x_min = as_real_print(value, element, errcode)
+      sub%use_x_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%x_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%x_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%x_max_exp)
+        CALL tokenize(value, sub%x_max_exp, errcode)
       END IF
-      subset_list(subset_id)%x_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_x_max = .TRUE.
+      sub%x_max = as_real_print(value, element, errcode)
+      sub%use_x_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'y_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%y_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%y_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%y_min_exp)
+        CALL tokenize(value, sub%y_min_exp, errcode)
       END IF
-      subset_list(subset_id)%y_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_y_min = .TRUE.
+      sub%y_min = as_real_print(value, element, errcode)
+      sub%use_y_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'y_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%y_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%y_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%y_max_exp)
+        CALL tokenize(value, sub%y_max_exp, errcode)
       END IF
-      subset_list(subset_id)%y_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_y_max = .TRUE.
+      sub%y_max = as_real_print(value, element, errcode)
+      sub%use_y_max = .TRUE.
       RETURN
     END IF
 
@@ -244,165 +245,162 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'px_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%px_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%px_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%px_min_exp)
+        CALL tokenize(value, sub%px_min_exp, errcode)
       END IF
-      subset_list(subset_id)%px_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_px_min = .TRUE.
+      sub%px_min = as_real_print(value, element, errcode)
+      sub%use_px_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'px_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%px_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%px_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%px_max_exp)
+        CALL tokenize(value, sub%px_max_exp, errcode)
       END IF
-      subset_list(subset_id)%px_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_px_max = .TRUE.
+      sub%px_max = as_real_print(value, element, errcode)
+      sub%use_px_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%py_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%py_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%py_min_exp)
+        CALL tokenize(value, sub%py_min_exp, errcode)
       END IF
-      subset_list(subset_id)%py_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_py_min = .TRUE.
+      sub%py_min = as_real_print(value, element, errcode)
+      sub%use_py_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%py_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%py_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%py_max_exp)
+        CALL tokenize(value, sub%py_max_exp, errcode)
       END IF
-      subset_list(subset_id)%py_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_py_max = .TRUE.
+      sub%py_max = as_real_print(value, element, errcode)
+      sub%use_py_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%pz_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%pz_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%pz_min_exp)
+        CALL tokenize(value, sub%pz_min_exp, errcode)
       END IF
-      subset_list(subset_id)%pz_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_pz_min = .TRUE.
+      sub%pz_min = as_real_print(value, element, errcode)
+      sub%use_pz_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%pz_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%pz_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%pz_max_exp)
+        CALL tokenize(value, sub%pz_max_exp, errcode)
       END IF
-      subset_list(subset_id)%pz_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_pz_max = .TRUE.
+      sub%pz_max = as_real_print(value, element, errcode)
+      sub%use_pz_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%weight_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%weight_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%weight_min_exp)
+        CALL tokenize(value, sub%weight_min_exp, errcode)
       END IF
-      subset_list(subset_id)%weight_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_weight_min = .TRUE.
+      sub%weight_min = as_real_print(value, element, errcode)
+      sub%use_weight_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%weight_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%weight_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%weight_max_exp)
+        CALL tokenize(value, sub%weight_max_exp, errcode)
       END IF
-      subset_list(subset_id)%weight_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_weight_max = .TRUE.
+      sub%weight_max = as_real_print(value, element, errcode)
+      sub%use_weight_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%charge_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%charge_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%charge_min_exp)
+        CALL tokenize(value, sub%charge_min_exp, errcode)
       END IF
-      subset_list(subset_id)%charge_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_charge_min = .TRUE.
+      sub%charge_min = as_real_print(value, element, errcode)
+      sub%use_charge_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%charge_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%charge_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%charge_max_exp)
+        CALL tokenize(value, sub%charge_max_exp, errcode)
       END IF
-      subset_list(subset_id)%charge_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_charge_max = .TRUE.
+      sub%charge_max = as_real_print(value, element, errcode)
+      sub%use_charge_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%mass_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%mass_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%mass_min_exp)
+        CALL tokenize(value, sub%mass_min_exp, errcode)
       END IF
-      subset_list(subset_id)%mass_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_mass_min = .TRUE.
+      sub%mass_min = as_real_print(value, element, errcode)
+      sub%use_mass_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%mass_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%mass_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%mass_max_exp)
+        CALL tokenize(value, sub%mass_max_exp, errcode)
       END IF
-      subset_list(subset_id)%mass_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_mass_max = .TRUE.
+      sub%mass_max = as_real_print(value, element, errcode)
+      sub%use_mass_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_min')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%id_min_exp)
-        CALL tokenize(value, subset_list(subset_id)%id_min_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%id_min_exp)
+        CALL tokenize(value, sub%id_min_exp, errcode)
       END IF
-      subset_list(subset_id)%id_min = as_integer_print(value, element, errcode)
-      subset_list(subset_id)%use_id_min = .TRUE.
+      sub%id_min = as_integer_print(value, element, errcode)
+      sub%use_id_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_max')) THEN
-      IF (subset_list(subset_id)%time_varying) THEN
-        CALL initialise_stack(subset_list(subset_id)%id_max_exp)
-        CALL tokenize(value, subset_list(subset_id)%id_max_exp, errcode)
+      IF (sub%time_varying) THEN
+        CALL initialise_stack(sub%id_max_exp)
+        CALL tokenize(value, sub%id_max_exp, errcode)
       END IF
-      subset_list(subset_id)%id_max = as_integer_print(value, element, errcode)
-      subset_list(subset_id)%use_id_max = .TRUE.
+      sub%id_max = as_integer_print(value, element, errcode)
+      sub%use_id_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'dumpmask')) THEN
-      subset_list(subset_id)%mask = as_integer_print(value, element, errcode)
+      sub%mask = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'skip')) THEN
-      subset_list(subset_id)%skip_dir = &
-          as_integer_print(value, element, errcode) + 1
+      sub%skip_dir = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
     IF (str_cmp(element, 'skip_x')) THEN
-      subset_list(subset_id)%skip_dir(1) = &
-          as_integer_print(value, element, errcode) + 1
+      sub%skip_dir(1) = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
     IF (str_cmp(element, 'skip_y')) THEN
-      subset_list(subset_id)%skip_dir(2) = &
-          as_integer_print(value, element, errcode) + 1
+      sub%skip_dir(2) = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
@@ -414,7 +412,7 @@ CONTAINS
       ispecies = as_integer_print(value, element, errcode)
       IF (errcode == c_err_none) THEN
         IF (ispecies > 0 .AND. ispecies <= n_species) THEN
-          subset_list(subset_id)%use_species(ispecies) = .TRUE.
+          sub%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
