@@ -106,7 +106,7 @@ CONTAINS
     ALLOCATE(tmp_array(old_size))
     DO i = 1, old_size
       tmp_array(i) = array(i)
-    ENDDO
+    END DO
 
     new_size = 2 * old_size
     DEALLOCATE(array)
@@ -114,7 +114,7 @@ CONTAINS
 
     DO i = 1, old_size
       array(i) = tmp_array(i)
-    ENDDO
+    END DO
 
     DEALLOCATE(tmp_array)
 

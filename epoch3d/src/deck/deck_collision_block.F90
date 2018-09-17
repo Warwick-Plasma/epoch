@@ -217,7 +217,7 @@ CONTAINS
     collstate = 1.0_num
     IF (str_cmp(TRIM(tstr2), 'on') .OR. str_cmp(TRIM(tstr2), '')) THEN
       collstate = 1.0_num
-    ELSEIF (str_cmp(TRIM(tstr2), 'off')) THEN
+    ELSE IF (str_cmp(TRIM(tstr2), 'off')) THEN
       collstate = -1.0_num
     ELSE
       collstate = as_real(tstr2, errcode)

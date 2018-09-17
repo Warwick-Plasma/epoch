@@ -413,7 +413,7 @@ CONTAINS
             sub%id_min = evaluate(sub%id_min_exp, errcode)
         IF (sub%use_id_max) &
             sub%id_max = evaluate(sub%id_max_exp, errcode)
-      ENDDO
+      END DO
 
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
@@ -2063,7 +2063,7 @@ CONTAINS
           sub%dump_field_grid = .TRUE.
         END DO
       END DO
-    ELSEIF (dump_species) THEN
+    ELSE IF (dump_species) THEN
       DO ispecies = 1, n_species
         IF (IAND(io_list(ispecies)%dumpmask, code) == 0) CYCLE
 
