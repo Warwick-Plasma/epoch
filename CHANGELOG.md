@@ -29,6 +29,8 @@
 
    - stop_time - Time at which to stop applying antenna
 
+ * Allow subset restrictions to be time-varying functions
+
 
 ## v4.14.0 to v4.15.0
 
