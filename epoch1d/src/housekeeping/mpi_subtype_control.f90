@@ -654,6 +654,7 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
     REAL(num) :: dir_min, dir_max, dir_d
+    INTEGER :: n
 
     global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
@@ -661,10 +662,12 @@ CONTAINS
     dir_min = x_min
     dir_max = x_max
     dir_d = dx
-    IF (current_subset%use_x_min) &
-        global_ranges(1,1) = current_subset%x_min
-    IF (current_subset%use_x_max) &
-        global_ranges(2,1) = current_subset%x_max
+    n = c_subset_x_min
+    IF (current_subset%use_restriction(n)) &
+        global_ranges(1,1) = current_subset%restriction(n)
+    n = c_subset_x_max
+    IF (current_subset%use_restriction(n)) &
+        global_ranges(2,1) = current_subset%restriction(n)
 
     IF (global_ranges(2,1) < global_ranges(1,1)) THEN
       global_ranges = 0

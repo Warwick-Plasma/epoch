@@ -658,7 +658,7 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
     REAL(num) :: dir_min, dir_max, dir_d
-    INTEGER :: idim
+    INTEGER :: idim, n
 
     global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
@@ -668,18 +668,22 @@ CONTAINS
         dir_min = x_min
         dir_max = x_max
         dir_d = dx
-        IF (current_subset%use_x_min) &
-            global_ranges(1,idim) = current_subset%x_min
-        IF (current_subset%use_x_max) &
-            global_ranges(2,idim) = current_subset%x_max
+        n = c_subset_x_min
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(1,idim) = current_subset%restriction(n)
+        n = c_subset_x_max
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(2,idim) = current_subset%restriction(n)
       ELSE IF (idim == 2) THEN
         dir_min = y_min
         dir_max = y_max
         dir_d = dy
-        IF (current_subset%use_y_min) &
-            global_ranges(1,idim) = current_subset%y_min
-        IF (current_subset%use_y_max) &
-            global_ranges(2,idim) = current_subset%y_max
+        n = c_subset_y_min
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(1,idim) = current_subset%restriction(n)
+        n = c_subset_y_max
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(2,idim) = current_subset%restriction(n)
       END IF
       IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
         global_ranges = 0

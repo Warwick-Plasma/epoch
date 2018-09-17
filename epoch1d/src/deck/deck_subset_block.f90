@@ -132,7 +132,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    INTEGER :: io, iu, ispecies
+    INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
 
     errcode = c_err_none
@@ -162,55 +162,60 @@ CONTAINS
     sub => subset_list(subset_id)
 
     IF (str_cmp(element, 'random_fraction')) THEN
+      n = c_subset_random
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%random_fraction_function)
-        CALL tokenize(value, sub%random_fraction_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%random_fraction = as_real_print(value, element, errcode)
-      sub%use_random = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_min')) THEN
+      n = c_subset_gamma_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%gamma_min_function)
-        CALL tokenize(value, sub%gamma_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%gamma_min = as_real_print(value, element, errcode)
-      sub%use_gamma_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_max')) THEN
+      n = c_subset_gamma_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%gamma_max_function)
-        CALL tokenize(value, sub%gamma_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%gamma_max = as_real_print(value, element, errcode)
-      sub%use_gamma_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_min')) THEN
+      n = c_subset_x_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%x_min_function)
-        CALL tokenize(value, sub%x_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%x_min = as_real_print(value, element, errcode)
-      sub%use_x_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       sub%space_restrictions = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_max')) THEN
+      n = c_subset_x_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%x_max_function)
-        CALL tokenize(value, sub%x_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%x_max = as_real_print(value, element, errcode)
-      sub%use_x_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       sub%space_restrictions = .TRUE.
       RETURN
     END IF
@@ -232,142 +237,156 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'px_min')) THEN
+      n = c_subset_px_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%px_min_function)
-        CALL tokenize(value, sub%px_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%px_min = as_real_print(value, element, errcode)
-      sub%use_px_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'px_max')) THEN
+      n = c_subset_px_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%px_max_function)
-        CALL tokenize(value, sub%px_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%px_max = as_real_print(value, element, errcode)
-      sub%use_px_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_min')) THEN
+      n = c_subset_py_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%py_min_function)
-        CALL tokenize(value, sub%py_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%py_min = as_real_print(value, element, errcode)
-      sub%use_py_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_max')) THEN
+      n = c_subset_py_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%py_max_function)
-        CALL tokenize(value, sub%py_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%py_max = as_real_print(value, element, errcode)
-      sub%use_py_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_min')) THEN
+      n = c_subset_pz_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%pz_min_function)
-        CALL tokenize(value, sub%pz_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%pz_min = as_real_print(value, element, errcode)
-      sub%use_pz_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_max')) THEN
+      n = c_subset_pz_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%pz_max_function)
-        CALL tokenize(value, sub%pz_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%pz_max = as_real_print(value, element, errcode)
-      sub%use_pz_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_min')) THEN
+      n = c_subset_weight_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%weight_min_function)
-        CALL tokenize(value, sub%weight_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%weight_min = as_real_print(value, element, errcode)
-      sub%use_weight_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_max')) THEN
+      n = c_subset_weight_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%weight_max_function)
-        CALL tokenize(value, sub%weight_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%weight_max = as_real_print(value, element, errcode)
-      sub%use_weight_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_min')) THEN
+      n = c_subset_charge_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%charge_min_function)
-        CALL tokenize(value, sub%charge_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%charge_min = as_real_print(value, element, errcode)
-      sub%use_charge_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_max')) THEN
+      n = c_subset_charge_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%charge_max_function)
-        CALL tokenize(value, sub%charge_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%charge_max = as_real_print(value, element, errcode)
-      sub%use_charge_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_min')) THEN
+      n = c_subset_mass_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%mass_min_function)
-        CALL tokenize(value, sub%mass_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%mass_min = as_real_print(value, element, errcode)
-      sub%use_mass_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_max')) THEN
+      n = c_subset_mass_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%mass_max_function)
-        CALL tokenize(value, sub%mass_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%mass_max = as_real_print(value, element, errcode)
-      sub%use_mass_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_min')) THEN
+      n = c_subset_id_min
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%id_min_function)
-        CALL tokenize(value, sub%id_min_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%id_min = as_integer_print(value, element, errcode)
-      sub%use_id_min = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_max')) THEN
+      n = c_subset_id_max
       IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%id_max_function)
-        CALL tokenize(value, sub%id_max_function, errcode)
+        CALL initialise_stack(sub%restriction_function(n))
+        CALL tokenize(value, sub%restriction_function(n), errcode)
       END IF
-      sub%id_max = as_integer_print(value, element, errcode)
-      sub%use_id_max = .TRUE.
+      sub%restriction(n) = as_real_print(value, element, errcode)
+      sub%use_restriction(n) = .TRUE.
       RETURN
     END IF
 
@@ -459,49 +478,22 @@ CONTAINS
 
     DO i = 1, n_subsets
       subset_list(i)%name = blank
-      subset_list(i)%use_random     = .FALSE.
       subset_list(i)%use_gamma      = .FALSE.
-      subset_list(i)%use_gamma_min  = .FALSE.
-      subset_list(i)%use_gamma_max  = .FALSE.
-      subset_list(i)%use_x_min      = .FALSE.
-      subset_list(i)%use_x_max      = .FALSE.
-      subset_list(i)%use_px_min     = .FALSE.
-      subset_list(i)%use_px_max     = .FALSE.
-      subset_list(i)%use_py_min     = .FALSE.
-      subset_list(i)%use_py_max     = .FALSE.
-      subset_list(i)%use_pz_min     = .FALSE.
-      subset_list(i)%use_pz_max     = .FALSE.
-      subset_list(i)%use_weight_min = .FALSE.
-      subset_list(i)%use_weight_max = .FALSE.
-      subset_list(i)%use_charge_min = .FALSE.
-      subset_list(i)%use_charge_max = .FALSE.
-      subset_list(i)%use_mass_min   = .FALSE.
-      subset_list(i)%use_mass_max   = .FALSE.
-      subset_list(i)%use_id_min     = .FALSE.
-      subset_list(i)%use_id_max     = .FALSE.
+      subset_list(i)%use_restriction(:) = .FALSE.
       subset_list(i)%skip           = .FALSE.
       subset_list(i)%dump_field_grid = .FALSE.
       subset_list(i)%space_restrictions = .FALSE.
       subset_list(i)%skip_dir       = 1
-      subset_list(i)%random_fraction = 0.0_num
-      subset_list(i)%gamma_min  = -HUGE(1.0_num)
-      subset_list(i)%gamma_max  =  HUGE(1.0_num)
-      subset_list(i)%x_min      = -HUGE(1.0_num)
-      subset_list(i)%x_max      =  HUGE(1.0_num)
-      subset_list(i)%px_min     = -HUGE(1.0_num)
-      subset_list(i)%px_max     =  HUGE(1.0_num)
-      subset_list(i)%py_min     = -HUGE(1.0_num)
-      subset_list(i)%py_max     =  HUGE(1.0_num)
-      subset_list(i)%pz_min     = -HUGE(1.0_num)
-      subset_list(i)%pz_max     =  HUGE(1.0_num)
-      subset_list(i)%weight_min = -HUGE(1.0_num)
-      subset_list(i)%weight_max =  HUGE(1.0_num)
-      subset_list(i)%charge_min = -HUGE(1.0_num)
-      subset_list(i)%charge_max =  HUGE(1.0_num)
-      subset_list(i)%mass_min   = -HUGE(1.0_num)
-      subset_list(i)%mass_max   =  HUGE(1.0_num)
-      subset_list(i)%id_min     = -HUGE(1)
-      subset_list(i)%id_max     =  HUGE(1)
+      subset_list(i)%restriction(:) = HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_gamma_min)  = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_x_min)      = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_px_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_py_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_pz_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_weight_min) = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_charge_min) = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_mass_min)   = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_id_min)     = -HUGE(1.0_num)
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
