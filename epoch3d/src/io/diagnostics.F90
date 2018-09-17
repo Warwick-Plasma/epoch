@@ -372,7 +372,7 @@ CONTAINS
         sub => subset_list(isubset)
         IF (.NOT. sub%time_varying) CYCLE
         DO n = 1, c_subset_max
-          IF (sub%use_restriction(n)) THEN
+          IF (sub%use_restriction_function(n)) THEN
             sub%restriction(n) = evaluate(sub%restriction_function(n), errcode)
           END IF
         END DO

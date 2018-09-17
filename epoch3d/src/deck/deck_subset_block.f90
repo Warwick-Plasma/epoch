@@ -31,7 +31,6 @@ MODULE deck_subset_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: subset_names
   INTEGER, DIMENSION(:), POINTER :: subset_blocks
-  LOGICAL, DIMENSION(:), POINTER :: subset_time_varying
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
 
@@ -46,8 +45,6 @@ CONTAINS
       n_subsets = 0
       ALLOCATE(subset_names(4))
       ALLOCATE(subset_blocks(4))
-      ALLOCATE(subset_time_varying(4))
-      subset_time_varying = .FALSE.
     ELSE
       DO i = 1, n_subsets
         ALLOCATE(subset_list(i)%use_species(n_species))
@@ -68,10 +65,8 @@ CONTAINS
 
       DO i = 1, n_subsets
         subset_list(i)%name = subset_names(i)
-        subset_list(i)%time_varying = subset_time_varying(i)
       END DO
       DEALLOCATE(subset_names)
-      DEALLOCATE(subset_time_varying)
     ELSE
       DEALLOCATE(subset_blocks)
       DO i = 1, n_subsets
@@ -148,13 +143,6 @@ CONTAINS
       CALL grow_array(subset_blocks, current_block)
       subset_blocks(current_block) = subset_number_from_name(value)
       RETURN
-    END IF
-
-    IF (str_cmp(element, 'time_varying')) THEN
-      IF (deck_state /= c_ds_first) RETURN
-      CALL grow_array(subset_time_varying, current_block)
-      subset_time_varying(current_block) = &
-          as_logical_print(value, element, errcode)
     END IF
 
     IF (deck_state == c_ds_first) RETURN
@@ -241,12 +229,16 @@ CONTAINS
     END IF
 
     IF (n /= 0) THEN
-      IF (sub%time_varying) THEN
-        CALL initialise_stack(sub%restriction_function(n))
-        CALL tokenize(value, sub%restriction_function(n), errcode)
-      END IF
-      sub%restriction(n) = as_real_print(value, element, errcode)
+      CALL initialise_stack(sub%restriction_function(n))
+      CALL tokenize(value, sub%restriction_function(n), errcode)
+      sub%restriction(n) = evaluate(sub%restriction_function(n), errcode)
       sub%use_restriction(n) = .TRUE.
+      IF (sub%restriction_function(n)%is_time_varying) THEN
+        sub%use_restriction_function(n) = .TRUE.
+        sub%time_varying = .TRUE.
+      ELSE
+        CALL deallocate_stack(sub%restriction_function(n))
+      END IF
       RETURN
     END IF
 
@@ -342,9 +334,11 @@ CONTAINS
       subset_list(i)%name = blank
       subset_list(i)%use_gamma      = .FALSE.
       subset_list(i)%use_restriction(:) = .FALSE.
+      subset_list(i)%use_restriction_function(:) = .FALSE.
       subset_list(i)%skip           = .FALSE.
       subset_list(i)%dump_field_grid = .FALSE.
       subset_list(i)%space_restrictions = .FALSE.
+      subset_list(i)%time_varying = .FALSE.
       subset_list(i)%skip_dir       = 1
       subset_list(i)%restriction(:) = HUGE(1.0_num)
       subset_list(i)%restriction(c_subset_gamma_min)  = -HUGE(1.0_num)

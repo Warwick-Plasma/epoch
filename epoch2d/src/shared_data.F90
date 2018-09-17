@@ -640,6 +640,7 @@ MODULE shared_data
     LOGICAL, DIMENSION(:), POINTER :: use_species
     LOGICAL :: use_gamma
     LOGICAL :: use_restriction(c_subset_max)
+    LOGICAL :: use_restriction_function(c_subset_max)
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
     LOGICAL :: time_varying
