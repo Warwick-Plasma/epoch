@@ -334,6 +334,13 @@ CONTAINS
       subset_list(i)%space_restrictions = .FALSE.
       subset_list(i)%time_varying = .FALSE.
       subset_list(i)%skip_dir       = 1
+      subset_list(i)%subtype = MPI_DATATYPE_NULL
+      subset_list(i)%subarray = MPI_DATATYPE_NULL
+      subset_list(i)%subtype_r4 = MPI_DATATYPE_NULL
+      subset_list(i)%subarray_r4 = MPI_DATATYPE_NULL
+      subset_list(i)%starts = -1
+      subset_list(i)%n_local = -1
+      subset_list(i)%n_global = -1
       subset_list(i)%restriction(:) = HUGE(1.0_num)
       subset_list(i)%restriction(c_subset_gamma_min)  = -HUGE(1.0_num)
       subset_list(i)%restriction(c_subset_x_min)      = -HUGE(1.0_num)

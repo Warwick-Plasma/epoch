@@ -647,7 +647,7 @@ MODULE shared_data
     REAL(num) :: restriction(c_subset_max)
     TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
-    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next

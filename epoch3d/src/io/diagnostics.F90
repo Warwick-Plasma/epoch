@@ -376,6 +376,7 @@ CONTAINS
             sub%restriction(n) = evaluate(sub%restriction_function(n), errcode)
           END IF
         END DO
+        IF (sub%space_restrictions) CALL create_subset_subtypes(isubset)
       END DO
 
       ! open the file
