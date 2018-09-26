@@ -2567,8 +2567,9 @@ CONTAINS
     INTEGER(i8), INTENT(IN), DIMENSION(1-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
-    INTEGER :: sz, idim, proc, old, nextra
+    INTEGER :: sz, idim, proc, old, nextra, i, i0, i1, iter, old_maxs, new_maxs
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
+    INTEGER(i8) :: load_local, load_max, load_min, load_var_best
 
     sz = SIZE(load) - 2 * ng
     mins = 1
@@ -2578,19 +2579,14 @@ CONTAINS
 
     load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
-    proc = 1
-    total = 0
+    proc = 0
     old = 1
-    nextra = 0
+    total = 0
     DO idim = 1, sz
-      IF (nextra > 0) THEN
-        nextra = nextra - 1
-        CYCLE
-      END IF
       total_old = total
       total = total + load(idim)
       IF (total >= load_per_proc_ideal) THEN
-        ! Pick the split that most closely matches the load
+        proc = proc + 1
         IF (load_per_proc_ideal - total_old &
             < total - load_per_proc_ideal) THEN
           maxs(proc) = idim - 1
@@ -2603,15 +2599,77 @@ CONTAINS
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
-        proc = proc + 1
-        IF (proc == nproc) EXIT
-        total = 0
-        old = maxs(proc-1)
-        load_per_proc_ideal = FLOOR(REAL(SUM(load(MIN(idim+1,sz):)), num) &
-            / (nproc - proc + 1) + 0.5d0, i8)
+        IF (proc == nproc - 1) EXIT
+        old = maxs(proc)
+        total = total - load_per_proc_ideal
       END IF
     END DO
-    maxs(nproc) = sz
+
+    ! Sanity check. Must be one cell of separation between each endpoint.
+    ! Backwards
+    old = sz
+    DO proc = nproc-1, 1, -1
+      IF (old - maxs(proc) < ng) THEN
+        maxs(proc) = old - ng
+      END IF
+      old = maxs(proc)
+    END DO
+
+    ! Try perturbing the splits by one cell to see if we get a better answer
+    load_var_best = HUGE(1)
+    DO iter = 1, 1000
+      DO i = 1, nproc - 1
+        ! Minus
+        old_maxs = maxs(i)
+        IF (i == 1) THEN
+          old = 0
+        ELSE
+          old = maxs(i-1)
+        END IF
+        IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
+
+        IF (new_maxs /= old_maxs) THEN
+          maxs(i) = new_maxs
+          load_max = -1
+          i0 = 1
+          DO proc = 1, nproc
+            i1 = maxs(proc)
+            load_local = SUM(load(i0:i1))
+            IF (load_local > load_max) load_max = load_local
+            IF (load_local < load_min) load_min = load_local
+            i0 = i1 + 1
+          END DO
+          IF (load_max - load_min < load_var_best) EXIT
+          maxs(i) = old_maxs
+        END IF
+
+        ! Plus
+        old_maxs = maxs(i)
+        old = maxs(i+1)
+        IF (old - old_maxs - 1 >= ng) new_maxs = old_maxs + 1
+
+        IF (new_maxs /= old_maxs) THEN
+          maxs(i) = new_maxs
+          load_max = -1
+          i0 = 1
+          DO proc = 1, nproc
+            i1 = maxs(proc)
+            load_local = SUM(load(i0:i1))
+            IF (load_local > load_max) load_max = load_local
+            IF (load_local < load_min) load_min = load_local
+            i0 = i1 + 1
+          END DO
+          IF (load_max - load_min < load_var_best) EXIT
+          maxs(i) = old_maxs
+        END IF
+      END DO
+
+      IF (load_max - load_min < load_var_best) THEN
+        load_var_best = load_max - load_min
+      ELSE
+        EXIT
+      END IF
+    END DO
 
     ! Sanity check. Must be one cell of separation between each endpoint.
     ! Backwards
