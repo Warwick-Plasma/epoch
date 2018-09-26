@@ -44,9 +44,8 @@ CONTAINS
     INTEGER, DIMENSION(:), ALLOCATABLE :: p_x_min, p_x_max
     INTEGER, DIMENSION(:), ALLOCATABLE :: p_y_min, p_y_max
     INTEGER, DIMENSION(:), ALLOCATABLE :: p_z_min, p_z_max
-    INTEGER(i8) :: load_local, nload_max, best_load
-    INTEGER :: iproc, ii, jj, np, npx, npy, npz, npyz
-    REAL(num) :: load_av, load_max, balance_frac
+    INTEGER :: ii, jj, npx, npy, npz, npyz
+    REAL(num) :: dummy, balance_frac, best_balance_frac
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
@@ -57,9 +56,8 @@ CONTAINS
     ALLOCATE(load_z(nz_global + 2 * ng))
     CALL get_load(load_x, load_y, load_z, array_load_func)
 
-    load_av = REAL(SUM(load_x(ng+1:nx_global+ng)), num) / nproc
+    best_balance_frac = -1.0_num
 
-    best_load = 0
     IF (rank == 0) PRINT*, 'Calculating optimal processor topology'
 
     DO ii = 1, nproc
@@ -81,30 +79,12 @@ CONTAINS
         CALL calculate_breaks(load_y, npy, p_y_min, p_y_max)
         CALL calculate_breaks(load_z, npz, p_z_min, p_z_max)
 
-        nload_max = 0
-        np = npy * npz
-        DO iproc = 1, npx
-          load_local = SUM(load_x(p_x_min(iproc)+ng:p_x_max(iproc)+ng)) / np
-          IF (load_local > nload_max) nload_max = load_local
-        END DO
+        CALL calculate_new_load_imbalance(dummy, balance_frac, &
+                                          p_x_min, p_x_max, p_y_min, p_y_max, &
+                                          p_z_min, p_z_max)
 
-        np = npx * npz
-        DO iproc = 1, npy
-          load_local = SUM(load_y(p_y_min(iproc)+ng:p_y_max(iproc)+ng)) / np
-          IF (load_local > nload_max) nload_max = load_local
-        END DO
-
-        np = npx * npy
-        DO iproc = 1, npz
-          load_local = SUM(load_z(p_z_min(iproc)+ng:p_z_max(iproc)+ng)) / np
-          IF (load_local > nload_max) nload_max = load_local
-        END DO
-
-        load_max = REAL(nload_max, num)
-        balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
-
-        IF (best_load == 0 .OR. nload_max < best_load) THEN
-          best_load = nload_max
+        IF (balance_frac > best_balance_frac) THEN
+          best_balance_frac = balance_frac
           nprocx = npx
           nprocy = npy
           nprocz = npz
