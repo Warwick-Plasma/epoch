@@ -60,7 +60,7 @@ CONTAINS
 
   SUBROUTINE auto_load
 
-    INTEGER :: ispecies, io, iu
+    INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
 
     CALL set_thermal_bcs
@@ -69,12 +69,7 @@ CONTAINS
       ALLOCATE(npart_per_cell_array(nx,ny))
       npart_per_cell_array = 0
     ELSE IF (n_species > 0) THEN
-      IF (rank == 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) 'Attempting to load particles'
-        END DO
-      END IF
+      IF (rank == 0) WRITE(*,*) 'Attempting to load particles'
     END IF
 
     DO ispecies = 1, n_species
