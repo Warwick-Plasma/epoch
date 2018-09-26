@@ -126,7 +126,8 @@ CONTAINS
       IF (.NOT.restarting) THEN
         CALL create_npart_per_cell_array
 
-        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          new_cell_x_min, new_cell_x_max)
 
         DEALLOCATE(npart_per_cell_array)
 
@@ -255,7 +256,8 @@ CONTAINS
 
     DEALLOCATE(load_x)
 
-    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, .TRUE.)
+    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                      new_cell_x_min, new_cell_x_max, .TRUE.)
 
     IF (ALLOCATED(npart_per_cell_array)) DEALLOCATE(npart_per_cell_array)
 
@@ -1259,13 +1261,15 @@ CONTAINS
 
 
   SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          load_x_min, load_x_max, &
                                           get_balance)
 
-    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    REAL(num), INTENT(OUT) :: balance_frac, balance_frac_final
+    INTEGER, INTENT(IN) :: load_x_min(:), load_x_max(:)
     LOGICAL, INTENT(IN), OPTIONAL :: get_balance
     REAL(num), ALLOCATABLE :: load_per_cpu(:)
     INTEGER(i8) :: npart_local
-    INTEGER :: i, i0, i1, ix
+    INTEGER :: i, i0, i1, ix, npx
     INTEGER :: ierr
     REAL(num) :: load_local, load_sum, load_max
     LOGICAL :: original_balance
@@ -1291,13 +1295,15 @@ CONTAINS
       balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
     END IF
 
-    ALLOCATE(load_per_cpu(nprocx))
+    npx = SIZE(load_x_min)
+
+    ALLOCATE(load_per_cpu(npx))
     load_per_cpu = 0.0_num
 
     IF (ALLOCATED(npart_per_cell_array)) THEN
-      DO i = 1, nprocx
-        i0 = new_cell_x_min(i) - nx_global_min + 1
-        i1 = new_cell_x_max(i) - nx_global_min + 1
+      DO i = 1, npx
+        i0 = load_x_min(i) - nx_global_min + 1
+        i1 = load_x_max(i) - nx_global_min + 1
 
         IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -1310,9 +1316,9 @@ CONTAINS
         END DO ! ix
       END DO ! i
     ELSE
-      DO i = 1, nprocx
-        i0 = new_cell_x_min(i) - nx_global_min + 1
-        i1 = new_cell_x_max(i) - nx_global_min + 1
+      DO i = 1, npx
+        i0 = load_x_min(i) - nx_global_min + 1
+        i1 = load_x_max(i) - nx_global_min + 1
 
         IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -1325,9 +1331,10 @@ CONTAINS
       END DO ! i
     END IF
 
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx, &
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, npx, &
                        mpireal, MPI_SUM, comm, ierr)
 
+    load_av = SUM(load_per_cpu) / npx
     load_max = MAXVAL(load_per_cpu)
 
     balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))

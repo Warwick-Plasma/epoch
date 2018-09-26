@@ -228,7 +228,10 @@ CONTAINS
       IF (.NOT.restarting) THEN
         CALL create_npart_per_cell_array
 
-        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          new_cell_x_min, new_cell_x_max, &
+                                          new_cell_y_min, new_cell_y_max, &
+                                          new_cell_z_min, new_cell_z_max)
 
         DEALLOCATE(npart_per_cell_array)
 
@@ -368,7 +371,10 @@ CONTAINS
 
     DEALLOCATE(load_x, load_y, load_z)
 
-    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, .TRUE.)
+    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                      new_cell_x_min, new_cell_x_max, &
+                                      new_cell_y_min, new_cell_y_max, &
+                                      new_cell_z_min, new_cell_z_max, .TRUE.)
 
     IF (ALLOCATED(npart_per_cell_array)) DEALLOCATE(npart_per_cell_array)
 
@@ -2836,15 +2842,21 @@ CONTAINS
 
 
   SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          load_x_min, load_x_max, &
+                                          load_y_min, load_y_max, &
+                                          load_z_min, load_z_max, &
                                           get_balance)
 
-    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    REAL(num), INTENT(OUT) :: balance_frac, balance_frac_final
+    INTEGER, INTENT(IN) :: load_x_min(:), load_x_max(:)
+    INTEGER, INTENT(IN) :: load_y_min(:), load_y_max(:)
+    INTEGER, INTENT(IN) :: load_z_min(:), load_z_max(:)
     LOGICAL, INTENT(IN), OPTIONAL :: get_balance
     REAL(num), ALLOCATABLE :: load_per_cpu(:,:,:)
     INTEGER(i8) :: npart_local
-    INTEGER :: i, i0, i1, ix
-    INTEGER :: j, j0, j1, iy
-    INTEGER :: k, k0, k1, iz
+    INTEGER :: i, i0, i1, ix, npx
+    INTEGER :: j, j0, j1, iy, npy
+    INTEGER :: k, k0, k1, iz, npz
     INTEGER :: ierr
     REAL(num) :: load_local, load_sum, load_max
     LOGICAL :: original_balance
@@ -2870,31 +2882,35 @@ CONTAINS
       balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
     END IF
 
-    ALLOCATE(load_per_cpu(nprocx,nprocy,nprocz))
+    npx = SIZE(load_x_min)
+    npy = SIZE(load_y_min)
+    npz = SIZE(load_z_min)
+
+    ALLOCATE(load_per_cpu(npx,npy,npz))
     load_per_cpu = 0.0_num
 
     IF (ALLOCATED(npart_per_cell_array)) THEN
-      DO k = 1, nprocz
-        k0 = new_cell_z_min(k) - nz_global_min + 1
-        k1 = new_cell_z_max(k) - nz_global_min + 1
+      DO k = 1, npz
+        k0 = load_z_min(k) - nz_global_min + 1
+        k1 = load_z_max(k) - nz_global_min + 1
 
         IF (k1 < 1 .OR. k0 > nz) CYCLE
 
         k0 = MAX(k0, 1)
         k1 = MIN(k1, nz)
 
-        DO j = 1, nprocy
-          j0 = new_cell_y_min(j) - ny_global_min + 1
-          j1 = new_cell_y_max(j) - ny_global_min + 1
+        DO j = 1, npy
+          j0 = load_y_min(j) - ny_global_min + 1
+          j1 = load_y_max(j) - ny_global_min + 1
 
           IF (j1 < 1 .OR. j0 > ny) CYCLE
 
           j0 = MAX(j0, 1)
           j1 = MIN(j1, ny)
 
-          DO i = 1, nprocx
-            i0 = new_cell_x_min(i) - nx_global_min + 1
-            i1 = new_cell_x_max(i) - nx_global_min + 1
+          DO i = 1, npx
+            i0 = load_x_min(i) - nx_global_min + 1
+            i1 = load_x_max(i) - nx_global_min + 1
 
             IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -2914,27 +2930,27 @@ CONTAINS
         END DO ! j
       END DO ! k
     ELSE
-      DO k = 1, nprocz
-        k0 = new_cell_z_min(k) - nz_global_min + 1
-        k1 = new_cell_z_max(k) - nz_global_min + 1
+      DO k = 1, npz
+        k0 = load_z_min(k) - nz_global_min + 1
+        k1 = load_z_max(k) - nz_global_min + 1
 
         IF (k1 < 1 .OR. k0 > nz) CYCLE
 
         k0 = MAX(k0, 1)
         k1 = MIN(k1, nz)
 
-        DO j = 1, nprocy
-          j0 = new_cell_y_min(j) - ny_global_min + 1
-          j1 = new_cell_y_max(j) - ny_global_min + 1
+        DO j = 1, npy
+          j0 = load_y_min(j) - ny_global_min + 1
+          j1 = load_y_max(j) - ny_global_min + 1
 
           IF (j1 < 1 .OR. j0 > ny) CYCLE
 
           j0 = MAX(j0, 1)
           j1 = MIN(j1, ny)
 
-          DO i = 1, nprocx
-            i0 = new_cell_x_min(i) - nx_global_min + 1
-            i1 = new_cell_x_max(i) - nx_global_min + 1
+          DO i = 1, npx
+            i0 = load_x_min(i) - nx_global_min + 1
+            i1 = load_x_max(i) - nx_global_min + 1
 
             IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -2953,9 +2969,10 @@ CONTAINS
       END DO ! k
     END IF
 
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy * nprocz, &
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, npx * npy * npz, &
                        mpireal, MPI_SUM, comm, ierr)
 
+    load_av = SUM(load_per_cpu) / (npx * npy * npz)
     load_max = MAXVAL(load_per_cpu)
 
     balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
