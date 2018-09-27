@@ -254,8 +254,14 @@ CONTAINS
 
         IF (print_eta_string) THEN
           eta_timestring = ''
-          IF (time > 0.0_num) THEN
-            eta_time = (t_end - time) * elapsed_time / time
+          IF (time > c_tiny) THEN
+            ! If nsteps is specified and the limit to runtime, use it to
+            ! calculate ETA. Otherwise use t_end.
+            IF (nsteps /= -1 .AND. nsteps * dt < t_end) THEN
+              eta_time = (nsteps * dt - time) * elapsed_time / time
+            ELSE
+              eta_time = (t_end - time) * elapsed_time / time
+            END IF
             CALL create_timestring(eta_time, eta_timestring)
           END IF
           WRITE(*, '(''Time'', g14.6, '', iteration'', i9, '' after'', &
