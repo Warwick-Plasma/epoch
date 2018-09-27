@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 38 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 39 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -483,7 +483,7 @@ CONTAINS
       balance_first = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+38)
       use_pre_balance = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+38)
+    CASE(4*c_ndims+39)
       use_optimal_layout = as_logical_print(value, element, errcode)
     END SELECT
 
