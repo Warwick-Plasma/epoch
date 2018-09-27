@@ -35,15 +35,15 @@ CONTAINS
 
     IF (chr == ' ') THEN
       char_type = c_char_space
-    ELSEIF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
+    ELSE IF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       char_type = c_char_numeric
-    ELSEIF ((chr >= 'A' .AND. chr <= 'Z') &
+    ELSE IF ((chr >= 'A' .AND. chr <= 'Z') &
         .OR. (chr >= 'a' .AND. chr <= 'z') .OR. chr == '_') THEN
       char_type = c_char_alpha
-    ELSEIF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
+    ELSE IF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
       char_type = c_char_delimiter
     ! 92 is the ASCII code for backslash
-    ELSEIF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
+    ELSE IF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
         .OR. chr == '/' .OR. chr == '*' .OR. chr == '^') THEN
       char_type = c_char_opcode
     END IF

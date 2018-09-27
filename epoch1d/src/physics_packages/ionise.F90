@@ -487,7 +487,7 @@ CONTAINS
                 + adk_bsi_cap(current_state)
           ! ... otherwise we need to check if we're in the tunnelling or
           ! multiphoton regime...
-          ELSEIF (e_part_mag > keldysh(current_state)) THEN
+          ELSE IF (e_part_mag > keldysh(current_state)) THEN
             ! Calculate ADK ionisation rate
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
@@ -506,7 +506,7 @@ CONTAINS
                 + adk_bsi_cap(current_state), rate)
           ! If we're in the multiphoton regime, make sure the electric field
           ! strength is larger than the minimum value for multiphoton
-          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
+          ELSE IF (e_part_mag > smallest_e_mag(current_state)) THEN
             rate = MIN(adk_multiphoton_cap(current_state), &
                 multi_constant(current_state) &
                 * e_part_mag**k_photons_exponent(current_state))
@@ -754,7 +754,7 @@ CONTAINS
                 species_list(current_state)%l + 1, 1, bessel_error) - 1.0_num)
           ! If we're in the multiphoton regime, make sure the electric field
           ! strength is larger than the minimum value for multiphoton
-          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
+          ELSE IF (e_part_mag > smallest_e_mag(current_state)) THEN
             rate = MIN(adk_multiphoton_cap(current_state), &
                 multi_constant(current_state) &
                 * e_part_mag**k_photons_exponent(current_state))
@@ -992,7 +992,7 @@ CONTAINS
                 + adk_bsi_cap(current_state)
           ! ... otherwise we check if the electric field is large enough for
           ! tunnelling ionisation...
-          ELSEIF (e_part_mag > smallest_e_mag(current_state)) THEN
+          ELSE IF (e_part_mag > smallest_e_mag(current_state)) THEN
             ! Calculate ADK ionisation rate
             rate = ionisation_constant(current_state) &
                 * (adk_scaling(current_state) &
