@@ -34,7 +34,7 @@ MODULE deck_io_block
   INTEGER :: o1, o2, o3, o4, o5, o6, o7, o8
   LOGICAL, DIMENSION(io_block_elements) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
-  LOGICAL, PRIVATE :: warning_printed
+  LOGICAL, PRIVATE :: warning_printed, got_dt_average
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
   CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
@@ -179,6 +179,7 @@ CONTAINS
     new_style_io_block = .FALSE.
     n_io_blocks = 0
     rolling_restart_io_block = 0
+    got_dt_average = .FALSE.
 
   END SUBROUTINE io_deck_initialise
 
@@ -514,8 +515,10 @@ CONTAINS
       CALL abort_code(c_err_unknown_element)
     CASE(8)
       io_block%dt_average = as_real_print(value, element, errcode)
+      got_dt_average = .TRUE.
     CASE(9)
       io_block%nstep_average = as_integer_print(value, element, errcode)
+      got_dt_average = .TRUE.
     CASE(10)
       io_block%nstep_snapshot = as_integer_print(value, element, errcode)
       IF (io_block%nstep_snapshot < 0) io_block%nstep_snapshot = 0
@@ -804,14 +807,14 @@ CONTAINS
     ! Averaging info not compulsory unless averaged variable selected
     IF (.NOT. any_average) io_block_done(i+o3:i+o4) = .TRUE.
 
-    IF (.NOT. io_block_done(i+o3) .AND. .NOT. io_block_done(i+o4)) THEN
+    IF (any_average .AND. .NOT. got_dt_average) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Required output block element ', &
-              TRIM(ADJUSTL(io_block_name(i+8))), &
+              TRIM(ADJUSTL(io_block_name(i+o3))), &
               ' absent. Please create this entry in the input deck'
         END DO
       END IF
