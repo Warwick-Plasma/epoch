@@ -83,7 +83,8 @@ MODULE deck_control_block
           'dlb_maximum_interval     ', &
           'dlb_force_interval       ', &
           'balance_first            ', &
-          'use_pre_balance          ' /)
+          'use_pre_balance          ', &
+          'use_optimal_layout       ' /)
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -131,7 +132,8 @@ MODULE deck_control_block
           'balance_maximum_interval ', &
           'balance_force_interval   ', &
           'balance_first            ', &
-          'use_pre_balance          ' /)
+          'pre_balance              ', &
+          'optimal_layout           ' /)
 
 CONTAINS
 
@@ -155,6 +157,7 @@ CONTAINS
       neutral_background = .TRUE.
       use_particle_migration = .FALSE.
       use_pre_balance = .TRUE.
+      use_optimal_layout = .TRUE.
       restart_number = 0
       check_stop_frequency = 10
       stop_at_walltime = -1.0_num
@@ -452,6 +455,8 @@ CONTAINS
       balance_first = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+38)
       use_pre_balance = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+38)
+      use_optimal_layout = as_logical_print(value, element, errcode)
     END SELECT
 
   END FUNCTION control_block_handle_element

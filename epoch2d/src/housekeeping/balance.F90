@@ -29,8 +29,68 @@ MODULE balance
   INTEGER, DIMENSION(:), ALLOCATABLE :: new_cell_y_min, new_cell_y_max
   LOGICAL :: overriding
   REAL(num) :: load_av
+  INTEGER :: old_comm, old_coordinates(c_ndims)
+  INTEGER :: old_slice_coord, new_slice_coord, slice_dir
+  LOGICAL :: max_boundary
 
 CONTAINS
+
+  SUBROUTINE get_optimal_layout
+
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
+    INTEGER, DIMENSION(:), ALLOCATABLE :: p_x_min, p_x_max
+    INTEGER, DIMENSION(:), ALLOCATABLE :: p_y_min, p_y_max
+    INTEGER :: ii, npx, npy
+    REAL(num) :: dummy, balance_frac, best_balance_frac
+
+    ! On one processor do nothing to save time
+    IF (nproc == 1) RETURN
+    IF (use_exact_restart) RETURN
+
+    ALLOCATE(load_x(nx_global + 2 * ng))
+    ALLOCATE(load_y(ny_global + 2 * ng))
+    CALL get_load(load_x, load_y, array_load_func)
+
+    best_balance_frac = -1.0_num
+
+    IF (rank == 0) PRINT*, 'Calculating optimal processor topology'
+
+    DO ii = 1, nproc
+      npx = ii
+      npy = nproc / npx
+      IF (npx * npy /= nproc) CYCLE
+      IF (nx_global / npx < ng) CYCLE
+      IF (ny_global / npy < ng) CYCLE
+
+      ALLOCATE(p_x_min(npx), p_x_max(npx))
+      ALLOCATE(p_y_min(npy), p_y_max(npy))
+
+      CALL calculate_breaks(load_x, npx, p_x_min, p_x_max)
+      CALL calculate_breaks(load_y, npy, p_y_min, p_y_max)
+
+      CALL calculate_new_load_imbalance(dummy, balance_frac, &
+                                        p_x_min, p_x_max, p_y_min, p_y_max)
+
+      IF (balance_frac > best_balance_frac) THEN
+        best_balance_frac = balance_frac
+        nprocx = npx
+        nprocy = npy
+      END IF
+
+      DEALLOCATE(p_x_min, p_x_max)
+      DEALLOCATE(p_y_min, p_y_max)
+    END DO
+
+    DEALLOCATE(load_x, load_y)
+
+    IF (rank == 0) THEN
+      PRINT*, 'Processor subdivision is ', (/nprocx, nprocy/)
+    END IF
+
+  END SUBROUTINE get_optimal_layout
+
+
 
   SUBROUTINE balance_workload(over_ride)
 
@@ -130,7 +190,9 @@ CONTAINS
       IF (.NOT.restarting) THEN
         CALL create_npart_per_cell_array
 
-        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final)
+        CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          new_cell_x_min, new_cell_x_max, &
+                                          new_cell_y_min, new_cell_y_max)
 
         DEALLOCATE(npart_per_cell_array)
 
@@ -181,6 +243,8 @@ CONTAINS
     END IF
 
     IF (use_redistribute_domain) THEN
+      old_comm = comm
+      old_coordinates(:) = coordinates(:)
       CALL redistribute_domain
     END IF
 
@@ -238,8 +302,9 @@ CONTAINS
 
 
 
-  SUBROUTINE pre_balance_workload
+  SUBROUTINE pre_balance_workload(old_communicator, old_coords)
 
+    INTEGER, INTENT(IN), OPTIONAL :: old_communicator, old_coords(:)
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_x
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: load_y
     REAL(num) :: balance_frac, balance_frac_final, balance_improvement
@@ -263,7 +328,9 @@ CONTAINS
 
     DEALLOCATE(load_x, load_y)
 
-    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, .TRUE.)
+    CALL calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                      new_cell_x_min, new_cell_x_max, &
+                                      new_cell_y_min, new_cell_y_max, .TRUE.)
 
     IF (ALLOCATED(npart_per_cell_array)) DEALLOCATE(npart_per_cell_array)
 
@@ -287,7 +354,22 @@ CONTAINS
       END IF
     END IF
 
+    IF (PRESENT(old_communicator)) use_redistribute_domain = .TRUE.
+
     IF (use_redistribute_domain) THEN
+      IF (PRESENT(old_communicator)) THEN
+        old_comm = old_communicator
+        old_coordinates(:) = old_coords(:)
+        DEALLOCATE(x_grid_mins, x_grid_maxs)
+        DEALLOCATE(y_grid_mins, y_grid_maxs)
+        ALLOCATE(x_grid_mins(0:nprocx-1))
+        ALLOCATE(x_grid_maxs(0:nprocx-1))
+        ALLOCATE(y_grid_mins(0:nprocy-1))
+        ALLOCATE(y_grid_maxs(0:nprocy-1))
+      ELSE
+        old_comm = comm
+        old_coordinates(:) = coordinates(:)
+      END IF
       CALL redistribute_domain
     END IF
 
@@ -626,6 +708,8 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:ny_new+ng))
 
+    max_boundary = .FALSE.
+
     current => laser_x_min
     DO WHILE(ASSOCIATED(current))
       CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
@@ -640,6 +724,8 @@ CONTAINS
 
       current => current%next
     END DO
+
+    max_boundary = .TRUE.
 
     current => laser_x_max
     DO WHILE(ASSOCIATED(current))
@@ -656,6 +742,8 @@ CONTAINS
       current => current%next
     END DO
 
+    max_boundary = .FALSE.
+
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
@@ -671,6 +759,8 @@ CONTAINS
       injector_current => injector_current%next
     END DO
 
+    max_boundary = .TRUE.
+
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
@@ -685,6 +775,8 @@ CONTAINS
 
       injector_current => injector_current%next
     END DO
+
+    max_boundary = .FALSE.
 
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
     DEALLOCATE(ex_x_min)
@@ -715,6 +807,8 @@ CONTAINS
     DEALLOCATE(bz_x_min)
     ALLOCATE(bz_x_min(1-ng:ny_new+ng))
     bz_x_min = temp_slice
+
+    max_boundary = .TRUE.
 
     CALL remap_field_slice(c_dir_x, ex_x_max, temp_slice)
     DEALLOCATE(ex_x_max)
@@ -752,6 +846,8 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:nx_new+ng))
 
+    max_boundary = .FALSE.
+
     current => laser_y_min
     DO WHILE(ASSOCIATED(current))
       CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
@@ -766,6 +862,8 @@ CONTAINS
 
       current => current%next
     END DO
+
+    max_boundary = .TRUE.
 
     current => laser_y_max
     DO WHILE(ASSOCIATED(current))
@@ -782,6 +880,8 @@ CONTAINS
       current => current%next
     END DO
 
+    max_boundary = .FALSE.
+
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
@@ -797,6 +897,8 @@ CONTAINS
       injector_current => injector_current%next
     END DO
 
+    max_boundary = .TRUE.
+
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
       CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
@@ -811,6 +913,8 @@ CONTAINS
 
       injector_current => injector_current%next
     END DO
+
+    max_boundary = .FALSE.
 
     CALL remap_field_slice(c_dir_y, ex_y_min, temp_slice)
     DEALLOCATE(ex_y_min)
@@ -841,6 +945,8 @@ CONTAINS
     DEALLOCATE(bz_y_min)
     ALLOCATE(bz_y_min(1-ng:nx_new+ng))
     bz_y_min = temp_slice
+
+    max_boundary = .TRUE.
 
     CALL remap_field_slice(c_dir_y, ex_y_max, temp_slice)
     DEALLOCATE(ex_y_max)
@@ -880,6 +986,8 @@ CONTAINS
       IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
 
+        max_boundary = .FALSE.
+
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
               species_list(ispecies)%ext_temp_x_min(:,i), temp(:,i))
@@ -893,6 +1001,8 @@ CONTAINS
 
       IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:ny_new+ng, 3))
+
+        max_boundary = .TRUE.
 
         DO i = 1, 3
           CALL remap_field_slice(c_dir_x, &
@@ -914,6 +1024,8 @@ CONTAINS
       IF (species_list(ispecies)%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
 
+        max_boundary = .FALSE.
+
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
               species_list(ispecies)%ext_temp_y_min(:,i), temp(:,i))
@@ -927,6 +1039,8 @@ CONTAINS
 
       IF (species_list(ispecies)%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
         IF (.NOT.ALLOCATED(temp)) ALLOCATE(temp(1-ng:nx_new+ng, 3))
+
+        max_boundary = .TRUE.
 
         DO i = 1, 3
           CALL remap_field_slice(c_dir_y, &
@@ -964,10 +1078,23 @@ CONTAINS
       n = n + 1
     END DO
 
+    old_slice_coord = 0
+    new_slice_coord = 0
+
     IF (direction == c_dir_x) THEN
+      slice_dir = 2
+      IF (max_boundary) THEN
+        old_slice_coord = SIZE(cell_x_min) - 1
+        new_slice_coord = SIZE(new_cell_x_min) - 1
+      END IF
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_y_min, cell_y_max, new_cell_y_min, new_cell_y_max)
     ELSE
+      slice_dir = 1
+      IF (max_boundary) THEN
+        old_slice_coord = SIZE(cell_y_min) - 1
+        new_slice_coord = SIZE(new_cell_y_min) - 1
+      END IF
       CALL redistribute_field_1d(field_in, field_out, cdim, &
           cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
     END IF
@@ -1042,7 +1169,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
@@ -1051,13 +1178,14 @@ CONTAINS
     ALLOCATE(recvtypes(0:nproc-1))
 
     DO i = 1, nd
-      our_coords(i) = coordinates(cdim(i))
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
     END DO
 
-    old_min(1) = old_cell_min1(our_coords(1)+1)
-    old_max(1) = old_cell_max1(our_coords(1)+1)
-    new_min(1) = new_cell_min1(our_coords(1)+1)
-    new_max(1) = new_cell_max1(our_coords(1)+1)
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
 
     tag = 0
     sendtypes = 0
@@ -1075,6 +1203,7 @@ CONTAINS
     END DO
 
     coord = coordinates
+    coord(slice_dir) = new_slice_coord
 
     n = 1
     type_min(n) = old_min(n)
@@ -1088,6 +1217,7 @@ CONTAINS
     END DO
 
     DO WHILE(type_max(n) <= old_max(n))
+      IF (old_coordinates(slice_dir) /= old_slice_coord) EXIT
       coord(cdim(n)) = iproc - 1
       type_max(n) = new_cell_max1(iproc)
       IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
@@ -1120,11 +1250,16 @@ CONTAINS
       type_min(n) = new_cell_min1(iproc)
     END DO
 
+    nprocs(1) = SIZE(old_cell_min1)
+
     ! Create array of recvtypes
 
     DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
+
+    coord = old_coordinates
+    coord(slice_dir) = old_slice_coord
 
     n = 1
     type_min(n) = new_min(n)
@@ -1138,6 +1273,7 @@ CONTAINS
     END DO
 
     DO WHILE(type_max(n) <= new_max(n))
+      IF (coordinates(slice_dir) /= new_slice_coord) EXIT
       coord(cdim(n)) = iproc - 1
       type_max(n) = old_cell_max1(iproc)
       IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
@@ -1150,7 +1286,7 @@ CONTAINS
       n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
       start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
-      CALL MPI_CART_RANK(comm, coord, irank, errcode)
+      CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
 
       IF (rank /= irank) THEN
         recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &
@@ -1207,7 +1343,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = mpireal
@@ -1216,18 +1352,19 @@ CONTAINS
     ALLOCATE(recvtypes(0:nproc-1))
 
     DO i = 1, nd
-      our_coords(i) = coordinates(cdim(i))
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
     END DO
 
-    old_min(1) = old_cell_min1(our_coords(1)+1)
-    old_max(1) = old_cell_max1(our_coords(1)+1)
-    new_min(1) = new_cell_min1(our_coords(1)+1)
-    new_max(1) = new_cell_max1(our_coords(1)+1)
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
 
-    old_min(2) = old_cell_min2(our_coords(2)+1)
-    old_max(2) = old_cell_max2(our_coords(2)+1)
-    new_min(2) = new_cell_min2(our_coords(2)+1)
-    new_max(2) = new_cell_max2(our_coords(2)+1)
+    old_min(2) = old_cell_min2(old_coords(2)+1)
+    old_max(2) = old_cell_max2(old_coords(2)+1)
+    new_min(2) = new_cell_min2(new_coords(2)+1)
+    new_max(2) = new_cell_max2(new_coords(2)+1)
 
     tag = 0
     sendtypes = 0
@@ -1323,11 +1460,16 @@ CONTAINS
       type_min(n) = new_cell_min2(jproc)
     END DO
 
+    nprocs(1) = SIZE(old_cell_min1)
+    nprocs(2) = SIZE(old_cell_min2)
+
     ! Create array of recvtypes
 
     DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
+
+    coord = old_coordinates
 
     n = 2
     type_min(n) = new_min(n)
@@ -1377,7 +1519,7 @@ CONTAINS
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
-        CALL MPI_CART_RANK(comm, coord, irank, errcode)
+        CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
 
         IF (rank /= irank) THEN
           recvtypes(irank) = create_2d_array_subtype(basetype, n_local, &
@@ -1443,7 +1585,7 @@ CONTAINS
     INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
     INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
     INTEGER, DIMENSION(c_ndims) :: coord
-    INTEGER, DIMENSION(nd) :: our_coords, nmin, nmax
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
     INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
 
     basetype = MPI_REAL4
@@ -1452,18 +1594,19 @@ CONTAINS
     ALLOCATE(recvtypes(0:nproc-1))
 
     DO i = 1, nd
-      our_coords(i) = coordinates(cdim(i))
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
     END DO
 
-    old_min(1) = old_cell_min1(our_coords(1)+1)
-    old_max(1) = old_cell_max1(our_coords(1)+1)
-    new_min(1) = new_cell_min1(our_coords(1)+1)
-    new_max(1) = new_cell_max1(our_coords(1)+1)
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
 
-    old_min(2) = old_cell_min2(our_coords(2)+1)
-    old_max(2) = old_cell_max2(our_coords(2)+1)
-    new_min(2) = new_cell_min2(our_coords(2)+1)
-    new_max(2) = new_cell_max2(our_coords(2)+1)
+    old_min(2) = old_cell_min2(old_coords(2)+1)
+    old_max(2) = old_cell_max2(old_coords(2)+1)
+    new_min(2) = new_cell_min2(new_coords(2)+1)
+    new_max(2) = new_cell_max2(new_coords(2)+1)
 
     tag = 0
     sendtypes = 0
@@ -1559,11 +1702,16 @@ CONTAINS
       type_min(n) = new_cell_min2(jproc)
     END DO
 
+    nprocs(1) = SIZE(old_cell_min1)
+    nprocs(2) = SIZE(old_cell_min2)
+
     ! Create array of recvtypes
 
     DO i = 1, nd
       n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
     END DO
+
+    coord = old_coordinates
 
     n = 2
     type_min(n) = new_min(n)
@@ -1613,7 +1761,7 @@ CONTAINS
         n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
         start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
 
-        CALL MPI_CART_RANK(comm, coord, irank, errcode)
+        CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
 
         IF (rank /= irank) THEN
           recvtypes(irank) = create_2d_array_subtype(basetype, n_local, &
@@ -1849,8 +1997,9 @@ CONTAINS
     INTEGER(i8), INTENT(IN), DIMENSION(1-ng:) :: load
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
-    INTEGER :: sz, idim, proc, old, nextra
+    INTEGER :: sz, idim, proc, old, nextra, i, i0, i1, iter, old_maxs, new_maxs
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
+    INTEGER(i8) :: load_local, load_max, load_min, load_var_best
 
     sz = SIZE(load) - 2 * ng
     mins = 1
@@ -1860,19 +2009,14 @@ CONTAINS
 
     load_per_proc_ideal = FLOOR(REAL(SUM(load(1:sz)), num) / nproc + 0.5d0, i8)
 
-    proc = 1
-    total = 0
+    proc = 0
     old = 1
-    nextra = 0
+    total = 0
     DO idim = 1, sz
-      IF (nextra > 0) THEN
-        nextra = nextra - 1
-        CYCLE
-      END IF
       total_old = total
       total = total + load(idim)
       IF (total >= load_per_proc_ideal) THEN
-        ! Pick the split that most closely matches the load
+        proc = proc + 1
         IF (load_per_proc_ideal - total_old &
             < total - load_per_proc_ideal) THEN
           maxs(proc) = idim - 1
@@ -1885,15 +2029,77 @@ CONTAINS
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
-        proc = proc + 1
-        IF (proc == nproc) EXIT
-        total = 0
-        old = maxs(proc-1)
-        load_per_proc_ideal = FLOOR(REAL(SUM(load(MIN(idim+1,sz):)), num) &
-            / (nproc - proc + 1) + 0.5d0, i8)
+        IF (proc == nproc - 1) EXIT
+        old = maxs(proc)
+        total = total - load_per_proc_ideal
       END IF
     END DO
-    maxs(nproc) = sz
+
+    ! Sanity check. Must be one cell of separation between each endpoint.
+    ! Backwards
+    old = sz
+    DO proc = nproc-1, 1, -1
+      IF (old - maxs(proc) < ng) THEN
+        maxs(proc) = old - ng
+      END IF
+      old = maxs(proc)
+    END DO
+
+    ! Try perturbing the splits by one cell to see if we get a better answer
+    load_var_best = HUGE(1)
+    DO iter = 1, 1000
+      DO i = 1, nproc - 1
+        ! Minus
+        old_maxs = maxs(i)
+        IF (i == 1) THEN
+          old = 0
+        ELSE
+          old = maxs(i-1)
+        END IF
+        IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
+
+        IF (new_maxs /= old_maxs) THEN
+          maxs(i) = new_maxs
+          load_max = -1
+          i0 = 1
+          DO proc = 1, nproc
+            i1 = maxs(proc)
+            load_local = SUM(load(i0:i1))
+            IF (load_local > load_max) load_max = load_local
+            IF (load_local < load_min) load_min = load_local
+            i0 = i1 + 1
+          END DO
+          IF (load_max - load_min < load_var_best) EXIT
+          maxs(i) = old_maxs
+        END IF
+
+        ! Plus
+        old_maxs = maxs(i)
+        old = maxs(i+1)
+        IF (old - old_maxs - 1 >= ng) new_maxs = old_maxs + 1
+
+        IF (new_maxs /= old_maxs) THEN
+          maxs(i) = new_maxs
+          load_max = -1
+          i0 = 1
+          DO proc = 1, nproc
+            i1 = maxs(proc)
+            load_local = SUM(load(i0:i1))
+            IF (load_local > load_max) load_max = load_local
+            IF (load_local < load_min) load_min = load_local
+            i0 = i1 + 1
+          END DO
+          IF (load_max - load_min < load_var_best) EXIT
+          maxs(i) = old_maxs
+        END IF
+      END DO
+
+      IF (load_max - load_min < load_var_best) THEN
+        load_var_best = load_max - load_min
+      ELSE
+        EXIT
+      END IF
+    END DO
 
     ! Sanity check. Must be one cell of separation between each endpoint.
     ! Backwards
@@ -2085,14 +2291,18 @@ CONTAINS
 
 
   SUBROUTINE calculate_new_load_imbalance(balance_frac, balance_frac_final, &
+                                          load_x_min, load_x_max, &
+                                          load_y_min, load_y_max, &
                                           get_balance)
 
-    REAL(num), INTENT(INOUT) :: balance_frac, balance_frac_final
+    REAL(num), INTENT(OUT) :: balance_frac, balance_frac_final
+    INTEGER, INTENT(IN) :: load_x_min(:), load_x_max(:)
+    INTEGER, INTENT(IN) :: load_y_min(:), load_y_max(:)
     LOGICAL, INTENT(IN), OPTIONAL :: get_balance
     REAL(num), ALLOCATABLE :: load_per_cpu(:,:)
     INTEGER(i8) :: npart_local
-    INTEGER :: i, i0, i1, ix
-    INTEGER :: j, j0, j1, iy
+    INTEGER :: i, i0, i1, ix, npx
+    INTEGER :: j, j0, j1, iy, npy
     INTEGER :: ierr
     REAL(num) :: load_local, load_sum, load_max
     LOGICAL :: original_balance
@@ -2118,22 +2328,25 @@ CONTAINS
       balance_frac = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))
     END IF
 
-    ALLOCATE(load_per_cpu(nprocx,nprocy))
+    npx = SIZE(load_x_min)
+    npy = SIZE(load_y_min)
+
+    ALLOCATE(load_per_cpu(npx,npy))
     load_per_cpu = 0.0_num
 
     IF (ALLOCATED(npart_per_cell_array)) THEN
-      DO j = 1, nprocy
-        j0 = new_cell_y_min(j) - ny_global_min + 1
-        j1 = new_cell_y_max(j) - ny_global_min + 1
+      DO j = 1, npy
+        j0 = load_y_min(j) - ny_global_min + 1
+        j1 = load_y_max(j) - ny_global_min + 1
 
         IF (j1 < 1 .OR. j0 > ny) CYCLE
 
         j0 = MAX(j0, 1)
         j1 = MIN(j1, ny)
 
-        DO i = 1, nprocx
-          i0 = new_cell_x_min(i) - nx_global_min + 1
-          i1 = new_cell_x_max(i) - nx_global_min + 1
+        DO i = 1, npx
+          i0 = load_x_min(i) - nx_global_min + 1
+          i1 = load_x_max(i) - nx_global_min + 1
 
           IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -2149,18 +2362,18 @@ CONTAINS
         END DO ! i
       END DO ! j
     ELSE
-      DO j = 1, nprocy
-        j0 = new_cell_y_min(j) - ny_global_min + 1
-        j1 = new_cell_y_max(j) - ny_global_min + 1
+      DO j = 1, npy
+        j0 = load_y_min(j) - ny_global_min + 1
+        j1 = load_y_max(j) - ny_global_min + 1
 
         IF (j1 < 1 .OR. j0 > ny) CYCLE
 
         j0 = MAX(j0, 1)
         j1 = MIN(j1, ny)
 
-        DO i = 1, nprocx
-          i0 = new_cell_x_min(i) - nx_global_min + 1
-          i1 = new_cell_x_max(i) - nx_global_min + 1
+        DO i = 1, npx
+          i0 = load_x_min(i) - nx_global_min + 1
+          i1 = load_x_max(i) - nx_global_min + 1
 
           IF (i1 < 1 .OR. i0 > nx) CYCLE
 
@@ -2176,9 +2389,10 @@ CONTAINS
       END DO ! j
     END IF
 
-    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, nprocx * nprocy, &
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_per_cpu, npx * npy, &
                        mpireal, MPI_SUM, comm, ierr)
 
+    load_av = SUM(load_per_cpu) / (npx * npy)
     load_max = MAXVAL(load_per_cpu)
 
     balance_frac_final = (load_av + SQRT(load_av)) / (load_max + SQRT(load_max))

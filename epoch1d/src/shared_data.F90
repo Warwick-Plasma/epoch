@@ -818,6 +818,7 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   LOGICAL :: use_balance, balance_first
   LOGICAL :: use_pre_balance
+  LOGICAL :: use_optimal_layout
   REAL(num) :: dlb_threshold
   INTEGER :: dlb_maximum_interval, dlb_force_interval
   INTEGER(i8), PARAMETER :: npart_per_it = 1000000
