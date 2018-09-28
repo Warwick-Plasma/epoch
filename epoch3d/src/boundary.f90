@@ -740,7 +740,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (x_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (x_min_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -757,7 +757,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (x_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (x_max_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
@@ -776,7 +776,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (y_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (y_min_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -793,7 +793,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (y_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (y_max_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
@@ -812,7 +812,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (z_min_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (z_min_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
@@ -829,7 +829,7 @@ CONTAINS
 
     n = n + 1
     bc = bc_species(n)
-    IF (z_max_boundary .AND. (bc == c_bc_reflect .OR. bc == c_bc_thermal)) THEN
+    IF (z_max_boundary .AND. bc == c_bc_reflect) THEN
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
