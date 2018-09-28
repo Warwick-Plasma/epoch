@@ -1369,7 +1369,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(1) = 2.0_num * x_min - part_pos
+                cur%part_pos(1) = 2.0_num * x_min_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
@@ -1456,7 +1456,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(1) = 2.0_num * x_max - part_pos
+                cur%part_pos(1) = 2.0_num * x_max_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
@@ -1544,7 +1544,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(2) = 2.0_num * y_min - part_pos
+                cur%part_pos(2) = 2.0_num * y_min_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
@@ -1631,7 +1631,7 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(2) = 2.0_num * y_max - part_pos
+                cur%part_pos(2) = 2.0_num * y_max_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
@@ -1719,7 +1719,7 @@ CONTAINS
                 cur%part_p(i) = flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(3) = 2.0_num * z_min - part_pos
+                cur%part_pos(3) = 2.0_num * z_min_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
@@ -1806,7 +1806,7 @@ CONTAINS
                 cur%part_p(i) = -flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos(3) = 2.0_num * z_max - part_pos
+                cur%part_pos(3) = 2.0_num * z_max_outer - part_pos
 
               ELSE
                 ! Default to open boundary conditions - remove particle
