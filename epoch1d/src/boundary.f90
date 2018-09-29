@@ -584,10 +584,10 @@ CONTAINS
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer
 
-    boundary_shift = 1.0_num + 0.5_num * png
+    boundary_shift = dx * REAL((1 + png) / 2, num)
 
-    x_min_outer = x_min - dx * boundary_shift
-    x_max_outer = x_max + dx * boundary_shift
+    x_min_outer = x_min - boundary_shift
+    x_max_outer = x_max + boundary_shift
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head

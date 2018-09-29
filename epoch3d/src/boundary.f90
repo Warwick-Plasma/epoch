@@ -1257,16 +1257,16 @@ CONTAINS
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
     REAL(num) :: z_min_outer, z_max_outer
 
-    boundary_shift = 1.0_num + 0.5_num * png
+    boundary_shift = dx * REAL((1 + png) / 2, num)
 
-    x_min_outer = x_min - dx * boundary_shift
-    x_max_outer = x_max + dx * boundary_shift
+    x_min_outer = x_min - boundary_shift
+    x_max_outer = x_max + boundary_shift
 
-    y_min_outer = y_min - dy * boundary_shift
-    y_max_outer = y_max + dy * boundary_shift
+    y_min_outer = y_min - boundary_shift
+    y_max_outer = y_max + boundary_shift
 
-    z_min_outer = z_min - dz * boundary_shift
-    z_max_outer = z_max + dz * boundary_shift
+    z_min_outer = z_min - boundary_shift
+    z_max_outer = z_max + boundary_shift
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
