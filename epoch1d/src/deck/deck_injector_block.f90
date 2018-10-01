@@ -38,6 +38,9 @@ CONTAINS
 
   SUBROUTINE injector_deck_initialise
 
+    NULLIFY(injector_x_min)
+    NULLIFY(injector_x_max)
+
   END SUBROUTINE injector_deck_initialise
 
 
