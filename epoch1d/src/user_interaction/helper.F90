@@ -289,8 +289,16 @@ CONTAINS
     ix_max = nx
 
     IF (species%fill_ghosts) THEN
-      IF (x_min_boundary) ix_min = ix_min - png
-      IF (x_max_boundary) ix_max = ix_max + png
+      IF (x_min_boundary) THEN
+        IF (ASSOCIATED(injector_x_min)) THEN
+          ix_min = ix_min - png
+        END IF
+      END IF
+      IF (x_max_boundary) THEN
+        IF (ASSOCIATED(injector_x_max)) THEN
+          ix_max = ix_max + png
+        END IF
+      END IF
     END IF
 
     num_valid_cells_local = 0
@@ -615,10 +623,11 @@ CONTAINS
     ! Then you have overfilled by half a cell but need those particles
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
-    IF (species%fill_ghosts) THEN
-      x1 = 0.5_num * dx * png
-      x0 = x_min - x1
-      x1 = x_max + x1
+    IF (species%fill_ghosts .AND. use_injectors) THEN
+      x0 = x_min
+      IF (ASSOCIATED(injector_x_min)) x0 = x0 - 0.5_num * dx * png
+      x1 = x_max
+      IF (ASSOCIATED(injector_x_max)) x1 = x1 + 0.5_num * dx * png
 
       current => partlist%head
       DO WHILE(ASSOCIATED(current))
