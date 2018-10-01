@@ -290,12 +290,14 @@ CONTAINS
 
     IF (species%fill_ghosts) THEN
       IF (x_min_boundary) THEN
-        IF (ASSOCIATED(injector_x_min)) THEN
+        IF (ASSOCIATED(injector_x_min) &
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
           ix_min = ix_min - png
         END IF
       END IF
       IF (x_max_boundary) THEN
-        IF (ASSOCIATED(injector_x_max)) THEN
+        IF (ASSOCIATED(injector_x_max) &
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
           ix_max = ix_max + png
         END IF
       END IF
