@@ -62,13 +62,13 @@ CONTAINS
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
-#ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(&
+#ifdef PER_SPECIES_WEIGHT
+      CALL non_uniform_load_particles(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(&
+      CALL setup_particle_density(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
@@ -260,6 +260,7 @@ CONTAINS
 
 
 
+#ifndef PER_SPECIES_WEIGHT
   ! This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE load_particles(species, load_list)
 
@@ -288,8 +289,18 @@ CONTAINS
     ix_max = nx
 
     IF (species%fill_ghosts) THEN
-      IF (x_min_boundary) ix_min = ix_min - png
-      IF (x_max_boundary) ix_max = ix_max + png
+      IF (x_min_boundary) THEN
+        IF (ASSOCIATED(injector_x_min) &
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+          ix_min = ix_min - png
+        END IF
+      END IF
+      IF (x_max_boundary) THEN
+        IF (ASSOCIATED(injector_x_max) &
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+          ix_max = ix_max + png
+        END IF
+      END IF
     END IF
 
     num_valid_cells_local = 0
@@ -495,6 +506,7 @@ CONTAINS
     CALL particle_bcs
 
   END SUBROUTINE load_particles
+#endif
 
 
 
@@ -613,10 +625,11 @@ CONTAINS
     ! Then you have overfilled by half a cell but need those particles
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
-    IF (species%fill_ghosts) THEN
-      x1 = 0.5_num * dx * png
-      x0 = x_min - x1
-      x1 = x_max + x1
+    IF (species%fill_ghosts .AND. use_injectors) THEN
+      x0 = x_min
+      IF (ASSOCIATED(injector_x_min)) x0 = x0 - 0.5_num * dx * png
+      x1 = x_max
+      IF (ASSOCIATED(injector_x_max)) x1 = x1 + 0.5_num * dx * png
 
       current => partlist%head
       DO WHILE(ASSOCIATED(current))
