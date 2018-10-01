@@ -231,7 +231,7 @@ CONTAINS
         DO idx = 1, 2*c_ndims
           bc = bc_species(idx)
 
-          IF (bc == c_bc_reflect .OR. bc == c_bc_thermal) THEN
+          IF (bc == c_bc_reflect) THEN
             bc = c_bc_reflect
           ELSE IF (bc /= c_bc_periodic) THEN
             bc = c_bc_open

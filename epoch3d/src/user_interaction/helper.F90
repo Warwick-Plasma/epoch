@@ -83,13 +83,13 @@ CONTAINS
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
-#ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(&
+#ifdef PER_SPECIES_WEIGHT
+      CALL non_uniform_load_particles(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(&
+      CALL setup_particle_density(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
@@ -321,6 +321,7 @@ CONTAINS
 
 
 
+#ifndef PER_SPECIES_WEIGHT
   ! This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE load_particles(species, load_list)
 
@@ -357,14 +358,44 @@ CONTAINS
     iz_max = nz
 
     IF (species%fill_ghosts) THEN
-      IF (x_min_boundary) ix_min = ix_min - png
-      IF (x_max_boundary) ix_max = ix_max + png
+      IF (x_min_boundary) THEN
+        IF (ASSOCIATED(injector_x_min) &
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+          ix_min = ix_min - png
+        END IF
+      END IF
+      IF (x_max_boundary) THEN
+        IF (ASSOCIATED(injector_x_max) &
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+          ix_max = ix_max + png
+        END IF
+      END IF
 
-      IF (y_min_boundary) iy_min = iy_min - png
-      IF (y_max_boundary) iy_max = iy_max + png
+      IF (y_min_boundary) THEN
+        IF (ASSOCIATED(injector_y_min) &
+            .OR. species%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+          iy_min = iy_min - png
+        END IF
+      END IF
+      IF (y_max_boundary) THEN
+        IF (ASSOCIATED(injector_y_max) &
+            .OR. species%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+          iy_max = iy_max + png
+        END IF
+      END IF
 
-      IF (z_min_boundary) iz_min = iz_min - png
-      IF (z_max_boundary) iz_max = iz_max + png
+      IF (z_min_boundary) THEN
+        IF (ASSOCIATED(injector_z_min) &
+            .OR. species%bc_particle(c_bd_z_min) == c_bc_thermal) THEN
+          iz_min = iz_min - png
+        END IF
+      END IF
+      IF (z_max_boundary) THEN
+        IF (ASSOCIATED(injector_z_max) &
+            .OR. species%bc_particle(c_bd_z_max) == c_bc_thermal) THEN
+          iz_max = iz_max + png
+        END IF
+      END IF
     END IF
 
     nx_e = ix_max - ix_min + 1
@@ -616,6 +647,7 @@ CONTAINS
     CALL particle_bcs
 
   END SUBROUTINE load_particles
+#endif
 
 
 
@@ -773,18 +805,21 @@ CONTAINS
     ! Then you have overfilled by half a cell but need those particles
     ! To calculate weights correctly. Now delete those particles that
     ! Overlap with the injection region
-    IF (species%fill_ghosts) THEN
-      x1 = 0.5_num * dx * png
-      x0 = x_min - x1
-      x1 = x_max + x1
+    IF (species%fill_ghosts .AND. use_injectors) THEN
+      x0 = x_min
+      IF (ASSOCIATED(injector_x_min)) x0 = x0 - 0.5_num * dx * png
+      x1 = x_max
+      IF (ASSOCIATED(injector_x_max)) x1 = x1 + 0.5_num * dx * png
 
-      y1 = 0.5_num * dy * png
-      y0 = y_min - y1
-      y1 = y_max + y1
+      y0 = y_min
+      IF (ASSOCIATED(injector_y_min)) y0 = y0 - 0.5_num * dy * png
+      y1 = y_max
+      IF (ASSOCIATED(injector_y_max)) y1 = y1 + 0.5_num * dy * png
 
-      z1 = 0.5_num * dz * png
-      z0 = z_min - z1
-      z1 = z_max + z1
+      z0 = z_min
+      IF (ASSOCIATED(injector_z_min)) z0 = z0 - 0.5_num * dz * png
+      z1 = z_max
+      IF (ASSOCIATED(injector_z_max)) z1 = z1 + 0.5_num * dz * png
 
       current => partlist%head
       DO WHILE(ASSOCIATED(current))
