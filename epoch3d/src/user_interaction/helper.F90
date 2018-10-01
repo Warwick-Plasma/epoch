@@ -78,13 +78,13 @@ CONTAINS
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
-#ifndef PER_SPECIES_WEIGHT
-      CALL setup_particle_density(&
+#ifdef PER_SPECIES_WEIGHT
+      CALL non_uniform_load_particles(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL non_uniform_load_particles(&
+      CALL setup_particle_density(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
@@ -297,6 +297,7 @@ CONTAINS
 
 
 
+#ifndef PER_SPECIES_WEIGHT
   ! This subroutine automatically loads a uniform density of pseudoparticles
   SUBROUTINE load_particles(species, load_list)
 
@@ -575,6 +576,7 @@ CONTAINS
     CALL particle_bcs
 
   END SUBROUTINE load_particles
+#endif
 
 
 
