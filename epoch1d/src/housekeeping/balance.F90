@@ -178,6 +178,7 @@ CONTAINS
     END IF
 
     IF (use_redistribute_domain) THEN
+      old_comm = comm
       CALL redistribute_domain
     END IF
 
