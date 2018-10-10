@@ -179,6 +179,7 @@ CONTAINS
 
     IF (use_redistribute_domain) THEN
       old_comm = comm
+      old_coordinates(:) = coordinates(:)
       CALL redistribute_domain
     END IF
 
@@ -982,6 +983,7 @@ CONTAINS
 
     ! Now have local densities, so add using MPI
     st = SIZE(load_x)
+
     CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_x, st, MPI_INTEGER8, MPI_SUM, &
                        comm, errcode)
 
