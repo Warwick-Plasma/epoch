@@ -398,10 +398,8 @@ CONTAINS
     INTEGER, INTENT(OUT) :: subtype, subtype_i4, subtype_i8
     INTEGER(i8), DIMENSION(1) :: npart_local
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
-    INTEGER :: i, mpitype, basetype, typesize
+    INTEGER :: particles_to_skip, total_particles
+    INTEGER :: i, mpitype, basetype
 
     npart_local = npart_in
 
@@ -414,76 +412,34 @@ CONTAINS
 
     particles_to_skip = 0
     DO i = 1, rank
-      particles_to_skip = particles_to_skip + npart_each_rank(i)
+      particles_to_skip = particles_to_skip + INT(npart_each_rank(i), i4)
     END DO
 
     total_particles = particles_to_skip
     DO i = rank+1, nproc
-      total_particles = total_particles + npart_each_rank(i)
+      total_particles = total_particles + INT(npart_each_rank(i), i4)
     END DO
 
     DEALLOCATE(npart_each_rank)
 
-    basetype = mpireal
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
-
     mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    basetype = mpireal
+    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
+         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
     subtype = mpitype
 
-    basetype = MPI_INTEGER4
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
-
     mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    basetype = MPI_INTEGER4
+    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
+         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
     subtype_i4 = mpitype
 
-    basetype = MPI_INTEGER8
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
-
     mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
+    basetype = MPI_INTEGER8
+    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
+         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
     subtype_i8 = mpitype
 
@@ -529,30 +485,12 @@ CONTAINS
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(1)
-    INTEGER :: vec1d, vec1d_sub, typesize
-
-    vec1d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CONTIGUOUS(n_local(1), basetype, vec1d, errcode)
-    CALL MPI_TYPE_COMMIT(vec1d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * starts(1)
-    disp(3) = typesize * n_global(1)
-    types(1) = MPI_LB
-    types(2) = vec1d
-    types(3) = MPI_UB
+    INTEGER :: vec1d_sub
 
     vec1d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec1d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(1, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec1d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec1d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec1d, errcode)
 
   END FUNCTION create_1d_array_subtype
 
@@ -571,31 +509,12 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(2)
-    INTEGER :: vec2d, vec2d_sub, typesize
-
-    vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
-        vec2d, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
-    disp(3) = typesize * n_global(1) * n_global(2)
-    types(1) = MPI_LB
-    types(2) = vec2d
-    types(3) = MPI_UB
+    INTEGER :: vec2d_sub
 
     vec2d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(2, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec2d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec2d, errcode)
 
   END FUNCTION create_2d_array_subtype
 
@@ -614,49 +533,12 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(3)
-    INTEGER :: vec2d, vec2d_sub
-    INTEGER :: vec3d, vec3d_sub, typesize
-
-    vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
-        vec2d, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
-    disp(3) = typesize * n_global(1) * n_global(2)
-    types(1) = MPI_LB
-    types(2) = vec2d
-    types(3) = MPI_UB
-
-    vec2d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
-
-    vec3d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CONTIGUOUS(n_local(3), vec2d_sub, vec3d, errcode)
-    CALL MPI_TYPE_COMMIT(vec3d, errcode)
-
-    disp(1) = 0
-    disp(2) = typesize * n_global(1) * n_global(2) * starts(3)
-    disp(3) = typesize * n_global(1) * n_global(2) * n_global(3)
-    types(1) = MPI_LB
-    types(2) = vec3d
-    types(3) = MPI_UB
+    INTEGER :: vec3d_sub
 
     vec3d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec3d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(3, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec3d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec3d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec2d, errcode)
-    CALL MPI_TYPE_FREE(vec2d_sub, errcode)
-    CALL MPI_TYPE_FREE(vec3d, errcode)
 
   END FUNCTION create_3d_array_subtype
 
