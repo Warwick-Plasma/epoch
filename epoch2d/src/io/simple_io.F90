@@ -38,11 +38,11 @@ CONTAINS
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: subtype, subarray, fh, i
-#ifndef NO_MPI3
-    INTEGER(KIND=MPI_COUNT_KIND) :: tsz
-#else
+#ifdef NO_MPI3
     INTEGER :: itsz
     INTEGER(KIND=MPI_OFFSET_KIND) :: tsz
+#else
+    INTEGER(KIND=MPI_COUNT_KIND) :: tsz
 #endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
@@ -59,11 +59,11 @@ CONTAINS
     subarray = create_current_field_subarray(ng)
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
-#ifndef NO_MPI3
-      CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
-#else
+#ifdef NO_MPI3
       CALL MPI_TYPE_SIZE(subtype, itsz, errcode)
       tsz = INT(itsz, MPI_OFFSET_KIND)
+#else
+      CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
 #endif
       IF (errcode == MPI_UNDEFINED) THEN
         PRINT*, '*** WARNING ***'
