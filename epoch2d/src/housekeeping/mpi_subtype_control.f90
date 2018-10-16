@@ -206,7 +206,6 @@ CONTAINS
       CALL MPI_TYPE_COMMIT(mpitype, errcode)
 
       sub%subtype = mpitype
-
       mpitype = MPI_DATATYPE_NULL
       IF (proc_outside_range) THEN
         CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
@@ -464,7 +463,6 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(subtype, errcode)
     CALL MPI_TYPE_FREE(intertype, errcode)
     subtype_i8 = mpitype
-
 
   END SUBROUTINE create_particle_subtypes
 
