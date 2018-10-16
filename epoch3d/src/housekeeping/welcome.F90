@@ -153,6 +153,9 @@ CONTAINS
 #ifdef NO_USE_ISATTY
     found = .TRUE.
 #endif
+#ifdef NO_MPI3
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -256,6 +259,11 @@ CONTAINS
     WRITE(*,*) 'Disable isatty C-call -DNO_USE_ISATTY'
 #else
     defines = IOR(defines, c_def_use_isatty)
+#endif
+#ifdef NO_MPI3
+    WRITE(*,*) 'Disable MPI3 features -DNO_MPI3'
+#else
+    defines = IOR(defines, c_def_use_mpi3)
 #endif
     WRITE(*,*) '*************************************************************'
 

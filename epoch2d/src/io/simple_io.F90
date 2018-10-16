@@ -34,11 +34,13 @@ CONTAINS
   SUBROUTINE load_single_array_from_file(filename, array, offset, err)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: subtype, subarray, fh, i
+#ifndef NO_MPI3
     INTEGER(KIND=MPI_COUNT_KIND) :: tsz
+#endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
@@ -52,6 +54,7 @@ CONTAINS
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray(ng)
+#ifndef NO_MPI3
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
       CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
@@ -61,6 +64,7 @@ CONTAINS
             'appear to match the domain dimensions'
       END IF
     END IF
+#endif
 
     CALL MPI_FILE_SET_VIEW(fh, offset, MPI_BYTE, subtype, 'native', &
         MPI_INFO_NULL, errcode)
