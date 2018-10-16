@@ -231,6 +231,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_work_done_integrated = 2**22
   INTEGER(i8), PARAMETER :: c_def_hc_push = 2**23
   INTEGER(i8), PARAMETER :: c_def_use_isatty = 2**24
+  INTEGER(i8), PARAMETER :: c_def_use_mpi3 = 2**25
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
