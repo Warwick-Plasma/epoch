@@ -400,8 +400,8 @@ CONTAINS
     INTEGER, INTENT(OUT) :: subtype, subtype_i4, subtype_i8
     INTEGER(i8), DIMENSION(1) :: npart_local
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
-    INTEGER :: particles_to_skip, total_particles
-    INTEGER :: i, mpitype, basetype
+    INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
+    INTEGER :: i, mpitype, basetype, typesize, intertype
 
     npart_local = npart_in
 
@@ -414,36 +414,57 @@ CONTAINS
 
     particles_to_skip = 0
     DO i = 1, rank
-      particles_to_skip = particles_to_skip + INT(npart_each_rank(i), i4)
+      particles_to_skip = particles_to_skip &
+          + INT(npart_each_rank(i), MPI_ADDRESS_KIND)
     END DO
 
     total_particles = particles_to_skip
     DO i = rank+1, nproc
-      total_particles = total_particles + INT(npart_each_rank(i), i4) 
+      total_particles = total_particles &
+          + INT(npart_each_rank(i), MPI_ADDRESS_KIND)
     END DO
 
     DEALLOCATE(npart_each_rank)
 
     mpitype = 0
     basetype = mpireal
-    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
-         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_COMMIT(intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
+    CALL MPI_TYPE_COMMIT(subtype, errcode)
+    CALL MPI_TYPE_FREE(intertype, errcode)
     subtype = mpitype
 
     mpitype = 0
     basetype = MPI_INTEGER4
-    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
-         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_COMMIT(intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
+    CALL MPI_TYPE_COMMIT(subtype, errcode)
+    CALL MPI_TYPE_FREE(intertype, errcode)
     subtype_i4 = mpitype
 
     mpitype = 0
     basetype = MPI_INTEGER8
-    CALL MPI_TYPE_CREATE_SUBARRAY(1, [total_particles], [INT(npart_in, i4)], &
-         [particles_to_skip], MPI_ORDER_FORTRAN, basetype, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_COMMIT(intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
+    CALL MPI_TYPE_COMMIT(subtype, errcode)
+    CALL MPI_TYPE_FREE(intertype, errcode)
     subtype_i8 = mpitype
+
 
   END SUBROUTINE create_particle_subtypes
 
