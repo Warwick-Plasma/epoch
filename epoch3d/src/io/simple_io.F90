@@ -38,7 +38,12 @@ CONTAINS
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: subtype, subarray, fh, i
+#ifdef NO_MPI3
+    INTEGER :: itsz
+    INTEGER(KIND=MPI_OFFSET_KIND) :: tsz
+#else
     INTEGER(KIND=MPI_COUNT_KIND) :: tsz
+#endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
@@ -54,11 +59,22 @@ CONTAINS
     subarray = create_current_field_subarray(ng)
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
+#ifdef NO_MPI3
+      CALL MPI_TYPE_SIZE(subtype, itsz, errcode)
+      tsz = INT(itsz, MPI_OFFSET_KIND)
+#else
       CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
-      IF (MOD(sz-offset, tsz) /= 0) THEN
+#endif
+      IF (errcode == MPI_UNDEFINED) THEN
         PRINT*, '*** WARNING ***'
-        PRINT*, 'Binary input file "' // TRIM(filename) // '"', ' does not ', &
-            'appear to match the domain dimensions'
+        PRINT*, 'Cannot automatically test size of file"' // TRIM(filename) &
+            // '". Ensure that file is of correct size'
+      ELSE
+        IF (MOD(sz-offset, tsz) /= 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Binary input file "' // TRIM(filename) // '"', &
+              ' does not appear to match the domain dimensions'
+        END IF
       END IF
     END IF
 
