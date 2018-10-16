@@ -40,6 +40,9 @@ CONTAINS
     INTEGER :: subtype, subarray, fh, i
 #ifndef NO_MPI3
     INTEGER(KIND=MPI_COUNT_KIND) :: tsz
+#else
+    INTEGER :: itsz
+    INTEGER(KIND=MPI_OFFSET_KIND) :: tsz
 #endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
 
@@ -54,17 +57,26 @@ CONTAINS
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray(ng)
-#ifndef NO_MPI3
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
+#ifndef NO_MPI3
       CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
-      IF (MOD(sz-offset, tsz) /= 0) THEN
+#else
+      CALL MPI_TYPE_SIZE(subtype, itsz, errcode)
+      tsz = INT(itsz, MPI_OFFSET_KIND)
+#endif
+      IF (errcode == MPI_UNDEFINED) THEN
         PRINT*, '*** WARNING ***'
-        PRINT*, 'Binary input file "' // TRIM(filename) // '"', ' does not ', &
-            'appear to match the domain dimensions'
+        PRINT*, 'Cannot automatically test size of file"' // TRIM(filename) &
+            // '". Ensure that file is of correct size'
+      ELSE
+        IF (MOD(sz-offset, tsz) /= 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Binary input file "' // TRIM(filename) // '"', &
+              ' does not appear to match the domain dimensions'
+        END IF
       END IF
     END IF
-#endif
 
     CALL MPI_FILE_SET_VIEW(fh, offset, MPI_BYTE, subtype, 'native', &
         MPI_INFO_NULL, errcode)
