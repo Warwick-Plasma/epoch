@@ -964,7 +964,11 @@ CONTAINS
     vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
     ! Collision frequency
-    nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, jdens)
+    IF (m1 > m2) THEN
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, idens)
+    ELSE
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, jdens)
+    END IF
     nu = 2.0_num * nu * factor * dt
 
 !    m_red = mass1 * mass2 / (mass1 + mass2)
@@ -1003,7 +1007,11 @@ CONTAINS
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
-    vcr = -v4
+    IF (m1 > m2) THEN
+      vcr = v3
+    ELSE
+      vcr = v4
+    END IF
     gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
