@@ -24,7 +24,6 @@ MODULE ionise
   USE mpi
   USE utilities
   USE boundary
-  USE current_smooth
 
   IMPLICIT NONE
 
@@ -414,10 +413,7 @@ CONTAINS
       END IF
     END IF
 
-    CALL current_bcs
     CALL particle_bcs
-
-    IF (smooth_currents) CALL smooth_current()
 
   END SUBROUTINE ionise_particles
 
