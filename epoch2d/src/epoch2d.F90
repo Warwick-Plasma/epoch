@@ -49,10 +49,11 @@ PROGRAM pic
   USE particle_migration
   USE ionise
   USE calc_df
+  USE injectors
+  USE current_smooth
 #ifdef PHOTONS
   USE photons
 #endif
-  USE injectors
 
   IMPLICIT NONE
 
@@ -213,6 +214,7 @@ PROGRAM pic
       END IF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
+      CALL current_finish
       CALL update_particle_count
     END IF
 

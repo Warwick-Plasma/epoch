@@ -27,7 +27,23 @@ MODULE current_smooth
 
 CONTAINS
 
-  SUBROUTINE smooth_current()
+  SUBROUTINE current_finish
+
+    CALL current_bcs
+
+    IF (smooth_currents) CALL smooth_current
+
+    IF (use_current_correction) THEN
+      jx = jx - initial_jx
+      jy = jy - initial_jy
+      jz = jz - initial_jz
+    END IF
+
+  END SUBROUTINE current_finish
+
+
+
+  SUBROUTINE smooth_current
 
     ! A very simple current smoothing routine
 
