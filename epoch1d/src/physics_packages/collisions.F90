@@ -957,11 +957,6 @@ CONTAINS
     END IF
     nu = 2.0_num * nu * factor * dt
 
-!    m_red = mass1 * mass2 / (mass1 + mass2)
-!    nu = ((idens * (charge1 * charge2)**2 * log_lambda) &
-!        / (8.0_num * pi * (epsilon0**2) * (m_red**2) * (vrabs**3))) &
-!        * gamma_rel * dt * factor
-
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
 
