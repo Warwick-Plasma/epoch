@@ -1058,10 +1058,6 @@ CONTAINS
 
     mu = (m1 * m2) / (m1 + m2)
     coll_freq = velocity_collisions(vrabs, log_lambda, mu, q1, q2, jdens)
-!    coll_freq = temperature_collisions(itemp, log_lambda, mu, q1, q2, jdens)
-!    coll_freq = manheimer_collisions(vrabs, log_lambda, m1, m2, q1, q2, &
-!        jtemp, jdens)
-!    coll_freq = MAX(coll_freq, vrabs / (jdens**(1.0_num / 3.0_num)))
 
   END FUNCTION
 
@@ -1089,60 +1085,6 @@ CONTAINS
     END IF
 
   END FUNCTION velocity_collisions
-
-
-
-  PURE FUNCTION temperature_collisions(itemp, log_lambda, mu, q1, q2, jdens)
-
-    REAL(num), INTENT(IN) :: itemp, log_lambda, mu, q1, q2, jdens
-    REAL(num) :: temperature_collisions
-
-    IF (itemp > c_tiny) THEN
-      temperature_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
-          / (3.0_num * epsilon0**2 * SQRT(mu) &
-          * (2.0_num * pi * q0 * itemp)**1.5_num)
-    ELSE
-      temperature_collisions = 0.0_num
-    END IF
-
-  END FUNCTION temperature_collisions
-
-
-
-  PURE FUNCTION manheimer_collisions(vrabs, log_lambda, m1, m2, q1, q2, &
-      jtemp, jdens)
-
-    REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2, jtemp, jdens
-    REAL(num) :: sc, grm1, mu, ek, slow, fast
-    REAL(num) :: manheimer_collisions
-
-    ! Manheimer-like collision operator
-    ! Valid for e-i and e-e collisions
-    sc = SQRT(1.0_num - (vrabs / c)**2)
-    grm1 = (vrabs / c)**2 / (sc + sc**2)
-
-    mu = m2 / 1.6726d-27
-    ek = grm1 * m1 * c**2 / q0
-
-    IF (jtemp <= 0.0_num) THEN
-      IF (ek <= 0.0_num) THEN
-        manheimer_collisions = 0.0_num
-      ELSE
-        manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_tiny)
-      END IF
-    ELSE
-      IF (ek <= 0.0_num) THEN
-        manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
-      ELSE
-        slow = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
-        fast = 3.9d-6 / (SQRT(ek**3) + c_tiny)
-        manheimer_collisions = slow / (1.0_num + slow / fast)
-      END IF
-    END IF
-    manheimer_collisions = manheimer_collisions * jdens * log_lambda &
-        * (q2 / q0)**2 * 1.0d-6
-
-  END FUNCTION manheimer_collisions
 
 
 
