@@ -109,7 +109,7 @@ CONTAINS
           CYCLE
 
       collide_species = .FALSE.
-      DO jspecies = 1, n_species
+      DO jspecies = ispecies, n_species
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor > 0) THEN
           collide_species = .TRUE.
@@ -136,7 +136,7 @@ CONTAINS
       END DO ! iy
       END DO ! iz
 
-      DO jspecies = 1, n_species
+      DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE

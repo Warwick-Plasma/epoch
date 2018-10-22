@@ -239,9 +239,9 @@ CONTAINS
     END IF
 
     coll_pairs(sp1, sp2) = collstate
-!    coll_pairs(sp2, sp1) = collstate
+    coll_pairs(sp2, sp1) = collstate
     coll_pairs_touched(sp1, sp2) = .TRUE.
-!    coll_pairs_touched(sp2, sp1) = .TRUE.
+    coll_pairs_touched(sp2, sp1) = .TRUE.
 
   END SUBROUTINE set_collision_matrix
 
