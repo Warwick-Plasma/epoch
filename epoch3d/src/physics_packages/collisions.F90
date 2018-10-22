@@ -979,9 +979,9 @@ CONTAINS
 
     ! Collision frequency
     IF (m1 > m2) THEN
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, idens)
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, idens)
     ELSE
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, jdens)
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
     END IF
     nu = 2.0_num * nu * factor * dt
 
@@ -1072,11 +1072,10 @@ CONTAINS
 
 
 
-  PURE FUNCTION coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, &
-      jdens)
+  PURE FUNCTION coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
 
     REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2
-    REAL(num), INTENT(IN) :: itemp, jtemp, jdens
+    REAL(num), INTENT(IN) :: jdens
     REAL(num) :: mu, coll_freq, numerator, denominator
     REAL(num), PARAMETER :: fac = 4.0_num * pi * epsilon0**2
 
