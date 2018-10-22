@@ -142,13 +142,18 @@ CONTAINS
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor <= 0) CYCLE
 
-        CALL calc_coll_number_density(jdens, jspecies)
-        CALL calc_coll_temperature(jtemp, jspecies)
+        IF (ispecies == jspecies) THEN
+          jdens = idens
+          jtemp = itemp
+        ELSE
+          CALL calc_coll_number_density(jdens, jspecies)
+          CALL calc_coll_temperature(jtemp, jspecies)
+          jtemp = jtemp * kb / q0
+        END IF
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
         w2 = species_list(jspecies)%weight
-        jtemp = jtemp * kb / q0
 
         IF (coulomb_log_auto) THEN
           CALL calc_coll_ekbar(iekbar, ispecies)
