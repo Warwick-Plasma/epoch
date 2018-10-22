@@ -121,7 +121,6 @@ CONTAINS
 
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature(itemp, ispecies)
-      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -156,6 +155,7 @@ CONTAINS
         jtemp = jtemp * kb / q0
 
         IF (coulomb_log_auto) THEN
+          CALL calc_coll_ekbar(iekbar, ispecies)
           log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
               q1, q2, m1)
         ELSE
