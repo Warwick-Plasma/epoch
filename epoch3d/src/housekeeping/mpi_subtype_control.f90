@@ -254,9 +254,6 @@ CONTAINS
 
   SUBROUTINE free_subtypes
 
-    INTEGER :: i
-    TYPE(subset), POINTER :: sub
-
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big, errcode)
