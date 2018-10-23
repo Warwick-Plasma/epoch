@@ -277,7 +277,7 @@ CONTAINS
         IF (.NOT. io_block%dump_first) &
             n_dumps = n_dumps - 1
 
-        n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(REAL(n_dumps))) + 1)
+        n_zeros_estimate = MAX(n_zeros, FLOOR(LOG10(REAL(MAX(n_dumps, 1)))) + 1)
 
         IF (n_zeros_control > 0) use_accurate_n_zeros = .FALSE.
 
