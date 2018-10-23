@@ -50,6 +50,15 @@ CONTAINS
   SUBROUTINE deallocate_memory
 
     INTEGER :: i, n, stat
+    TYPE(subset), POINTER :: sub
+
+    DO i = 1, n_subsets
+      sub => subset_list(i)
+      CALL MPI_TYPE_FREE(sub%subtype, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray, errcode)
+      CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+    END DO
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
