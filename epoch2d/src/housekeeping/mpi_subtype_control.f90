@@ -262,14 +262,6 @@ CONTAINS
     CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
 
-    DO i = 1, n_subsets
-      sub => subset_list(i)
-      CALL MPI_TYPE_FREE(sub%subtype, errcode)
-      CALL MPI_TYPE_FREE(sub%subarray, errcode)
-      CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-      CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-    END DO
-
   END SUBROUTINE free_subtypes
 
 
