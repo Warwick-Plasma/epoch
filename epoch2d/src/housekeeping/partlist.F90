@@ -20,6 +20,9 @@ MODULE partlist
 #ifdef PHOTONS
   USE random_generator
 #endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  USE particle_id_hash_mod
+#endif
 
   IMPLICIT NONE
 
@@ -56,7 +59,7 @@ CONTAINS
     nvar = nvar+2
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    nvar = nvar+1
+    nvar = nvar+2
 #endif
 #ifdef COLLISIONS_TEST
     nvar = nvar+1
@@ -408,6 +411,10 @@ CONTAINS
     array(cpos) = TRANSFER(a_particle%id, 1.0_num)
     cpos = cpos+1
 #endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    array(cpos) = TRANSFER(id_registry%delete_and_map(a_particle%id), 1.0_num)
+    cpos = cpos+1
+#endif
 #ifdef COLLISIONS_TEST
     array(cpos) = REAL(a_particle%coll_count, num)
     cpos = cpos+1
@@ -439,10 +446,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
-#ifdef PARTICLE_ID4
-    INTEGER(i8) :: temp_i8
-#endif
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     a_particle%part_pos = array(cpos:cpos+c_ndims-1)
@@ -473,6 +477,11 @@ CONTAINS
     cpos = cpos+1
 #elif PARTICLE_ID
     a_particle%id = TRANSFER(array(cpos), a_particle%id)
+    cpos = cpos+1
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    CALL id_registry%add_with_map(a_particle%id, &
+        TRANSFER(array(cpos), temp_i8))
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
