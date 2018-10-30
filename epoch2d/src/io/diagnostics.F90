@@ -981,7 +981,7 @@ CONTAINS
     CALL MPI_GATHER(start_local, 1, MPI_INTEGER8, id_starts(2), 1, &
         MPI_INTEGER8, 0, comm, ierr)
 
-    id_starts = n_cpu_bits
+    id_starts(1) = n_cpu_bits
 
     CALL sdf_write_srl(sdf_handle, "id_starts", "id_starts", id_starts, 0)
 
