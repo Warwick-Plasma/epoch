@@ -284,6 +284,17 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'persist_after')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%use_hash = .TRUE.
+      sub%persist_after = as_real_print(value, element, errcode)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 
   END FUNCTION subset_block_handle_element
@@ -358,6 +369,11 @@ CONTAINS
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
+
+      subset_list(i)%use_hash = .FALSE.
+      subset_list(i)%persist_after = 0.0_num
+      subset_list(i)%locked = .FALSE.
+      subset_list(i)%run_before_lock = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets
