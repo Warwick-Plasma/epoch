@@ -205,7 +205,7 @@ DEFINES := $(DEFINE)
 
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
-#DEFINES += $(D)PARTICLE_ID
+DEFINES += $(D)PARTICLE_ID
 #DEFINES += $(D)PARTICLE_ID4
 
 # Include QED routines
@@ -257,6 +257,9 @@ DEFINES := $(DEFINE)
 # Disable MPI3 features
 #DEFINES += $(D)NO_MPI3
 
+# Allow persistent particle subsets
+#DEFINES += $(D)ALLOW_PPS
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
@@ -295,14 +298,14 @@ SRCFILES = antennae.f90 balance.F90 boundary.F90 calc_df.F90 collisions.F90 \
   deck_io_block.F90 deck_io_global_block.F90 deck_laser_block.f90 \
   deck_part_from_file_block.F90 deck_particle_probe_block.F90 \
   deck_qed_block.F90 deck_species_block.F90 deck_stencil_block.f90 \
-  deck_subset_block.f90 deck_window_block.f90 deltaf_loader.F90 \
+  deck_subset_block.F90 deck_window_block.f90 deltaf_loader.F90 \
   diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.F90 evaluator_blocks.F90 \
   fields.f90 finish.f90 helper.F90 ic_module.f90 injectors.F90 ionise.F90 \
   iterators.F90 laser.f90 mpi_routines.F90 mpi_subtype_control.f90 \
   numerics.f90 particle_migration.F90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particles.F90 partlist.F90 photons.F90 prefetch.F90 \
-  probes.F90 random_generator.f90 redblack_module.f90 setup.F90 \
-  shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
+  particle_temperature.F90 particle_id_hash.F90 particles.F90 partlist.F90 \
+  photons.F90 prefetch.F90 probes.F90 random_generator.f90 redblack_module.f90 \
+  setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
   split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
   terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
   version_data.F90 welcome.F90 window.F90
@@ -469,14 +472,14 @@ deck_qed_block.o: deck_qed_block.F90 strings_advanced.o utilities.o
 deck_species_block.o: deck_species_block.F90 partlist.o setup.o simple_io.o \
   strings_advanced.o utilities.o
 deck_stencil_block.o: deck_stencil_block.f90 fields.o strings_advanced.o
-deck_subset_block.o: deck_subset_block.f90 shunt.o strings_advanced.o \
+deck_subset_block.o: deck_subset_block.F90 shunt.o strings_advanced.o \
   utilities.o
 deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
 diagnostics.o: diagnostics.F90 antennae.o calc_df.o constants.o deck.o \
   deck_io_block.o dist_fn.o evaluate.o iterators.o probes.o setup.o \
-  shared_data.o strings.o timer.o version_data.o window.o $(SDFMOD) \
-  $(ENCODED_SOURCE)
+  shared_data.o strings.o timer.o version_data.o window.o particle_id_hash.o \
+  $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch2d.o: epoch2d.F90 antennae.o balance.o calc_df.o collisions.o \
   current_smooth.o deck.o diagnostics.o fields.o finish.o helper.o ic_module.o \
@@ -504,8 +507,9 @@ particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shared_data.o
+particle_id_hash.o: particle_id_hash.F90 constants.o shared_data.o
 particles.o: particles.F90 boundary.o partlist.o prefetch.o
-partlist.o: partlist.F90 random_generator.o shared_data.o
+partlist.o: partlist.F90 random_generator.o shared_data.o particle_id_hash.o
 photons.o: photons.F90 partlist.o
 prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
