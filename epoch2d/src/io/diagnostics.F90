@@ -602,6 +602,7 @@ CONTAINS
             'Processor_at_t0', '', it_output_integer4)
 #endif
 #if defined(PARTICLE_ID)
+        !NB: Need to write the ID before the particle persistence information
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer8)
         IF (id_registry%get_hash_count() > 0) &
@@ -2284,7 +2285,7 @@ CONTAINS
     l = isubset - 1
     sub => subset_list(l)
     current_hash => NULL()
-    IF (sub%use_hash) THEN
+    IF (sub%persistent) THEN
       current_hash => id_registry%get_hash(sub%name)
       CALL current_hash%init(1000)
     END IF
@@ -2301,8 +2302,7 @@ CONTAINS
         CYCLE
       END IF
 
-      IF (sub%use_hash .AND. .NOT. sub%run_before_lock .AND. &
-          time < sub%persist_after) THEN
+      IF (sub%persistent .AND. time < sub%persist_after) THEN
         io_list(i)%dumpmask = c_io_never
         CYCLE
       END IF
@@ -2315,7 +2315,7 @@ CONTAINS
         next => current%next
         use_particle = .TRUE.
 
-        IF (sub%use_hash .AND. sub%locked) THEN
+        IF (sub%persistent .AND. sub%locked) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           use_particle = current_hash%holds(current%id)
 #endif
@@ -2461,7 +2461,7 @@ CONTAINS
         IF (use_particle) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           ! Move particle to io_list
-          IF (sub%use_hash .AND. time >= sub%persist_after .AND. &
+          IF (sub%persistent .AND. time >= sub%persist_after .AND. &
               .NOT. sub%locked) THEN
             CALL current_hash%add(current%id)
           END IF
@@ -2476,10 +2476,10 @@ CONTAINS
     END DO
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    IF (sub%use_hash .AND. time >= sub%persist_after) THEN
+    IF (sub%persistent .AND. time >= sub%persist_after) THEN
       sub%locked = .TRUE.
       sub%use_restriction = .FALSE.
-      CALL current_hash%init(count, realloc = .TRUE.)
+      CALL current_hash%optimise()
     END IF
 #endif
 

@@ -21,6 +21,7 @@ MODULE particle_id_hash_mod
   TYPE :: particle_id_hash
     CHARACTER(LEN=c_max_string_length) :: name
     TYPE(particle_id_inner_list), DIMENSION(:), ALLOCATABLE :: buckets
+    INTEGER(i8) :: count
     CONTAINS
     PROCEDURE, PRIVATE :: hash => pid_hash_hash
     PROCEDURE :: holds => pid_hash_holds
@@ -30,6 +31,7 @@ MODULE particle_id_hash_mod
     PROCEDURE, PRIVATE :: init_i8 => pid_hash_init_i8
     PROCEDURE, PRIVATE :: init_i4 => pid_hash_init_i4
     GENERIC :: init => init_i8, init_i4
+    PROCEDURE :: optimise => pid_optimise
     FINAL :: pid_hash_destructor
   END TYPE particle_id_hash
 
@@ -315,6 +317,7 @@ MODULE particle_id_hash_mod
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
     bucket = this%hash(add_id)
     CALL this%buckets(bucket)%add(add_id)
+    this%count = this%count + 1
 
   END SUBROUTINE pid_hash_add
 
@@ -322,7 +325,6 @@ MODULE particle_id_hash_mod
 
 !> Add those IDs from a list of IDs that correspond to particles on this
 !> processor
-
   SUBROUTINE pid_hash_add_if_local(this, id_list)
     CLASS(particle_id_hash), INTENT(INOUT) :: this
 #if defined(PARTICLE_ID)
@@ -338,7 +340,10 @@ MODULE particle_id_hash_mod
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
-        IF (in_list(id_list, current%id)) CALL this%add(current%id)
+        IF (in_list(id_list, current%id)) THEN
+          CALL this%add(current%id)
+          this%count = this%count + 1
+        END IF
         current => current%next
       END DO
     END DO
@@ -365,6 +370,7 @@ MODULE particle_id_hash_mod
 
     bucket = this%hash(del_id)
     holds = this%buckets(bucket)%delete(del_id)
+    IF(holds) this%count = this%count - 1
 
   END FUNCTION pid_hash_delete
 
@@ -385,6 +391,7 @@ MODULE particle_id_hash_mod
         comm, ierr)
     local_count = MIN(local_count, 1000)
     IF (.NOT. ALLOCATED(this%buckets)) THEN
+      this%count = 0
       ALLOCATE(this%buckets(local_count))
     ELSE
       IF (.NOT. should_realloc) RETURN
@@ -411,6 +418,16 @@ MODULE particle_id_hash_mod
 
     CALL this%init(INT(bucket_count,i8), realloc)
   END SUBROUTINE pid_hash_init_i4
+
+
+
+  !> Subroutine to optimise the hash table
+  SUBROUTINE pid_optimise(this)
+    CLASS(particle_id_hash), INTENT(INOUT) :: this
+
+    CALL this%init(this%count, .TRUE.)
+  END SUBROUTINE pid_optimise
+
 
 
   !> Delete all inner lists on destruction

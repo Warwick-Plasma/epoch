@@ -286,7 +286,7 @@ CONTAINS
 
     IF (str_cmp(element, 'persist_after')) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-      sub%use_hash = .TRUE.
+      sub%persistent = .TRUE.
       sub%persist_after = as_real_print(value, element, errcode)
 #else
       errcode = c_err_pp_options_missing
@@ -370,10 +370,9 @@ CONTAINS
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
 
-      subset_list(i)%use_hash = .FALSE.
+      subset_list(i)%persistent = .FALSE.
       subset_list(i)%persist_after = 0.0_num
       subset_list(i)%locked = .FALSE.
-      subset_list(i)%run_before_lock = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets
