@@ -1388,7 +1388,21 @@ CONTAINS
             PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
           END IF
 #endif
-
+        ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
+          PRINT *,'Persistent subset'
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+!            CALL sdf_read_point_variable(sdf_handle, npart_local, &
+!                species_subtypes_i8(ispecies), it_id8)
+          IF (datatype /= c_datatype_integer8) PRINT *,'Bad datatype'
+!          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+!              species_subtypes_i8(ispecies), it_pers_sub)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Discarding particle persistent subset.'
+            PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
+          END IF
+#endif
         ELSE IF (block_id(1:7) == 'weight/') THEN
 #ifndef PER_SPECIES_WEIGHT
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
@@ -1809,6 +1823,29 @@ CONTAINS
     it_id8 = 0
 
   END FUNCTION it_id8
+
+
+
+  FUNCTION it_pers_sub(array, npart_this_it, start, param)
+
+    USE constants
+    USE particle_id_hash_mod
+    INTEGER(i8) :: it_pers_sub
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      CALL id_registry%add_with_map(iterator_list%id, array(ipart))
+      iterator_list => iterator_list%next
+    END DO
+
+    it_pers_sub = 0
+
+  END FUNCTION it_pers_sub
+
 #endif
 
 

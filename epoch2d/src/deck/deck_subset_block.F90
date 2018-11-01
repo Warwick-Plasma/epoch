@@ -18,6 +18,7 @@ MODULE deck_subset_block
   USE strings_advanced
   USE utilities
   USE shunt
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
   SAVE
@@ -129,6 +130,7 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -288,6 +290,8 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%persist_after = as_real_print(value, element, errcode)
+      current_hash => id_registry%get_hash(sub%name)
+      CALL current_hash%init(1000)
 #else
       errcode = c_err_pp_options_missing
       extended_error_string = '-DPARTICLE_ID'

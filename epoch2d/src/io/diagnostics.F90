@@ -2270,7 +2270,6 @@ CONTAINS
     REAL(num) :: gamma_rel, random_num, part_mc
     TYPE(subset), POINTER :: sub
     TYPE(particle_id_hash), POINTER :: current_hash
-    INTEGER(i8) :: count
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2285,11 +2284,7 @@ CONTAINS
     l = isubset - 1
     sub => subset_list(l)
     current_hash => NULL()
-    IF (sub%persistent) THEN
-      current_hash => id_registry%get_hash(sub%name)
-      CALL current_hash%init(1000)
-    END IF
-    count = 0_i8
+    current_hash => id_registry%get_hash(sub%name)
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
@@ -2466,7 +2461,6 @@ CONTAINS
             CALL current_hash%add(current%id)
           END IF
 #endif
-          count = count + 1
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(io_list(i)%attached_list, current)
