@@ -156,7 +156,7 @@ CONTAINS
             j = species_list(j)%ionise_to_species
           END DO
         ! If there's a list of release species use it
-        ELSEIF (nlevels == nrelease) THEN
+        ELSE IF (nlevels == nrelease) THEN
           nlevels = 1
           j = i
           DO WHILE(species_list(j)%ionise)

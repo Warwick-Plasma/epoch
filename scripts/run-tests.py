@@ -23,6 +23,7 @@ _epochdir = os.path.dirname(os.path.abspath(__file__))
 _epochdir = os.path.join(_epochdir, '..')
 _subdir = None
 
+
 def setcwd(relative=None):
     '''
     resets the current working directiory to the path
@@ -32,6 +33,7 @@ def setcwd(relative=None):
     os.chdir(_subdir)
     if relative:
         os.chdir(relative)
+
 
 def compileepoch():
     '''
@@ -73,7 +75,6 @@ def clean():
         subprocess.call('make clean', shell=True)
 
 
-
 def main():
     import argparse
     parser = argparse.ArgumentParser(description='''
@@ -84,12 +85,12 @@ def main():
     ''')
     parser.add_argument('codeversion', help='''
     specify the  code version to run the tests on.
-    ''',
-    choices=['epoch1d', '1d', 'epoch2d', '2d', 'epoch3d', '3d'])
+    ''', choices=['epoch1d', '1d', 'epoch2d', '2d', 'epoch3d', '3d'])
     parser.add_argument('test', nargs='?', help='''
     run only a single test specified by its name, i.e. 'laser'
     ''')
-    parser.add_argument('--clean', '-c', action='store_true', help=clean.__doc__)
+    parser.add_argument('--clean', '-c', action='store_true',
+                        help=clean.__doc__)
     parser.add_argument('--build', '-b', action='store_true', help='''
     build only. Do not run the code.
     ''')
@@ -115,5 +116,5 @@ def main():
     exit(int(not testsok))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
