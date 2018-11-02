@@ -117,6 +117,7 @@ CONTAINS
     DOUBLE PRECISION :: rand1, rand2, w, mu_val
     DOUBLE PRECISION, PARAMETER :: c_tiny = TINY(1.0D0)
     DOUBLE PRECISION, SAVE :: cached_random_value
+    LOGICAL, SAVE :: cached = .FALSE.
 
     ! This is a basic polar Box-Muller transform
     ! It generates gaussian distributed random numbers
@@ -127,11 +128,13 @@ CONTAINS
       mu_val = 0.0D0
     END IF
 
-    IF (state%box_muller_cached) THEN
-      state%box_muller_cached = .FALSE.
+    IF (PRESENT(state)) cached = state%box_muller_cached
+
+    IF (cached) THEN
+      cached = .FALSE.
       random_box_muller = cached_random_value * stdev + mu_val
     ELSE
-      state%box_muller_cached = .TRUE.
+      cached = .TRUE.
 
       DO
         rand1 = random(state)
@@ -150,6 +153,8 @@ CONTAINS
       random_box_muller = rand1 * w * stdev + mu_val
       cached_random_value = rand2 * w
     END IF
+
+    IF (PRESENT(state)) state%box_muller_cached = cached
 
   END FUNCTION random_box_muller
 
