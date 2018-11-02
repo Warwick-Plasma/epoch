@@ -884,9 +884,6 @@ CONTAINS
     io_block%walltime_prev = 0.0_num
     io_block%walltime_start = -1.0_num
     io_block%walltime_stop  = HUGE(1.0_num)
-    NULLIFY(io_block%dump_at_nsteps)
-    NULLIFY(io_block%dump_at_times)
-    NULLIFY(io_block%dump_at_walltimes)
     DO i = 1, num_vars_to_dump
       io_block%averaged_data(i)%dump_single = .FALSE.
     END DO
@@ -901,9 +898,6 @@ CONTAINS
     INTEGER :: i
 
     io_block_copy = io_block
-    NULLIFY(io_block%dump_at_nsteps)
-    NULLIFY(io_block%dump_at_times)
-    NULLIFY(io_block%dump_at_walltimes)
     DO i = 1, num_vars_to_dump
       io_block_copy%averaged_data(i) = io_block%averaged_data(i)
     END DO

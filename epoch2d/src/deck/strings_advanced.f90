@@ -141,7 +141,7 @@ CONTAINS
   SUBROUTINE get_allocated_array_rnum(str_in, array, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
-    REAL(num), POINTER :: array(:)
+    REAL(num), ALLOCATABLE :: array(:)
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
     INTEGER :: ndim, i
@@ -170,7 +170,7 @@ CONTAINS
 
     CALL tokenize(str_tmp, output, err)
     IF (err == c_err_none) THEN
-      NULLIFY(array)
+      IF (ALLOCATED(array)) DEALLOCATE(array)
       CALL evaluate_and_return_all(output, ndim, array, err)
     END IF
     CALL deallocate_stack(output)
@@ -182,13 +182,13 @@ CONTAINS
   SUBROUTINE get_allocated_array_int(str_in, array, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
-    INTEGER, POINTER :: array(:)
+    INTEGER, ALLOCATABLE :: array(:)
     INTEGER, INTENT(INOUT) :: err
-    REAL(num), POINTER :: rarray(:)
+    REAL(num), ALLOCATABLE :: rarray(:)
 
     CALL get_allocated_array_rnum(str_in, rarray, err)
 
-    IF (ASSOCIATED(array)) DEALLOCATE(array)
+    IF (ALLOCATED(array)) DEALLOCATE(array)
     ALLOCATE(array(SIZE(rarray)))
     array = INT(rarray)
     DEALLOCATE(rarray)

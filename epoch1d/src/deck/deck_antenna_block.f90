@@ -70,7 +70,7 @@ CONTAINS
   FUNCTION antenna_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(LEN=*), INTENT(IN) :: element, value
-    REAL(num), DIMENSION(:), POINTER :: ranges
+    REAL(num), DIMENSION(:), ALLOCATABLE :: ranges
     INTEGER :: errcode, nels
 
     errcode = c_err_none
@@ -98,7 +98,6 @@ CONTAINS
     IF (str_cmp(element, 'ranges')) THEN
       CALL initialise_stack(working_antenna%ranges)
       CALL tokenize(value, working_antenna%ranges, errcode)
-      ranges => NULL()
       CALL evaluate_and_return_all(working_antenna%ranges, nels, ranges, &
           errcode)
       DEALLOCATE(ranges)

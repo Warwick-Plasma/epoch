@@ -321,8 +321,8 @@ CONTAINS
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when reading data.
 
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     subtype_field = create_current_field_subtype()
@@ -352,8 +352,8 @@ CONTAINS
   SUBROUTINE free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
       species_subtypes_i8)
 
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)

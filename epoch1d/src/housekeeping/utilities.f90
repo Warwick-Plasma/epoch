@@ -31,7 +31,7 @@ CONTAINS
 
   SUBROUTINE grow_real_array(array, idx)
 
-    REAL(num), DIMENSION(:), POINTER :: array
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     REAL(num), DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -63,7 +63,7 @@ CONTAINS
 
   SUBROUTINE grow_integer_array(array, idx)
 
-    INTEGER, DIMENSION(:), POINTER :: array
+    INTEGER, DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     INTEGER, DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -124,7 +124,7 @@ CONTAINS
 
   SUBROUTINE grow_string_array(array, idx)
 
-    CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: array
+    CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -156,7 +156,7 @@ CONTAINS
 
   SUBROUTINE grow_real_array2d(array, idx, idy)
 
-    REAL(num), DIMENSION(:,:), POINTER :: array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx, idy
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size(2), new_size(2), i, j, idxy, idir
@@ -206,7 +206,7 @@ CONTAINS
 
   SUBROUTINE grow_integer_array2d(array, idx, idy)
 
-    INTEGER, DIMENSION(:,:), POINTER :: array
+    INTEGER, DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx, idy
     INTEGER, DIMENSION(:,:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size(2), new_size(2), i, j, idxy, idir

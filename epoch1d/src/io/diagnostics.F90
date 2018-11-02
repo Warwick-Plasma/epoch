@@ -73,7 +73,7 @@ MODULE diagnostics
     INTEGER :: count
   END TYPE string_list
 
-  TYPE(string_list), POINTER :: file_list(:)
+  TYPE(string_list), ALLOCATABLE, TARGET :: file_list(:)
 
   INTERFACE write_particle_variable
     MODULE PROCEDURE &
@@ -115,7 +115,7 @@ CONTAINS
     INTEGER :: i, step_orig, n_dumps
     REAL(num) :: time_orig
     INTEGER, ALLOCATABLE :: file_numbers_orig(:)
-    TYPE(io_block_type), POINTER :: io_block_orig(:)
+    TYPE(io_block_type), ALLOCATABLE :: io_block_orig(:)
     INTEGER :: ndt
     INTEGER(i8) :: istep, step_interval
     REAL(num) :: time_start, time0, time1, dt_interval
@@ -1070,7 +1070,7 @@ CONTAINS
     INTEGER :: i, n, nlist, stat
     TYPE(string_entry), POINTER :: current, next
 
-    IF (ASSOCIATED(file_list)) THEN
+    IF (ALLOCATED(file_list)) THEN
       DO i = 1, n_io_blocks+2
         nlist = file_list(i)%count
         IF (nlist > 0) THEN
@@ -1147,7 +1147,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
           IF (step >= io_block_list(io)%dump_at_nsteps(is)) THEN
             io_block_list(io)%dump = .TRUE.
@@ -1156,7 +1156,7 @@ CONTAINS
         END DO
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_times)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_times)
           IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
@@ -1165,7 +1165,7 @@ CONTAINS
         END DO
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_walltimes)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_walltimes)
           IF (elapsed_time >= io_block_list(io)%dump_at_walltimes(is)) THEN
             io_block_list(io)%dump = .TRUE.

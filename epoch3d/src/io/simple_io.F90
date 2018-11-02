@@ -105,7 +105,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-    REAL(num), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
     INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
@@ -177,7 +177,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-    INTEGER(KIND=i4), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    INTEGER(KIND=i4), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
     INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
@@ -247,7 +247,7 @@ CONTAINS
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
-    INTEGER(KIND=i8), DIMENSION(:), POINTER, INTENT(INOUT) :: array
+    INTEGER(KIND=i8), DIMENSION(:), ALLOCATABLE, INTENT(INOUT) :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER(KIND=MPI_OFFSET_KIND) :: filesize, disp
     INTEGER(KIND=MPI_OFFSET_KIND) :: total_records, remainder, tail
