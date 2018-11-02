@@ -19,19 +19,21 @@ MODULE particle_id_hash_mod
   END TYPE particle_id_inner_list
 
   TYPE :: particle_id_hash
+    PRIVATE
     CHARACTER(LEN=c_max_string_length) :: name
     TYPE(particle_id_inner_list), DIMENSION(:), ALLOCATABLE :: buckets
     INTEGER(i8) :: count
     CONTAINS
-    PROCEDURE, PRIVATE :: hash => pid_hash_hash
-    PROCEDURE :: holds => pid_hash_holds
-    PROCEDURE :: add => pid_hash_add
-    PROCEDURE :: add_if_local => pid_hash_add_if_local
-    PROCEDURE :: delete => pid_hash_delete
-    PROCEDURE, PRIVATE :: init_i8 => pid_hash_init_i8
-    PROCEDURE, PRIVATE :: init_i4 => pid_hash_init_i4
-    GENERIC :: init => init_i8, init_i4
-    PROCEDURE :: optimise => pid_optimise
+    PRIVATE
+    PROCEDURE :: hash => pid_hash_hash
+    PROCEDURE, PUBLIC :: holds => pid_hash_holds
+    PROCEDURE, PUBLIC :: add => pid_hash_add
+    PROCEDURE, PUBLIC :: add_if_local => pid_hash_add_if_local
+    PROCEDURE, PUBLIC :: delete => pid_hash_delete
+    PROCEDURE :: init_i8 => pid_hash_init_i8
+    PROCEDURE :: init_i4 => pid_hash_init_i4
+    GENERIC, PUBLIC :: init => init_i8, init_i4
+    PROCEDURE, PUBLIC :: optimise => pid_optimise
     FINAL :: pid_hash_destructor
   END TYPE particle_id_hash
 
@@ -58,9 +60,10 @@ MODULE particle_id_hash_mod
     FINAL :: pidr_destructor
   END TYPE particle_id_list_registry
 
-  PRIVATE :: sort_list, partition
-
   TYPE(particle_id_list_registry), SAVE :: id_registry
+
+  PRIVATE
+  PUBLIC :: id_registry, particle_id_hash
 
   CONTAINS
 
@@ -274,9 +277,9 @@ MODULE particle_id_hash_mod
     INTEGER(i4), INTENT(IN) :: hash_id
     INTEGER, PARAMETER :: id_kind = i4
 #endif
-    INTEGER(i4) :: hash
+    INTEGER(i8) :: hash
 
-    hash = INT(MODULO(hash_id, SIZE(this%buckets, KIND=id_kind)), i4) + 1
+    hash = INT(MODULO(hash_id, SIZE(this%buckets, KIND=id_kind)), i8) + 1
 
   END FUNCTION pid_hash_hash
 
@@ -290,7 +293,7 @@ MODULE particle_id_hash_mod
     INTEGER(i4), INTENT(IN) :: test_id
 #endif
     LOGICAL :: holds
-    INTEGER(i4) :: bucket
+    INTEGER(i8) :: bucket
 
     IF (.NOT. ALLOCATED(this%buckets)) THEN
       holds = .FALSE.
@@ -312,7 +315,7 @@ MODULE particle_id_hash_mod
 #else
     INTEGER(i4), INTENT(IN) :: add_id
 #endif
-    INTEGER(i4) :: bucket
+    INTEGER(i8) :: bucket
 
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
     bucket = this%hash(add_id)
@@ -360,7 +363,7 @@ MODULE particle_id_hash_mod
 #else
     INTEGER(i4), INTENT(IN) :: del_id
 #endif
-    INTEGER(i4) :: bucket
+    INTEGER(i8) :: bucket
     LOGICAL :: holds
 
     IF (.NOT. ALLOCATED(this%buckets)) THEN
@@ -387,14 +390,18 @@ MODULE particle_id_hash_mod
     should_realloc = .FALSE.
     IF (PRESENT(realloc)) should_realloc = realloc
 
-    CALL MPI_ALLREDUCE(bucket_count, local_count, 1, MPI_INTEGER, MPI_MAX, &
-        comm, ierr)
-    local_count = MIN(local_count, 1000)
     IF (.NOT. ALLOCATED(this%buckets)) THEN
+      CALL MPI_ALLREDUCE(bucket_count, local_count, 1, MPI_INTEGER, MPI_MAX, &
+          comm, ierr)
+      local_count = MAX(local_count, 1000)
       this%count = 0
       ALLOCATE(this%buckets(local_count))
     ELSE
       IF (.NOT. should_realloc) RETURN
+      CALL MPI_ALLREDUCE(bucket_count, local_count, 1, MPI_INTEGER, MPI_MAX, &
+          comm, ierr)
+      local_count = MAX(local_count, 1000)
+      IF (local_count == SIZE(this%buckets)) RETURN
       ALLOCATE(buckets_old(SIZE(this%buckets)), SOURCE = this%buckets)
       DEALLOCATE(this%buckets)
       ALLOCATE(this%buckets(local_count))
@@ -601,6 +608,7 @@ MODULE particle_id_hash_mod
     INTEGER :: ihash, sz 
 
     IF (.NOT. ALLOCATED(this%list)) RETURN
+    IF (hashmap == 0) RETURN
     sz = SIZE(this%list)
     shifthash = hashmap
     DO ihash = 1, sz

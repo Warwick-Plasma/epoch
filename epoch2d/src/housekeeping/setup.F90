@@ -1389,13 +1389,9 @@ CONTAINS
           END IF
 #endif
         ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
-          PRINT *,'Persistent subset'
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-!            CALL sdf_read_point_variable(sdf_handle, npart_local, &
-!                species_subtypes_i8(ispecies), it_id8)
-          IF (datatype /= c_datatype_integer8) PRINT *,'Bad datatype'
-!          CALL sdf_read_point_variable(sdf_handle, npart_local, &
-!              species_subtypes_i8(ispecies), it_pers_sub)
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes_i8(ispecies), it_pers_sub)
 #else
           IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1497,10 +1493,26 @@ CONTAINS
     END IF
 
     CALL set_thermal_bcs
+    CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE setup_persistent_subsets
+
+    INTEGER :: isub
+
+    DO isub = 1, SIZE(subset_list)
+      IF(subset_list(isub)%persistent .AND. &
+          time >= subset_list(isub)%persist_after) THEN
+        subset_list(isub)%locked = .TRUE.
+      END IF
+    END DO
+
+  END SUBROUTINE setup_persistent_subsets
 
 
 
