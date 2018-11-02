@@ -423,7 +423,6 @@ CONTAINS
     CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
         total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
     CALL MPI_TYPE_COMMIT(subtype, errcode)
-    subtype = mpitype
 
     mpitype = 0
     basetype = MPI_INTEGER4
@@ -432,9 +431,8 @@ CONTAINS
         [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
         intertype, errcode)
     CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
-        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
-    CALL MPI_TYPE_COMMIT(subtype, errcode)
-    subtype_i4 = mpitype
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype_i4, errcode)
+    CALL MPI_TYPE_COMMIT(subtype_i4, errcode)
 
     mpitype = 0
     basetype = MPI_INTEGER8
@@ -443,9 +441,8 @@ CONTAINS
         [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
         intertype, errcode)
     CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
-        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
-    CALL MPI_TYPE_COMMIT(subtype, errcode)
-    subtype_i8 = mpitype
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype_i8, errcode)
+    CALL MPI_TYPE_COMMIT(subtype_i8, errcode)
 
   END SUBROUTINE create_particle_subtypes
 
