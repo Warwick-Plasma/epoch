@@ -251,7 +251,7 @@ CONTAINS
     DO iz = 1, nz
     DO iy = 1, ny
     DO ix = 1, nx
-      npart_per_cell = NINT(density(ix, iy, iz) / density_average &
+      npart_per_cell = NINT(density(ix,iy,iz) / density_average &
           * npart_per_cell_average)
       npart_this_proc_new = npart_this_proc_new + npart_per_cell
     END DO ! ix
@@ -266,7 +266,7 @@ CONTAINS
     DO iz = 1, nz
     DO iy = 1, ny
     DO ix = 1, nx
-      npart_per_cell = NINT(density(ix, iy, iz) / density_average &
+      npart_per_cell = NINT(density(ix,iy,iz) / density_average &
           * npart_per_cell_average)
 
       ipart = 0
@@ -410,7 +410,7 @@ CONTAINS
     DO iz = iz_min, iz_max
     DO iy = iy_min, iy_max
     DO ix = ix_min, ix_max
-      IF (load_list(ix, iy, iz)) &
+      IF (load_list(ix,iy,iz)) &
           num_valid_cells_local = num_valid_cells_local + 1
     END DO ! ix
     END DO ! iy
@@ -537,7 +537,7 @@ CONTAINS
       DO iz = iz_min, iz_max
       DO iy = iy_min, iy_max
       DO ix = ix_min, ix_max
-        IF (.NOT. load_list(ix, iy, iz)) CYCLE
+        IF (.NOT. load_list(ix,iy,iz)) CYCLE
 
         ipart = 0
         DO WHILE(ASSOCIATED(current) .AND. ipart < npart_per_cell)
