@@ -54,11 +54,16 @@ CONTAINS
 
     INTEGER :: ispecies
     TYPE(particle_species), POINTER :: species
+    INTEGER :: i0, i1
 
     CALL set_thermal_bcs
 
     IF (pre_loading .AND. n_species > 0) THEN
-      ALLOCATE(npart_per_cell_array(nx))
+      i0 = 1 - ng
+      IF (use_field_ionisation) i0 = -ng
+      i1 = 1 - i0
+
+      ALLOCATE(npart_per_cell_array(i0:nx+i1))
       npart_per_cell_array = 0
     ELSE IF (n_species > 0) THEN
       IF (rank == 0) WRITE(*,*) 'Attempting to load particles'
