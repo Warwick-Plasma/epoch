@@ -189,7 +189,7 @@ CONTAINS
 #ifdef PARTICLE_ID4
       n_cpu_bits = MAX(n_cpu_bits, 8)
 #else
-      n_cpu_bits = MAX(n_cpu_bits, 12)
+      n_cpu_bits = MAX(n_cpu_bits, 16)
 #endif
     END IF
     highest_id = 1
