@@ -232,7 +232,7 @@ CONTAINS
     END DO
 
   END FUNCTION reverse_bits
-
+#endif
 
 
   SUBROUTINE print_id_info
