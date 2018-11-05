@@ -185,10 +185,36 @@ CONTAINS
     END IF
     highest_id = 1
     cpu_id = rank
-    cpu_id = ISHFT(cpu_id, n_id_bits - 1_i8 - n_cpu_bits)
+    cpu_id = reverse_bits(cpu_id)
 #endif
 
   END SUBROUTINE setup_ids
+
+
+
+  !> Function to reverse the bits in a number and then shift down by
+  !> one bit to guarantee empty sign bit
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  FUNCTION reverse_bits(inval) RESULT(revval)
+    INTEGER(idkind), INTENT(IN) :: inval
+#ifdef PARTICLE_ID
+    INTEGER, PARAMETER :: nbits = 8 * 8 !8 bits per byte
+#else
+    INTEGER, PARAMETER :: nbits = 8 * 4 !8 bits per byte
+#endif
+    INTEGER(idkind) :: revval, tval, sval
+    INTEGER :: ibit
+
+    tval = 1_idkind
+    sval = ISHFT(1_idkind, INT(nbits, idkind)-2_idkind)
+    revval = 0_idkind
+    DO ibit = 1, INT(nbits) - 1
+      IF (IAND(inval, tval) /= 0_idkind) revval = IOR(revval, sval)
+      tval = ISHFT(tval, 1_idkind)
+      sval = ISHFT(sval, -1_idkind)
+    END DO
+
+  END FUNCTION reverse_bits
 
 
 
