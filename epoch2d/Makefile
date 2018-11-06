@@ -205,7 +205,7 @@ DEFINES := $(DEFINE)
 
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
-DEFINES += $(D)PARTICLE_ID
+#DEFINES += $(D)PARTICLE_ID
 #DEFINES += $(D)PARTICLE_ID4
 
 # Include QED routines
