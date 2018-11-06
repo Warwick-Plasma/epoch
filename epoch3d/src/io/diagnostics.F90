@@ -219,7 +219,7 @@ CONTAINS
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval, n
     INTEGER :: errcode
-    INTEGER :: random_state(4)
+    INTEGER :: random_state(5)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER, SAVE :: nstep_prev = -1
@@ -460,11 +460,11 @@ CONTAINS
 
         IF (need_random_state) THEN
           CALL get_random_state(random_state)
-          ALLOCATE(random_states_per_proc(4*nproc))
-          CALL MPI_GATHER(random_state, 4, MPI_INTEGER, &
-              random_states_per_proc, 4, MPI_INTEGER, 0, comm, errcode)
-          CALL sdf_write_srl(sdf_handle, 'random_states', 'Random States', &
-              random_states_per_proc)
+          ALLOCATE(random_states_per_proc(5*nproc))
+          CALL MPI_GATHER(random_state, 5, MPI_INTEGER, &
+              random_states_per_proc, 5, MPI_INTEGER, 0, comm, errcode)
+          CALL sdf_write_srl(sdf_handle, 'random_states_full', &
+              'Random States', random_states_per_proc)
           DEALLOCATE(random_states_per_proc)
         END IF
       END IF
