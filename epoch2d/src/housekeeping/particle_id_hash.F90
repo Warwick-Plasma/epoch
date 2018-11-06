@@ -2,8 +2,13 @@ MODULE particle_id_hash_mod
 
   USE constants
   USE shared_data
+  USE random_generator
 
   IMPLICIT NONE
+
+  INTEGER, PARAMETER :: id_global_chunk_size = 1000000 !8MB chunks at i8
+  LOGICAL :: random_state_set = .FALSE.
+  TYPE(random_state_type), SAVE :: random_state
 
   TYPE :: particle_id_inner_list
 #if defined(PARTICLE_ID)
@@ -22,13 +27,15 @@ MODULE particle_id_hash_mod
     PRIVATE
     CHARACTER(LEN=c_max_string_length) :: name
     TYPE(particle_id_inner_list), DIMENSION(:), ALLOCATABLE :: buckets
-    INTEGER(i8) :: count
+    INTEGER(i8) :: count, hash_gr
+    INTEGER(i4) :: id_chunk_size
     CONTAINS
     PRIVATE
     PROCEDURE :: hash => pid_hash_hash
     PROCEDURE, PUBLIC :: holds => pid_hash_holds
     PROCEDURE, PUBLIC :: add => pid_hash_add
     PROCEDURE, PUBLIC :: add_if_local => pid_hash_add_if_local
+    PROCEDURE, PUBLIC :: add_from_file => pid_hash_add_from_file
     PROCEDURE, PUBLIC :: delete => pid_hash_delete
     PROCEDURE :: init_i8 => pid_hash_init_i8
     PROCEDURE :: init_i4 => pid_hash_init_i4
@@ -55,6 +62,7 @@ MODULE particle_id_hash_mod
     GENERIC :: get_hash => get_hash_by_name, get_existing_hash_by_index
     PROCEDURE :: get_hash_count => pidr_get_hash_count
     PROCEDURE :: map => pidr_map
+    PROCEDURE :: delete_all => pidr_delete_all
     PROCEDURE :: delete_and_map => pidr_delete_and_map
     PROCEDURE :: add_with_map => pidr_add_with_map
     FINAL :: pidr_destructor
@@ -98,9 +106,14 @@ MODULE particle_id_hash_mod
     INTEGER(i4) :: pivot, temp
 #endif
     INTEGER(i8), INTENT(INOUT) :: part_index
-    INTEGER(i8) :: upper, lower
+    INTEGER(i8) :: upper, lower, pivot_index, p1, p2, p3
 
-    pivot = list_in(1)
+    p1 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
+    p2 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
+    p3 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
+
+    pivot_index = median_of_three(p1,p2,p3)
+    pivot = list_in(pivot_index)
     lower = 0
     upper = SIZE(list_in) + 1
     DO
@@ -130,6 +143,16 @@ MODULE particle_id_hash_mod
 
 
 
+  FUNCTION median_of_three(a, b, c) RESULT(median)
+
+    INTEGER(i8), INTENT(IN) :: a, b, c
+    INTEGER(i8) :: median
+
+    median = MAXVAL([MINVAL([a,b]), MINVAL([MAXVAL([a,b]), c])])
+
+  END FUNCTION median_of_three
+
+
   !> Function to find if an item is in a list
   RECURSIVE FUNCTION in_list(list_in, test) RESULT(found)
 #if defined(PARTICLE_ID)
@@ -141,6 +164,11 @@ MODULE particle_id_hash_mod
 #endif
     LOGICAL :: found
     INTEGER(i8) :: trial_index
+
+    IF (SIZE(list_in) == 0) THEN
+      found = .FALSE.
+      RETURN
+    END IF
 
     IF (SIZE(list_in) == 1) THEN
       IF (list_in(1) == test) THEN
@@ -272,14 +300,14 @@ MODULE particle_id_hash_mod
     CLASS(particle_id_hash), INTENT(IN) :: this
 #if defined(PARTICLE_ID)
     INTEGER(i8), INTENT(IN) :: hash_id
-    INTEGER, PARAMETER :: id_kind = i8
 #else
     INTEGER(i4), INTENT(IN) :: hash_id
-    INTEGER, PARAMETER :: id_kind = i4
 #endif
     INTEGER(i8) :: hash
 
-    hash = INT(MODULO(hash_id, SIZE(this%buckets, KIND=id_kind)), i8) + 1
+    !Knuth's multiplicative method (sort of)
+    hash = INT(MODULO(hash_id * INT(this%hash_gr,idkind), &
+        SIZE(this%buckets, KIND=idkind)), idkind) + 1_idkind
 
   END FUNCTION pid_hash_hash
 
@@ -328,18 +356,23 @@ MODULE particle_id_hash_mod
 
 !> Add those IDs from a list of IDs that correspond to particles on this
 !> processor
-  SUBROUTINE pid_hash_add_if_local(this, id_list)
+  SUBROUTINE pid_hash_add_if_local(this, id_list, sorted)
     CLASS(particle_id_hash), INTENT(INOUT) :: this
 #if defined(PARTICLE_ID)
     INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: id_list
 #else
     INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: id_list
 #endif
+    LOGICAL, INTENT(IN), OPTIONAL :: sorted
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    CALL sort_list(id_list)
+    IF (.NOT. PRESENT(sorted)) THEN
+      CALL sort_list(id_list)
+    ELSE IF (.NOT. sorted) THEN
+      CALL sort_list(id_list)
+    END IF
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
@@ -352,6 +385,44 @@ MODULE particle_id_hash_mod
     END DO
 #endif
   END SUBROUTINE pid_hash_add_if_local
+
+
+
+  !> Function to add a list of hashes based on a binary file
+  SUBROUTINE pid_hash_add_from_file(this, id_file, sorted)
+    CLASS(particle_id_hash), INTENT(INOUT) :: this
+    CHARACTER(LEN=*), INTENT(IN) :: id_file
+    LOGICAL, INTENT(IN), OPTIONAL :: sorted
+#if defined(PARTICLE_ID)
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: id_list
+    INTEGER(KIND = MPI_OFFSET_KIND), PARAMETER :: id_length = 8
+    INTEGER, PARAMETER :: mpi_type = MPI_INTEGER8
+#else
+    INTEGER(i4), DIMENSION(:), ALLOCATABLE :: id_list
+    INTEGER(KIND = MPI_OFFSET_KIND), PARAMETER :: id_length = 4
+    INTEGER, PARAMETER :: mpi_type = MPI_INTEGER4
+#endif
+    INTEGER(KIND = MPI_OFFSET_KIND) :: nels, nels_remaining
+    INTEGER :: handle, errcode, to_read
+
+    ALLOCATE(id_list(this%id_chunk_size))
+    CALL MPI_FILE_OPEN(MPI_COMM_SELF, id_file, MPI_MODE_RDONLY, &
+        MPI_INFO_NULL, handle, errcode)
+    CALL MPI_FILE_GET_SIZE(handle, nels, errcode)
+    nels = nels / id_length
+    nels_remaining = nels
+    DO WHILE(nels_remaining > 0)
+      to_read = INT(MIN(nels_remaining, &
+          INT(this%id_chunk_size, MPI_OFFSET_KIND)), i4)
+      CALL MPI_FILE_READ(handle, id_list, to_read, mpi_type, &
+          MPI_STATUS_IGNORE, errcode)
+      CALL this%add_if_local(id_list(1:to_read), sorted)
+      nels_remaining = nels_remaining - to_read
+    END DO
+
+    CALL MPI_FILE_CLOSE(handle, errcode)
+
+  END SUBROUTINE pid_hash_add_from_file
 
 
 
@@ -384,17 +455,28 @@ MODULE particle_id_hash_mod
     INTEGER(i8), INTENT(IN) :: bucket_count
     LOGICAL, INTENT(IN), OPTIONAL :: realloc
     TYPE(particle_id_inner_list), DIMENSION(:), ALLOCATABLE :: buckets_old
-    INTEGER :: local_count, ierr, ibuck, ipart
+    INTEGER :: local_count, ierr, ibuck, ipart, seed
     LOGICAL :: should_realloc
 
     should_realloc = .FALSE.
     IF (PRESENT(realloc)) should_realloc = realloc
 
+    !Since this RNG is only used for partitioning for the quicksort
+    !algorithm (which it ultimately deterministic) seed from clock always
+    IF (.NOT. random_state_set) THEN
+      CALL SYSTEM_CLOCK(seed)
+      seed = seed + rank
+      CALL random_init(seed, random_state)
+    END IF
+
     IF (.NOT. ALLOCATED(this%buckets)) THEN
       CALL MPI_ALLREDUCE(bucket_count, local_count, 1, MPI_INTEGER, MPI_MAX, &
           comm, ierr)
+      this%hash_gr = INT(0.5_num * (SQRT(5.0_num)-1.0_num) &
+          * REAL(local_count, num), i8)
       local_count = MAX(local_count, 1000)
       this%count = 0
+      this%id_chunk_size = id_global_chunk_size
       ALLOCATE(this%buckets(local_count))
     ELSE
       IF (.NOT. should_realloc) RETURN
@@ -546,6 +628,27 @@ MODULE particle_id_hash_mod
     hash_ptr => this%list(index)%contents
 
   END FUNCTION pidr_get_existing_hash_by_index
+
+
+
+  !> Delete an ID from all hashes
+  SUBROUTINE pidr_delete_all(this, del_id)
+   CLASS(particle_id_list_registry), INTENT(INOUT) :: this
+#if defined(PARTICLE_ID)
+    INTEGER(i8), INTENT(IN) :: del_id
+#else
+    INTEGER(i4), INTENT(IN) :: del_id
+#endif
+    INTEGER :: ihash, sz
+    LOGICAL :: dummy
+
+    IF (.NOT. ALLOCATED(this%list)) RETURN
+    sz = SIZE(this%list)
+    DO ihash = 1, sz
+      dummy = this%list(ihash)%contents%delete(del_id)
+    END DO
+
+  END SUBROUTINE pidr_delete_all
 
 
 

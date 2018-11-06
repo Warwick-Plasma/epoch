@@ -649,8 +649,11 @@ MODULE shared_data
     TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
-    LOGICAL :: persistent, locked
+    !Persistent subset
+    LOGICAL :: persistent, locked, from_file
     REAL(num) :: persist_after
+    LOGICAL :: file_sorted
+    CHARACTER(LEN=string_length) :: filename
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next

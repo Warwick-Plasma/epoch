@@ -266,7 +266,7 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      DEALLOCATE(new_particle)
+      CALL destroy_particle(new_particle)
       new_particle => next
       ipart = ipart+1
     END DO
@@ -416,7 +416,7 @@ CONTAINS
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
 #ifndef NO_PERSIST
-    array(cpos) = TRANSFER(id_registry%delete_and_map(a_particle%id), 1.0_num)
+    array(cpos) = TRANSFER(id_registry%map(a_particle%id), 1.0_num)
     cpos = cpos + 1
 #endif
 #endif
@@ -566,6 +566,21 @@ CONTAINS
   END SUBROUTINE init_particle
 
 
+  !>Routine to delete a particle. This routine is only safe to use on 
+  !> a particle that is not in a partlist
+  SUBROUTINE destroy_particle(part)
+
+    TYPE(particle), POINTER :: part
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    CALL id_registry%delete_all(part%id)
+#endif
+
+    DEALLOCATE(part)
+
+  END SUBROUTINE destroy_particle
+
+
 
   SUBROUTINE create_particle(new_particle)
 
@@ -655,7 +670,7 @@ CONTAINS
       current => current%next
     END DO
 
-    DEALLOCATE(a_particle)
+    DEALLOCATE(a_particle) !DO NOT REPLACE WITH CALL TO destroy_particle
 
     test_packed_particles = .TRUE.
 

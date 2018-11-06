@@ -2350,34 +2350,37 @@ CONTAINS
 
       sub => subset_list(isub)
       current_hash => id_registry%get_hash(sub%name)
-      DO ispec = 1, n_species
-
-        IF (.NOT. sub%use_species(ispec)) THEN
-          CYCLE
-        END IF
-
-        part_mc = c * species_list(ispec)%mass
-
-        current => species_list(ispec)%attached_list%head
-        DO WHILE (ASSOCIATED(current))
-          next => current%next
-#ifdef PER_PARTICLE_CHARGE_MASS
-          part_mc = c * current%mass
-#endif
-          use_particle = test_particle(sub, current, part_mc)
-
-          IF (use_particle) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-            ! Add particle ID to persistence list
-            IF (sub%persistent .AND. time >= sub%persist_after .AND. &
-                .NOT. sub%locked) THEN
-              CALL current_hash%add(current%id)
-            END IF
-#endif
+      IF (sub%from_file) THEN
+        CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
+      ELSE
+        DO ispec = 1, n_species
+          IF (.NOT. sub%use_species(ispec)) THEN
+            CYCLE
           END IF
-          current => next
+
+          part_mc = c * species_list(ispec)%mass
+
+          current => species_list(ispec)%attached_list%head
+          DO WHILE (ASSOCIATED(current))
+            next => current%next
+#ifdef PER_PARTICLE_CHARGE_MASS
+            part_mc = c * current%mass
+#endif
+            use_particle = test_particle(sub, current, part_mc)
+
+            IF (use_particle) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+              ! Add particle ID to persistence list
+              IF (sub%persistent .AND. time >= sub%persist_after .AND. &
+                  .NOT. sub%locked) THEN
+                CALL current_hash%add(current%id)
+              END IF
+#endif
+            END IF
+            current => next
+          END DO
         END DO
-      END DO
+      END IF
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%locked = .TRUE.

@@ -299,6 +299,30 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'from_file')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%filename = TRIM(value)
+      sub%from_file = .TRUE.
+      current_hash => id_registry%get_hash(sub%name)
+      CALL current_hash%init(1000)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'sorted_file')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%file_sorted = as_logical_print(value, element, errcode)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 
   END FUNCTION subset_block_handle_element
@@ -377,6 +401,8 @@ CONTAINS
       subset_list(i)%persistent = .FALSE.
       subset_list(i)%persist_after = 0.0_num
       subset_list(i)%locked = .FALSE.
+      subset_list(i)%from_file = .FALSE.
+      subset_list(i)%file_sorted = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets
