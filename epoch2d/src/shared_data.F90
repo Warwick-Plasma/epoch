@@ -655,7 +655,7 @@ MODULE shared_data
     !Persistent subset
     LOGICAL :: persistent, locked, from_file
     REAL(num) :: persist_after
-    LOGICAL :: file_sorted
+    LOGICAL :: file_sorted, add_after_restart
     CHARACTER(LEN=string_length) :: filename
 
     ! Pointer to next subset

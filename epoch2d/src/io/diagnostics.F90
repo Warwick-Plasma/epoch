@@ -2349,7 +2349,11 @@ CONTAINS
       sub => subset_list(isub)
       current_hash => id_registry%get_hash(sub%name)
       IF (sub%from_file) THEN
-        CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
+        !If you are restarting then unless the user specifically asks, build up
+        !the persistent subset from the restart file, not from the external file
+        IF (.NOT. ic_from_restart .OR. sub%add_after_restart) THEN
+          CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
+        END IF
       ELSE
         DO ispec = 1, n_species
           IF (.NOT. sub%use_species(ispec)) THEN
