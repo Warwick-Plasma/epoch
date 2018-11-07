@@ -113,15 +113,17 @@ CONTAINS
 
 
 
-  SUBROUTINE create_unsafe_partlist(partlist, a_particle, n_elements)
+  SUBROUTINE create_unsafe_partlist(partlist, a_particle, n_elements, &
+      holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: a_particle
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     partlist%safe = .FALSE.
     current => a_particle
@@ -138,14 +140,15 @@ CONTAINS
 
 
 
-  SUBROUTINE create_unsafe_partlist_by_tail(partlist, head, tail)
+  SUBROUTINE create_unsafe_partlist_by_tail(partlist, head, tail, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: head, tail
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     partlist%safe = .FALSE.
     partlist%head => head
@@ -167,14 +170,15 @@ CONTAINS
 
 
 
-  SUBROUTINE create_allocated_partlist(partlist, n_elements)
+  SUBROUTINE create_allocated_partlist(partlist, n_elements, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       CALL create_particle(new_particle)
@@ -186,15 +190,16 @@ CONTAINS
 
 
 
-  SUBROUTINE create_filled_partlist(partlist, data_in, n_elements)
+  SUBROUTINE create_filled_partlist(partlist, data_in, n_elements, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     REAL(num), DIMENSION(:), INTENT(IN) :: data_in
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart, cpos = 0
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       ALLOCATE(new_particle)
@@ -272,7 +277,10 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      CALL destroy_particle(new_particle, partlist%holds_copies)
+      !A partlist that holds copies or an unsafe partlist should not cause
+      !unlinking
+      CALL destroy_particle(new_particle, partlist%holds_copies .OR. &
+          .NOT. partlist%safe)
       new_particle => next
       ipart = ipart+1
     END DO
