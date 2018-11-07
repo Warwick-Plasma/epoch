@@ -30,8 +30,8 @@ MODULE deck_subset_block
 
   INTEGER :: subset_id, current_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
-  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: subset_names
-  INTEGER, DIMENSION(:), POINTER :: subset_blocks
+  CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: subset_names
+  INTEGER, DIMENSION(:), ALLOCATABLE :: subset_blocks
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
 
