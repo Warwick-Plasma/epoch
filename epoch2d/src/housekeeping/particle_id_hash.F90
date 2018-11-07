@@ -100,20 +100,19 @@ MODULE particle_id_hash_mod
   SUBROUTINE partition(list_in, part_index)
 #if defined(PARTICLE_ID)
     INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: list_in
-    INTEGER(i8) :: pivot, temp
+    INTEGER(i8) :: pivot, temp, p1, p2, p3,
 #else
     INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: list_in
-    INTEGER(i4) :: pivot, temp
+    INTEGER(i4) :: pivot, temp, p1, p2, p3
 #endif
     INTEGER(i8), INTENT(INOUT) :: part_index
-    INTEGER(i8) :: upper, lower, pivot_index, p1, p2, p3
+    INTEGER(i8) :: upper, lower
 
-    p1 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
-    p2 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
-    p3 = INT(random(random_state) * REAL(SIZE(list_in),num), i8)
+    p1 = list_in(INT(random(random_state) * REAL(SIZE(list_in),num), idkind))
+    p2 = list_in(INT(random(random_state) * REAL(SIZE(list_in),num), idkind))
+    p3 = list_in(INT(random(random_state) * REAL(SIZE(list_in),num), idkind))
 
-    pivot_index = median_of_three(p1,p2,p3)
-    pivot = list_in(pivot_index)
+    pivot = median_of_three(p1,p2,p3)
     lower = 0
     upper = SIZE(list_in) + 1
     DO
@@ -145,8 +144,13 @@ MODULE particle_id_hash_mod
 
   FUNCTION median_of_three(a, b, c) RESULT(median)
 
+#if defined(PARTICLE_ID)
     INTEGER(i8), INTENT(IN) :: a, b, c
     INTEGER(i8) :: median
+#else
+    INTEGER(i4), INTENT(IN) :: a, b, c
+    INTEGER(i4) :: median
+#endif
 
     median = MAXVAL([MINVAL([a,b]), MINVAL([MAXVAL([a,b]), c])])
 
