@@ -80,8 +80,6 @@ MODULE diagnostics
     MODULE PROCEDURE &
 #if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
         write_particle_variable_i4, &
-#endif
-#if defined(PARTICLE_ID)
         write_particle_variable_i8, &
 #endif
         write_particle_variable_num
@@ -2832,7 +2830,7 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   SUBROUTINE write_particle_variable_i8(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
