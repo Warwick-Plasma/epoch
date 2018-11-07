@@ -369,6 +369,9 @@ MODULE shared_data
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
 
+    !Does this partlist hold copies of particles rather than originals
+    LOGICAL :: holds_copies
+
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
 

@@ -93,15 +93,21 @@ CONTAINS
 
 
 
-  SUBROUTINE create_empty_partlist(partlist)
+  SUBROUTINE create_empty_partlist(partlist, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
 
     NULLIFY(partlist%head)
     NULLIFY(partlist%tail)
     partlist%count = 0
     partlist%id_update = 0
     partlist%safe = .TRUE.
+    IF (PRESENT(holds_copies)) THEN
+      partlist%holds_copies = holds_copies
+    ELSE
+      partlist%holds_copies = .FALSE.
+    END IF
 
   END SUBROUTINE create_empty_partlist
 
@@ -266,7 +272,7 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      CALL destroy_particle(new_particle)
+      CALL destroy_particle(new_particle, partlist%holds_copies)
       new_particle => next
       ipart = ipart+1
     END DO
@@ -285,6 +291,7 @@ CONTAINS
     partlist2%tail => partlist1%tail
     partlist2%count = partlist1%count
     partlist2%id_update = partlist1%id_update
+    partlist2%holds_copies = partlist1%holds_copies
 
   END SUBROUTINE copy_partlist
 
@@ -568,12 +575,17 @@ CONTAINS
 
   !>Routine to delete a particle. This routine is only safe to use on 
   !> a particle that is not in a partlist
-  SUBROUTINE destroy_particle(part)
+  SUBROUTINE destroy_particle(part, is_copy)
 
     TYPE(particle), POINTER :: part
+    LOGICAL, INTENT(IN), OPTIONAL :: is_copy
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    CALL id_registry%delete_all(part%id)
+    IF (PRESENT(is_copy)) THEN
+      IF (.NOT. is_copy) CALL id_registry%delete_all(part%id)
+    ELSE
+      CALL id_registry%delete_all(part%id)
+    END IF
 #endif
 
     DEALLOCATE(part)
