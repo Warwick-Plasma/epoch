@@ -3,6 +3,7 @@ MODULE particle_id_hash_mod
   USE constants
   USE shared_data
   USE random_generator
+  USE utilities
 
   IMPLICIT NONE
 
@@ -100,7 +101,7 @@ MODULE particle_id_hash_mod
   SUBROUTINE partition(list_in, part_index)
 #if defined(PARTICLE_ID)
     INTEGER(i8), DIMENSION(:), INTENT(INOUT) :: list_in
-    INTEGER(i8) :: pivot, temp, p1, p2, p3,
+    INTEGER(i8) :: pivot, temp, p1, p2, p3
 #else
     INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: list_in
     INTEGER(i4) :: pivot, temp, p1, p2, p3
@@ -410,8 +411,15 @@ MODULE particle_id_hash_mod
     INTEGER :: handle, errcode, to_read
 
     ALLOCATE(id_list(this%id_chunk_size))
+    IF (rank == 0) PRINT *, 'Opening persistent ID file ', TRIM(id_file)
     CALL MPI_FILE_OPEN(MPI_COMM_SELF, id_file, MPI_MODE_RDONLY, &
         MPI_INFO_NULL, handle, errcode)
+    IF (errcode /= 0) THEN
+      IF (rank == 0) PRINT *, '***ERROR*** Persistent ID file ', &
+          TRIM(id_file), ' does not exist.'
+      CALL abort_code(c_err_bad_value)
+      RETURN
+    END IF
     CALL MPI_FILE_GET_SIZE(handle, nels, errcode)
     nels = nels / id_length
     nels_remaining = nels
@@ -425,6 +433,7 @@ MODULE particle_id_hash_mod
     END DO
 
     CALL MPI_FILE_CLOSE(handle, errcode)
+    IF (rank == 0) PRINT *, 'Persistent ID file ', TRIM(id_file), ' read OK'
 
   END SUBROUTINE pid_hash_add_from_file
 

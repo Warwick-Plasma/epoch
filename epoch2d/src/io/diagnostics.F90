@@ -41,6 +41,7 @@ MODULE diagnostics
   PUBLIC :: output_routines, create_full_timestring
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
   PUBLIC :: deallocate_file_list, count_n_zeros
+  PUBLIC :: build_persistent_subsets
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
@@ -80,6 +81,9 @@ MODULE diagnostics
     MODULE PROCEDURE &
 #if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
         write_particle_variable_i4, &
+        write_particle_variable_i8, &
+#endif
+#if defined(PARTICLE_ID)
         write_particle_variable_i8, &
 #endif
         write_particle_variable_num
@@ -2343,7 +2347,8 @@ CONTAINS
 
     DO isub = 1, SIZE(subset_list)
       IF (.NOT. subset_list(isub)%persistent) CYCLE !Not a persistent subset
-      IF (subset_list(isub)%locked) CYCLE !Already locked in
+      IF (subset_list(isub)%locked .AND. &
+          .NOT. subset_list(isub)%add_after_restart) CYCLE !Already locked in
       IF (time < subset_list(isub)%persist_after) CYCLE !Not yet time to lock
 
       sub => subset_list(isub)
@@ -2353,6 +2358,7 @@ CONTAINS
         !the persistent subset from the restart file, not from the external file
         IF (.NOT. ic_from_restart .OR. sub%add_after_restart) THEN
           CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
+          sub%add_after_restart = .FALSE.
         END IF
       ELSE
         DO ispec = 1, n_species
