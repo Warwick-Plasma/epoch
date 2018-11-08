@@ -21,8 +21,10 @@ MODULE version_data
   CHARACTER(LEN=*), PARAMETER :: c_code_name = 'EPOCH2D'
   INTEGER(i4) :: c_version, c_revision, c_minor_rev
   INTEGER(i4), PARAMETER :: c_code_io_version = 1
-  CHARACTER(LEN=*), PARAMETER :: c_commit_id = _COMMIT
-  CHARACTER(LEN=*), PARAMETER :: c_compile_machine = _MACHINE
+  CHARACTER(LEN=*), PARAMETER :: c_commit_id = &
+_COMMIT
+  CHARACTER(LEN=*), PARAMETER :: c_compile_machine = &
+_MACHINE
   CHARACTER(LEN=*), PARAMETER :: c_compile_flags = 'unknown'
   INTEGER(i4), PARAMETER :: c_compile_date = _DATE
   CHARACTER(LEN=16) :: version_string
