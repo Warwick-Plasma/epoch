@@ -194,8 +194,10 @@ CONTAINS
 
   !> Function to reverse the bits in a number and then shift down by
   !> one bit to guarantee empty sign bit
+
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   FUNCTION reverse_bits(inval) RESULT(revval)
+
     INTEGER(idkind), INTENT(IN) :: inval
 #ifdef PARTICLE_ID
     INTEGER, PARAMETER :: nbits = 8 * 8 !8 bits per byte
@@ -206,7 +208,7 @@ CONTAINS
     INTEGER :: ibit
 
     tval = 1_idkind
-    sval = ISHFT(1_idkind, INT(nbits, idkind)-2_idkind)
+    sval = ISHFT(1_idkind, INT(nbits, idkind) - 2_idkind)
     revval = 0_idkind
     DO ibit = 1, INT(nbits) - 1
       IF (IAND(inval, tval) /= 0_idkind) revval = IOR(revval, sval)
@@ -216,6 +218,7 @@ CONTAINS
 
   END FUNCTION reverse_bits
 #endif
+
 
 
   SUBROUTINE print_id_info
