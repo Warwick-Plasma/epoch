@@ -162,6 +162,8 @@ PROGRAM pic
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
+  !Setup persistent subsets first call
+  CALL build_persistent_subsets !diagnostics.f90
 
   IF (rank == 0) THEN
     PRINT*

@@ -20,6 +20,11 @@ MODULE partlist
 #ifdef PHOTONS
   USE random_generator
 #endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  USE particle_id_hash_mod
+#endif
+ 
+
 
   IMPLICIT NONE
 
@@ -57,6 +62,9 @@ CONTAINS
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     nvar = nvar+1
+#ifndef NO_PERSISTENT
+    nvar = nvar+1
+#endif
 #endif
 #ifdef COLLISIONS_TEST
     nvar = nvar+1
@@ -87,29 +95,37 @@ CONTAINS
 
 
 
-  SUBROUTINE create_empty_partlist(partlist)
+  SUBROUTINE create_empty_partlist(partlist, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
 
     NULLIFY(partlist%head)
     NULLIFY(partlist%tail)
     partlist%count = 0
     partlist%id_update = 0
     partlist%safe = .TRUE.
+    IF (PRESENT(holds_copies)) THEN
+      partlist%holds_copies = holds_copies
+    ELSE
+      partlist%holds_copies = .FALSE.
+    END IF
 
   END SUBROUTINE create_empty_partlist
 
 
 
-  SUBROUTINE create_unsafe_partlist(partlist, a_particle, n_elements)
+  SUBROUTINE create_unsafe_partlist(partlist, a_particle, n_elements, &
+      holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: a_particle
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     partlist%safe = .FALSE.
     current => a_particle
@@ -126,14 +142,15 @@ CONTAINS
 
 
 
-  SUBROUTINE create_unsafe_partlist_by_tail(partlist, head, tail)
+  SUBROUTINE create_unsafe_partlist_by_tail(partlist, head, tail, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     TYPE(particle), POINTER :: head, tail
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     partlist%safe = .FALSE.
     partlist%head => head
@@ -155,14 +172,15 @@ CONTAINS
 
 
 
-  SUBROUTINE create_allocated_partlist(partlist, n_elements)
+  SUBROUTINE create_allocated_partlist(partlist, n_elements, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       CALL create_particle(new_particle)
@@ -174,15 +192,16 @@ CONTAINS
 
 
 
-  SUBROUTINE create_filled_partlist(partlist, data_in, n_elements)
+  SUBROUTINE create_filled_partlist(partlist, data_in, n_elements, holds_copies)
 
     TYPE(particle_list), INTENT(INOUT) :: partlist
     REAL(num), DIMENSION(:), INTENT(IN) :: data_in
     INTEGER(i8), INTENT(IN) :: n_elements
+    LOGICAL, INTENT(IN), OPTIONAL :: holds_copies
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart, cpos = 0
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       ALLOCATE(new_particle)
@@ -260,7 +279,10 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      DEALLOCATE(new_particle)
+      !A partlist that holds copies or an unsafe partlist should not cause
+      !unlinking
+      CALL destroy_particle(new_particle, partlist%holds_copies .OR. &
+          .NOT. partlist%safe)
       new_particle => next
       ipart = ipart+1
     END DO
@@ -279,6 +301,7 @@ CONTAINS
     partlist2%tail => partlist1%tail
     partlist2%count = partlist1%count
     partlist2%id_update = partlist1%id_update
+    partlist2%holds_copies = partlist1%holds_copies
 
   END SUBROUTINE copy_partlist
 
@@ -408,6 +431,12 @@ CONTAINS
     array(cpos) = TRANSFER(a_particle%id, 1.0_num)
     cpos = cpos+1
 #endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+#ifndef NO_PERSIST
+    array(cpos) = TRANSFER(id_registry%map(a_particle%id), 1.0_num)
+    cpos = cpos + 1
+#endif
+#endif
 #ifdef COLLISIONS_TEST
     array(cpos) = REAL(a_particle%coll_count, num)
     cpos = cpos+1
@@ -439,10 +468,7 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos
-#ifdef PARTICLE_ID4
-    INTEGER(i8) :: temp_i8
-#endif
+    INTEGER(i8) :: cpos, temp_i8
 
     cpos = 1
     a_particle%part_pos = array(cpos)
@@ -474,6 +500,13 @@ CONTAINS
 #elif PARTICLE_ID
     a_particle%id = TRANSFER(array(cpos), a_particle%id)
     cpos = cpos+1
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+#ifndef NO_PERSISTENT
+    CALL id_registry%add_with_map(a_particle%id, &
+        TRANSFER(array(cpos), temp_i8))
+    cpos = cpos+1
+#endif
 #endif
 #ifdef COLLISIONS_TEST
     a_particle%coll_count = NINT(array(cpos))
@@ -548,6 +581,27 @@ CONTAINS
 #endif
 
   END SUBROUTINE init_particle
+
+
+
+  !>Routine to delete a particle. This routine is only safe to use on 
+  !> a particle that is not in a partlist
+  SUBROUTINE destroy_particle(part, is_copy)
+
+    TYPE(particle), POINTER :: part
+    LOGICAL, INTENT(IN), OPTIONAL :: is_copy
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (PRESENT(is_copy)) THEN
+      IF (.NOT. is_copy) CALL id_registry%delete_all(part%id)
+    ELSE
+      CALL id_registry%delete_all(part%id)
+    END IF
+#endif
+
+    DEALLOCATE(part)
+
+  END SUBROUTINE destroy_particle
 
 
 
@@ -639,7 +693,7 @@ CONTAINS
       current => current%next
     END DO
 
-    DEALLOCATE(a_particle)
+    DEALLOCATE(a_particle) !DO NOT REPLACE WITH CALL TO destroy_particle
 
     test_packed_particles = .TRUE.
 

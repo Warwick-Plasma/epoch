@@ -368,6 +368,8 @@ MODULE shared_data
     INTEGER :: id_update
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
+    !Does this partlist hold copies of particles rather than originals
+    LOGICAL :: holds_copies
 
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
@@ -513,16 +515,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 47
   INTEGER, PARAMETER :: c_dump_ppc               = 48
   INTEGER, PARAMETER :: c_dump_average_weight    = 49
+  INTEGER, PARAMETER :: c_dump_persistent_ids    = 50
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 50
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 51
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 52
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 53
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 54
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 55
-  INTEGER, PARAMETER :: num_vars_to_dump         = 55
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 51
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 52
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 53
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 54
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 55
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 56
+  INTEGER, PARAMETER :: num_vars_to_dump         = 56
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 49
+  INTEGER, PARAMETER :: num_vars_to_dump         = 50
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
@@ -641,6 +644,12 @@ MODULE shared_data
     TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
+
+    !Persistent subset
+    LOGICAL :: persistent, locked, from_file
+    REAL(num) :: persist_after
+    LOGICAL :: file_sorted, add_after_restart
+    CHARACTER(LEN=string_length) :: filename
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
