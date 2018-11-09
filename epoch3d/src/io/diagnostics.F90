@@ -2359,7 +2359,7 @@ CONTAINS
 
     l = isubset - 1
     sub => subset_list(l)
-    current_hash => id_registry%get_hash(sub%name)
+    current_hash => id_registry%get_existing_hash(sub%name)
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
@@ -2427,7 +2427,8 @@ CONTAINS
       IF (sub%from_file) THEN
         !If you are restarting then unless the user specifically asks, build up
         !the persistent subset from the restart file, not from the external file
-        IF (.NOT. ic_from_restart .OR. sub%add_after_restart) THEN
+        IF (.NOT. ic_from_restart .OR. sub%add_after_restart .OR. &
+            .NOT. sub%locked) THEN
           CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
           sub%add_after_restart = .FALSE.
         END IF

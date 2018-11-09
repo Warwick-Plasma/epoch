@@ -57,7 +57,7 @@ MODULE particle_id_hash_mod
         pidr_get_existing_hash_by_name
     PROCEDURE, PRIVATE :: get_existing_hash_by_index => &
         pidr_get_existing_hash_by_index
-    GENERIC, PRIVATE :: get_existing_hash => get_existing_hash_by_name, &
+    GENERIC :: get_existing_hash => get_existing_hash_by_name, &
         get_existing_hash_by_index
     PROCEDURE, PRIVATE :: get_hash_by_name => pidr_get_hash_by_name
     GENERIC :: get_hash => get_hash_by_name, get_existing_hash_by_index
