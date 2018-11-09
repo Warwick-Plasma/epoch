@@ -396,7 +396,7 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   FUNCTION it_output_integer8(array, npoint_it, start, param)
 
     INTEGER(i8) :: it_output_integer8
@@ -414,11 +414,22 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-        part_count = part_count + 1
-        array(part_count) = cur%id
-        cur => cur%next
-      END DO
+      SELECT CASE (param)
+#ifdef PARTICLE_ID
+      CASE (c_dump_part_id) ! particle weight
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%id
+          cur => cur%next
+        END DO
+#endif
+      CASE (c_dump_persistent_ids) ! particle weight
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = id_registry%map(cur%id)
+          cur => cur%next
+        END DO
+      END SELECT
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)

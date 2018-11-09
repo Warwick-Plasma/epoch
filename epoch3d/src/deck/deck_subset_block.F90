@@ -18,6 +18,7 @@ MODULE deck_subset_block
   USE strings_advanced
   USE utilities
   USE shunt
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
   SAVE
@@ -129,6 +130,7 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -287,6 +289,45 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'persist_after')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%persist_after = as_real_print(value, element, errcode)
+      current_hash => id_registry%get_hash(sub%name)
+      CALL current_hash%init(1000)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'from_file') &
+        .OR. str_cmp(element, 'from_file_on_restart')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%filename = TRIM(value)
+      sub%from_file = .TRUE.
+      current_hash => id_registry%get_hash(sub%name)
+      CALL current_hash%init(1000)
+      sub%add_after_restart = str_cmp(element, 'from_file_on_restart')
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'sorted_file')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%file_sorted = as_logical_print(value, element, errcode)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 
   END FUNCTION subset_block_handle_element
@@ -362,6 +403,11 @@ CONTAINS
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
+      subset_list(i)%persistent = .FALSE.
+      subset_list(i)%persist_after = 0.0_num
+      subset_list(i)%locked = .FALSE.
+      subset_list(i)%from_file = .FALSE.
+      subset_list(i)%file_sorted = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets
