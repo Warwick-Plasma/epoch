@@ -130,7 +130,9 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     TYPE(particle_id_hash), POINTER :: current_hash
+#endif
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN

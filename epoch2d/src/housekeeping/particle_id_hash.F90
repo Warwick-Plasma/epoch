@@ -369,8 +369,10 @@ MODULE particle_id_hash_mod
     INTEGER(i4), DIMENSION(:), INTENT(INOUT) :: id_list
 #endif
     LOGICAL, INTENT(IN), OPTIONAL :: sorted
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     TYPE(particle), POINTER :: current
     INTEGER :: ispecies
+#endif
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     IF (.NOT. PRESENT(sorted)) THEN

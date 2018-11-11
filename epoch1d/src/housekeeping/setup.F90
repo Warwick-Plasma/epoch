@@ -1415,6 +1415,7 @@ CONTAINS
     END IF
 
     CALL set_thermal_bcs
+    CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 

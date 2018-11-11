@@ -2267,10 +2267,10 @@ CONTAINS
 
   SUBROUTINE build_species_subset
 
-    INTEGER :: i, l, n
+    INTEGER :: i, l
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
-    REAL(num) :: gamma_rel, random_num, part_mc
+    REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
     TYPE(particle_id_hash), POINTER :: current_hash
 
@@ -2341,7 +2341,7 @@ CONTAINS
     INTEGER :: isub, ispec
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
-    REAL(num) :: gamma_rel, random_num, part_mc
+    REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
     TYPE(particle_id_hash), POINTER :: current_hash
 

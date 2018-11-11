@@ -461,7 +461,10 @@ CONTAINS
 
     REAL(num), DIMENSION(:), INTENT(IN) :: array
     TYPE(particle), POINTER :: a_particle
-    INTEGER(i8) :: cpos, temp_i8
+    INTEGER(i8) :: cpos
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(i8) :: temp_i8
+#endif
 
     cpos = 1
     a_particle%part_pos = array(cpos:cpos+c_ndims-1)
