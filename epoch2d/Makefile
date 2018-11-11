@@ -266,6 +266,11 @@ DEFINES := $(DEFINE)
 #ENCODED_SOURCE = epoch_source_info_dummy.o
 
 
+# Automatically add -DPARSER_CHECKING for debug builds
+ifeq ($(strip $(MODE)),debug)
+  DEFINES += $(D)PARSER_CHECKING
+endif
+
 
 # --------------------------------------------------
 # Shouldn't need to touch below here
