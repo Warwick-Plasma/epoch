@@ -61,10 +61,7 @@ CONTAINS
     nvar = nvar+2
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    nvar = nvar+1
-#ifndef NO_PERSISTENT
-    nvar = nvar+1
-#endif
+    nvar = nvar+2
 #endif
 #ifdef COLLISIONS_TEST
     nvar = nvar+1
@@ -432,10 +429,8 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-#ifndef NO_PERSIST
     array(cpos) = TRANSFER(id_registry%map(a_particle%id), 1.0_num)
     cpos = cpos + 1
-#endif
 #endif
 #ifdef COLLISIONS_TEST
     array(cpos) = REAL(a_particle%coll_count, num)
@@ -502,11 +497,9 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-#ifndef NO_PERSISTENT
     CALL id_registry%add_with_map(a_particle%id, &
         TRANSFER(array(cpos), temp_i8))
     cpos = cpos+1
-#endif
 #endif
 #ifdef COLLISIONS_TEST
     a_particle%coll_count = NINT(array(cpos))
