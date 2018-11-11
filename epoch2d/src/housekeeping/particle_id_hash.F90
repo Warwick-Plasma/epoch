@@ -291,7 +291,7 @@ MODULE particle_id_hash_mod
 
 
   !> Clean up inner list on destruction
-  SUBROUTINE pid_inner_list_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pid_inner_list_destructor(this)
     TYPE(particle_id_inner_list), INTENT(INOUT) :: this
 
     IF (.NOT. ALLOCATED(this%list)) RETURN
@@ -535,7 +535,7 @@ MODULE particle_id_hash_mod
 
 
   !> Delete all inner lists on destruction
-  SUBROUTINE pid_hash_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pid_hash_destructor(this)
     TYPE(particle_id_hash), INTENT(INOUT) :: this
 
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
@@ -743,7 +743,7 @@ MODULE particle_id_hash_mod
 
 
   !> Delete all hash tables on destruction
-  SUBROUTINE pidr_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
     TYPE(particle_id_list_registry), INTENT(INOUT) :: this
 
     IF (.NOT. ALLOCATED(this%list)) RETURN
