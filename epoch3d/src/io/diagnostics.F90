@@ -2423,7 +2423,7 @@ CONTAINS
       IF (time < subset_list(isub)%persist_after) CYCLE !Not yet time to lock
 
       sub => subset_list(isub)
-      current_hash => id_registry%get_hash(sub%name)
+      current_hash => id_registry%get_existing_hash(sub%name)
       IF (sub%from_file) THEN
         !If you are restarting then unless the user specifically asks, build up
         !the persistent subset from the restart file, not from the external file

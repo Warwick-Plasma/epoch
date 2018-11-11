@@ -2217,7 +2217,7 @@ CONTAINS
 
     l = isubset - 1
     sub => subset_list(l)
-    current_hash => id_registry%get_hash(sub%name)
+    current_hash => id_registry%get_existing_hash(sub%name)
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
