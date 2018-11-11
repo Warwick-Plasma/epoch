@@ -2402,13 +2402,13 @@ CONTAINS
 
 
 
-  FUNCTION test_particle(sub, current, part_mc) RESULT(use_particle)
+  FUNCTION test_particle(sub, current, part_mc_in) RESULT(use_particle)
 
     TYPE(subset), INTENT(IN) :: sub
     TYPE(particle), INTENT(IN) :: current
-    REAL(num), INTENT(IN) :: part_mc
+    REAL(num), INTENT(IN) :: part_mc_in
     LOGICAL :: use_particle
-    REAL(num) :: gamma_rel, random_num
+    REAL(num) :: gamma_rel, random_num, part_mc
     INTEGER :: n
 
     use_particle = .TRUE.
@@ -2416,6 +2416,8 @@ CONTAINS
     IF (sub%use_gamma) THEN
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mc = c * current%mass
+#else
+      part_mc = part_mc_in
 #endif
       gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
 
