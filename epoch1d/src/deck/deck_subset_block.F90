@@ -288,7 +288,13 @@ CONTAINS
       sub%persistent = .TRUE.
       sub%persist_after = as_real_print(value, element, errcode)
       current_hash => id_registry%get_hash(sub%name)
-      CALL current_hash%init(1000)
+      IF (ASSOCIATED(current_hash)) THEN
+        CALL current_hash%init(1000)
+      ELSE
+        IF (rank == 0) PRINT *,'Can only have 64 persistent subsets'
+        errcode = c_err_bad_value
+        RETURN
+      END IF
 #else
       errcode = c_err_pp_options_missing
       extended_error_string = '-DPARTICLE_ID'
@@ -303,7 +309,13 @@ CONTAINS
       sub%filename = TRIM(value)
       sub%from_file = .TRUE.
       current_hash => id_registry%get_hash(sub%name)
-      CALL current_hash%init(1000)
+      IF (ASSOCIATED(current_hash)) THEN
+        CALL current_hash%init(1000)
+      ELSE
+        IF (rank == 0) PRINT *,'Can only have 64 persistent subsets'
+        errcode = c_err_bad_value
+        RETURN
+      END IF
       sub%add_after_restart = str_cmp(element, 'from_file_on_restart')
 #else
       errcode = c_err_pp_options_missing

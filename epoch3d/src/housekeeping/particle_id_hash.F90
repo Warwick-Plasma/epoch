@@ -587,6 +587,10 @@ MODULE particle_id_hash_mod
     copyback = ALLOCATED(this%list)
     IF (copyback) THEN
       sz = SIZE(this%list)
+      IF (sz > 64) THEN
+        hash_ptr => NULL()
+        RETURN
+      END IF
       ALLOCATE(temp(1:sz), SOURCE = this%list)
       DEALLOCATE(this%list)
     END IF
