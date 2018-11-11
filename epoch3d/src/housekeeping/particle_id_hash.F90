@@ -270,7 +270,7 @@ CONTAINS
 
   !> Clean up inner list on destruction
 
-  SUBROUTINE pid_inner_list_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pid_inner_list_destructor(this)
 
     TYPE(particle_id_inner_list), INTENT(INOUT) :: this
 
@@ -529,7 +529,7 @@ CONTAINS
 
   !> Delete all inner lists on destruction
 
-  SUBROUTINE pid_hash_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pid_hash_destructor(this)
 
     TYPE(particle_id_hash), INTENT(INOUT) :: this
 
@@ -751,7 +751,7 @@ CONTAINS
 
   !> Delete all hash tables on destruction
 
-  SUBROUTINE pidr_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
 
     TYPE(particle_id_list_registry), INTENT(INOUT) :: this
 
