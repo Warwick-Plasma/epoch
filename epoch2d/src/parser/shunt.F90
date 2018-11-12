@@ -35,15 +35,15 @@ CONTAINS
 
     IF (chr == ' ') THEN
       char_type = c_char_space
-    ELSEIF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
+    ELSE IF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       char_type = c_char_numeric
-    ELSEIF ((chr >= 'A' .AND. chr <= 'Z') &
+    ELSE IF ((chr >= 'A' .AND. chr <= 'Z') &
         .OR. (chr >= 'a' .AND. chr <= 'z') .OR. chr == '_') THEN
       char_type = c_char_alpha
-    ELSEIF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
+    ELSE IF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
       char_type = c_char_delimiter
     ! 92 is the ASCII code for backslash
-    ELSEIF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
+    ELSE IF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
         .OR. chr == '/' .OR. chr == '*' .OR. chr == '^') THEN
       char_type = c_char_opcode
     END IF
@@ -372,6 +372,7 @@ CONTAINS
     CHARACTER(LEN=*), INTENT(IN) :: expression
     TYPE(primitive_stack), INTENT(INOUT) :: output
     INTEGER, INTENT(INOUT) :: err
+    LOGICAL :: maybe_e
 
     CHARACTER(LEN=500) :: current
     INTEGER :: current_type, current_pointer, i, ptype
@@ -385,6 +386,7 @@ CONTAINS
     current(1:1) = expression(1:1)
     current_pointer = 2
     current_type = char_type(expression(1:1))
+    maybe_e = .FALSE.
 
     err = c_err_none
 
@@ -395,9 +397,14 @@ CONTAINS
       ! This is a bit of a hack.
       ! Allow numbers to follow letters in an expression *except* in the
       ! special case of a single 'e' character, to allow 10.0e5, etc.
-      IF (ptype == current_type .AND. .NOT. (ptype == c_char_delimiter) &
-        .OR. (ptype == c_char_numeric .AND. current_type == c_char_alpha &
-        .AND. .NOT. str_cmp(current, 'e'))) THEN
+      IF (ptype == current_type .AND. ptype /= c_char_delimiter &
+          .OR. (ptype == c_char_numeric .AND. current_type == c_char_alpha &
+          .AND. .NOT. str_cmp(current, 'e'))) THEN
+        current(current_pointer:current_pointer) = expression(i:i)
+        current_pointer = current_pointer+1
+      ELSE IF (str_cmp(current, 'e') .AND. .NOT.maybe_e) THEN
+        ! Only interpret "e" as the Euler number if it is both preceded and
+        ! followed by a number
         current(current_pointer:current_pointer) = expression(i:i)
         current_pointer = current_pointer+1
       ELSE
@@ -411,6 +418,7 @@ CONTAINS
         current_pointer = 2
         current(1:1) = expression(i:i)
         current_type = ptype
+        maybe_e = iblock%ptype == c_pt_variable
       END IF
     END DO
 

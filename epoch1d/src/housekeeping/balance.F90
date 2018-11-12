@@ -178,6 +178,8 @@ CONTAINS
     END IF
 
     IF (use_redistribute_domain) THEN
+      old_comm = comm
+      old_coordinates(:) = coordinates(:)
       CALL redistribute_domain
     END IF
 
@@ -981,6 +983,7 @@ CONTAINS
 
     ! Now have local densities, so add using MPI
     st = SIZE(load_x)
+
     CALL MPI_ALLREDUCE(MPI_IN_PLACE, load_x, st, MPI_INTEGER8, MPI_SUM, &
                        comm, errcode)
 
@@ -1103,6 +1106,7 @@ CONTAINS
         ELSE
           old = maxs(i-1)
         END IF
+        new_maxs = old_maxs
         IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
 
         IF (new_maxs /= old_maxs) THEN
@@ -1123,6 +1127,7 @@ CONTAINS
         ! Plus
         old_maxs = maxs(i)
         old = maxs(i+1)
+        new_maxs = old_maxs
         IF (old - old_maxs - 1 >= ng) new_maxs = old_maxs + 1
 
         IF (new_maxs /= old_maxs) THEN

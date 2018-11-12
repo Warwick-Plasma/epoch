@@ -2626,6 +2626,7 @@ CONTAINS
         ELSE
           old = maxs(i-1)
         END IF
+        new_maxs = old_maxs
         IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
 
         IF (new_maxs /= old_maxs) THEN
@@ -2646,6 +2647,7 @@ CONTAINS
         ! Plus
         old_maxs = maxs(i)
         old = maxs(i+1)
+        new_maxs = old_maxs
         IF (old - old_maxs - 1 >= ng) new_maxs = old_maxs + 1
 
         IF (new_maxs /= old_maxs) THEN
