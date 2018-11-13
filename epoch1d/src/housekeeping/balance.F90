@@ -454,6 +454,12 @@ CONTAINS
     ALLOCATE(bz(1-ng:nx_new+ng))
     bz = temp
 
+    IF (pre_loading) THEN
+      IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
+      IF (ALLOCATED(global_species_temp)) DEALLOCATE(global_species_temp)
+      IF (ALLOCATED(global_species_drift)) DEALLOCATE(global_species_drift)
+    END IF
+
     DO ispecies = 1, n_species
       mg => species_list(ispecies)%migrate
 
@@ -477,31 +483,40 @@ CONTAINS
 
       ic => species_list(ispecies)%initial_conditions
 
-      CALL remap_field(ic%density, temp)
-      DEALLOCATE(ic%density)
-      ALLOCATE(ic%density(1-ng:nx_new+ng))
-      ic%density = temp
+      IF (ASSOCIATED(ic%density)) THEN
+        CALL remap_field(ic%density, temp)
+        DEALLOCATE(ic%density)
+        ALLOCATE(ic%density(1-ng:nx_new+ng))
+        ic%density = temp
+      END IF
 
-      ALLOCATE(temp_sum(1-ng:nx_new+ng,3))
+      IF (ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(temp_sum)) &
+            ALLOCATE(temp_sum(1-ng:nx_new+ng,3))
 
-      CALL remap_field(ic%temp(:,1), temp_sum(:,1))
-      CALL remap_field(ic%temp(:,2), temp_sum(:,2))
-      CALL remap_field(ic%temp(:,3), temp_sum(:,3))
+        CALL remap_field(ic%temp(:,1), temp_sum(:,1))
+        CALL remap_field(ic%temp(:,2), temp_sum(:,2))
+        CALL remap_field(ic%temp(:,3), temp_sum(:,3))
 
-      DEALLOCATE(ic%temp)
-      ALLOCATE(ic%temp(1-ng:nx_new+ng,3))
-      ic%temp = temp_sum
+        DEALLOCATE(ic%temp)
+        ALLOCATE(ic%temp(1-ng:nx_new+ng,3))
+        ic%temp = temp_sum
+      END IF
 
-      CALL remap_field(ic%drift(:,1), temp_sum(:,1))
-      CALL remap_field(ic%drift(:,2), temp_sum(:,2))
-      CALL remap_field(ic%drift(:,3), temp_sum(:,3))
+      IF (ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(temp_sum)) &
+            ALLOCATE(temp_sum(1-ng:nx_new+ng,3))
+        CALL remap_field(ic%drift(:,1), temp_sum(:,1))
+        CALL remap_field(ic%drift(:,2), temp_sum(:,2))
+        CALL remap_field(ic%drift(:,3), temp_sum(:,3))
 
-      DEALLOCATE(ic%drift)
-      ALLOCATE(ic%drift(1-ng:nx_new+ng,3))
-      ic%drift = temp_sum
-
-      DEALLOCATE(temp_sum)
+        DEALLOCATE(ic%drift)
+        ALLOCATE(ic%drift(1-ng:nx_new+ng,3))
+        ic%drift = temp_sum
+      END IF
     END DO
+
+    IF (ALLOCATED(temp_sum)) DEALLOCATE(temp_sum)
 
     IF (cpml_boundaries) THEN
       CALL remap_field(cpml_psi_eyx, temp)

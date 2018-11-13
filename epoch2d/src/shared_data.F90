@@ -447,6 +447,10 @@ MODULE shared_data
     INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
+  REAL(num), ALLOCATABLE, TARGET :: global_species_density(:,:)
+  REAL(num), ALLOCATABLE, TARGET :: global_species_temp(:,:,:)
+  REAL(num), ALLOCATABLE, TARGET :: global_species_drift(:,:,:)
+
   !----------------------------------------------------------------------------
   ! file handling
   !----------------------------------------------------------------------------

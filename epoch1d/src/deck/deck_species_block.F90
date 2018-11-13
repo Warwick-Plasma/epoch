@@ -648,6 +648,9 @@ CONTAINS
       END IF
 
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%density)) THEN
+        ALLOCATE(ic%density(1-ng:nx+ng))
+      END IF
 
       CALL fill_array(species_list(species_id)%density_function, &
           ic%density, mult, mult_string, element, value, filename, got_file)
@@ -657,6 +660,9 @@ CONTAINS
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
+        ALLOCATE(ic%drift(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
           ic%drift(:,n), mult, mult_string, element, value, filename, &
@@ -667,6 +673,9 @@ CONTAINS
     IF (str_cmp(element, 'drift_y')) THEN
       n = 2
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
+        ALLOCATE(ic%drift(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
           ic%drift(:,n), mult, mult_string, element, value, filename, &
@@ -677,6 +686,9 @@ CONTAINS
     IF (str_cmp(element, 'drift_z')) THEN
       n = 3
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
+        ALLOCATE(ic%drift(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
           ic%drift(:,n), mult, mult_string, element, value, filename, &
@@ -709,6 +721,9 @@ CONTAINS
       IF (str_cmp(element, 'temp_ev')) mult = ev / kb
 
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
+        ALLOCATE(ic%temp(1-ng:nx+ng,3))
+      END IF
 
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
@@ -770,6 +785,9 @@ CONTAINS
 
       n = 1
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
+        ALLOCATE(ic%temp(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
           ic%temp(:,n), mult, mult_string, element, value, filename, got_file)
@@ -782,6 +800,9 @@ CONTAINS
 
       n = 2
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
+        ALLOCATE(ic%temp(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
           ic%temp(:,n), mult, mult_string, element, value, filename, got_file)
@@ -794,6 +815,9 @@ CONTAINS
 
       n = 3
       ic => species_list(species_id)%initial_conditions
+      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
+        ALLOCATE(ic%temp(1-ng:nx+ng,3))
+      END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
           ic%temp(:,n), mult, mult_string, element, value, filename, got_file)
@@ -1008,9 +1032,8 @@ CONTAINS
     LOGICAL, INTENT(IN) :: got_file
     TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: stack
-    INTEGER :: io, iu, ix
+    INTEGER :: io, iu
     REAL(num) :: tmp
-    TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(stack)
     IF (got_file) THEN
@@ -1050,11 +1073,6 @@ CONTAINS
         END IF
         CALL abort_code(errcode)
       END IF
-
-      DO ix = 1-ng, nx+ng
-        parameters%pack_ix = ix
-        array(ix) = evaluate_with_parameters(stack, parameters, errcode)
-      END DO
     END IF
 
     CALL deallocate_stack(output)

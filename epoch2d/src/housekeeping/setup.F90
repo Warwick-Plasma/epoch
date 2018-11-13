@@ -583,6 +583,9 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
+        CALL setup_ic_density(ispecies)
+        CALL setup_ic_temp(ispecies)
+
         ic => species_list(ispecies)%initial_conditions
 
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
@@ -590,8 +593,9 @@ CONTAINS
         IF (ic%density_max > 0) THEN
           DO iy = 1, ny
           DO ix = 1, nx
-            clipped_dens = MIN(ic%density(ix,iy), ic%density_max)
-            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(ic%temp(ix,iy,:))
+            clipped_dens = MIN(species_density(ix,iy), ic%density_max)
+            omega2 = fac1 * clipped_dens &
+                + fac2 * MAXVAL(species_temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -600,7 +604,8 @@ CONTAINS
         ELSE
           DO iy = 1, ny
           DO ix = 1, nx
-            omega2 = fac1 * ic%density(ix,iy) + fac2 * MAXVAL(ic%temp(ix,iy,:))
+            omega2 = fac1 * species_density(ix,iy) &
+                + fac2 * MAXVAL(species_temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -1399,8 +1404,6 @@ CONTAINS
     IF (use_offset_grid) THEN
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
-
-    CALL set_thermal_bcs
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 

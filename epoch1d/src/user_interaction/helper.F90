@@ -24,27 +24,29 @@ MODULE helper
 
   IMPLICIT NONE
 
+  REAL(num), POINTER :: species_density(:)
+  REAL(num), POINTER :: species_temp(:,:)
+  REAL(num), POINTER :: species_drift(:,:)
+
 CONTAINS
 
-  SUBROUTINE set_thermal_bcs
+  SUBROUTINE set_thermal_bcs(ispecies)
 
-    INTEGER :: ispecies
+    INTEGER, INTENT(IN) :: ispecies
     TYPE(particle_species), POINTER :: species
     TYPE(initial_condition_block), POINTER :: ic
 
-    DO ispecies = 1, n_species
-      species => species_list(ispecies)
-      ic => species%initial_conditions
+    ! Set temperature at boundary for thermal bcs.
 
-      ! Set temperature at boundary for thermal bcs.
+    species => species_list(ispecies)
+    ic => species%initial_conditions
 
-      IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-        species%ext_temp_x_min(:) = ic%temp(1,:)
-      END IF
-      IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-        species%ext_temp_x_max(:) = ic%temp(nx,:)
-      END IF
-    END DO
+    IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      species%ext_temp_x_min(:) = species_temp(1,:)
+    END IF
+    IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      species%ext_temp_x_max(:) = species_temp(nx,:)
+    END IF
 
   END SUBROUTINE set_thermal_bcs
 
@@ -56,8 +58,6 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER :: i0, i1
     TYPE(initial_condition_block), POINTER :: ic
-
-    CALL set_thermal_bcs
 
     IF (pre_loading .AND. n_species > 0) THEN
       i0 = 1 - ng
@@ -74,18 +74,24 @@ CONTAINS
       species => species_list(ispecies)
       ic => species%initial_conditions
 
+      CALL setup_ic_density(ispecies)
+
 #ifdef PER_SPECIES_WEIGHT
-      CALL non_uniform_load_particles(ic%density, species, &
+      CALL non_uniform_load_particles(species_density, species, &
           ic%density_min, ic%density_max)
 #else
-      CALL setup_particle_density(ic%density, species, &
+      CALL setup_particle_density(species_density, species, &
           ic%density_min, ic%density_max)
 #endif
       IF (pre_loading) CYCLE
 
+      CALL setup_ic_temp(ispecies)
+      CALL setup_ic_drift(ispecies)
+      CALL set_thermal_bcs(ispecies)
+
       DO n = 1, 3
         CALL setup_particle_temperature(&
-            ic%temp(:,n), n, species, ic%drift(:,n))
+            species_temp(:,n), n, species, species_drift(:,n))
       END DO
     END DO
 
@@ -119,13 +125,10 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ic => species_list(ispecies)%initial_conditions
-      ALLOCATE(ic%density(1-ng:nx+ng))
-      ALLOCATE(ic%temp(1-ng:nx+ng,3))
-      ALLOCATE(ic%drift(1-ng:nx+ng,3))
+      NULLIFY(ic%density)
+      NULLIFY(ic%temp)
+      NULLIFY(ic%drift)
 
-      ic%density = 1.0_num
-      ic%temp = 0.0_num
-      ic%drift = 0.0_num
       ic%density_min = EPSILON(1.0_num)
       ic%density_max = HUGE(1.0_num)
       ic%density_back = 0.0_num
@@ -144,9 +147,12 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ic => species_list(ispecies)%initial_conditions
-      DEALLOCATE(ic%density)
-      DEALLOCATE(ic%temp)
-      DEALLOCATE(ic%drift)
+      IF (ASSOCIATED(ic%density)) DEALLOCATE(ic%density)
+      IF (ASSOCIATED(ic%temp)) DEALLOCATE(ic%temp)
+      IF (ASSOCIATED(ic%drift)) DEALLOCATE(ic%drift)
+      IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
+      IF (ALLOCATED(global_species_temp)) DEALLOCATE(global_species_temp)
+      IF (ALLOCATED(global_species_drift)) DEALLOCATE(global_species_drift)
     END DO
 
   END SUBROUTINE deallocate_ic
@@ -891,5 +897,105 @@ CONTAINS
     CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
+
+
+
+  SUBROUTINE setup_ic_density(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%density)) THEN
+      species_density => ic%density
+      RETURN
+    END IF
+
+    IF (.NOT. ALLOCATED(global_species_density)) THEN
+      ALLOCATE(global_species_density(1-ng:nx+ng))
+    END IF
+    species_density => global_species_density
+
+    DO ix = 1-ng, nx+ng
+      parameters%pack_ix = ix
+      species_density(ix) = &
+          evaluate_with_parameters(species%density_function, &
+              parameters, errcode)
+    END DO
+
+  END SUBROUTINE setup_ic_density
+
+
+
+  SUBROUTINE setup_ic_temp(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix, n
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%temp)) THEN
+      species_temp => ic%temp
+      RETURN
+    END IF
+
+    IF (.NOT. ALLOCATED(global_species_temp)) THEN
+      ALLOCATE(global_species_temp(1-ng:nx+ng,3))
+    END IF
+    species_temp => global_species_temp
+
+    DO n = 1, 3
+      DO ix = 1-ng, nx+ng
+        parameters%pack_ix = ix
+        species_temp(ix,n) = &
+            evaluate_with_parameters(species%temperature_function(n), &
+                parameters, errcode)
+      END DO
+    END DO
+
+  END SUBROUTINE setup_ic_temp
+
+
+
+  SUBROUTINE setup_ic_drift(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix, n
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%drift)) THEN
+      species_drift => ic%drift
+      RETURN
+    END IF
+
+    IF (.NOT. ALLOCATED(global_species_drift)) THEN
+      ALLOCATE(global_species_drift(1-ng:nx+ng,3))
+    END IF
+    species_drift => global_species_drift
+
+    DO n = 1, 3
+      DO ix = 1-ng, nx+ng
+        parameters%pack_ix = ix
+        species_drift(ix,n) = &
+            evaluate_with_parameters(species%drift_function(n), &
+                parameters, errcode)
+      END DO
+    END DO
+
+  END SUBROUTINE setup_ic_drift
 
 END MODULE helper
