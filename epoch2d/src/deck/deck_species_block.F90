@@ -349,6 +349,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
     INTEGER :: i, j, io, iu, n
+    TYPE(initial_condition_block), POINTER :: ic
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -668,33 +669,40 @@ CONTAINS
         mult_string = '/ species_list(species_id)%mass'
       END IF
 
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%density_function, &
-          species_list(species_id)%initial_conditions%density, &
-          mult, mult_string, element, value, filename, got_file)
+          ic%density, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          species_list(species_id)%initial_conditions%drift(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
+          got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_y')) THEN
       n = 2
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          species_list(species_id)%initial_conditions%drift(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
+          got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_z')) THEN
       n = 3
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          species_list(species_id)%initial_conditions%drift(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
+          got_file)
       RETURN
     END IF
 
@@ -722,18 +730,17 @@ CONTAINS
         .OR. str_cmp(element, 'temp_ev')) THEN
       IF (str_cmp(element, 'temp_ev')) mult = ev / kb
 
+      ic => species_list(species_id)%initial_conditions
+
       n = 1
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
       n = 2
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
       n = 3
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
 
       debug_mode = .FALSE.
       RETURN
@@ -784,9 +791,10 @@ CONTAINS
       IF (str_cmp(element, 'temp_x_ev')) mult = ev / kb
 
       n = 1
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -795,9 +803,10 @@ CONTAINS
       IF (str_cmp(element, 'temp_y_ev')) mult = ev / kb
 
       n = 2
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -806,9 +815,10 @@ CONTAINS
       IF (str_cmp(element, 'temp_z_ev')) mult = ev / kb
 
       n = 3
+      ic => species_list(species_id)%initial_conditions
+
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          species_list(species_id)%initial_conditions%temp(:,:,n), &
-          mult, mult_string, element, value, filename, got_file)
+          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -1021,6 +1031,7 @@ CONTAINS
     TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: stack
     INTEGER :: io, iu, ix, iy
+    REAL(num) :: tmp
     TYPE(parameter_pack) :: parameters
 
     CALL initialise_stack(stack)
@@ -1050,7 +1061,7 @@ CONTAINS
           CALL tokenize(mult_string, stack, errcode)
 
       ! Sanity check
-      array(1,1) = evaluate(stack, errcode)
+      tmp = evaluate(stack, errcode)
       IF (errcode /= c_err_none) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file

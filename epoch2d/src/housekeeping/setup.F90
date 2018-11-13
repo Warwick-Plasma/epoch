@@ -572,6 +572,7 @@ CONTAINS
 
     INTEGER :: ispecies, ix, iy
     REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
+    TYPE(initial_condition_block), POINTER :: ic
 
     IF (ic_from_restart) RETURN
 
@@ -582,16 +583,15 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
+        ic => species_list(ispecies)%initial_conditions
+
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        IF (species_list(ispecies)%initial_conditions%density_max > 0) THEN
+        IF (ic%density_max > 0) THEN
           DO iy = 1, ny
           DO ix = 1, nx
-            clipped_dens = MIN(&
-                species_list(ispecies)%initial_conditions%density(ix,iy), &
-                species_list(ispecies)%initial_conditions%density_max)
-            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,iy,:))
+            clipped_dens = MIN(ic%density(ix,iy), ic%density_max)
+            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(ic%temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -600,10 +600,7 @@ CONTAINS
         ELSE
           DO iy = 1, ny
           DO ix = 1, nx
-            omega2 = fac1 &
-                * species_list(ispecies)%initial_conditions%density(ix,iy) &
-                + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,iy,:))
+            omega2 = fac1 * ic%density(ix,iy) + fac2 * MAXVAL(ic%temp(ix,iy,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega

@@ -470,7 +470,8 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp_slice
     TYPE(laser_block), POINTER :: current
     TYPE(injector_block), POINTER :: injector_current
-    TYPE(particle_species), POINTER :: sp
+    TYPE(particle_species_migration), POINTER :: mg
+    TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
@@ -553,18 +554,18 @@ CONTAINS
     bz = temp
 
     DO ispecies = 1, n_species
-      IF (species_list(ispecies)%migrate%fluid) THEN
-        CALL remap_field(species_list(ispecies)%migrate%fluid_energy, temp)
-        DEALLOCATE(species_list(ispecies)%migrate%fluid_energy)
-        ALLOCATE(species_list(ispecies)&
-            %migrate%fluid_energy(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-        species_list(ispecies)%migrate%fluid_energy = temp
+      mg => species_list(ispecies)%migrate
 
-        CALL remap_field(species_list(ispecies)%migrate%fluid_density, temp)
-        DEALLOCATE(species_list(ispecies)%migrate%fluid_density)
-        ALLOCATE(species_list(ispecies)&
-            %migrate%fluid_density(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-        species_list(ispecies)%migrate%fluid_density = temp
+      IF (mg%fluid) THEN
+        CALL remap_field(mg%fluid_energy, temp)
+        DEALLOCATE(mg%fluid_energy)
+        ALLOCATE(mg%fluid_energy(1-ng:nx_new+ng,1-ng:ny_new+ng))
+        mg%fluid_energy = temp
+
+        CALL remap_field(mg%fluid_density, temp)
+        DEALLOCATE(mg%fluid_density)
+        ALLOCATE(mg%fluid_density(1-ng:nx_new+ng,1-ng:ny_new+ng))
+        mg%fluid_density = temp
       END IF
 
       IF (.NOT.pre_loading) CYCLE
@@ -573,30 +574,30 @@ CONTAINS
       ! also redistribute the per-species initial conditions arrays.
       ! These are discarded after the initial setup
 
-      sp => species_list(ispecies)
+      ic => species_list(ispecies)%initial_conditions
 
-      CALL remap_field(sp%initial_conditions%density, temp)
-      DEALLOCATE(sp%initial_conditions%density)
-      ALLOCATE(sp%initial_conditions%density(1-ng:nx_new+ng,1-ng:ny_new+ng))
-      sp%initial_conditions%density = temp
+      CALL remap_field(ic%density, temp)
+      DEALLOCATE(ic%density)
+      ALLOCATE(ic%density(1-ng:nx_new+ng,1-ng:ny_new+ng))
+      ic%density = temp
 
       ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
 
-      CALL remap_field(sp%initial_conditions%temp(:,:,1), temp_sum(:,:,1))
-      CALL remap_field(sp%initial_conditions%temp(:,:,2), temp_sum(:,:,2))
-      CALL remap_field(sp%initial_conditions%temp(:,:,3), temp_sum(:,:,3))
+      CALL remap_field(ic%temp(:,:,1), temp_sum(:,:,1))
+      CALL remap_field(ic%temp(:,:,2), temp_sum(:,:,2))
+      CALL remap_field(ic%temp(:,:,3), temp_sum(:,:,3))
 
-      DEALLOCATE(sp%initial_conditions%temp)
-      ALLOCATE(sp%initial_conditions%temp(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
-      sp%initial_conditions%temp = temp_sum
+      DEALLOCATE(ic%temp)
+      ALLOCATE(ic%temp(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
+      ic%temp = temp_sum
 
-      CALL remap_field(sp%initial_conditions%drift(:,:,1), temp_sum(:,:,1))
-      CALL remap_field(sp%initial_conditions%drift(:,:,2), temp_sum(:,:,2))
-      CALL remap_field(sp%initial_conditions%drift(:,:,3), temp_sum(:,:,3))
+      CALL remap_field(ic%drift(:,:,1), temp_sum(:,:,1))
+      CALL remap_field(ic%drift(:,:,2), temp_sum(:,:,2))
+      CALL remap_field(ic%drift(:,:,3), temp_sum(:,:,3))
 
-      DEALLOCATE(sp%initial_conditions%drift)
-      ALLOCATE(sp%initial_conditions%drift(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
-      sp%initial_conditions%drift = temp_sum
+      DEALLOCATE(ic%drift)
+      ALLOCATE(ic%drift(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
+      ic%drift = temp_sum
 
       DEALLOCATE(temp_sum)
     END DO
