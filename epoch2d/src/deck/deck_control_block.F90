@@ -30,7 +30,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 38 + 4 * c_ndims
+  INTEGER, PARAMETER :: control_block_elements = 41 + 4 * c_ndims
   LOGICAL, DIMENSION(control_block_elements) :: control_block_done
   ! 3rd alias for ionisation
   CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
@@ -83,7 +83,11 @@ MODULE deck_control_block
           'dlb_force_interval       ', &
           'balance_first            ', &
           'use_pre_balance          ', &
-          'use_optimal_layout       ' /)
+          'use_optimal_layout       ', &
+          'smooth_iterations        ', &
+          'smooth_compensation      ', &
+          'smooth_strides           '/)
+
   CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
       alternate_name = (/ &
           'nx                       ', &
@@ -131,7 +135,10 @@ MODULE deck_control_block
           'balance_force_interval   ', &
           'balance_first            ', &
           'pre_balance              ', &
-          'optimal_layout           ' /)
+          'optimal_layout           ', &
+          'smooth_iterations        ', &
+          'smooth_compensation      ', &
+          'smooth_strides           '/)
 
 CONTAINS
 
@@ -284,6 +291,7 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: loop, elementselected, field_order, ierr, io, iu, i
     LOGICAL :: isnum
+    INTEGER, DIMENSION(:), POINTER :: stride_temp
 
     errcode = c_err_none
 
@@ -453,6 +461,20 @@ CONTAINS
       use_pre_balance = as_logical_print(value, element, errcode)
     CASE(4*c_ndims+38)
       use_optimal_layout = as_logical_print(value, element, errcode)
+    CASE(4*c_ndims+39)
+      smooth_its = as_integer_print(value, element, errcode)
+    CASE(4*c_ndims+40)
+      IF(as_logical_print(value, element, errcode)) smooth_comp_its = 1
+    CASE(4*c_ndims+41)
+      IF (str_cmp(value, "auto")) THEN
+        ALLOCATE(smooth_strides(4), SOURCE = [1,2,3,4])
+        RETURN
+      END IF
+      stride_temp => NULL()
+      CALL get_allocated_array(value, stride_temp, errcode)
+      ALLOCATE(smooth_strides(SIZE(stride_temp)), SOURCE = stride_temp)
+      DEALLOCATE(stride_temp)
+      sng = MAXVAL(smooth_strides)
     END SELECT
 
   END FUNCTION control_block_handle_element

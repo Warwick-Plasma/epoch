@@ -45,24 +45,21 @@ CONTAINS
 
   SUBROUTINE smooth_current
 
-    ! A very simple current smoothing routine
-
-    ! First copy in values to ghost cells
-    CALL field_bc(jx, jng)
-    CALL field_bc(jy, jng)
-    CALL field_bc(jz, jng)
-
-    CALL smooth_array(jx)
-    CALL smooth_array(jy)
-    CALL smooth_array(jz)
+    !Implements strided compensated binomial filtering
+    CALL smooth_array(jx, smooth_its, smooth_comp_its, smooth_strides)
+    CALL smooth_array(jy, smooth_its, smooth_comp_its, smooth_strides)
+    CALL smooth_array(jz, smooth_its, smooth_comp_its, smooth_strides)
 
   END SUBROUTINE smooth_current
 
 
 
-  SUBROUTINE smooth_array(array)
+  SUBROUTINE smooth_array(array, its, comp_its, stride)
 
     REAL(num), DIMENSION(1-jng:,1-jng:), INTENT(INOUT) :: array
+    INTEGER, INTENT(IN) :: its
+    INTEGER, INTENT(IN) :: comp_its
+    INTEGER, INTENT(IN), DIMENSION(:), ALLOCATABLE :: stride
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy
 #ifdef HIGH_ORDER_SMOOTHING
@@ -70,8 +67,18 @@ CONTAINS
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
     REAL(num) :: val, w1, w2
 #endif
+    INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
+    INTEGER :: ng_l, iit, istride, cstride
+    REAL(num) :: alpha
 
-    ALLOCATE(wk_array(nx, ny))
+    IF (ALLOCATED(stride)) THEN
+      ALLOCATE(stride_inner(SIZE(stride)), SOURCE = stride)
+    ELSE
+      ALLOCATE(stride_inner(1), SOURCE=[1])
+    END IF
+    ng_l = MAX(sng, jng)
+    alpha = 0.5_num
+    ALLOCATE(wk_array(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l))
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
@@ -90,19 +97,29 @@ CONTAINS
     END DO
     END DO
 #else
-    DO iy = 1, ny
-    DO ix = 1, nx
-      wk_array(ix, iy) = 0.25_num * array(ix, iy) &
-          + (array(ix-1, iy) + array(ix+1, iy) &
-          + array(ix, iy-1) + array(ix, iy+1)) * 0.125_num &
-          + (array(ix-1, iy-1) + array(ix+1, iy-1) &
-          + array(ix-1, iy+1) + array(ix+1, iy+1)) * 0.0625_num
-    END DO
+    wk_array(1-jng:nx+jng, 1-jng:ny+jng) = array(1-jng:nx+jng,1-jng:ny+jng)
+    DO iit = 1, its + comp_its
+      DO istride = 1, SIZE(stride_inner)
+        CALL field_bc(wk_array, ng_l)
+        cstride = stride_inner(istride)
+        DO iy = 1, ny
+        DO ix = 1, nx
+          wk_array(ix, iy) = alpha * wk_array(ix, iy) &
+              + (wk_array(ix-cstride, iy) + wk_array(ix+cstride, iy) &
+              + wk_array(ix, iy-cstride) + wk_array(ix, iy+cstride)) &
+              * (1.0_num - alpha) * 0.25_num
+        END DO
+        END DO
+      END DO
+      IF (iit > its) THEN
+        alpha = REAL(its, num) * 0.5_num + 1.0_num
+      END IF
     END DO
 #endif
-    array(1:nx, 1:ny) = wk_array
+    array(1:nx, 1:ny) = wk_array(1:nx, 1:ny)
 
     DEALLOCATE(wk_array)
+    DEALLOCATE(stride_inner)
 
   END SUBROUTINE smooth_array
 

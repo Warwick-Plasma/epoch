@@ -688,13 +688,18 @@ MODULE shared_data
   ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
   ! jng is the number of ghost cells needed by the current arrays
+  ! sng is the number of ghost cells needed by the current smoother
   INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
+  INTEGER :: sng = 1
   INTEGER :: fng, nx, ny
   INTEGER :: nx_global, ny_global
   INTEGER(i8) :: npart_global, particles_max_id
   INTEGER :: nsteps, n_species = -1
   LOGICAL :: smooth_currents
+  INTEGER :: smooth_its = 1
+  INTEGER :: smooth_comp_its = 0
+  INTEGER, DIMENSION(:), ALLOCATABLE :: smooth_strides
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ex, ey, ez, bx, by, bz, jx, jy, jz
   REAL(r4), ALLOCATABLE, DIMENSION(:,:) :: r4array
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: npart_per_cell_array

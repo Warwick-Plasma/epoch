@@ -32,6 +32,7 @@ MODULE balance
   INTEGER :: old_comm, old_coordinates(c_ndims)
   INTEGER :: old_slice_coord, new_slice_coord, slice_dir
   LOGICAL :: max_boundary
+  INTEGER :: ng_max
 
 CONTAINS
 
@@ -117,6 +118,7 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
+    ng_max = MAX(ng, jng, sng)
 
     full_check = over_ride
     IF (step - last_full_check < dlb_force_interval) THEN
@@ -2025,7 +2027,7 @@ CONTAINS
         END IF
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
-        nextra = old - maxs(proc) + ng
+        nextra = old - maxs(proc) + ng_max
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -2039,8 +2041,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng) THEN
-        maxs(proc) = old - ng
+      IF (old - maxs(proc) < ng_max) THEN
+        maxs(proc) = old - ng_max
       END IF
       old = maxs(proc)
     END DO
@@ -2107,8 +2109,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng) THEN
-        maxs(proc) = old - ng
+      IF (old - maxs(proc) < ng_max) THEN
+        maxs(proc) = old - ng_max
       END IF
       old = maxs(proc)
     END DO
