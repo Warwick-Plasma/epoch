@@ -30,156 +30,46 @@ MODULE deck_control_block
   PUBLIC :: control_block_start, control_block_end
   PUBLIC :: control_block_handle_element, control_block_check
 
-  INTEGER, PARAMETER :: control_block_elements = 39 + 4 * c_ndims
-  LOGICAL, DIMENSION(control_block_elements) :: control_block_done
-  ! 3rd alias for ionisation
-  CHARACTER(LEN=string_length) :: ionization_alias = 'field_ionization'
-  INTEGER, PARAMETER :: ionisation_index = 13 + 4 * c_ndims
-
-  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
-      control_block_name = (/ &
-          'nx                       ', &
-          'ny                       ', &
-          'nz                       ', &
-          'x_min                    ', &
-          'x_max                    ', &
-          'y_min                    ', &
-          'y_max                    ', &
-          'z_min                    ', &
-          'z_max                    ', &
-          'nprocx                   ', &
-          'nprocy                   ', &
-          'nprocz                   ', &
-          'npart                    ', &
-          'nsteps                   ', &
-          't_end                    ', &
-          'dt_multiplier            ', &
-          'dlb_threshold            ', &
-          'icfile                   ', &
-          'restart_snapshot         ', &
-          'neutral_background       ', &
-          'field_order              ', &
-          'stdout_frequency         ', &
-          'use_random_seed          ', &
-          'smooth_currents          ', &
-          'field_ionisation         ', &
-          'use_multiphoton          ', &
-          'use_bsi                  ', &
-          'particle_tstart          ', &
-          'use_migration            ', &
-          'migration_interval       ', &
-          'use_exact_restart        ', &
-          'allow_cpu_reduce         ', &
-          'check_stop_file_frequency', &
-          'stop_at_walltime         ', &
-          'stop_at_walltime_file    ', &
-          'simplify_deck            ', &
-          'print_constants          ', &
-          'allow_missing_restart    ', &
-          'print_eta_string         ', &
-          'n_zeros                  ', &
-          'use_current_correction   ', &
-          'maxwell_solver           ', &
-          'use_particle_count_update', &
-          'use_accurate_n_zeros     ', &
-          'bits_in_cpu_id           ', &
-          'reset_walltime           ', &
-          'dlb_maximum_interval     ', &
-          'dlb_force_interval       ', &
-          'balance_first            ', &
-          'use_pre_balance          ', &
-          'use_optimal_layout       ' /)
-  CHARACTER(LEN=string_length), DIMENSION(control_block_elements) :: &
-      alternate_name = (/ &
-          'nx                       ', &
-          'ny                       ', &
-          'nz                       ', &
-          'x_start                  ', &
-          'x_end                    ', &
-          'y_start                  ', &
-          'y_end                    ', &
-          'z_start                  ', &
-          'z_end                    ', &
-          'nprocx                   ', &
-          'nprocy                   ', &
-          'nprocz                   ', &
-          'npart                    ', &
-          'nsteps                   ', &
-          't_end                    ', &
-          'dt_multiplier            ', &
-          'balance_threshold        ', &
-          'icfile                   ', &
-          'restart_snapshot         ', &
-          'neutral_background       ', &
-          'field_order              ', &
-          'stdout_frequency         ', &
-          'use_random_seed          ', &
-          'smooth_currents          ', &
-          'use_field_ionise         ', &
-          'multiphoton              ', &
-          'bsi                      ', &
-          'particle_tstart          ', &
-          'migrate_particles        ', &
-          'migration_interval       ', &
-          'use_exact_restart        ', &
-          'allow_cpu_reduce         ', &
-          'check_stop_frequency     ', &
-          'stop_at_walltime         ', &
-          'stop_at_walltime_file    ', &
-          'simplify_deck            ', &
-          'print_constants          ', &
-          'allow_missing_restart    ', &
-          'print_eta_string         ', &
-          'n_zeros                  ', &
-          'use_current_correction   ', &
-          'maxwell_solver           ', &
-          'use_particle_count_update', &
-          'use_accurate_n_zeros     ', &
-          'bits_in_cpu_id           ', &
-          'reset_walltime           ', &
-          'balance_maximum_interval ', &
-          'balance_force_interval   ', &
-          'balance_first            ', &
-          'pre_balance              ', &
-          'optimal_layout           ' /)
+  LOGICAL :: got_time, got_grid(2*c_ndims)
 
 CONTAINS
 
   SUBROUTINE control_deck_initialise
 
-    IF (deck_state == c_ds_first) THEN
-      control_block_done = .FALSE.
-      use_exact_restart = .FALSE.
-      allow_cpu_reduce = .TRUE.
-      check_walltime = .FALSE.
-      simplify_deck = .TRUE.
-      print_deck_constants = .FALSE.
-      allow_missing_restart = .FALSE.
-      print_eta_string = .TRUE.
-      use_current_correction = .FALSE.
-      use_particle_count_update = .FALSE.
-      use_accurate_n_zeros = .FALSE.
-      reset_walltime = .FALSE.
-      balance_first = .TRUE.
-      ic_from_restart = .FALSE.
-      neutral_background = .TRUE.
-      use_particle_migration = .FALSE.
-      use_pre_balance = .TRUE.
-      use_optimal_layout = .TRUE.
-      restart_number = 0
-      check_stop_frequency = 10
-      stop_at_walltime = -1.0_num
-      restart_filename = ''
-      n_zeros_control = -1
-      dlb_maximum_interval = 500
-      dlb_force_interval = 2000
-      nx_global = -1
-      ny_global = -1
-      nz_global = -1
-      particle_push_start_time = 0.0_num
-      particle_migration_interval = 1
-      maxwell_solver = c_maxwell_solver_yee
-    END IF
+    IF (deck_state /= c_ds_first) RETURN
+
+    use_exact_restart = .FALSE.
+    allow_cpu_reduce = .TRUE.
+    check_walltime = .FALSE.
+    simplify_deck = .TRUE.
+    print_deck_constants = .FALSE.
+    allow_missing_restart = .FALSE.
+    print_eta_string = .TRUE.
+    use_current_correction = .FALSE.
+    use_particle_count_update = .FALSE.
+    use_accurate_n_zeros = .FALSE.
+    reset_walltime = .FALSE.
+    balance_first = .TRUE.
+    ic_from_restart = .FALSE.
+    neutral_background = .TRUE.
+    use_particle_migration = .FALSE.
+    use_pre_balance = .TRUE.
+    use_optimal_layout = .TRUE.
+    restart_number = 0
+    check_stop_frequency = 10
+    stop_at_walltime = -1.0_num
+    restart_filename = ''
+    n_zeros_control = -1
+    dlb_maximum_interval = 500
+    dlb_force_interval = 2000
+    nx_global = -1
+    ny_global = -1
+    nz_global = -1
+    particle_push_start_time = 0.0_num
+    particle_migration_interval = 1
+    maxwell_solver = c_maxwell_solver_yee
+    got_grid(:) = .FALSE.
+    got_time = .FALSE.
 
   END SUBROUTINE control_deck_initialise
 
@@ -303,75 +193,80 @@ CONTAINS
     CHARACTER(LEN=string_length) :: str_tmp
     CHARACTER(LEN=1) :: c
     INTEGER :: errcode
-    INTEGER :: loop, elementselected, field_order, ierr, io, iu, i
+    INTEGER :: field_order, ierr, io, iu, i
     LOGICAL :: isnum
 
     errcode = c_err_none
 
     IF (deck_state /= c_ds_first) RETURN
 
-    errcode = c_err_unknown_element
-    elementselected = 0
-
-    DO loop = 1, control_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(control_block_name(loop)))) &
-          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
-        elementselected = loop
-        EXIT
-      END IF
-    END DO
-
-    ! Adds 3rd alias just for ionisation s vs z issue
-    IF (str_cmp(element, TRIM(ADJUSTL(ionization_alias)))) THEN
-      elementselected = ionisation_index
-    END IF
-
-    IF (elementselected == 0) RETURN
-
-    IF (control_block_done(elementselected)) THEN
-      errcode = c_err_preset_element
-      RETURN
-    END IF
-
-    control_block_done(elementselected) = .TRUE.
-    errcode = c_err_none
-
-    SELECT CASE (elementselected)
-    CASE(1)
+    IF (str_cmp(element, 'nx')) THEN
       nx_global = as_integer_print(value, element, errcode)
-    CASE(2)
+
+    ELSE IF (str_cmp(element, 'ny')) THEN
       ny_global = as_integer_print(value, element, errcode)
-    CASE(3)
+
+    ELSE IF (str_cmp(element, 'nz')) THEN
       nz_global = as_integer_print(value, element, errcode)
-    CASE(c_ndims+1)
+
+    ELSE IF (str_cmp(element, 'x_min') &
+        .OR. str_cmp(element, 'x_start')) THEN
       x_min = as_real_print(value, element, errcode)
-    CASE(c_ndims+2)
+      got_grid(1) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'x_max') &
+        .OR. str_cmp(element, 'x_end')) THEN
       x_max = as_real_print(value, element, errcode)
-    CASE(c_ndims+3)
+      got_grid(2) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'y_min') &
+        .OR. str_cmp(element, 'y_start')) THEN
       y_min = as_real_print(value, element, errcode)
-    CASE(c_ndims+4)
+      got_grid(3) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'y_max') &
+        .OR. str_cmp(element, 'y_end')) THEN
       y_max = as_real_print(value, element, errcode)
-    CASE(c_ndims+5)
+      got_grid(4) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'z_min') &
+        .OR. str_cmp(element, 'z_start')) THEN
       z_min = as_real_print(value, element, errcode)
-    CASE(c_ndims+6)
+      got_grid(5) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'z_max') &
+        .OR. str_cmp(element, 'z_end')) THEN
       z_max = as_real_print(value, element, errcode)
-    CASE(3*c_ndims+1)
+      got_grid(6) = .TRUE.
+
+    ELSE IF (str_cmp(element, 'nprocx')) THEN
       nprocx = as_integer_print(value, element, errcode)
-    CASE(3*c_ndims+2)
+
+    ELSE IF (str_cmp(element, 'nprocy')) THEN
       nprocy = as_integer_print(value, element, errcode)
-    CASE(3*c_ndims+3)
+
+    ELSE IF (str_cmp(element, 'nprocz')) THEN
       nprocz = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+1)
+
+    ELSE IF (str_cmp(element, 'npart')) THEN
       npart_global = as_long_integer_print(value, element, errcode)
-    CASE(4*c_ndims+2)
+
+    ELSE IF (str_cmp(element, 'nsteps')) THEN
       nsteps = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+3)
+      got_time = .TRUE.
+
+    ELSE IF (str_cmp(element, 't_end')) THEN
       t_end = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+4)
+      got_time = .TRUE.
+
+    ELSE IF (str_cmp(element, 'dt_multiplier')) THEN
       dt_multiplier = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+5)
+
+    ELSE IF (str_cmp(element, 'dlb_threshold') &
+        .OR. str_cmp(element, 'balance_threshold')) THEN
       dlb_threshold = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+6)
+
+    ELSE IF (str_cmp(element, 'icfile')) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -381,7 +276,8 @@ CONTAINS
         END DO
       END IF
       CALL abort_code(c_err_bad_value)
-    CASE(4*c_ndims+7)
+
+    ELSE IF (str_cmp(element, 'restart_snapshot')) THEN
       isnum = .TRUE.
       str_tmp = TRIM(ADJUSTL(value))
       DO i = 1,LEN_TRIM(str_tmp)
@@ -397,9 +293,11 @@ CONTAINS
         restart_filename = TRIM(str_tmp)
       END IF
       ic_from_restart = .TRUE.
-    CASE(4*c_ndims+8)
+
+    ELSE IF (str_cmp(element, 'neutral_background')) THEN
       neutral_background = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+9)
+
+    ELSE IF (str_cmp(element, 'field_order')) THEN
       field_order = as_integer_print(value, element, errcode)
       IF (field_order /= 2 .AND. field_order /= 4 &
           .AND. field_order /= 6) THEN
@@ -407,33 +305,53 @@ CONTAINS
       ELSE
         CALL set_field_order(field_order)
       END IF
-    CASE(4*c_ndims+10)
+
+    ELSE IF (str_cmp(element, 'stdout_frequency')) THEN
       stdout_frequency = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+11)
+
+    ELSE IF (str_cmp(element, 'use_random_seed')) THEN
       use_random_seed = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+12)
+
+    ELSE IF (str_cmp(element, 'smooth_currents')) THEN
       smooth_currents = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+13)
+
+    ELSE IF (str_cmp(element, 'field_ionisation') &
+        .OR. str_cmp(element, 'field_ionization') &
+        .OR. str_cmp(element, 'use_field_ionise')) THEN
       use_field_ionisation = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+14)
+
+    ELSE IF (str_cmp(element, 'use_multiphoton') &
+        .OR. str_cmp(element, 'multiphoton')) THEN
       use_multiphoton = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+15)
+
+    ELSE IF (str_cmp(element, 'use_bsi') &
+        .OR. str_cmp(element, 'bsi')) THEN
       use_bsi = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+16)
+
+    ELSE IF (str_cmp(element, 'particle_tstart')) THEN
       particle_push_start_time = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+17)
+
+    ELSE IF (str_cmp(element, 'use_migration') &
+        .OR. str_cmp(element, 'migrate_particles')) THEN
       use_particle_migration = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+18)
+
+    ELSE IF (str_cmp(element, 'migration_interval')) THEN
       particle_migration_interval = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+19)
+
+    ELSE IF (str_cmp(element, 'use_exact_restart')) THEN
       use_exact_restart = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+20)
+
+    ELSE IF (str_cmp(element, 'allow_cpu_reduce')) THEN
       allow_cpu_reduce = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+21)
+
+    ELSE IF (str_cmp(element, 'check_stop_file_frequency') &
+        .OR. str_cmp(element, 'check_stop_frequency')) THEN
       check_stop_frequency = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+22)
+
+    ELSE IF (str_cmp(element, 'stop_at_walltime')) THEN
       stop_at_walltime = as_real_print(value, element, errcode)
-    CASE(4*c_ndims+23)
+
+    ELSE IF (str_cmp(element, 'stop_at_walltime_file')) THEN
       IF (rank == 0) THEN
         OPEN(unit=lu, status='OLD', iostat=ierr, &
             file=TRIM(data_dir) // '/' // TRIM(value))
@@ -443,19 +361,26 @@ CONTAINS
         END IF
       END IF
       CALL MPI_BCAST(stop_at_walltime, 1, mpireal, 0, comm, errcode)
-    CASE(4*c_ndims+24)
+
+    ELSE IF (str_cmp(element, 'simplify_deck')) THEN
       simplify_deck = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+25)
+
+    ELSE IF (str_cmp(element, 'print_constants')) THEN
       print_deck_constants = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+26)
+
+    ELSE IF (str_cmp(element, 'allow_missing_restart')) THEN
       allow_missing_restart = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+27)
+
+    ELSE IF (str_cmp(element, 'print_eta_string')) THEN
       print_eta_string = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+28)
+
+    ELSE IF (str_cmp(element, 'n_zeros')) THEN
       n_zeros_control = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+29)
+
+    ELSE IF (str_cmp(element, 'use_current_correction')) THEN
       use_current_correction = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+30)
+
+    ELSE IF (str_cmp(element, 'maxwell_solver')) THEN
       maxwell_solver = as_integer_print(value, element, errcode)
       IF (maxwell_solver /= c_maxwell_solver_yee &
           .AND. maxwell_solver /= c_maxwell_solver_lehe &
@@ -467,25 +392,42 @@ CONTAINS
           .AND. maxwell_solver /= c_maxwell_solver_custom) THEN
         errcode = c_err_bad_value
       END IF
-    CASE(4*c_ndims+31)
+
+    ELSE IF (str_cmp(element, 'use_particle_count_update')) THEN
       use_particle_count_update = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+32)
+
+    ELSE IF (str_cmp(element, 'use_accurate_n_zeros')) THEN
       use_accurate_n_zeros = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+33)
+
+    ELSE IF (str_cmp(element, 'bits_in_cpu_id')) THEN
       n_cpu_bits = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+34)
+
+    ELSE IF (str_cmp(element, 'reset_walltime')) THEN
       reset_walltime = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+35)
+
+    ELSE IF (str_cmp(element, 'dlb_maximum_interval') &
+        .OR. str_cmp(element, 'balance_maximum_interval')) THEN
       dlb_maximum_interval = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+36)
+
+    ELSE IF (str_cmp(element, 'dlb_force_interval') &
+        .OR. str_cmp(element, 'balance_force_interval')) THEN
       dlb_force_interval = as_integer_print(value, element, errcode)
-    CASE(4*c_ndims+37)
+
+    ELSE IF (str_cmp(element, 'balance_first')) THEN
       balance_first = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+38)
+
+    ELSE IF (str_cmp(element, 'use_pre_balance') &
+        .OR. str_cmp(element, 'pre_balance')) THEN
       use_pre_balance = as_logical_print(value, element, errcode)
-    CASE(4*c_ndims+39)
+
+    ELSE IF (str_cmp(element, 'use_optimal_layout') &
+        .OR. str_cmp(element, 'optimal_layout')) THEN
       use_optimal_layout = as_logical_print(value, element, errcode)
-    END SELECT
+
+    ELSE
+      errcode = c_err_unknown_element
+
+    END IF
 
   END FUNCTION control_block_handle_element
 
@@ -494,31 +436,33 @@ CONTAINS
   FUNCTION control_block_check() RESULT(errcode)
 
     INTEGER :: errcode, idx, io, iu
+    CHARACTER(LEN=5), DIMENSION(6), PARAMETER :: &
+        grid_name = ['x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max']
 
     errcode = c_err_none
 
-    ! nprocx/y/z and npart are optional
-    control_block_done(3*c_ndims+1:4*c_ndims+1) = .TRUE.
+    IF (.NOT. got_time) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Required control block element "t_end" or "nsteps"', &
+              ' absent. Please create this entry in the input deck'
+        END DO
+      END IF
+      errcode = c_err_missing_elements
+    END IF
 
-    ! Only one of nsteps or t_end need be specified
-    IF (control_block_done(4*c_ndims+2)) &
-        control_block_done(4*c_ndims+3) = .TRUE.
-    IF (control_block_done(4*c_ndims+3)) &
-        control_block_done(4*c_ndims+2) = .TRUE.
-
-    ! All entries after t_end are optional
-    control_block_done(4*c_ndims+4:) = .TRUE.
-
-    DO idx = 1, control_block_elements
-      IF (.NOT. control_block_done(idx)) THEN
+    DO idx = 1, 2 * c_ndims
+      IF (.NOT. got_grid(idx)) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
-            WRITE(io,*) 'Required control block element ', &
-                TRIM(ADJUSTL(control_block_name(idx))), &
-                ' absent. Please create this entry in the input deck'
+            WRITE(io,*) 'Required control block element "' // grid_name(idx) &
+                // '" absent. Please create this entry in the input deck'
           END DO
         END IF
         errcode = c_err_missing_elements
