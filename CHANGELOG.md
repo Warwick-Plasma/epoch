@@ -10,6 +10,9 @@
    load balancer attempts to find the best nprocx/y/z split of the domain
    prior to the initial load balance
 
+ * Removed static parameter arrays from the input deck block parsers to
+   simplify the process of adding new entries
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
