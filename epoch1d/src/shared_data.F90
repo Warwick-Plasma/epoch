@@ -717,6 +717,7 @@ MODULE shared_data
   LOGICAL :: use_particle_count_update = .FALSE.
   LOGICAL :: use_accurate_n_zeros = .FALSE.
   LOGICAL :: use_injectors = .FALSE.
+  LOGICAL :: use_more_setup_memory = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart

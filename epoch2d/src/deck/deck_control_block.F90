@@ -402,6 +402,9 @@ CONTAINS
         .OR. str_cmp(element, 'optimal_layout')) THEN
       use_optimal_layout = as_logical_print(value, element, errcode)
 
+    ELSE IF (str_cmp(element, 'use_more_setup_memory')) THEN
+      use_more_setup_memory = as_logical_print(value, element, errcode)
+
     ELSE
       errcode = c_err_unknown_element
 

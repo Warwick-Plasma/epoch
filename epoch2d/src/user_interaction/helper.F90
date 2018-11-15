@@ -995,10 +995,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (.NOT. ALLOCATED(global_species_density)) THEN
-      ALLOCATE(global_species_density(1-ng:nx+ng,1-ng:ny+ng))
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%density(1-ng:nx+ng,1-ng:ny+ng))
+      species_density => ic%density
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_density)) THEN
+        ALLOCATE(global_species_density(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+      species_density => global_species_density
     END IF
-    species_density => global_species_density
 
     DO iy = 1-ng, ny+ng
       parameters%pack_iy = iy
@@ -1030,10 +1035,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (.NOT. ALLOCATED(global_species_temp)) THEN
-      ALLOCATE(global_species_temp(1-ng:nx+ng,1-ng:ny+ng,3))
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      species_temp => ic%temp
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_temp)) THEN
+        ALLOCATE(global_species_temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      END IF
+      species_temp => global_species_temp
     END IF
-    species_temp => global_species_temp
 
     DO n = 1, 3
       DO iy = 1-ng, ny+ng
@@ -1067,10 +1077,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (.NOT. ALLOCATED(global_species_drift)) THEN
-      ALLOCATE(global_species_drift(1-ng:nx+ng,1-ng:ny+ng,3))
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      species_drift => ic%drift
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_drift)) THEN
+        ALLOCATE(global_species_drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      END IF
+      species_drift => global_species_drift
     END IF
-    species_drift => global_species_drift
 
     DO n = 1, 3
       DO iy = 1-ng, ny+ng
