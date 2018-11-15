@@ -13,6 +13,13 @@
  * Removed static parameter arrays from the input deck block parsers to
    simplify the process of adding new entries
 
+ * Added control block option "use_more_setup_memory". If set to false then
+   only one set of arrays will be used for storing temperature, density and
+   drift during species loading. This can be a significant memory saving but
+   comes at the expense of recalculating grid quantities multiple times.
+   Setting the flag to true enables one set of arrays per species.
+   The default value is false.
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
