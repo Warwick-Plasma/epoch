@@ -76,7 +76,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER :: i, ispec
     TYPE(stack_element) :: iblock
 
     CALL eval_reset()
@@ -94,6 +94,10 @@ CONTAINS
         CALL do_constant(iblock%value, .FALSE., parameters, err)
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .FALSE., parameters, err)
+        IF (err < 0) THEN
+          ispec = -err
+          CALL do_evaluate(iblock%value, .FALSE., parameters, ispec, err)
+        END IF
       END IF
 
       IF (err /= c_err_none) THEN
@@ -113,7 +117,7 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER :: i, ispec
     TYPE(stack_element) :: iblock
 
     IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
@@ -133,6 +137,10 @@ CONTAINS
         CALL do_constant(iblock%value, .FALSE., parameters, err)
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .FALSE., parameters, err)
+        IF (err < 0) THEN
+          ispec = -err
+          CALL do_evaluate(iblock%value, .FALSE., parameters, ispec, err)
+        END IF
       END IF
 
       IF (err /= c_err_none) THEN
@@ -171,7 +179,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER :: i, ispec
     TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: output_stack
     TYPE(parameter_pack) :: parameters
@@ -212,6 +220,10 @@ CONTAINS
         CALL update_stack_for_block(iblock, err)
       ELSE IF (iblock%ptype == c_pt_function) THEN
         CALL do_functions(iblock%value, .TRUE., parameters, err)
+        IF (err < 0) THEN
+          ispec = -err
+          CALL do_evaluate(iblock%value, .TRUE., parameters, ispec, err)
+        END IF
         CALL update_stack_for_block(iblock, err)
       END IF
 
@@ -477,5 +489,103 @@ CONTAINS
     evaluate = evaluate_with_parameters(input_stack, parameters, err)
 
   END FUNCTION evaluate
+
+
+
+  SUBROUTINE do_evaluate(opcode, simplify, parameters, ispec, err)
+
+    ! Initial conditions arrays might not be allocated when we try to access
+    ! them. In that situation, we need to evaluate the functional form instead.
+    ! Routine must be defined here to remove circular dependencies.
+    INTEGER, INTENT(IN) :: opcode
+    TYPE(parameter_pack), INTENT(IN) :: parameters
+    LOGICAL, INTENT(IN) :: simplify
+    INTEGER, INTENT(INOUT) :: ispec, err
+    REAL(num) :: val, val_local, convert
+    INTEGER :: n, err_simplify
+    INTEGER :: ix, iy
+    TYPE(parameter_pack) :: param
+    TYPE(particle_species), POINTER :: species
+#include "particle_head.inc"
+
+    err = c_err_none
+    err_simplify = c_err_none
+
+    IF (simplify) err_simplify = c_err_other
+
+    IF (opcode == c_func_rho) THEN
+      species => species_list(ispec)
+
+      IF (parameters%use_grid_position) THEN
+        val_local = evaluate_with_parameters(species%density_function, &
+                  parameters, errcode)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          param%pack_ix = cell_x + ix
+          param%pack_iy = cell_y + iy
+          val = evaluate_with_parameters(species%density_function, &
+                  param, errcode)
+          val_local = val_local + gx(ix) * gy(iy) * val
+        END DO
+        END DO
+      END IF
+
+      CALL push_on_eval(val_local)
+      err = err_simplify
+      RETURN
+    END IF
+
+    n = 0
+    IF (opcode == c_func_tempx) THEN
+      n = 1
+      convert = 1.0_num
+    ELSE IF (opcode == c_func_tempy) THEN
+      n = 2
+      convert = 1.0_num
+    ELSE IF (opcode == c_func_tempz) THEN
+      n = 3
+      convert = 1.0_num
+    ELSE IF (opcode == c_func_tempx_ev) THEN
+      n = 1
+      convert = kb / ev
+    ELSE IF (opcode == c_func_tempy_ev) THEN
+      n = 2
+      convert = kb / ev
+    ELSE IF (opcode == c_func_tempz_ev) THEN
+      n = 3
+      convert = kb / ev
+    END IF
+
+    IF (n > 0) THEN
+      species => species_list(ispec)
+
+      IF (parameters%use_grid_position) THEN
+        val_local = evaluate_with_parameters(species%temperature_function(n), &
+                  parameters, errcode)
+      ELSE
+#include "pack_to_grid.inc"
+        val_local = 0.0_num
+        DO iy = sf_min, sf_max
+        DO ix = sf_min, sf_max
+          param%pack_ix = cell_x + ix
+          param%pack_iy = cell_y + iy
+          val = evaluate_with_parameters(species%temperature_function(n), &
+                  param, errcode)
+          val_local = val_local + gx(ix) * gy(iy) * val
+        END DO
+        END DO
+      END IF
+
+      CALL push_on_eval(convert * val_local)
+      err = err_simplify
+      RETURN
+    END IF
+
+    err = c_err_unknown_element
+
+  END SUBROUTINE do_evaluate
 
 END MODULE evaluator
