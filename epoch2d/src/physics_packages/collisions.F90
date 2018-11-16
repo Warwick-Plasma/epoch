@@ -120,12 +120,11 @@ CONTAINS
       IF (.NOT.collide_species) CYCLE
 
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_temperature(itemp, ispecies)
+      CALL calc_coll_temperature_ev(itemp, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
-      itemp = itemp * kb / q0
 
       DO iy = 1, ny
       DO ix = 1, nx
@@ -149,8 +148,7 @@ CONTAINS
           jtemp = itemp
         ELSE
           CALL calc_coll_number_density(jdens, jspecies)
-          CALL calc_coll_temperature(jtemp, jspecies)
-          jtemp = jtemp * kb / q0
+          CALL calc_coll_temperature_ev(jtemp, jspecies)
         END IF
 
         m2 = species_list(jspecies)%mass
@@ -247,23 +245,21 @@ CONTAINS
         use_coulomb_log_auto_i = .FALSE.
       END IF
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_temperature(itemp, ispecies)
+      CALL calc_coll_temperature_ev(itemp, ispecies)
       CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
-      itemp = itemp * kb / q0
 
       IF (species_list(ispecies)%ionise) THEN
         e_species = species_list(ispecies)%release_species
         CALL calc_coll_number_density(e_dens, e_species)
-        CALL calc_coll_temperature(e_temp, e_species)
+        CALL calc_coll_temperature_ev(e_temp, e_species)
         CALL calc_coll_ekbar(e_ekbar, e_species)
         m_e = species_list(e_species)%mass
         q_e = species_list(e_species)%charge
         w_e = species_list(e_species)%weight
-        e_temp = e_temp * kb / q0
         n1 = species_list(ispecies)%n
         l = species_list(ispecies)%l
         ionisation_energy = species_list(ispecies)%ionisation_energy / ev
@@ -292,22 +288,20 @@ CONTAINS
         IF (user_factor <= 0) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
-        CALL calc_coll_temperature(jtemp, jspecies)
+        CALL calc_coll_temperature_ev(jtemp, jspecies)
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
         w2 = species_list(jspecies)%weight
-        jtemp = jtemp * kb / q0
 
         IF (species_list(ispecies)%electron &
             .AND. species_list(jspecies)%ionise) THEN
           e_species = species_list(jspecies)%release_species
           CALL calc_coll_number_density(e_dens, e_species)
-          CALL calc_coll_temperature(e_temp, e_species)
+          CALL calc_coll_temperature_ev(e_temp, e_species)
           m_e = species_list(e_species)%mass
           q_e = species_list(e_species)%charge
           w_e = species_list(e_species)%weight
-          e_temp = e_temp * kb / q0
           n1 = species_list(jspecies)%n
           l = species_list(jspecies)%l
           ionisation_energy = species_list(jspecies)%ionisation_energy / ev
@@ -1319,7 +1313,7 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_coll_temperature(sigma, ispecies)
+  SUBROUTINE calc_coll_temperature_ev(sigma, ispecies)
 
     ! This subroutine calculates the grid-based temperature of a given
     ! particle species.
@@ -1433,9 +1427,9 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! 3/2 kT = <p^2>/(2m)
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / q0 / 3.0_num
 
-  END SUBROUTINE calc_coll_temperature
+  END SUBROUTINE calc_coll_temperature_ev
 
 
 
