@@ -122,6 +122,7 @@ CONTAINS
 
       CALL calc_coll_number_density(idens, ispecies)
       CALL calc_coll_temperature_ev(itemp, ispecies)
+      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -156,7 +157,6 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
-          CALL calc_coll_ekbar(iekbar, ispecies)
           CALL calc_coll_ekbar(jekbar, ispecies)
           log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
               q1, q2, m1)
@@ -170,7 +170,7 @@ CONTAINS
           IF (ispecies == jspecies) THEN
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
-                m1, q1, w1, idens(ix,iy,iz), itemp(ix,iy,iz), &
+                m1, q1, w1, idens(ix,iy,iz), iekbar(ix,iy,iz), &
                 log_lambda(ix,iy,iz), user_factor)
           ELSE
             CALL inter_species_collisions( &
@@ -348,7 +348,7 @@ CONTAINS
           DO ix = 1, nx
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
-                m1, q1, w1, idens(ix,iy,iz), itemp(ix,iy,iz), &
+                m1, q1, w1, idens(ix,iy,iz), iekbar(ix,iy,iz), &
                 log_lambda(ix,iy,iz), user_factor)
           END DO ! ix
           END DO ! iy
@@ -709,7 +709,7 @@ CONTAINS
 
 
   SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
-      dens, temp, log_lambda, user_factor)
+      dens, ekbar, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
@@ -717,7 +717,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: user_factor
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
-    REAL(num) :: dens, temp, log_lambda
+    REAL(num) :: dens, ekbar, log_lambda
     INTEGER(i8) :: icount, k
 
     factor = 0.0_num
@@ -730,7 +730,7 @@ CONTAINS
     IF (icount <= 1) RETURN
 
     ! No collisions in cold plasma so return
-    IF (temp <= c_tiny) RETURN
+    IF (ekbar <= c_tiny) RETURN
 
 #ifdef PER_SPECIES_WEIGHT
     np = icount * weight
