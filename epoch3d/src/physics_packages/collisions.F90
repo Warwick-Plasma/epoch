@@ -85,7 +85,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar, jekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
@@ -99,6 +99,7 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(jekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -159,6 +160,7 @@ CONTAINS
 
         IF (coulomb_log_auto) THEN
           CALL calc_coll_ekbar(iekbar, ispecies)
+          CALL calc_coll_ekbar(jekbar, ispecies)
           log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
               q1, q2, m1)
         ELSE
@@ -189,7 +191,7 @@ CONTAINS
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
-    DEALLOCATE(iekbar)
+    DEALLOCATE(iekbar, jekbar)
 
   END SUBROUTINE particle_collisions
 
