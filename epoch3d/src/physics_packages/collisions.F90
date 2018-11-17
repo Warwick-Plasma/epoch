@@ -157,9 +157,14 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
-          CALL calc_coll_ekbar(jekbar, ispecies)
-          log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
-              q1, q2, m1)
+          IF (ispecies == jspecies) THEN
+            log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
+                q1, q1, m1)
+          ELSE
+            CALL calc_coll_ekbar(jekbar, ispecies)
+            log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
+                q1, q2, m1)
+          END IF
         ELSE
           log_lambda = coulomb_log
         END IF
