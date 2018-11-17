@@ -87,8 +87,8 @@ ifeq ($(strip $(COMPILER)),gfortran)
 
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -std=f2003 -Wall -Wextra -pedantic -Wno-unused-parameter \
-             -Wno-integer-division -ffree-line-length-80 -fcheck=all \
-             -fbacktrace -fbounds-check -Werror \
+             -Wno-unused-dummy-argument -Wno-integer-division \
+             -ffree-line-length-80 -fcheck=all -fbacktrace -Werror \
              -ffpe-trap=invalid,zero,overflow -fbounds-check
     #FFLAGS += -ffpe-trap=underflow,denormal
 

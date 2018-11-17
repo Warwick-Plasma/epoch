@@ -4,11 +4,6 @@
 
  * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
 
- * Replaced non-standard ISATTY intrinsic function with a call to the
-   POSIX C-library function "isatty"
-
- * Changed FORTRAN standard to 2003
-
  * Added antennae that allow you to specify an external time varying current
    in the simulation domain
 
@@ -53,6 +48,11 @@
    comes at the expense of recalculating grid quantities multiple times.
    Setting the flag to true enables one set of arrays per species.
    The default value is false.
+
+ * Replaced non-standard ISATTY intrinsic function with a call to the
+   POSIX C-library function "isatty"
+
+ * Changed FORTRAN standard to 2003
 
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
