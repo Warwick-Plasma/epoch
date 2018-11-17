@@ -754,7 +754,7 @@ CONTAINS
     impact => current%next
     DO k = 2, icount-2, 2
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor)
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -765,18 +765,18 @@ CONTAINS
 
     IF (MOD(icount, 2_i8) == 0) THEN
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor)
     ELSE
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => impact%next
       impact => current%prev%prev
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => current%prev
       impact => current%next
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
     END IF
 
   END SUBROUTINE intra_species_collisions
@@ -848,8 +848,8 @@ CONTAINS
       impact => p_list2%head
       DO k = 1, pcount
         CALL scatter(current, impact, mass1, mass2, charge1, charge2, &
-            weight1, weight2, idens, jdens, itemp, jtemp, &
-            log_lambda, user_factor * np / factor)
+            weight1, weight2, idens, jdens, log_lambda, &
+            user_factor * np / factor)
         current => current%next
         impact => impact%next
 #ifdef PREFETCH
@@ -868,7 +868,7 @@ CONTAINS
 
 
   SUBROUTINE scatter(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, itemp, jtemp, log_lambda, factor)
+      weight1, weight2, idens, jdens, log_lambda, factor)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
@@ -881,7 +881,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass1, mass2
     REAL(num), INTENT(IN) :: charge1, charge2
     REAL(num), INTENT(IN) :: weight1, weight2
-    REAL(num), INTENT(IN) :: idens, jdens, itemp, jtemp, log_lambda
+    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
