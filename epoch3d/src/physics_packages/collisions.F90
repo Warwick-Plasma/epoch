@@ -121,7 +121,6 @@ CONTAINS
       IF (.NOT.collide_species) CYCLE
 
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_temperature_ev(itemp, ispecies)
       CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
@@ -149,8 +148,7 @@ CONTAINS
 
         IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
-          CALL calc_coll_temperature_ev(jtemp, jspecies)
-          CALL calc_coll_ekbar(jekbar, ispecies)
+          CALL calc_coll_ekbar(jekbar, jspecies)
         END IF
 
         m2 = species_list(jspecies)%mass
@@ -158,10 +156,12 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
+          CALL calc_coll_temperature_ev(itemp, ispecies)
           IF (ispecies == jspecies) THEN
             log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
                 q1, q1, m1)
           ELSE
+            CALL calc_coll_temperature_ev(jtemp, jspecies)
             log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
                 q1, q2, m1)
           END IF
