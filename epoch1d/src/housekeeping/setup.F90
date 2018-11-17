@@ -1429,8 +1429,8 @@ CONTAINS
     INTEGER :: isub
 
     DO isub = 1, SIZE(subset_list)
-      IF(subset_list(isub)%persistent .AND. &
-          time >= subset_list(isub)%persist_after) THEN
+      IF (subset_list(isub)%persistent &
+          .AND. time >= subset_list(isub)%persist_after) THEN
         subset_list(isub)%locked = .TRUE.
       END IF
     END DO

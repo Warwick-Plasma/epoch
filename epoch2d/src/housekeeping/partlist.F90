@@ -274,10 +274,10 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      !A partlist that holds copies or an unsafe partlist should not cause
-      !unlinking
-      CALL destroy_particle(new_particle, partlist%holds_copies .OR. &
-          .NOT. partlist%safe)
+      ! A partlist that holds copies or an unsafe partlist should not cause
+      ! unlinking
+      CALL destroy_particle(new_particle, &
+          partlist%holds_copies .OR. .NOT.partlist%safe)
       new_particle => next
       ipart = ipart+1
     END DO
@@ -498,8 +498,7 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    CALL id_registry%add_with_map(a_particle%id, &
-        TRANSFER(array(cpos), temp_i8))
+    CALL id_registry%add_with_map(a_particle%id, TRANSFER(array(cpos), temp_i8))
     cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
@@ -589,10 +588,10 @@ CONTAINS
 
 
 
-  !>Routine to delete a particle. This routine is only safe to use on 
-  !> a particle that is not in a partlist
   SUBROUTINE destroy_particle(part, is_copy)
 
+    ! Routine to delete a particle. This routine is only safe to use on
+    ! a particle that is not in a partlist
     TYPE(particle), POINTER :: part
     LOGICAL, INTENT(IN), OPTIONAL :: is_copy
 

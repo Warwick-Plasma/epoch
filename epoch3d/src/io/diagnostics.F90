@@ -242,6 +242,7 @@ CONTAINS
 #endif
 
     CALL build_persistent_subsets
+
     timer_walltime = -1.0_num
     IF (step /= last_step) THEN
       last_step = step
@@ -618,18 +619,18 @@ CONTAINS
             'Processor_at_t0', '', it_output_integer4)
 #endif
 #if defined(PARTICLE_ID)
-        !NB: Need to write the ID before the particle persistence information
+        ! NB: Need to write the ID before the particle persistence information
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer8)
         IF (id_registry%get_hash_count() > 0) &
             CALL write_particle_variable(c_dump_persistent_ids, code, &
-            'persistent_subset', '#', it_output_integer8)
+                'persistent_subset', '#', it_output_integer8)
 #elif defined(PARTICLE_ID4)
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer4)
         IF (id_registry%get_hash_count() > 0) &
             CALL write_particle_variable(c_dump_persistent_ids, code, &
-            'persistent_subset', '#', it_output_integer8)
+                'persistent_subset', '#', it_output_integer8)
 #endif
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
@@ -2421,18 +2422,22 @@ CONTAINS
     TYPE(particle_id_hash), POINTER :: current_hash
 
     DO isub = 1, SIZE(subset_list)
-      IF (.NOT. subset_list(isub)%persistent) CYCLE !Not a persistent subset
-      IF (subset_list(isub)%locked .AND. &
-          .NOT. subset_list(isub)%add_after_restart) CYCLE !Already locked in
-      IF (time < subset_list(isub)%persist_after) CYCLE !Not yet time to lock
+      ! Not a persistent subset
+      IF (.NOT. subset_list(isub)%persistent) CYCLE
+      ! Already locked in
+      IF (subset_list(isub)%locked &
+          .AND. .NOT.subset_list(isub)%add_after_restart) CYCLE
+      ! Not yet time to lock
+      IF (time < subset_list(isub)%persist_after) CYCLE
 
       sub => subset_list(isub)
       current_hash => id_registry%get_existing_hash(sub%name)
       IF (sub%from_file) THEN
-        !If you are restarting then unless the user specifically asks, build up
-        !the persistent subset from the restart file, not from the external file
-        IF (.NOT. ic_from_restart .OR. sub%add_after_restart .OR. &
-            .NOT. sub%locked) THEN
+        ! If you are restarting then unless the user specifically asks, build up
+        ! the persistent subset from the restart file, not from the external
+        ! file
+        IF (.NOT. ic_from_restart &
+            .OR. sub%add_after_restart .OR. .NOT.sub%locked) THEN
           CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
           sub%add_after_restart = .FALSE.
         END IF
@@ -2455,8 +2460,8 @@ CONTAINS
             IF (use_particle) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
               ! Add particle ID to persistence list
-              IF (sub%persistent .AND. time >= sub%persist_after .AND. &
-                  .NOT. sub%locked) THEN
+              IF (sub%persistent .AND. time >= sub%persist_after &
+                  .AND. .NOT.sub%locked) THEN
                 CALL current_hash%add(current%id)
               END IF
 #endif
@@ -2477,13 +2482,13 @@ CONTAINS
 
 
 
-  FUNCTION test_particle(sub, current, part_mc_in) RESULT(use_particle)
+  FUNCTION test_particle(sub, current, part_mc) RESULT(use_particle)
 
     TYPE(subset), INTENT(IN) :: sub
     TYPE(particle), INTENT(IN) :: current
-    REAL(num), INTENT(IN) :: part_mc_in
+    REAL(num), INTENT(INOUT) :: part_mc
     LOGICAL :: use_particle
-    REAL(num) :: gamma_rel, random_num, part_mc
+    REAL(num) :: gamma_rel, random_num
     INTEGER :: n
 
     use_particle = .TRUE.
@@ -2491,8 +2496,6 @@ CONTAINS
     IF (sub%use_gamma) THEN
 #ifdef PER_PARTICLE_CHARGE_MASS
       part_mc = c * current%mass
-#else
-      part_mc = part_mc_in
 #endif
       gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
 

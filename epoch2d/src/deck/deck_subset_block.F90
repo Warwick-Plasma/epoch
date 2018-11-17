@@ -296,7 +296,7 @@ CONTAINS
       IF (ASSOCIATED(current_hash)) THEN
         CALL current_hash%init(1000)
       ELSE
-        IF (rank == 0) PRINT *,'Can only have 64 persistent subsets'
+        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
         errcode = c_err_bad_value
         RETURN
       END IF
@@ -317,7 +317,7 @@ CONTAINS
       IF (ASSOCIATED(current_hash)) THEN
         CALL current_hash%init(1000)
       ELSE
-        IF (rank == 0) PRINT *,'Can only have 64 persistent subsets'
+        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
         errcode = c_err_bad_value
         RETURN
       END IF

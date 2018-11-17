@@ -48,7 +48,7 @@ CONTAINS
     NULLIFY(probe%next)
     ALLOCATE(probe%use_species(n_species))
     probe%use_species = .FALSE.
-    CALL create_empty_partlist(probe%sampled_particles, holds_copies = .TRUE.)
+    CALL create_empty_partlist(probe%sampled_particles, holds_copies=.TRUE.)
 
   END SUBROUTINE init_probe
 
