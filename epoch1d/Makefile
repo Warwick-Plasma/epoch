@@ -304,11 +304,11 @@ SRCFILES = antennae.f90 balance.F90 boundary.F90 calc_df.F90 collisions.F90 \
   diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 evaluator_blocks.F90 \
   fields.f90 finish.f90 helper.F90 ic_module.f90 injectors.F90 ionise.F90 \
   iterators.F90 laser.f90 mpi_routines.F90 mpi_subtype_control.f90 \
-  numerics.f90 particle_migration.F90 particle_pointer_advance.f90 \
-  particle_temperature.F90 particle_id_hash.F90 particles.F90 partlist.F90 \
-  photons.F90 prefetch.F90 probes.F90 random_generator.f90 redblack_module.f90 \
-  setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 simple_io.F90 \
-  split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
+  numerics.f90 particle_id_hash.F90 particle_migration.F90 \
+  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
+  partlist.F90 photons.F90 prefetch.F90 probes.F90 random_generator.f90 \
+  redblack_module.f90 setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 \
+  simple_io.F90 split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
   terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
   version_data.F90 welcome.F90 window.F90
 
@@ -434,8 +434,8 @@ FORCE:
 antennae.o: antennae.f90 evaluate.o shared_data.o shunt.o
 balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
   redblack_module.o timer.o utilities.o
-boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_temperature.o \
-  partlist.o particle_id_hash.o utilities.o
+boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_id_hash.o \
+  particle_temperature.o partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 constants.o: constants.F90 $(SDFMOD)
@@ -480,8 +480,8 @@ deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
 diagnostics.o: diagnostics.F90 antennae.o calc_df.o constants.o deck.o \
   deck_io_block.o dist_fn.o evaluate.o iterators.o particle_id_hash.o probes.o \
-  setup.o shared_data.o strings.o timer.o version_data.o window.o \
-  $(SDFMOD) $(ENCODED_SOURCE)
+  setup.o shared_data.o strings.o timer.o version_data.o window.o $(SDFMOD) \
+  $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch1d.o: epoch1d.F90 antennae.o balance.o calc_df.o collisions.o \
   current_smooth.o deck.o diagnostics.o fields.o finish.o helper.o ic_module.o \
@@ -500,17 +500,18 @@ injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
   random_generator.o
 ionise.o: ionise.F90 boundary.o numerics.o partlist.o random_generator.o \
   utilities.o
-iterators.o: iterators.F90 particle_pointer_advance.o particle_id_hash.o \
+iterators.o: iterators.F90 particle_id_hash.o particle_pointer_advance.o \
   partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
 mpi_routines.o: mpi_routines.F90 helper.o
 mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 constants.o
+particle_id_hash.o: particle_id_hash.F90 constants.o random_generator.o \
+  shared_data.o utilities.o
 particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shared_data.o
-particle_id_hash.o: particle_id_hash.F90 constants.o shared_data.o utilities.o
 particles.o: particles.F90 boundary.o partlist.o prefetch.o
 partlist.o: partlist.F90 particle_id_hash.o random_generator.o shared_data.o
 photons.o: photons.F90 partlist.o
@@ -519,8 +520,8 @@ probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
 setup.o: setup.F90 antennae.o balance.o constants.o fields.o helper.o laser.o \
-  mpi_subtype_control.o particle_id_hash.o shunt.o split_particle.o timer.o \
-  version_data.o welcome.o window.o $(SDFMOD)
+  mpi_routines.o mpi_subtype_control.o particle_id_hash.o shunt.o \
+  split_particle.o timer.o version_data.o welcome.o window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o

@@ -106,7 +106,6 @@ CONTAINS
       partlist%holds_copies = .FALSE.
     END IF
 
-
   END SUBROUTINE create_empty_partlist
 
 
@@ -146,7 +145,7 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     partlist%safe = .FALSE.
     partlist%head => head
@@ -176,7 +175,7 @@ CONTAINS
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       CALL create_particle(new_particle)
@@ -197,7 +196,7 @@ CONTAINS
     TYPE(particle), POINTER :: new_particle
     INTEGER(i8) :: ipart, cpos = 0
 
-    CALL create_empty_partlist(partlist)
+    CALL create_empty_partlist(partlist, holds_copies)
 
     DO ipart = 0, n_elements-1
       ALLOCATE(new_particle)
@@ -275,7 +274,10 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       next => new_particle%next
-      CALL destroy_particle(new_particle)
+      !A partlist that holds copies or an unsafe partlist should not cause
+      !unlinking
+      CALL destroy_particle(new_particle, partlist%holds_copies .OR. &
+          .NOT. partlist%safe)
       new_particle => next
       ipart = ipart+1
     END DO
@@ -498,7 +500,7 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     CALL id_registry%add_with_map(a_particle%id, &
         TRANSFER(array(cpos), temp_i8))
-    cpos = cpos + 1
+    cpos = cpos+1
 #endif
 #ifdef COLLISIONS_TEST
     a_particle%coll_count = NINT(array(cpos))

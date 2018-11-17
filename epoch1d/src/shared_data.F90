@@ -368,6 +368,7 @@ MODULE shared_data
     INTEGER :: id_update
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
+
     !Does this partlist hold copies of particles rather than originals
     LOGICAL :: holds_copies
 
@@ -644,7 +645,6 @@ MODULE shared_data
     TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
-
     !Persistent subset
     LOGICAL :: persistent, locked, from_file
     REAL(num) :: persist_after

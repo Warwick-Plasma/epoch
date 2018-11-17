@@ -431,6 +431,7 @@ CONTAINS
           cur => cur%next
         END DO
       END SELECT
+      ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)
       END IF

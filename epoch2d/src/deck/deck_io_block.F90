@@ -978,13 +978,6 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_cpml_psi_bxy), c_io_restartable)
     io_block%dumpmask(c_dump_cpml_psi_bzy) = &
         IOR(io_block%dumpmask(c_dump_cpml_psi_bzy), c_io_restartable)
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    !Persistent IDs
-    io_block%dumpmask(c_dump_persistent_ids) = &
-        IOR(io_block%dumpmask(c_dump_persistent_ids), c_io_restartable)
-    io_block%dumpmask(c_dump_part_id) = &
-        IOR(io_block%dumpmask(c_dump_part_id), c_io_restartable)
-#endif
 
   END SUBROUTINE set_restart_dumpmasks
 

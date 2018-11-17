@@ -23,8 +23,6 @@ MODULE partlist
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   USE particle_id_hash_mod
 #endif
- 
-
 
   IMPLICIT NONE
 
@@ -580,6 +578,17 @@ CONTAINS
 
 
 
+  SUBROUTINE create_particle(new_particle)
+
+    TYPE(particle), POINTER :: new_particle
+
+    ALLOCATE(new_particle)
+    CALL init_particle(new_particle)
+
+  END SUBROUTINE create_particle
+
+
+
   !>Routine to delete a particle. This routine is only safe to use on 
   !> a particle that is not in a partlist
   SUBROUTINE destroy_particle(part, is_copy)
@@ -598,17 +607,6 @@ CONTAINS
     DEALLOCATE(part)
 
   END SUBROUTINE destroy_particle
-
-
-
-  SUBROUTINE create_particle(new_particle)
-
-    TYPE(particle), POINTER :: new_particle
-
-    ALLOCATE(new_particle)
-    CALL init_particle(new_particle)
-
-  END SUBROUTINE create_particle
 
 
 

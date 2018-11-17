@@ -2305,6 +2305,7 @@ CONTAINS
       END IF
 
       io_list(i)%dumpmask = sub%mask
+
       part_mc = c * species_list(i)%mass
 
       current => species_list(i)%attached_list%head
@@ -2324,6 +2325,7 @@ CONTAINS
         END IF
 
         IF (use_particle) THEN
+          ! Move particle to io_list
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(io_list(i)%attached_list, current)
@@ -2443,7 +2445,7 @@ CONTAINS
     n = c_subset_x_max
     IF (sub%use_restriction(n)) THEN
       IF (current%part_pos(1) > sub%restriction(n)) &
-        use_particle = .FALSE.
+          use_particle = .FALSE.
     END IF
 
     n = c_subset_y_min
@@ -2467,7 +2469,7 @@ CONTAINS
     n = c_subset_px_max
     IF (sub%use_restriction(n)) THEN
       IF (current%part_p(1) > sub%restriction(n)) &
-           use_particle = .FALSE.
+          use_particle = .FALSE.
     END IF
 
     n = c_subset_py_min
@@ -2529,6 +2531,19 @@ CONTAINS
     n = c_subset_mass_max
     IF (sub%use_restriction(n)) THEN
       IF (current%mass > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    n = c_subset_id_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%id < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
+
+    n = c_subset_id_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%id > sub%restriction(n)) &
           use_particle = .FALSE.
     END IF
 #endif

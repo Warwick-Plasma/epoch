@@ -2249,10 +2249,14 @@ CONTAINS
           use_particle = current_hash%holds(current%id)
 #endif
         ELSE
+#ifdef PER_PARTICLE_CHARGE_MASS
+          part_mc = c * current%mass
+#endif
           use_particle = test_particle(sub, current, part_mc)
         END IF
 
         IF (use_particle) THEN
+          ! Move particle to io_list
           CALL remove_particle_from_partlist(species_list(i)%attached_list, &
               current)
           CALL add_particle_to_partlist(io_list(i)%attached_list, current)
@@ -2295,6 +2299,7 @@ CONTAINS
           IF (.NOT. sub%use_species(ispec)) THEN
             CYCLE
           END IF
+
           part_mc = c * species_list(ispec)%mass
 
           current => species_list(ispec)%attached_list%head
@@ -2325,10 +2330,13 @@ CONTAINS
       CALL current_hash%optimise()
 #endif
     END DO
+
   END SUBROUTINE build_persistent_subsets
 
 
+
   FUNCTION test_particle(sub, current, part_mc_in) RESULT(use_particle)
+
     TYPE(subset), INTENT(IN) :: sub
     TYPE(particle), INTENT(IN) :: current
     REAL(num), INTENT(IN) :: part_mc_in
@@ -2429,8 +2437,8 @@ CONTAINS
 
     n = c_subset_charge_max
     IF (sub%use_restriction(n)) THEN
-       IF (current%charge > sub%restriction(n)) &
-           use_particle = .FALSE.
+      IF (current%charge > sub%restriction(n)) &
+          use_particle = .FALSE.
     END IF
 
     n = c_subset_mass_min

@@ -21,6 +21,7 @@ MODULE boundary
   USE laser
   USE mpi_subtype_control
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 

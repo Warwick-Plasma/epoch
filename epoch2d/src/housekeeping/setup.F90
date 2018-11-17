@@ -1886,7 +1886,6 @@ CONTAINS
     it_pers_sub = 0
 
   END FUNCTION it_pers_sub
-
 #endif
 
 

@@ -19,6 +19,7 @@ MODULE iterators
   USE particle_pointer_advance
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   USE partlist
+  USE particle_id_hash_mod
 #endif
 
   IMPLICIT NONE
