@@ -17,6 +17,7 @@ MODULE deck_subset_block
 
   USE strings_advanced
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
   SAVE
@@ -75,8 +76,7 @@ CONTAINS
         sub%skip = (SUM(sub%skip_dir - 1) /= 0)
 
         ! Check for any spatial restrictions in place
-        sub%space_restrictions = sub%use_x_min .OR. sub%use_x_max &
-            .OR. sub%use_y_min .OR. sub%use_y_max
+        sub%space_restrictions = sub%use_x_min .OR. sub%use_x_max
         IF (sub%skip .AND. sub%space_restrictions) THEN
           IF (rank == 0) THEN
             PRINT*, 'Skip and spatial restrictions specified for ', &
@@ -133,6 +133,9 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies
     TYPE(subset), POINTER :: sub
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    TYPE(particle_id_hash), POINTER :: current_hash
+#endif
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -186,14 +189,10 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'y_min')) THEN
-      sub%y_min = as_real_print(value, element, errcode)
-      sub%use_y_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'y_max')) THEN
-      sub%y_max = as_real_print(value, element, errcode)
-      sub%use_y_max = .TRUE.
       RETURN
     END IF
 
@@ -305,7 +304,6 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'skip_y')) THEN
-      sub%skip_dir(2) = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
@@ -330,6 +328,57 @@ CONTAINS
           errcode = c_err_bad_value
         END IF
       END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'persist_after')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%persist_after = as_real_print(value, element, errcode)
+      current_hash => id_registry%get_hash(sub%name)
+      IF (ASSOCIATED(current_hash)) THEN
+        CALL current_hash%init(1000)
+      ELSE
+        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
+        errcode = c_err_bad_value
+        RETURN
+      END IF
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'from_file') &
+        .OR. str_cmp(element, 'from_file_on_restart')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%filename = TRIM(value)
+      sub%from_file = .TRUE.
+      current_hash => id_registry%get_hash(sub%name)
+      IF (ASSOCIATED(current_hash)) THEN
+        CALL current_hash%init(1000)
+      ELSE
+        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
+        errcode = c_err_bad_value
+        RETURN
+      END IF
+      sub%add_after_restart = str_cmp(element, 'from_file_on_restart')
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'sorted_file')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%file_sorted = as_logical_print(value, element, errcode)
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
       RETURN
     END IF
 
@@ -384,8 +433,6 @@ CONTAINS
       subset_list(i)%use_gamma_max  = .FALSE.
       subset_list(i)%use_x_min      = .FALSE.
       subset_list(i)%use_x_max      = .FALSE.
-      subset_list(i)%use_y_min      = .FALSE.
-      subset_list(i)%use_y_max      = .FALSE.
       subset_list(i)%use_px_min     = .FALSE.
       subset_list(i)%use_px_max     = .FALSE.
       subset_list(i)%use_py_min     = .FALSE.
@@ -409,8 +456,6 @@ CONTAINS
       subset_list(i)%gamma_max  =  HUGE(1.0_num)
       subset_list(i)%x_min      = -HUGE(1.0_num)
       subset_list(i)%x_max      =  HUGE(1.0_num)
-      subset_list(i)%y_min      = -HUGE(1.0_num)
-      subset_list(i)%y_max      =  HUGE(1.0_num)
       subset_list(i)%px_min     = -HUGE(1.0_num)
       subset_list(i)%px_max     =  HUGE(1.0_num)
       subset_list(i)%py_min     = -HUGE(1.0_num)
@@ -428,6 +473,11 @@ CONTAINS
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
+      subset_list(i)%persistent = .FALSE.
+      subset_list(i)%persist_after = 0.0_num
+      subset_list(i)%locked = .FALSE.
+      subset_list(i)%from_file = .FALSE.
+      subset_list(i)%file_sorted = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets

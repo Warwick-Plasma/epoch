@@ -21,6 +21,7 @@ MODULE boundary
   USE laser
   USE mpi_subtype_control
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -642,6 +643,9 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 END DO
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                CALL id_registry%delete_all(cur%id)
+#endif
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
@@ -702,6 +706,9 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 END DO
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                CALL id_registry%delete_all(cur%id)
+#endif
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
@@ -735,7 +742,7 @@ CONTAINS
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
           ELSE
-            DEALLOCATE(cur)
+            CALL destroy_particle(cur)
           END IF
         ELSE IF (ABS(xbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour

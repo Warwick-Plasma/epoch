@@ -365,6 +365,9 @@ MODULE shared_data
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
 
+    ! Does this partlist hold copies of particles rather than originals
+    LOGICAL :: holds_copies
+
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
 
@@ -523,16 +526,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 55
   INTEGER, PARAMETER :: c_dump_ppc               = 56
   INTEGER, PARAMETER :: c_dump_average_weight    = 57
+  INTEGER, PARAMETER :: c_dump_persistent_ids    = 58
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 58
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 59
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 60
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 61
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 62
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 63
-  INTEGER, PARAMETER :: num_vars_to_dump         = 63
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 59
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 60
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 61
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 62
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 63
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 64
+  INTEGER, PARAMETER :: num_vars_to_dump         = 64
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 57
+  INTEGER, PARAMETER :: num_vars_to_dump         = 58
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
@@ -642,6 +646,11 @@ MODULE shared_data
     INTEGER(i8) :: id_min, id_max
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    ! Persistent subset
+    LOGICAL :: persistent, locked, from_file
+    REAL(num) :: persist_after
+    LOGICAL :: file_sorted, add_after_restart
+    CHARACTER(LEN=string_length) :: filename
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next

@@ -30,6 +30,7 @@ MODULE diagnostics
   USE strings
   USE window
   USE timer
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -38,6 +39,7 @@ MODULE diagnostics
   PUBLIC :: output_routines, create_full_timestring
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
   PUBLIC :: deallocate_file_list, count_n_zeros
+  PUBLIC :: build_persistent_subsets
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'
@@ -77,6 +79,7 @@ MODULE diagnostics
     MODULE PROCEDURE &
 #if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
         write_particle_variable_i4, &
+        write_particle_variable_i8, &
 #endif
 #if defined(PARTICLE_ID)
         write_particle_variable_i8, &
@@ -234,6 +237,8 @@ CONTAINS
 #ifdef NO_IO
     RETURN
 #endif
+
+    CALL build_persistent_subsets
 
     timer_walltime = -1.0_num
     IF (step /= last_step) THEN
@@ -569,11 +574,18 @@ CONTAINS
             'Processor_at_t0', '', it_output_integer4)
 #endif
 #if defined(PARTICLE_ID)
+        ! NB: Need to write the ID before the particle persistence information
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer8)
+        IF (id_registry%get_hash_count() > 0) &
+            CALL write_particle_variable(c_dump_persistent_ids, code, &
+                'persistent_subset', '#', it_output_integer8)
 #elif defined(PARTICLE_ID4)
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer4)
+        IF (id_registry%get_hash_count() > 0) &
+            CALL write_particle_variable(c_dump_persistent_ids, code, &
+                'persistent_subset', '#', it_output_integer8)
 #endif
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
@@ -2126,7 +2138,9 @@ CONTAINS
     INTEGER :: i, l
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
-    REAL(num) :: gamma_rel, random_num, part_mc
+    REAL(num) :: part_mc
+    TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2139,17 +2153,26 @@ CONTAINS
     io_list => io_list_data
 
     l = isubset - 1
+    sub => subset_list(l)
+    current_hash => id_registry%get_existing_hash(sub%name)
     DO i = 1, n_species
       io_list(i) = species_list(i)
       io_list(i)%count = 0
-      io_list(i)%name = 'subset_' // TRIM(subset_list(l)%name) // '/' &
+      io_list(i)%name = 'subset_' // TRIM(sub%name) // '/' &
           // TRIM(species_list(i)%name)
       CALL create_empty_partlist(io_list(i)%attached_list)
 
-      IF (.NOT. subset_list(l)%use_species(i)) THEN
+      IF (.NOT. sub%use_species(i)) THEN
         io_list(i)%dumpmask = c_io_never
         CYCLE
       END IF
+
+      IF (sub%persistent .AND. time < sub%persist_after) THEN
+        io_list(i)%dumpmask = c_io_never
+        CYCLE
+      END IF
+
+      io_list(i)%dumpmask = sub%mask
 
       part_mc = c * species_list(i)%mass
 
@@ -2157,91 +2180,16 @@ CONTAINS
       DO WHILE (ASSOCIATED(current))
         next => current%next
         use_particle = .TRUE.
-        IF (subset_list(l)%use_gamma) THEN
+
+        IF (sub%persistent .AND. sub%locked) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+          use_particle = current_hash%holds(current%id)
+#endif
+        ELSE
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = c * current%mass
 #endif
-          gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
-          IF (subset_list(l)%use_gamma_min &
-              .AND. gamma_rel < subset_list(l)%gamma_min) use_particle = .FALSE.
-          IF (subset_list(l)%use_gamma_max &
-              .AND. gamma_rel > subset_list(l)%gamma_max) use_particle = .FALSE.
-        END IF
-
-        IF (subset_list(l)%use_x_min &
-            .AND. current%part_pos < subset_list(l)%x_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_x_max &
-            .AND. current%part_pos > subset_list(l)%x_max) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_px_min &
-            .AND. current%part_p(1) < subset_list(l)%px_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_px_max &
-            .AND. current%part_p(1) > subset_list(l)%px_max) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_py_min &
-            .AND. current%part_p(2) < subset_list(l)%py_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_py_max &
-            .AND. current%part_p(2) > subset_list(l)%py_max) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_pz_min &
-            .AND. current%part_p(3) < subset_list(l)%pz_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_pz_max &
-            .AND. current%part_p(3) > subset_list(l)%pz_max) &
-                use_particle = .FALSE.
-
-#ifndef PER_SPECIES_WEIGHT
-        IF (subset_list(l)%use_weight_min &
-            .AND. current%weight < subset_list(l)%weight_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_weight_max &
-            .AND. current%weight > subset_list(l)%weight_max) &
-                use_particle = .FALSE.
-
-#endif
-#ifdef PER_PARTICLE_CHARGE_MASS
-        IF (subset_list(l)%use_charge_min &
-            .AND. current%charge < subset_list(l)%charge_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_charge_max &
-            .AND. current%charge > subset_list(l)%charge_max) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_mass_min &
-            .AND. current%mass < subset_list(l)%mass_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_mass_max &
-            .AND. current%mass > subset_list(l)%mass_max) &
-                use_particle = .FALSE.
-
-#endif
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-        IF (subset_list(l)%use_id_min &
-            .AND. current%id < subset_list(l)%id_min) &
-                use_particle = .FALSE.
-
-        IF (subset_list(l)%use_id_max &
-            .AND. current%id > subset_list(l)%id_max) &
-                use_particle = .FALSE.
-#endif
-
-        IF (subset_list(l)%use_random) THEN
-          random_num = random()
-          IF (random_num > subset_list(l)%random_fraction) &
-              use_particle = .FALSE.
+          use_particle = test_particle(sub, current, part_mc)
         END IF
 
         IF (use_particle) THEN
@@ -2255,6 +2203,176 @@ CONTAINS
     END DO
 
   END SUBROUTINE build_species_subset
+
+
+
+  SUBROUTINE build_persistent_subsets
+
+    INTEGER :: isub, ispec
+    TYPE(particle), POINTER :: current, next
+    LOGICAL :: use_particle
+    REAL(num) :: part_mc
+    TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
+
+    DO isub = 1, SIZE(subset_list)
+      ! Not a persistent subset
+      IF (.NOT. subset_list(isub)%persistent) CYCLE
+      ! Already locked in
+      IF (subset_list(isub)%locked &
+          .AND. .NOT.subset_list(isub)%add_after_restart) CYCLE
+      ! Not yet time to lock
+      IF (time < subset_list(isub)%persist_after) CYCLE
+
+      sub => subset_list(isub)
+      current_hash => id_registry%get_existing_hash(sub%name)
+      IF (sub%from_file) THEN
+        ! If you are restarting then unless the user specifically asks, build up
+        ! the persistent subset from the restart file, not from the external
+        ! file
+        IF (.NOT. ic_from_restart &
+            .OR. sub%add_after_restart .OR. .NOT.sub%locked) THEN
+          CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
+          sub%add_after_restart = .FALSE.
+        END IF
+      ELSE
+        DO ispec = 1, n_species
+          IF (.NOT. sub%use_species(ispec)) THEN
+            CYCLE
+          END IF
+
+          part_mc = c * species_list(ispec)%mass
+
+          current => species_list(ispec)%attached_list%head
+          DO WHILE (ASSOCIATED(current))
+            next => current%next
+#ifdef PER_PARTICLE_CHARGE_MASS
+            part_mc = c * current%mass
+#endif
+            use_particle = test_particle(sub, current, part_mc)
+
+            IF (use_particle) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+              ! Add particle ID to persistence list
+              IF (sub%persistent .AND. time >= sub%persist_after &
+                  .AND. .NOT.sub%locked) THEN
+                CALL current_hash%add(current%id)
+              END IF
+#endif
+            END IF
+            current => next
+          END DO
+        END DO
+      END IF
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%locked = .TRUE.
+      CALL current_hash%optimise()
+#endif
+    END DO
+
+  END SUBROUTINE build_persistent_subsets
+
+
+
+  FUNCTION test_particle(sub, current, part_mc) RESULT(use_particle)
+
+    TYPE(subset), INTENT(IN) :: sub
+    TYPE(particle), INTENT(IN) :: current
+    REAL(num), INTENT(INOUT) :: part_mc
+    LOGICAL :: use_particle
+    REAL(num) :: gamma_rel, random_num
+
+    use_particle = .TRUE.
+
+    IF (sub%use_gamma) THEN
+#ifdef PER_PARTICLE_CHARGE_MASS
+      part_mc = c * current%mass
+#endif
+      gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
+      IF (sub%use_gamma_min &
+          .AND. gamma_rel < sub%gamma_min) use_particle = .FALSE.
+      IF (sub%use_gamma_max &
+          .AND. gamma_rel > sub%gamma_max) use_particle = .FALSE.
+    END IF
+
+    IF (sub%use_x_min &
+        .AND. current%part_pos < sub%x_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_x_max &
+        .AND. current%part_pos > sub%x_max) &
+            use_particle = .FALSE.
+
+    IF (sub%use_px_min &
+        .AND. current%part_p(1) < sub%px_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_px_max &
+        .AND. current%part_p(1) > sub%px_max) &
+            use_particle = .FALSE.
+
+    IF (sub%use_py_min &
+        .AND. current%part_p(2) < sub%py_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_py_max &
+        .AND. current%part_p(2) > sub%py_max) &
+            use_particle = .FALSE.
+
+    IF (sub%use_pz_min &
+        .AND. current%part_p(3) < sub%pz_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_pz_max &
+        .AND. current%part_p(3) > sub%pz_max) &
+            use_particle = .FALSE.
+
+#ifdef PER_SPECIES_WEIGHT
+    IF (sub%use_weight_min &
+        .AND. current%weight < sub%weight_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_weight_max &
+        .AND. current%weight > sub%weight_max) &
+            use_particle = .FALSE.
+
+#endif
+#ifdef PER_PARTICLE_CHARGE_MASS
+    IF (sub%use_charge_min &
+        .AND. current%charge < sub%charge_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_charge_max &
+        .AND. current%charge > sub%charge_max) &
+            use_particle = .FALSE.
+
+    IF (sub%use_mass_min &
+        .AND. current%mass < sub%mass_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_mass_max &
+        .AND. current%mass > sub%mass_max) &
+            use_particle = .FALSE.
+
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (sub%use_id_min &
+        .AND. current%id < sub%id_min) &
+            use_particle = .FALSE.
+
+    IF (sub%use_id_max &
+        .AND. current%id > sub%id_max) &
+            use_particle = .FALSE.
+#endif
+
+    IF (sub%use_random) THEN
+      random_num = random()
+      IF (random_num > sub%random_fraction) &
+          use_particle = .FALSE.
+    END IF
+
+  END FUNCTION test_particle
 
 
 
@@ -2558,7 +2676,7 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   SUBROUTINE write_particle_variable_i8(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
