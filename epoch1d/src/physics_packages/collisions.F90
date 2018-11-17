@@ -142,10 +142,7 @@ CONTAINS
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor <= 0) CYCLE
 
-        IF (ispecies == jspecies) THEN
-          jdens = idens
-          jtemp = itemp
-        ELSE
+        IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
           CALL calc_coll_temperature_ev(jtemp, jspecies)
         END IF
