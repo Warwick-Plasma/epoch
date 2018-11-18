@@ -1213,7 +1213,7 @@ CONTAINS
         ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
-              species_subtypes_i8(ispecies), it_pers_sub)
+              species_subtypes_i8(ispecies), it_persistent_subset)
 #else
           IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1591,11 +1591,11 @@ CONTAINS
 
 
 
-  FUNCTION it_pers_sub(array, npart_this_it, start, param)
+  FUNCTION it_persistent_subset(array, npart_this_it, start, param)
 
     USE constants
     USE particle_id_hash_mod
-    INTEGER(i8) :: it_pers_sub
+    INTEGER(i8) :: it_persistent_subset
     INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
     INTEGER, INTENT(INOUT) :: npart_this_it
     LOGICAL, INTENT(IN) :: start
@@ -1607,9 +1607,9 @@ CONTAINS
       iterator_list => iterator_list%next
     END DO
 
-    it_pers_sub = 0
+    it_persistent_subset = 0
 
-  END FUNCTION it_pers_sub
+  END FUNCTION it_persistent_subset
 #endif
 
 
