@@ -58,6 +58,7 @@ CONTAINS
   SUBROUTINE subset_deck_finalise
 
     INTEGER :: i
+    TYPE(subset), POINTER :: sub
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
@@ -69,18 +70,19 @@ CONTAINS
     ELSE
       DEALLOCATE(subset_blocks)
       DO i = 1, n_subsets
-        subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
+        sub => subset_list(i)
+
+        sub%skip = (SUM(sub%skip_dir - 1) /= 0)
 
         ! Check for any spatial restrictions in place
-        subset_list(i)%space_restrictions = subset_list(i)%use_x_min &
-            .OR. subset_list(i)%use_x_max
-        IF (subset_list(i)%skip .AND. subset_list(i)%space_restrictions) THEN
+        sub%space_restrictions = sub%use_x_min .OR. sub%use_x_max
+        IF (sub%skip .AND. sub%space_restrictions) THEN
           IF (rank == 0) THEN
             PRINT*, 'Skip and spatial restrictions specified for ', &
-                TRIM(subset_list(i)%name), &
+                TRIM(sub%name), &
                 ': field variables will not be trimmmed'
           END IF
-          subset_list(i)%space_restrictions = .FALSE.
+          sub%space_restrictions = .FALSE.
         END IF
       END DO
     END IF
@@ -129,6 +131,7 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies
+    TYPE(subset), POINTER :: sub
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -147,137 +150,152 @@ CONTAINS
 
     IF (deck_state == c_ds_first) RETURN
 
+    sub => subset_list(subset_id)
+
     IF (str_cmp(element, 'random_fraction')) THEN
-      subset_list(subset_id)%random_fraction = &
-          as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_random = .TRUE.
+      sub%random_fraction = as_real_print(value, element, errcode)
+      sub%use_random = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_min')) THEN
-      subset_list(subset_id)%gamma_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_gamma_min = .TRUE.
-      subset_list(subset_id)%use_gamma = .TRUE.
+      sub%gamma_min = as_real_print(value, element, errcode)
+      sub%use_gamma_min = .TRUE.
+      sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'gamma_max')) THEN
-      subset_list(subset_id)%gamma_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_gamma_max = .TRUE.
-      subset_list(subset_id)%use_gamma = .TRUE.
+      sub%gamma_max = as_real_print(value, element, errcode)
+      sub%use_gamma_max = .TRUE.
+      sub%use_gamma = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_min')) THEN
-      subset_list(subset_id)%x_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_x_min = .TRUE.
+      sub%x_min = as_real_print(value, element, errcode)
+      sub%use_x_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'x_max')) THEN
-      subset_list(subset_id)%x_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_x_max = .TRUE.
+      sub%x_max = as_real_print(value, element, errcode)
+      sub%use_x_max = .TRUE.
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'y_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'y_max')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'z_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'z_max')) THEN
       RETURN
     END IF
 
     IF (str_cmp(element, 'px_min')) THEN
-      subset_list(subset_id)%px_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_px_min = .TRUE.
+      sub%px_min = as_real_print(value, element, errcode)
+      sub%use_px_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'px_max')) THEN
-      subset_list(subset_id)%px_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_px_max = .TRUE.
+      sub%px_max = as_real_print(value, element, errcode)
+      sub%use_px_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_min')) THEN
-      subset_list(subset_id)%py_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_py_min = .TRUE.
+      sub%py_min = as_real_print(value, element, errcode)
+      sub%use_py_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'py_max')) THEN
-      subset_list(subset_id)%py_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_py_max = .TRUE.
+      sub%py_max = as_real_print(value, element, errcode)
+      sub%use_py_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_min')) THEN
-      subset_list(subset_id)%pz_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_pz_min = .TRUE.
+      sub%pz_min = as_real_print(value, element, errcode)
+      sub%use_pz_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'pz_max')) THEN
-      subset_list(subset_id)%pz_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_pz_max = .TRUE.
+      sub%pz_max = as_real_print(value, element, errcode)
+      sub%use_pz_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_min')) THEN
-      subset_list(subset_id)%weight_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_weight_min = .TRUE.
+      sub%weight_min = as_real_print(value, element, errcode)
+      sub%use_weight_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'weight_max')) THEN
-      subset_list(subset_id)%weight_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_weight_max = .TRUE.
+      sub%weight_max = as_real_print(value, element, errcode)
+      sub%use_weight_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_min')) THEN
-      subset_list(subset_id)%charge_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_charge_min = .TRUE.
+      sub%charge_min = as_real_print(value, element, errcode)
+      sub%use_charge_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'charge_max')) THEN
-      subset_list(subset_id)%charge_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_charge_max = .TRUE.
+      sub%charge_max = as_real_print(value, element, errcode)
+      sub%use_charge_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_min')) THEN
-      subset_list(subset_id)%mass_min = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_mass_min = .TRUE.
+      sub%mass_min = as_real_print(value, element, errcode)
+      sub%use_mass_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'mass_max')) THEN
-      subset_list(subset_id)%mass_max = as_real_print(value, element, errcode)
-      subset_list(subset_id)%use_mass_max = .TRUE.
+      sub%mass_max = as_real_print(value, element, errcode)
+      sub%use_mass_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_min')) THEN
-      subset_list(subset_id)%id_min = as_integer_print(value, element, errcode)
-      subset_list(subset_id)%use_id_min = .TRUE.
+      sub%id_min = as_integer_print(value, element, errcode)
+      sub%use_id_min = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'id_max')) THEN
-      subset_list(subset_id)%id_max = as_integer_print(value, element, errcode)
-      subset_list(subset_id)%use_id_max = .TRUE.
+      sub%id_max = as_integer_print(value, element, errcode)
+      sub%use_id_max = .TRUE.
       RETURN
     END IF
 
     IF (str_cmp(element, 'dumpmask')) THEN
-      subset_list(subset_id)%mask = as_integer_print(value, element, errcode)
+      sub%mask = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'skip')) THEN
-      subset_list(subset_id)%skip_dir = &
-          as_integer_print(value, element, errcode) + 1
+      sub%skip_dir = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
     IF (str_cmp(element, 'skip_x')) THEN
-      subset_list(subset_id)%skip_dir(1) = &
-          as_integer_print(value, element, errcode) + 1
+      sub%skip_dir(1) = as_integer_print(value, element, errcode) + 1
       RETURN
     END IF
 
@@ -293,7 +311,7 @@ CONTAINS
       ispecies = as_integer_print(value, element, errcode)
       IF (errcode == c_err_none) THEN
         IF (ispecies > 0 .AND. ispecies <= n_species) THEN
-          subset_list(subset_id)%use_species(ispecies) = .TRUE.
+          sub%use_species(ispecies) = .TRUE.
         ELSE
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
