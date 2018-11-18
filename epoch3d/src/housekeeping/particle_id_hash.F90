@@ -301,7 +301,35 @@ CONTAINS
 
   !> Test if this hash table holds a given id
 
-  FUNCTION pid_hash_holds(this, test_id) RESULT (holds)
+  FUNCTION pid_hash_holds(this, part) RESULT (holds)
+
+    CLASS(particle_id_hash), INTENT(IN) :: this
+    TYPE(particle), POINTER, INTENT(IN) :: part
+    LOGICAL :: holds
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(hkind) :: test_id
+    INTEGER(i8) :: bucket
+
+    IF (.NOT. ALLOCATED(this%buckets)) THEN
+      holds = .FALSE.
+      RETURN
+    END IF
+
+    test_id = part%id
+    bucket = this%hash(test_id)
+    holds = this%buckets(bucket)%holds(test_id)
+#else
+    holds = .FALSE.
+#endif
+
+  END FUNCTION pid_hash_holds
+
+
+
+  !> Test if this hash table holds a given id
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  FUNCTION pid_hash_holds_hkind(this, test_id) RESULT (holds)
 
     CLASS(particle_id_hash), INTENT(IN) :: this
     INTEGER(hkind), INTENT(IN) :: test_id
@@ -316,24 +344,43 @@ CONTAINS
     bucket = this%hash(test_id)
     holds = this%buckets(bucket)%holds(test_id)
 
-  END FUNCTION pid_hash_holds
+  END FUNCTION pid_hash_holds_hkind
+#endif
+
+
+
+  !> Add particle to the hash table
+
+  SUBROUTINE pid_hash_add(this, part)
+
+    CLASS(particle_id_hash), INTENT(INOUT) :: this
+    TYPE(particle), POINTER, INTENT(IN) :: part
+
+    IF (.NOT. ALLOCATED(this%buckets)) RETURN
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    CALL pid_hash_add_hkind(this, part%id)
+#endif
+
+  END SUBROUTINE pid_hash_add
 
 
 
   !> Add an ID to the hash table
 
-  SUBROUTINE pid_hash_add(this, add_id)
+  SUBROUTINE pid_hash_add_hkind(this, add_id)
 
     CLASS(particle_id_hash), INTENT(INOUT) :: this
     INTEGER(hkind), INTENT(IN) :: add_id
     INTEGER(i8) :: bucket
 
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
+
     bucket = this%hash(add_id)
     CALL this%buckets(bucket)%add(add_id)
     this%count = this%count + 1
 
-  END SUBROUTINE pid_hash_add
+  END SUBROUTINE pid_hash_add_hkind
 
 
 
@@ -358,7 +405,7 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       DO WHILE(ASSOCIATED(current))
         IF (in_list(id_list, current%id)) THEN
-          CALL this%add(current%id)
+          CALL pid_hash_add_hkind(this, current%id)
           this%count = this%count + 1
         END IF
         current => current%next
@@ -493,7 +540,7 @@ CONTAINS
       DO ibuck = 1, SIZE(buckets_old)
         IF (.NOT. ALLOCATED(buckets_old(ibuck)%list)) CYCLE
         DO ipart = 1, SIZE(buckets_old(ibuck)%list)
-          CALL this%add(buckets_old(ibuck)%list(ipart))
+          CALL pid_hash_add_hkind(this, buckets_old(ibuck)%list(ipart))
         END DO
       END DO
       DEALLOCATE(buckets_old)
@@ -682,20 +729,24 @@ CONTAINS
 
   !> Delete an ID from all hashes
 
-  SUBROUTINE pidr_delete_all(this, del_id)
+  SUBROUTINE pidr_delete_all(this, part)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(hkind), INTENT(IN) :: del_id
+    TYPE(particle), POINTER, INTENT(IN) :: part
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(hkind) :: del_id
     INTEGER :: ihash, sz
     LOGICAL :: dummy
 
     IF (.NOT. any_persistent_subset) RETURN
     IF (.NOT. ALLOCATED(this%list)) RETURN
 
+    del_id = part%id
     sz = SIZE(this%list)
     DO ihash = 1, sz
       dummy = this%list(ihash)%contents%delete(del_id)
     END DO
+#endif
 
   END SUBROUTINE pidr_delete_all
 
@@ -727,21 +778,29 @@ CONTAINS
   !> Go through all stored hashes and test if the id is in it
   !> then return a bitmask showing which hashes the ID was in
 
-  FUNCTION pidr_map(this, test_id) RESULT(hashmap)
+  FUNCTION pidr_map(this, part) RESULT(hashmap)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(hkind), INTENT(IN) :: test_id
+    TYPE(particle), POINTER, INTENT(IN) :: part
     INTEGER(i8) :: hashmap
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(hkind) :: test_id
     INTEGER :: ihash, sz
 
     hashmap = 0
     IF (.NOT. ALLOCATED(this%list)) RETURN
 
+    test_id = part%id
+
     sz = SIZE(this%list)
     DO ihash = 1, sz
       hashmap = ISHFT(hashmap, 1_i8)
-      IF (this%list(ihash)%contents%holds(test_id)) hashmap = hashmap + 1_i8
+      IF (pid_hash_holds_hkind(this%list(ihash)%contents, test_id)) &
+          hashmap = hashmap + 1_i8
     END DO
+#else
+    hashmap = 0
+#endif
 
   END FUNCTION pidr_map
 
@@ -749,24 +808,28 @@ CONTAINS
 
   !> Get the hashmap (bitmask of which hashes the specified ID is contained in)
 
-  SUBROUTINE pidr_add_with_map(this, new_id, hashmap)
+  SUBROUTINE pidr_add_with_map(this, part, hashmap)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(hkind), INTENT(IN) :: new_id
+    TYPE(particle), POINTER, INTENT(IN) :: part
     INTEGER(i8), INTENT(IN) :: hashmap
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(hkind) :: new_id
     INTEGER(i8) :: shifthash
     INTEGER :: ihash, sz
 
     IF (.NOT. ALLOCATED(this%list)) RETURN
     IF (hashmap == 0) RETURN
 
+    new_id = part%id
     sz = SIZE(this%list)
     shifthash = hashmap
     DO ihash = 1, sz
       IF (IAND(shifthash, 1_i8) /= 0_i8) &
-          CALL this%list(ihash)%contents%add(new_id)
+          CALL pid_hash_add_hkind(this%list(ihash)%contents, new_id)
       shifthash = ISHFT(shifthash, -1_i8)
     END DO
+#endif
 
   END SUBROUTINE pidr_add_with_map
 

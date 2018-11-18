@@ -79,11 +79,8 @@ MODULE diagnostics
     MODULE PROCEDURE &
 #if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
         write_particle_variable_i4, &
-        write_particle_variable_i8, &
 #endif
-#if defined(PARTICLE_ID)
         write_particle_variable_i8, &
-#endif
         write_particle_variable_num
   END INTERFACE write_particle_variable
 
@@ -593,12 +590,10 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer4)
 #endif
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         IF (id_registry%get_hash_count(step) > 0) THEN
           CALL write_particle_variable(c_dump_persistent_ids, code, &
               'persistent_subset', '#', it_output_integer8)
         END IF
-#endif
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
             'Optical depth', '', it_output_real)
@@ -2254,9 +2249,7 @@ CONTAINS
         use_particle = .TRUE.
 
         IF (sub%persistent .AND. sub%locked) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-          use_particle = current_hash%holds(current%id)
-#endif
+          use_particle = current_hash%holds(current)
         ELSE
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = c * current%mass
@@ -2280,7 +2273,6 @@ CONTAINS
 
   SUBROUTINE build_persistent_subsets
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER :: isub, ispec
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
@@ -2327,7 +2319,7 @@ CONTAINS
             use_particle = test_particle(sub, current, part_mc)
 
             ! Add particle ID to persistence list
-            IF (use_particle) CALL current_hash%add(current%id)
+            IF (use_particle) CALL current_hash%add(current)
 
             current => next
           END DO
@@ -2337,7 +2329,6 @@ CONTAINS
       sub%locked = .TRUE.
       CALL current_hash%optimise()
     END DO
-#endif
 
   END SUBROUTINE build_persistent_subsets
 
@@ -2752,7 +2743,6 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   SUBROUTINE write_particle_variable_i8(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
@@ -2831,7 +2821,6 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_particle_variable_i8
-#endif
 
 
 

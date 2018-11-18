@@ -1000,9 +1000,8 @@ CONTAINS
                   END DO
                 END DO
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
-#endif
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
@@ -1078,9 +1077,8 @@ CONTAINS
                   END DO
                 END DO
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
-#endif
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
@@ -1157,9 +1155,8 @@ CONTAINS
                   END DO
                 END DO
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
-#endif
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&
@@ -1235,9 +1232,8 @@ CONTAINS
                   END DO
                 END DO
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
-#endif
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = momentum_from_temperature(&

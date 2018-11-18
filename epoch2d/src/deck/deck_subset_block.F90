@@ -61,10 +61,8 @@ CONTAINS
 
     INTEGER :: i
     TYPE(subset), POINTER :: sub
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER :: io, iu
     TYPE(particle_id_hash), POINTER :: current_hash
-#endif
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
@@ -92,7 +90,6 @@ CONTAINS
           sub%space_restrictions = .FALSE.
         END IF
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         IF (sub%persistent) THEN
           IF (sub%persist_start_time <= time &
               .AND. sub%persist_start_step <= step) THEN
@@ -112,7 +109,6 @@ CONTAINS
             sub%persistent = .FALSE.
           END IF
         END IF
-#endif
       END DO
     END IF
 

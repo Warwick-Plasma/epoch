@@ -1436,16 +1436,9 @@ CONTAINS
           END IF
 #endif
         ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes_i8(ispecies), it_persistent_subset)
-#else
-          IF (rank == 0) THEN
-            PRINT*, '*** WARNING ***'
-            PRINT*, 'Discarding particle persistent subset.'
-            PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
-          END IF
-#endif
+
         ELSE IF (block_id(1:7) == 'weight/') THEN
 #ifndef PER_SPECIES_WEIGHT
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
@@ -1823,6 +1816,7 @@ CONTAINS
     it_id8 = 0
 
   END FUNCTION it_id8
+#endif
 
 
 
@@ -1838,14 +1832,13 @@ CONTAINS
     INTEGER :: ipart
 
     DO ipart = 1, npart_this_it
-      CALL id_registry%add_with_map(iterator_list%id, array(ipart))
+      CALL id_registry%add_with_map(iterator_list, array(ipart))
       iterator_list => iterator_list%next
     END DO
 
     it_persistent_subset = 0
 
   END FUNCTION it_persistent_subset
-#endif
 
 
 
