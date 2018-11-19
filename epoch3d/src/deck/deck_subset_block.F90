@@ -60,6 +60,10 @@ CONTAINS
 
     INTEGER :: i
     TYPE(subset), POINTER :: sub
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER :: io, iu
+    TYPE(particle_id_hash), POINTER :: current_hash
+#endif
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
@@ -87,6 +91,28 @@ CONTAINS
           END IF
           sub%space_restrictions = .FALSE.
         END IF
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+        IF (sub%persistent) THEN
+          IF (sub%persist_start_time <= time &
+              .AND. sub%persist_start_step <= step) THEN
+            current_hash => id_registry%get_hash(sub%name)
+            IF (ASSOCIATED(current_hash)) THEN
+              CALL current_hash%init(1000)
+            ELSE
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*)
+                WRITE(io,*) '*** ERROR ***'
+                WRITE(io,*) 'Can only have 64 persistent subsets'
+              END DO
+              CALL abort_code(c_err_bad_value)
+            END IF
+          ELSE
+            sub%persistent = .FALSE.
+          END IF
+        END IF
+#endif
       END DO
     END IF
 
@@ -135,9 +161,6 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies
     TYPE(subset), POINTER :: sub
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    TYPE(particle_id_hash), POINTER :: current_hash
-#endif
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -348,14 +371,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%persist_start_time = as_real_print(value, element, errcode)
-      current_hash => id_registry%get_hash(sub%name)
-      IF (ASSOCIATED(current_hash)) THEN
-        CALL current_hash%init(1000)
-      ELSE
-        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
-        errcode = c_err_bad_value
-        RETURN
-      END IF
 #else
       errcode = c_err_pp_options_missing
       extended_error_string = '-DPARTICLE_ID'
@@ -368,14 +383,6 @@ CONTAINS
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%persist_start_step = as_integer_print(value, element, errcode)
-      current_hash => id_registry%get_hash(sub%name)
-      IF (ASSOCIATED(current_hash)) THEN
-        CALL current_hash%init(1000)
-      ELSE
-        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
-        errcode = c_err_bad_value
-        RETURN
-      END IF
 #else
       errcode = c_err_pp_options_missing
       extended_error_string = '-DPARTICLE_ID'
@@ -388,14 +395,6 @@ CONTAINS
       sub%persistent = .TRUE.
       sub%filename = TRIM(value)
       sub%from_file = .TRUE.
-      current_hash => id_registry%get_hash(sub%name)
-      IF (ASSOCIATED(current_hash)) THEN
-        CALL current_hash%init(1000)
-      ELSE
-        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
-        errcode = c_err_bad_value
-        RETURN
-      END IF
 #else
       errcode = c_err_pp_options_missing
       extended_error_string = '-DPARTICLE_ID'
