@@ -356,8 +356,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'from_file') &
-        .OR. str_cmp(element, 'from_file_on_restart')) THEN
+    IF (str_cmp(element, 'from_file')) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%filename = TRIM(value)
@@ -370,6 +369,15 @@ CONTAINS
         errcode = c_err_bad_value
         RETURN
       END IF
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'file_overrides_restart')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%add_after_restart = str_cmp(element, 'from_file_on_restart')
 #else
       errcode = c_err_pp_options_missing
