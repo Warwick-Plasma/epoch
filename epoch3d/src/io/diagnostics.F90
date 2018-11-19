@@ -2350,6 +2350,7 @@ CONTAINS
 
   SUBROUTINE build_persistent_subsets
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER :: isub, ispec
     TYPE(particle), POINTER :: current, next
     LOGICAL :: use_particle
@@ -2358,22 +2359,21 @@ CONTAINS
     TYPE(particle_id_hash), POINTER :: current_hash
 
     DO isub = 1, SIZE(subset_list)
-      ! Not a persistent subset
-      IF (.NOT. subset_list(isub)%persistent) CYCLE
-      ! Already locked in
-      IF (subset_list(isub)%locked &
-          .AND. .NOT.subset_list(isub)%add_after_restart) CYCLE
-      ! Not yet time to lock
-      IF (time < subset_list(isub)%persist_after) CYCLE
-
       sub => subset_list(isub)
+
+      ! Not a persistent subset
+      IF (.NOT. sub%persistent) CYCLE
+      ! Already locked in
+      IF (sub%locked) CYCLE
+      ! Not yet time to lock
+      IF (time < sub%persist_after) CYCLE
+
       current_hash => id_registry%get_existing_hash(sub%name)
       IF (sub%from_file) THEN
         ! If you are restarting then unless the user specifically asks, build up
         ! the persistent subset from the restart file, not from the external
         ! file
-        IF (.NOT. ic_from_restart &
-            .OR. sub%add_after_restart .OR. .NOT.sub%locked) THEN
+        IF (.NOT. ic_from_restart .OR. sub%add_after_restart) THEN
           CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
           sub%add_after_restart = .FALSE.
         END IF
@@ -2393,25 +2393,18 @@ CONTAINS
 #endif
             use_particle = test_particle(sub, current, part_mc)
 
-            IF (use_particle) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-              ! Add particle ID to persistence list
-              IF (sub%persistent .AND. time >= sub%persist_after &
-                  .AND. .NOT.sub%locked) THEN
-                CALL current_hash%add(current%id)
-              END IF
-#endif
-            END IF
+            ! Add particle ID to persistence list
+            IF (use_particle) CALL current_hash%add(current%id)
+
             current => next
           END DO
         END DO
       END IF
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%locked = .TRUE.
       CALL current_hash%optimise()
-#endif
     END DO
+#endif
 
   END SUBROUTINE build_persistent_subsets
 
