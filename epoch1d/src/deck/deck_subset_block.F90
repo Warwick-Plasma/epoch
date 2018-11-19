@@ -331,10 +331,11 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'persist_after')) THEN
+    IF (str_cmp(element, 'persist_start_time') &
+        .OR. str_cmp(element, 'persist_after_time')) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
-      sub%persist_after = as_real_print(value, element, errcode)
+      sub%persist_start_time = as_real_print(value, element, errcode)
       current_hash => id_registry%get_hash(sub%name)
       IF (ASSOCIATED(current_hash)) THEN
         CALL current_hash%init(1000)
@@ -482,7 +483,7 @@ CONTAINS
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
       subset_list(i)%persistent = .FALSE.
-      subset_list(i)%persist_after = 0.0_num
+      subset_list(i)%persist_start_time = -1.0_num
       subset_list(i)%locked = .FALSE.
       subset_list(i)%from_file = .FALSE.
       subset_list(i)%file_sorted = .FALSE.

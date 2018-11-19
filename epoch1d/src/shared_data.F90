@@ -636,7 +636,7 @@ MODULE shared_data
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
     ! Persistent subset
     LOGICAL :: persistent, locked, from_file
-    REAL(num) :: persist_after
+    REAL(num) :: persist_start_time
     LOGICAL :: file_sorted, add_after_restart
     CHARACTER(LEN=string_length) :: filename
 

@@ -1320,7 +1320,7 @@ CONTAINS
 
     DO isub = 1, SIZE(subset_list)
       IF (subset_list(isub)%persistent &
-          .AND. time >= subset_list(isub)%persist_after) THEN
+          .AND. time >= subset_list(isub)%persist_start_time) THEN
         subset_list(isub)%locked = .TRUE.
       END IF
     END DO
