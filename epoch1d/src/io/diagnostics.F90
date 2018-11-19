@@ -2174,6 +2174,7 @@ CONTAINS
         END IF
       END IF
 
+      IF (sub%persistent) any_persistent_subset = .TRUE.
       io_list(i)%dumpmask = sub%mask
 
       part_mc = c * species_list(i)%mass
@@ -2217,6 +2218,8 @@ CONTAINS
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
     TYPE(particle_id_hash), POINTER :: current_hash
+
+    IF (.NOT. any_persistent_subset) RETURN
 
     DO isub = 1, SIZE(subset_list)
       sub => subset_list(isub)

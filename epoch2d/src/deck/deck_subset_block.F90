@@ -43,6 +43,7 @@ CONTAINS
     current_block = 0
     IF (deck_state == c_ds_first) THEN
       n_subsets = 0
+      any_persistent_subset = .FALSE.
       ALLOCATE(subset_names(4))
       ALLOCATE(subset_blocks(4))
     ELSE

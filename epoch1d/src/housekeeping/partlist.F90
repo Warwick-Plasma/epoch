@@ -423,9 +423,11 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    temp_i8 = id_registry%map(a_particle%id)
-    array(cpos) = TRANSFER(temp_i8, 1.0_num)
-    cpos = cpos + 1
+    IF (any_persistent_subset) THEN
+      temp_i8 = id_registry%map(a_particle%id)
+      array(cpos) = TRANSFER(temp_i8, 1.0_num)
+      cpos = cpos + 1
+    END IF
 #endif
 #ifdef COLLISIONS_TEST
     array(cpos) = REAL(a_particle%coll_count, num)
@@ -494,8 +496,11 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    CALL id_registry%add_with_map(a_particle%id, TRANSFER(array(cpos), temp_i8))
-    cpos = cpos+1
+    IF (any_persistent_subset) THEN
+      CALL id_registry%add_with_map(a_particle%id, &
+          TRANSFER(array(cpos), temp_i8))
+      cpos = cpos+1
+    END IF
 #endif
 #ifdef COLLISIONS_TEST
     a_particle%coll_count = NINT(array(cpos))
@@ -579,10 +584,12 @@ CONTAINS
     LOGICAL, INTENT(IN), OPTIONAL :: is_copy
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    IF (PRESENT(is_copy)) THEN
-      IF (.NOT. is_copy) CALL id_registry%delete_all(part%id)
-    ELSE
-      CALL id_registry%delete_all(part%id)
+    IF (any_persistent_subset) THEN
+      IF (PRESENT(is_copy)) THEN
+        IF (.NOT. is_copy) CALL id_registry%delete_all(part%id)
+      ELSE
+        CALL id_registry%delete_all(part%id)
+      END IF
     END IF
 #endif
 

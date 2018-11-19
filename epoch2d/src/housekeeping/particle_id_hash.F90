@@ -550,6 +550,9 @@ CONTAINS
     INTEGER, SAVE :: last_step = -1
     INTEGER, SAVE :: last_count = 0
 
+    count = 0
+    IF (.NOT. any_persistent_subset) RETURN
+
     IF (PRESENT(step)) THEN
       IF (step == last_step) THEN
         count = last_count
@@ -684,6 +687,7 @@ CONTAINS
     INTEGER :: ihash, sz
     LOGICAL :: dummy
 
+    IF (.NOT. any_persistent_subset) RETURN
     IF (.NOT. ALLOCATED(this%list)) RETURN
 
     sz = SIZE(this%list)

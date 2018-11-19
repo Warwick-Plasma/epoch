@@ -646,6 +646,7 @@ MODULE shared_data
   END TYPE subset
   TYPE(subset), DIMENSION(:), POINTER :: subset_list
   INTEGER :: n_subsets
+  LOGICAL :: any_persistent_subset
 
 #ifndef NO_PARTICLE_PROBES
   TYPE particle_probe

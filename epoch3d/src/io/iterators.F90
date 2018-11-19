@@ -436,11 +436,13 @@ CONTAINS
         END DO
 #endif
       CASE (c_dump_persistent_ids) ! particle weight
-        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-          part_count = part_count + 1
-          array(part_count) = id_registry%map(cur%id)
-          cur => cur%next
-        END DO
+        IF (any_persistent_subset) THEN
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+            part_count = part_count + 1
+            array(part_count) = id_registry%map(cur%id)
+            cur => cur%next
+          END DO
+        END IF
       END SELECT
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
