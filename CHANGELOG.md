@@ -25,6 +25,15 @@
 
  * Changed FORTRAN standard to 2003
 
+ * Added persistent subsets
+   This adds the flags "persist_start_time" and "persist_start_step" to the
+   subset block.  If either of these flags is present then once either the time
+   specified by "persist_start_time" or the step specified by
+   "persist_start_step" has been reached, the particles that have been selected
+   using the other criteria in the subset block will be recorded. Each
+   subsequent output for this subset will then use the particle list selected
+   at the specified start time.
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
