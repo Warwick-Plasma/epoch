@@ -2294,37 +2294,27 @@ CONTAINS
           .AND. step < sub%persist_start_step) CYCLE
 
       current_hash => id_registry%get_existing_hash(sub%name)
-      IF (sub%from_file) THEN
-        ! If you are restarting then unless the user specifically asks, build up
-        ! the persistent subset from the restart file, not from the external
-        ! file
-        IF (.NOT. ic_from_restart .OR. sub%add_after_restart) THEN
-          CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
-          sub%add_after_restart = .FALSE.
+      DO ispec = 1, n_species
+        IF (.NOT. sub%use_species(ispec)) THEN
+          CYCLE
         END IF
-      ELSE
-        DO ispec = 1, n_species
-          IF (.NOT. sub%use_species(ispec)) THEN
-            CYCLE
-          END IF
 
-          part_mc = c * species_list(ispec)%mass
+        part_mc = c * species_list(ispec)%mass
 
-          current => species_list(ispec)%attached_list%head
-          DO WHILE (ASSOCIATED(current))
-            next => current%next
+        current => species_list(ispec)%attached_list%head
+        DO WHILE (ASSOCIATED(current))
+          next => current%next
 #ifdef PER_PARTICLE_CHARGE_MASS
-            part_mc = c * current%mass
+          part_mc = c * current%mass
 #endif
-            use_particle = test_particle(sub, current, part_mc)
+          use_particle = test_particle(sub, current, part_mc)
 
-            ! Add particle ID to persistence list
-            IF (use_particle) CALL current_hash%add(current)
+          ! Add particle ID to persistence list
+          IF (use_particle) CALL current_hash%add(current)
 
-            current => next
-          END DO
+          current => next
         END DO
-      END IF
+      END DO
 
       sub%locked = .TRUE.
       CALL current_hash%optimise()

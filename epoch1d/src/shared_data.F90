@@ -635,11 +635,9 @@ MODULE shared_data
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
     ! Persistent subset
-    LOGICAL :: persistent, locked, from_file
+    LOGICAL :: persistent, locked
     REAL(num) :: persist_start_time
     INTEGER :: persist_start_step
-    LOGICAL :: file_sorted, add_after_restart
-    CHARACTER(LEN=string_length) :: filename
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
