@@ -357,6 +357,26 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'persist_start_step') &
+        .OR. str_cmp(element, 'persist_after_step')) THEN
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+      sub%persistent = .TRUE.
+      sub%persist_start_step = as_integer_print(value, element, errcode)
+      current_hash => id_registry%get_hash(sub%name)
+      IF (ASSOCIATED(current_hash)) THEN
+        CALL current_hash%init(1000)
+      ELSE
+        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
+        errcode = c_err_bad_value
+        RETURN
+      END IF
+#else
+      errcode = c_err_pp_options_missing
+      extended_error_string = '-DPARTICLE_ID'
+#endif
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'from_file')) THEN
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
@@ -494,6 +514,7 @@ CONTAINS
       subset_list(i)%dumpmask = c_io_none
       subset_list(i)%persistent = .FALSE.
       subset_list(i)%persist_start_time = -1.0_num
+      subset_list(i)%persist_start_step = -1
       subset_list(i)%locked = .FALSE.
       subset_list(i)%from_file = .FALSE.
       subset_list(i)%file_sorted = .FALSE.

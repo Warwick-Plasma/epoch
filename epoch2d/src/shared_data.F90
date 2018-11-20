@@ -643,6 +643,7 @@ MODULE shared_data
     ! Persistent subset
     LOGICAL :: persistent, locked, from_file
     REAL(num) :: persist_start_time
+    INTEGER :: persist_start_step
     LOGICAL :: file_sorted, add_after_restart
     CHARACTER(LEN=string_length) :: filename
 

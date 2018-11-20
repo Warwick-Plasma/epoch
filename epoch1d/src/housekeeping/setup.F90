@@ -1317,11 +1317,14 @@ CONTAINS
   SUBROUTINE setup_persistent_subsets
 
     INTEGER :: isub
+    TYPE(subset), POINTER :: sub
 
     DO isub = 1, SIZE(subset_list)
-      IF (subset_list(isub)%persistent &
-          .AND. time >= subset_list(isub)%persist_start_time) THEN
-        subset_list(isub)%locked = .TRUE.
+      sub => subset_list(isub)
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) CYCLE
+        sub%locked = .TRUE.
       END IF
     END DO
 

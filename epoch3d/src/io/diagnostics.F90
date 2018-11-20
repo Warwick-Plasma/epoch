@@ -2309,9 +2309,12 @@ CONTAINS
         CYCLE
       END IF
 
-      IF (sub%persistent .AND. time < sub%persist_start_time) THEN
-        io_list(i)%dumpmask = c_io_never
-        CYCLE
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) THEN
+          io_list(i)%dumpmask = c_io_never
+          CYCLE
+        END IF
       END IF
 
       io_list(i)%dumpmask = sub%mask
@@ -2366,7 +2369,8 @@ CONTAINS
       ! Already locked in
       IF (sub%locked) CYCLE
       ! Not yet time to lock
-      IF (time < sub%persist_start_time) CYCLE
+      IF (time < sub%persist_start_time &
+          .AND. step < sub%persist_start_step) CYCLE
 
       current_hash => id_registry%get_existing_hash(sub%name)
       IF (sub%from_file) THEN
