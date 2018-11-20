@@ -11,7 +11,11 @@ MODULE particle_id_hash_mod
   LOGICAL :: random_state_set = .FALSE.
   TYPE(random_state_type), SAVE :: random_state
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   INTEGER, PARAMETER :: hkind = idkind
+#else
+  INTEGER, PARAMETER :: hkind = MPI_ADDRESS_KIND
+#endif
 
   TYPE :: particle_id_inner_list
     INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: list
@@ -306,7 +310,6 @@ CONTAINS
     CLASS(particle_id_hash), INTENT(IN) :: this
     TYPE(particle), POINTER, INTENT(IN) :: part
     LOGICAL :: holds
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(hkind) :: test_id
     INTEGER(i8) :: bucket
 
@@ -315,12 +318,13 @@ CONTAINS
       RETURN
     END IF
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     test_id = part%id
+#else
+    CALL MPI_GET_ADDRESS(part, test_id, errcode)
+#endif
     bucket = this%hash(test_id)
     holds = this%buckets(bucket)%holds(test_id)
-#else
-    holds = .FALSE.
-#endif
 
   END FUNCTION pid_hash_holds
 
@@ -328,7 +332,6 @@ CONTAINS
 
   !> Test if this hash table holds a given id
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   FUNCTION pid_hash_holds_hkind(this, test_id) RESULT (holds)
 
     CLASS(particle_id_hash), INTENT(IN) :: this
@@ -345,7 +348,6 @@ CONTAINS
     holds = this%buckets(bucket)%holds(test_id)
 
   END FUNCTION pid_hash_holds_hkind
-#endif
 
 
 
@@ -355,12 +357,16 @@ CONTAINS
 
     CLASS(particle_id_hash), INTENT(INOUT) :: this
     TYPE(particle), POINTER, INTENT(IN) :: part
+    INTEGER(KIND=hkind) :: new_id
 
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    CALL pid_hash_add_hkind(this, part%id)
+    new_id = part%id
+#else
+    CALL MPI_GET_ADDRESS(part, new_id, errcode)
 #endif
+    CALL pid_hash_add_hkind(this, new_id)
 
   END SUBROUTINE pid_hash_add
 
@@ -424,6 +430,7 @@ CONTAINS
     CLASS(particle_id_hash), INTENT(INOUT) :: this
     CHARACTER(LEN=*), INTENT(IN) :: id_file
     LOGICAL, INTENT(IN), OPTIONAL :: sorted
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: id_list
 #if defined(PARTICLE_ID)
     INTEGER(KIND = MPI_OFFSET_KIND), PARAMETER :: id_length = 8
@@ -464,6 +471,7 @@ CONTAINS
 
     CALL MPI_FILE_CLOSE(handle, errcode)
     IF (rank == 0) PRINT*, 'Persistent ID file ', TRIM(id_file), ' read OK'
+#endif
 
   END SUBROUTINE pid_hash_add_from_file
 
@@ -733,7 +741,6 @@ CONTAINS
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
     TYPE(particle), POINTER, INTENT(IN) :: part
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(hkind) :: del_id
     INTEGER :: ihash, sz
     LOGICAL :: dummy
@@ -741,12 +748,15 @@ CONTAINS
     IF (.NOT. any_persistent_subset) RETURN
     IF (.NOT. ALLOCATED(this%list)) RETURN
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     del_id = part%id
+#else
+    CALL MPI_GET_ADDRESS(part, del_id, errcode)
+#endif
     sz = SIZE(this%list)
     DO ihash = 1, sz
       dummy = this%list(ihash)%contents%delete(del_id)
     END DO
-#endif
 
   END SUBROUTINE pidr_delete_all
 
@@ -783,14 +793,17 @@ CONTAINS
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
     TYPE(particle), POINTER, INTENT(IN) :: part
     INTEGER(i8) :: hashmap
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(hkind) :: test_id
     INTEGER :: ihash, sz
 
     hashmap = 0
     IF (.NOT. ALLOCATED(this%list)) RETURN
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     test_id = part%id
+#else
+    CALL MPI_GET_ADDRESS(part, test_id, errcode)
+#endif
 
     sz = SIZE(this%list)
     DO ihash = 1, sz
@@ -798,9 +811,6 @@ CONTAINS
       IF (pid_hash_holds_hkind(this%list(ihash)%contents, test_id)) &
           hashmap = hashmap + 1_i8
     END DO
-#else
-    hashmap = 0
-#endif
 
   END FUNCTION pidr_map
 
@@ -813,7 +823,6 @@ CONTAINS
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
     TYPE(particle), POINTER, INTENT(IN) :: part
     INTEGER(i8), INTENT(IN) :: hashmap
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(hkind) :: new_id
     INTEGER(i8) :: shifthash
     INTEGER :: ihash, sz
@@ -821,7 +830,12 @@ CONTAINS
     IF (.NOT. ALLOCATED(this%list)) RETURN
     IF (hashmap == 0) RETURN
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     new_id = part%id
+#else
+    CALL MPI_GET_ADDRESS(part, new_id, errcode)
+#endif
+
     sz = SIZE(this%list)
     shifthash = hashmap
     DO ihash = 1, sz
@@ -829,7 +843,6 @@ CONTAINS
           CALL pid_hash_add_hkind(this%list(ihash)%contents, new_id)
       shifthash = ISHFT(shifthash, -1_i8)
     END DO
-#endif
 
   END SUBROUTINE pidr_add_with_map
 

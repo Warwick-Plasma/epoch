@@ -63,6 +63,9 @@ CONTAINS
     TYPE(subset), POINTER :: sub
     INTEGER :: io, iu
     TYPE(particle_id_hash), POINTER :: current_hash
+    LOGICAL :: got_persistent_subset
+
+    got_persistent_subset = .FALSE.
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
@@ -96,6 +99,7 @@ CONTAINS
             current_hash => id_registry%get_hash(sub%name)
             IF (ASSOCIATED(current_hash)) THEN
               CALL current_hash%init(1000)
+              got_persistent_subset = .TRUE.
             ELSE
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
@@ -110,6 +114,20 @@ CONTAINS
           END IF
         END IF
       END DO
+
+#if !defined(PARTICLE_ID) && !defined(PARTICLE_ID4)
+      IF (got_persistent_subset .AND. rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Using particle memory addresses for persistent ', &
+                      'subsets but IDs might be faster'
+          WRITE(io,*) 'To enable particle IDs, recompile with ', &
+                      'DEFINE=-DPARTICLE_ID'
+        END DO
+      END IF
+#endif
     END IF
 
   END SUBROUTINE subset_deck_finalise
@@ -359,25 +377,15 @@ CONTAINS
 
     IF (str_cmp(element, 'persist_start_time') &
         .OR. str_cmp(element, 'persist_after_time')) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%persist_start_time = as_real_print(value, element, errcode)
-#else
-      errcode = c_err_pp_options_missing
-      extended_error_string = '-DPARTICLE_ID'
-#endif
       RETURN
     END IF
 
     IF (str_cmp(element, 'persist_start_step') &
         .OR. str_cmp(element, 'persist_after_step')) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%persistent = .TRUE.
       sub%persist_start_step = as_integer_print(value, element, errcode)
-#else
-      errcode = c_err_pp_options_missing
-      extended_error_string = '-DPARTICLE_ID'
-#endif
       RETURN
     END IF
 
