@@ -11,8 +11,10 @@ MODULE particle_id_hash_mod
   LOGICAL :: random_state_set = .FALSE.
   TYPE(random_state_type), SAVE :: random_state
 
+  INTEGER, PARAMETER :: hkind = idkind
+
   TYPE :: particle_id_inner_list
-    INTEGER(idkind), DIMENSION(:), ALLOCATABLE :: list
+    INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: list
     CONTAINS
     PROCEDURE :: holds => pid_inner_list_holds
     PROCEDURE :: add => pid_inner_list_add
@@ -76,7 +78,7 @@ CONTAINS
 
   RECURSIVE SUBROUTINE sort_list(list_in)
 
-    INTEGER(idkind), DIMENSION(:), INTENT(INOUT) :: list_in
+    INTEGER(hkind), DIMENSION(:), INTENT(INOUT) :: list_in
     INTEGER(i8) :: part_index
 
     IF (SIZE(list_in) <= 1) RETURN
@@ -94,14 +96,14 @@ CONTAINS
 
   SUBROUTINE partition(list_in, part_index)
 
-    INTEGER(idkind), DIMENSION(:), INTENT(INOUT) :: list_in
-    INTEGER(idkind) :: pivot, temp, p1, p2, p3
+    INTEGER(hkind), DIMENSION(:), INTENT(INOUT) :: list_in
+    INTEGER(hkind) :: pivot, temp, p1, p2, p3
     INTEGER(i8), INTENT(INOUT) :: part_index
     INTEGER(i8) :: upper, lower
 
-    p1 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), idkind))
-    p2 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), idkind))
-    p3 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), idkind))
+    p1 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), hkind))
+    p2 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), hkind))
+    p3 = list_in(INT(random(random_state) * REAL(SIZE(list_in), num), hkind))
 
     pivot = median_of_three(p1, p2, p3)
     lower = 0
@@ -135,8 +137,8 @@ CONTAINS
 
   FUNCTION median_of_three(a, b, c) RESULT(median)
 
-    INTEGER(idkind), INTENT(IN) :: a, b, c
-    INTEGER(idkind) :: median
+    INTEGER(hkind), INTENT(IN) :: a, b, c
+    INTEGER(hkind) :: median
 
     median = MAXVAL([MINVAL([a,b]), MINVAL([MAXVAL([a,b]), c])])
 
@@ -148,8 +150,8 @@ CONTAINS
 
   RECURSIVE FUNCTION in_list(list_in, test) RESULT(found)
 
-    INTEGER(idkind), DIMENSION(:), INTENT(IN) :: list_in
-    INTEGER(idkind), INTENT(IN) :: test
+    INTEGER(hkind), DIMENSION(:), INTENT(IN) :: list_in
+    INTEGER(hkind), INTENT(IN) :: test
     LOGICAL :: found
     INTEGER(i8) :: trial_index
 
@@ -186,7 +188,7 @@ CONTAINS
   FUNCTION pid_inner_list_holds(this, test_id, index_out) RESULT(holds)
 
     CLASS(particle_id_inner_list), INTENT(IN) :: this
-    INTEGER(idkind), INTENT(IN) :: test_id
+    INTEGER(hkind), INTENT(IN) :: test_id
     INTEGER, INTENT(OUT), OPTIONAL :: index_out
     LOGICAL :: holds
     INTEGER :: ipart, sz, index_inner
@@ -214,8 +216,8 @@ CONTAINS
   SUBROUTINE pid_inner_list_add(this, add_id)
 
     CLASS(particle_id_inner_list), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: add_id
-    INTEGER(idkind), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(hkind), INTENT(IN) :: add_id
+    INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: temp
     LOGICAL :: copyback
     INTEGER :: sz
 
@@ -243,8 +245,8 @@ CONTAINS
   FUNCTION pid_inner_list_delete(this, del_id) RESULT(holds)
 
     CLASS(particle_id_inner_list), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: del_id
-    INTEGER(idkind), DIMENSION(:), ALLOCATABLE :: temp
+    INTEGER(hkind), INTENT(IN) :: del_id
+    INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: temp
     INTEGER :: sz, ind
     LOGICAL :: holds
 
@@ -286,12 +288,12 @@ CONTAINS
   FUNCTION pid_hash_hash(this, hash_id) RESULT(hash)
 
     CLASS(particle_id_hash), INTENT(IN) :: this
-    INTEGER(idkind), INTENT(IN) :: hash_id
+    INTEGER(hkind), INTENT(IN) :: hash_id
     INTEGER(i8) :: hash
 
     ! Knuth's multiplicative method (sort of)
-    hash = INT(MODULO(hash_id * INT(this%hash_gr, idkind), &
-        SIZE(this%buckets, KIND=idkind)), idkind) + 1_idkind
+    hash = INT(MODULO(hash_id * INT(this%hash_gr, hkind), &
+        SIZE(this%buckets, KIND=hkind)), hkind) + 1_hkind
 
   END FUNCTION pid_hash_hash
 
@@ -302,7 +304,7 @@ CONTAINS
   FUNCTION pid_hash_holds(this, test_id) RESULT (holds)
 
     CLASS(particle_id_hash), INTENT(IN) :: this
-    INTEGER(idkind), INTENT(IN) :: test_id
+    INTEGER(hkind), INTENT(IN) :: test_id
     LOGICAL :: holds
     INTEGER(i8) :: bucket
 
@@ -323,7 +325,7 @@ CONTAINS
   SUBROUTINE pid_hash_add(this, add_id)
 
     CLASS(particle_id_hash), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: add_id
+    INTEGER(hkind), INTENT(IN) :: add_id
     INTEGER(i8) :: bucket
 
     IF (.NOT. ALLOCATED(this%buckets)) RETURN
@@ -341,7 +343,7 @@ CONTAINS
   SUBROUTINE pid_hash_add_if_local(this, id_list, sorted)
 
     CLASS(particle_id_hash), INTENT(INOUT) :: this
-    INTEGER(idkind), DIMENSION(:), INTENT(INOUT) :: id_list
+    INTEGER(hkind), DIMENSION(:), INTENT(INOUT) :: id_list
     LOGICAL, INTENT(IN), OPTIONAL :: sorted
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     TYPE(particle), POINTER :: current
@@ -375,7 +377,7 @@ CONTAINS
     CLASS(particle_id_hash), INTENT(INOUT) :: this
     CHARACTER(LEN=*), INTENT(IN) :: id_file
     LOGICAL, INTENT(IN), OPTIONAL :: sorted
-    INTEGER(idkind), DIMENSION(:), ALLOCATABLE :: id_list
+    INTEGER(hkind), DIMENSION(:), ALLOCATABLE :: id_list
 #if defined(PARTICLE_ID)
     INTEGER(KIND = MPI_OFFSET_KIND), PARAMETER :: id_length = 8
     INTEGER, PARAMETER :: mpi_type = MPI_INTEGER8
@@ -425,7 +427,7 @@ CONTAINS
   FUNCTION pid_hash_delete(this, del_id) RESULT(holds)
 
     CLASS(particle_id_hash), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: del_id
+    INTEGER(hkind), INTENT(IN) :: del_id
     INTEGER(i8) :: bucket
     LOGICAL :: holds
 
@@ -683,7 +685,7 @@ CONTAINS
   SUBROUTINE pidr_delete_all(this, del_id)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: del_id
+    INTEGER(hkind), INTENT(IN) :: del_id
     INTEGER :: ihash, sz
     LOGICAL :: dummy
 
@@ -705,7 +707,7 @@ CONTAINS
   FUNCTION pidr_delete_and_map(this, test_id) RESULT(hashmap)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: test_id
+    INTEGER(hkind), INTENT(IN) :: test_id
     INTEGER(i8) :: hashmap
     INTEGER :: ihash, sz
 
@@ -728,7 +730,7 @@ CONTAINS
   FUNCTION pidr_map(this, test_id) RESULT(hashmap)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: test_id
+    INTEGER(hkind), INTENT(IN) :: test_id
     INTEGER(i8) :: hashmap
     INTEGER :: ihash, sz
 
@@ -750,7 +752,7 @@ CONTAINS
   SUBROUTINE pidr_add_with_map(this, new_id, hashmap)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
-    INTEGER(idkind), INTENT(IN) :: new_id
+    INTEGER(hkind), INTENT(IN) :: new_id
     INTEGER(i8), INTENT(IN) :: hashmap
     INTEGER(i8) :: shifthash
     INTEGER :: ihash, sz
