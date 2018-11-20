@@ -542,14 +542,31 @@ CONTAINS
 
   !> Get the number of stored hashes
 
-  FUNCTION pidr_get_hash_count(this) RESULT(count)
+  FUNCTION pidr_get_hash_count(this, step) RESULT(count)
 
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
+    INTEGER, OPTIONAL :: step
     INTEGER :: count
+    INTEGER, SAVE :: last_step = -1
+    INTEGER, SAVE :: last_count = 0
 
-    count = 0
-    IF (.NOT. ALLOCATED(this%list)) RETURN
-    count = SIZE(this%list)
+    IF (PRESENT(step)) THEN
+      IF (step == last_step) THEN
+        count = last_count
+        RETURN
+      END IF
+      last_step = step
+    END IF
+
+    IF (ALLOCATED(this%list)) THEN
+      count = SIZE(this%list)
+    ELSE
+      count = 0
+    END IF
+
+    CALL MPI_ALLREDUCE(MPI_IN_PLACE, count, 1, MPI_INTEGER, MPI_SUM, comm, &
+                       errcode)
+    last_count = count
 
   END FUNCTION pidr_get_hash_count
 

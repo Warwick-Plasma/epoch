@@ -600,18 +600,17 @@ CONTAINS
             'Processor_at_t0', '', it_output_integer4)
 #endif
 #if defined(PARTICLE_ID)
-        ! NB: Need to write the ID before the particle persistence information
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer8)
-        IF (id_registry%get_hash_count() > 0) &
-            CALL write_particle_variable(c_dump_persistent_ids, code, &
-                'persistent_subset', '#', it_output_integer8)
 #elif defined(PARTICLE_ID4)
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer4)
-        IF (id_registry%get_hash_count() > 0) &
-            CALL write_particle_variable(c_dump_persistent_ids, code, &
-                'persistent_subset', '#', it_output_integer8)
+#endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+        IF (id_registry%get_hash_count(step) > 0) THEN
+          CALL write_particle_variable(c_dump_persistent_ids, code, &
+              'persistent_subset', '#', it_output_integer8)
+        END IF
 #endif
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
