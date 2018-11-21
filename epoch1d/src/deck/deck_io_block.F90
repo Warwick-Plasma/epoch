@@ -909,6 +909,9 @@ CONTAINS
 #endif
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    ! Persistent IDs
+    io_block%dumpmask(c_dump_persistent_ids) = &
+        IOR(io_block%dumpmask(c_dump_persistent_ids), c_io_restartable)
     io_block%dumpmask(c_dump_part_id) = &
         IOR(io_block%dumpmask(c_dump_part_id), c_io_restartable)
 #endif

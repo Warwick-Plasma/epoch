@@ -162,6 +162,7 @@ PROGRAM pic
 
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
+  CALL build_persistent_subsets
 
   IF (rank == 0) THEN
     PRINT*
