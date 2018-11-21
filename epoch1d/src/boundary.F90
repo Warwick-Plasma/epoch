@@ -21,6 +21,7 @@ MODULE boundary
   USE laser
   USE mpi_subtype_control
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -643,6 +644,7 @@ CONTAINS
                 END DO
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                CALL id_registry%delete_all(cur%id)
                 cur%id = generate_id()
 #endif
                 ! x-direction
@@ -706,6 +708,7 @@ CONTAINS
                 END DO
 
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+                CALL id_registry%delete_all(cur%id)
                 cur%id = generate_id()
 #endif
                 ! x-direction
@@ -741,7 +744,7 @@ CONTAINS
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
           ELSE
-            DEALLOCATE(cur)
+            CALL destroy_particle(cur)
           END IF
         ELSE IF (ABS(xbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour
