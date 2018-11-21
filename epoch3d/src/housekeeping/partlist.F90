@@ -391,7 +391,7 @@ CONTAINS
     REAL(num), DIMENSION(:), INTENT(INOUT) :: array
     TYPE(particle), POINTER :: a_particle
     INTEGER(i8) :: cpos
-#ifdef PARTICLE_ID4
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     INTEGER(i8) :: temp_i8
 #endif
 
@@ -427,7 +427,8 @@ CONTAINS
     cpos = cpos+1
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    array(cpos) = TRANSFER(id_registry%map(a_particle%id), 1.0_num)
+    temp_i8 = id_registry%map(a_particle%id)
+    array(cpos) = TRANSFER(temp_i8, 1.0_num)
     cpos = cpos + 1
 #endif
 #ifdef COLLISIONS_TEST
