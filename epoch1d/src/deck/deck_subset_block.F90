@@ -44,6 +44,7 @@ CONTAINS
     current_block = 0
     IF (deck_state == c_ds_first) THEN
       n_subsets = 0
+      any_persistent_subset = .FALSE.
       ALLOCATE(subset_names(4))
       ALLOCATE(subset_blocks(4))
     ELSE
@@ -59,7 +60,12 @@ CONTAINS
 
   SUBROUTINE subset_deck_finalise
 
-    INTEGER :: i
+    INTEGER :: i, io, iu
+    TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
+    LOGICAL :: got_persistent_subset
+
+    got_persistent_subset = .FALSE.
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_subsets
@@ -71,18 +77,55 @@ CONTAINS
     ELSE
       DEALLOCATE(subset_blocks)
       DO i = 1, n_subsets
-        subset_list(i)%skip = (SUM(subset_list(i)%skip_dir - 1) /= 0)
+        sub => subset_list(i)
+
+        sub%skip = (SUM(sub%skip_dir - 1) /= 0)
 
         ! Check for any spatial restrictions in place
-        IF (subset_list(i)%skip .AND. subset_list(i)%space_restrictions) THEN
+        IF (sub%skip .AND. sub%space_restrictions) THEN
           IF (rank == 0) THEN
             PRINT*, 'Skip and spatial restrictions specified for ', &
-                TRIM(subset_list(i)%name), &
+                TRIM(sub%name), &
                 ': field variables will not be trimmmed'
           END IF
-          subset_list(i)%space_restrictions = .FALSE.
+          sub%space_restrictions = .FALSE.
+        END IF
+
+        IF (sub%persistent) THEN
+          IF (sub%persist_start_time <= time &
+              .AND. sub%persist_start_step <= step) THEN
+            current_hash => id_registry%get_hash(sub%name)
+            IF (ASSOCIATED(current_hash)) THEN
+              CALL current_hash%init(1000)
+              got_persistent_subset = .TRUE.
+            ELSE
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*)
+                WRITE(io,*) '*** ERROR ***'
+                WRITE(io,*) 'Can only have 64 persistent subsets'
+              END DO
+              CALL abort_code(c_err_bad_value)
+            END IF
+          ELSE
+            sub%persistent = .FALSE.
+          END IF
         END IF
       END DO
+
+#if !defined(PARTICLE_ID) && !defined(PARTICLE_ID4)
+      IF (got_persistent_subset .AND. rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Using particle memory addresses for persistent ', &
+                      'subsets but IDs might be faster'
+          WRITE(io,*) 'To enable particle IDs, recompile with ', &
+                      'DEFINE=-DPARTICLE_ID'
+        END DO
+      END IF
+#endif
     END IF
 
   END SUBROUTINE subset_deck_finalise
@@ -130,9 +173,6 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    TYPE(particle_id_hash), POINTER :: current_hash
-#endif
 
     errcode = c_err_none
     IF (value == blank .OR. element == blank) RETURN
@@ -285,54 +325,17 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'persist_after')) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (str_cmp(element, 'persist_start_time') &
+        .OR. str_cmp(element, 'persist_after_time')) THEN
       sub%persistent = .TRUE.
-      sub%persist_after = as_real_print(value, element, errcode)
-      current_hash => id_registry%get_hash(sub%name)
-      IF (ASSOCIATED(current_hash)) THEN
-        CALL current_hash%init(1000)
-      ELSE
-        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
-        errcode = c_err_bad_value
-        RETURN
-      END IF
-#else
-      errcode = c_err_pp_options_missing
-      extended_error_string = '-DPARTICLE_ID'
-#endif
+      sub%persist_start_time = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'from_file') &
-        .OR. str_cmp(element, 'from_file_on_restart')) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (str_cmp(element, 'persist_start_step') &
+        .OR. str_cmp(element, 'persist_after_step')) THEN
       sub%persistent = .TRUE.
-      sub%filename = TRIM(value)
-      sub%from_file = .TRUE.
-      current_hash => id_registry%get_hash(sub%name)
-      IF (ASSOCIATED(current_hash)) THEN
-        CALL current_hash%init(1000)
-      ELSE
-        IF (rank == 0) PRINT*, 'Can only have 64 persistent subsets'
-        errcode = c_err_bad_value
-        RETURN
-      END IF
-      sub%add_after_restart = str_cmp(element, 'from_file_on_restart')
-#else
-      errcode = c_err_pp_options_missing
-      extended_error_string = '-DPARTICLE_ID'
-#endif
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'sorted_file')) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-      sub%file_sorted = as_logical_print(value, element, errcode)
-#else
-      errcode = c_err_pp_options_missing
-      extended_error_string = '-DPARTICLE_ID'
-#endif
+      sub%persist_start_step = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
@@ -410,10 +413,9 @@ CONTAINS
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
       subset_list(i)%persistent = .FALSE.
-      subset_list(i)%persist_after = 0.0_num
+      subset_list(i)%persist_start_time = -1.0_num
+      subset_list(i)%persist_start_step = -1
       subset_list(i)%locked = .FALSE.
-      subset_list(i)%from_file = .FALSE.
-      subset_list(i)%file_sorted = .FALSE.
     END DO
 
   END SUBROUTINE setup_subsets
