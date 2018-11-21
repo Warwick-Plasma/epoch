@@ -278,7 +278,7 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL remove_particle_from_partlist(partlist, current)
-      DEALLOCATE(current)
+      CALL destroy_particle(current)
       current => next
     END DO
 
@@ -575,7 +575,7 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL remove_particle_from_partlist(partlist, current)
-      DEALLOCATE(current)
+      CALL destroy_particle(current)
       current => next
     END DO
 
@@ -751,7 +751,7 @@ CONTAINS
         IF (current%part_pos(1) < x0 .OR. current%part_pos(1) >= x1 &
             .OR. current%part_pos(2) < y0 .OR. current%part_pos(2) >= y1) THEN
           CALL remove_particle_from_partlist(partlist, current)
-          DEALLOCATE(current)
+          CALL destroy_particle(current)
         END IF
         current => next
       END DO

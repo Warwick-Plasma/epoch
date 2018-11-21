@@ -1435,6 +1435,9 @@ CONTAINS
             PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
           END IF
 #endif
+        ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes_i8(ispecies), it_persistent_subset)
 
         ELSE IF (block_id(1:7) == 'weight/') THEN
 #ifndef PER_SPECIES_WEIGHT
@@ -1521,9 +1524,29 @@ CONTAINS
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
 
+    CALL setup_persistent_subsets
+
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE setup_persistent_subsets
+
+    INTEGER :: isub
+    TYPE(subset), POINTER :: sub
+
+    DO isub = 1, SIZE(subset_list)
+      sub => subset_list(isub)
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) CYCLE
+        sub%locked = .TRUE.
+      END IF
+    END DO
+
+  END SUBROUTINE setup_persistent_subsets
 
 
 
@@ -1794,6 +1817,28 @@ CONTAINS
 
   END FUNCTION it_id8
 #endif
+
+
+
+  FUNCTION it_persistent_subset(array, npart_this_it, start, param)
+
+    USE constants
+    USE particle_id_hash_mod
+    INTEGER(i8) :: it_persistent_subset
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      CALL id_registry%add_with_map(iterator_list, array(ipart))
+      iterator_list => iterator_list%next
+    END DO
+
+    it_persistent_subset = 0
+
+  END FUNCTION it_persistent_subset
 
 
 
