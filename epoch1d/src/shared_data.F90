@@ -650,16 +650,16 @@ MODULE shared_data
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
     ! Persistent subset
-    LOGICAL :: persistent, locked, from_file
-    REAL(num) :: persist_after
-    LOGICAL :: file_sorted, add_after_restart
-    CHARACTER(LEN=string_length) :: filename
+    LOGICAL :: persistent, locked
+    REAL(num) :: persist_start_time
+    INTEGER :: persist_start_step
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
   END TYPE subset
   TYPE(subset), DIMENSION(:), ALLOCATABLE, TARGET :: subset_list
   INTEGER :: n_subsets
+  LOGICAL :: any_persistent_subset
 
 #ifndef NO_PARTICLE_PROBES
   TYPE particle_probe

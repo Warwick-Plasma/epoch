@@ -83,9 +83,7 @@ MODULE diagnostics
         write_particle_variable_i4, &
         write_particle_variable_i8, &
 #endif
-#if defined(PARTICLE_ID)
         write_particle_variable_i8, &
-#endif
         write_particle_variable_num
   END INTERFACE write_particle_variable
 
@@ -606,19 +604,16 @@ CONTAINS
             'Processor_at_t0', '', it_output_integer4)
 #endif
 #if defined(PARTICLE_ID)
-        ! NB: Need to write the ID before the particle persistence information
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer8)
-        IF (id_registry%get_hash_count() > 0) &
-            CALL write_particle_variable(c_dump_persistent_ids, code, &
-                'persistent_subset', '#', it_output_integer8)
 #elif defined(PARTICLE_ID4)
         CALL write_particle_variable(c_dump_part_id, code, &
             'ID', '#', it_output_integer4)
-        IF (id_registry%get_hash_count() > 0) &
-            CALL write_particle_variable(c_dump_persistent_ids, code, &
-                'persistent_subset', '#', it_output_integer8)
 #endif
+        IF (id_registry%get_hash_count(step) > 0) THEN
+          CALL write_particle_variable(c_dump_persistent_ids, code, &
+              'persistent_subset', '#', it_output_integer8)
+        END IF
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
             'Optical depth', '', it_output_real)
@@ -2300,11 +2295,15 @@ CONTAINS
         CYCLE
       END IF
 
-      IF (sub%persistent .AND. time < sub%persist_after) THEN
-        io_list(i)%dumpmask = c_io_never
-        CYCLE
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) THEN
+          io_list(i)%dumpmask = c_io_never
+          CYCLE
+        END IF
       END IF
 
+      IF (sub%persistent) any_persistent_subset = .TRUE.
       io_list(i)%dumpmask = sub%mask
 
       part_mc = c * species_list(i)%mass
@@ -2315,9 +2314,7 @@ CONTAINS
         use_particle = .TRUE.
 
         IF (sub%persistent .AND. sub%locked) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-          use_particle = current_hash%holds(current%id)
-#endif
+          use_particle = current_hash%holds(current)
         ELSE
 #ifdef PER_PARTICLE_CHARGE_MASS
           part_mc = c * current%mass
@@ -2348,61 +2345,44 @@ CONTAINS
     TYPE(subset), POINTER :: sub
     TYPE(particle_id_hash), POINTER :: current_hash
 
+    IF (.NOT. any_persistent_subset) RETURN
+
     DO isub = 1, SIZE(subset_list)
-      ! Not a persistent subset
-      IF (.NOT. subset_list(isub)%persistent) CYCLE
-      ! Already locked in
-      IF (subset_list(isub)%locked &
-          .AND. .NOT.subset_list(isub)%add_after_restart) CYCLE
-      ! Not yet time to lock
-      IF (time < subset_list(isub)%persist_after) CYCLE
-
       sub => subset_list(isub)
+
+      ! Not a persistent subset
+      IF (.NOT. sub%persistent) CYCLE
+      ! Already locked in
+      IF (sub%locked) CYCLE
+      ! Not yet time to lock
+      IF (time < sub%persist_start_time &
+          .AND. step < sub%persist_start_step) CYCLE
+
       current_hash => id_registry%get_existing_hash(sub%name)
-      IF (sub%from_file) THEN
-        ! If you are restarting then unless the user specifically asks, build up
-        ! the persistent subset from the restart file, not from the external
-        ! file
-        IF (.NOT. ic_from_restart &
-            .OR. sub%add_after_restart .OR. .NOT.sub%locked) THEN
-          CALL current_hash%add_from_file(TRIM(sub%filename), sub%file_sorted)
-          sub%add_after_restart = .FALSE.
+      DO ispec = 1, n_species
+        IF (.NOT. sub%use_species(ispec)) THEN
+          CYCLE
         END IF
-      ELSE
-        DO ispec = 1, n_species
-          IF (.NOT. sub%use_species(ispec)) THEN
-            CYCLE
-          END IF
 
-          part_mc = c * species_list(ispec)%mass
+        part_mc = c * species_list(ispec)%mass
 
-          current => species_list(ispec)%attached_list%head
-          DO WHILE (ASSOCIATED(current))
-            next => current%next
+        current => species_list(ispec)%attached_list%head
+        DO WHILE (ASSOCIATED(current))
+          next => current%next
 #ifdef PER_PARTICLE_CHARGE_MASS
-            part_mc = c * current%mass
+          part_mc = c * current%mass
 #endif
-            use_particle = test_particle(sub, current, part_mc)
+          use_particle = test_particle(sub, current, part_mc)
 
-            IF (use_particle) THEN
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-              ! Add particle ID to persistence list
-              IF (sub%persistent .AND. time >= sub%persist_after &
-                  .AND. .NOT.sub%locked) THEN
-                CALL current_hash%add(current%id)
-              END IF
-#endif
-            END IF
-            current => next
-          END DO
+          ! Add particle ID to persistence list
+          IF (use_particle) CALL current_hash%add(current)
+
+          current => next
         END DO
-      END IF
+      END DO
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
       sub%locked = .TRUE.
-      sub%use_restriction = .FALSE.
       CALL current_hash%optimise()
-#endif
     END DO
 
   END SUBROUTINE build_persistent_subsets
@@ -2861,7 +2841,6 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   SUBROUTINE write_particle_variable_i8(id_in, code, name, units, iterator)
 
     INTEGER, INTENT(IN) :: id_in, code
@@ -2940,7 +2919,6 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_particle_variable_i8
-#endif
 
 
 

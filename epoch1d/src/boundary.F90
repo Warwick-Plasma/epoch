@@ -643,10 +643,11 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 END DO
 
+                CALL id_registry%delete_all(cur)
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
                 cur%id = generate_id()
 #endif
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
@@ -707,10 +708,11 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 END DO
 
+                CALL id_registry%delete_all(cur)
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-                CALL id_registry%delete_all(cur%id)
                 cur%id = generate_id()
 #endif
+
                 ! x-direction
                 i = 1
                 cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
