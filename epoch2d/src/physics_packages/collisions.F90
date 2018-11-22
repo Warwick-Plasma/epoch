@@ -974,7 +974,7 @@ CONTAINS
     ELSE
       nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
     END IF
-    nu = nu * factor * dt
+    nu = 2.0_num * nu * factor * dt
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -997,8 +997,13 @@ CONTAINS
     ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
-    sin_theta = (2.0_num * delta) / (1.0_num + delta**2)
-    cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
+    IF (ABS(delta) < c_tiny) THEN
+      sin_theta = 0.0_num
+      cos_theta = 1.0_num
+    ELSE
+      sin_theta = delta / SQRT(1.0_num + delta**2)
+      cos_theta = sin_theta / delta
+    END IF
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
