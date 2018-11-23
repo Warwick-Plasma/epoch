@@ -97,12 +97,12 @@ CONTAINS
         two_kb_mass = two_kb * mass
         two_pi_kb_mass3 = (pi * two_kb_mass)**3
 #endif
-        CALL params_local(current, species%initial_conditions%temp(:,:,:,1), &
-            species%initial_conditions%drift(:,:,:,1), Tx, driftx)
-        CALL params_local(current, species%initial_conditions%temp(:,:,:,2), &
-            species%initial_conditions%drift(:,:,:,2), Ty, drifty)
-        CALL params_local(current, species%initial_conditions%temp(:,:,:,3), &
-            species%initial_conditions%drift(:,:,:,3), Tz, driftz)
+        CALL params_local(current, species_temp(:,:,:,1), species_drift(:,:,:,1), &
+            Tx, driftx)
+        CALL params_local(current, species_temp(:,:,:,2), species_drift(:,:,:,2), &
+            Ty, drifty)
+        CALL params_local(current, species_temp(:,:,:,3), species_drift(:,:,:,3), &
+            Tz, driftz)
 
         f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
                      + (current%part_p(2) - drifty)**2 / Ty &

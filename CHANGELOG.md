@@ -10,6 +10,30 @@
    load balancer attempts to find the best nprocx/y/z split of the domain
    prior to the initial load balance
 
+ * Removed static parameter arrays from the input deck block parsers to
+   simplify the process of adding new entries
+
+ * Added control block option "use_more_setup_memory". If set to false then
+   only one set of arrays will be used for storing temperature, density and
+   drift during species loading. This can be a significant memory saving but
+   comes at the expense of recalculating grid quantities multiple times.
+   Setting the flag to true enables one set of arrays per species.
+   The default value is false.
+
+ * Replaced non-standard ISATTY intrinsic function with a call to the
+   POSIX C-library function "isatty"
+
+ * Changed FORTRAN standard to 2003
+
+ * Added persistent subsets
+   This adds the flags "persist_start_time" and "persist_start_step" to the
+   subset block.  If either of these flags is present then once either the time
+   specified by "persist_start_time" or the step specified by
+   "persist_start_step" has been reached, the particles that have been selected
+   using the other criteria in the subset block will be recorded. Each
+   subsequent output for this subset will then use the particle list selected
+   at the specified start time.
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
