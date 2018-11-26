@@ -243,4 +243,10 @@ MODULE constants
 
   INTEGER, PARAMETER :: stat_unit = 20
 
+#ifdef PARTICLE_ID4
+  INTEGER, PARAMETER :: idkind = i4
+#else
+  INTEGER, PARAMETER :: idkind = i8
+#endif
+
 END MODULE constants

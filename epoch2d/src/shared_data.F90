@@ -365,6 +365,9 @@ MODULE shared_data
     ! Pointer is safe if the particles in it are all unambiguously linked
     LOGICAL :: safe
 
+    ! Does this partlist hold copies of particles rather than originals
+    LOGICAL :: holds_copies
+
     TYPE(particle_list), POINTER :: next, prev
   END TYPE particle_list
 
@@ -447,6 +450,10 @@ MODULE shared_data
     INTEGER, DIMENSION(2*c_ndims) :: bc_particle
   END TYPE particle_species
 
+  REAL(num), ALLOCATABLE, TARGET :: global_species_density(:,:)
+  REAL(num), ALLOCATABLE, TARGET :: global_species_temp(:,:,:)
+  REAL(num), ALLOCATABLE, TARGET :: global_species_drift(:,:,:)
+
   !----------------------------------------------------------------------------
   ! file handling
   !----------------------------------------------------------------------------
@@ -514,16 +521,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_part_proc0        = 51
   INTEGER, PARAMETER :: c_dump_ppc               = 52
   INTEGER, PARAMETER :: c_dump_average_weight    = 53
+  INTEGER, PARAMETER :: c_dump_persistent_ids    = 54
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 54
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 55
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 56
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 57
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 58
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 59
-  INTEGER, PARAMETER :: num_vars_to_dump         = 59
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 55
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 56
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 57
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 58
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 59
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 60
+  INTEGER, PARAMETER :: num_vars_to_dump         = 60
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 53
+  INTEGER, PARAMETER :: num_vars_to_dump         = 54
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
@@ -632,12 +640,17 @@ MODULE shared_data
     INTEGER(i8) :: id_min, id_max
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
     INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    ! Persistent subset
+    LOGICAL :: persistent, locked
+    REAL(num) :: persist_start_time
+    INTEGER :: persist_start_step
 
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
   END TYPE subset
   TYPE(subset), DIMENSION(:), POINTER :: subset_list
   INTEGER :: n_subsets
+  LOGICAL :: any_persistent_subset
 
 #ifndef NO_PARTICLE_PROBES
   TYPE particle_probe
@@ -735,6 +748,7 @@ MODULE shared_data
   LOGICAL :: use_particle_count_update = .FALSE.
   LOGICAL :: use_accurate_n_zeros = .FALSE.
   LOGICAL :: use_injectors = .FALSE.
+  LOGICAL :: use_more_setup_memory = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart

@@ -5,6 +5,16 @@ do not conform to this style.
 The most important rules are the following:
 
 All code must conform to the Fortran 95 standard (ISO/IEC 1539-1: 1997).
+Fortran 2003 is allowed for all features which have wide compiler support,
+as outlined in the table found at the following URL:
+http://fortranwiki.org/fortran/show/Fortran+2003+status
+
+In particular, Cray, gfortran, IBM, Intel and PGI compilers must all have full
+support for the language feature. At present, this excludes the following
+Fortran 2003 extensions:
+ - Parameterized derived types
+ - Support for international character sets
+ - Derived type I/O
 
 All Fortran keywords and intrinsics are uppercase, user-defined
 function, subroutine and variable names are lowercase.

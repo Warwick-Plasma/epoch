@@ -27,64 +27,14 @@ MODULE deck_boundaries_block
   PUBLIC :: boundary_block_start, boundary_block_end
   PUBLIC :: boundary_block_handle_element, boundary_block_check
 
-  INTEGER, PARAMETER :: boundary_block_nbase = 2 * c_ndims
-  INTEGER, PARAMETER :: boundary_block_elements = 3 * boundary_block_nbase + 4
-  LOGICAL, DIMENSION(boundary_block_elements) :: boundary_block_done
-  CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
-      boundary_block_name = (/ &
-          'bc_x_min         ', &
-          'bc_x_max         ', &
-          'bc_y_min         ', &
-          'bc_y_max         ', &
-          'bc_z_min         ', &
-          'bc_z_max         ', &
-          'bc_x_min_field   ', &
-          'bc_x_max_field   ', &
-          'bc_y_min_field   ', &
-          'bc_y_max_field   ', &
-          'bc_z_min_field   ', &
-          'bc_z_max_field   ', &
-          'bc_x_min_particle', &
-          'bc_x_max_particle', &
-          'bc_y_min_particle', &
-          'bc_y_max_particle', &
-          'bc_z_min_particle', &
-          'bc_z_max_particle', &
-          'cpml_thickness   ', &
-          'cpml_kappa_max   ', &
-          'cpml_a_max       ', &
-          'cpml_sigma_max   ' /)
-  CHARACTER(LEN=string_length), DIMENSION(boundary_block_elements) :: &
-      alternate_name = (/ &
-          'xbc_left          ', &
-          'xbc_right         ', &
-          'ybc_down          ', &
-          'ybc_up            ', &
-          'zbc_back          ', &
-          'zbc_front         ', &
-          'xbc_left_field    ', &
-          'xbc_right_field   ', &
-          'ybc_down_field    ', &
-          'ybc_up_field      ', &
-          'zbc_back_field    ', &
-          'zbc_front_field   ', &
-          'xbc_left_particle ', &
-          'xbc_right_particle', &
-          'ybc_down_particle ', &
-          'ybc_up_particle   ', &
-          'zbc_back_particle ', &
-          'zbc_front_particle', &
-          'cpml_thickness    ', &
-          'cpml_kappa_max    ', &
-          'cpml_a_max        ', &
-          'cpml_sigma_max    ' /)
-
 CONTAINS
 
   SUBROUTINE boundary_deck_initialise
 
     IF (deck_state /= c_ds_first) RETURN
-    boundary_block_done = .FALSE.
+
+    bc_field(:) = -1
+    bc_particle(:) = -1
 
   END SUBROUTINE boundary_deck_initialise
 
@@ -112,108 +62,111 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    INTEGER :: loop, elementselected, itmp
-    INTEGER, PARAMETER :: nbase = boundary_block_nbase
+    INTEGER :: itmp
 
     errcode = c_err_none
     IF (deck_state /= c_ds_first) RETURN
 
-    errcode = c_err_unknown_element
-
-    elementselected = 0
-
-    DO loop = 1, boundary_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(boundary_block_name(loop)))) &
-          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
-        elementselected = loop
-        EXIT
-      END IF
-    END DO
-
-    IF (elementselected == 0) RETURN
-
-    IF (boundary_block_done(elementselected)) THEN
-      errcode = c_err_preset_element
-      RETURN
-    END IF
-    boundary_block_done(elementselected) = .TRUE.
-    errcode = c_err_none
-
-    IF (elementselected <= nbase) THEN
-      boundary_block_done(elementselected+  nbase) = .TRUE.
-      boundary_block_done(elementselected+2*nbase) = .TRUE.
-    END IF
-
-    SELECT CASE (elementselected)
-    CASE(1)
+    IF (str_cmp(element, 'bc_x_min') &
+        .OR. str_cmp(element, 'xbc_left')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_x_min) = itmp
       bc_particle(c_bd_x_min) = itmp
-    CASE(2)
+
+    ELSE IF (str_cmp(element, 'bc_x_max') &
+        .OR. str_cmp(element, 'xbc_right')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_x_max) = itmp
       bc_particle(c_bd_x_max) = itmp
-    CASE(3)
+
+    ELSE IF (str_cmp(element, 'bc_y_min') &
+        .OR. str_cmp(element, 'ybc_down')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_y_min) = itmp
       bc_particle(c_bd_y_min) = itmp
-    CASE(4)
+
+    ELSE IF (str_cmp(element, 'bc_y_max') &
+        .OR. str_cmp(element, 'ybc_up')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_y_max) = itmp
       bc_particle(c_bd_y_max) = itmp
-    CASE(5)
+
+    ELSE IF (str_cmp(element, 'bc_z_min') &
+        .OR. str_cmp(element, 'zbc_back')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_z_min) = itmp
       bc_particle(c_bd_z_min) = itmp
-    CASE(6)
+
+    ELSE IF (str_cmp(element, 'bc_z_max') &
+        .OR. str_cmp(element, 'zbc_front')) THEN
       itmp = as_bc_print(value, element, errcode)
       bc_field(c_bd_z_max) = itmp
       bc_particle(c_bd_z_max) = itmp
-    CASE(nbase+1)
+
+    ELSE IF (str_cmp(element, 'bc_x_min_field') &
+        .OR. str_cmp(element, 'xbc_left_field')) THEN
       bc_field(c_bd_x_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(1)  = .TRUE.
-    CASE(nbase+2)
+
+    ELSE IF (str_cmp(element, 'bc_x_max_field') &
+        .OR. str_cmp(element, 'xbc_right_field')) THEN
       bc_field(c_bd_x_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(2)  = .TRUE.
-    CASE(nbase+3)
+
+    ELSE IF (str_cmp(element, 'bc_y_min_field') &
+        .OR. str_cmp(element, 'ybc_down_field')) THEN
       bc_field(c_bd_y_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(3)  = .TRUE.
-    CASE(nbase+4)
+
+    ELSE IF (str_cmp(element, 'bc_y_max_field') &
+        .OR. str_cmp(element, 'ybc_up_field')) THEN
       bc_field(c_bd_y_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(4)  = .TRUE.
-    CASE(nbase+5)
+
+    ELSE IF (str_cmp(element, 'bc_z_min_field') &
+        .OR. str_cmp(element, 'zbc_back_field')) THEN
       bc_field(c_bd_z_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(5)  = .TRUE.
-    CASE(nbase+6)
+
+    ELSE IF (str_cmp(element, 'bc_z_max_field') &
+        .OR. str_cmp(element, 'zbc_front_field')) THEN
       bc_field(c_bd_z_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(6)  = .TRUE.
-    CASE(2*nbase+1)
+
+    ELSE IF (str_cmp(element, 'bc_x_min_particle') &
+        .OR. str_cmp(element, 'xbc_left_particle')) THEN
       bc_particle(c_bd_x_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(1)  = .TRUE.
-    CASE(2*nbase+2)
+
+    ELSE IF (str_cmp(element, 'bc_x_max_particle') &
+        .OR. str_cmp(element, 'xbc_right_particle')) THEN
       bc_particle(c_bd_x_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(2)  = .TRUE.
-    CASE(2*nbase+3)
+
+    ELSE IF (str_cmp(element, 'bc_y_min_particle') &
+        .OR. str_cmp(element, 'ybc_down_particle')) THEN
       bc_particle(c_bd_y_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(3)  = .TRUE.
-    CASE(2*nbase+4)
+
+    ELSE IF (str_cmp(element, 'bc_y_max_particle') &
+        .OR. str_cmp(element, 'ybc_up_particle')) THEN
       bc_particle(c_bd_y_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(4)  = .TRUE.
-    CASE(2*nbase+5)
+
+    ELSE IF (str_cmp(element, 'bc_z_min_particle') &
+        .OR. str_cmp(element, 'zbc_back_particle')) THEN
       bc_particle(c_bd_z_min) = as_bc_print(value, element, errcode)
-      boundary_block_done(5)  = .TRUE.
-    CASE(2*nbase+6)
+
+    ELSE IF (str_cmp(element, 'bc_z_max_particle') &
+        .OR. str_cmp(element, 'zbc_front_particle')) THEN
       bc_particle(c_bd_z_max) = as_bc_print(value, element, errcode)
-      boundary_block_done(6)  = .TRUE.
-    CASE(3*nbase+1)
+
+    ELSE IF (str_cmp(element, 'cpml_thickness')) THEN
       cpml_thickness = as_integer_print(value, element, errcode)
-    CASE(3*nbase+2)
+
+    ELSE IF (str_cmp(element, 'cpml_kappa_max')) THEN
       cpml_kappa_max = as_real_print(value, element, errcode)
-    CASE(3*nbase+3)
+
+    ELSE IF (str_cmp(element, 'cpml_a_max')) THEN
       cpml_a_max = as_real_print(value, element, errcode)
-    CASE(3*nbase+4)
+
+    ELSE IF (str_cmp(element, 'cpml_sigma_max')) THEN
       cpml_sigma_max = as_real_print(value, element, errcode)
-    END SELECT
+
+    ELSE
+      errcode = c_err_unknown_element
+
+    END IF
 
   END FUNCTION boundary_block_handle_element
 
@@ -223,28 +176,40 @@ CONTAINS
 
     INTEGER :: errcode
     INTEGER :: idx, io, iu
-    INTEGER, PARAMETER :: nbase = boundary_block_nbase
     LOGICAL :: error
+    CHARACTER(LEN=*), DIMENSION(6), PARAMETER :: &
+        part_name =  (/ 'bc_x_min_particle', 'bc_x_max_particle', &
+                        'bc_y_min_particle', 'bc_y_max_particle', &
+                        'bc_z_min_particle', 'bc_z_max_particle' /)
+    CHARACTER(LEN=*), DIMENSION(6), PARAMETER :: &
+        field_name = (/ 'bc_x_min_field', 'bc_x_max_field', &
+                        'bc_y_min_field', 'bc_y_max_field', &
+                        'bc_z_min_field', 'bc_z_max_field' /)
 
     errcode = c_err_none
 
-    DO idx = 1, nbase
-      IF (.NOT.boundary_block_done(idx+nbase) &
-          .AND. .NOT.boundary_block_done(idx+2*nbase)) THEN
-        boundary_block_done(idx+  nbase) = .TRUE.
-        boundary_block_done(idx+2*nbase) = .TRUE.
-      END IF
-    END DO
-
-    DO idx = 1, boundary_block_elements - 4
-      IF (.NOT. boundary_block_done(idx)) THEN
+    DO idx = 1, 2 * c_ndims
+      IF (bc_particle(idx) == -1) THEN
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Required boundary block element "' &
-                // TRIM(ADJUSTL(boundary_block_name(idx))) // '" absent.'
+                // part_name(idx) // '" absent.'
+            WRITE(io,*) 'Please create this entry in the input deck'
+          END DO
+        END IF
+        errcode = c_err_missing_elements
+      END IF
+      IF (bc_field(idx) == -1) THEN
+        IF (rank == 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Required boundary block element "' &
+                // field_name(idx) // '" absent.'
             WRITE(io,*) 'Please create this entry in the input deck'
           END DO
         END IF

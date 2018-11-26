@@ -640,6 +640,7 @@ CONTAINS
 
     INTEGER :: ispecies, ix, iy, iz
     REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
+    TYPE(initial_condition_block), POINTER :: ic
 
     IF (ic_from_restart) RETURN
 
@@ -650,17 +651,20 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
+        CALL setup_ic_density(ispecies)
+        CALL setup_ic_temp(ispecies)
+
+        ic => species_list(ispecies)%initial_conditions
+
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        IF (species_list(ispecies)%initial_conditions%density_max > 0) THEN
+        IF (ic%density_max > 0) THEN
           DO iz = 1, nz
           DO iy = 1, ny
           DO ix = 1, nx
-            clipped_dens = MIN(&
-                species_list(ispecies)%initial_conditions%density(ix,iy,iz), &
-                species_list(ispecies)%initial_conditions%density_max)
-            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,iy,iz,:))
+            clipped_dens = MIN(species_density(ix,iy,iz), ic%density_max)
+            omega2 = fac1 * clipped_dens &
+                + fac2 * MAXVAL(species_temp(ix,iy,iz,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -671,10 +675,8 @@ CONTAINS
           DO iz = 1, nz
           DO iy = 1, ny
           DO ix = 1, nx
-            omega2 = fac1 &
-                * species_list(ispecies)%initial_conditions%density(ix,iy,iz) &
-                + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,iy,iz,:))
+            omega2 = fac1 * species_density(ix,iy,iz) &
+                + fac2 * MAXVAL(species_temp(ix,iy,iz,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -1433,6 +1435,9 @@ CONTAINS
             PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
           END IF
 #endif
+        ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes_i8(ispecies), it_persistent_subset)
 
         ELSE IF (block_id(1:7) == 'weight/') THEN
 #ifndef PER_SPECIES_WEIGHT
@@ -1519,11 +1524,29 @@ CONTAINS
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
 
-    CALL set_thermal_bcs
+    CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE setup_persistent_subsets
+
+    INTEGER :: isub
+    TYPE(subset), POINTER :: sub
+
+    DO isub = 1, SIZE(subset_list)
+      sub => subset_list(isub)
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) CYCLE
+        sub%locked = .TRUE.
+      END IF
+    END DO
+
+  END SUBROUTINE setup_persistent_subsets
 
 
 
@@ -1794,6 +1817,28 @@ CONTAINS
 
   END FUNCTION it_id8
 #endif
+
+
+
+  FUNCTION it_persistent_subset(array, npart_this_it, start, param)
+
+    USE constants
+    USE particle_id_hash_mod
+    INTEGER(i8) :: it_persistent_subset
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      CALL id_registry%add_with_map(iterator_list, array(ipart))
+      iterator_list => iterator_list%next
+    END DO
+
+    it_persistent_subset = 0
+
+  END FUNCTION it_persistent_subset
 
 
 
