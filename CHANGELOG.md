@@ -34,8 +34,27 @@
    subsequent output for this subset will then use the particle list selected
    at the specified start time.
 
+ * Added relativistic Maxwellians (Maxwell-Juttner)
+   Adds the "use_maxwell_juttner" logical flag to the species block. If set
+   to true then the particle loader (both initially and for the moving window)
+   the particles will be loaded following a Maxwell-Juttner distribution
+   rather than an simple Maxwellian. If they flag is either missing or set to
+   "F" then the current loader is used
 
-## v4.12.0 to v4.14.0 (2018-08-13)
+ * Added arbitrary distribution functions in loader
+   Adds the "dist_fn", "dist_fn_px_range", "dist_fn_py_range" and
+   "dist_fn_pz_range" keys. The latter three keys set then range of momentum
+   over which to sample the distribution function. The first key specifies the
+   acceptance function. This should be a function having the maximum value of 1
+   but the same shape as the true distribution function. It is combined with
+   the density to calculate the full distribution function. The function is
+   specified using the new deck keys "px", "py" and "pz". ALL VALUES ARE
+   SPECIFIED AS MOMENTUM IN MC UNITS, NOT SI! The arbitrary
+   distribution function can be combined with the "drift" keys and the 
+   function is shifted up by the drift momentum specified. The temperature 
+   key is not compatible and will be silently ignored if specified.
+
+## v4.12.0 to v4.14.0 (2018-08-13) 
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
    compiling with the flag -DHC_PUSH
