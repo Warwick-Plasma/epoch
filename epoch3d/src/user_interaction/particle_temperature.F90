@@ -82,6 +82,156 @@ CONTAINS
 
 
 
+  ! Subroutine to initialise a thermal particle distribution
+  ! Assumes linear interpolation of temperature between cells
+  SUBROUTINE setup_particle_temperature_relativistic(temperature, &
+      part_species, drift)
+
+    REAL(num), DIMENSION(1-ng:, 1-ng:, 1-ng:, :), INTENT(IN) :: temperature
+    TYPE(particle_species), POINTER :: part_species
+    REAL(num), DIMENSION(1-ng:, 1-ng:, 1-ng:, :), INTENT(IN) :: drift
+    TYPE(particle_list), POINTER :: partlist
+    REAL(num) :: mass
+    REAL(num), DIMENSION(c_ndirs) ::  temp_local, drift_local
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart
+    INTEGER :: ix, iy, iz, idir
+#include "particle_head.inc"
+
+    partlist => part_species%attached_list
+    current => partlist%head
+    ipart = 0
+    DO WHILE(ipart < partlist%count)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
+#else
+      mass = part_species%mass
+#endif
+
+      ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+
+      temp_local = 0.0_num
+      drift_local = 0.0_num
+      DO idir = 1, c_ndirs
+        DO iz = sf_min, sf_max
+          DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              temp_local(idir) = temp_local(idir) &
+                  + gx(ix) * gy(iy) * gz(iz) &
+                  * temperature(cell_x+ix, cell_y+iy, cell_z+iz, idir)
+              drift_local(idir) = drift_local(idir) &
+                  + gx(ix) * gy(iy) * gz(iz)&
+                  * drift(cell_x+ix, cell_y+iy, cell_z+iz, idir)
+            END DO
+          END DO
+        END DO
+      END DO
+
+      current%part_p = momentum_from_temperature_relativistic(mass, &
+          temp_local, part_species%fractional_tail_cutoff)
+
+      CALL particle_drift_lorentz_transform(current, mass, drift_local)
+
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+  END SUBROUTINE setup_particle_temperature_relativistic
+
+
+
+  FUNCTION momentum_from_temperature_relativistic(mass, temperature, cutoff)
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: temperature
+    REAL(num), INTENT(IN) :: cutoff
+    REAL(num), DIMENSION(c_ndirs) :: momentum_from_temperature_relativistic
+
+    !Three parameters for calculating the range of momenta
+    !Includes different combinations of physical constants
+    REAL(num), PARAMETER :: param1 = -3.07236e-40_num
+    REAL(num), PARAMETER :: param2 = 2.35985e-80_num
+    !c^2/kb
+    REAL(num), PARAMETER :: c2ok = 6.509658203714208e39_num
+    REAL(num) :: rand, probability
+    REAL(num) :: momentum_x, momentum_y, momentum_z, momentum
+    REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
+    INTEGER :: dof
+    REAL(num) :: inter1, inter2, inter3
+
+    temp = SUM(temperature)
+    temp_max = MAXVAL(temperature)
+    dof=COUNT(temperature > c_tiny)
+    !If there are no degrees of freedom them sampling is unnecessary
+    !plasma is cold
+    IF (dof == 0) THEN
+      momentum_from_temperature_relativistic = 0.0_num
+      RETURN
+    ENDIF
+
+    p_max = SQRT(param1 * mass * temp * LOG(cutoff) + &
+        param2 * temp**2 * LOG(cutoff)**2)/mass
+
+    p_max_x = p_max * SQRT(temperature(1)/temp)
+    p_max_y = p_max * SQRT(temperature(2)/temp)
+    p_max_z = p_max * SQRT(temperature(3)/temp)
+
+    !Loop around until a momentum is accepted for this particle
+    DO
+      !Generate random x and y momenta between p_min and p_max
+      momentum_x = (random() * 2.0_num * p_max_x - p_max_x)
+      momentum_y = (random() * 2.0_num * p_max_y - p_max_y)
+      momentum_z = (random() * 2.0_num * p_max_z - p_max_z)
+      momentum = SQRT(momentum_x**2+momentum_y**2+momentum_z**2)
+      !From that value, have to generate the probability that a particle
+      !with that momentum should be accepted.
+      !This is just the particle distribution function scaled to have
+      !a maximum of 1 (or lower).
+      !In general you will have to work this out yourself
+      inter1 = temperature(1)/temp
+      inter2 = temperature(2)/temp
+      inter3 = temperature(3)/temp
+      probability = EXP(-c2ok * mass / temp * (SQRT(1.0_num + &
+          1.0_num/MAX(inter1,c_tiny) * momentum_x**2 + &
+          1.0_num/MAX(inter2,c_tiny) * momentum_y**2 + &
+          1.0_num/MAX(inter3,c_tiny) * momentum_z**2)-1.0_num))
+      !Once you know your probability you just generate a random number
+      !between 0 and 1 and if the generated number is less than the
+      !probability then accept the particle and exit this loop.
+      rand=random()
+      IF (rand <= probability) EXIT
+    END DO
+
+    momentum_from_temperature_relativistic = &
+        (/ momentum_x , momentum_y , momentum_z /) * m0 * c
+
+  END FUNCTION momentum_from_temperature_relativistic
+
+
+
+  !Subroutine takes a particle and a drift momentum and Lorentz transforms
+  !The particle momentum subject to the specified drift
+  SUBROUTINE particle_drift_lorentz_transform(part, mass, drift)
+
+    TYPE(particle), POINTER :: part
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(3), INTENT(IN) :: drift
+    REAL(num) :: gamma_drift, gamma_part, e_prime
+    INTEGER :: idir
+
+    gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift/(mass*c),drift/(mass*c)))
+    gamma_part = SQRT(1.0_num + DOT_PRODUCT(part%part_p/(mass*c),&
+        part%part_p/(mass*c)))
+    e_prime = gamma_part * mass * c**2
+    DO idir = 1, 3
+      part%part_p(idir) = part%part_p(idir) * gamma_drift + &
+          drift(idir)/(mass*c**2) * e_prime
+    ENDDO
+
+  END SUBROUTINE particle_drift_lorentz_transform
+
+
+
   FUNCTION momentum_from_temperature(mass, temperature, drift)
 
     REAL(num), INTENT(IN) :: mass, temperature, drift

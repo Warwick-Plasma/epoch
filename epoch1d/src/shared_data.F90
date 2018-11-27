@@ -403,6 +403,10 @@ MODULE shared_data
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 
+    !Parameters for relativistic particle loader
+    INTEGER :: ic_df_type
+    REAL(num) :: fractional_tail_cutoff
+
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
 #endif

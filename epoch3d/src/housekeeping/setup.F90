@@ -416,6 +416,8 @@ CONTAINS
         CALL initialise_stack(species_list(ispecies)%drift_function(n))
         CALL set_stack_zero  (species_list(ispecies)%drift_function(n))
       END DO
+      species_list(ispecies)%fractional_tail_cutoff = 0.0001_num
+      species_list(ispecies)%ic_df_type = c_ic_df_thermal
       species_list(ispecies)%electron = .FALSE.
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1

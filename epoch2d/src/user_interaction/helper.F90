@@ -95,10 +95,16 @@ CONTAINS
       CALL setup_ic_drift(ispecies)
       CALL set_thermal_bcs(ispecies)
 
-      DO n = 1, 3
-        CALL setup_particle_temperature(&
-            species_temp(:,:,n), n, species, species_drift(:,:,n))
-      END DO
+      IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+        DO n = 1, 3
+          CALL setup_particle_temperature(&
+              species_temp(:,:,n), n, species, species_drift(:,:,n))
+        END DO
+      ELSE IF (species_list(ispecies)%ic_df_type &
+          == c_ic_df_relativistic_thermal) THEN
+        CALL setup_particle_temperature_relativistic(species_temp, species, &
+            species_drift)
+      END IF
     END DO
 
     IF (pre_loading) RETURN

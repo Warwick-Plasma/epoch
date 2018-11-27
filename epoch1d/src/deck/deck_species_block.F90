@@ -421,6 +421,25 @@ CONTAINS
 
     IF (deck_state == c_ds_first) RETURN
 
+    !This sets up whether or not to use the MJ sampler for a species.
+    !It could go in the first deck pass, but that requires more temporary
+    !variables and seems unnecessary
+    IF (str_cmp(element, 'use_maxwell_juettner') &
+        .OR. str_cmp(element, 'use_maxwell_juttner')) THEN
+      IF (as_logical_print(value, element, errcode)) THEN
+        species_list(species_id)%ic_df_type = c_ic_df_relativistic_thermal
+      ELSE
+        species_list(species_id)%ic_df_type = c_ic_df_thermal
+      END IF
+      RETURN
+    ENDIF
+
+    IF (str_cmp(element, 'fractional_tail_cutoff')) THEN
+      species_list(species_id)%fractional_tail_cutoff = &
+          as_real_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     ! *************************************************************
     ! This section identifies a species. Generic
     ! but currently only used in photon production

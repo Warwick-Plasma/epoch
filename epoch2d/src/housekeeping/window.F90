@@ -200,7 +200,8 @@ CONTAINS
     INTEGER(i8) :: ipart, npart_per_cell, n_frac
     REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
-    REAL(num) :: temp_local, drift_local, npart_frac
+    REAL(num), DIMENSION(c_ndirs) :: temp_local, drift_local
+    REAL(num) :: npart_frac
     REAL(num) :: weight_local, x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
 
@@ -271,16 +272,27 @@ CONTAINS
           gy( 0) = 0.75_num - cy2
           gy( 1) = 0.5_num * (0.25_num + cy2 - cell_frac_y)
 
-          DO i = 1, 3
-            temp_local = 0.0_num
-            drift_local = 0.0_num
+          temp_local = 0.0_num
+          drift_local = 0.0_num
+          DO i = 1, c_ndirs
             DO isuby = -1, 1
               temp_local = temp_local + gy(isuby) * temperature(iy+isuby, i)
               drift_local = drift_local + gy(isuby) * drift(iy+isuby, i)
             END DO
-            current%part_p(i) = momentum_from_temperature(&
-                species_list(ispecies)%mass, temp_local, drift_local)
           END DO
+          IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+            DO i = 1, c_ndirs
+              current%part_p(i) = momentum_from_temperature(&
+                  species_list(ispecies)%mass, temp_local(i), drift_local(i))
+            END DO
+          ELSE IF (species_list(ispecies)%ic_df_type &
+              == c_ic_df_relativistic_thermal) THEN
+            current%part_p = momentum_from_temperature_relativistic(&
+                species_list(ispecies)%mass, temp_local, &
+                species_list(ispecies)%fractional_tail_cutoff)
+            CALL particle_drift_lorentz_transform(current, &
+                species_list(ispecies)%mass, drift_local)
+          END IF
 
           weight_local = 0.0_num
           DO isuby = -1, 1

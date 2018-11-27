@@ -224,12 +224,21 @@ CONTAINS
         CALL create_particle(current)
         current%part_pos = x0 + random() * dx
 
-        DO i = 1, 3
-          temp_local = temperature(i)
-          drift_local = drift(i)
-          current%part_p(i) = momentum_from_temperature(&
-              species_list(ispecies)%mass, temp_local, drift_local)
-        END DO
+        IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+          DO i = 1, 3
+            temp_local = temperature(i)
+            drift_local = drift(i)
+            current%part_p(i) = momentum_from_temperature(&
+                species_list(ispecies)%mass, temp_local, drift_local)
+          END DO
+        ELSE IF (species_list(ispecies)%ic_df_type &
+            == c_ic_df_relativistic_thermal) THEN
+          current%part_p = momentum_from_temperature_relativistic(&
+              species_list(ispecies)%mass, temperature, &
+              species_list(ispecies)%fractional_tail_cutoff)
+          CALL particle_drift_lorentz_transform(current, &
+              species_list(ispecies)%mass, drift)
+        END IF
 
         current%weight = density * wdata
 #ifdef PARTICLE_DEBUG

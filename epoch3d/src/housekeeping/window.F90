@@ -217,7 +217,8 @@ CONTAINS
     REAL(num) :: cell_frac_y, cy2
     REAL(num) :: cell_frac_z, cz2
     REAL(num), DIMENSION(-1:1) :: gy, gz
-    REAL(num) :: temp_local, drift_local, npart_frac
+    REAL(num), DIMENSION(c_ndirs) :: temp_local, drift_local
+    REAL(num) ::  npart_frac
     REAL(num) :: weight_local, x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
 
@@ -302,20 +303,32 @@ CONTAINS
             gz( 0) = 0.75_num - cz2
             gz( 1) = 0.5_num * (0.25_num + cz2 - cell_frac_z)
 
+            temp_local = 0.0_num
+            drift_local = 0.0_num
             DO i = 1, 3
-              temp_local = 0.0_num
-              drift_local = 0.0_num
               DO isubz = -1, 1
                 DO isuby = -1, 1
-                  temp_local = temp_local + gy(isuby) * gz(isubz) &
+                  temp_local(i) = temp_local(i) + gy(isuby) * gz(isubz) &
                       * temperature(iy+isuby, iz+isubz, i)
-                  drift_local = drift_local + gy(isuby) * gz(isubz) &
+                  drift_local(i) = drift_local(i) + gy(isuby) * gz(isubz) &
                       * drift(iy+isuby, iz+isubz, i)
                 END DO
               END DO
-              current%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp_local, drift_local)
             END DO
+
+            IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+              DO i = 1, c_ndirs
+                current%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp_local(i), drift_local(i))
+              END DO
+            ELSE IF (species_list(ispecies)%ic_df_type &
+                == c_ic_df_relativistic_thermal) THEN
+              current%part_p = momentum_from_temperature_relativistic(&
+                  species_list(ispecies)%mass, temp_local, &
+                  species_list(ispecies)%fractional_tail_cutoff)
+              CALL particle_drift_lorentz_transform(current, &
+                  species_list(ispecies)%mass, drift_local)
+            END IF
 
             weight_local = 0.0_num
             DO isubz = -1, 1
