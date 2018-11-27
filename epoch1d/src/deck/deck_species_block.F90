@@ -715,6 +715,35 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'dist_fn')) THEN
+      species_list(species_id)%ic_df_type = c_ic_df_arbitrary
+      CALL initialise_stack(species_list(species_id)%dist_fn)
+      CALL tokenize(value, species_list(species_id)%dist_fn, errcode)
+      species_list(species_id)%dist_fn%should_simplify = .FALSE.
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_px_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(1))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(1))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(1), errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_py_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(2))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(2))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(2), errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_pz_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(3))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(3))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(3), errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'drift_x_back')) THEN
       species_list(species_id)%initial_conditions%drift_back(1) = &
           as_real_print(value, element, errcode)

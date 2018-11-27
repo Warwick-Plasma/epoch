@@ -222,6 +222,10 @@ CONTAINS
     IF (as_constant == c_const_z .AND. stagger(c_dir_z,tokenize_stagger)) &
         as_constant = c_const_zb
 
+    IF (str_cmp(name, 'px')) as_constant = c_const_px
+    IF (str_cmp(name, 'py')) as_constant = c_const_py
+    IF (str_cmp(name, 'pz')) as_constant = c_const_pz
+
     IF (str_cmp(name, 'yee')) as_constant = c_const_maxwell_solver_yee
     IF (str_cmp(name, 'cowan')) as_constant = c_const_maxwell_solver_cowan
     IF (str_cmp(name, 'pukhov')) as_constant = c_const_maxwell_solver_pukhov

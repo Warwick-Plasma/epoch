@@ -130,6 +130,7 @@ MODULE constants
   ! Particle distribution type codes
   INTEGER, PARAMETER :: c_ic_df_thermal = 1
   INTEGER, PARAMETER :: c_ic_df_relativistic_thermal = 2
+  INTEGER, PARAMETER :: c_ic_df_arbitrary = 3
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0

@@ -98,6 +98,8 @@ CONTAINS
           == c_ic_df_relativistic_thermal) THEN
         CALL setup_particle_temperature_relativistic(species_temp, species, &
             species_drift)
+      ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
+        CALL setup_particle_dist_fn(species, species_drift)
       END IF
     END DO
 

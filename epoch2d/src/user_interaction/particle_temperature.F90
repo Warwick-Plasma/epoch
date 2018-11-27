@@ -18,6 +18,7 @@ MODULE particle_temperature
 
   USE shared_data
   USE random_generator
+  USE evaluator
 
   IMPLICIT NONE
 
@@ -132,6 +133,100 @@ CONTAINS
     END DO
 
   END SUBROUTINE setup_particle_temperature_relativistic
+
+
+
+! Subroutine to initialise an arbitrary distribution function
+  SUBROUTINE setup_particle_dist_fn(part_species, drift)
+
+    TYPE(particle_species), POINTER :: part_species
+    REAL(num), DIMENSION(1-ng:, 1-ng:, :), INTENT(IN) :: drift
+    TYPE(particle_list), POINTER :: partlist
+    REAL(num) :: mass
+    REAL(num), DIMENSION(c_ndirs) ::  drift_local
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart, iit, ipart_global, iit_global
+    REAL(num) :: average_its
+    INTEGER :: ix, iy, idir, err
+    TYPE(parameter_pack) :: parameters
+    REAL(num), DIMENSION(c_ndirs, 2) :: ranges
+    CHARACTER(LEN=25) :: string
+
+#include "particle_head.inc"
+
+    partlist => part_species%attached_list
+    current => partlist%head
+    ipart = 0
+    iit = 0
+    DO WHILE(ipart < partlist%count)
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
+#else
+      mass = part_species%mass
+#endif
+
+      ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+
+      drift_local = 0.0_num
+      DO idir = 1, c_ndirs
+        DO iy = sf_min, sf_max
+          DO ix = sf_min, sf_max
+            drift_local(idir) = drift_local(idir) &
+                + gx(ix) * gy(iy) * drift(cell_x+ix, cell_y+iy, idir)
+          END DO
+        END DO
+      END DO
+
+      parameters%use_grid_position = .FALSE.
+      parameters%pack_ix = cell_x
+      parameters%pack_pos = current%part_pos
+      err = 0
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(1), &
+          parameters, 2, ranges(1,:), err)
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(2), &
+          parameters, 2, ranges(2,:), err)
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(3), &
+          parameters, 2, ranges(3,:), err)
+
+      CALL sample_from_deck_expression(current, mass, part_species%dist_fn, &
+          parameters, ranges, iit)
+
+      CALL particle_drift_lorentz_transform(current, mass, drift_local)
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+    CALL MPI_REDUCE(ipart, ipart_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
+        errcode)
+    CALL MPI_REDUCE(iit, iit_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
+        errcode)
+    average_its = REAL(iit_global, num) / MAX(REAL(ipart_global, num), c_tiny)
+
+    IF (rank == 0) THEN
+      WRITE(string,'(F8.1)') average_its
+      WRITE(*,*) 'Setup distribution for particles of species ', '"' &
+          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
+          // ' iteratations per particle on average'
+      IF (average_its >= 20.0_num) THEN
+        WRITE(*,*) '***WARNING***'
+        WRITE(*,*) 'Average iterations is high. ', &
+            'Possibly try smaller momentum range'
+      ENDIF
+#ifndef NO_IO
+      WRITE(stat_unit,*) 'Setup distribution for particles of species ', '"' &
+          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
+          // ' iteratations per particle on average'
+      IF (average_its >= 20.0_num) THEN
+        WRITE(stat_unit,*) '***WARNING***'
+        WRITE(stat_unit,*) 'Average iterations is high. ', &
+            'Possibly try smaller momentum range'
+      ENDIF
+#endif
+    ENDIF
+
+  END SUBROUTINE setup_particle_dist_fn
 
 
 
@@ -257,5 +352,50 @@ CONTAINS
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
 
   END FUNCTION flux_momentum_from_temperature
+
+
+
+  ! Function to take a deck expression and sample until it returns a value
+  SUBROUTINE sample_from_deck_expression(part, mass, stack, parameters, &
+      ranges, iit_r)
+
+    TYPE(particle), INTENT(INOUT) :: part
+    REAL(num), INTENT(IN) :: mass
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+    TYPE(parameter_pack), INTENT(INOUT) :: parameters
+    REAL(num), DIMENSION(3,2), INTENT(IN) :: ranges
+    INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
+    REAL(num) :: setlevel
+    INTEGER :: err
+    INTEGER(i8) :: iit
+
+    err = c_err_none
+    IF (PRESENT(iit_r)) iit = iit_r
+    DO
+      ! These lines are setting global variables that are later used by
+      ! the deck parser
+      parameters%pack_p(1) = random() * (ranges(1,2) - ranges(1,1)) &
+          + ranges(1,1)
+      parameters%pack_p(2) = random() * (ranges(2,2) - ranges(2,1)) &
+          + ranges(2,1)
+      parameters%pack_p(3) = random() * (ranges(3,2) - ranges(3,1)) &
+          + ranges(3,1)
+
+      !pack spatial information has already been set before calling
+      setlevel = evaluate_with_parameters(stack, parameters, err)
+      IF (err /= c_err_none .AND. rank == 0) THEN
+        PRINT*, 'Unable to evaluate distribution function'
+        CALL abort_code(c_err_bad_setup)
+      ENDIF
+
+      iit = iit + 1
+
+      IF (random() <= setlevel) EXIT
+    ENDDO
+    IF (PRESENT(iit_r)) iit_r = iit
+
+    part%part_p = parameters%pack_p * c * mass
+
+  END SUBROUTINE sample_from_deck_expression
 
 END MODULE particle_temperature
