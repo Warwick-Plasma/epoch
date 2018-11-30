@@ -85,7 +85,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:), ALLOCATABLE :: itemp, jtemp, log_lambda
-    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar
+    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar, jekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
@@ -99,6 +99,7 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng))
     ALLOCATE(part_count(1-ng:nx+ng))
     ALLOCATE(iekbar(1-ng:nx+ng))
+    ALLOCATE(jekbar(1-ng:nx+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -109,7 +110,7 @@ CONTAINS
           CYCLE
 
       collide_species = .FALSE.
-      DO jspecies = 1, n_species
+      DO jspecies = ispecies, n_species
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor > 0) THEN
           collide_species = .TRUE.
@@ -120,20 +121,18 @@ CONTAINS
       IF (.NOT.collide_species) CYCLE
 
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_temperature(itemp, ispecies)
       CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
-      itemp = itemp * kb / q0
 
       DO ix = 1, nx
         p_list1 => species_list(ispecies)%secondary_list(ix)
         CALL shuffle_particle_list_random(p_list1)
       END DO ! ix
 
-      DO jspecies = 1, n_species
+      DO jspecies = ispecies, n_species
         ! Currently no support for photon collisions so just cycle round
         IF (species_list(jspecies)%species_type == c_species_id_photon) &
             CYCLE
@@ -143,17 +142,25 @@ CONTAINS
         user_factor = coll_pairs(ispecies, jspecies)
         IF (user_factor <= 0) CYCLE
 
-        CALL calc_coll_number_density(jdens, jspecies)
-        CALL calc_coll_temperature(jtemp, jspecies)
+        IF (ispecies /= jspecies) THEN
+          CALL calc_coll_number_density(jdens, jspecies)
+          CALL calc_coll_ekbar(jekbar, jspecies)
+        END IF
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
         w2 = species_list(jspecies)%weight
-        jtemp = jtemp * kb / q0
 
         IF (coulomb_log_auto) THEN
-          log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
-              q1, q2, m1)
+          CALL calc_coll_temperature_ev(itemp, ispecies)
+          IF (ispecies == jspecies) THEN
+            log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
+                q1, q1, m1)
+          ELSE
+            CALL calc_coll_temperature_ev(jtemp, jspecies)
+            log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
+                q1, q2, m1)
+          END IF
         ELSE
           log_lambda = coulomb_log
         END IF
@@ -162,14 +169,14 @@ CONTAINS
           IF (ispecies == jspecies) THEN
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix), &
-                m1, q1, w1, idens(ix), itemp(ix), &
+                m1, q1, w1, idens(ix), iekbar(ix), &
                 log_lambda(ix), user_factor)
           ELSE
             CALL inter_species_collisions( &
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                itemp(ix), jtemp(ix), log_lambda(ix), &
+                iekbar(ix), jekbar(ix), log_lambda(ix), &
                 user_factor)
           END IF
         END DO ! ix
@@ -178,7 +185,7 @@ CONTAINS
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
-    DEALLOCATE(iekbar)
+    DEALLOCATE(iekbar, jekbar)
 
   END SUBROUTINE particle_collisions
 
@@ -194,7 +201,7 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: idens, jdens, e_dens
     REAL(num), DIMENSION(:), ALLOCATABLE :: itemp, jtemp, e_temp
     REAL(num), DIMENSION(:), ALLOCATABLE :: log_lambda, e_log_lambda
-    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar, e_ekbar
+    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar, jekbar, e_ekbar
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
     LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
@@ -219,6 +226,7 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng))
     ALLOCATE(part_count(1-ng:nx+ng))
     ALLOCATE(iekbar(1-ng:nx+ng))
+    ALLOCATE(jekbar(1-ng:nx+ng))
     ALLOCATE(e_ekbar(1-ng:nx+ng))
 
     CALL create_empty_partlist(ionising_e)
@@ -236,23 +244,21 @@ CONTAINS
         use_coulomb_log_auto_i = .FALSE.
       END IF
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_temperature(itemp, ispecies)
+      CALL calc_coll_temperature_ev(itemp, ispecies)
       CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
-      itemp = itemp * kb / q0
 
       IF (species_list(ispecies)%ionise) THEN
         e_species = species_list(ispecies)%release_species
         CALL calc_coll_number_density(e_dens, e_species)
-        CALL calc_coll_temperature(e_temp, e_species)
+        CALL calc_coll_temperature_ev(e_temp, e_species)
         CALL calc_coll_ekbar(e_ekbar, e_species)
         m_e = species_list(e_species)%mass
         q_e = species_list(e_species)%charge
         w_e = species_list(e_species)%weight
-        e_temp = e_temp * kb / q0
         n1 = species_list(ispecies)%n
         l = species_list(ispecies)%l
         ionisation_energy = species_list(ispecies)%ionisation_energy / ev
@@ -281,22 +287,21 @@ CONTAINS
         IF (user_factor <= 0) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
-        CALL calc_coll_temperature(jtemp, jspecies)
+        CALL calc_coll_temperature_ev(jtemp, jspecies)
+        CALL calc_coll_ekbar(jekbar, jspecies)
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
         w2 = species_list(jspecies)%weight
-        jtemp = jtemp * kb / q0
 
         IF (species_list(ispecies)%electron &
             .AND. species_list(jspecies)%ionise) THEN
           e_species = species_list(jspecies)%release_species
           CALL calc_coll_number_density(e_dens, e_species)
-          CALL calc_coll_temperature(e_temp, e_species)
+          CALL calc_coll_temperature_ev(e_temp, e_species)
           m_e = species_list(e_species)%mass
           q_e = species_list(e_species)%charge
           w_e = species_list(e_species)%weight
-          e_temp = e_temp * kb / q0
           n1 = species_list(jspecies)%n
           l = species_list(jspecies)%l
           ionisation_energy = species_list(jspecies)%ionisation_energy / ev
@@ -336,7 +341,7 @@ CONTAINS
           DO ix = 1, nx
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix), &
-                m1, q1, w1, idens(ix), itemp(ix), &
+                m1, q1, w1, idens(ix), iekbar(ix), &
                 log_lambda(ix), user_factor)
           END DO ! ix
         ELSE IF (species_list(ispecies)%ionise &
@@ -354,7 +359,7 @@ CONTAINS
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix), jdens(ix), &
-                  e_temp(ix), jtemp(ix), e_log_lambda(ix), &
+                  e_ekbar(ix), jekbar(ix), e_log_lambda(ix), &
                   e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
@@ -364,7 +369,7 @@ CONTAINS
                   species_list(ispecies)%secondary_list(ix), &
                   species_list(jspecies)%secondary_list(ix), &
                   m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                  itemp(ix), jtemp(ix), log_lambda(ix), &
+                  iekbar(ix), jekbar(ix), log_lambda(ix), &
                   user_factor)
             END IF
             ! Put ions and electrons into respective lists
@@ -389,7 +394,7 @@ CONTAINS
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix), e_dens(ix), &
-                  itemp(ix), e_temp(ix), e_log_lambda(ix), &
+                  iekbar(ix), e_ekbar(ix), e_log_lambda(ix), &
                   e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
@@ -399,7 +404,7 @@ CONTAINS
                   species_list(ispecies)%secondary_list(ix), &
                   species_list(jspecies)%secondary_list(ix), &
                   m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                  itemp(ix), jtemp(ix), log_lambda(ix), &
+                  iekbar(ix), jekbar(ix), log_lambda(ix), &
                   user_factor)
             END IF
             ! Put electrons into respective lists
@@ -415,7 +420,7 @@ CONTAINS
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
-                itemp(ix), jtemp(ix), log_lambda(ix), &
+                iekbar(ix), jekbar(ix), log_lambda(ix), &
                 user_factor)
           END DO ! ix
         END IF
@@ -425,7 +430,7 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
-    DEALLOCATE(iekbar, e_ekbar)
+    DEALLOCATE(iekbar, jekbar, e_ekbar)
 #endif
 
   END SUBROUTINE collisional_ionisation
@@ -683,7 +688,7 @@ CONTAINS
 
 
   SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
-      dens, temp, log_lambda, user_factor)
+      dens, ekbar, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
@@ -691,7 +696,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: user_factor
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
-    REAL(num) :: dens, temp, log_lambda
+    REAL(num) :: dens, ekbar, log_lambda
     INTEGER(i8) :: icount, k
 
     factor = 0.0_num
@@ -704,7 +709,7 @@ CONTAINS
     IF (icount <= 1) RETURN
 
     ! No collisions in cold plasma so return
-    IF (temp <= c_tiny) RETURN
+    IF (ekbar <= c_tiny) RETURN
 
 #ifdef PER_SPECIES_WEIGHT
     np = icount * weight
@@ -739,7 +744,7 @@ CONTAINS
     impact => current%next
     DO k = 2, icount-2, 2
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor)
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -750,18 +755,18 @@ CONTAINS
 
     IF (MOD(icount, 2_i8) == 0) THEN
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor)
     ELSE
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => impact%next
       impact => current%prev%prev
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => current%prev
       impact => current%next
       CALL scatter(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, temp, temp, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
     END IF
 
   END SUBROUTINE intra_species_collisions
@@ -770,7 +775,7 @@ CONTAINS
 
   SUBROUTINE inter_species_collisions(p_list1, p_list2, mass1, mass2, &
       charge1, charge2, weight1, weight2, &
-      idens, jdens, itemp, jtemp, log_lambda, user_factor )
+      idens, jdens, iekbar, jekbar, log_lambda, user_factor )
 
     TYPE(particle_list), INTENT(INOUT) :: p_list1
     TYPE(particle_list), INTENT(INOUT) :: p_list2
@@ -779,7 +784,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass2, charge2, weight2
 
     REAL(num), INTENT(IN) :: idens, jdens
-    REAL(num), INTENT(IN) :: itemp, jtemp, log_lambda
+    REAL(num), INTENT(IN) :: iekbar, jekbar, log_lambda
     REAL(num), INTENT(IN) :: user_factor
 
     TYPE(particle), POINTER :: current, impact
@@ -791,7 +796,7 @@ CONTAINS
     np = 0.0_num
 
     ! No collisions in cold plasma so return
-    IF (itemp <= c_tiny .AND. jtemp <= c_tiny) RETURN
+    IF (iekbar <= c_tiny .AND. jekbar <= c_tiny) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
@@ -833,8 +838,8 @@ CONTAINS
       impact => p_list2%head
       DO k = 1, pcount
         CALL scatter(current, impact, mass1, mass2, charge1, charge2, &
-            weight1, weight2, idens, jdens, itemp, jtemp, &
-            log_lambda, user_factor * np / factor)
+            weight1, weight2, idens, jdens, log_lambda, &
+            user_factor * np / factor)
         current => current%next
         impact => impact%next
 #ifdef PREFETCH
@@ -853,7 +858,7 @@ CONTAINS
 
 
   SUBROUTINE scatter(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, itemp, jtemp, log_lambda, factor)
+      weight1, weight2, idens, jdens, log_lambda, factor)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
@@ -866,7 +871,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass1, mass2
     REAL(num), INTENT(IN) :: charge1, charge2
     REAL(num), INTENT(IN) :: weight1, weight2
-    REAL(num), INTENT(IN) :: idens, jdens, itemp, jtemp, log_lambda
+    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
@@ -950,13 +955,12 @@ CONTAINS
     vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
     ! Collision frequency
-    nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, jdens)
+    IF (m1 > m2) THEN
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, idens)
+    ELSE
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
+    END IF
     nu = 2.0_num * nu * factor * dt
-
-!    m_red = mass1 * mass2 / (mass1 + mass2)
-!    nu = ((idens * (charge1 * charge2)**2 * log_lambda) &
-!        / (8.0_num * pi * (epsilon0**2) * (m_red**2) * (vrabs**3))) &
-!        * gamma_rel * dt * factor
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -989,7 +993,11 @@ CONTAINS
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
-    vcr = -v4
+    IF (m1 > m2) THEN
+      vcr = v3
+    ELSE
+      vcr = v4
+    END IF
     gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
 
     denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
@@ -1041,30 +1049,14 @@ CONTAINS
 
 
 
-  PURE FUNCTION coll_freq(vrabs, log_lambda, m1, m2, q1, q2, itemp, jtemp, &
-      jdens)
+  PURE FUNCTION coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
 
     REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2
-    REAL(num), INTENT(IN) :: itemp, jtemp, jdens
-    REAL(num) :: mu, coll_freq
+    REAL(num), INTENT(IN) :: jdens
+    REAL(num) :: mu, coll_freq, numerator, denominator
+    REAL(num), PARAMETER :: fac = 4.0_num * pi * epsilon0**2
 
     mu = (m1 * m2) / (m1 + m2)
-    coll_freq = velocity_collisions(vrabs, log_lambda, mu, q1, q2, jdens)
-!    coll_freq = temperature_collisions(itemp, log_lambda, mu, q1, q2, jdens)
-!    coll_freq = manheimer_collisions(vrabs, log_lambda, m1, m2, q1, q2, &
-!        jtemp, jdens)
-!    coll_freq = MAX(coll_freq, vrabs / (jdens**(1.0_num / 3.0_num)))
-
-  END FUNCTION
-
-
-
-  PURE FUNCTION velocity_collisions(vrabs, log_lambda, mu, q1, q2, jdens)
-
-    REAL(num), INTENT(IN) :: vrabs, log_lambda, mu, q1, q2, jdens
-    REAL(num), PARAMETER :: fac = 4.0_num * pi * epsilon0**2
-    REAL(num) :: numerator, denominator
-    REAL(num) :: velocity_collisions
 
     IF (vrabs > 0.0_num) THEN
       numerator = (q1 * q2)**2 * jdens * log_lambda
@@ -1072,69 +1064,15 @@ CONTAINS
       IF (denominator <= 0.0_num &
           .OR. EXPONENT(numerator) - EXPONENT(denominator) &
           >= c_maxexponent) THEN
-        velocity_collisions = 0.0_num
+        coll_freq = 0.0_num
       ELSE
-        velocity_collisions = numerator / denominator
+        coll_freq = numerator / denominator
       END IF
     ELSE
-      velocity_collisions = 0.0_num
+      coll_freq = 0.0_num
     END IF
 
-  END FUNCTION velocity_collisions
-
-
-
-  PURE FUNCTION temperature_collisions(itemp, log_lambda, mu, q1, q2, jdens)
-
-    REAL(num), INTENT(IN) :: itemp, log_lambda, mu, q1, q2, jdens
-    REAL(num) :: temperature_collisions
-
-    IF (itemp > c_tiny) THEN
-      temperature_collisions = ((q1 * q2)**2 * jdens * log_lambda) &
-          / (3.0_num * epsilon0**2 * SQRT(mu) &
-          * (2.0_num * pi * q0 * itemp)**1.5_num)
-    ELSE
-      temperature_collisions = 0.0_num
-    END IF
-
-  END FUNCTION temperature_collisions
-
-
-
-  PURE FUNCTION manheimer_collisions(vrabs, log_lambda, m1, m2, q1, q2, &
-      jtemp, jdens)
-
-    REAL(num), INTENT(IN) :: vrabs, log_lambda, m1, m2, q1, q2, jtemp, jdens
-    REAL(num) :: sc, grm1, mu, ek, slow, fast
-    REAL(num) :: manheimer_collisions
-
-    ! Manheimer-like collision operator
-    ! Valid for e-i and e-e collisions
-    sc = SQRT(1.0_num - (vrabs / c)**2)
-    grm1 = (vrabs / c)**2 / (sc + sc**2)
-
-    mu = m2 / 1.6726d-27
-    ek = grm1 * m1 * c**2 / q0
-
-    IF (jtemp <= 0.0_num) THEN
-      IF (ek <= 0.0_num) THEN
-        manheimer_collisions = 0.0_num
-      ELSE
-        manheimer_collisions = 3.9d-6 / (SQRT(ek**3) + c_tiny)
-      END IF
-    ELSE
-      IF (ek <= 0.0_num) THEN
-        manheimer_collisions = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
-      ELSE
-        slow = 0.23_num * SQRT((mu / (jtemp + c_tiny))**3)
-        fast = 3.9d-6 / (SQRT(ek**3) + c_tiny)
-        manheimer_collisions = slow / (1.0_num + slow / fast)
-      END IF
-    END IF
-    manheimer_collisions = manheimer_collisions * jdens * log_lambda &
-        * (q2 / q0)**2 * 1.0d-6
-
-  END FUNCTION manheimer_collisions
+  END FUNCTION coll_freq
 
 
 
@@ -1366,7 +1304,7 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_coll_temperature(sigma, ispecies)
+  SUBROUTINE calc_coll_temperature_ev(sigma, ispecies)
 
     ! This subroutine calculates the grid-based temperature of a given
     ! particle species.
@@ -1472,9 +1410,9 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! 3/2 kT = <p^2>/(2m)
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / q0 / 3.0_num
 
-  END SUBROUTINE calc_coll_temperature
+  END SUBROUTINE calc_coll_temperature_ev
 
 
 
