@@ -172,8 +172,9 @@ CONTAINS
     IF (str_cmp(element, 'nx')) THEN
       nx_global = as_integer_print(value, element, errcode)
 
-    ELSE IF (str_cmp(element, 'ny') &
-        .OR. str_cmp(element, 'nz')) THEN
+    ELSE IF (str_cmp(element, 'ny')) THEN
+
+    ELSE IF (str_cmp(element, 'nz')) THEN
 
     ELSE IF (str_cmp(element, 'x_min') &
         .OR. str_cmp(element, 'x_start')) THEN
@@ -186,12 +187,15 @@ CONTAINS
       got_grid(2) = .TRUE.
 
     ELSE IF (str_cmp(element, 'y_min') &
-        .OR. str_cmp(element, 'y_start') &
-        .OR. str_cmp(element, 'y_max') &
-        .OR. str_cmp(element, 'y_end') &
-        .OR. str_cmp(element, 'z_min') &
-        .OR. str_cmp(element, 'z_start') &
-        .OR. str_cmp(element, 'z_max') &
+        .OR. str_cmp(element, 'y_start')) THEN
+
+    ELSE IF (str_cmp(element, 'y_max') &
+        .OR. str_cmp(element, 'y_end')) THEN
+
+    ELSE IF (str_cmp(element, 'z_min') &
+        .OR. str_cmp(element, 'z_start')) THEN
+
+    ELSE IF (str_cmp(element, 'z_max') &
         .OR. str_cmp(element, 'z_end')) THEN
 
     ELSE IF (str_cmp(element, 'nprocx')) THEN
@@ -379,13 +383,13 @@ CONTAINS
       IF(as_logical_print(value, element, errcode)) smooth_comp_its = 1
 
     ELSE IF (str_cmp(element, 'smooth_strides')) THEN
-      IF (str_cmp(value, "auto")) THEN
-        ALLOCATE(smooth_strides(4), SOURCE = [1,2,3,4])
+      IF (str_cmp(value, 'auto')) THEN
+        ALLOCATE(smooth_strides(4), SOURCE=[1,2,3,4])
         RETURN
       END IF
       stride_temp => NULL()
       CALL get_allocated_array(value, stride_temp, errcode)
-      ALLOCATE(smooth_strides(SIZE(stride_temp)), SOURCE = stride_temp)
+      ALLOCATE(smooth_strides(SIZE(stride_temp)), SOURCE=stride_temp)
       DEALLOCATE(stride_temp)
       sng = MAXVAL(smooth_strides)
 

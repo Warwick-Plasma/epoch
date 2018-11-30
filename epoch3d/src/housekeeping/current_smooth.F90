@@ -45,7 +45,8 @@ CONTAINS
 
   SUBROUTINE smooth_current
 
-    !Implements strided compensated binomial filtering
+    ! Implements strided compensated binomial filtering
+
     CALL smooth_array(jx, smooth_its, smooth_comp_its, smooth_strides)
     CALL smooth_array(jy, smooth_its, smooth_comp_its, smooth_strides)
     CALL smooth_array(jz, smooth_its, smooth_comp_its, smooth_strides)
@@ -72,7 +73,7 @@ CONTAINS
     REAL(num) :: alpha
 
     IF (ALLOCATED(stride)) THEN
-      ALLOCATE(stride_inner(SIZE(stride)), SOURCE = stride)
+      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
     ELSE
       ALLOCATE(stride_inner(1), SOURCE=[1])
     END IF
@@ -93,39 +94,39 @@ CONTAINS
           w2 = w3 * weight_fn(isuby)
           DO isubx = sf_min, sf_max
             w1 = w2 * weight_fn(isubx)
-            val = val + array(ix+isubx, iy+isuby, iz+isubz) * w1
+            val = val + array(ix+isubx,iy+isuby,iz+isubz) * w1
           END DO
         END DO
       END DO
-      wk_array(ix, iy, iz) = val
+      wk_array(ix,iy,iz) = val
     END DO
     END DO
     END DO
 #else
-    wk_array(1-jng:nx+jng, 1-jng:ny+jng, 1-jng:nz+jng) = &
-        array(1-jng:nx+jng,1-jng:ny+jng, 1-jng:nz+jng)
+    wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
+        array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng)
     DO iit = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
         CALL field_bc(wk_array, ng_l)
         cstride = stride_inner(istride)
-          DO iz = 1, nz
-          DO iy = 1, ny
-          DO ix = 1, nx
-            wk_array(ix, iy, iz) = alpha * array(ix, iy, iz) &
-                + (wk_array(ix-cstride, iy, iz) + wk_array(ix+cstride, iy, iz) &
-                + wk_array(ix, iy-cstride, iz) + wk_array(ix, iy+cstride, iz) &
-                + wk_array(ix, iy, iz-cstride) + wk_array(ix, iy, iz+cstride)) &
-                * (1.0_num-alpha)/6.0_num
-          END DO
-          END DO
-          END DO
+        DO iz = 1, nz
+        DO iy = 1, ny
+        DO ix = 1, nx
+          wk_array(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
+              + (wk_array(ix-cstride,iy,iz) + wk_array(ix+cstride,iy,iz) &
+              +  wk_array(ix,iy-cstride,iz) + wk_array(ix,iy+cstride,iz) &
+              +  wk_array(ix,iy,iz-cstride) + wk_array(ix,iy,iz+cstride)) &
+              * (1.0_num - alpha) / 6.0_num
         END DO
-        IF (iit > its) THEN
-          alpha = REAL(its, num) * 0.5_num + 1.0_num
-        END IF
+        END DO
+        END DO
       END DO
+      IF (iit > its) THEN
+        alpha = REAL(its, num) * 0.5_num + 1.0_num
+      END IF
+    END DO
 #endif
-    array(1:nx, 1:ny, 1:nz) = wk_array(1:nx, 1:ny, 1:nz)
+    array(1:nx,1:ny,1:nz) = wk_array(1:nx,1:ny,1:nz)
 
     DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
