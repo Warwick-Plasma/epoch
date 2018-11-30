@@ -50,7 +50,6 @@ CONTAINS
     CALL smooth_array(jy, smooth_its, smooth_comp_its, smooth_strides)
     CALL smooth_array(jz, smooth_its, smooth_comp_its, smooth_strides)
 
-
   END SUBROUTINE smooth_current
 
 
@@ -100,8 +99,8 @@ CONTAINS
     wk_array(1-jng:nx+jng) = array(1-ng:nx+jng)
     DO iit = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
-        cstride = stride_inner(istride)
         CALL field_bc(wk_array, ng_l)
+        cstride = stride_inner(istride)
         DO ix = 1, nx
           wk_array(ix) = alpha * wk_array(ix) &
               + (1.0_num - alpha) * (wk_array(ix-cstride) &
@@ -109,7 +108,7 @@ CONTAINS
         END DO
       END DO
       IF (iit > its) THEN
-        alpha = REAL(its, num) / 2.0_num  + 1.0_num
+        alpha = REAL(its, num) * 0.5_num  + 1.0_num
       END IF
     END DO
 #endif
