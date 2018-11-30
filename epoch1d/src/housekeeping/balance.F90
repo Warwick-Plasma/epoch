@@ -1177,8 +1177,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng) THEN
-        maxs(proc) = old - ng
+      IF (old - maxs(proc) < ng_max) THEN
+        maxs(proc) = old - ng_max
       END IF
       old = maxs(proc)
     END DO
@@ -1186,8 +1186,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < ng) THEN
-        maxs(proc) = old + ng
+      IF (maxs(proc) - old < ng_max) THEN
+        maxs(proc) = old + ng_max
       END IF
       old = maxs(proc)
     END DO

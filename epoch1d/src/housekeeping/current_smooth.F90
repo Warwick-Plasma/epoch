@@ -45,11 +45,11 @@ CONTAINS
 
   SUBROUTINE smooth_current
 
-    !Implements strided compensated binomial filtering
+    ! Implements strided compensated binomial filtering
+
     CALL smooth_array(jx, smooth_its, smooth_comp_its, smooth_strides)
     CALL smooth_array(jy, smooth_its, smooth_comp_its, smooth_strides)
     CALL smooth_array(jz, smooth_its, smooth_comp_its, smooth_strides)
-
 
   END SUBROUTINE smooth_current
 
@@ -58,10 +58,10 @@ CONTAINS
   SUBROUTINE smooth_array(array, its, comp_its, stride)
 
     REAL(num), DIMENSION(1-jng:), INTENT(INOUT) :: array
-    REAL(num), DIMENSION(:), ALLOCATABLE :: wk_array
     INTEGER, INTENT(IN) :: its
     INTEGER, INTENT(IN) :: comp_its
     INTEGER, INTENT(IN), DIMENSION(:), ALLOCATABLE :: stride
+    REAL(num), DIMENSION(:), ALLOCATABLE :: wk_array
     INTEGER :: ix
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: isubx
@@ -73,17 +73,13 @@ CONTAINS
     REAL(num) :: alpha
 
     IF (ALLOCATED(stride)) THEN
-      ALLOCATE(stride_inner(SIZE(stride)), SOURCE = stride)
+      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
     ELSE
       ALLOCATE(stride_inner(1), SOURCE=[1])
     END IF
-
     ng_l = MAX(sng, jng)
-
+    alpha = 0.5_num
     ALLOCATE(wk_array(1-ng_l:nx+ng_l))
-
-    wk_array = 0.0_num
-    alpha = 0.5_num ! bilinear filter
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
@@ -97,19 +93,19 @@ CONTAINS
       wk_array(ix) = val
     END DO
 #else
-    wk_array(1-jng:nx+jng) = array(1-ng:nx+jng)
+    wk_array(1-jng:nx+jng) = array(1-jng:nx+jng)
     DO iit = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
-        cstride = stride_inner(istride)
         CALL field_bc(wk_array, ng_l)
+        cstride = stride_inner(istride)
         DO ix = 1, nx
           wk_array(ix) = alpha * wk_array(ix) &
-              + (1.0_num - alpha) * (wk_array(ix-cstride) &
-              + wk_array(ix+cstride)) * 0.5_num
+              + (wk_array(ix-cstride) + wk_array(ix+cstride)) &
+              * (1.0_num - alpha) * 0.5_num
         END DO
       END DO
       IF (iit > its) THEN
-        alpha = REAL(its, num) / 2.0_num  + 1.0_num
+        alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO
 #endif

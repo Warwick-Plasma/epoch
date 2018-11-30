@@ -689,7 +689,7 @@ MODULE shared_data
   ! sng is the number of ghost cells needed by the current smoother
   INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng =  MAX(ng,png)
-  INTEGER :: sng = 0
+  INTEGER :: sng = 1
   INTEGER :: fng, nx
   INTEGER :: nx_global
   INTEGER(i8) :: npart_global, particles_max_id
