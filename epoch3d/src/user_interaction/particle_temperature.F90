@@ -199,7 +199,7 @@ CONTAINS
       CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(3), &
           parameters, 2, ranges(3,:), err)
 
-      CALL sample_from_deck_expression(current, mass, part_species%dist_fn, &
+      CALL sample_from_deck_expression(current, part_species%dist_fn, &
           parameters, ranges, iit)
 
       CALL particle_drift_lorentz_transform(current, mass, drift_local)
@@ -365,11 +365,10 @@ CONTAINS
 
 
   ! Function to take a deck expression and sample until it returns a value
-  SUBROUTINE sample_from_deck_expression(part, mass, stack, parameters, &
+  SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
       ranges, iit_r)
 
     TYPE(particle), INTENT(INOUT) :: part
-    REAL(num), INTENT(IN) :: mass
     TYPE(primitive_stack), INTENT(INOUT) :: stack
     TYPE(parameter_pack), INTENT(INOUT) :: parameters
     REAL(num), DIMENSION(3,2), INTENT(IN) :: ranges
@@ -403,7 +402,7 @@ CONTAINS
     ENDDO
     IF (PRESENT(iit_r)) iit_r = iit
 
-    part%part_p = parameters%pack_p * c * mass
+    part%part_p = parameters%pack_p
 
   END SUBROUTINE sample_from_deck_expression
 

@@ -309,8 +309,7 @@ CONTAINS
                 ranges(3,:), errcode)
 
             CALL sample_from_deck_expression(current, &
-                species_list(ispecies)%mass, species_list(ispecies)%dist_fn, &
-                parameters, ranges)
+                species_list(ispecies)%dist_fn, parameters, ranges)
             CALL particle_drift_lorentz_transform(current, &
                 species_list(ispecies)%mass, drift)
           END IF
