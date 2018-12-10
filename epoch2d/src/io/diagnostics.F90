@@ -2363,7 +2363,6 @@ CONTAINS
         IF (.NOT. sub%use_species(ispec)) THEN
           CYCLE
         END IF
-        CALL generate_particle_ids(species_list(ispec)%attached_list)
 
         part_mc = c * species_list(ispec)%mass
 
