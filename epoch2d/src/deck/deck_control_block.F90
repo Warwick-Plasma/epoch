@@ -184,6 +184,7 @@ CONTAINS
     INTEGER :: errcode
     INTEGER :: field_order, ierr, io, iu, i
     LOGICAL :: isnum
+    INTEGER, DIMENSION(:), POINTER :: stride_temp
 
     errcode = c_err_none
 
@@ -218,8 +219,9 @@ CONTAINS
       got_grid(4) = .TRUE.
 
     ELSE IF (str_cmp(element, 'z_min') &
-        .OR. str_cmp(element, 'z_start') &
-        .OR. str_cmp(element, 'z_max') &
+        .OR. str_cmp(element, 'z_start')) THEN
+
+    ELSE IF (str_cmp(element, 'z_max') &
         .OR. str_cmp(element, 'z_end')) THEN
 
     ELSE IF (str_cmp(element, 'nprocx')) THEN
@@ -401,6 +403,23 @@ CONTAINS
     ELSE IF (str_cmp(element, 'use_optimal_layout') &
         .OR. str_cmp(element, 'optimal_layout')) THEN
       use_optimal_layout = as_logical_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'smooth_iterations')) THEN
+      smooth_its = as_integer_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'smooth_compensation')) THEN
+      IF(as_logical_print(value, element, errcode)) smooth_comp_its = 1
+
+    ELSE IF (str_cmp(element, 'smooth_strides')) THEN
+      IF (str_cmp(value, 'auto')) THEN
+        ALLOCATE(smooth_strides(4), SOURCE=[1,2,3,4])
+        RETURN
+      END IF
+      stride_temp => NULL()
+      CALL get_allocated_array(value, stride_temp, errcode)
+      ALLOCATE(smooth_strides(SIZE(stride_temp)), SOURCE=stride_temp)
+      DEALLOCATE(stride_temp)
+      sng = MAXVAL(smooth_strides)
 
     ELSE IF (str_cmp(element, 'use_more_setup_memory')) THEN
       use_more_setup_memory = as_logical_print(value, element, errcode)
