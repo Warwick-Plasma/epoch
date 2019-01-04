@@ -73,15 +73,18 @@ CONTAINS
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #endif
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,1), c_dir_x, &
-          species, species_list(ispecies)%initial_conditions%drift(:,1))
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,2), c_dir_y, &
-          species, species_list(ispecies)%initial_conditions%drift(:,2))
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,3), c_dir_z, &
-          species, species_list(ispecies)%initial_conditions%drift(:,3))
+      IF (species%particle_sampling_function .EQ. c_psf_ring_beam) THEN
+        CALL setup_particle_ring_beam(&
+            species, species_list(ispecies)%initial_conditions%temp,&
+            species_list(ispecies)%initial_conditions%drift)
+      ELSE
+        ! default behaviour, where
+        ! species%particle_sampling_function .EQ. c_psf_drifting_tri_maxwellian
+        ! is true
+        CALL setup_particle_temperatures(&
+            species, species_list(ispecies)%initial_conditions%temp,&
+            species_list(ispecies)%initial_conditions%drift)
+      ENDIF
     END DO
 
     IF (rank == 0) THEN

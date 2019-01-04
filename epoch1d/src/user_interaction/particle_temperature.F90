@@ -23,15 +23,28 @@ MODULE particle_temperature
 
 CONTAINS
 
+  SUBROUTINE setup_particle_temperatures(species, temperatures, drifts)
+    TYPE(particle_species), POINTER :: species 
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drifts
+    CALL setup_particle_temperature(&
+        species, temperatures(:, 1), drifts(:, 1), c_dir_x)
+    CALL setup_particle_temperature(&
+        species, temperatures(:, 2), drifts(:, 2), c_dir_y)
+    CALL setup_particle_temperature(&
+        species, temperatures(:, 3), drifts(:, 3), c_dir_z)
+  END SUBROUTINE setup_particle_temperatures
+
+
+
   ! Subroutine to initialise a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature(temperature, direction, part_species, &
-      drift)
-
+  SUBROUTINE setup_particle_temperature(species, temperature, drift,&
+      direction)
+    TYPE(particle_species), POINTER :: species
     REAL(num), DIMENSION(1-ng:), INTENT(IN) :: temperature
-    INTEGER, INTENT(IN) :: direction
-    TYPE(particle_species), POINTER :: part_species
     REAL(num), DIMENSION(1-ng:), INTENT(IN) :: drift
+    INTEGER, INTENT(IN) :: direction
     TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
     TYPE(particle), POINTER :: current
@@ -39,14 +52,14 @@ CONTAINS
     INTEGER :: ix
 #include "particle_head.inc"
 
-    partlist => part_species%attached_list
+    partlist => species%attached_list
     current => partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
       mass = current%mass
 #else
-      mass = part_species%mass
+      mass = species%mass
 #endif
 
       ! Assume that temperature is cell centred
@@ -89,7 +102,6 @@ CONTAINS
   END FUNCTION momentum_from_temperature
 
 
-
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
   ! These satisfy a Rayleigh distribution, formed by combining two
@@ -107,5 +119,6 @@ CONTAINS
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
 
   END FUNCTION flux_momentum_from_temperature
+
 
 END MODULE particle_temperature

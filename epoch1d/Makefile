@@ -294,7 +294,8 @@ SRCFILES = balance.F90 boundary.f90 calc_df.F90 collisions.F90 \
   evaluator_blocks.F90 fields.f90 finish.f90 helper.F90 ic_module.f90 \
   injectors.F90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
   mpi_subtype_control.f90 numerics.f90 particle_migration.F90 \
-  particle_pointer_advance.f90 particle_temperature.F90 particles.F90 \
+  particle_pointer_advance.f90 particle_temperature.F90 \
+  particle_ring_beam.F90 particles.F90 \
   partlist.F90 photons.F90 prefetch.F90 probes.F90 random_generator.f90 \
   redblack_module.f90 setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 \
   simple_io.f90 split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
@@ -423,7 +424,7 @@ FORCE:
 balance.o: balance.F90 boundary.o mpi_subtype_control.o redblack_module.o \
   timer.o utilities.o
 boundary.o: boundary.f90 laser.o mpi_subtype_control.o particle_temperature.o \
-  partlist.o utilities.o
+  partlist.o utilities.o particle_ring_beam.o
 calc_df.o: calc_df.F90 boundary.o shared_data.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
@@ -492,6 +493,8 @@ mpi_subtype_control.o: mpi_subtype_control.f90 shared_data.o
 numerics.o: numerics.f90 shared_data.o
 particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
+particle_ring_beam.o: particle_ring_beam.F90 particle_temperature.o \
+  random_generator.o shared_data.o 
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shared_data.o
 particles.o: particles.F90 boundary.o partlist.o prefetch.o

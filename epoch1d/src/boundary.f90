@@ -17,6 +17,7 @@
 MODULE boundary
 
   USE partlist
+  USE particle_ring_beam
   USE particle_temperature
   USE laser
   USE mpi_subtype_control

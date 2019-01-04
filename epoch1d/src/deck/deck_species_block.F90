@@ -562,6 +562,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'particle_sampling_function')) THEN
+      species_list(species_id)%particle_sampling_function = &
+          as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
     ! *************************************************************
     ! This section sets properties for migration
     ! *************************************************************

@@ -187,6 +187,10 @@ MODULE constants
   INTEGER, PARAMETER :: c_species_id_positron = 3
   INTEGER, PARAMETER :: c_species_id_proton = 4
 
+  ! define species particle sampling function codes
+  INTEGER, PARAMETER :: c_psf_drifting_tri_maxwellian = 0
+  INTEGER, PARAMETER :: c_psf_ring_beam = 1
+
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1
   INTEGER, PARAMETER :: c_dir_y = 2
@@ -648,6 +652,9 @@ MODULE shared_data
 
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
+
+    ! ID code which identifies if a species is of a special type
+    INTEGER :: particle_sampling_function
 
     ! particle cell division
     INTEGER(i8) :: global_count
