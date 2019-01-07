@@ -662,6 +662,9 @@ CONTAINS
     INTEGER :: ispecies, ix, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
+    REAL(num) :: dof, wdata
+    INTEGER :: dir
+    INTEGER, PARAMETER :: c_dir_all = -1
 #include "particle_head.inc"
 
     ALLOCATE(meanx(1-ng:nx+ng))
@@ -673,6 +676,14 @@ CONTAINS
     meanz = 0.0_num
     part_count = 0.0_num
     sigma = 0.0_num
+
+    IF (PRESENT(direction)) THEN
+      dir = direction
+      dof = 1.0_num
+    ELSE
+      dir = c_dir_all
+      dof = 3.0_num
+    END IF
 
     spec_start = current_species
     spec_end = current_species
@@ -755,10 +766,19 @@ CONTAINS
 
         DO ix = sf_min, sf_max
           gf = gx(ix)
-          sigma(cell_x+ix) = sigma(cell_x+ix) + gf &
-              * ((part_pmx - meanx(cell_x+ix))**2 &
+          SELECT CASE(dir)
+            CASE(c_dir_all)
+              wdata = (part_pmx - meanx(cell_x+ix))**2 &
               + (part_pmy - meany(cell_x+ix))**2 &
-              + (part_pmz - meanz(cell_x+ix))**2)
+              + (part_pmz - meanz(cell_x+ix))**2
+            CASE(c_dir_x)
+              wdata = (part_pmx - meanx(cell_x+ix))**2
+            CASE(c_dir_y)
+              wdata = (part_pmy - meany(cell_x+ix))**2
+            CASE(c_dir_z)
+              wdata = (part_pmz - meanz(cell_x+ix))**2
+          END SELECT
+          sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
         END DO
         current => current%next
@@ -771,7 +791,7 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! 3/2 kT = <p^2>/(2m)
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / dof
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 
