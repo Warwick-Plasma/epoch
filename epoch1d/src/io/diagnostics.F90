@@ -636,6 +636,11 @@ CONTAINS
             'temperature', 'Temperature', 'K', &
             c_stagger_cell_centre, calc_temperature, array)
 
+        CALL write_nspecies_field(c_dump_temperature, code, &
+            'temperature', 'Temperature', 'K', &
+            c_stagger_cell_centre, calc_temperature, array, fluxdir(1:3), &
+            dim_tags)
+
         CALL write_nspecies_field(c_dump_jx, code, &
             'jx', 'Jx', 'A/m^2', &
             c_stagger_cell_centre, calc_per_species_jx, array)
