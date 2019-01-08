@@ -1,0 +1,116 @@
+begin:constant
+  background_density = 1e20
+  background_temp = 1e8
+  ion_mass_e = 1836.2
+  mass_ion = me * ion_mass_e
+  ring_beam_energy_ev = 1.0e6
+  pring_beam = sqrt(2 * mass_ion * qe * ring_beam_energy_ev)
+  pbeam = pring_beam * sin(-pi/3)
+  pring = pring_beam * cos(-pi/3)
+  temp_beam = ring_beam_energy_ev / 1000
+  temp_ring = ring_beam_energy_ev / 100
+  lambda_db = sqrt(epsilon0 * kb * background_temp / background_density / qe^2)
+  grid_spacing = lambda_db * 0.5
+  nxgrid = 300
+  x_length = nxgrid * grid_spacing
+  simtime = grid_spacing / c
+  diagtime = simtime * 2
+end:constant
+
+
+begin:control
+  nx = nxgrid
+  npart = nx * 300.0
+
+  # final time of simulation
+  t_end = simtime
+
+  # size of domain
+  x_min = 0.0
+  x_max = nx * grid_spacing
+end:control
+
+begin:fields
+  by = 1.0
+end:fields
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+end:boundaries
+
+
+begin:species
+  name = ion_ring_beam
+  charge = 1.0
+  mass = ion_mass_e
+  frac = 1.0
+  density = 1.0e20
+  drift_x = pring
+  drift_z = pbeam
+  temp_x = temp_ring
+  temp_z = temp_beam
+  sampling_function = ring_beam
+end:species
+
+
+begin:output
+  # number of timesteps between output dumps
+  dt_snapshot = diagtime
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 100
+  force_final_to_be_restartable = T
+
+  # Properties at particle positions
+  particles = full
+  particle_weight = full
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  by = always
+  bz = always
+  ekbar = always
+  charge_density = full
+  number_density = always + species
+
+  #Extended IO
+  distribution_functions = always
+end:output
+
+
+begin:dist_fn
+  name = xy_pz
+  ndims = 2
+
+  direction1 = dir_py
+  direction2 = dir_pz
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-3.0e-22, 3.0e-22)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+  resolution2 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
+
+
+begin:dist_fn
+  name = px
+  ndims = 1
+
+  direction1 = dir_px
+
+  # range is ignored for spatial coordinates
+  range1 = (-3.0e-22, 3.0e-22)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
