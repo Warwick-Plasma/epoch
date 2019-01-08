@@ -33,59 +33,80 @@ CONTAINS
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drifts
     TYPE(particle_list), POINTER :: partlist
-    REAL(num) :: mass, gyrophase, pperp, ppara, part_x
-    REAL(num), DIMENSION(1:3) :: temps_local, drifts_local
     TYPE(particle), POINTER :: current
-    REAL(num), PARAMETER :: golden_angle = pi * (3.0_num - SQRT(5.0_num))
     INTEGER(i8) :: ipart
-    INTEGER :: ix, i
-    REAL(num), DIMENSION(1:3, 1:3) :: rotation_matrix
-    REAL(num), DIMENSION(1:3) :: aligned_momentum
+
 #include "particle_head.inc"
 
     partlist => species%attached_list
     current => partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
-#ifdef PER_PARTICLE_CHARGE_MASS
-      mass = current%mass
-#else
-      mass = species%mass
-#endif
-
-      ! Assume that temperatures is cell centred
-#include "particle_to_grid.inc"
-
-      temps_local = 0.0_num
-      drifts_local = 0.0_num
-      DO i = 1, 3
-        DO ix = sf_min, sf_max
-          temps_local(i) = temps_local(i) + gx(ix) * temperatures(cell_x+ix, i)
-          drifts_local(i) = drifts_local(i) + gx(ix) * drifts(cell_x+ix, i)
-        END DO
-      END DO
-
-      part_x  = current%part_pos - x_grid_min_local
-
-      pperp = momentum_from_temperature(mass, temps_local(1), drifts_local(3))
-      ppara = momentum_from_temperature(mass, temps_local(3), drifts_local(3))
-      gyrophase = ipart * golden_angle
-
-      CALL setup_rotation_matrix(current, rotation_matrix)
-
-      aligned_momentum(1) = pperp * COS(gyrophase)
-      aligned_momentum(2) = pperp * SIN(gyrophase)
-      aligned_momentum(3) = ppara
-      
-      current%part_p(1) = DOT_PRODUCT(rotation_matrix(1, :), aligned_momentum)
-      current%part_p(2) = DOT_PRODUCT(rotation_matrix(2, :), aligned_momentum)
-      current%part_p(3) = DOT_PRODUCT(rotation_matrix(3, :), aligned_momentum)
-
+      CALL setup_particle_ring_beam_particle(current, temperatures, drifts, &
+        species%mass, ipart)
       current => current%next
       ipart = ipart + 1
     END DO
 
   END SUBROUTINE setup_particle_ring_beam
+
+
+  SUBROUTINE setup_particle_ring_beam_particle(current, temperatures, drifts, &
+      species_mass, ipart)
+    TYPE(particle), POINTER, INTENT(INOUT) :: current
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drifts
+    REAL(num), INTENT(IN) :: species_mass
+    INTEGER(i8), INTENT(IN) :: ipart
+    REAL(num), DIMENSION(1:3, 1:3) :: rotation_matrix
+    REAL(num) :: mass, gyrophase, pperp, ppara, part_x
+    REAL(num), DIMENSION(1:3) :: temps_local, drifts_local
+    REAL(num), PARAMETER :: golden_angle = pi * (3.0_num - SQRT(5.0_num))
+    INTEGER :: ix, i
+    REAL(num), DIMENSION(1:3) :: aligned_momentum
+#include "particle_head.inc"
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
+#else
+      mass = species_mass
+#endif
+
+      ! Assume that temperatures is cell centred
+#include "particle_to_grid.inc"
+
+    temps_local = 0.0_num
+    drifts_local = 0.0_num
+    DO i = 1, 3
+      DO ix = sf_min, sf_max
+        temps_local(i) = temps_local(i) + gx(ix) * temperatures(cell_x+ix, i)
+        drifts_local(i) = drifts_local(i) + gx(ix) * drifts(cell_x+ix, i)
+      END DO
+    END DO
+
+    part_x  = current%part_pos - x_grid_min_local
+
+    pperp = momentum_from_temperature(mass, temps_local(1), drifts_local(3))
+    ppara = momentum_from_temperature(mass, temps_local(3), drifts_local(3))
+    IF (ipart .LE. 0) THEN
+      gyrophase = random() * 2 * pi
+    ELSE
+      gyrophase = ipart * golden_angle
+    ENDIF
+
+    CALL setup_rotation_matrix(current, rotation_matrix)
+
+    aligned_momentum(1) = pperp * COS(gyrophase)
+    aligned_momentum(2) = pperp * SIN(gyrophase)
+    aligned_momentum(3) = ppara
+
+    current%part_p(1) = DOT_PRODUCT(rotation_matrix(1, :), aligned_momentum)
+    current%part_p(2) = DOT_PRODUCT(rotation_matrix(2, :), aligned_momentum)
+    current%part_p(3) = DOT_PRODUCT(rotation_matrix(3, :), aligned_momentum)
+
+  END SUBROUTINE setup_particle_ring_beam_particle
+
+
 
   SUBROUTINE setup_rotation_matrix(part, r)
 

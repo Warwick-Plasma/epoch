@@ -170,6 +170,7 @@ CONTAINS
 
     INTEGER :: ispecies, idim
     INTEGER :: nx0, nxp
+    INTEGER :: bc_x_min, bc_x_max
 
     IF (.NOT.cpml_boundaries) cpml_thickness = 0
 
@@ -257,10 +258,15 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
-      IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      bc_x_min = species_list(ispecies)%bc_particle(c_bd_x_min)
+      bc_x_max = species_list(ispecies)%bc_particle(c_bd_x_max)
+
+      IF (bc_x_min == c_bc_thermal .OR. &
+          bc_x_min == c_bc_sampling_function) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1:3))
       END IF
-      IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      IF (bc_x_max == c_bc_thermal .OR. &
+          bc_x_max == c_bc_sampling_function) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1:3))
       END IF
     END DO

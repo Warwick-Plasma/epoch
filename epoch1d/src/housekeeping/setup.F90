@@ -302,7 +302,7 @@ CONTAINS
       species_list(ispecies)%global_count = 0
       species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
-      species_list(ispecies)%particle_sampling_function = c_psf_drifting_tri_maxwellian
+      species_list(ispecies)%sampling_function = c_psf_drifting_tri_maxwellian
       species_list(ispecies)%immobile = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)

@@ -257,6 +257,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'sampling_function')) THEN
+      as_bc = c_bc_sampling_function
+      RETURN
+    END IF
+
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_bc
@@ -283,6 +288,36 @@ CONTAINS
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_domain
+
+
+
+  FUNCTION as_sampling_function(str_in, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: as_sampling_function
+
+    as_sampling_function = c_psf_drifting_tri_maxwellian
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'ringbeam') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'ring_beam')) THEN
+      as_sampling_function = c_psf_ring_beam
+      RETURN
+    END IF
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'maxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'trimaxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'tri_maxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'driftingmaxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'drifting_maxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'driftingtrimaxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'drifting_trimaxwellian') .OR. &
+        str_cmp(TRIM(ADJUSTL(str_in)), 'drifting_tri_maxwellian')) THEN
+      as_sampling_function = c_psf_drifting_tri_maxwellian
+      RETURN
+    END IF
+
+    err = IOR(err, c_err_bad_value)
+
+  END FUNCTION as_sampling_function
 
 
 
@@ -331,5 +366,21 @@ CONTAINS
     WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
 
   END FUNCTION as_logical_print
+
+
+
+  FUNCTION as_sampling_function_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: res
+
+    res = as_sampling_function(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_sampling_function_print
 
 END MODULE strings

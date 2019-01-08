@@ -38,11 +38,13 @@ CONTAINS
 
       ! Set temperature at boundary for thermal bcs.
 
-      IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      IF (species%bc_particle(c_bd_x_min) == c_bc_thermal .OR. &
+          species%bc_particle(c_bd_x_min) == c_bc_sampling_function) THEN
         species_list(ispecies)%ext_temp_x_min(:) = &
             species_list(ispecies)%initial_conditions%temp(1,:)
       END IF
-      IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      IF (species%bc_particle(c_bd_x_max) == c_bc_thermal .OR. &
+          species%bc_particle(c_bd_x_max) == c_bc_sampling_function) THEN
         species_list(ispecies)%ext_temp_x_max(:) = &
             species_list(ispecies)%initial_conditions%temp(nx,:)
       END IF
@@ -73,18 +75,18 @@ CONTAINS
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #endif
-      IF (species%particle_sampling_function .EQ. c_psf_ring_beam) THEN
-        CALL setup_particle_ring_beam(&
-            species, species_list(ispecies)%initial_conditions%temp,&
+      IF (species%sampling_function .EQ. c_psf_ring_beam) THEN
+        CALL setup_particle_ring_beam( &
+            species, species_list(ispecies)%initial_conditions%temp, &
             species_list(ispecies)%initial_conditions%drift)
       ELSE
         ! default behaviour, where
-        ! species%particle_sampling_function .EQ. c_psf_drifting_tri_maxwellian
+        ! species%sampling_function .EQ. c_psf_drifting_tri_maxwellian
         ! is true
-        CALL setup_particle_temperatures(&
-            species, species_list(ispecies)%initial_conditions%temp,&
+        CALL setup_particle_temperature( &
+            species, species_list(ispecies)%initial_conditions%temp, &
             species_list(ispecies)%initial_conditions%drift)
-      ENDIF
+      END IF
     END DO
 
     IF (rank == 0) THEN
@@ -294,13 +296,17 @@ CONTAINS
     IF (species%fill_ghosts) THEN
       IF (x_min_boundary) THEN
         IF (ASSOCIATED(injector_x_min) &
-            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_sampling_function) &
+                THEN
           ix_min = ix_min - png
         END IF
       END IF
       IF (x_max_boundary) THEN
         IF (ASSOCIATED(injector_x_max) &
-            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_sampling_function) &
+                THEN
           ix_max = ix_max + png
         END IF
       END IF

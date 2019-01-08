@@ -71,6 +71,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_cpml_laser = 12
   INTEGER, PARAMETER :: c_bc_cpml_outflow = 13
   INTEGER, PARAMETER :: c_bc_mixed = 14
+  INTEGER, PARAMETER :: c_bc_sampling_function = 15
 
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
@@ -654,7 +655,7 @@ MODULE shared_data
     INTEGER :: species_type
 
     ! ID code which identifies if a species is of a special type
-    INTEGER :: particle_sampling_function
+    INTEGER :: sampling_function
 
     ! particle cell division
     INTEGER(i8) :: global_count

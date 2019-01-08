@@ -34,6 +34,7 @@ CONTAINS
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
     CHARACTER(LEN=2*c_max_string_length) :: bc_error
+    REAL(num), DIMENSION(3), PARAMETER :: zero_drifts = 0.0_num!(/0._num, 0._num, 0._num/)
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
@@ -104,6 +105,7 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_sampling_function &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
@@ -584,6 +586,7 @@ CONTAINS
     REAL(num) :: temp(3)
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer
+    TYPE(particle_species), POINTER :: species
 
     boundary_shift = dx * REAL((1 + png) / 2, num)
 
@@ -591,9 +594,11 @@ CONTAINS
     x_max_outer = x_max + boundary_shift
 
     DO ispecies = 1, n_species
-      cur => species_list(ispecies)%attached_list%head
+      species => species_list(ispecies)
 
-      bc_species = species_list(ispecies)%bc_particle
+      cur => species%attached_list%head
+
+      bc_species = species%bc_particle
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))
@@ -656,12 +661,26 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos = 2.0_num * x_min_outer - part_pos
-
+              ELSE IF (bc == c_bc_sampling_function) THEN
+                IF (species%sampling_function .EQ. c_psf_ring_beam) &
+                    THEN
+                  CALL setup_particle_ring_beam_particle(cur, &
+                      species%initial_conditions%temp, &
+                      species%initial_conditions%drift, &
+                      species%mass, INT(-1, i8))
+                ELSE
+                  ! default - drifting tri maxwellian
+                  CALL setup_particle_temperature_particle(cur, &
+                      species%initial_conditions%temp, &
+                      species%initial_conditions%drift, &
+                      species%mass)
+                ENDIF
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
+              ! Doesn't matter if out_of_bounds whether we do this or not
+              cur%part_pos = 2.0_num * x_min_outer - part_pos
             END IF
           END IF
         END IF
@@ -715,12 +734,26 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-                cur%part_pos = 2.0_num * x_max_outer - part_pos
-
+              ELSE IF (bc == c_bc_sampling_function) THEN
+                IF (species%sampling_function .EQ. c_psf_ring_beam) &
+                    THEN
+                  CALL setup_particle_ring_beam_particle(cur, &
+                      species%initial_conditions%temp, &
+                      species%initial_conditions%drift, &
+                      species%mass, INT(-1, i8))
+                ELSE
+                  ! default - drifting tri maxwellian
+                  CALL setup_particle_temperature_particle(cur, &
+                      species%initial_conditions%temp, &
+                      species%initial_conditions%drift, &
+                      species%mass)
+                ENDIF
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
+              ! Doesn't matter if out_of_bounds whether we do this or not
+              cur%part_pos = 2.0_num * x_max_outer - part_pos
             END IF
           END IF
         END IF

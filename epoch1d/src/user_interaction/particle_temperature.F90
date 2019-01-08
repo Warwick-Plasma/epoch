@@ -23,69 +23,68 @@ MODULE particle_temperature
 
 CONTAINS
 
-  SUBROUTINE setup_particle_temperatures(species, temperatures, drifts)
-    TYPE(particle_species), POINTER :: species 
-    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
-    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drifts
-    CALL setup_particle_temperature(&
-        species, temperatures(:, 1), drifts(:, 1), c_dir_x)
-    CALL setup_particle_temperature(&
-        species, temperatures(:, 2), drifts(:, 2), c_dir_y)
-    CALL setup_particle_temperature(&
-        species, temperatures(:, 3), drifts(:, 3), c_dir_z)
-  END SUBROUTINE setup_particle_temperatures
 
-
-
-  ! Subroutine to initialise a thermal particle distribution
+  ! Subroutine to initialise a species with a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature(species, temperature, drift,&
-      direction)
+  SUBROUTINE setup_particle_temperature(species, temperature, drift)
     TYPE(particle_species), POINTER :: species
-    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: temperature
-    REAL(num), DIMENSION(1-ng:), INTENT(IN) :: drift
-    INTEGER, INTENT(IN) :: direction
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperature
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drift
     TYPE(particle_list), POINTER :: partlist
-    REAL(num) :: mass, temp_local, drift_local
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
-    INTEGER :: ix
-#include "particle_head.inc"
 
     partlist => species%attached_list
     current => partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
-#ifdef PER_PARTICLE_CHARGE_MASS
-      mass = current%mass
-#else
-      mass = species%mass
-#endif
 
-      ! Assume that temperature is cell centred
-#include "particle_to_grid.inc"
-
-      temp_local = 0.0_num
-      drift_local = 0.0_num
-      DO ix = sf_min, sf_max
-        temp_local = temp_local + gx(ix) * temperature(cell_x+ix)
-        drift_local = drift_local + gx(ix) * drift(cell_x+ix)
-      END DO
-
-      IF (direction == c_dir_x) current%part_p(1) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
-
-      IF (direction == c_dir_y) current%part_p(2) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
-
-      IF (direction == c_dir_z) current%part_p(3) = &
-          momentum_from_temperature(mass, temp_local, drift_local)
+      CALL setup_particle_temperature_particle(current, temperature, drift, &
+          species%mass)
 
       current => current%next
       ipart = ipart + 1
     END DO
 
   END SUBROUTINE setup_particle_temperature
+
+
+
+  ! Subroutine to initialise a particle with a thermal particle distribution
+  ! Assumes linear interpolation of temperature between cells
+  SUBROUTINE setup_particle_temperature_particle(current, temperature, &
+      drift, species_mass)
+    TYPE(particle), POINTER :: current 
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperature
+    REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drift
+    REAL(num), INTENT(IN) :: species_mass
+    TYPE(particle_list), POINTER :: partlist
+    REAL(num) :: mass, temp_local, drift_local
+    INTEGER(i8) :: ipart
+    INTEGER :: ix, i
+#include "particle_head.inc"
+
+#ifdef PER_PARTICLE_CHARGE_MASS
+    mass = current%mass
+#else
+    mass = species_mass
+#endif
+
+    ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+    DO i = 1, 3
+      temp_local = 0.0_num
+      drift_local = 0.0_num
+      DO ix = sf_min, sf_max
+        temp_local = temp_local + gx(ix) * temperature(cell_x+ix, i)
+        drift_local = drift_local + gx(ix) * drift(cell_x+ix, i)
+      END DO
+
+      current%part_p(i) = &
+          momentum_from_temperature(mass, temp_local, drift_local)
+    END DO
+
+  END SUBROUTINE setup_particle_temperature_particle
 
 
 

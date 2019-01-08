@@ -562,9 +562,9 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'particle_sampling_function')) THEN
-      species_list(species_id)%particle_sampling_function = &
-          as_integer_print(value, element, errcode)
+    IF (str_cmp(element, 'sampling_function')) THEN
+      species_list(species_id)%sampling_function = &
+          as_sampling_function_print(value, element, errcode)
       RETURN
     END IF
 
