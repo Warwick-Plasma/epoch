@@ -86,7 +86,7 @@ CONTAINS
 
     part_x  = current%part_pos - x_grid_min_local
 
-    pperp = momentum_from_temperature(mass, temps_local(1), drifts_local(3))
+    pperp = momentum_from_temperature(mass, temps_local(1), drifts_local(1))
     ppara = momentum_from_temperature(mass, temps_local(3), drifts_local(3))
     IF (ipart .LE. 0) THEN
       gyrophase = random() * 2 * pi
@@ -96,10 +96,12 @@ CONTAINS
 
     CALL setup_rotation_matrix(current, rotation_matrix)
 
+    ! z is the dummy magnetic field direction
     aligned_momentum(1) = pperp * COS(gyrophase)
     aligned_momentum(2) = pperp * SIN(gyrophase)
     aligned_momentum(3) = ppara
 
+    ! orient particle along actual magnetic field direction
     current%part_p(1) = DOT_PRODUCT(rotation_matrix(1, :), aligned_momentum)
     current%part_p(2) = DOT_PRODUCT(rotation_matrix(2, :), aligned_momentum)
     current%part_p(3) = DOT_PRODUCT(rotation_matrix(3, :), aligned_momentum)
@@ -109,9 +111,8 @@ CONTAINS
 
 
   SUBROUTINE setup_rotation_matrix(part, r)
-
-    Type(Particle), POINTER, INTENT(INOUT) :: part
-    REAL(num), DIMENSION(1:3,1:3), INTENT(INOUT) :: r
+    TYPE(Particle), POINTER, INTENT(IN) :: part
+    REAL(num), DIMENSION(1:3, 1:3), INTENT(INOUT) :: r ! the rotation matrix
     REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2, part_x
 #include "fields_at_particle_variable_declarations.inc"
 
@@ -127,9 +128,11 @@ CONTAINS
     fy = fy / SQRT(fx**2 + fy**2 + fz**2)
     fz = fz / SQRT(fx**2 + fy**2 + fz**2)
 
-    ax = 1.0_num
+    ! Vector points in z direction, because initially particles are loaded
+    ! as though z *is* the magnetic direction.
+    ax = 0.0_num
     ay = 0.0_num
-    az = 0.0_num
+    az = 1.0_num
 
     ux = ay * fz - az * fy
     uy = az * fx - ax * fz
@@ -147,9 +150,9 @@ CONTAINS
 
     u2 = SQRT(ux**2 + uy**2 + uz**2)
     IF (u2 .GT. 0.0_num) THEN
-      ux = ux/u2
-      uy = uy/u2
-      uz = uz/u2
+      ux = ux / u2
+      uy = uy / u2
+      uz = uz / u2
       r(1,1) = ux**2 + (1 - ux**2) * COS(th)
       r(1,2) = ux * uy * (1 - COS(th)) - uz * SIN(th)
       r(1,3) = ux * uz * (1 - COS(th)) + uy * SIN(th)
@@ -161,9 +164,9 @@ CONTAINS
       r(3,3) = uz**2 + (1 - uz**2) * COS(th)
     END IF
 
-    det = r(1,1)*(r(2,2)*r(3,3) - r(2,3)*r(3,2)) &
-        + r(1,2)*(r(2,3)*r(3,1) - r(2,1)*r(3,3)) &
-        + r(1,3)*(r(2,1)*r(3,2) - r(2,2)*r(3,1))
+    det = r(1,1) * (r(2,2) * r(3,3) - r(2,3) * r(3,2)) &
+        + r(1,2) * (r(2,3) * r(3,1) - r(2,1) * r(3,3)) &
+        + r(1,3) * (r(2,1) * r(3,2) - r(2,2) * r(3,1))
     r = r / det
 
   END SUBROUTINE setup_rotation_matrix

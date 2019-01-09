@@ -5,22 +5,26 @@ begin:constant
   mass_ion = me * ion_mass_e
   ring_beam_energy_ev = 1.0e6
   pring_beam = sqrt(2 * mass_ion * qe * ring_beam_energy_ev)
-  pbeam = pring_beam * sin(-pi/3)
-  pring = pring_beam * cos(-pi/3)
-  temp_beam = ring_beam_energy_ev / 1000
-  temp_ring = ring_beam_energy_ev / 100
+  theta = -pi/3
+  ! -2.005E-20 ! but with obviously change if anything above is changed
+  pbeam = pring_beam * sin(theta)
+  ! 1.158E-20 ! but with obviously change if anything above is changed
+  pring = pring_beam * cos(theta)
+  temp_beam_ev = ring_beam_energy_ev / 20
+  temp_ring_ev = ring_beam_energy_ev / 100
   lambda_db = sqrt(epsilon0 * kb * background_temp / background_density / qe^2)
   grid_spacing = lambda_db * 0.5
-  nxgrid = 300
+  nxgrid = 1024
   x_length = nxgrid * grid_spacing
   simtime = grid_spacing / c
   diagtime = simtime * 2
+  pdfn_limit = 2 * abs(pring_beam)
 end:constant
 
 
 begin:control
   nx = nxgrid
-  npart = nx * 300.0
+  npart = nx * 1000
 
   # final time of simulation
   t_end = simtime
@@ -48,8 +52,8 @@ begin:species
   density = 1.0e20
   drift_x = pring
   drift_z = pbeam
-  temp_x = temp_ring
-  temp_z = temp_beam
+  temp_x_ev = temp_ring_ev
+  temp_z_ev = temp_beam_ev
   sampling_function = ring_beam
 end:species
 
@@ -82,15 +86,52 @@ end:output
 
 
 begin:dist_fn
-  name = xy_pz
+  name = px_py
+  ndims = 2
+
+  direction1 = dir_px
+  direction2 = dir_py
+
+  # range is ignored for spatial coordinates
+  range1 = (-pdfn_limit, pdfn_limit)
+  range2 = (-pdfn_limit, pdfn_limit)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+  resolution2 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
+
+begin:dist_fn
+  name = px_pz
+  ndims = 2
+
+  direction1 = dir_px
+  direction2 = dir_pz
+
+  # range is ignored for spatial coordinates
+  range1 = (-pdfn_limit, pdfn_limit)
+  range2 = (-pdfn_limit, pdfn_limit)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+  resolution2 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
+
+
+begin:dist_fn
+  name = py_pz
   ndims = 2
 
   direction1 = dir_py
   direction2 = dir_pz
 
   # range is ignored for spatial coordinates
-  range1 = (1, 1)
-  range2 = (-3.0e-22, 3.0e-22)
+  range1 = (-pdfn_limit, pdfn_limit)
+  range2 = (-pdfn_limit, pdfn_limit)
 
   # resolution is ignored for spatial coordinates
   resolution1 = 100
@@ -107,7 +148,37 @@ begin:dist_fn
   direction1 = dir_px
 
   # range is ignored for spatial coordinates
-  range1 = (-3.0e-22, 3.0e-22)
+  range1 = (-pdfn_limit, pdfn_limit)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
+
+begin:dist_fn
+  name = py
+  ndims = 1
+
+  direction1 = dir_py
+
+  # range is ignored for spatial coordinates
+  range1 = (-pdfn_limit, pdfn_limit)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 100
+
+  include_species:ion_ring_beam
+end:dist_fn
+
+begin:dist_fn
+  name = pz
+  ndims = 1
+
+  direction1 = dir_pz
+
+  # range is ignored for spatial coordinates
+  range1 = (-pdfn_limit, pdfn_limit)
 
   # resolution is ignored for spatial coordinates
   resolution1 = 100

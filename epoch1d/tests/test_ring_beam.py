@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import unittest
 import platform
 from . import SimTest
+#from . import SimTest
 
 
 def showdatafields(sdffile):
@@ -30,40 +31,31 @@ def showdatafields(sdffile):
     print(data.keys())
 
 
-def plotdump(sdffile, key, ax):
+def save_plot(key):
+    sdffile = '0000.sdf'
+    fig = plt.figure()
+    ax = plt.gca()
     data = sdf.read(sdffile, dict=True)
-    array = data[key].data
-    ax.plot(array)
-    ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
-
-
-def plotdump2d(sdffile, key, ax):
-    data = sdf.read(sdffile, dict=True)
-    if len(data[key].dims) == 3:
-        array = data[key].data[:, :, 0]
-    else:
-        array = data[key].data[:, :]
-    ax.imshow(array)
-    ax.set_title(r'{:2.1f} ms'.format(data['Header']['time']*1e3))
-
-
-def plotevolution(key):
-    print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
-    fig, axarr = plt.subplots(3, 5, figsize=(20, 11))
-    for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
-        plotdump(sdffile, key, ax)
-    fig.suptitle(key)
+    x = data['Grid/' + key].data[0]
+    y = data['dist_fn/' + key].data
+    ax.plot(x, y)
+    ax.set_title(key + ' ' + r'{:2.1f} ms'.format(data['Header']['time']*1e3))
+    plt.tight_layout()
+    plt.grid(b=True, which='both')
     fig.savefig(key.replace('/', '_') + '.png', dpi=160)
 
 
-def plot2devolution(key):
-    print('plotting: ' + key)
-    sdffiles = ['{:04d}.sdf'.format(i) for i in range(15)]
-    fig, axarr = plt.subplots(3, 5, figsize=(20, 11))
-    for (sdffile, ax) in zip(sdffiles, np.ravel(axarr)):
-        plotdump2d(sdffile, key, ax)
-    fig.suptitle(key)
+def save_contourf(key):
+    sdffile = '0000.sdf'
+    fig = plt.figure()
+    ax = plt.gca()
+    data = sdf.read(sdffile, dict=True)
+    x = data['Grid/' + key].data[0]
+    y = data['Grid/' + key].data[0]
+    z = data['dist_fn/' + key].data[:, :]
+    ax.contourf(x, y, z)
+    ax.set_title(key + ' ' + r'{:2.1f} ms'.format(data['Header']['time']*1e3))
+    plt.grid()
     fig.savefig(key.replace('/', '_') + '.png', dpi=160)
 
 
@@ -71,16 +63,17 @@ def createplots():
     if platform.system() == 'Darwin':
         print('macosx backend')
         plt.switch_backend('macosx')
-    # showdatafields('0000.sdf')
-    plotevolution('Electric Field/Ex')
-    plotevolution('Derived/Number_Density/Right')
-    plotevolution('Derived/Number_Density/Left')
-    plotevolution('Derived/Charge_Density')
-    plotevolution('Current/Jx')
-    plot2devolution('dist_fn/x_px/Right')
-    plot2devolution('dist_fn/x_px/Left')
+
+    #showdatafields('0000.sdf')
+    save_plot('px/ion_ring_beam')
+    save_plot('py/ion_ring_beam')
+    save_plot('pz/ion_ring_beam')
+    save_contourf('px_py/ion_ring_beam')
+    save_contourf('px_pz/ion_ring_beam')
+    save_contourf('py_pz/ion_ring_beam')
 
 
+#class test_ring_beam():
 class test_ring_beam(SimTest):
 
     def test_createplots(self):
@@ -89,3 +82,5 @@ class test_ring_beam(SimTest):
 
 if __name__ == '__main__':
     unittest.main()
+    #trb = test_ring_beam()
+    #trb.test_createplots()
