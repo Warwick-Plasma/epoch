@@ -188,9 +188,9 @@ MODULE constants
   INTEGER, PARAMETER :: c_species_id_positron = 3
   INTEGER, PARAMETER :: c_species_id_proton = 4
 
-  ! define species particle sampling function codes
-  INTEGER, PARAMETER :: c_psf_drifting_tri_maxwellian = 0
-  INTEGER, PARAMETER :: c_psf_ring_beam = 1
+  ! define species sampling function codes
+  INTEGER, PARAMETER :: c_sf_drifting_tri_maxwellian = 0
+  INTEGER, PARAMETER :: c_sf_ring_beam = 1
 
   ! direction parameters
   INTEGER, PARAMETER :: c_dir_x = 1

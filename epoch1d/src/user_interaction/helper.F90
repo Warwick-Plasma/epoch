@@ -75,13 +75,13 @@ CONTAINS
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #endif
-      IF (species%sampling_function .EQ. c_psf_ring_beam) THEN
+      IF (species%sampling_function .EQ. c_sf_ring_beam) THEN
         CALL setup_particle_ring_beam( &
             species, species_list(ispecies)%initial_conditions%temp, &
             species_list(ispecies)%initial_conditions%drift)
       ELSE
         ! default behaviour, where
-        ! species%sampling_function .EQ. c_psf_drifting_tri_maxwellian
+        ! species%sampling_function .EQ. c_sf_drifting_tri_maxwellian
         ! is true
         CALL setup_particle_temperature( &
             species, species_list(ispecies)%initial_conditions%temp, &

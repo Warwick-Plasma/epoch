@@ -494,7 +494,7 @@ numerics.o: numerics.f90 shared_data.o
 particle_migration.o: particle_migration.F90 calc_df.o partlist.o prefetch.o
 particle_pointer_advance.o: particle_pointer_advance.f90 shared_data.o
 particle_ring_beam.o: particle_ring_beam.F90 particle_temperature.o \
-  random_generator.o shared_data.o 
+  random_generator.o shared_data.o
 particle_temperature.o: particle_temperature.F90 random_generator.o \
   shared_data.o
 particles.o: particles.F90 boundary.o partlist.o prefetch.o

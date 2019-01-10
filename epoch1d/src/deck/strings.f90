@@ -297,10 +297,10 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: as_sampling_function
 
-    as_sampling_function = c_psf_drifting_tri_maxwellian
+    as_sampling_function = c_sf_drifting_tri_maxwellian
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'ringbeam') .OR. &
         str_cmp(TRIM(ADJUSTL(str_in)), 'ring_beam')) THEN
-      as_sampling_function = c_psf_ring_beam
+      as_sampling_function = c_sf_ring_beam
       RETURN
     END IF
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'maxwellian') .OR. &
@@ -311,7 +311,7 @@ CONTAINS
         str_cmp(TRIM(ADJUSTL(str_in)), 'driftingtrimaxwellian') .OR. &
         str_cmp(TRIM(ADJUSTL(str_in)), 'drifting_trimaxwellian') .OR. &
         str_cmp(TRIM(ADJUSTL(str_in)), 'drifting_tri_maxwellian')) THEN
-      as_sampling_function = c_psf_drifting_tri_maxwellian
+      as_sampling_function = c_sf_drifting_tri_maxwellian
       RETURN
     END IF
 

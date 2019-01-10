@@ -139,7 +139,7 @@ CONTAINS
     uz = ax * fy - ay * fx
 
     th = ACOS(ax * fx + ay * fy + az * fz)
-    
+
     r = 0.0_num
     r(1,1) = 1.0_num
     r(2,2) = 1.0_num

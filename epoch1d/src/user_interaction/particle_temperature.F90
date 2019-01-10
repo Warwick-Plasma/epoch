@@ -54,7 +54,7 @@ CONTAINS
   ! Assumes linear interpolation of temperature between cells
   SUBROUTINE setup_particle_temperature_particle(current, temperature, &
       drift, species_mass)
-    TYPE(particle), POINTER :: current 
+    TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperature
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drift
     REAL(num), INTENT(IN) :: species_mass

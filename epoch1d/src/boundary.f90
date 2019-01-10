@@ -34,7 +34,7 @@ CONTAINS
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
     CHARACTER(LEN=2*c_max_string_length) :: bc_error
-    REAL(num), DIMENSION(3), PARAMETER :: zero_drifts = 0.0_num!(/0._num, 0._num, 0._num/)
+    REAL(num), DIMENSION(3), PARAMETER :: zero_drifts = 0.0_num
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
@@ -662,7 +662,7 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
               ELSE IF (bc == c_bc_sampling_function) THEN
-                IF (species%sampling_function .EQ. c_psf_ring_beam) &
+                IF (species%sampling_function .EQ. c_sf_ring_beam) &
                     THEN
                   CALL setup_particle_ring_beam_particle(cur, &
                       species%initial_conditions%temp, &
@@ -735,7 +735,7 @@ CONTAINS
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
               ELSE IF (bc == c_bc_sampling_function) THEN
-                IF (species%sampling_function .EQ. c_psf_ring_beam) &
+                IF (species%sampling_function .EQ. c_sf_ring_beam) &
                     THEN
                   CALL setup_particle_ring_beam_particle(cur, &
                       species%initial_conditions%temp, &
