@@ -50,11 +50,11 @@
    the density to calculate the full distribution function. The function is
    specified using the new deck keys "px", "py" and "pz". ALL VALUES ARE
    SPECIFIED AS MOMENTUM IN MC UNITS, NOT SI! The arbitrary
-   distribution function can be combined with the "drift" keys and the 
-   function is shifted up by the drift momentum specified. The temperature 
+   distribution function can be combined with the "drift" keys and the
+   function is shifted up by the drift momentum specified. The temperature
    key is not compatible and will be silently ignored if specified.
 
-## v4.12.0 to v4.14.0 (2018-08-13) 
+## v4.12.0 to v4.14.0 (2018-08-13)
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
    compiling with the flag -DHC_PUSH
@@ -653,8 +653,8 @@ Bugfixes:
  * Fixed GIT_DIR when CWD does not equal GIT_WORK_TREE
 
  * Fixed sdf_write_namevalue when h%string_length changes.
-   Care must be taken when writing the array of strings in the 
-   sdf_write_namevalue routine since the strings are of length 
+   Care must be taken when writing the array of strings in the
+   sdf_write_namevalue routine since the strings are of length
    c_max_string_length which might be longer than the current value of
    h%string_length.
 
@@ -757,7 +757,7 @@ Bugfixes:
    This fixes issue #1259
 
  * Fixes for make_tarball.sh
-   Added generation of commit_info.h for SDF/C and SDF/utilities submodules. 
+   Added generation of commit_info.h for SDF/C and SDF/utilities submodules.
    Replaced submodule search paths with local versions.
 
  * Updated manuals submodule to latest master
