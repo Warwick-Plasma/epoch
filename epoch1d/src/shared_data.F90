@@ -408,7 +408,7 @@ MODULE shared_data
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 
-    !Parameters for relativistic and arbitrary particle loader
+    ! Parameters for relativistic and arbitrary particle loader
     INTEGER :: ic_df_type
     REAL(num) :: fractional_tail_cutoff
 

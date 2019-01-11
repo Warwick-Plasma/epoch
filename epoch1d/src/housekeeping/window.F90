@@ -226,7 +226,7 @@ CONTAINS
         current%part_pos = x0 + random() * dx
 
         IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
-          DO i = 1, 3
+          DO i = 1, c_ndirs
             temp_local = temperature(i)
             drift_local = drift(i)
             current%part_p(i) = momentum_from_temperature(&

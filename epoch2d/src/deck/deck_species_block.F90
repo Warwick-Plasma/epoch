@@ -431,9 +431,9 @@ CONTAINS
 
     IF (deck_state == c_ds_first) RETURN
 
-    !This sets up whether or not to use the MJ sampler for a species.
-    !It could go in the first deck pass, but that requires more temporary
-    !variables and seems unnecessary
+    ! This sets up whether or not to use the MJ sampler for a species.
+    ! It could go in the first deck pass, but that requires more temporary
+    ! variables and seems unnecessary
     IF (str_cmp(element, 'use_maxwell_juettner') &
         .OR. str_cmp(element, 'use_maxwell_juttner')) THEN
       IF (as_logical_print(value, element, errcode)) THEN
@@ -698,35 +698,6 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'dist_fn')) THEN
-      species_list(species_id)%ic_df_type = c_ic_df_arbitrary
-      CALL initialise_stack(species_list(species_id)%dist_fn)
-      CALL tokenize(value, species_list(species_id)%dist_fn, errcode)
-      species_list(species_id)%dist_fn%should_simplify = .FALSE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'dist_fn_px_range')) THEN
-      CALL deallocate_stack(species_list(species_id)%dist_fn_range(1))
-      CALL initialise_stack(species_list(species_id)%dist_fn_range(1))
-      CALL tokenize(value, species_list(species_id)%dist_fn_range(1), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'dist_fn_py_range')) THEN
-      CALL deallocate_stack(species_list(species_id)%dist_fn_range(2))
-      CALL initialise_stack(species_list(species_id)%dist_fn_range(2))
-      CALL tokenize(value, species_list(species_id)%dist_fn_range(2), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'dist_fn_pz_range')) THEN
-      CALL deallocate_stack(species_list(species_id)%dist_fn_range(3))
-      CALL initialise_stack(species_list(species_id)%dist_fn_range(3))
-      CALL tokenize(value, species_list(species_id)%dist_fn_range(3), errcode)
-      RETURN
-    END IF
-
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
       ic => species_list(species_id)%initial_conditions
@@ -763,6 +734,35 @@ CONTAINS
       CALL fill_array(species_list(species_id)%drift_function(n), &
           ic%drift(:,:,n), mult, mult_string, element, value, filename, &
           got_file)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn')) THEN
+      species_list(species_id)%ic_df_type = c_ic_df_arbitrary
+      CALL initialise_stack(species_list(species_id)%dist_fn)
+      CALL tokenize(value, species_list(species_id)%dist_fn, errcode)
+      species_list(species_id)%dist_fn%should_simplify = .FALSE.
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_px_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(1))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(1))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(1), errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_py_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(2))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(2))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(2), errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'dist_fn_pz_range')) THEN
+      CALL deallocate_stack(species_list(species_id)%dist_fn_range(3))
+      CALL initialise_stack(species_list(species_id)%dist_fn_range(3))
+      CALL tokenize(value, species_list(species_id)%dist_fn_range(3), errcode)
       RETURN
     END IF
 

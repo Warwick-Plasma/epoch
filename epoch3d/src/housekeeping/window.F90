@@ -218,7 +218,7 @@ CONTAINS
     REAL(num) :: cell_frac_z, cz2
     REAL(num), DIMENSION(-1:1) :: gy, gz
     REAL(num), DIMENSION(c_ndirs) :: temp_local, drift_local
-    REAL(num) ::  npart_frac
+    REAL(num) :: npart_frac
     REAL(num) :: weight_local, x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
     REAL(num), DIMENSION(c_ndirs, 2) :: ranges
@@ -306,7 +306,7 @@ CONTAINS
 
             temp_local = 0.0_num
             drift_local = 0.0_num
-            DO i = 1, 3
+            DO i = 1, c_ndirs
               DO isubz = -1, 1
                 DO isuby = -1, 1
                   temp_local(i) = temp_local(i) + gy(isuby) * gz(isubz) &

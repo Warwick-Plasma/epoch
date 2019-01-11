@@ -421,9 +421,9 @@ CONTAINS
 
     IF (deck_state == c_ds_first) RETURN
 
-    !This sets up whether or not to use the MJ sampler for a species.
-    !It could go in the first deck pass, but that requires more temporary
-    !variables and seems unnecessary
+    ! This sets up whether or not to use the MJ sampler for a species.
+    ! It could go in the first deck pass, but that requires more temporary
+    ! variables and seems unnecessary
     IF (str_cmp(element, 'use_maxwell_juettner') &
         .OR. str_cmp(element, 'use_maxwell_juttner')) THEN
       IF (as_logical_print(value, element, errcode)) THEN

@@ -277,10 +277,13 @@ CONTAINS
           drift_local = 0.0_num
           DO i = 1, c_ndirs
             DO isuby = -1, 1
-              temp_local = temp_local + gy(isuby) * temperature(iy+isuby, i)
-              drift_local = drift_local + gy(isuby) * drift(iy+isuby, i)
+              temp_local(i) = temp_local(i) + gy(isuby) &
+                  * temperature(iy+isuby, i)
+              drift_local(i) = drift_local(i) + gy(isuby) &
+                  * drift(iy+isuby, i)
             END DO
           END DO
+
           IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
             DO i = 1, c_ndirs
               current%part_p(i) = momentum_from_temperature(&
