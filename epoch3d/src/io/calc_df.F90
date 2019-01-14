@@ -789,12 +789,24 @@ CONTAINS
         DO iy = sf_min, sf_max
         DO ix = sf_min, sf_max
           gf = gx(ix) * gy(iy) * gz(iz) * part_w
-          meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
-          meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
-          meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+          SELECT CASE(dir)
+            CASE(c_dir_x)
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+            CASE(c_dir_y)
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+            CASE(c_dir_z)
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+            CASE DEFAULT
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+          END SELECT
           part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
               part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
         END DO
@@ -802,15 +814,33 @@ CONTAINS
         END DO
         current => current%next
       END DO
-      CALL calc_boundary(meanx, ispecies)
-      CALL calc_boundary(meany, ispecies)
-      CALL calc_boundary(meanz, ispecies)
+      SELECT CASE(dir)
+        CASE(c_dir_x)
+          CALL calc_boundary(meanx, ispecies)
+        CASE(c_dir_y)
+          CALL calc_boundary(meany, ispecies)
+        CASE(c_dir_z)
+          CALL calc_boundary(meanz, ispecies)
+        CASE DEFAULT
+          CALL calc_boundary(meanx, ispecies)
+          CALL calc_boundary(meany, ispecies)
+          CALL calc_boundary(meanz, ispecies)
+      END SELECT
       CALL calc_boundary(part_count, ispecies)
     END DO
 
-    CALL calc_boundary(meanx)
-    CALL calc_boundary(meany)
-    CALL calc_boundary(meanz)
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL calc_boundary(meanx)
+      CASE(c_dir_y)
+        CALL calc_boundary(meany)
+      CASE(c_dir_z)
+        CALL calc_boundary(meanz)
+      CASE DEFAULT
+        CALL calc_boundary(meanx)
+        CALL calc_boundary(meany)
+        CALL calc_boundary(meanz)
+    END SELECT
     CALL calc_boundary(part_count)
 
     part_count = MAX(part_count, 1.e-6_num)
