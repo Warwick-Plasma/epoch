@@ -729,6 +729,9 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
+    REAL(num) :: dof, wdata
+    INTEGER :: dir
+
 #include "particle_head.inc"
 
     ALLOCATE(meanx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -740,6 +743,14 @@ CONTAINS
     meanz = 0.0_num
     part_count = 0.0_num
     sigma = 0.0_num
+
+    IF (PRESENT(direction)) THEN
+      dir = direction
+      dof = 1.0_num
+    ELSE
+      dir = -1
+      dof = 3.0_num
+    END IF
 
     spec_start = current_species
     spec_end = current_species
@@ -774,32 +785,91 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz) * part_w
-          meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
-          meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
-          meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
-          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-        END DO
-        END DO
-        END DO
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_y)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_z)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE DEFAULT
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+        END SELECT
         current => current%next
       END DO
-      CALL calc_boundary(meanx, ispecies)
-      CALL calc_boundary(meany, ispecies)
-      CALL calc_boundary(meanz, ispecies)
+
+      SELECT CASE(dir)
+        CASE(c_dir_x)
+          CALL calc_boundary(meanx, ispecies)
+        CASE(c_dir_y)
+          CALL calc_boundary(meany, ispecies)
+        CASE(c_dir_z)
+          CALL calc_boundary(meanz, ispecies)
+        CASE DEFAULT
+          CALL calc_boundary(meanx, ispecies)
+          CALL calc_boundary(meany, ispecies)
+          CALL calc_boundary(meanz, ispecies)
+      END SELECT
+
       CALL calc_boundary(part_count, ispecies)
     END DO
 
-    CALL calc_boundary(meanx)
-    CALL calc_boundary(meany)
-    CALL calc_boundary(meanz)
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL calc_boundary(meanx)
+      CASE(c_dir_y)
+        CALL calc_boundary(meany)
+      CASE(c_dir_z)
+        CALL calc_boundary(meanz)
+      CASE DEFAULT
+        CALL calc_boundary(meanx)
+        CALL calc_boundary(meany)
+        CALL calc_boundary(meanz)
+    END SELECT
     CALL calc_boundary(part_count)
 
     part_count = MAX(part_count, 1.e-6_num)
@@ -828,20 +898,62 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz)
-          sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf &
-              * ((part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-              + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-              + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2)
-          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-        END DO
-        END DO
-        END DO
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_y)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_z)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE DEFAULT
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+                    + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+                    + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+        END SELECT
         current => current%next
       END DO
       CALL calc_boundary(sigma, ispecies)
@@ -852,7 +964,7 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! 3/2 kT = <p^2>/(2m)
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / dof
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 

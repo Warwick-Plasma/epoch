@@ -656,6 +656,18 @@ CONTAINS
             'temperature', 'Temperature', 'K', &
             c_stagger_cell_centre, calc_temperature, array)
 
+        CALL write_nspecies_field(c_dump_temperature_x, code, &
+            'temperature_x', 'Temperature_x', 'K', &
+            c_stagger_cell_centre, calc_temperature, array, (/c_dir_x/))
+
+        CALL write_nspecies_field(c_dump_temperature_y, code, &
+            'temperature_y', 'Temperature_y', 'K', &
+            c_stagger_cell_centre, calc_temperature, array, (/c_dir_y/))
+
+        CALL write_nspecies_field(c_dump_temperature_z, code, &
+            'temperature_z', 'Temperature_z', 'K', &
+            c_stagger_cell_centre, calc_temperature, array, (/c_dir_z/))
+
         CALL write_nspecies_field(c_dump_jx, code, &
             'jx', 'Jx', 'A/m^2', &
             c_stagger_cell_centre, calc_per_species_jx, array)
@@ -1403,6 +1415,30 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+      CASE(c_dump_temperature_x)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_x)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature_y)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_y)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature_z)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_z)
+          avg%r4array(:,ispecies) = avg%r4array(:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
       CASE(c_dump_ekflux)
         nd = averaged_var_dims(ioutput)
         ALLOCATE(array(1-ng:nx+ng))
@@ -1490,6 +1526,27 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng))
         DO ispecies = 1, n_species_local
           CALL calc_temperature(array, ispecies-avg%species_sum)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature_x)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_x)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature_y)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_y)
+          avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_temperature_z)
+        ALLOCATE(array(1-ng:nx+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_temperature(array, ispecies-avg%species_sum, c_dir_z)
           avg%array(:,ispecies) = avg%array(:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)

@@ -533,16 +533,19 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_ppc               = 48
   INTEGER, PARAMETER :: c_dump_average_weight    = 49
   INTEGER, PARAMETER :: c_dump_persistent_ids    = 50
+  INTEGER, PARAMETER :: c_dump_temperature_x     = 51
+  INTEGER, PARAMETER :: c_dump_temperature_y     = 52
+  INTEGER, PARAMETER :: c_dump_temperature_z     = 53
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 51
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 52
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 53
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 54
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 55
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 56
-  INTEGER, PARAMETER :: num_vars_to_dump         = 56
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 54
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 55
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 56
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 57
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 58
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 59
+  INTEGER, PARAMETER :: num_vars_to_dump         = 59
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 50
+  INTEGER, PARAMETER :: num_vars_to_dump         = 53
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
