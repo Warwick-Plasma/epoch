@@ -61,7 +61,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: its
     INTEGER, INTENT(IN) :: comp_its
     INTEGER, INTENT(IN), DIMENSION(:), ALLOCATABLE :: stride
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wk_array
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wk_array, wk_array2
     INTEGER :: ix, iy, iz
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: isubx, isuby, isubz
@@ -80,6 +80,7 @@ CONTAINS
     ng_l = MAX(sng, jng)
     alpha = 0.5_num
     ALLOCATE(wk_array(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l, 1-ng_l:nz+ng_l))
+    ALLOCATE(wk_array2(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l, 1-ng_l:nz+ng_l))
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
@@ -112,7 +113,7 @@ CONTAINS
         DO iz = 1, nz
         DO iy = 1, ny
         DO ix = 1, nx
-          wk_array(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
+          wk_array2(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
               + (wk_array(ix-cstride,iy,iz) + wk_array(ix+cstride,iy,iz) &
               +  wk_array(ix,iy-cstride,iz) + wk_array(ix,iy+cstride,iz) &
               +  wk_array(ix,iy,iz-cstride) + wk_array(ix,iy,iz+cstride)) &
@@ -120,6 +121,7 @@ CONTAINS
         END DO
         END DO
         END DO
+        wk_array = wk_array2
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
@@ -128,7 +130,7 @@ CONTAINS
 #endif
     array(1:nx,1:ny,1:nz) = wk_array(1:nx,1:ny,1:nz)
 
-    DEALLOCATE(wk_array)
+    DEALLOCATE(wk_array, wk_array2)
     DEALLOCATE(stride_inner)
 
   END SUBROUTINE smooth_array

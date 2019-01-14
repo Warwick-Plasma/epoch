@@ -720,13 +720,20 @@ CONTAINS
 
 
 
-  SUBROUTINE set_stack_zero(stack)
+  SUBROUTINE set_stack_zero(stack, n_zeros)
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack
+    INTEGER, INTENT(IN), OPTIONAL :: n_zeros
+    INTEGER :: zmax, iz
+
+    zmax = 1
+    IF (PRESENT(n_zeros)) zmax = n_zeros
 
     CALL deallocate_stack(stack)
     CALL initialise_stack(stack)
-    CALL tokenize('0', stack, errcode)
+    DO iz = 1, zmax
+      CALL tokenize('0', stack, errcode)
+    END DO
 
   END SUBROUTINE set_stack_zero
 

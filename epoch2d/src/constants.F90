@@ -35,6 +35,7 @@ MODULE constants
       c_smallest_exp = (MINEXPONENT(1.0_num) - 1.0_num) * c_log2
 
   INTEGER, PARAMETER :: c_ndims = 2
+  INTEGER, PARAMETER :: c_ndirs = 3 ! Number of directions for velocity
 
   ! File unit for deck parser diagnostic output
   INTEGER, PARAMETER :: stdout = 6
@@ -125,6 +126,11 @@ MODULE constants
   INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 4
   INTEGER, PARAMETER :: c_maxwell_solver_cowan = 5
   INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 6
+
+  ! Particle distribution type codes
+  INTEGER, PARAMETER :: c_ic_df_thermal = 1
+  INTEGER, PARAMETER :: c_ic_df_relativistic_thermal = 2
+  INTEGER, PARAMETER :: c_ic_df_arbitrary = 3
 
   ! domain codes
   INTEGER, PARAMETER :: c_do_full = 0
