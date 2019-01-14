@@ -18,6 +18,7 @@ MODULE particle_temperature
 
   USE shared_data
   USE random_generator
+  USE evaluator
 
   IMPLICIT NONE
 
@@ -76,6 +77,245 @@ CONTAINS
 
 
 
+  ! Subroutine to initialise a thermal particle distribution
+  ! Assumes linear interpolation of temperature between cells
+  SUBROUTINE setup_particle_temperature_relativistic(temperature, &
+      part_species, drift)
+
+    REAL(num), DIMENSION(1-ng:,:), INTENT(IN) :: temperature
+    TYPE(particle_species), POINTER :: part_species
+    REAL(num), DIMENSION(1-ng:,:), INTENT(IN) :: drift
+    TYPE(particle_list), POINTER :: partlist
+    REAL(num) :: mass
+    REAL(num), DIMENSION(c_ndirs) ::  temp_local, drift_local
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart
+    INTEGER :: ix, idir
+#include "particle_head.inc"
+
+    partlist => part_species%attached_list
+    current => partlist%head
+    ipart = 0
+    DO WHILE(ipart < partlist%count)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
+#else
+      mass = part_species%mass
+#endif
+
+      ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+
+      temp_local = 0.0_num
+      drift_local = 0.0_num
+      DO idir = 1, c_ndirs
+        DO ix = sf_min, sf_max
+          temp_local(idir) = temp_local(idir) &
+              + gx(ix) * temperature(cell_x+ix, idir)
+          drift_local(idir) = drift_local(idir) &
+              + gx(ix) * drift(cell_x+ix, idir)
+        END DO
+      END DO
+
+      current%part_p = momentum_from_temperature_relativistic(mass, &
+          temp_local, part_species%fractional_tail_cutoff)
+
+      CALL particle_drift_lorentz_transform(current, mass, drift_local)
+
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+  END SUBROUTINE setup_particle_temperature_relativistic
+
+
+
+  ! Subroutine to initialise an arbitrary distribution function
+  SUBROUTINE setup_particle_dist_fn(part_species, drift)
+
+    TYPE(particle_species), POINTER :: part_species
+    REAL(num), DIMENSION(1-ng:,:), INTENT(IN) :: drift
+    TYPE(particle_list), POINTER :: partlist
+    REAL(num) :: mass
+    REAL(num), DIMENSION(c_ndirs) ::  drift_local
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart, iit, ipart_global, iit_global
+    REAL(num) :: average_its
+    INTEGER :: ix, idir, err
+    TYPE(parameter_pack) :: parameters
+    REAL(num), DIMENSION(c_ndirs, 2) :: ranges
+    CHARACTER(LEN=25) :: string
+#include "particle_head.inc"
+
+    partlist => part_species%attached_list
+    current => partlist%head
+    ipart = 0
+    iit = 0
+    DO WHILE(ipart < partlist%count)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
+#else
+      mass = part_species%mass
+#endif
+
+      ! Assume that temperature is cell centred
+#include "particle_to_grid.inc"
+
+      drift_local = 0.0_num
+      DO idir = 1, c_ndirs
+        DO ix = sf_min, sf_max
+          drift_local(idir) = drift_local(idir) &
+              + gx(ix) * drift(cell_x+ix, idir)
+        END DO
+      END DO
+
+      parameters%use_grid_position = .FALSE.
+      parameters%pack_ix = cell_x
+      parameters%pack_pos = current%part_pos
+      err = 0
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(1), &
+          parameters, 2, ranges(1,:), err)
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(2), &
+          parameters, 2, ranges(2,:), err)
+      CALL evaluate_with_parameters_to_array(part_species%dist_fn_range(3), &
+          parameters, 2, ranges(3,:), err)
+
+      CALL sample_from_deck_expression(current, part_species%dist_fn, &
+          parameters, ranges, iit)
+
+      CALL particle_drift_lorentz_transform(current, mass, drift_local)
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+    CALL MPI_REDUCE(ipart, ipart_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
+        errcode)
+    CALL MPI_REDUCE(iit, iit_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
+        errcode)
+    average_its = REAL(iit_global, num) / MAX(REAL(ipart_global, num), c_tiny)
+
+    IF (rank == 0) THEN
+      WRITE(string,'(F8.1)') average_its
+      WRITE(*,*) 'Setup distribution for particles of species ', '"' &
+          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
+          // ' iteratations per particle on average'
+      IF (average_its >= 20.0_num) THEN
+        WRITE(*,*) '***WARNING***'
+        WRITE(*,*) 'Average iterations is high. ', &
+            'Possibly try smaller momentum range'
+      ENDIF
+#ifndef NO_IO
+      WRITE(stat_unit,*) 'Setup distribution for particles of species ', '"' &
+          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
+          // ' iteratations per particle on average'
+      IF (average_its >= 20.0_num) THEN
+        WRITE(stat_unit,*) '***WARNING***'
+        WRITE(stat_unit,*) 'Average iterations is high. ', &
+            'Possibly try smaller momentum range'
+      ENDIF
+#endif
+    ENDIF
+
+  END SUBROUTINE setup_particle_dist_fn
+
+
+
+  FUNCTION momentum_from_temperature_relativistic(mass, temperature, cutoff)
+
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: temperature
+    REAL(num), INTENT(IN) :: cutoff
+    REAL(num), DIMENSION(c_ndirs) :: momentum_from_temperature_relativistic
+
+    ! Three parameters for calculating the range of momenta
+    ! Includes different combinations of physical constants
+    REAL(num), PARAMETER :: param1 = -3.07236e-40_num
+    REAL(num), PARAMETER :: param2 = 2.35985e-80_num
+    ! c^2/kb
+    REAL(num), PARAMETER :: c2_k = 6.509658203714208e39_num
+    REAL(num) :: rand, probability
+    REAL(num) :: momentum_x, momentum_y, momentum_z, momentum
+    REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
+    INTEGER :: dof
+    REAL(num) :: inter1, inter2, inter3
+
+    temp = SUM(temperature)
+    temp_max = MAXVAL(temperature)
+    dof = COUNT(temperature > c_tiny)
+    ! If there are no degrees of freedom them sampling is unnecessary
+    ! plasma is cold
+    IF (dof == 0) THEN
+      momentum_from_temperature_relativistic = 0.0_num
+      RETURN
+    ENDIF
+
+    p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
+        + param2 * temp**2 * LOG(cutoff)**2) / mass
+
+    p_max_x = p_max * SQRT(temperature(1) / temp)
+    p_max_y = p_max * SQRT(temperature(2) / temp)
+    p_max_z = p_max * SQRT(temperature(3) / temp)
+
+    ! Loop around until a momentum is accepted for this particle
+    DO
+      ! Generate random x and y momenta between p_min and p_max
+      momentum_x = random() * 2.0_num * p_max_x - p_max_x
+      momentum_y = random() * 2.0_num * p_max_y - p_max_y
+      momentum_z = random() * 2.0_num * p_max_z - p_max_z
+      momentum = SQRT(momentum_x**2 + momentum_y**2 + momentum_z**2)
+      ! From that value, have to generate the probability that a particle
+      ! with that momentum should be accepted.
+      ! This is just the particle distribution function scaled to have
+      ! a maximum of 1 (or lower).
+      ! In general you will have to work this out yourself
+      inter1 = momentum_x**2 / MAX(temperature(1) / temp, c_tiny)
+      inter2 = momentum_y**2 / MAX(temperature(2) / temp, c_tiny)
+      inter3 = momentum_z**2 / MAX(temperature(3) / temp, c_tiny)
+      probability = EXP(-c2_k * mass / temp * (SQRT(1.0_num &
+          + inter1 + inter2 + inter3) - 1.0_num))
+      ! Once you know your probability you just generate a random number
+      ! between 0 and 1 and if the generated number is less than the
+      ! probability then accept the particle and exit this loop.
+      rand = random()
+      IF (rand <= probability) EXIT
+    END DO
+
+    momentum_from_temperature_relativistic = &
+        (/ momentum_x, momentum_y, momentum_z /) * m0 * c
+
+  END FUNCTION momentum_from_temperature_relativistic
+
+
+
+  ! Subroutine takes a particle and a drift momentum and Lorentz transforms
+  ! The particle momentum subject to the specified drift
+  SUBROUTINE particle_drift_lorentz_transform(part, mass, drift)
+
+    TYPE(particle), POINTER :: part
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(3), INTENT(IN) :: drift
+    REAL(num), DIMENSION(3) :: drift_mc, drift_mc2, part_mc
+    REAL(num) :: gamma_drift, gamma_part, e_prime, imc
+    INTEGER :: idir
+
+    imc = 1.0_num / mass / c
+    drift_mc = drift * imc
+    part_mc = part%part_p * imc
+
+    gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift_mc, drift_mc))
+    gamma_part = SQRT(1.0_num + DOT_PRODUCT(part_mc, part_mc))
+    e_prime = gamma_part * mass * c**2
+
+    drift_mc2 = drift_mc / c
+    DO idir = 1, 3
+      part%part_p(idir) = part%part_p(idir) * gamma_drift &
+          + drift_mc2(idir) * e_prime
+    ENDDO
+
+  END SUBROUTINE particle_drift_lorentz_transform
+
+
+
   FUNCTION momentum_from_temperature(mass, temperature, drift)
 
     REAL(num), INTENT(IN) :: mass, temperature, drift
@@ -107,5 +347,50 @@ CONTAINS
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
 
   END FUNCTION flux_momentum_from_temperature
+
+
+
+  ! Function to take a deck expression and sample until it returns a value
+  SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
+      ranges, iit_r)
+
+    TYPE(particle), INTENT(INOUT) :: part
+    TYPE(primitive_stack), INTENT(INOUT) :: stack
+    TYPE(parameter_pack), INTENT(INOUT) :: parameters
+    REAL(num), DIMENSION(3,2), INTENT(IN) :: ranges
+    INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
+    REAL(num) :: setlevel
+    INTEGER :: err
+    INTEGER(i8) :: iit
+
+    err = c_err_none
+    IF (PRESENT(iit_r)) iit = iit_r
+    DO
+      ! These lines are setting global variables that are later used by
+      ! the deck parser
+      parameters%pack_p(1) = random() * (ranges(1,2) - ranges(1,1)) &
+          + ranges(1,1)
+      parameters%pack_p(2) = random() * (ranges(2,2) - ranges(2,1)) &
+          + ranges(2,1)
+      parameters%pack_p(3) = random() * (ranges(3,2) - ranges(3,1)) &
+          + ranges(3,1)
+
+      ! pack spatial information has already been set before calling
+      setlevel = evaluate_with_parameters(stack, parameters, err)
+      IF (err /= c_err_none .AND. rank == 0) THEN
+        PRINT*, 'Unable to evaluate distribution function'
+        CALL abort_code(c_err_bad_setup)
+      ENDIF
+
+      iit = iit + 1
+
+      IF (random() <= setlevel) EXIT
+    ENDDO
+
+    IF (PRESENT(iit_r)) iit_r = iit
+
+    part%part_p = parameters%pack_p
+
+  END SUBROUTINE sample_from_deck_expression
 
 END MODULE particle_temperature
