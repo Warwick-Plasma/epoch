@@ -664,7 +664,6 @@ CONTAINS
     LOGICAL :: spec_sum
     REAL(num) :: dof, wdata
     INTEGER :: dir
-    INTEGER, PARAMETER :: c_dir_all = -1
 #include "particle_head.inc"
 
     ALLOCATE(meanx(1-ng:nx+ng))
@@ -681,7 +680,7 @@ CONTAINS
       dir = direction
       dof = 1.0_num
     ELSE
-      dir = c_dir_all
+      dir = -1
       dof = 3.0_num
     END IF
 
@@ -767,16 +766,16 @@ CONTAINS
         DO ix = sf_min, sf_max
           gf = gx(ix)
           SELECT CASE(dir)
-            CASE(c_dir_all)
-              wdata = (part_pmx - meanx(cell_x+ix))**2 &
-              + (part_pmy - meany(cell_x+ix))**2 &
-              + (part_pmz - meanz(cell_x+ix))**2
             CASE(c_dir_x)
               wdata = (part_pmx - meanx(cell_x+ix))**2
             CASE(c_dir_y)
               wdata = (part_pmy - meany(cell_x+ix))**2
             CASE(c_dir_z)
               wdata = (part_pmz - meanz(cell_x+ix))**2
+            CASE DEFAULT
+              wdata = (part_pmx - meanx(cell_x+ix))**2 &
+              + (part_pmy - meany(cell_x+ix))**2 &
+              + (part_pmz - meanz(cell_x+ix))**2
           END SELECT
           sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
           part_count(cell_x+ix) = part_count(cell_x+ix) + gf
