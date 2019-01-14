@@ -172,6 +172,10 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
   INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
 
+  INTEGER, PARAMETER :: c_const_px = 108
+  INTEGER, PARAMETER :: c_const_py = 109
+  INTEGER, PARAMETER :: c_const_pz = 110
+
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
   INTEGER, PARAMETER :: c_const_custom_lowbound = 8192
@@ -235,6 +239,7 @@ MODULE shared_data
     LOGICAL :: use_grid_position = .TRUE.
     INTEGER :: pack_ix = 1
     REAL(num) :: pack_pos = 0.0_num
+    REAL(num), DIMENSION(c_ndirs) :: pack_p = 0.0_num
   END TYPE parameter_pack
 
   TYPE stack_element
@@ -406,6 +411,13 @@ MODULE shared_data
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
+
+    ! Parameters for relativistic and arbitrary particle loader
+    INTEGER :: ic_df_type
+    REAL(num) :: fractional_tail_cutoff
+
+    TYPE(primitive_stack) :: dist_fn
+    TYPE(primitive_stack) :: dist_fn_range(3)
 
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
