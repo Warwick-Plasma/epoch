@@ -494,8 +494,6 @@ CONTAINS
     ELSE IF (str_cmp(element, 'rolling_restart')) THEN
       ! Only handled on first parse
 
-    ELSE IF (str_cmp(element, 'rolling_restart')) THEN
-
     ELSE IF (str_cmp(element, 'particles') &
         .OR. str_cmp(element, 'particle_grid')) THEN
       elementselected = c_dump_part_grid
@@ -631,6 +629,21 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'temperature')) THEN
       elementselected = c_dump_temperature
+
+    ELSE IF (str_cmp(element, 'tx') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temp_x')) THEN
+      elementselected = c_dump_temperature_x
+
+    ELSE IF (str_cmp(element, 'ty') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temp_y')) THEN
+      elementselected = c_dump_temperature_y
+
+    ELSE IF (str_cmp(element, 'tz') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temp_z')) THEN
+      elementselected = c_dump_temperature_z
 
     ELSE IF (str_cmp(element, 'distribution_functions')) THEN
       elementselected = c_dump_dist_fns
@@ -786,6 +799,9 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
@@ -828,6 +844,9 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_ekflux) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
