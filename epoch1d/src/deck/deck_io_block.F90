@@ -32,8 +32,6 @@ MODULE deck_io_block
   LOGICAL, DIMENSION(num_vars_to_dump) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   LOGICAL, PRIVATE :: warning_printed, got_dt_average
-  CHARACTER(LEN=string_length), DIMENSION(num_vars_to_dump) :: io_block_name
-  CHARACTER(LEN=string_length), DIMENSION(num_vars_to_dump) :: alternate_name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
@@ -46,76 +44,6 @@ CONTAINS
 
     any_average = .FALSE.
     warning_printed = .FALSE.
-    alternate_name = ''
-    io_block_name (c_dump_part_grid        ) = 'particles'
-    alternate_name(c_dump_part_grid        ) = 'particle_grid'
-    io_block_name (c_dump_grid             ) = 'grid'
-    alternate_name(c_dump_grid             ) = 'field_grid'
-    io_block_name (c_dump_part_species     ) = 'species_id'
-    io_block_name (c_dump_part_weight      ) = 'particle_weight'
-    alternate_name(c_dump_part_weight      ) = 'weight'
-    io_block_name (c_dump_part_px          ) = 'px'
-    io_block_name (c_dump_part_py          ) = 'py'
-    io_block_name (c_dump_part_pz          ) = 'pz'
-    io_block_name (c_dump_part_vx          ) = 'vx'
-    io_block_name (c_dump_part_vy          ) = 'vy'
-    io_block_name (c_dump_part_vz          ) = 'vz'
-    io_block_name (c_dump_part_charge      ) = 'charge'
-    io_block_name (c_dump_part_mass        ) = 'mass'
-    alternate_name(c_dump_part_mass        ) = 'rest_mass'
-    io_block_name (c_dump_part_id          ) = 'id'
-    io_block_name (c_dump_part_ek          ) = 'ek'
-    alternate_name(c_dump_part_ek          ) = 'particle_energy'
-    io_block_name (c_dump_part_rel_mass    ) = 'relativistic_mass'
-    io_block_name (c_dump_part_gamma       ) = 'gamma'
-
-    io_block_name (c_dump_part_opdepth     ) = ''
-    io_block_name (c_dump_part_qed_energy  ) = ''
-    io_block_name (c_dump_part_opdepth_tri ) = ''
-#ifdef PHOTONS
-    io_block_name (c_dump_part_opdepth     ) = 'optical_depth'
-    io_block_name (c_dump_part_qed_energy  ) = 'qed_energy'
-#ifdef TRIDENT_PHOTONS
-    io_block_name (c_dump_part_opdepth_tri ) = 'trident_optical_depth'
-#endif
-#endif
-#ifdef WORK_DONE_INTEGRATED
-    io_block_name (c_dump_part_work_x      ) = 'work_x'
-    io_block_name (c_dump_part_work_y      ) = 'work_y'
-    io_block_name (c_dump_part_work_z      ) = 'work_z'
-    io_block_name (c_dump_part_work_x_total) = 'work_x_total'
-    io_block_name (c_dump_part_work_y_total) = 'work_y_total'
-    io_block_name (c_dump_part_work_z_total) = 'work_z_total'
-#endif
-
-    io_block_name (c_dump_ex               ) = 'ex'
-    io_block_name (c_dump_ey               ) = 'ey'
-    io_block_name (c_dump_ez               ) = 'ez'
-    io_block_name (c_dump_bx               ) = 'bx'
-    io_block_name (c_dump_by               ) = 'by'
-    io_block_name (c_dump_bz               ) = 'bz'
-    io_block_name (c_dump_jx               ) = 'jx'
-    io_block_name (c_dump_jy               ) = 'jy'
-    io_block_name (c_dump_jz               ) = 'jz'
-    io_block_name (c_dump_ekbar            ) = 'ekbar'
-    io_block_name (c_dump_mass_density     ) = 'mass_density'
-    io_block_name (c_dump_charge_density   ) = 'charge_density'
-    io_block_name (c_dump_number_density   ) = 'number_density'
-    io_block_name (c_dump_ppc              ) = 'ppc'
-    alternate_name(c_dump_ppc              ) = 'particles_per_cell'
-    io_block_name (c_dump_average_weight   ) = 'average_weight'
-    io_block_name (c_dump_temperature      ) = 'temperature'
-    io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
-    io_block_name (c_dump_probes           ) = 'particle_probes'
-    io_block_name (c_dump_ejected_particles) = 'ejected_particles'
-    io_block_name (c_dump_ekflux           ) = 'ekflux'
-    io_block_name (c_dump_poynt_flux       ) = 'poynt_flux'
-    io_block_name (c_dump_cpml_psi_eyx     ) = 'cpml_psi_eyx'
-    io_block_name (c_dump_cpml_psi_ezx     ) = 'cpml_psi_ezx'
-    io_block_name (c_dump_cpml_psi_byx     ) = 'cpml_psi_byx'
-    io_block_name (c_dump_cpml_psi_bzx     ) = 'cpml_psi_bzx'
-    io_block_name (c_dump_absorption       ) = 'absorption'
-    io_block_name (c_dump_total_energy_sum ) = 'total_energy_sum'
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -359,7 +287,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
-    INTEGER :: loop, elementselected, mask, fullmask = 0, mask_element
+    INTEGER :: elementselected, mask, fullmask = 0, mask_element
     INTEGER :: i, is, subset, n_list, io, iu
     INTEGER, ALLOCATABLE :: subsets(:)
     LOGICAL :: bad, found, got_element
@@ -399,6 +327,7 @@ CONTAINS
     errcode = c_err_none
     style_error = c_err_none
     got_element = .TRUE.
+    elementselected = 0
 
     IF (str_cmp(element, 'dt_snapshot')) THEN
       io_block%dt_snapshot = as_real_print(value, element, errcode)
@@ -564,6 +493,178 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'rolling_restart')) THEN
       ! Only handled on first parse
+
+    ELSE IF (str_cmp(element, 'rolling_restart')) THEN
+
+    ELSE IF (str_cmp(element, 'particles') &
+        .OR. str_cmp(element, 'particle_grid')) THEN
+      elementselected = c_dump_part_grid
+
+    ELSE IF (str_cmp(element, 'grid') &
+        .OR. str_cmp(element, 'field_grid')) THEN
+      elementselected = c_dump_grid
+
+    ELSE IF (str_cmp(element, 'species_id')) THEN
+      elementselected = c_dump_part_species
+
+    ELSE IF (str_cmp(element, 'particle_weight') &
+        .OR. str_cmp(element, 'weight')) THEN
+      elementselected = c_dump_part_weight
+
+    ELSE IF (str_cmp(element, 'px')) THEN
+      elementselected = c_dump_part_px
+
+    ELSE IF (str_cmp(element, 'py')) THEN
+      elementselected = c_dump_part_py
+
+    ELSE IF (str_cmp(element, 'pz')) THEN
+      elementselected = c_dump_part_pz
+
+    ELSE IF (str_cmp(element, 'vx')) THEN
+      elementselected = c_dump_part_vx
+
+    ELSE IF (str_cmp(element, 'vy')) THEN
+      elementselected = c_dump_part_vy
+
+    ELSE IF (str_cmp(element, 'vz')) THEN
+      elementselected = c_dump_part_vz
+
+    ELSE IF (str_cmp(element, 'charge')) THEN
+      elementselected = c_dump_part_charge
+
+    ELSE IF (str_cmp(element, 'mass') &
+        .OR. str_cmp(element, 'rest_mass')) THEN
+      elementselected = c_dump_part_mass
+
+    ELSE IF (str_cmp(element, 'id')) THEN
+      elementselected = c_dump_part_id
+
+    ELSE IF (str_cmp(element, 'ek') &
+        .OR. str_cmp(element, 'particle_energy')) THEN
+      elementselected = c_dump_part_ek
+
+    ELSE IF (str_cmp(element, 'relativistic_mass')) THEN
+      elementselected = c_dump_part_rel_mass
+
+    ELSE IF (str_cmp(element, 'gamma')) THEN
+      elementselected = c_dump_part_gamma
+
+#ifdef PHOTONS
+    ELSE IF (str_cmp(element, 'optical_depth')) THEN
+      elementselected = c_dump_part_opdepth
+
+    ELSE IF (str_cmp(element, 'qed_energy')) THEN
+      elementselected = c_dump_part_qed_energy
+
+#ifdef TRIDENT_PHOTONS
+    ELSE IF (str_cmp(element, 'trident_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_tri
+#endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+
+    ELSE IF (str_cmp(element, 'work_x')) THEN
+      elementselected = c_dump_part_work_x
+
+    ELSE IF (str_cmp(element, 'work_y')) THEN
+      elementselected = c_dump_part_work_y
+
+    ELSE IF (str_cmp(element, 'work_z')) THEN
+      elementselected = c_dump_part_work_z
+
+    ELSE IF (str_cmp(element, 'work_x_total')) THEN
+      elementselected = c_dump_part_work_x_total
+
+    ELSE IF (str_cmp(element, 'work_y_total')) THEN
+      elementselected = c_dump_part_work_y_total
+
+    ELSE IF (str_cmp(element, 'work_z_total')) THEN
+      elementselected = c_dump_part_work_z_total
+#endif
+
+
+    ELSE IF (str_cmp(element, 'ex')) THEN
+      elementselected = c_dump_ex
+
+    ELSE IF (str_cmp(element, 'ey')) THEN
+      elementselected = c_dump_ey
+
+    ELSE IF (str_cmp(element, 'ez')) THEN
+      elementselected = c_dump_ez
+
+    ELSE IF (str_cmp(element, 'bx')) THEN
+      elementselected = c_dump_bx
+
+    ELSE IF (str_cmp(element, 'by')) THEN
+      elementselected = c_dump_by
+
+    ELSE IF (str_cmp(element, 'bz')) THEN
+      elementselected = c_dump_bz
+
+    ELSE IF (str_cmp(element, 'jx')) THEN
+      elementselected = c_dump_jx
+
+    ELSE IF (str_cmp(element, 'jy')) THEN
+      elementselected = c_dump_jy
+
+    ELSE IF (str_cmp(element, 'jz')) THEN
+      elementselected = c_dump_jz
+
+    ELSE IF (str_cmp(element, 'ekbar')) THEN
+      elementselected = c_dump_ekbar
+
+    ELSE IF (str_cmp(element, 'mass_density')) THEN
+      elementselected = c_dump_mass_density
+
+    ELSE IF (str_cmp(element, 'charge_density')) THEN
+      elementselected = c_dump_charge_density
+
+    ELSE IF (str_cmp(element, 'number_density')) THEN
+      elementselected = c_dump_number_density
+
+    ELSE IF (str_cmp(element, 'ppc') &
+        .OR. str_cmp(element, 'particles_per_cell')) THEN
+      elementselected = c_dump_ppc
+
+    ELSE IF (str_cmp(element, 'average_weight')) THEN
+      elementselected = c_dump_average_weight
+
+    ELSE IF (str_cmp(element, 'temperature')) THEN
+      elementselected = c_dump_temperature
+
+    ELSE IF (str_cmp(element, 'distribution_functions')) THEN
+      elementselected = c_dump_dist_fns
+
+    ELSE IF (str_cmp(element, 'particle_probes')) THEN
+      elementselected = c_dump_probes
+
+    ELSE IF (str_cmp(element, 'ejected_particles')) THEN
+      elementselected = c_dump_ejected_particles
+
+    ELSE IF (str_cmp(element, 'ekflux')) THEN
+      elementselected = c_dump_ekflux
+
+    ELSE IF (str_cmp(element, 'poynt_flux')) THEN
+      elementselected = c_dump_poynt_flux
+
+    ELSE IF (str_cmp(element, 'cpml_psi_eyx')) THEN
+      elementselected = c_dump_cpml_psi_eyx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_ezx')) THEN
+      elementselected = c_dump_cpml_psi_ezx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_byx')) THEN
+      elementselected = c_dump_cpml_psi_byx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_bzx')) THEN
+      elementselected = c_dump_cpml_psi_bzx
+
+    ELSE IF (str_cmp(element, 'absorption')) THEN
+      elementselected = c_dump_absorption
+
+    ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
+      elementselected = c_dump_total_energy_sum
+
     ELSE
       got_element = .FALSE.
 
@@ -607,21 +708,12 @@ CONTAINS
       END IF
     END IF
 
-    IF (got_element) RETURN
+    IF (elementselected == 0) THEN
+      IF (got_element) RETURN
 
-    errcode = c_err_unknown_element
-
-    elementselected = 0
-
-    DO loop = 1, num_vars_to_dump
-      IF (str_cmp(element, TRIM(ADJUSTL(io_block_name(loop)))) &
-          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
-        elementselected = loop
-        EXIT
-      END IF
-    END DO
-
-    IF (elementselected == 0) RETURN
+      errcode = c_err_unknown_element
+      RETURN
+    END IF
 
     IF (io_block_done(elementselected)) THEN
       errcode = c_err_preset_element
@@ -750,7 +842,7 @@ CONTAINS
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) 'Error occurred whilst assigning the averaging ', &
                     'dumpmask of the variable'
-                WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
+                WRITE(io,*) '"' // TRIM(element) &
                     // '" in ', 'output block number ', block_number
                 WRITE(io,*) 'Only one average per variable can be computed'
                 WRITE(io,*) 'If multiple were specified the first averaging ', &
