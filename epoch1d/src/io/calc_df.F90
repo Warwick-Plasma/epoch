@@ -664,6 +664,7 @@ CONTAINS
     LOGICAL :: spec_sum
     REAL(num) :: dof, wdata
     INTEGER :: dir
+
 #include "particle_head.inc"
 
     ALLOCATE(meanx(1-ng:nx+ng))
@@ -717,24 +718,37 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * part_w
-          SELECT CASE(dir)
-            CASE(c_dir_x)
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * part_w
               meanx(cell_x+ix) = meanx(cell_x+ix) + gf * part_pmx
-            CASE(c_dir_y)
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE(c_dir_y)
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * part_w
               meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
-            CASE(c_dir_z)
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE(c_dir_z)
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * part_w
               meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
-            CASE DEFAULT
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE DEFAULT
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * part_w
               meanx(cell_x+ix) = meanx(cell_x+ix) + gf * part_pmx
               meany(cell_x+ix) = meany(cell_x+ix) + gf * part_pmy
               meanz(cell_x+ix) = meanz(cell_x+ix) + gf * part_pmz
-          END SELECT
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
-        END DO
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+        END SELECT
         current => current%next
       END DO
+
       SELECT CASE(dir)
         CASE(c_dir_x)
           CALL calc_boundary(meanx, ispecies)
@@ -747,6 +761,7 @@ CONTAINS
           CALL calc_boundary(meany, ispecies)
           CALL calc_boundary(meanz, ispecies)
       END SELECT
+
       CALL calc_boundary(part_count, ispecies)
     END DO
 
@@ -790,23 +805,38 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO ix = sf_min, sf_max
-          gf = gx(ix)
-          SELECT CASE(dir)
-            CASE(c_dir_x)
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO ix = sf_min, sf_max
+              gf = gx(ix)
               wdata = (part_pmx - meanx(cell_x+ix))**2
-            CASE(c_dir_y)
+              sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE(c_dir_y)
+            DO ix = sf_min, sf_max
+              gf = gx(ix)
               wdata = (part_pmy - meany(cell_x+ix))**2
-            CASE(c_dir_z)
+              sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE(c_dir_z)
+            DO ix = sf_min, sf_max
+              gf = gx(ix)
               wdata = (part_pmz - meanz(cell_x+ix))**2
-            CASE DEFAULT
+              sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+          CASE DEFAULT
+            DO ix = sf_min, sf_max
+              gf = gx(ix)
               wdata = (part_pmx - meanx(cell_x+ix))**2 &
-              + (part_pmy - meany(cell_x+ix))**2 &
-              + (part_pmz - meanz(cell_x+ix))**2
-          END SELECT
-          sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
-          part_count(cell_x+ix) = part_count(cell_x+ix) + gf
-        END DO
+                    + (part_pmy - meany(cell_x+ix))**2 &
+                    + (part_pmz - meanz(cell_x+ix))**2
+              sigma(cell_x+ix) = sigma(cell_x+ix) + gf * wdata
+              part_count(cell_x+ix) = part_count(cell_x+ix) + gf
+            END DO
+        END SELECT
         current => current%next
       END DO
       CALL calc_boundary(sigma, ispecies)

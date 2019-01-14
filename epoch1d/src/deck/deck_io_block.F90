@@ -494,8 +494,6 @@ CONTAINS
     ELSE IF (str_cmp(element, 'rolling_restart')) THEN
       ! Only handled on first parse
 
-    ELSE IF (str_cmp(element, 'rolling_restart')) THEN
-
     ELSE IF (str_cmp(element, 'particles') &
         .OR. str_cmp(element, 'particle_grid')) THEN
       elementselected = c_dump_part_grid
