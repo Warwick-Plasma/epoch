@@ -53,6 +53,8 @@
    function is shifted up by the drift momentum specified. The temperature
    key is not compatible and will be silently ignored if specified.
 
+ * Added temperature_{x,y,z} output diagnostics
+
 
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
