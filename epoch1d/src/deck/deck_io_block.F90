@@ -633,15 +633,18 @@ CONTAINS
       elementselected = c_dump_temperature
 
     ELSE IF (str_cmp(element, 'tx') &
-        .OR. str_cmp(element, 'temperature_x')) THEN
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temp_x')) THEN
       elementselected = c_dump_temperature_x
 
     ELSE IF (str_cmp(element, 'ty') &
-        .OR. str_cmp(element, 'temperature_y')) THEN
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temp_y')) THEN
       elementselected = c_dump_temperature_y
 
     ELSE IF (str_cmp(element, 'tz') &
-        .OR. str_cmp(element, 'temperature_z')) THEN
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temp_z')) THEN
       elementselected = c_dump_temperature_z
 
     ELSE IF (str_cmp(element, 'distribution_functions')) THEN
