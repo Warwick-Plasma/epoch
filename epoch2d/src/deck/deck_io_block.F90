@@ -120,6 +120,12 @@ CONTAINS
     io_block_name (c_dump_cpml_psi_bzy     ) = 'cpml_psi_bzy'
     io_block_name (c_dump_absorption       ) = 'absorption'
     io_block_name (c_dump_total_energy_sum ) = 'total_energy_sum'
+    io_block_name (c_dump_temperature_x    ) = 'tx'
+    alternate_name(c_dump_temperature_x    ) = 'temperature_x'
+    io_block_name (c_dump_temperature_y    ) = 'ty'
+    alternate_name(c_dump_temperature_y    ) = 'temperature_y'
+    io_block_name (c_dump_temperature_z    ) = 'tz'
+    alternate_name(c_dump_temperature_z    ) = 'temperature_z'
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -686,6 +692,9 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
@@ -728,6 +737,9 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_ekflux) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
