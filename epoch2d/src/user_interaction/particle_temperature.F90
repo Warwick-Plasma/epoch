@@ -308,6 +308,8 @@ CONTAINS
     REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1, beta2
     INTEGER :: idir1, idir2
 
+    IF (DOT_PRODUCT(drift, drift) < c_tiny) RETURN
+
     imc = 1.0_num / mass / c
     drift_mc = drift * imc
     part_mc = part%part_p * imc
