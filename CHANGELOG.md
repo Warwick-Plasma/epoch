@@ -1,4 +1,4 @@
-## v4.14.0 to v4.15.0
+## v4.14.0 to v4.15.0 (2019-01-15)
 
  * Enabled averaging of poynt_flux and ekflux variables
 
