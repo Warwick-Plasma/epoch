@@ -302,23 +302,49 @@ CONTAINS
     TYPE(particle), POINTER :: part
     REAL(num), INTENT(IN) :: mass
     REAL(num), DIMENSION(3), INTENT(IN) :: drift
-    REAL(num), DIMENSION(3) :: drift_mc, drift_mc2, part_mc
-    REAL(num) :: gamma_drift, gamma_part, e_prime, imc
-    INTEGER :: idir
+    REAL(num), DIMENSION(3) :: drift_mc, part_mc, beta
+    REAL(num), DIMENSION(4) :: p4_in
+    REAL(num), DIMENSION(3,4) :: boost_tensor
+    REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1_beta2
+    INTEGER :: i, j
+
+    IF (DOT_PRODUCT(drift, drift) < c_tiny) RETURN
 
     imc = 1.0_num / mass / c
     drift_mc = drift * imc
     part_mc = part%part_p * imc
-
     gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift_mc, drift_mc))
     gamma_part = SQRT(1.0_num + DOT_PRODUCT(part_mc, part_mc))
-    e_prime = gamma_part * mass * c**2
+    e_prime = gamma_part * mass * c
 
-    drift_mc2 = drift_mc / c
-    DO idir = 1, 3
-      part%part_p(idir) = part%part_p(idir) * gamma_drift &
-          + drift_mc2(idir) * e_prime
-    ENDDO
+    beta = -drift * imc / gamma_drift !Lorentz beta vector
+
+    gamma_m1_beta2 = (gamma_drift - 1.0_num) / DOT_PRODUCT(beta, beta)
+
+    boost_tensor(1,1) = -beta(1) * gamma_drift
+    boost_tensor(2,1) = -beta(2) * gamma_drift
+    boost_tensor(2,1) = -beta(3) * gamma_drift
+
+    boost_tensor(1,2) = 1.0_num + gamma_m1_beta2 * beta(1)**2
+    boost_tensor(2,2) = gamma_m1_beta2 * beta(1) * beta(2)
+    boost_tensor(3,2) = gamma_m1_beta2 * beta(1) * beta(3)
+
+    boost_tensor(1,3) = gamma_m1_beta2 * beta(1) * beta(2)
+    boost_tensor(2,3) = 1.0_num + gamma_m1_beta2 * beta(2)**2
+    boost_tensor(3,3) = gamma_m1_beta2 * beta(2) * beta(3)
+
+    boost_tensor(1,4) = gamma_m1_beta2 * beta(1) * beta(3)
+    boost_tensor(2,4) = gamma_m1_beta2 * beta(2) * beta(3)
+    boost_tensor(3,4) = 1.0_num + gamma_m1_beta2 * beta(3)**2
+
+    p4_in = [e_prime, part%part_p(1), part%part_p(2), part%part_p(3)]
+    part%part_p = 0.0_num
+
+    DO i = 1, 3
+      DO j = 1, 4
+        part%part_p(i) = part%part_p(i) + p4_in(j) * boost_tensor(i,j)
+      END DO
+    END DO
 
   END SUBROUTINE particle_drift_lorentz_transform
 
