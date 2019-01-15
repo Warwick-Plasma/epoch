@@ -34,6 +34,18 @@ CONTAINS
     IF (deck_state == c_ds_first) THEN
       qed_table_location = 'src/physics_packages/TABLES'
       use_radiation_reaction = .TRUE.
+      use_qed = .FALSE.
+      photon_species = -1
+      trident_electron_species = -1
+      breit_wheeler_electron_species = -1
+      trident_positron_species = -1
+      breit_wheeler_positron_species = -1
+      photon_energy_min = EPSILON(1.0_num)
+      qed_start_time = 0.0_num
+      produce_pairs = .FALSE.
+      use_radiation_reaction = .TRUE.
+      produce_photons = .FALSE.
+      photon_dynamics = .FALSE.
     END IF
 #endif
 

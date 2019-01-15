@@ -1,3 +1,61 @@
+## v4.14.0 to v4.15.0 (2019-01-15)
+
+ * Enabled averaging of poynt_flux and ekflux variables
+
+ * Added control block option "use_pre_balance". If set to true then the
+   load balancer attempts to calculate the load balance prior to loading
+   any particles
+
+ * Added control block option "use_optimal_layout". If set to true then the
+   load balancer attempts to find the best nprocx/y/z split of the domain
+   prior to the initial load balance
+
+ * Removed static parameter arrays from the input deck block parsers to
+   simplify the process of adding new entries
+
+ * Added control block option "use_more_setup_memory". If set to false then
+   only one set of arrays will be used for storing temperature, density and
+   drift during species loading. This can be a significant memory saving but
+   comes at the expense of recalculating grid quantities multiple times.
+   Setting the flag to true enables one set of arrays per species.
+   The default value is false.
+
+ * Replaced non-standard ISATTY intrinsic function with a call to the
+   POSIX C-library function "isatty"
+
+ * Changed FORTRAN standard to 2003
+
+ * Added persistent subsets
+   This adds the flags "persist_start_time" and "persist_start_step" to the
+   subset block.  If either of these flags is present then once either the time
+   specified by "persist_start_time" or the step specified by
+   "persist_start_step" has been reached, the particles that have been selected
+   using the other criteria in the subset block will be recorded. Each
+   subsequent output for this subset will then use the particle list selected
+   at the specified start time.
+
+ * Added relativistic Maxwellians (Maxwell-Juttner)
+   Adds the "use_maxwell_juttner" logical flag to the species block. If set
+   to true then within the particle loader (both initially and for the moving
+   window) the particles will be loaded following a Maxwell-Juttner distribution
+   rather than a simple Maxwellian. If set to "F" then the standard Box-Muller
+   loader for a Maxwellian distribution is used. The default value is "F".
+
+ * Added arbitrary distribution functions in loader
+   Adds the "dist_fn", "dist_fn_px_range", "dist_fn_py_range" and
+   "dist_fn_pz_range" keys. The latter three keys set then range of momentum
+   over which to sample the distribution function. The first key specifies the
+   acceptance function. This should be a function having the maximum value of 1
+   but the same shape as the true distribution function. It is combined with
+   the density to calculate the full distribution function. The function is
+   specified using the new deck keys "px", "py" and "pz".  The arbitrary
+   distribution function can be combined with the "drift" keys and the
+   function is shifted up by the drift momentum specified. The temperature
+   key is not compatible and will be silently ignored if specified.
+
+ * Added temperature_{x,y,z} output diagnostics
+
+
 ## v4.12.0 to v4.14.0 (2018-08-13)
 
  * Added the Higuera-Cary relativistic particle push. This is enabled by
@@ -597,8 +655,8 @@ Bugfixes:
  * Fixed GIT_DIR when CWD does not equal GIT_WORK_TREE
 
  * Fixed sdf_write_namevalue when h%string_length changes.
-   Care must be taken when writing the array of strings in the 
-   sdf_write_namevalue routine since the strings are of length 
+   Care must be taken when writing the array of strings in the
+   sdf_write_namevalue routine since the strings are of length
    c_max_string_length which might be longer than the current value of
    h%string_length.
 
@@ -701,7 +759,7 @@ Bugfixes:
    This fixes issue #1259
 
  * Fixes for make_tarball.sh
-   Added generation of commit_info.h for SDF/C and SDF/utilities submodules. 
+   Added generation of commit_info.h for SDF/C and SDF/utilities submodules.
    Replaced submodule search paths with local versions.
 
  * Updated manuals submodule to latest master

@@ -27,16 +27,11 @@ MODULE deck_io_block
   PUBLIC :: io_block_start, io_block_end
   PUBLIC :: io_block_handle_element, io_block_check, copy_io_block
 
-  INTEGER, PARAMETER :: ov = 33
-  INTEGER, PARAMETER :: io_block_elements = num_vars_to_dump + ov
   INTEGER :: block_number, nfile_prefixes
   INTEGER :: rolling_restart_io_block
-  INTEGER :: o1, o2, o3, o4, o5, o6, o7, o8
-  LOGICAL, DIMENSION(io_block_elements) :: io_block_done
+  LOGICAL, DIMENSION(num_vars_to_dump) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   LOGICAL, PRIVATE :: warning_printed, got_dt_average
-  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: io_block_name
-  CHARACTER(LEN=string_length), DIMENSION(io_block_elements) :: alternate_name
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
@@ -44,133 +39,11 @@ CONTAINS
 
   SUBROUTINE io_deck_initialise
 
-    INTEGER :: i
-
     block_number = 0
     IF (deck_state /= c_ds_first) RETURN
 
+    any_average = .FALSE.
     warning_printed = .FALSE.
-    alternate_name = ''
-    io_block_name (c_dump_part_grid        ) = 'particles'
-    alternate_name(c_dump_part_grid        ) = 'particle_grid'
-    io_block_name (c_dump_grid             ) = 'grid'
-    alternate_name(c_dump_grid             ) = 'field_grid'
-    io_block_name (c_dump_part_species     ) = 'species_id'
-    io_block_name (c_dump_part_weight      ) = 'particle_weight'
-    alternate_name(c_dump_part_weight      ) = 'weight'
-    io_block_name (c_dump_part_px          ) = 'px'
-    io_block_name (c_dump_part_py          ) = 'py'
-    io_block_name (c_dump_part_pz          ) = 'pz'
-    io_block_name (c_dump_part_vx          ) = 'vx'
-    io_block_name (c_dump_part_vy          ) = 'vy'
-    io_block_name (c_dump_part_vz          ) = 'vz'
-    io_block_name (c_dump_part_charge      ) = 'charge'
-    io_block_name (c_dump_part_mass        ) = 'mass'
-    alternate_name(c_dump_part_mass        ) = 'rest_mass'
-    io_block_name (c_dump_part_id          ) = 'id'
-    io_block_name (c_dump_part_ek          ) = 'ek'
-    alternate_name(c_dump_part_ek          ) = 'particle_energy'
-    io_block_name (c_dump_part_rel_mass    ) = 'relativistic_mass'
-    io_block_name (c_dump_part_gamma       ) = 'gamma'
-
-    io_block_name (c_dump_part_opdepth     ) = ''
-    io_block_name (c_dump_part_qed_energy  ) = ''
-    io_block_name (c_dump_part_opdepth_tri ) = ''
-#ifdef PHOTONS
-    io_block_name (c_dump_part_opdepth     ) = 'optical_depth'
-    io_block_name (c_dump_part_qed_energy  ) = 'qed_energy'
-#ifdef TRIDENT_PHOTONS
-    io_block_name (c_dump_part_opdepth_tri ) = 'trident_optical_depth'
-#endif
-#endif
-#ifdef WORK_DONE_INTEGRATED
-    io_block_name (c_dump_part_work_x      ) = 'work_x'
-    io_block_name (c_dump_part_work_y      ) = 'work_y'
-    io_block_name (c_dump_part_work_z      ) = 'work_z'
-    io_block_name (c_dump_part_work_x_total) = 'work_x_total'
-    io_block_name (c_dump_part_work_y_total) = 'work_y_total'
-    io_block_name (c_dump_part_work_z_total) = 'work_z_total'
-#endif
-
-    io_block_name (c_dump_ex               ) = 'ex'
-    io_block_name (c_dump_ey               ) = 'ey'
-    io_block_name (c_dump_ez               ) = 'ez'
-    io_block_name (c_dump_bx               ) = 'bx'
-    io_block_name (c_dump_by               ) = 'by'
-    io_block_name (c_dump_bz               ) = 'bz'
-    io_block_name (c_dump_jx               ) = 'jx'
-    io_block_name (c_dump_jy               ) = 'jy'
-    io_block_name (c_dump_jz               ) = 'jz'
-    io_block_name (c_dump_ekbar            ) = 'ekbar'
-    io_block_name (c_dump_mass_density     ) = 'mass_density'
-    io_block_name (c_dump_charge_density   ) = 'charge_density'
-    io_block_name (c_dump_number_density   ) = 'number_density'
-    io_block_name (c_dump_ppc              ) = 'ppc'
-    alternate_name(c_dump_ppc              ) = 'particles_per_cell'
-    io_block_name (c_dump_average_weight   ) = 'average_weight'
-    io_block_name (c_dump_temperature      ) = 'temperature'
-    io_block_name (c_dump_dist_fns         ) = 'distribution_functions'
-    io_block_name (c_dump_probes           ) = 'particle_probes'
-    io_block_name (c_dump_ejected_particles) = 'ejected_particles'
-    io_block_name (c_dump_ekflux           ) = 'ekflux'
-    io_block_name (c_dump_poynt_flux       ) = 'poynt_flux'
-    io_block_name (c_dump_cpml_psi_eyx     ) = 'cpml_psi_eyx'
-    io_block_name (c_dump_cpml_psi_ezx     ) = 'cpml_psi_ezx'
-    io_block_name (c_dump_cpml_psi_byx     ) = 'cpml_psi_byx'
-    io_block_name (c_dump_cpml_psi_bzx     ) = 'cpml_psi_bzx'
-    io_block_name (c_dump_absorption       ) = 'absorption'
-    io_block_name (c_dump_total_energy_sum ) = 'total_energy_sum'
-
-    i = num_vars_to_dump
-    o1 = 1
-    io_block_name (i+1 ) = 'dt_snapshot'
-    io_block_name (i+2 ) = 'full_dump_every'
-    io_block_name (i+3 ) = 'restart_dump_every'
-    io_block_name (i+4 ) = 'force_first_to_be_restartable'
-    io_block_name (i+5 ) = 'force_final_to_be_restartable'
-    alternate_name(i+5 ) = 'force_last_to_be_restartable'
-    io_block_name (i+6 ) = 'use_offset_grid'
-    o2 = 7
-    io_block_name (i+7 ) = 'extended_io_file'
-    o3 = 8
-    io_block_name (i+8 ) = 'dt_average'
-    alternate_name(i+8 ) = 'averaging_period'
-    o4 = 9
-    io_block_name (i+9 ) = 'nstep_average'
-    alternate_name(i+9 ) = 'min_cycles_per_average'
-    o5 = 10
-    io_block_name (i+10) = 'nstep_snapshot'
-    io_block_name (i+11) = 'dump_source_code'
-    io_block_name (i+12) = 'dump_input_decks'
-    io_block_name (i+13) = 'dump_first'
-    io_block_name (i+14) = 'dump_last'
-    alternate_name(i+14) = 'dump_final'
-    o6 = 15
-    io_block_name (i+15) = 'restartable'
-    io_block_name (i+16) = 'name'
-    io_block_name (i+17) = 'time_start'
-    io_block_name (i+18) = 'time_stop'
-    io_block_name (i+19) = 'nstep_start'
-    io_block_name (i+20) = 'nstep_stop'
-    io_block_name (i+21) = 'dump_at_nsteps'
-    alternate_name(i+21) = 'nsteps_dump'
-    io_block_name (i+22) = 'dump_at_times'
-    alternate_name(i+22) = 'times_dump'
-    o7 = 23
-    io_block_name (i+23) = 'dump_cycle'
-    o8 = 24
-    io_block_name (i+24) = 'file_prefix'
-    io_block_name (i+25) = 'rolling_restart'
-    io_block_name (i+26) = 'dump_cycle_first_index'
-    io_block_name (i+27) = 'filesystem'
-    io_block_name (i+28) = 'dump_first_after_restart'
-    io_block_name (i+29) = 'dump_at_walltimes'
-    alternate_name(i+29) = 'walltimes_dump'
-    io_block_name (i+30) = 'walltime_interval'
-    alternate_name(i+30) = 'walltime_snapshot'
-    io_block_name (i+31) = 'walltime_start'
-    io_block_name (i+32) = 'walltime_stop'
-    io_block_name (i+ov) = 'disabled'
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -340,11 +213,6 @@ CONTAINS
     block_number = block_number + 1
     IF (deck_state /= c_ds_first .AND. block_number > 0) THEN
       io_block => io_block_list(block_number)
-      IF (io_block%rolling_restart) THEN
-        io_block_done(num_vars_to_dump+o6) = .TRUE.
-        io_block_done(num_vars_to_dump+o7) = .TRUE.
-        io_block_done(num_vars_to_dump+o8) = .TRUE.
-      END IF
     END IF
 
   END SUBROUTINE io_block_start
@@ -419,10 +287,10 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, style_error
-    INTEGER :: loop, elementselected, mask, fullmask = 0, mask_element
+    INTEGER :: elementselected, mask, fullmask = 0, mask_element
     INTEGER :: i, is, subset, n_list, io, iu
     INTEGER, ALLOCATABLE :: subsets(:)
-    LOGICAL :: bad, found
+    LOGICAL :: bad, found, got_element
     INTEGER, PARAMETER :: c_err_new_style_ignore = 1
     INTEGER, PARAMETER :: c_err_new_style_global = 2
     INTEGER, PARAMETER :: c_err_old_style_ignore = 3
@@ -431,8 +299,10 @@ CONTAINS
     IF (value == blank) RETURN
 
     IF (deck_state == c_ds_first) THEN
-      IF (str_cmp(element, 'name')) new_style_io_block = .TRUE.
-      IF (str_cmp(element, 'rolling_restart')) THEN
+      IF (str_cmp(element, 'name')) THEN
+        new_style_io_block = .TRUE.
+
+      ELSE IF (str_cmp(element, 'rolling_restart')) THEN
         IF (rolling_restart_io_block > 0) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -445,6 +315,7 @@ CONTAINS
         END IF
         rolling_restart_io_block = block_number
       END IF
+
       RETURN
     END IF
 
@@ -453,56 +324,44 @@ CONTAINS
       RETURN
     END IF
 
-    errcode = c_err_unknown_element
-
-    elementselected = 0
-
-    DO loop = 1, io_block_elements
-      IF (str_cmp(element, TRIM(ADJUSTL(io_block_name(loop)))) &
-          .OR. str_cmp(element, TRIM(ADJUSTL(alternate_name(loop))))) THEN
-        elementselected = loop
-        EXIT
-      END IF
-    END DO
-
-    IF (elementselected == 0) RETURN
-
-    IF (io_block_done(elementselected)) THEN
-      errcode = c_err_preset_element
-      RETURN
-    END IF
-    io_block_done(elementselected) = .TRUE.
     errcode = c_err_none
     style_error = c_err_none
+    got_element = .TRUE.
+    elementselected = 0
 
-    SELECT CASE (elementselected-num_vars_to_dump)
-    CASE(1)
+    IF (str_cmp(element, 'dt_snapshot')) THEN
       io_block%dt_snapshot = as_real_print(value, element, errcode)
       IF (io_block%dt_snapshot < 0.0_num) io_block%dt_snapshot = 0.0_num
-    CASE(2)
+
+    ELSE IF (str_cmp(element, 'full_dump_every')) THEN
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
         full_dump_every = as_integer_print(value, element, errcode)
         IF (full_dump_every == 0) full_dump_every = 1
       END IF
-    CASE(3)
+
+    ELSE IF (str_cmp(element, 'restart_dump_every')) THEN
       IF (new_style_io_block) THEN
         style_error = c_err_new_style_ignore
       ELSE
         restart_dump_every = as_integer_print(value, element, errcode)
         IF (restart_dump_every == 0) restart_dump_every = 1
       END IF
-    CASE(4)
+
+    ELSE IF (str_cmp(element, 'force_first_to_be_restartable')) THEN
       IF (new_style_io_block) style_error = c_err_new_style_global
       force_first_to_be_restartable = as_logical_print(value, element, errcode)
-    CASE(5)
+
+    ELSE IF (str_cmp(element, 'force_final_to_be_restartable')) THEN
       IF (new_style_io_block) style_error = c_err_new_style_global
       force_final_to_be_restartable = as_logical_print(value, element, errcode)
-    CASE(6)
+
+    ELSE IF (str_cmp(element, 'use_offset_grid')) THEN
       IF (new_style_io_block) style_error = c_err_new_style_global
       use_offset_grid = as_logical_print(value, element, errcode)
-    CASE(7)
+
+    ELSE IF (str_cmp(element, 'extended_io_file')) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -512,29 +371,41 @@ CONTAINS
         END DO
       END IF
       CALL abort_code(c_err_unknown_element)
-    CASE(8)
+
+    ELSE IF (str_cmp(element, 'dt_average') &
+        .OR. str_cmp(element, 'averaging_period')) THEN
       io_block%dt_average = as_real_print(value, element, errcode)
       got_dt_average = .TRUE.
-    CASE(9)
+
+    ELSE IF (str_cmp(element, 'nstep_average') &
+        .OR. str_cmp(element, 'min_cycles_per_average')) THEN
       io_block%nstep_average = as_integer_print(value, element, errcode)
       got_dt_average = .TRUE.
-    CASE(10)
+
+    ELSE IF (str_cmp(element, 'nstep_snapshot')) THEN
       io_block%nstep_snapshot = as_integer_print(value, element, errcode)
       IF (io_block%nstep_snapshot < 0) io_block%nstep_snapshot = 0
-    CASE(11)
+
+    ELSE IF (str_cmp(element, 'dump_source_code')) THEN
       io_block%dump_source_code = as_logical_print(value, element, errcode)
       got_dump_source_code = .TRUE.
-    CASE(12)
+
+    ELSE IF (str_cmp(element, 'dump_input_decks')) THEN
       io_block%dump_input_decks = as_logical_print(value, element, errcode)
       got_dump_input_decks = .TRUE.
-    CASE(13)
+
+    ELSE IF (str_cmp(element, 'dump_first')) THEN
       io_block%dump_first = as_logical_print(value, element, errcode)
-    CASE(14)
+
+    ELSE IF (str_cmp(element, 'dump_last') &
+        .OR. str_cmp(element, 'dump_final')) THEN
       io_block%dump_last = as_logical_print(value, element, errcode)
-    CASE(15)
+
+    ELSE IF (str_cmp(element, 'restartable')) THEN
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       io_block%restart = as_logical_print(value, element, errcode)
-    CASE(16)
+
+    ELSE IF (str_cmp(element, 'name')) THEN
       DO i = 1,block_number
         IF (TRIM(io_block_list(i)%name) == TRIM(value)) THEN
           IF (rank == 0) THEN
@@ -550,23 +421,33 @@ CONTAINS
       END DO
       io_block%name = value
       got_name = .TRUE.
-    CASE(17)
+
+    ELSE IF (str_cmp(element, 'time_start')) THEN
       io_block%time_start = as_real_print(value, element, errcode)
-    CASE(18)
+
+    ELSE IF (str_cmp(element, 'time_stop')) THEN
       io_block%time_stop = as_real_print(value, element, errcode)
-    CASE(19)
+
+    ELSE IF (str_cmp(element, 'nstep_start')) THEN
       io_block%nstep_start = as_integer_print(value, element, errcode)
-    CASE(20)
+
+    ELSE IF (str_cmp(element, 'nstep_stop')) THEN
       io_block%nstep_stop = as_integer_print(value, element, errcode)
-    CASE(21)
+
+    ELSE IF (str_cmp(element, 'dump_at_nsteps') &
+        .OR. str_cmp(element, 'nsteps_dump')) THEN
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_nsteps, errcode)
-    CASE(22)
+
+    ELSE IF (str_cmp(element, 'dump_at_times') &
+        .OR. str_cmp(element, 'times_dump')) THEN
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_times, errcode)
-    CASE(23)
+
+    ELSE IF (str_cmp(element, 'dump_cycle')) THEN
       io_block%dump_cycle = as_integer_print(value, element, errcode)
-    CASE(24)
+
+    ELSE IF (str_cmp(element, 'file_prefix')) THEN
       found = .FALSE.
       DO i = 1,nfile_prefixes
         IF (TRIM(io_prefixes(i)) == TRIM(value)) THEN
@@ -580,26 +461,227 @@ CONTAINS
         io_prefixes(nfile_prefixes) = TRIM(value)
         io_block%prefix_index = nfile_prefixes
       END IF
-    CASE(26)
+
+    ELSE IF (str_cmp(element, 'dump_cycle_first_index')) THEN
       io_block%dump_cycle_first_index = &
           as_integer_print(value, element, errcode)
-    CASE(27)
+
+    ELSE IF (str_cmp(element, 'filesystem')) THEN
       filesystem = TRIM(value) // ':'
-    CASE(28)
+
+    ELSE IF (str_cmp(element, 'dump_first_after_restart')) THEN
       io_block%dump_first_after_restart = &
           as_logical_print(value, element, errcode)
-    CASE(29)
+
+    ELSE IF (str_cmp(element, 'dump_at_walltimes') &
+        .OR. str_cmp(element, 'walltimes_dump')) THEN
       IF (.NOT.new_style_io_block) style_error = c_err_old_style_ignore
       CALL get_allocated_array(value, io_block%dump_at_walltimes, errcode)
-    CASE(30)
+
+    ELSE IF (str_cmp(element, 'walltime_interval') &
+        .OR. str_cmp(element, 'walltime_snapshot')) THEN
       io_block%walltime_interval = as_real_print(value, element, errcode)
-    CASE(31)
+
+    ELSE IF (str_cmp(element, 'walltime_start')) THEN
       io_block%walltime_start = as_real_print(value, element, errcode)
-    CASE(32)
+
+    ELSE IF (str_cmp(element, 'walltime_stop')) THEN
       io_block%walltime_stop = as_real_print(value, element, errcode)
-    CASE(ov)
+
+    ELSE IF (str_cmp(element, 'disabled')) THEN
       io_block%disabled = as_logical_print(value, element, errcode)
-    END SELECT
+
+    ELSE IF (str_cmp(element, 'rolling_restart')) THEN
+      ! Only handled on first parse
+
+    ELSE IF (str_cmp(element, 'particles') &
+        .OR. str_cmp(element, 'particle_grid')) THEN
+      elementselected = c_dump_part_grid
+
+    ELSE IF (str_cmp(element, 'grid') &
+        .OR. str_cmp(element, 'field_grid')) THEN
+      elementselected = c_dump_grid
+
+    ELSE IF (str_cmp(element, 'species_id')) THEN
+      elementselected = c_dump_part_species
+
+    ELSE IF (str_cmp(element, 'particle_weight') &
+        .OR. str_cmp(element, 'weight')) THEN
+      elementselected = c_dump_part_weight
+
+    ELSE IF (str_cmp(element, 'px')) THEN
+      elementselected = c_dump_part_px
+
+    ELSE IF (str_cmp(element, 'py')) THEN
+      elementselected = c_dump_part_py
+
+    ELSE IF (str_cmp(element, 'pz')) THEN
+      elementselected = c_dump_part_pz
+
+    ELSE IF (str_cmp(element, 'vx')) THEN
+      elementselected = c_dump_part_vx
+
+    ELSE IF (str_cmp(element, 'vy')) THEN
+      elementselected = c_dump_part_vy
+
+    ELSE IF (str_cmp(element, 'vz')) THEN
+      elementselected = c_dump_part_vz
+
+    ELSE IF (str_cmp(element, 'charge')) THEN
+      elementselected = c_dump_part_charge
+
+    ELSE IF (str_cmp(element, 'mass') &
+        .OR. str_cmp(element, 'rest_mass')) THEN
+      elementselected = c_dump_part_mass
+
+    ELSE IF (str_cmp(element, 'id')) THEN
+      elementselected = c_dump_part_id
+
+    ELSE IF (str_cmp(element, 'ek') &
+        .OR. str_cmp(element, 'particle_energy')) THEN
+      elementselected = c_dump_part_ek
+
+    ELSE IF (str_cmp(element, 'relativistic_mass')) THEN
+      elementselected = c_dump_part_rel_mass
+
+    ELSE IF (str_cmp(element, 'gamma')) THEN
+      elementselected = c_dump_part_gamma
+
+#ifdef PHOTONS
+    ELSE IF (str_cmp(element, 'optical_depth')) THEN
+      elementselected = c_dump_part_opdepth
+
+    ELSE IF (str_cmp(element, 'qed_energy')) THEN
+      elementselected = c_dump_part_qed_energy
+
+#ifdef TRIDENT_PHOTONS
+    ELSE IF (str_cmp(element, 'trident_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_tri
+#endif
+#endif
+#ifdef WORK_DONE_INTEGRATED
+
+    ELSE IF (str_cmp(element, 'work_x')) THEN
+      elementselected = c_dump_part_work_x
+
+    ELSE IF (str_cmp(element, 'work_y')) THEN
+      elementselected = c_dump_part_work_y
+
+    ELSE IF (str_cmp(element, 'work_z')) THEN
+      elementselected = c_dump_part_work_z
+
+    ELSE IF (str_cmp(element, 'work_x_total')) THEN
+      elementselected = c_dump_part_work_x_total
+
+    ELSE IF (str_cmp(element, 'work_y_total')) THEN
+      elementselected = c_dump_part_work_y_total
+
+    ELSE IF (str_cmp(element, 'work_z_total')) THEN
+      elementselected = c_dump_part_work_z_total
+#endif
+
+
+    ELSE IF (str_cmp(element, 'ex')) THEN
+      elementselected = c_dump_ex
+
+    ELSE IF (str_cmp(element, 'ey')) THEN
+      elementselected = c_dump_ey
+
+    ELSE IF (str_cmp(element, 'ez')) THEN
+      elementselected = c_dump_ez
+
+    ELSE IF (str_cmp(element, 'bx')) THEN
+      elementselected = c_dump_bx
+
+    ELSE IF (str_cmp(element, 'by')) THEN
+      elementselected = c_dump_by
+
+    ELSE IF (str_cmp(element, 'bz')) THEN
+      elementselected = c_dump_bz
+
+    ELSE IF (str_cmp(element, 'jx')) THEN
+      elementselected = c_dump_jx
+
+    ELSE IF (str_cmp(element, 'jy')) THEN
+      elementselected = c_dump_jy
+
+    ELSE IF (str_cmp(element, 'jz')) THEN
+      elementselected = c_dump_jz
+
+    ELSE IF (str_cmp(element, 'ekbar')) THEN
+      elementselected = c_dump_ekbar
+
+    ELSE IF (str_cmp(element, 'mass_density')) THEN
+      elementselected = c_dump_mass_density
+
+    ELSE IF (str_cmp(element, 'charge_density')) THEN
+      elementselected = c_dump_charge_density
+
+    ELSE IF (str_cmp(element, 'number_density')) THEN
+      elementselected = c_dump_number_density
+
+    ELSE IF (str_cmp(element, 'ppc') &
+        .OR. str_cmp(element, 'particles_per_cell')) THEN
+      elementselected = c_dump_ppc
+
+    ELSE IF (str_cmp(element, 'average_weight')) THEN
+      elementselected = c_dump_average_weight
+
+    ELSE IF (str_cmp(element, 'temperature')) THEN
+      elementselected = c_dump_temperature
+
+    ELSE IF (str_cmp(element, 'tx') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temp_x')) THEN
+      elementselected = c_dump_temperature_x
+
+    ELSE IF (str_cmp(element, 'ty') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temp_y')) THEN
+      elementselected = c_dump_temperature_y
+
+    ELSE IF (str_cmp(element, 'tz') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temp_z')) THEN
+      elementselected = c_dump_temperature_z
+
+    ELSE IF (str_cmp(element, 'distribution_functions')) THEN
+      elementselected = c_dump_dist_fns
+
+    ELSE IF (str_cmp(element, 'particle_probes')) THEN
+      elementselected = c_dump_probes
+
+    ELSE IF (str_cmp(element, 'ejected_particles')) THEN
+      elementselected = c_dump_ejected_particles
+
+    ELSE IF (str_cmp(element, 'ekflux')) THEN
+      elementselected = c_dump_ekflux
+
+    ELSE IF (str_cmp(element, 'poynt_flux')) THEN
+      elementselected = c_dump_poynt_flux
+
+    ELSE IF (str_cmp(element, 'cpml_psi_eyx')) THEN
+      elementselected = c_dump_cpml_psi_eyx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_ezx')) THEN
+      elementselected = c_dump_cpml_psi_ezx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_byx')) THEN
+      elementselected = c_dump_cpml_psi_byx
+
+    ELSE IF (str_cmp(element, 'cpml_psi_bzx')) THEN
+      elementselected = c_dump_cpml_psi_bzx
+
+    ELSE IF (str_cmp(element, 'absorption')) THEN
+      elementselected = c_dump_absorption
+
+    ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
+      elementselected = c_dump_total_energy_sum
+
+    ELSE
+      got_element = .FALSE.
+
+    END IF
 
     IF (style_error == c_err_old_style_ignore) THEN
       IF (rank == 0) THEN
@@ -607,8 +689,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Element "' &
-              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+          WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" not ', 'allowed in an unnamed output block.'
           WRITE(io,*) 'It has been ignored.'
           WRITE(io,*)
@@ -620,8 +701,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Element "' &
-              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+          WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" not ', 'allowed in a named output block.'
           WRITE(io,*) 'It has been ignored.'
           WRITE(io,*)
@@ -633,8 +713,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'Element "' &
-              // TRIM(ADJUSTL(io_block_name(elementselected))) &
+          WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" should be moved to ', 'an "output_global" block.'
           WRITE(io,*) 'Its value will be applied to all output blocks.'
           WRITE(io,*)
@@ -642,7 +721,20 @@ CONTAINS
       END IF
     END IF
 
-    IF (elementselected > num_vars_to_dump) RETURN
+    IF (elementselected == 0) THEN
+      IF (got_element) RETURN
+
+      errcode = c_err_unknown_element
+      RETURN
+    END IF
+
+    IF (io_block_done(elementselected)) THEN
+      errcode = c_err_preset_element
+      RETURN
+    END IF
+    io_block_done(elementselected) = .TRUE.
+    errcode = c_err_none
+    style_error = c_err_none
 
     mask_element = elementselected
     ALLOCATE(subsets(n_subsets+1))
@@ -695,6 +787,9 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
@@ -725,6 +820,7 @@ CONTAINS
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
+        IF (mask_element == c_dump_poynt_flux) bad = .FALSE.
 
         ! Unset 'no_sum' dumpmask for grid variables
         IF (.NOT.bad) mask = IAND(mask, NOT(c_io_no_sum))
@@ -736,6 +832,10 @@ CONTAINS
         IF (mask_element == c_dump_ppc) bad = .FALSE.
         IF (mask_element == c_dump_average_weight) bad = .FALSE.
         IF (mask_element == c_dump_temperature) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_x) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_y) bad = .FALSE.
+        IF (mask_element == c_dump_temperature_z) bad = .FALSE.
+        IF (mask_element == c_dump_ekflux) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -761,7 +861,7 @@ CONTAINS
                 WRITE(io,*) '*** WARNING ***'
                 WRITE(io,*) 'Error occurred whilst assigning the averaging ', &
                     'dumpmask of the variable'
-                WRITE(io,*) '"' // TRIM(io_block_name(mask_element)) &
+                WRITE(io,*) '"' // TRIM(element) &
                     // '" in ', 'output block number ', block_number
                 WRITE(io,*) 'Only one average per variable can be computed'
                 WRITE(io,*) 'If multiple were specified the first averaging ', &
@@ -791,27 +891,20 @@ CONTAINS
 
   FUNCTION io_block_check() RESULT(errcode)
 
-    INTEGER :: errcode, io, iu, i
+    INTEGER :: errcode, io, iu
 
     ! Just assume that anything not included except for the compulsory
     ! elements is not wanted
     errcode = c_err_none
 
-    ! Other control parameters are optional
-    i = num_vars_to_dump
-    io_block_done(i+o1:i+o2) = .TRUE.
-    io_block_done(i+o5:io_block_elements) = .TRUE.
     ! Averaging info not compulsory unless averaged variable selected
-    IF (.NOT. any_average) io_block_done(i+o3:i+o4) = .TRUE.
-
     IF (any_average .AND. .NOT. got_dt_average) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Required output block element ', &
-              TRIM(ADJUSTL(io_block_name(i+o3))), &
+          WRITE(io,*) 'Required output block element "dt_average"', &
               ' absent. Please create this entry in the input deck'
         END DO
       END IF
@@ -932,6 +1025,13 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_part_opdepth_tri), c_io_restartable)
 #endif
 #endif
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    io_block%dumpmask(c_dump_part_id) = &
+        IOR(io_block%dumpmask(c_dump_part_id), c_io_restartable)
+#endif
+    ! Persistent IDs
+    io_block%dumpmask(c_dump_persistent_ids) = &
+        IOR(io_block%dumpmask(c_dump_persistent_ids), c_io_restartable)
     ! Fields
     io_block%dumpmask(c_dump_grid) = &
         IOR(io_block%dumpmask(c_dump_grid), c_io_restartable)

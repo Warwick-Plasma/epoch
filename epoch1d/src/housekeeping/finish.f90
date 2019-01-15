@@ -18,8 +18,6 @@ MODULE finish
   USE shared_data
   USE diagnostics
   USE setup
-  USE shunt
-  USE partlist
   USE deck
   USE window
   USE laser

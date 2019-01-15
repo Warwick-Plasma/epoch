@@ -35,15 +35,15 @@ CONTAINS
 
     IF (chr == ' ') THEN
       char_type = c_char_space
-    ELSEIF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
+    ELSE IF (chr >= '0' .AND. chr <= '9' .OR. chr == '.') THEN
       char_type = c_char_numeric
-    ELSEIF ((chr >= 'A' .AND. chr <= 'Z') &
+    ELSE IF ((chr >= 'A' .AND. chr <= 'Z') &
         .OR. (chr >= 'a' .AND. chr <= 'z') .OR. chr == '_') THEN
       char_type = c_char_alpha
-    ELSEIF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
+    ELSE IF (chr == '(' .OR. chr == ')' .OR. chr == ',') THEN
       char_type = c_char_delimiter
     ! 92 is the ASCII code for backslash
-    ELSEIF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
+    ELSE IF (chr == '+' .OR. chr == '-' .OR. ICHAR(chr) == 92 &
         .OR. chr == '/' .OR. chr == '*' .OR. chr == '^') THEN
       char_type = c_char_opcode
     END IF
@@ -720,13 +720,20 @@ CONTAINS
 
 
 
-  SUBROUTINE set_stack_zero(stack)
+  SUBROUTINE set_stack_zero(stack, n_zeros)
 
     TYPE(primitive_stack), INTENT(INOUT) :: stack
+    INTEGER, INTENT(IN), OPTIONAL :: n_zeros
+    INTEGER :: zmax, iz
+
+    zmax = 1
+    IF (PRESENT(n_zeros)) zmax = n_zeros
 
     CALL deallocate_stack(stack)
     CALL initialise_stack(stack)
-    CALL tokenize('0', stack, errcode)
+    DO iz = 1, zmax
+      CALL tokenize('0', stack, errcode)
+    END DO
 
   END SUBROUTINE set_stack_zero
 
