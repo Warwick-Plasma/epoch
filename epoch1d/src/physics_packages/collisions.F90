@@ -868,7 +868,6 @@ CONTAINS
     REAL(num), INTENT(IN) :: factor
     REAL(num) :: nu, ran1, ran2, s12, u0, A, cosp, gperp, mr, sinp
     REAL(num), DIMENSION(3) :: g, h, deltap
-    INTEGER :: branch
 
     g = current%part_p/mass1 - impact%part_p/mass2
     u0 = SQRT(SUM(g**2))
@@ -882,19 +881,15 @@ CONTAINS
     ran2 = random() * 2.0_num * pi
     !Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
     IF (s12 < 0.1_num) THEN
-      branch = 1
       cosp = 1.0_num + s12 * LOG(MAX(ran1,c_tiny))
     ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
-      branch = 2
       A = 0.0056958_num + (0.9560202_num + (-0.508139_num + (0.47913906_num &
           + (-0.12788975 + (0.02389567) * s12) * s12) * s12) * s12) * s12
       cosp = A * LOG(EXP(-1.0_num / A) + 2.0_num * ran1 * SINH(A))
     ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
-      branch = 3
       A = 3.0_num * EXP(-s12)
       cosp = 1.0_num/A * LOG(EXP(-A) + 2.0_num * ran1 * SINH(A))
     ELSE
-      branch = 4
       cosp = 2.0_num * ran1 - 1.0_num
     END IF
 
@@ -906,7 +901,6 @@ CONTAINS
     h(3) = -(g(1)*g(3) * COS(ran2) - u0 * g(2) * SIN(ran2))/MAX(gperp, c_tiny)
 
     deltap = mr * (g * (1.0_num - cosp) + h * sinp)
-    IF (ANY(deltap /= deltap)) PRINT *,branch, g, h
     current%part_p = current%part_p - deltap
     impact%part_p = impact%part_p + deltap
 
