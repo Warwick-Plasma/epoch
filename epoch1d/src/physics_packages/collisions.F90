@@ -743,7 +743,7 @@ CONTAINS
     current => p_list%head
     impact => current%next
     DO k = 2, icount-2, 2
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
       current => impact%next
       impact => current%next
@@ -754,18 +754,18 @@ CONTAINS
     END DO
 
     IF (MOD(icount, 2_i8) == 0) THEN
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
     ELSE
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => impact%next
       impact => current%prev%prev
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => current%prev
       impact => current%next
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
     END IF
 
@@ -837,7 +837,7 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
       DO k = 1, pcount
-        CALL scatter(current, impact, mass1, mass2, charge1, charge2, &
+        CALL scatter_nanbu(current, impact, mass1, mass2, charge1, charge2, &
             weight1, weight2, idens, jdens, log_lambda, &
             user_factor * np / factor)
         current => current%next
@@ -854,6 +854,63 @@ CONTAINS
     END IF
 
   END SUBROUTINE inter_species_collisions
+
+
+
+  SUBROUTINE scatter_nanbu(current, impact, mass1, mass2, charge1, charge2, &
+      weight1, weight2, idens, jdens, log_lambda, factor)
+
+    TYPE(particle), POINTER :: current, impact
+    REAL(num), INTENT(IN) :: mass1, mass2
+    REAL(num), INTENT(IN) :: charge1, charge2
+    REAL(num), INTENT(IN) :: weight1, weight2
+    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
+    REAL(num), INTENT(IN) :: factor
+    REAL(num) :: nu, ran1, ran2, s12, u0, A, cosp, gperp, mr, sinp
+    REAL(num), DIMENSION(3) :: g, h, deltap
+    INTEGER :: branch
+
+    g = current%part_p/mass1 - impact%part_p/mass2
+    u0 = SQRT(SUM(g**2))
+    IF (ABS(u0) < c_tiny) RETURN
+    mr = (mass1 * mass2)/(mass1 + mass2)
+
+    s12 = (charge1**2 * charge2**2 * jdens * log_lambda) / (4.0_num * pi &
+        * epsilon0**2 * mr**2 * u0**3) * dt * factor
+
+    ran1 = random()
+    ran2 = random() * 2.0_num * pi
+    !Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+    IF (s12 < 0.1_num) THEN
+      branch = 1
+      cosp = 1.0_num + s12 * LOG(MAX(ran1,c_tiny))
+    ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
+      branch = 2
+      A = 0.0056958_num + (0.9560202_num + (-0.508139_num + (0.47913906_num &
+          + (-0.12788975 + (0.02389567) * s12) * s12) * s12) * s12) * s12
+      cosp = A * LOG(EXP(-1.0_num / A) + 2.0_num * ran1 * SINH(A))
+    ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
+      branch = 3
+      A = 3.0_num * EXP(-s12)
+      cosp = 1.0_num/A * LOG(EXP(-A) + 2.0_num * ran1 * SINH(A))
+    ELSE
+      branch = 4
+      cosp = 2.0_num * ran1 - 1.0_num
+    END IF
+
+    sinp = SIN(ACOS(cosp))
+    gperp = SQRT(g(1)**2 + g(2)**2)
+
+    h(1) = gperp * COS(ran2)
+    h(2) = -(g(1)*g(2) * COS(ran2) + u0 * g(3) * SIN(ran2))/MAX(gperp, c_tiny)
+    h(3) = -(g(1)*g(3) * COS(ran2) - u0 * g(2) * SIN(ran2))/MAX(gperp, c_tiny)
+
+    deltap = mr * (g * (1.0_num - cosp) + h * sinp)
+    IF (ANY(deltap /= deltap)) PRINT *,branch, g, h
+    current%part_p = current%part_p - deltap
+    impact%part_p = impact%part_p + deltap
+
+  END SUBROUTINE scatter_nanbu
 
 
 
