@@ -872,6 +872,14 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
+    IF (.NOT. PRESENT(direction)) THEN
+      IF (rank == 0) THEN
+        PRINT*, 'Error: No direction argument supplied to &
+            &calc_per_species_current'
+        CALL abort_code(c_err_bad_value)
+      ENDIF
+    END IF
+
     data_array = 0.0_num
     part_q = 0.0_num
     fac = 0.0_num
