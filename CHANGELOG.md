@@ -2,8 +2,6 @@
 
  * Assign particle IDs at creation time. See the user manual for further details
 
- * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
-
  * Added antennae that allow you to specify an external time varying current
    in the simulation domain
 
@@ -25,6 +23,15 @@
    - stop_time - Time at which to stop applying antenna
 
  * Allow subset restrictions to be time-varying functions
+
+
+## v4.15.0 to v4.16.0
+
+ * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
+
+ * Add NO_MPI3 compiler flag to disable MPI-3 features such as the
+   MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
+   older versions of the MPI library.
 
 
 ## v4.14.0 to v4.15.0 (2019-01-15)
