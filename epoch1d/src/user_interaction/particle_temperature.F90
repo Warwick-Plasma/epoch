@@ -309,7 +309,7 @@ CONTAINS
     gamma_part = SQRT(1.0_num + DOT_PRODUCT(part_mc, part_mc))
     e_prime = gamma_part * mass * c
 
-    beta = -drift * imc / gamma_drift !Lorentz beta vector
+    beta = -drift * imc / gamma_drift ! Lorentz beta vector
 
     gamma_m1_beta2 = (gamma_drift - 1.0_num) / DOT_PRODUCT(beta, beta)
 
