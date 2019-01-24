@@ -1,3 +1,12 @@
+## v4.15.0 to v4.16.0
+
+ * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
+
+ * Add NO_MPI3 compiler flag to disable MPI-3 features such as the
+   MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
+   older versions of the MPI library.
+
+
 ## v4.14.0 to v4.15.0 (2019-01-15)
 
  * Enabled averaging of poynt_flux and ekflux variables

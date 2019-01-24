@@ -238,8 +238,8 @@ DEFINES := $(DEFINE)
 # are enabled.
 #DEFINES += $(D)PARSER_CHECKING
 
-# Use compiler extension ISATTY to enable coloured welcome banner
-#DEFINES += $(D)USE_ISATTY
+# Disable the use of isatty C call to enable coloured welcome banner
+#DEFINES += $(D)NO_USE_ISATTY
 
 # Compile the delta-f version of EPOCH
 #DEFINES += $(D)DELTAF_METHOD
@@ -253,6 +253,9 @@ DEFINES := $(DEFINE)
 
 # Higuera-Cary push
 #DEFINES += $(D)HC_PUSH
+
+# Disable MPI3 features
+#DEFINES += $(D)NO_MPI3
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
@@ -304,7 +307,7 @@ SRCFILES = balance.F90 boundary.F90 calc_df.F90 collisions.F90 constants.F90 \
   particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
   particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
   random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
-  shared_data.F90 shunt.F90 simple_io.f90 split_particle.F90 stack.f90 \
+  shared_data.F90 shunt.F90 simple_io.F90 split_particle.F90 stack.f90 \
   strings.f90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
   tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
@@ -517,7 +520,7 @@ setup.o: setup.F90 balance.o constants.o fields.o helper.o laser.o \
 shape_functions.o: shape_functions.F90 shared_data.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
-simple_io.o: simple_io.f90 boundary.o mpi_subtype_control.o
+simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
 split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 constants.o
 strings.o: strings.f90 shared_data.o
