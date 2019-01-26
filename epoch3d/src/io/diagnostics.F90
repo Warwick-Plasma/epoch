@@ -2333,7 +2333,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2408,7 +2408,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (.NOT. any_persistent_subset) RETURN
 

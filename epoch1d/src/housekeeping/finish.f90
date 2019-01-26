@@ -49,6 +49,7 @@ CONTAINS
   SUBROUTINE deallocate_memory
 
     INTEGER :: i, n, stat
+    TYPE(particle_id_hash), POINTER :: current_hash
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
@@ -63,6 +64,7 @@ CONTAINS
       DO n = 1, 3
         CALL deallocate_stack(species_list(i)%temperature_function(n))
         CALL deallocate_stack(species_list(i)%drift_function(n))
+        CALL deallocate_stack(species_list(i)%dist_fn_range(n))
       END DO
       CALL destroy_partlist(species_list(i)%attached_list)
       DEALLOCATE(species_list(i)%ext_temp_x_min, STAT=stat)
@@ -85,8 +87,13 @@ CONTAINS
     DO i = 1, n_subsets
       DEALLOCATE(subset_list(i)%dumpmask, STAT=stat)
       DEALLOCATE(subset_list(i)%use_species, STAT=stat)
+      IF (subset_list(i)%persistent) THEN
+        current_hash => id_registry%get_hash(subset_list(i)%name)
+        DEALLOCATE(current_hash)
+      END IF
     END DO
     DEALLOCATE(subset_list, STAT=stat)
+    CALL id_registry%reset
 
     DO i = 1, n_deck_constants
       CALL deallocate_stack(deck_constant_list(i)%execution_stream)
