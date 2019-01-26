@@ -66,6 +66,7 @@ MODULE particle_id_hash_mod
     PROCEDURE :: delete_all => pidr_delete_all
     PROCEDURE :: delete_and_map => pidr_delete_and_map
     PROCEDURE :: add_with_map => pidr_add_with_map
+    PROCEDURE, PUBLIC :: reset => pidr_reset
     FINAL :: pidr_destructor
   END TYPE particle_id_list_registry
 
@@ -650,14 +651,26 @@ CONTAINS
 
 
 
+  !> Delete all hash tables
+
+  PURE ELEMENTAL SUBROUTINE pidr_reset(this)
+
+    CLASS(particle_id_list_registry), INTENT(INOUT) :: this
+
+    IF (.NOT. ALLOCATED(this%list)) RETURN
+    DEALLOCATE(this%list)
+
+  END SUBROUTINE pidr_reset
+
+
+
   !> Delete all hash tables on destruction
 
   PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
 
     TYPE(particle_id_list_registry), INTENT(INOUT) :: this
 
-    IF (.NOT. ALLOCATED(this%list)) RETURN
-    DEALLOCATE(this%list)
+    CALL pidr_reset(this)
 
   END SUBROUTINE pidr_destructor
 
