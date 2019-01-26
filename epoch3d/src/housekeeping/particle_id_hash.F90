@@ -23,7 +23,7 @@ MODULE particle_id_hash_mod
     PROCEDURE :: holds => pid_inner_list_holds
     PROCEDURE :: add => pid_inner_list_add
     PROCEDURE :: delete => pid_inner_list_delete
-#ifdef USE_F03
+#ifndef USE_F95
     FINAL :: pid_inner_list_destructor
 #endif
   END TYPE particle_id_inner_list
@@ -44,7 +44,7 @@ MODULE particle_id_hash_mod
     PROCEDURE :: init_i4 => pid_hash_init_i4
     GENERIC, PUBLIC :: init => init_i8, init_i4
     PROCEDURE, PUBLIC :: optimise => pid_optimise
-#ifdef USE_F03
+#ifndef USE_F95
     FINAL :: pid_hash_destructor
 #endif
   END TYPE particle_id_hash
@@ -71,7 +71,7 @@ MODULE particle_id_hash_mod
     PROCEDURE :: delete_and_map => pidr_delete_and_map
     PROCEDURE :: add_with_map => pidr_add_with_map
     PROCEDURE, PUBLIC :: reset => pidr_reset
-#ifdef USE_F03
+#ifndef USE_F95
     FINAL :: pidr_destructor
 #endif
   END TYPE particle_id_list_registry
@@ -351,7 +351,7 @@ CONTAINS
       IF (local_count == SIZE(this%buckets)) RETURN
 
       ALLOCATE(buckets_old(SIZE(this%buckets)), SOURCE = this%buckets)
-#ifndef USE_F03
+#ifdef USE_F95
       CALL pid_inner_list_destructor(this%buckets)
 #endif
       DEALLOCATE(this%buckets)
@@ -363,7 +363,7 @@ CONTAINS
           CALL pid_hash_add_hkind(this, buckets_old(ibuck)%list(ipart))
         END DO
       END DO
-#ifndef USE_F03
+#ifdef USE_F95
       CALL pid_inner_list_destructor(buckets_old)
 #endif
       DEALLOCATE(buckets_old)
@@ -401,7 +401,7 @@ CONTAINS
 
   !> Delete all inner lists on destruction
 
-#ifdef USE_F03
+#ifndef USE_F95
   PURE ELEMENTAL SUBROUTINE pid_hash_destructor(this)
 
     TYPE(particle_id_hash), INTENT(INOUT) :: this
@@ -680,7 +680,7 @@ CONTAINS
 
   !> Delete all hash tables on destruction
 
-#ifdef USE_F03
+#ifndef USE_F95
   PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
 
     TYPE(particle_id_list_registry), INTENT(INOUT) :: this
