@@ -62,7 +62,7 @@ CONTAINS
 
     INTEGER :: i, io, iu
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
     LOGICAL :: got_persistent_subset
 
     got_persistent_subset = .FALSE.

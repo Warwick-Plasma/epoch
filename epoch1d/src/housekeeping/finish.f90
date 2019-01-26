@@ -51,6 +51,7 @@ CONTAINS
 
     INTEGER :: i, n, stat
     TYPE(subset), POINTER :: sub
+    TYPE(particle_id_hash), POINTER :: current_hash
 
     DO i = 1, n_subsets
       sub => subset_list(i)
@@ -73,6 +74,7 @@ CONTAINS
       DO n = 1, 3
         CALL deallocate_stack(species_list(i)%temperature_function(n))
         CALL deallocate_stack(species_list(i)%drift_function(n))
+        CALL deallocate_stack(species_list(i)%dist_fn_range(n))
       END DO
       CALL destroy_partlist(species_list(i)%attached_list)
       DEALLOCATE(species_list(i)%ext_temp_x_min, STAT=stat)
@@ -95,6 +97,10 @@ CONTAINS
     DO i = 1, n_subsets
       DEALLOCATE(subset_list(i)%dumpmask, STAT=stat)
       DEALLOCATE(subset_list(i)%use_species, STAT=stat)
+      IF (subset_list(i)%persistent) THEN
+        current_hash => id_registry%get_hash(subset_list(i)%name)
+        DEALLOCATE(current_hash)
+      END IF
       IF (.NOT. subset_list(i)%time_varying) CYCLE
       DO n = 1, c_subset_max
         IF (subset_list(i)%use_restriction_function(n)) THEN
@@ -103,6 +109,7 @@ CONTAINS
       END DO
     END DO
     DEALLOCATE(subset_list, STAT=stat)
+    CALL id_registry%reset
 
     DO i = 1, n_deck_constants
       CALL deallocate_stack(deck_constant_list(i)%execution_stream)
