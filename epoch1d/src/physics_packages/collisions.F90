@@ -955,11 +955,7 @@ CONTAINS
     vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
     ! Collision frequency
-    IF (m1 > m2) THEN
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, idens)
-    ELSE
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
-    END IF
+    nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
     nu = MIN(nu * factor * dt, 0.02_num)
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
