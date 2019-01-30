@@ -54,6 +54,8 @@ CONTAINS
 
   SUBROUTINE deltaf_load(species_temp, species_drift)
 
+    REAL(num), DIMENSION(:,:), POINTER :: species_temp, species_drift
+ 
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
     REAL(num) :: f0_exponent, distribution, mass, npart_per_cell, idx
@@ -66,8 +68,6 @@ CONTAINS
 #if DELTAF_DEBUG
     REAL(num) :: weight_back, f0_back
 #endif
-    REAL(num), DIMENSION(:,:), POINTER :: species_temp, species_drift
- 
     ! f0 calculation: mainly, we need to calculate the phase space volumes.
     ! Calculate this based on the loading parameters. Easy to check
     ! that this is OK for a Maxwellian load by setting f0 = f0_back,
