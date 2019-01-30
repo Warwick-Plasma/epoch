@@ -66,7 +66,7 @@ CONTAINS
 #if DELTAF_DEBUG
     REAL(num) :: weight_back, f0_back
 #endif
-    REAL(num), DIMENSION(:,:), POINTER, INTENT(IN) :: species_temp, species_drift
+    REAL(num), DIMENSION(:,:), POINTER :: species_temp, species_drift
  
     ! f0 calculation: mainly, we need to calculate the phase space volumes.
     ! Calculate this based on the loading parameters. Easy to check
