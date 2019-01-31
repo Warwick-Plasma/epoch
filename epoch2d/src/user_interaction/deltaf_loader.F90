@@ -29,7 +29,7 @@ CONTAINS
   SUBROUTINE params_local(current, temperature, drift, temp_local, drift_local)
 
     TYPE(particle), POINTER, INTENT(IN) :: current
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: temperature, drift
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: temperature, drift
     REAL(num), INTENT(INOUT) :: temp_local, drift_local
     REAL(num) :: gf
     INTEGER :: ix, iy
@@ -54,8 +54,9 @@ CONTAINS
 
 
 
-  SUBROUTINE deltaf_load
+  SUBROUTINE deltaf_load(species_temp, species_drift)
 
+    REAL(num), DIMENSION(:,:,:), POINTER :: species_temp, species_drift
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
     REAL(num) :: f0_exponent, distribution, mass, npart_per_cell, idx
