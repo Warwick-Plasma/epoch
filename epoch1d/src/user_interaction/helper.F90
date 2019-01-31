@@ -120,7 +120,7 @@ CONTAINS
       END DO
     END IF
 
-    CALL deltaf_load
+    CALL deltaf_load(species_temp, species_drift)
 
   END SUBROUTINE auto_load
 
