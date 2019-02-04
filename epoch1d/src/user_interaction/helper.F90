@@ -39,7 +39,6 @@ CONTAINS
     ! Set temperature at boundary for thermal bcs.
 
     species => species_list(ispecies)
-    ic => species%initial_conditions
 
     IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
       species%ext_temp_x_min(:) = species_temp(1,:)
@@ -50,6 +49,21 @@ CONTAINS
 
   END SUBROUTINE set_thermal_bcs
 
+
+
+  SUBROUTINE set_thermal_bcs_all
+
+    INTEGER :: ispecies
+    ! Set temperature at boundary for thermal bcs.
+
+    DO ispecies = 1, n_species
+      CALL setup_ic_density(ispecies)
+      CALL setup_ic_temp(ispecies)
+      CALL setup_ic_drift(ispecies)
+      CALL set_thermal_bcs(ispecies)
+    ENDDO
+
+  END SUBROUTINE set_thermal_bcs_all
 
 
   SUBROUTINE auto_load
