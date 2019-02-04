@@ -59,6 +59,7 @@ CONTAINS
   SUBROUTINE set_thermal_bcs_all
 
     INTEGER :: ispecies
+
     ! Set temperature at boundary for thermal bcs.
 
     DO ispecies = 1, n_species
@@ -66,7 +67,7 @@ CONTAINS
       CALL setup_ic_temp(ispecies)
       CALL setup_ic_drift(ispecies)
       CALL set_thermal_bcs(ispecies)
-    ENDDO
+    END DO
 
   END SUBROUTINE set_thermal_bcs_all
 
