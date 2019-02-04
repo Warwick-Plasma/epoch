@@ -34,7 +34,6 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ispecies
     TYPE(particle_species), POINTER :: species
-    TYPE(initial_condition_block), POINTER :: ic
 
     ! Set temperature at boundary for thermal bcs.
 
