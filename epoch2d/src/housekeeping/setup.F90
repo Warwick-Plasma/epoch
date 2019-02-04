@@ -1521,6 +1521,7 @@ CONTAINS
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
 
+    CALL set_thermal_bcs_all
     CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
