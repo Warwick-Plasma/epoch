@@ -835,6 +835,20 @@ CONTAINS
     meany = meany / part_count
     meanz = meanz / part_count
 
+    ! Restore ghost cell values for means
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL field_bc(meanx, ng)
+      CASE(c_dir_y)
+        CALL field_bc(meany, ng)
+      CASE(c_dir_z)
+        CALL field_bc(meanz, ng)
+      CASE DEFAULT
+        CALL field_bc(meanx, ng)
+        CALL field_bc(meany, ng)
+        CALL field_bc(meanz, ng)
+    END SELECT
+
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
