@@ -835,7 +835,7 @@ CONTAINS
     meany = meany / part_count
     meanz = meanz / part_count
 
-    !Restore ghost cell values for means
+    ! Restore ghost cell values for means
     SELECT CASE(dir)
       CASE(c_dir_x)
         CALL field_bc(meanx, ng)
