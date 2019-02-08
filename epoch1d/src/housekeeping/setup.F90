@@ -885,7 +885,11 @@ CONTAINS
         CYCLE
       END IF
 
-      CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+      IF(blocktype == c_blocktype_point_mesh) THEN
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+      ELSE
+        species_id = block_id(5:LEN(block_id))
+      END IF
       CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
       IF (ispecies == 0) THEN
         IF (rank == 0) THEN
