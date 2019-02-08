@@ -1047,12 +1047,17 @@ CONTAINS
         CYCLE
       END IF
 
-      IF(blocktype == c_blocktype_point_mesh) THEN
+      ispecies = 0
+      IF (blocktype == c_blocktype_point_mesh) THEN
         CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
-      ELSE
-        species_id = block_id(5:LEN(block_id))
+        CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+      ELSE IF (blocktype == c_blocktype_cpu_split) THEN
+        IF (block_id(1:3) == 'cpu') THEN
+          species_id = block_id(5:LEN(block_id))
+          CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+        END IF
       END IF
-      CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+
       IF (ispecies == 0) THEN
         IF (rank == 0) THEN
           IF (.NOT. str_cmp(species_id(1:6), 'subset')) THEN
