@@ -866,7 +866,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: weight1, weight2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
-    REAL(num) :: nu, ran1, ran2, s12, u0, A, cosp, gperp, mr, sinp
+    REAL(num) :: ran1, ran2, s12, u0, cosp, gperp, mr, sinp
+    REAL(num) :: a, a_inv
     REAL(num), DIMENSION(3) :: g, h, deltap
 
     g = current%part_p/mass1 - impact%part_p/mass2
@@ -883,18 +884,21 @@ CONTAINS
     IF (s12 < 0.1_num) THEN
       cosp = 1.0_num + s12 * LOG(MAX(ran1,c_tiny))
     ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
-      A = 0.0056958_num + (0.9560202_num + (-0.508139_num + (0.47913906_num &
-          + (-0.12788975 + (0.02389567) * s12) * s12) * s12) * s12) * s12
-      cosp = A * LOG(EXP(-1.0_num / A) + 2.0_num * ran1 * SINH(A))
+      a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
+           + (0.47913906_num + (-0.12788975 + (0.02389567) &
+           * s12) * s12) * s12) * s12) * s12
+      a = 1.0_num / a_inv
+      cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
     ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
-      A = 3.0_num * EXP(-s12)
-      cosp = 1.0_num/A * LOG(EXP(-A) + 2.0_num * ran1 * SINH(A))
+      a = 3.0_num * EXP(-s12)
+      a_inv = 1.0_num / a
+      cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
     ELSE
       cosp = 2.0_num * ran1 - 1.0_num
     END IF
 
     sinp = SIN(ACOS(cosp))
-    gperp = SQRT(g(1)**2 + g(2)**2)
+    gperp = SQRT(g(2)**2 + g(3)**2)
 
     h(1) = gperp * COS(ran2)
     h(2) = -(g(1)*g(2) * COS(ran2) + u0 * g(3) * SIN(ran2))/MAX(gperp, c_tiny)
