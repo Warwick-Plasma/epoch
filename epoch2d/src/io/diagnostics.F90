@@ -663,15 +663,15 @@ CONTAINS
 
         CALL write_nspecies_field(c_dump_jx, code, &
             'jx', 'Jx', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jx, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_x/))
 
         CALL write_nspecies_field(c_dump_jy, code, &
             'jy', 'Jy', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jy, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_y/))
 
         CALL write_nspecies_field(c_dump_jz, code, &
             'jz', 'Jz', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jz, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_z/))
 
         CALL write_nspecies_field(c_dump_ekflux, code, &
             'ekflux', 'EkFlux', 'W/m^2', &
@@ -2260,7 +2260,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2335,7 +2335,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (.NOT. any_persistent_subset) RETURN
 

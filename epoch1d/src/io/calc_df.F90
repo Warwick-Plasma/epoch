@@ -504,7 +504,8 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (spec_sum &
+          .AND. io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -785,6 +786,20 @@ CONTAINS
     meany = meany / part_count
     meanz = meanz / part_count
 
+    ! Restore ghost cell values for means
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL field_bc(meanx, ng)
+      CASE(c_dir_y)
+        CALL field_bc(meany, ng)
+      CASE(c_dir_z)
+        CALL field_bc(meanz, ng)
+      CASE DEFAULT
+        CALL field_bc(meanx, ng)
+        CALL field_bc(meany, ng)
+        CALL field_bc(meanz, ng)
+    END SELECT
+
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
@@ -871,6 +886,14 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
+    IF (.NOT. PRESENT(direction)) THEN
+      IF (rank == 0) THEN
+        PRINT*, 'Error: No direction argument supplied to ', &
+            'calc_per_species_current'
+        CALL abort_code(c_err_bad_value)
+      END IF
+    END IF
+
     data_array = 0.0_num
     part_q = 0.0_num
     fac = 0.0_num
@@ -948,42 +971,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE calc_per_species_current
-
-
-
-  SUBROUTINE calc_per_species_jx(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_x)
-
-  END SUBROUTINE calc_per_species_jx
-
-
-
-  SUBROUTINE calc_per_species_jy(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_y)
-
-  END SUBROUTINE calc_per_species_jy
-
-
-
-  SUBROUTINE calc_per_species_jz(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_z)
-
-  END SUBROUTINE calc_per_species_jz
 
 
 

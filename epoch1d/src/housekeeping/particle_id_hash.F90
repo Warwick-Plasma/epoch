@@ -23,7 +23,9 @@ MODULE particle_id_hash_mod
     PROCEDURE :: holds => pid_inner_list_holds
     PROCEDURE :: add => pid_inner_list_add
     PROCEDURE :: delete => pid_inner_list_delete
+#ifdef USE_F03
     FINAL :: pid_inner_list_destructor
+#endif
   END TYPE particle_id_inner_list
 
   TYPE :: particle_id_hash
@@ -42,7 +44,9 @@ MODULE particle_id_hash_mod
     PROCEDURE :: init_i4 => pid_hash_init_i4
     GENERIC, PUBLIC :: init => init_i8, init_i4
     PROCEDURE, PUBLIC :: optimise => pid_optimise
+#ifdef USE_F03
     FINAL :: pid_hash_destructor
+#endif
   END TYPE particle_id_hash
 
   TYPE :: particle_id_hash_holder
@@ -66,7 +70,10 @@ MODULE particle_id_hash_mod
     PROCEDURE :: delete_all => pidr_delete_all
     PROCEDURE :: delete_and_map => pidr_delete_and_map
     PROCEDURE :: add_with_map => pidr_add_with_map
+    PROCEDURE, PUBLIC :: reset => pidr_reset
+#ifdef USE_F03
     FINAL :: pidr_destructor
+#endif
   END TYPE particle_id_list_registry
 
   TYPE(particle_id_list_registry), SAVE :: id_registry
@@ -344,6 +351,9 @@ CONTAINS
       IF (local_count == SIZE(this%buckets)) RETURN
 
       ALLOCATE(buckets_old(SIZE(this%buckets)), SOURCE = this%buckets)
+#ifndef USE_F03
+      CALL pid_inner_list_destructor(this%buckets)
+#endif
       DEALLOCATE(this%buckets)
       ALLOCATE(this%buckets(local_count))
 
@@ -353,6 +363,9 @@ CONTAINS
           CALL pid_hash_add_hkind(this, buckets_old(ibuck)%list(ipart))
         END DO
       END DO
+#ifndef USE_F03
+      CALL pid_inner_list_destructor(buckets_old)
+#endif
       DEALLOCATE(buckets_old)
     END IF
 
@@ -388,6 +401,7 @@ CONTAINS
 
   !> Delete all inner lists on destruction
 
+#ifdef USE_F03
   PURE ELEMENTAL SUBROUTINE pid_hash_destructor(this)
 
     TYPE(particle_id_hash), INTENT(INOUT) :: this
@@ -396,6 +410,7 @@ CONTAINS
     DEALLOCATE(this%buckets)
 
   END SUBROUTINE pid_hash_destructor
+#endif
 
 
 
@@ -441,7 +456,7 @@ CONTAINS
     CLASS(particle_id_list_registry), INTENT(INOUT) :: this
     CHARACTER(LEN=*), INTENT(IN) :: name
     LOGICAL, INTENT(IN), OPTIONAL :: must_exist
-    TYPE(particle_id_hash), POINTER :: hash_ptr
+    CLASS(particle_id_hash), POINTER :: hash_ptr
     LOGICAL :: exist_local
 
     exist_local = .FALSE.
@@ -650,15 +665,29 @@ CONTAINS
 
 
 
-  !> Delete all hash tables on destruction
+  !> Delete all hash tables
 
-  PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
+  PURE ELEMENTAL SUBROUTINE pidr_reset(this)
 
-    TYPE(particle_id_list_registry), INTENT(INOUT) :: this
+    CLASS(particle_id_list_registry), INTENT(INOUT) :: this
 
     IF (.NOT. ALLOCATED(this%list)) RETURN
     DEALLOCATE(this%list)
 
+  END SUBROUTINE pidr_reset
+
+
+
+  !> Delete all hash tables on destruction
+
+#ifdef USE_F03
+  PURE ELEMENTAL SUBROUTINE pidr_destructor(this)
+
+    TYPE(particle_id_list_registry), INTENT(INOUT) :: this
+
+    CALL pidr_reset(this)
+
   END SUBROUTINE pidr_destructor
+#endif
 
 END MODULE particle_id_hash_mod

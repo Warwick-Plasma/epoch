@@ -1047,8 +1047,17 @@ CONTAINS
         CYCLE
       END IF
 
-      CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
-      CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+      ispecies = 0
+      IF (blocktype == c_blocktype_point_mesh) THEN
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+        CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+      ELSE IF (blocktype == c_blocktype_cpu_split) THEN
+        IF (block_id(1:3) == 'cpu') THEN
+          species_id = block_id(5:LEN(block_id))
+          CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+        END IF
+      END IF
+
       IF (ispecies == 0) THEN
         IF (rank == 0) THEN
           IF (.NOT. str_cmp(species_id(1:6), 'subset')) THEN
@@ -1529,6 +1538,7 @@ CONTAINS
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
 
+    CALL set_thermal_bcs_all
     CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'

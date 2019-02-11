@@ -281,7 +281,7 @@ CONTAINS
     END DO
 
     momentum_from_temperature_relativistic = &
-        (/ momentum_x, momentum_y, momentum_z /) * m0 * c
+        (/ momentum_x, momentum_y, momentum_z /) * mass * c
 
   END FUNCTION momentum_from_temperature_relativistic
 
@@ -309,13 +309,13 @@ CONTAINS
     gamma_part = SQRT(1.0_num + DOT_PRODUCT(part_mc, part_mc))
     e_prime = gamma_part * mass * c
 
-    beta = -drift * imc / gamma_drift !Lorentz beta vector
+    beta = -drift * imc / gamma_drift ! Lorentz beta vector
 
     gamma_m1_beta2 = (gamma_drift - 1.0_num) / DOT_PRODUCT(beta, beta)
 
     boost_tensor(1,1) = -beta(1) * gamma_drift
     boost_tensor(2,1) = -beta(2) * gamma_drift
-    boost_tensor(2,1) = -beta(3) * gamma_drift
+    boost_tensor(3,1) = -beta(3) * gamma_drift
 
     boost_tensor(1,2) = 1.0_num + gamma_m1_beta2 * beta(1)**2
     boost_tensor(2,2) = gamma_m1_beta2 * beta(1) * beta(2)
