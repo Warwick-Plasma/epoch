@@ -866,9 +866,9 @@ CONTAINS
     REAL(num), INTENT(IN) :: weight1, weight2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
-    REAL(num) :: ran1, ran2, s12, u0, cosp, gperp, mr, sinp
+    REAL(num) :: ran1, ran2, s12, u0, cosp, mr, sinp
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
-    REAL(num), DIMENSION(3) :: g, h, deltap, p1, p2, p3, p4, vc, v1, v2, p5, p6
+    REAL(num), DIMENSION(3) :: g, p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, e1, e2, vc_sq, vc_mag
 
