@@ -955,12 +955,8 @@ CONTAINS
     vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
     ! Collision frequency
-    IF (m1 > m2) THEN
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, idens)
-    ELSE
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, jdens)
-    END IF
-    nu = 2.0_num * nu * factor * dt
+    nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
+    nu = MIN(nu * factor * dt, 0.02_num)
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
@@ -983,13 +979,8 @@ CONTAINS
     ran2 = 2.0_num * pi * random()
 
     ! angle theta in the One Particle at Rest frame
-    IF (ABS(delta) < c_tiny) THEN
-      sin_theta = 0.0_num
-      cos_theta = 1.0_num
-    ELSE
-      sin_theta = delta / SQRT(1.0_num + delta**2)
-      cos_theta = sin_theta / delta
-    END IF
+    sin_theta = 2.0_num * delta / (1.0_num + delta**2)
+    cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
 
     ! Transform angles from particle j's rest frame to COM frame
     ! Note azimuthal angle (ran2) is invariant under this transformation
@@ -1010,8 +1001,8 @@ CONTAINS
       tan_theta_cm2 = c_largest_number
     END IF
 
-    sin_theta = SQRT(tan_theta_cm2 / (1.0_num + tan_theta_cm2))
-    cos_theta = SQRT(1.0_num / (1.0_num + tan_theta_cm2))
+    sin_theta = tan_theta_cm / SQRT(1.0_num + tan_theta_cm2)
+    cos_theta = 1.0_num / SQRT(1.0_num + tan_theta_cm2)
 
     ! Post-collision momenta in COM frame
     p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
