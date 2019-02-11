@@ -931,14 +931,29 @@ CONTAINS
 
     sinp = SIN(ACOS(cosp))
 
-    gperp = SQRT(g(2)**2 + g(3)**2)
+    ! Calculate new momenta according to rotation by angle p
+    p_perp = SQRT(p3(1)**2 + p3(2)**2)
+    p_tot = SQRT(p3(1)**2 + p3(2)**2 + p3(3)**2)
+    mat(1,1) =  p3(1) * p3(3) / (p_perp + c_tiny)
+    mat(1,2) = -p3(2) * p_tot / (p_perp + c_tiny)
+    mat(1,3) =  p3(1)
+    mat(2,1) =  p3(2) * p3(3) / (p_perp + c_tiny)
+    mat(2,2) =  p3(1) * p_tot / (p_perp + c_tiny)
+    mat(2,3) =  p3(2)
+    mat(3,1) = -p_perp
+    mat(3,2) =  0.0_num
+    mat(3,3) =  p3(3)
 
-    h(1) = gperp * COS(ran2)
-    h(2) = -(g(1)*g(2) * COS(ran2) + u0 * g(3) * SIN(ran2))/MAX(gperp, c_tiny)
-    h(3) = -(g(1)*g(3) * COS(ran2) - u0 * g(2) * SIN(ran2))/MAX(gperp, c_tiny)
+    p3(1) = mat(1,1) * (sinp * COS(ran2)) &
+          + mat(1,2) * (sinp * SIN(ran2)) &
+          + mat(1,3) * cosp
+    p3(2) = mat(2,1) * (sinp * COS(ran2)) &
+          + mat(2,2) * (sinp * SIN(ran2)) &
+          + mat(2,3) * cosp
+    p3(3) = mat(3,1) * (sinp * COS(ran2)) &
+          + mat(3,2) * (sinp * SIN(ran2)) &
+          + mat(3,3) * cosp
 
-    deltap = mr * (g * (1.0_num - cosp) + h * sinp)
-    p3 = p3 - deltap
     p4 = -p3
 
     p5 = p3 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p3) &
