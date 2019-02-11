@@ -867,17 +867,11 @@ CONTAINS
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num) :: ran1, ran2, s12, u0, cosp, gperp, mr, sinp
-    REAL(num) :: a, a_inv, p_perp, p_tot
+    REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
     REAL(num), DIMENSION(3) :: g, h, deltap, p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, e1, e2, vc_sq, vc_mag
 
-    ! Calculate gamma factors
-    g1 = 1.0_num
-    g2 = 1.0_num
-    g3 = 1.0_num
-    g4 = 1.0_num
-    gc = 1.0_num
 
     p1 = current%part_p
     p2 = impact%part_p
@@ -890,14 +884,29 @@ CONTAINS
     v1 = p1 * c**2 / e1
     v2 = p2 * c**2 / e2
 
+    v_sq = DOT_PRODUCT(v1,v1)
+    gamma_rel_inv = SQRT(1.0_num - v_sq / c**2)
+    g1 = 1.0_num / gamma_rel_inv
+
+    v_sq = DOT_PRODUCT(v2,v2)
+    gamma_rel_inv = SQRT(1.0_num - v_sq / c**2)
+    g2 = 1.0_num / gamma_rel_inv
+
     ! Velocity of centre-of-momentum (COM) reference frame
-    !    vc = (p1 + p2) * c**2 / (e1 + e2)
-    vc = (p1 + p2) / (mass1 + mass2)
+    vc = (p1 + p2) * c**2 / (e1 + e2)
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
 
+    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gc = 1.0_num / gamma_rel_inv
+
     p3 = p1 + ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, v1) - gc) &
          * mass1 * g1 * vc
+
+    v_sq = DOT_PRODUCT(vc,v1)
+    g3 = (1.0_num - v_sq / c**2) * gc * g1
+    v_sq = DOT_PRODUCT(vc,v2)
+    g4 = (1.0_num - v_sq / c**2) * gc * g2
 
     g = current%part_p/mass1 - impact%part_p/mass2
     u0 = SQRT(SUM(g**2))
