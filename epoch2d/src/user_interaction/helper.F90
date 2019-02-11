@@ -34,12 +34,10 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: ispecies
     TYPE(particle_species), POINTER :: species
-    TYPE(initial_condition_block), POINTER :: ic
 
     ! Set temperature at boundary for thermal bcs.
 
     species => species_list(ispecies)
-    ic => species%initial_conditions
 
     IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
       species%ext_temp_x_min(:,:) = species_temp(1,:,:)
@@ -55,6 +53,23 @@ CONTAINS
     END IF
 
   END SUBROUTINE set_thermal_bcs
+
+
+
+  SUBROUTINE set_thermal_bcs_all
+
+    INTEGER :: ispecies
+
+    ! Set temperature at boundary for thermal bcs.
+
+    DO ispecies = 1, n_species
+      CALL setup_ic_density(ispecies)
+      CALL setup_ic_temp(ispecies)
+      CALL setup_ic_drift(ispecies)
+      CALL set_thermal_bcs(ispecies)
+    END DO
+
+  END SUBROUTINE set_thermal_bcs_all
 
 
 
@@ -100,6 +115,7 @@ CONTAINS
           CALL setup_particle_temperature(&
               species_temp(:,:,n), n, species, species_drift(:,:,n))
         END DO
+        CALL deltaf_load(ispecies, species_temp, species_drift)
       ELSE IF (species_list(ispecies)%ic_df_type &
           == c_ic_df_relativistic_thermal) THEN
         CALL setup_particle_temperature_relativistic(species_temp, species, &
@@ -125,8 +141,6 @@ CONTAINS
         END IF
       END DO
     END IF
-
-    CALL deltaf_load
 
   END SUBROUTINE auto_load
 

@@ -37,14 +37,14 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, subarray, fh, i
+    INTEGER :: subtype, subarray, fh, i, oerr
 #ifdef NO_MPI3
-    INTEGER :: itsz
-    INTEGER(KIND=MPI_OFFSET_KIND) :: tsz
+    INTEGER :: iasz
 #else
-    INTEGER(KIND=MPI_COUNT_KIND) :: tsz
+    INTEGER(KIND=MPI_COUNT_KIND) :: asz
 #endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
+    INTEGER(KIND=i8) :: asz8, tsz
 
     CALL MPI_FILE_OPEN(comm, TRIM(filename), MPI_MODE_RDONLY, &
         MPI_INFO_NULL, fh, errcode)
@@ -57,15 +57,21 @@ CONTAINS
 
     subtype = create_current_field_subtype()
     subarray = create_current_field_subarray(ng)
+
+    ! Check that file size is divisible by the total size of a field array
+#ifdef NO_MPI3
+    CALL MPI_TYPE_SIZE(subtype, iasz, errcode)
+    asz8 = INT(iasz, i8)
+#else
+    CALL MPI_TYPE_SIZE_X(subarray, asz, errcode)
+    asz8 = INT(asz, i8)
+#endif
+    oerr = errcode
+    CALL MPI_REDUCE(asz8, tsz, 1, MPI_INTEGER8, MPI_SUM, 0, comm, errcode)
+
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
-#ifdef NO_MPI3
-      CALL MPI_TYPE_SIZE(subtype, itsz, errcode)
-      tsz = INT(itsz, MPI_OFFSET_KIND)
-#else
-      CALL MPI_TYPE_SIZE_X(subtype, tsz, errcode)
-#endif
-      IF (errcode == MPI_UNDEFINED) THEN
+      IF (oerr == MPI_UNDEFINED) THEN
         PRINT*, '*** WARNING ***'
         PRINT*, 'Cannot automatically test size of file"' // TRIM(filename) &
             // '". Ensure that file is of correct size'
