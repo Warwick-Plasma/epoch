@@ -867,16 +867,47 @@ CONTAINS
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num) :: ran1, ran2, s12, u0, cosp, gperp, mr, sinp
-    REAL(num) :: a, a_inv
-    REAL(num), DIMENSION(3) :: g, h, deltap
+    REAL(num) :: a, a_inv, p_perp, p_tot
+    REAL(num), DIMENSION(3) :: g, h, deltap, p1, p2, p3, p4, vc, v1, v2, p5, p6
+    REAL(num), DIMENSION(3,3) :: mat
+    REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, e1, e2, vc_sq, vc_mag
+
+    ! Calculate gamma factors
+    g1 = 1.0_num
+    g2 = 1.0_num
+    g3 = 1.0_num
+    g4 = 1.0_num
+    gc = 1.0_num
+
+    p1 = current%part_p
+    p2 = impact%part_p
+
+    ! Pre-collision energies
+    e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+    e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+
+    ! Pre-collision velocities
+    v1 = p1 * c**2 / e1
+    v2 = p2 * c**2 / e2
+
+    ! Velocity of centre-of-momentum (COM) reference frame
+    vc = (p1 + p2) * c**2 / (e1 + e2)
+    vc_sq = DOT_PRODUCT(vc, vc)
+    vc_mag = SQRT(vc_sq)
+
+    p3 = p1 + ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, v1) - gc) &
+         * mass1 * g1 * vc
 
     g = current%part_p/mass1 - impact%part_p/mass2
     u0 = SQRT(SUM(g**2))
     IF (ABS(u0) < c_tiny) RETURN
+    p_mag = SQRT(DOT_PRODUCT(p3,p3))
     mr = (mass1 * mass2)/(mass1 + mass2)
 
-    s12 = (charge1**2 * charge2**2 * jdens * log_lambda) / (4.0_num * pi &
-        * epsilon0**2 * mr**2 * u0**3) * dt * factor
+    fac = charge1**2 * charge2**2 * jdens * log_lambda * dt * factor &
+        / (4.0_num * pi * epsilon0**2 * c**4 * mass1 * g1 * mass2 * g2)
+    s12 = fac * gc * p_mag / (mass1 * g1 + mass2 * g2) &
+          * (mass1 * g3 * mass2 * g4 * c**2 / p_mag**2 + 1.0_num)**2
 
     ran1 = random()
     ran2 = random() * 2.0_num * pi
