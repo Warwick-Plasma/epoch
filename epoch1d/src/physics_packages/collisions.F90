@@ -891,7 +891,8 @@ CONTAINS
     v2 = p2 * c**2 / e2
 
     ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) * c**2 / (e1 + e2)
+    !    vc = (p1 + p2) * c**2 / (e1 + e2)
+    vc = (p1 + p2) / (mass1 + mass2)
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
 
@@ -929,6 +930,7 @@ CONTAINS
     END IF
 
     sinp = SIN(ACOS(cosp))
+
     gperp = SQRT(g(2)**2 + g(3)**2)
 
     h(1) = gperp * COS(ran2)
@@ -936,8 +938,16 @@ CONTAINS
     h(3) = -(g(1)*g(3) * COS(ran2) - u0 * g(2) * SIN(ran2))/MAX(gperp, c_tiny)
 
     deltap = mr * (g * (1.0_num - cosp) + h * sinp)
-    current%part_p = current%part_p - deltap
-    impact%part_p = impact%part_p + deltap
+    p3 = p3 - deltap
+    p4 = -p3
+
+    p5 = p3 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p3) &
+         + mass1 * gc * g3)
+    p6 = p4 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p4) &
+         + mass2 * gc * g4)
+    ! Update particle properties
+    current%part_p = p5
+    impact%part_p = p6
 
   END SUBROUTINE scatter_nanbu
 
