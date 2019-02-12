@@ -18,7 +18,7 @@ MODULE random_generator
   IMPLICIT NONE
   PRIVATE
   PUBLIC :: random, random_init, get_random_state, set_random_state
-  PUBLIC :: random_box_muller, random_state_type
+  PUBLIC :: random_box_muller, random_state_type, flush_bm_cache
 
   INTEGER, PARAMETER :: init_x = 123456789
   INTEGER, PARAMETER :: init_y = 362436069
@@ -28,6 +28,7 @@ MODULE random_generator
   TYPE :: random_state_type
     INTEGER :: x, y, z, w
     LOGICAL :: box_muller_cached
+    DOUBLE PRECISION :: cached_bm_value
   END TYPE random_state_type
 
   TYPE(random_state_type), TARGET, SAVE :: global_random
@@ -97,6 +98,7 @@ CONTAINS
     current_state%z = init_z + seed
     current_state%w = init_w + seed
     current_state%box_muller_cached = .FALSE.
+    current_state%cached_bm_value = 0.0d0
 
     ! 'Warm-up' the generator by cycling through a few times
     DO i = 1, 1000
@@ -128,7 +130,13 @@ CONTAINS
       mu_val = 0.0D0
     END IF
 
-    IF (PRESENT(state)) cached = state%box_muller_cached
+    IF (PRESENT(state)) THEN
+      cached = state%box_muller_cached
+      cached_random_value = state%cached_bm_value
+    ELSE
+      cached = global_random%box_muller_cached
+      cached_random_value = global_random%cached_bm_value
+    END IF
 
     IF (cached) THEN
       cached = .FALSE.
@@ -154,7 +162,13 @@ CONTAINS
       cached_random_value = rand2 * w
     END IF
 
-    IF (PRESENT(state)) state%box_muller_cached = cached
+    IF (PRESENT(state)) THEN
+      state%box_muller_cached = cached
+      state%cached_bm_value = cached_random_value
+    ELSE
+      global_random%box_muller_cached = cached
+      global_random%cached_bm_value = cached_random_value
+    ENDIF
 
   END FUNCTION random_box_muller
 
@@ -193,5 +207,21 @@ CONTAINS
     END IF
 
   END SUBROUTINE set_random_state
+
+
+  SUBROUTINE flush_bm_cache(state)
+
+    TYPE(random_state_type), INTENT(INOUT), OPTIONAL :: state
+
+    IF (PRESENT(state)) THEN
+      state%box_muller_cached = .FALSE.
+      state%cached_bm_value = 0.0d0
+    ELSE
+      global_random%box_muller_cached = .FALSE.
+      global_random%cached_bm_value = 0.0d0
+    END IF
+
+  END SUBROUTINE flush_bm_cache
+
 
 END MODULE random_generator
