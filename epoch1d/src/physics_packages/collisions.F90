@@ -929,7 +929,7 @@ CONTAINS
     ran2 = random() * 2.0_num * pi
     !Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
     IF (s12 < 0.1_num) THEN
-      cosp = 1.0_num + s12 * LOG(MAX(ran1,c_tiny))
+      cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
     ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
       a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
            + (0.47913906_num + (-0.12788975 + (0.02389567) &
