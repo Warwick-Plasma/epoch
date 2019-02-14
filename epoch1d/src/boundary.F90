@@ -146,7 +146,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
         tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO i = nx_local+1, nx_local+ng
         field(i) = temp(n)
@@ -157,7 +157,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
         tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO i = 1-ng, 0
         field(i) = temp(n)
@@ -186,7 +186,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
         tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO i = nx_local+1, nx_local+ng
         field(i) = temp(n)
@@ -197,7 +197,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
         tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO i = 1-ng, 0
         field(i) = temp(n)

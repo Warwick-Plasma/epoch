@@ -143,11 +143,28 @@ CONTAINS
     basetype = mpireal
 
     IF (direction == c_dir_x) THEN
-      proc1_min = proc_y_min
-      proc1_max = proc_y_max
+      IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+        proc1_min = proc_y_min
+      ELSE
+        proc1_min = MPI_PROC_NULL
+      END IF
+
+      IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+        proc1_max = proc_y_max
+      ELSE
+        proc1_max = MPI_PROC_NULL
+      END IF
     ELSE
-      proc1_min = proc_x_min
-      proc1_max = proc_x_max
+      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+        proc1_min = proc_x_min
+      ELSE
+        proc1_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+        proc1_max = proc_x_max
+      ELSE
+        proc1_max = MPI_PROC_NULL
+      END IF
     END IF
 
     ALLOCATE(temp(ng))
@@ -211,7 +228,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = nx_local+1, subsizes(1)+nx_local
@@ -224,7 +241,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -246,7 +263,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
       n = 1
       DO j = ny_local+1, subsizes(2)+ny_local
       DO i = 1-ng, subsizes(1)-ng
@@ -259,7 +276,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -308,7 +325,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = nx_local+1, subsizes(1)+nx_local
@@ -321,7 +338,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -343,7 +360,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
       n = 1
       DO j = ny_local+1, subsizes(2)+ny_local
       DO i = 1-ng, subsizes(1)-ng
@@ -356,7 +373,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
