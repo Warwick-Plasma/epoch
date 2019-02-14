@@ -1144,19 +1144,13 @@ CONTAINS
       CASE(c_blocktype_array)
         IF (use_exact_restart .AND. need_random_state &
             .AND. str_cmp(block_id, 'random_states')) THEN
-          IF (datatype == c_datatype_integer4 .AND. ndims == 4) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (datatype == c_datatype_integer4 .AND. dims(1) == 4*nproc) THEN
             ! Older form of random_states output
             ! Missing the box_muller_cache entry
-            ALLOCATE(random_states_per_proc(5*nproc))
-            ALLOCATE(random_states_per_proc_old(4*nproc))
+            ALLOCATE(random_states_per_proc(4*nproc))
             CALL sdf_read_srl(sdf_handle, random_states_per_proc)
-            DO i = 0, nproc - 1
-              random_states_per_proc(5*i+1:5*(i+1)-1) = &
-                  random_states_per_proc_old(4*i+1:4*(i+1))
-              random_states_per_proc(5*(i+1)) = 0
-            END DO
-            DEALLOCATE(random_states_per_proc_old)
-            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+            CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
             DEALLOCATE(random_states_per_proc)
           ELSE IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1165,10 +1159,17 @@ CONTAINS
           END IF
         ELSE IF (use_exact_restart .AND. need_random_state &
             .AND. str_cmp(block_id, 'random_states_full')) THEN
-          IF (datatype == c_datatype_integer4 .AND. ndims == 5) THEN
-            ALLOCATE(random_states_per_proc(5*nproc))
-            CALL sdf_read_srl(sdf_handle, random_states_per_proc)
-            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (datatype == c_datatype_integer4 .AND. dims(1) == 5*nproc) THEN
+            ALLOCATE(random_states_per_proc(4*nproc))
+            ALLOCATE(random_states_per_proc_old(5*nproc))
+            CALL sdf_read_srl(sdf_handle, random_states_per_proc_old)
+            DO i = 0, nproc - 1
+              random_states_per_proc(4*i+1:4*(i+1)) = &
+                  random_states_per_proc_old(5*i+1:5*(i+1)-1)
+            END DO
+            DEALLOCATE(random_states_per_proc_old)
+            CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
             DEALLOCATE(random_states_per_proc)
           ELSE IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
