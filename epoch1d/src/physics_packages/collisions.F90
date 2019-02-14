@@ -35,6 +35,23 @@ MODULE collisions
   PUBLIC :: test_collisions
 #endif
 
+  ABSTRACT INTERFACE
+    SUBROUTINE scatter_proto(current, impact, mass1, mass2, charge1, charge2, &
+        weight1, weight2, idens, jdens, log_lambda, factor)
+
+      IMPORT particle, num
+
+      TYPE(particle), POINTER :: current, impact
+      REAL(num), INTENT(IN) :: mass1, mass2
+      REAL(num), INTENT(IN) :: charge1, charge2
+      REAL(num), INTENT(IN) :: weight1, weight2
+      REAL(num), INTENT(IN) :: idens, jdens, log_lambda
+      REAL(num), INTENT(IN) :: factor
+    END SUBROUTINE scatter_proto
+  END INTERFACE
+
+  PROCEDURE(scatter_proto), POINTER :: scatter_fn => NULL()
+
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
   REAL(num), PARAMETER :: e_rest = m0 * c**2
@@ -100,6 +117,12 @@ CONTAINS
     ALLOCATE(part_count(1-ng:nx+ng))
     ALLOCATE(iekbar(1-ng:nx+ng))
     ALLOCATE(jekbar(1-ng:nx+ng))
+
+    IF (use_nanbu) THEN
+      scatter_fn => scatter_np
+    ELSE
+      scatter_fn => scatter_sk
+    END IF
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -743,7 +766,7 @@ CONTAINS
     current => p_list%head
     impact => current%next
     DO k = 2, icount-2, 2
-      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
       current => impact%next
       impact => current%next
@@ -754,18 +777,18 @@ CONTAINS
     END DO
 
     IF (MOD(icount, 2_i8) == 0) THEN
-      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
     ELSE
-      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => impact%next
       impact => current%prev%prev
-      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => current%prev
       impact => current%next
-      CALL scatter_nanbu(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
     END IF
 
@@ -837,7 +860,7 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
       DO k = 1, pcount
-        CALL scatter_nanbu(current, impact, mass1, mass2, charge1, charge2, &
+        CALL scatter_fn(current, impact, mass1, mass2, charge1, charge2, &
             weight1, weight2, idens, jdens, log_lambda, &
             user_factor * np / factor)
         current => current%next
@@ -856,8 +879,10 @@ CONTAINS
   END SUBROUTINE inter_species_collisions
 
 
-
-  SUBROUTINE scatter_nanbu(current, impact, mass1, mass2, charge1, charge2, &
+  ! Binary collision scattering operator based jointly on:
+  ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
+  ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
+  SUBROUTINE scatter_np(current, impact, mass1, mass2, charge1, charge2, &
       weight1, weight2, idens, jdens, log_lambda, factor)
 
     TYPE(particle), POINTER :: current, impact
@@ -979,19 +1004,18 @@ CONTAINS
     current%part_p = p5
     impact%part_p = p6
 
-  END SUBROUTINE scatter_nanbu
+  END SUBROUTINE scatter_np
 
 
-
-  SUBROUTINE scatter(current, impact, mass1, mass2, charge1, charge2, &
+  ! Binary collision scattering operator based on that of
+  ! Y. Sentoku and A. J. Kemp. [J Comput Phys, 227, 6846 (2008)]
+  SUBROUTINE scatter_sk(current, impact, mass1, mass2, charge1, charge2, &
       weight1, weight2, idens, jdens, log_lambda, factor)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
     ! frame. Then, as the collisions are assumed to be elastic, the momentum
     ! of the second particle is simply the opposite of the first.
-    ! This algorithm is based on that of Y. Sentoku and A. J. Kemp.
-    ! [J Comput Phys, 227, 6846 (2008)]
 
     TYPE(particle), POINTER :: current, impact
     REAL(num), INTENT(IN) :: mass1, mass2
@@ -1162,7 +1186,7 @@ CONTAINS
     current%part_p = p5
     impact%part_p = p6
 
-  END SUBROUTINE scatter
+  END SUBROUTINE scatter_sk
 
 
 
