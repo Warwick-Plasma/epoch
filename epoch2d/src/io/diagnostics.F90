@@ -231,8 +231,8 @@ CONTAINS
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
 
-    !Clean-up any cached RNG state
-    CALL flush_bm_cache
+    ! Clean-up any cached RNG state
+    CALL random_flush_cache
 
 #ifdef NO_IO
     RETURN
