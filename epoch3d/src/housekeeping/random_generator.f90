@@ -182,11 +182,6 @@ CONTAINS
     state(2) = global_random%y
     state(3) = global_random%z
     state(4) = global_random%w
-    IF (global_random%box_muller_cached) THEN
-      state(5) = 1
-    ELSE
-      state(5) = 0
-    END IF
 
   END SUBROUTINE get_random_state
 
@@ -200,14 +195,8 @@ CONTAINS
     global_random%y = state(2)
     global_random%z = state(3)
     global_random%w = state(4)
-    IF (state(5) == 1) THEN
-      global_random%box_muller_cached = .TRUE.
-    ELSE
-      global_random%box_muller_cached = .FALSE.
-    END IF
 
   END SUBROUTINE set_random_state
-
 
 
   SUBROUTINE flush_bm_cache(state)
@@ -223,5 +212,6 @@ CONTAINS
     END IF
 
   END SUBROUTINE flush_bm_cache
+
 
 END MODULE random_generator
