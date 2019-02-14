@@ -957,7 +957,7 @@ CONTAINS
       cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
     ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
       a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
-           + (0.47913906_num + (-0.12788975 + (0.02389567) &
+           + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
            * s12) * s12) * s12) * s12) * s12
       a = 1.0_num / a_inv
       cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
