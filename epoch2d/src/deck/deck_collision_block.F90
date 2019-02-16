@@ -104,6 +104,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_nanbu')) THEN
+      use_nanbu = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'coulomb_log')) THEN
       IF (str_cmp(value, 'auto')) THEN
         coulomb_log_auto = .TRUE.

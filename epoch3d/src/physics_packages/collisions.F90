@@ -35,6 +35,23 @@ MODULE collisions
   PUBLIC :: test_collisions
 #endif
 
+  ABSTRACT INTERFACE
+    SUBROUTINE scatter_proto(current, impact, mass1, mass2, charge1, charge2, &
+        weight1, weight2, idens, jdens, log_lambda, factor)
+
+      IMPORT particle, num
+
+      TYPE(particle), POINTER :: current, impact
+      REAL(num), INTENT(IN) :: mass1, mass2
+      REAL(num), INTENT(IN) :: charge1, charge2
+      REAL(num), INTENT(IN) :: weight1, weight2
+      REAL(num), INTENT(IN) :: idens, jdens, log_lambda
+      REAL(num), INTENT(IN) :: factor
+    END SUBROUTINE scatter_proto
+  END INTERFACE
+
+  PROCEDURE(scatter_proto), POINTER :: scatter_fn => NULL()
+
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
   REAL(num), PARAMETER :: e_rest = m0 * c**2
@@ -100,6 +117,12 @@ CONTAINS
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(jekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+
+    IF (use_nanbu) THEN
+      scatter_fn => scatter_np
+    ELSE
+      scatter_fn => scatter_sk
+    END IF
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -771,7 +794,7 @@ CONTAINS
     current => p_list%head
     impact => current%next
     DO k = 2, icount-2, 2
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
       current => impact%next
       impact => current%next
@@ -782,18 +805,18 @@ CONTAINS
     END DO
 
     IF (MOD(icount, 2_i8) == 0) THEN
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, factor)
     ELSE
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => impact%next
       impact => current%prev%prev
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
       current => current%prev
       impact => current%next
-      CALL scatter(current, impact, mass, mass, charge, charge, &
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
           weight, weight, dens, dens, log_lambda, 0.5_num*factor)
     END IF
 
@@ -865,7 +888,7 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
       DO k = 1, pcount
-        CALL scatter(current, impact, mass1, mass2, charge1, charge2, &
+        CALL scatter_fn(current, impact, mass1, mass2, charge1, charge2, &
             weight1, weight2, idens, jdens, log_lambda, &
             user_factor * np / factor)
         current => current%next
@@ -884,16 +907,143 @@ CONTAINS
   END SUBROUTINE inter_species_collisions
 
 
+  ! Binary collision scattering operator based jointly on:
+  ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
+  ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
+  SUBROUTINE scatter_np(current, impact, mass1, mass2, charge1, charge2, &
+      weight1, weight2, idens, jdens, log_lambda, factor)
 
-  SUBROUTINE scatter(current, impact, mass1, mass2, charge1, charge2, &
+    TYPE(particle), POINTER :: current, impact
+    REAL(num), INTENT(IN) :: mass1, mass2
+    REAL(num), INTENT(IN) :: charge1, charge2
+    REAL(num), INTENT(IN) :: weight1, weight2
+    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
+    REAL(num), INTENT(IN) :: factor
+    REAL(num) :: ran1, ran2, s12, cosp, sinp
+    REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
+    REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm
+    REAL(num), DIMENSION(3,3) :: mat
+    REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, vc_sq, vc_mag
+    REAL(num) :: mc_inv1, mc_inv2
+
+    p1 = current%part_p
+    p2 = impact%part_p
+
+    p1_norm = p1 / mc0
+    p2_norm = p2 / mc0
+
+    ! Two stationary particles can't collide, so don't try
+    IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+        .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) RETURN
+
+    ! Ditto for two particles with the same momentum
+    vc = (p1_norm - p2_norm)
+    IF (DOT_PRODUCT(vc, vc) < eps) RETURN
+
+    ! 1 / mc
+    mc_inv1 = 1.0_num / mass1 / c
+    mc_inv2 = 1.0_num / mass2 / c
+
+    p1_norm = p1 * mc_inv1
+    g1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num)
+
+    p2_norm = p2 * mc_inv2
+    g2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num)
+
+    ! Pre-collision velocities
+    v1 = p1 / mass1 / g1
+    v2 = p2 / mass2 / g2
+
+    ! Velocity of centre-of-momentum (COM) reference frame
+    vc = (p1 + p2) / (g1 * mass1 + g2 * mass2)
+    vc_sq = DOT_PRODUCT(vc, vc)
+    vc_mag = SQRT(vc_sq)
+
+    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gc = 1.0_num / gamma_rel_inv
+
+    p3 = p1 + ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, v1) - gc) &
+         * mass1 * g1 * vc
+
+    v_sq = DOT_PRODUCT(vc,v1)
+    g3 = (1.0_num - v_sq / c**2) * gc * g1
+    v_sq = DOT_PRODUCT(vc,v2)
+    g4 = (1.0_num - v_sq / c**2) * gc * g2
+
+    p_mag = SQRT(DOT_PRODUCT(p3,p3))
+
+    fac = charge1**2 * charge2**2 * jdens * log_lambda * dt * factor &
+        / (4.0_num * pi * epsilon0**2 * c**4 * mass1 * g1 * mass2 * g2)
+    s12 = fac * gc * p_mag / (mass1 * g1 + mass2 * g2) &
+          * (mass1 * g3 * mass2 * g4 * c**2 / p_mag**2 + 1.0_num)**2
+
+    ran1 = random()
+    ran2 = random() * 2.0_num * pi
+    !Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+    IF (s12 < 0.1_num) THEN
+      cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
+    ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
+      a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
+           + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
+           * s12) * s12) * s12) * s12) * s12
+      a = 1.0_num / a_inv
+      cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
+    ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
+      a = 3.0_num * EXP(-s12)
+      a_inv = 1.0_num / a
+      cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
+    ELSE
+      cosp = 2.0_num * ran1 - 1.0_num
+    END IF
+
+    sinp = SIN(ACOS(cosp))
+
+    ! Calculate new momenta according to rotation by angle p
+    p_perp = SQRT(p3(1)**2 + p3(2)**2)
+    p_tot = SQRT(p3(1)**2 + p3(2)**2 + p3(3)**2)
+    mat(1,1) =  p3(1) * p3(3) / (p_perp + c_tiny)
+    mat(1,2) = -p3(2) * p_tot / (p_perp + c_tiny)
+    mat(1,3) =  p3(1)
+    mat(2,1) =  p3(2) * p3(3) / (p_perp + c_tiny)
+    mat(2,2) =  p3(1) * p_tot / (p_perp + c_tiny)
+    mat(2,3) =  p3(2)
+    mat(3,1) = -p_perp
+    mat(3,2) =  0.0_num
+    mat(3,3) =  p3(3)
+
+    p3(1) = mat(1,1) * (sinp * COS(ran2)) &
+          + mat(1,2) * (sinp * SIN(ran2)) &
+          + mat(1,3) * cosp
+    p3(2) = mat(2,1) * (sinp * COS(ran2)) &
+          + mat(2,2) * (sinp * SIN(ran2)) &
+          + mat(2,3) * cosp
+    p3(3) = mat(3,1) * (sinp * COS(ran2)) &
+          + mat(3,2) * (sinp * SIN(ran2)) &
+          + mat(3,3) * cosp
+
+    p4 = -p3
+
+    p5 = p3 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p3) &
+         + mass1 * gc * g3)
+    p6 = p4 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p4) &
+         + mass2 * gc * g4)
+    ! Update particle properties
+    current%part_p = p5
+    impact%part_p = p6
+
+  END SUBROUTINE scatter_np
+
+
+  ! Binary collision scattering operator based on that of
+  ! Y. Sentoku and A. J. Kemp. [J Comput Phys, 227, 6846 (2008)]
+  SUBROUTINE scatter_sk(current, impact, mass1, mass2, charge1, charge2, &
       weight1, weight2, idens, jdens, log_lambda, factor)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
     ! frame. Then, as the collisions are assumed to be elastic, the momentum
     ! of the second particle is simply the opposite of the first.
-    ! This algorithm is based on that of Y. Sentoku and A. J. Kemp.
-    ! [J Comput Phys, 227, 6846 (2008)]
 
     TYPE(particle), POINTER :: current, impact
     REAL(num), INTENT(IN) :: mass1, mass2
@@ -1065,7 +1215,7 @@ CONTAINS
     current%part_p = p5
     impact%part_p = p6
 
-  END SUBROUTINE scatter
+  END SUBROUTINE scatter_sk
 
 
 
