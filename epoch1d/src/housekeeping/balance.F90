@@ -324,9 +324,12 @@ CONTAINS
     ! Redistribute the field variables
     CALL redistribute_fields(domain)
 
+    DEALLOCATE(cell_x_min, cell_x_max)
+    ALLOCATE(cell_x_min(nprocx), cell_x_max(nprocx))
+
     ! Copy the new lengths into the permanent variables
-    cell_x_min = new_cell_x_min
-    cell_x_max = new_cell_x_max
+    cell_x_min(:) = new_cell_x_min(:)
+    cell_x_max(:) = new_cell_x_max(:)
 
     ! Set the new nx
     nx_global_min = cell_x_min(x_coords+1)
