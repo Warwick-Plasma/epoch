@@ -1135,6 +1135,7 @@ CONTAINS
         IF (new_maxs /= old_maxs) THEN
           maxs(i) = new_maxs
           load_max = -1
+          load_min = HUGE(load_min)
           i0 = 1
           DO proc = 1, nproc
             i1 = maxs(proc)
@@ -1156,6 +1157,7 @@ CONTAINS
         IF (new_maxs /= old_maxs) THEN
           maxs(i) = new_maxs
           load_max = -1
+          load_min = HUGE(load_min)
           i0 = 1
           DO proc = 1, nproc
             i1 = maxs(proc)
