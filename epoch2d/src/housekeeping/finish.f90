@@ -51,7 +51,7 @@ CONTAINS
 
     INTEGER :: i, n, stat
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     DO i = 1, n_subsets
       sub => subset_list(i)
