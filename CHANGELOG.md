@@ -6,6 +6,10 @@
    MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
    older versions of the MPI library.
 
+ * Added collisions block option "use_nanbu". If set to true then the
+   scattering algorithm of Nanbu, with relativistic corrections by
+   Perez will be used in the collisions module. If false, the previous
+   Sentoku-Kemp algorithm will be used.
 
 ## v4.14.0 to v4.15.0 (2019-01-15)
 
