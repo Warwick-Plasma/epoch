@@ -57,6 +57,7 @@ MODULE collisions
   REAL(num), PARAMETER :: e_rest = m0 * c**2
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
   REAL(num), PARAMETER :: mrbeb_const = 2.0_num * pi * a0**2 * alpha**4
+  REAL(num), PARAMETER :: cc = c**2
 
 #ifndef PER_SPECIES_WEIGHT
   REAL(num), DIMENSION(3,0:2), PARAMETER :: a_bell = RESHAPE( &
@@ -559,11 +560,11 @@ CONTAINS
         e_p_rot(1) = gamma_i * (e_p_rot(1) - beta_i * e_e / c)
         ! Find electron velocity in ion frame
         e_p2_i = DOT_PRODUCT(e_p_rot, e_p_rot)
-        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / c**2))
+        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / cc))
       ELSE
         e_p2_i = DOT_PRODUCT(electron%part_p, electron%part_p)
         e_ke_i = c * (SQRT(e_p2_i + e_mass * e_rest) - e_mass * c) / ev
-        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / c**2))
+        e_v_i = SQRT(e_p2_i / (e_mass**2 + e_p2_i / cc))
       END IF
       ! Must enforce that electrons with insufficient kinetic energies cannot
       ! cause ionisation, as all cross sectional models used show massively
@@ -893,12 +894,16 @@ CONTAINS
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor
     REAL(num) :: ran1, ran2, s12, cosp, sinp
+    REAL(num) :: sinp_cos, sinp_sin
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
+    REAL(num) :: p_perp2, p_perp_inv
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, vc_sq, vc_mag
-    REAL(num) :: mc_inv1, mc_inv2, m1, m2, q1, q2
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
+    REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
+    REAL(num) :: m1, m2, q1, q2
+    REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
 
     p1 = current%part_p
     p2 = impact%part_p
@@ -926,46 +931,45 @@ CONTAINS
     q2 = charge2
 #endif
 
-    ! 1 / mc
-    mc_inv1 = 1.0_num / m1 / c
-    mc_inv2 = 1.0_num / m2 / c
+    p1_norm = p1 / m1 / c
+    gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
 
-    p1_norm = p1 * mc_inv1
-    g1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num)
+    p2_norm = p2 / m2 / c
+    gm2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num) * m2
 
-    p2_norm = p2 * mc_inv2
-    g2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num)
+    gm = gm1 + gm2
 
     ! Pre-collision velocities
-    v1 = p1 / m1 / g1
-    v2 = p2 / m2 / g2
+    v1 = p1 / gm1
+    v2 = p2 / gm2
 
     ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) / (g1 * m1 + g2 * m2)
+    vc = (p1 + p2) / gm
     vc_sq = DOT_PRODUCT(vc, vc)
-    vc_mag = SQRT(vc_sq)
 
-    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gamma_rel_inv = SQRT(1.0_num - vc_sq / cc)
     gc = 1.0_num / gamma_rel_inv
 
-    p3 = p1 + ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, v1) - gc) &
-         * m1 * g1 * vc
+    gc_m1_vc = (gc - 1.0_num) / vc_sq
 
-    v_sq = DOT_PRODUCT(vc,v1)
-    g3 = (1.0_num - v_sq / c**2) * gc * g1
-    v_sq = DOT_PRODUCT(vc,v2)
-    g4 = (1.0_num - v_sq / c**2) * gc * g2
+    p3 = p1 + (gc_m1_vc * DOT_PRODUCT(vc, v1) - gc) * gm1 * vc
 
-    p_mag = SQRT(DOT_PRODUCT(p3,p3))
+    v_sq = DOT_PRODUCT(vc, v1)
+    gm3 = (1.0_num - v_sq / cc) * gc * gm1
+    v_sq = DOT_PRODUCT(vc, v2)
+    gm4 = (1.0_num - v_sq / cc) * gc * gm2
 
-    fac = q1**2 * q2**2 * jdens * log_lambda * dt * factor &
-        / (4.0_num * pi * epsilon0**2 * c**4 * m1 * g1 * m2 * g2)
-    s12 = fac * gc * p_mag / (m1 * g1 + m2 * g2) &
-          * (m1 * g3 * m2 * g4 * c**2 / p_mag**2 + 1.0_num)**2
+    p_mag2 = DOT_PRODUCT(p3, p3)
+    p_mag = SQRT(p_mag2)
+
+    fac = (q1 * q2)**2 * jdens * log_lambda * dt * factor &
+        / (pi4_eps2_c4 * gm1 * gm2)
+    s12 = fac * gc * p_mag / gm * (gm3 * gm4 * cc / p_mag2 + 1.0_num)**2
 
     ran1 = random()
     ran2 = random() * 2.0_num * pi
-    !Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+
+    ! Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
     IF (s12 < 0.1_num) THEN
       cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
     ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
@@ -985,39 +989,39 @@ CONTAINS
     sinp = SIN(ACOS(cosp))
 
     ! Calculate new momenta according to rotation by angle p
-    p_perp = SQRT(p3(1)**2 + p3(2)**2)
-    p_tot = SQRT(p3(1)**2 + p3(2)**2 + p3(3)**2)
-    mat(1,1) =  p3(1) * p3(3) / (p_perp + c_tiny)
-    mat(1,2) = -p3(2) * p_tot / (p_perp + c_tiny)
+    p_perp2 = p3(1)**2 + p3(2)**2
+    p_perp = SQRT(p_perp2)
+    p_tot = SQRT(p_perp2 + p3(3)**2)
+    p_perp_inv = 1.0_num / (p_perp + c_tiny)
+
+    mat(1,1) =  p3(1) * p3(3) * p_perp_inv
+    mat(1,2) = -p3(2) * p_tot * p_perp_inv
     mat(1,3) =  p3(1)
-    mat(2,1) =  p3(2) * p3(3) / (p_perp + c_tiny)
-    mat(2,2) =  p3(1) * p_tot / (p_perp + c_tiny)
+    mat(2,1) =  p3(2) * p3(3) * p_perp_inv
+    mat(2,2) =  p3(1) * p_tot * p_perp_inv
     mat(2,3) =  p3(2)
     mat(3,1) = -p_perp
     mat(3,2) =  0.0_num
     mat(3,3) =  p3(3)
 
-    p3(1) = mat(1,1) * (sinp * COS(ran2)) &
-          + mat(1,2) * (sinp * SIN(ran2)) &
-          + mat(1,3) * cosp
-    p3(2) = mat(2,1) * (sinp * COS(ran2)) &
-          + mat(2,2) * (sinp * SIN(ran2)) &
-          + mat(2,3) * cosp
-    p3(3) = mat(3,1) * (sinp * COS(ran2)) &
-          + mat(3,2) * (sinp * SIN(ran2)) &
-          + mat(3,3) * cosp
+    sinp_cos = sinp * COS(ran2)
+    sinp_sin = sinp * SIN(ran2)
+
+    p3(1) = mat(1,1) * sinp_cos + mat(1,2) * sinp_sin + mat(1,3) * cosp
+    p3(2) = mat(2,1) * sinp_cos + mat(2,2) * sinp_sin + mat(2,3) * cosp
+    p3(3) = mat(3,1) * sinp_cos + mat(3,2) * sinp_sin + mat(3,3) * cosp
 
     p4 = -p3
 
-    p5 = p3 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p3) &
-         + m1 * gc * g3)
-    p6 = p4 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p4) &
-         + m2 * gc * g4)
+    p5 = p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc
+    p6 = p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc
+
     ! Update particle properties
     current%part_p = p5
     impact%part_p = p6
 
   END SUBROUTINE scatter_np
+
 
 
   ! Binary collision scattering operator based on that of
@@ -1049,7 +1053,7 @@ CONTAINS
     REAL(num) :: e3, e4, e5, e6
     REAL(num) :: gamma_rel_inv, gamma_rel, gamma_rel_m1, gamma_rel_r
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
-    REAL(num) :: vc_sq, vc_mag, p1_vc, p2_vc, p3_mag
+    REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
     REAL(num) :: vrabs, denominator
     REAL(num) :: nu, ran1, ran2
@@ -1087,21 +1091,21 @@ CONTAINS
     e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
 
     ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) * c**2 / (e1 + e2)
+    vc = (p1 + p2) * cc / (e1 + e2)
     vc_sq = DOT_PRODUCT(vc, vc)
-    vc_mag = SQRT(vc_sq)
+    vc_sq_cc = vc_sq / cc
 
-    gamma_rel_inv = SQRT(1.0_num - vc_sq / c**2)
+    gamma_rel_inv = SQRT(1.0_num - vc_sq_cc)
     gamma_rel = 1.0_num / gamma_rel_inv
-    gamma_rel_m1 = vc_sq / c**2 / (gamma_rel_inv + gamma_rel_inv**2)
+    gamma_rel_m1 = vc_sq_cc / (gamma_rel_inv + gamma_rel_inv**2)
 
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
     p2_vc = DOT_PRODUCT(p2, vc)
     tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
-    p3 = p1 + vc * (tvar - gamma_rel * e1 / c**2)
+    p3 = p1 + vc * (tvar - gamma_rel * e1 / cc)
     tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
-    p4 = p2 + vc * (tvar - gamma_rel * e2 / c**2)
+    p4 = p2 + vc * (tvar - gamma_rel * e2 / cc)
 
     p3_mag = SQRT(DOT_PRODUCT(p3, p3))
 
@@ -1109,11 +1113,11 @@ CONTAINS
     e3 = gamma_rel * (e1 - p1_vc)
     e4 = gamma_rel * (e2 - p2_vc)
     ! Pre-collision velocities in COM frame
-    v3 = p3 * c**2 / e3
-    v4 = p4 * c**2 / e4
+    v3 = p3 * cc / e3
+    v4 = p4 * cc / e4
 
     ! Relative velocity
-    tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / c**2)
+    tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / cc)
     vr = (v3 - v4) / tvar
     vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
@@ -1152,7 +1156,7 @@ CONTAINS
     ELSE
       vcr = v4
     END IF
-    gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / c**2))
+    gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / cc))
 
     denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
         / MAX(vrabs, c_tiny))
@@ -1174,9 +1178,9 @@ CONTAINS
 
     ! Lorentz momentum transform to get back to lab frame
     tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
-    p5 = p3 + vc * (tvar + gamma_rel * e3 / c**2)
+    p5 = p3 + vc * (tvar + gamma_rel * e3 / cc)
     tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
-    p6 = p4 + vc * (tvar + gamma_rel * e4 / c**2)
+    p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
 
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
@@ -1250,7 +1254,7 @@ CONTAINS
     en_after = (1.0_num - wtr) * en + wtr * en_scat
     p_after  = (1.0_num - wtr) * p  + wtr * p_scat
     p_mag = SQRT(DOT_PRODUCT(p_after, p_after))
-    gamma_en = en_after / (mass * c**2)
+    gamma_en = en_after / (mass * cc)
     gamma_p = SQRT(1.0_num + (p_mag / mass / c)**2)
 
     ! This if-statement is just to take care of possible rounding errors
@@ -1391,7 +1395,7 @@ CONTAINS
       ELSE
         bmax = SQRT(epsilon0 * q0 * local_temp2 / (ABS(q2) * q0 * dens2(i)))
         b0 = ABS(q1 * q2) / (8.0_num * pi * epsilon0 * local_ekbar1)
-        gamm = (local_ekbar1 / (m1 * c**2)) + 1.0_num
+        gamm = (local_ekbar1 / (m1 * cc)) + 1.0_num
         dB = 2.0_num * pi * h_bar / (SQRT(gamm**2 - 1.0_num) * m1 * c)
         bmin = MAX(b0, dB)
         calc_coulomb_log(i) = MAX(1.0_num, LOG(bmax / bmin))
@@ -1756,8 +1760,8 @@ CONTAINS
       part1%weight = wt1
       part2%weight = wt2
 
-      en1_before = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_before = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + p1 + p2
       p_sqr = p_sqr + SUM((p1 + p2)**2)
@@ -1770,8 +1774,8 @@ CONTAINS
       p1 = part1%part_p
       p2 = part2%part_p
 
-      en1_after = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_after = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
@@ -1813,8 +1817,8 @@ CONTAINS
       part1%weight = wt1
       part2%weight = wt2
 
-      en1_before = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_before = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + p1 + p2
       p_sqr = p_sqr + SUM((p1 + p2)**2)
@@ -1833,8 +1837,8 @@ CONTAINS
       p1 = part1%part_p
       p2 = part2%part_p
 
-      en1_after = c**2 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = c**2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_after = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - p1 - p2
       en_error = en_error - en1_after - en2_after
@@ -1877,8 +1881,8 @@ CONTAINS
       part2%weight = wt2
 
 
-      en1_before = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + wt1 * p1 + wt2 * p2
       p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
@@ -1891,8 +1895,8 @@ CONTAINS
       p1 = part1%part_p
       p2 = part2%part_p
 
-      en1_after = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_after = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
@@ -1934,8 +1938,8 @@ CONTAINS
       part1%weight = wt1
       part2%weight = wt2
 
-      en1_before = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error + wt1 * p1 + wt2 * p2
       p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
@@ -1954,8 +1958,8 @@ CONTAINS
       p1 = part1%part_p
       p2 = part2%part_p
 
-      en1_after = c**2 * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = c**2 * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
+      en1_after = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
+      en2_after = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 
       p_error = p_error - wt1 * p1 - wt2 * p2
       en_error = en_error - en1_after - en2_after
