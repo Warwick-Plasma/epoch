@@ -941,7 +941,7 @@ CONTAINS
     v2 = p2 / m2 / g2
 
     ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) / (g1 * mass1 + g2 * mass2)
+    vc = (p1 + p2) / (g1 * m1 + g2 * m2)
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_mag = SQRT(vc_sq)
 
@@ -949,7 +949,7 @@ CONTAINS
     gc = 1.0_num / gamma_rel_inv
 
     p3 = p1 + ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, v1) - gc) &
-         * mass1 * g1 * vc
+         * m1 * g1 * vc
 
     v_sq = DOT_PRODUCT(vc,v1)
     g3 = (1.0_num - v_sq / c**2) * gc * g1
