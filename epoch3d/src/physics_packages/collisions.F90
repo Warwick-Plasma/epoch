@@ -907,6 +907,7 @@ CONTAINS
   END SUBROUTINE inter_species_collisions
 
 
+
   ! Binary collision scattering operator based jointly on:
   ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
   ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
@@ -925,7 +926,7 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: g1, g2, g3, g4, p_mag, fac, gc, vc_sq, vc_mag
-    REAL(num) :: mc_inv1, mc_inv2
+    REAL(num) :: mc_inv1, mc_inv2, m1, m2, q1, q2
 
     p1 = current%part_p
     p2 = impact%part_p
@@ -941,9 +942,21 @@ CONTAINS
     vc = (p1_norm - p2_norm)
     IF (DOT_PRODUCT(vc, vc) < eps) RETURN
 
+#ifdef PER_PARTICLE_CHARGE_MASS
+    m1 = current%mass
+    m2 = impact%mass
+    q1 = current%charge
+    q2 = impact%charge
+#else
+    m1 = mass1
+    m2 = mass2
+    q1 = charge1
+    q2 = charge2
+#endif
+
     ! 1 / mc
-    mc_inv1 = 1.0_num / mass1 / c
-    mc_inv2 = 1.0_num / mass2 / c
+    mc_inv1 = 1.0_num / m1 / c
+    mc_inv2 = 1.0_num / m2 / c
 
     p1_norm = p1 * mc_inv1
     g1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num)
@@ -952,8 +965,8 @@ CONTAINS
     g2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num)
 
     ! Pre-collision velocities
-    v1 = p1 / mass1 / g1
-    v2 = p2 / mass2 / g2
+    v1 = p1 / m1 / g1
+    v2 = p2 / m2 / g2
 
     ! Velocity of centre-of-momentum (COM) reference frame
     vc = (p1 + p2) / (g1 * mass1 + g2 * mass2)
@@ -973,10 +986,10 @@ CONTAINS
 
     p_mag = SQRT(DOT_PRODUCT(p3,p3))
 
-    fac = charge1**2 * charge2**2 * jdens * log_lambda * dt * factor &
-        / (4.0_num * pi * epsilon0**2 * c**4 * mass1 * g1 * mass2 * g2)
-    s12 = fac * gc * p_mag / (mass1 * g1 + mass2 * g2) &
-          * (mass1 * g3 * mass2 * g4 * c**2 / p_mag**2 + 1.0_num)**2
+    fac = q1**2 * q2**2 * jdens * log_lambda * dt * factor &
+        / (4.0_num * pi * epsilon0**2 * c**4 * m1 * g1 * m2 * g2)
+    s12 = fac * gc * p_mag / (m1 * g1 + m2 * g2) &
+          * (m1 * g3 * m2 * g4 * c**2 / p_mag**2 + 1.0_num)**2
 
     ran1 = random()
     ran2 = random() * 2.0_num * pi
@@ -1025,9 +1038,9 @@ CONTAINS
     p4 = -p3
 
     p5 = p3 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p3) &
-         + mass1 * gc * g3)
+         + m1 * gc * g3)
     p6 = p4 + vc * ((gc - 1.0_num) / vc_sq * DOT_PRODUCT(vc, p4) &
-         + mass2 * gc * g4)
+         + m2 * gc * g4)
     ! Update particle properties
     current%part_p = p5
     impact%part_p = p6
