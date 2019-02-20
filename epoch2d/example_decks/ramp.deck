@@ -8,7 +8,7 @@ begin:constant
 
   n_crit = critical(las_omega)
 
-  rhomax = 0.8 * n_crit
+  max_dens = 0.8 * n_crit
 
   scale_x = 20 * micron
 
@@ -66,9 +66,9 @@ begin:species
   mass = 1.0
   npart = nx * ny * part
 
-  density = rhomax * (exp(x/scale_x) - 1) / (exp(1) - 1)
+  density = max_dens * (exp(x/scale_x) - 1) / (exp(1) - 1)
   density = if(x lt 0, 0.0, density(electron))
-  density = if(density(electron) gt rhomax, rhomax, density(electron))
+  density = if(density(electron) gt max_dens, max_dens, density(electron))
   density = if(x gt 75*micron, 0.0, density(electron))
   #density = density(electron) * (0.8 + 0.2 * gauss(y,0,0.5*las_scale_y))
   density_min = 0.0001 * n_crit

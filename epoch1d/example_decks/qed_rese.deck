@@ -84,8 +84,8 @@ begin:species
   dump = T
 
   temp = 0
-  rho = if (x gt -1e-6, nel * 1.0e6, 0)
-  minrho = 1
+  density = if (x gt -1e-6, nel * 1.0e6, 0)
+  density_min = 1
 
   # In EPOCH-QED you have to identify the type of a charged particle. This is
   # done with the "identify" directive. You have to know which species the
@@ -113,9 +113,9 @@ begin:species
   frac = 0.5
   dump = T
 
-  rho = rho(Electron)
+  density = density(Electron)
   temp = temp_x(Electron)
-  minrho = 1
+  density_min = 1
 
   # You don't have to identify protons, since they're not used in the QED
   # routines, but the alias exists and it's quicker than specifying it manually.
