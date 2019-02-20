@@ -1050,7 +1050,7 @@ CONTAINS
     REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
     REAL(num) :: e3, e4, e5, e6
-    REAL(num) :: gamma_rel_inv, gamma_rel, gamma_rel_m1, gamma_rel_r
+    REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
@@ -1094,9 +1094,9 @@ CONTAINS
     vc_sq = DOT_PRODUCT(vc, vc)
     vc_sq_cc = vc_sq / cc
 
-    gamma_rel_inv = SQRT(1.0_num - vc_sq_cc)
-    gamma_rel = 1.0_num / gamma_rel_inv
-    gamma_rel_m1 = vc_sq_cc / (gamma_rel_inv + gamma_rel_inv**2)
+    gamma_rel2 = 1.0_num / (1.0_num - vc_sq_cc)
+    gamma_rel = SQRT(gamma_rel2)
+    gamma_rel_m1 = gamma_rel2 * vc_sq_cc / (gamma_rel + 1.0_num)
 
     ! Lorentz momentum transform to get into COM frame
     p1_vc = DOT_PRODUCT(p1, vc)
