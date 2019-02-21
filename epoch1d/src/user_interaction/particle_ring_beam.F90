@@ -92,7 +92,7 @@ CONTAINS
       gyrophase = random() * 2 * pi
     ELSE
       gyrophase = ipart * golden_angle
-    ENDIF
+    END IF
 
     CALL setup_rotation_matrix(current, rotation_matrix)
 
@@ -119,14 +119,10 @@ CONTAINS
     part_x = part%part_pos
 
 #include "fields_at_particle_implementation.inc"
-
-    fx = bx_part
-    fy = by_part
-    fz = bz_part
-    ! normalise
-    fx = fx / SQRT(fx**2 + fy**2 + fz**2)
-    fy = fy / SQRT(fx**2 + fy**2 + fz**2)
-    fz = fz / SQRT(fx**2 + fy**2 + fz**2)
+    ! assign and normalise to components of vector f
+    fx = bx_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
+    fy = by_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
+    fz = bz_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
 
     ! Vector points in z direction, because initially particles are loaded
     ! as though z *is* the magnetic direction.
@@ -137,6 +133,10 @@ CONTAINS
     ux = ay * fz - az * fy
     uy = az * fx - ax * fz
     uz = ax * fy - ay * fx
+    u2 = SQRT(ux**2 + uy**2 + uz**2)
+    ux = ux / u2
+    uy = uy / u2
+    uz = uz / u2
 
     th = ACOS(ax * fx + ay * fy + az * fz)
 
@@ -148,11 +148,7 @@ CONTAINS
       r = -r
     ENDIF
 
-    u2 = SQRT(ux**2 + uy**2 + uz**2)
     IF (u2 .GT. 0.0_num) THEN
-      ux = ux / u2
-      uy = uy / u2
-      uz = uz / u2
       r(1,1) = ux**2 + (1 - ux**2) * COS(th)
       r(1,2) = ux * uy * (1 - COS(th)) - uz * SIN(th)
       r(1,3) = ux * uz * (1 - COS(th)) + uy * SIN(th)
