@@ -9,7 +9,13 @@
  * Added collisions block option "use_nanbu". If set to true then the
    scattering algorithm of Nanbu, with relativistic corrections by
    Perez will be used in the collisions module. If false, the previous
-   Sentoku-Kemp algorithm will be used.
+   Sentoku-Kemp algorithm will be used. Due to known issues in the Sentoku-Kemp
+   method for some test problems, the Nanbu method is now the default.
+
+ * Bugfixes for Sentoku-Kemp collisions. These changes will affect the results
+   for some problems. Note that some test problems continue to demonstrate
+   unexpected behaviour and users are advised to use the Nanbu method instead.
+
 
 ## v4.14.0 to v4.15.0 (2019-01-15)
 
