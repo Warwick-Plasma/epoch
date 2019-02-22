@@ -112,6 +112,7 @@ CONTAINS
     TYPE(Particle), POINTER, INTENT(IN) :: part
     REAL(num), DIMENSION(1:3, 1:3), INTENT(INOUT) :: r ! the rotation matrix
     REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2, part_x
+#include "particle_head.inc"
 #include "fields_at_particle_declarations_and_first_statements.inc"
 
     part_x = part%part_pos - x_grid_min_local
