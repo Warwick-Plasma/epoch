@@ -76,7 +76,6 @@ CONTAINS
     REAL(num) :: wx, wy
 
     ! Temporary variables
-    REAL(num) :: idx
     REAL(num) :: idtf, idxf
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fjx, fjy, fjz
@@ -101,7 +100,7 @@ CONTAINS
 
     TYPE(particle), POINTER :: current, next
 
-#include "fields_at_particle_variable_declarations.inc"
+#include "fields_at_particle_declarations_and_first_statements.inc"
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -115,7 +114,6 @@ CONTAINS
 
     ! Unvarying multiplication factors
 
-    idx = 1.0_num / dx
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
@@ -321,7 +319,7 @@ CONTAINS
 #else
           cell_x_r = part_x * idx
 #endif
-          ! cell_x3 is declated in fields_at_particle.inc
+          ! cell_x3 is declared in fields_at_particle.inc
           cell_x3 = FLOOR(cell_x_r + 0.5_num)
           cell_frac_x = REAL(cell_x3, num) - cell_x_r
           cell_x3 = cell_x3 + 1

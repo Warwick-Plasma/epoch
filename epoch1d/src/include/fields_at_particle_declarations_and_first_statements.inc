@@ -1,3 +1,6 @@
+    ! Temporary variables
+    REAL(num) :: idx
+
     ! Contains the integer cell position of the particle in x, y, z
     ! cell_x3 is unused here, but is always used later where this is included
     INTEGER :: cell_x1, cell_x2, cell_x3
@@ -37,3 +40,9 @@
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+
+    ! Temporary variables
+    REAL(num) :: idtx
+
+    ! Unvarying multiplication factors
+    idx = 1.0_num / dx

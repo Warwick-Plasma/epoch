@@ -745,7 +745,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: part_x
     REAL(num), INTENT(OUT) :: e_at_part(3), b_at_part(3)
 
-#include "fields_at_particle_variable_declarations.inc"
+#include "fields_at_particle_declarations_and_first_statements.inc"
 #include "fields_at_particle_implementation.inc"
 
     ! update particle momenta using weighted fields

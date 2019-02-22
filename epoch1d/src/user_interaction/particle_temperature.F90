@@ -26,7 +26,7 @@ CONTAINS
 
   ! Subroutine to initialise a species with a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature(species, temperature, drift)
+  SUBROUTINE setup_species_temperature(species, temperature, drift)
     TYPE(particle_species), POINTER :: species
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperature
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drift
@@ -39,28 +39,26 @@ CONTAINS
     ipart = 0
     DO WHILE(ipart < partlist%count)
 
-      CALL setup_particle_temperature_particle(current, temperature, drift, &
+      CALL setup_particle_temperature(current, temperature, drift, &
           species%mass)
 
       current => current%next
       ipart = ipart + 1
     END DO
 
-  END SUBROUTINE setup_particle_temperature
+  END SUBROUTINE setup_species_temperature
 
 
 
   ! Subroutine to initialise a particle with a thermal particle distribution
   ! Assumes linear interpolation of temperature between cells
-  SUBROUTINE setup_particle_temperature_particle(current, temperature, &
+  SUBROUTINE setup_particle_temperature(current, temperature, &
       drift, species_mass)
     TYPE(particle), POINTER :: current
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperature
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drift
     REAL(num), INTENT(IN) :: species_mass
-    TYPE(particle_list), POINTER :: partlist
     REAL(num) :: mass, temp_local, drift_local
-    INTEGER(i8) :: ipart
     INTEGER :: ix, i
 #include "particle_head.inc"
 
@@ -84,7 +82,7 @@ CONTAINS
           momentum_from_temperature(mass, temp_local, drift_local)
     END DO
 
-  END SUBROUTINE setup_particle_temperature_particle
+  END SUBROUTINE setup_particle_temperature
 
 
 

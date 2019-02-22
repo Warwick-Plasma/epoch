@@ -28,7 +28,7 @@ CONTAINS
   ! Assumes linear interpolation of temperatures between cells
   ! Create a beam distribution along z, and ring distribution around x and y
   ! then rotate to point along magnetic field
-  SUBROUTINE setup_particle_ring_beam(species, temperatures, drifts)
+  SUBROUTINE setup_species_ring_beam(species, temperatures, drifts)
     TYPE(particle_species), POINTER :: species
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: drifts
@@ -36,22 +36,20 @@ CONTAINS
     TYPE(particle), POINTER :: current
     INTEGER(i8) :: ipart
 
-#include "particle_head.inc"
-
     partlist => species%attached_list
     current => partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
-      CALL setup_particle_ring_beam_particle(current, temperatures, drifts, &
+      CALL setup_particle_ring_beam(current, temperatures, drifts, &
         species%mass, ipart)
       current => current%next
       ipart = ipart + 1
     END DO
 
-  END SUBROUTINE setup_particle_ring_beam
+  END SUBROUTINE setup_species_ring_beam
 
 
-  SUBROUTINE setup_particle_ring_beam_particle(current, temperatures, drifts, &
+  SUBROUTINE setup_particle_ring_beam(current, temperatures, drifts, &
       species_mass, ipart)
     TYPE(particle), POINTER, INTENT(INOUT) :: current
     REAL(num), DIMENSION(1-ng:, :), INTENT(IN) :: temperatures
@@ -88,7 +86,7 @@ CONTAINS
 
     pperp = momentum_from_temperature(mass, temps_local(1), drifts_local(1))
     ppara = momentum_from_temperature(mass, temps_local(3), drifts_local(3))
-    IF (ipart .LE. 0) THEN
+    IF (ipart .LT. 0) THEN
       gyrophase = random() * 2 * pi
     ELSE
       gyrophase = ipart * golden_angle
@@ -106,7 +104,7 @@ CONTAINS
     current%part_p(2) = DOT_PRODUCT(rotation_matrix(2, :), aligned_momentum)
     current%part_p(3) = DOT_PRODUCT(rotation_matrix(3, :), aligned_momentum)
 
-  END SUBROUTINE setup_particle_ring_beam_particle
+  END SUBROUTINE setup_particle_ring_beam
 
 
 
@@ -114,9 +112,9 @@ CONTAINS
     TYPE(Particle), POINTER, INTENT(IN) :: part
     REAL(num), DIMENSION(1:3, 1:3), INTENT(INOUT) :: r ! the rotation matrix
     REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2, part_x
-#include "fields_at_particle_variable_declarations.inc"
+#include "fields_at_particle_declarations_and_first_statements.inc"
 
-    part_x = part%part_pos
+    part_x = part%part_pos - x_grid_min_local
 
 #include "fields_at_particle_implementation.inc"
     ! assign and normalise to components of vector f
@@ -133,10 +131,6 @@ CONTAINS
     ux = ay * fz - az * fy
     uy = az * fx - ax * fz
     uz = ax * fy - ay * fx
-    u2 = SQRT(ux**2 + uy**2 + uz**2)
-    ux = ux / u2
-    uy = uy / u2
-    uz = uz / u2
 
     th = ACOS(ax * fx + ay * fy + az * fz)
 
@@ -144,11 +138,16 @@ CONTAINS
     r(1,1) = 1.0_num
     r(2,2) = 1.0_num
     r(3,3) = 1.0_num
-    IF ((ax*fx + ay*fy + az*fz) .EQ. -1.0_num) THEN
-      r = -r
-    ENDIF
+    ! I can't remember why this is necessary so it maybe isn't?
+    !IF ((ax*fx + ay*fy + az*fz) .EQ. -1.0_num) THEN
+    !  r = -r
+    !ENDIF
 
+    u2 = SQRT(ux**2 + uy**2 + uz**2)
     IF (u2 .GT. 0.0_num) THEN
+      ux = ux / u2
+      uy = uy / u2
+      uz = uz / u2
       r(1,1) = ux**2 + (1 - ux**2) * COS(th)
       r(1,2) = ux * uy * (1 - COS(th)) - uz * SIN(th)
       r(1,3) = ux * uz * (1 - COS(th)) + uy * SIN(th)

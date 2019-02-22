@@ -70,20 +70,20 @@ CONTAINS
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #else
-      CALL setup_particle_density(&
+      CALL setup_species_density(&
           species_list(ispecies)%initial_conditions%density, species, &
           species_list(ispecies)%initial_conditions%density_min, &
           species_list(ispecies)%initial_conditions%density_max)
 #endif
       IF (species%sampling_function .EQ. c_sf_ring_beam) THEN
-        CALL setup_particle_ring_beam( &
+        CALL setup_species_ring_beam( &
             species, species_list(ispecies)%initial_conditions%temp, &
             species_list(ispecies)%initial_conditions%drift)
       ELSE
         ! default behaviour, where
         ! species%sampling_function .EQ. c_sf_drifting_tri_maxwellian
         ! is true
-        CALL setup_particle_temperature( &
+        CALL setup_species_temperature( &
             species, species_list(ispecies)%initial_conditions%temp, &
             species_list(ispecies)%initial_conditions%drift)
       END IF
@@ -520,7 +520,7 @@ CONTAINS
 
 
 #ifndef PER_SPECIES_WEIGHT
-  SUBROUTINE setup_particle_density(density_in, species, density_min, &
+  SUBROUTINE setup_species_density(density_in, species, density_min, &
       density_max)
 
     REAL(num), DIMENSION(1-ng:), INTENT(IN) :: density_in
@@ -651,7 +651,7 @@ CONTAINS
       END DO
     END IF
 
-  END SUBROUTINE setup_particle_density
+  END SUBROUTINE setup_species_density
 #endif
 
 

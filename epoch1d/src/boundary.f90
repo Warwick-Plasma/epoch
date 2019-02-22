@@ -664,13 +664,13 @@ CONTAINS
               ELSE IF (bc == c_bc_sampling_function) THEN
                 IF (species%sampling_function .EQ. c_sf_ring_beam) &
                     THEN
-                  CALL setup_particle_ring_beam_particle(cur, &
+                  CALL setup_particle_ring_beam(cur, &
                       species%initial_conditions%temp, &
                       species%initial_conditions%drift, &
                       species%mass, INT(-1, i8))
                 ELSE
                   ! default - drifting tri maxwellian
-                  CALL setup_particle_temperature_particle(cur, &
+                  CALL setup_particle_temperature(cur, &
                       species%initial_conditions%temp, &
                       species%initial_conditions%drift, &
                       species%mass)
@@ -737,13 +737,13 @@ CONTAINS
               ELSE IF (bc == c_bc_sampling_function) THEN
                 IF (species%sampling_function .EQ. c_sf_ring_beam) &
                     THEN
-                  CALL setup_particle_ring_beam_particle(cur, &
+                  CALL setup_particle_ring_beam(cur, &
                       species%initial_conditions%temp, &
                       species%initial_conditions%drift, &
                       species%mass, INT(-1, i8))
                 ELSE
                   ! default - drifting tri maxwellian
-                  CALL setup_particle_temperature_particle(cur, &
+                  CALL setup_particle_temperature(cur, &
                       species%initial_conditions%temp, &
                       species%initial_conditions%drift, &
                       species%mass)

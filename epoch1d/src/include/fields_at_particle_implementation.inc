@@ -1,8 +1,8 @@
     ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
-    cell_x_r = part_x / dx - 0.5_num
+    cell_x_r = part_x * idx - 0.5_num
 #else
-    cell_x_r = part_x / dx
+    cell_x_r = part_x * idx
 #endif
     ! Round cell position to nearest cell
     cell_x1 = FLOOR(cell_x_r + 0.5_num)
@@ -53,4 +53,3 @@
 #include "triangle/e_part.inc"
 #include "triangle/b_part.inc"
 #endif
-
