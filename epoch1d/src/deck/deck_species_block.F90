@@ -693,6 +693,7 @@ CONTAINS
     mult = 1.0_num
 
     IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho') &
+        .OR. str_cmp(element, 'number_density') &
         .OR. str_cmp(element, 'mass_density')) THEN
 
       IF (str_cmp(element, 'mass_density')) THEN
