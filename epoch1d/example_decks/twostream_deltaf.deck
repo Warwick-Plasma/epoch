@@ -1,5 +1,5 @@
 begin:constant
-  background_density = 1e20
+  background_number_density = 1e20
   background_temp = 1e8
   frac_beam = 1e-3
   ion_mass_e = 1836.2
@@ -7,7 +7,7 @@ begin:constant
   pt_ion      = sqrt(2 * mass_ion * kb * background_temp)
   pt_electron = sqrt(2 * me * kb * background_temp)
   vel_ion = sqrt(2 * kb * background_temp / mass_ion)
-  lambda_db = sqrt(epsilon0 * kb * background_temp / background_density / qe^2)
+  lambda_db = sqrt(epsilon0 * kb * background_temp / background_number_density / qe^2)
   grid_spacing = lambda_db * 0.5
   nxgrid = 300
   x_length = nxgrid * grid_spacing
@@ -44,9 +44,9 @@ begin:species
   charge = 1.0
   mass = ion_mass_e
   frac = 0.4
-  density = background_density
+  number_density = background_number_density
   temp = 1e8
-  density_back = density(proton)
+  number_density_back = number_density(proton)
   temp_back = 1e8
 end:species
 
@@ -57,9 +57,9 @@ begin:species
   mass = 1.0
   frac = 0.3
   temp = 1e8
-  density = background_density * (1.0 - frac_beam)
+  number_density = background_number_density * (1.0 - frac_beam)
   drift_x = 0.0 - frac_beam * 5.0 * pt_electron
-  density_back = density(electron)
+  number_density_back = number_density(electron)
   temp_back = 1e8
   drift_x_back = 0.0 - frac_beam * 5.0 * pt_electron
 end:species
@@ -71,9 +71,9 @@ begin:species
   mass = 1.0
   frac = 0.3
   temp = 1e7
-  density = background_density * frac_beam
+  number_density = background_number_density * frac_beam
   drift_x = (1.0 - frac_beam) * 5.0 * pt_electron
-  density_back = 0.0
+  number_density_back = 0.0
   temp_back = background_temp
 end:species
 

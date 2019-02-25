@@ -52,7 +52,7 @@ begin:species
   frac = 0.5
   tracer = T
 
-  rho = den_max
+  number_density = den_max
   temp = 1e6
 
   ionisation_electron_species=Electron
@@ -62,7 +62,7 @@ end:species
 
 begin:species
   name = Electron
-  rho = rho(Palladium) * 22.0
+  number_density = number_density(Palladium) * 22.0
   temp = 1e6
 end:species
 

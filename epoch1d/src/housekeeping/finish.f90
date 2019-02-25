@@ -49,7 +49,7 @@ CONTAINS
   SUBROUTINE deallocate_memory
 
     INTEGER :: i, n, stat
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
     DEALLOCATE(ex, ey, ez, bx, by, bz, jx, jy, jz)
