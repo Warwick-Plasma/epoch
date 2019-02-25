@@ -37,7 +37,7 @@ end:constant
 begin:injector
   boundary = x_min
   species = Beam
-  density = dens
+  number_density = dens
   temp = temp
   drift_x = drift_p
   npart_per_cell = ppc
@@ -52,7 +52,7 @@ begin:species
   npart = ppc * nx * ny * nz
   temp = temp
   drift_x = -drift_p / 1000
-  density = dens * 1000
+  number_density = dens * 1000
 end:species
 
 
@@ -63,7 +63,7 @@ begin:species
   mass = 1.0
 #  temp_x = temp
 #  drift_x = drift_p
-#  density = dens
+#  number_density = dens
   bc_x_min = simple_outflow
   bc_x_max = simple_outflow
 end:species

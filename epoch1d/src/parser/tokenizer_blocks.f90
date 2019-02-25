@@ -326,8 +326,8 @@ CONTAINS
     IF (str_cmp(name, 'interpolate')) as_function = c_func_interpolate
     IF (str_cmp(name, 'if')) as_function = c_func_if
 
-    IF (str_cmp(name, 'density') .OR. str_cmp(name, 'rho')) &
-        as_function = c_func_rho
+    IF (str_cmp(name, 'density') .OR. str_cmp(name, 'rho') &
+        .OR. str_cmp(name, 'number_density')) as_function = c_func_rho
     IF (str_cmp(name, 'temp_x') .OR. str_cmp(name, 'temp_x_k')) &
         as_function = c_func_tempx
     IF (str_cmp(name, 'temp_y') .OR. str_cmp(name, 'temp_y_k')) &
