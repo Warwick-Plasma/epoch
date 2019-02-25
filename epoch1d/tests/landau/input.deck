@@ -29,8 +29,8 @@ begin:species
   mass = 1.0
   frac = 0.5
   temp_x = temp
-  density = dens + 0.8*dens * sin(2*pi*x/lengthx)
-  density_min = 0.0
+  number_density = dens + 0.8*dens * sin(2*pi*x/lengthx)
+  number_density_min = 0.0
 end:species
 
 
@@ -40,7 +40,7 @@ begin:species
   mass = 1836.2
   frac = 0.5
   temp_x = temp_x(electrons)
-  density = density(electrons)
+  number_density = number_density(electrons)
 end:species
 
 

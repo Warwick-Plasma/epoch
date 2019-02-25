@@ -66,13 +66,13 @@ begin:species
   mass = 1.0
   npart = nx * ny * part
 
-  density = max_dens * (exp(x/scale_x) - 1) / (exp(1) - 1)
-  density = if(x lt 0, 0.0, density(electron))
-  density = if(density(electron) gt max_dens, max_dens, density(electron))
-  density = if(x gt 75*micron, 0.0, density(electron))
-  #density = density(electron) * (0.8 + 0.2 * gauss(y,0,0.5*las_scale_y))
-  density_min = 0.0001 * n_crit
-  density_max = n_crit
+  number_density = max_dens * (exp(x/scale_x) - 1) / (exp(1) - 1)
+  number_density = if(x lt 0, 0.0, number_density(electron))
+  number_density = if(number_density(electron) gt max_dens, max_dens, number_density(electron))
+  number_density = if(x gt 75*micron, 0.0, number_density(electron))
+  #number_density = number_density(electron) * (0.8 + 0.2 * gauss(y,0,0.5*las_scale_y))
+  number_density_min = 0.0001 * n_crit
+  number_density_max = n_crit
 
   temp_ev = 10^3
 end:species
@@ -85,9 +85,9 @@ begin:species
   mass = 1836.2
   npart = nx * ny * part
 
-  density = density(electron)
-  density_min = 0.0001 * n_crit
-  density_max = 1.2 * n_crit
+  number_density = number_density(electron)
+  number_density_min = 0.0001 * n_crit
+  number_density_max = 1.2 * n_crit
 
   temp_ev = 40
 end:species

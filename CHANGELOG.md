@@ -6,6 +6,16 @@
    MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
    older versions of the MPI library.
 
+ * Added "number_density" aliases for "density" in the species and injector
+   blocks.
+   These include:
+     - number_density for density
+     - promote_number_density for promote_density
+     - demote_number_density for demote_density
+     - number_density_min for density_min
+     - number_density_max for density_max
+     - number_density_back for density_back
+
 
 ## v4.14.0 to v4.15.0 (2019-01-15)
 

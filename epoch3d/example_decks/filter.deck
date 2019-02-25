@@ -49,7 +49,7 @@ begin:species
   frac = 0.5
   temp_x = temp
   drift_x = drift_p
-  density = dens
+  number_density = dens
 end:species
 
 
@@ -61,7 +61,7 @@ begin:species
   frac = 0.5
   temp_x = temp
   drift_x = -drift_p
-  density = dens
+  number_density = dens
 end:species
 
 
