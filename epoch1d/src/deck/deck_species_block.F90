@@ -650,13 +650,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'promote_density')) THEN
+    IF (str_cmp(element, 'promote_density') &
+        .OR. str_cmp(element, 'promote_number_density')) THEN
       species_list(species_id)%migrate%promotion_density = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'demote_density')) THEN
+    IF (str_cmp(element, 'demote_density') &
+        .OR. str_cmp(element, 'demote_number_density')) THEN
       species_list(species_id)%migrate%demotion_density = &
           as_real_print(value, element, errcode)
       RETURN
@@ -669,20 +671,23 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
+    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho') &
+        .OR. str_cmp(element, 'number_density_min')) THEN
       dmin = as_real_print(value, element, errcode)
       IF (dmin <= 0.0_num) dmin = EPSILON(1.0_num)
       species_list(species_id)%initial_conditions%density_min = dmin
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
+    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho') &
+        .OR. str_cmp(element, 'number_density_max')) THEN
       species_list(species_id)%initial_conditions%density_max = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_back')) THEN
+    IF (str_cmp(element, 'density_back') &
+        .OR. str_cmp(element, 'number_density_back')) THEN
       species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
