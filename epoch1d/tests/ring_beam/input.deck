@@ -50,9 +50,13 @@ begin:species
   mass = ion_mass_e
   frac = 1.0
   density = 1.0e20
+# the drift_x parameter is hijacked for the ring drift / width
   drift_x = pring
+# the drift_z parameter is hijacked for the beam drift
   drift_z = pbeam
+# the temp_x parameter is hijacked for the ring temperature
   temp_x_ev = temp_ring_ev
+# the temp_z parameter is hijacked for the beam temperature
   temp_z_ev = temp_beam_ev
   sampling_function = ring_beam
 end:species
