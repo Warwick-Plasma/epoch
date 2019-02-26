@@ -64,23 +64,6 @@ CONTAINS
     REAL(num) :: probe_energy, part_mc2
 #endif
 
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx
-
-    ! Defined at the particle position - 0.5 grid cell in each direction
-    ! This is to deal with the grid stagger
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx
-
     ! P+, P- and Tau variables from Boris1970, page27 of manual
     REAL(num) :: uxp, uxm, uyp, uym, uzp, uzm
     REAL(num) :: tau, taux, tauy, tauz, taux2, tauy2, tauz2
@@ -121,6 +104,7 @@ CONTAINS
     CALL prefetch_particle(species_list(1)%attached_list%head)
 #endif
 
+#include "particle_head.inc"
 #include "fields_at_particle_declarations_and_first_statements.inc"
 
     jx = 0.0_num

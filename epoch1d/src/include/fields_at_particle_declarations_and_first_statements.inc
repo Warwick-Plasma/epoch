@@ -1,3 +1,7 @@
+    ! Defined at the particle position - 0.5 grid cell in each direction
+    ! This is to deal with the grid stagger
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx
+
     ! Contains the integer cell position of the particle in x, y, z
     INTEGER :: cell_x1, cell_x2, cell_x3
 

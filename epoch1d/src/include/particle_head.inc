@@ -1,8 +1,4 @@
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx
-
-    ! Defined at the particle position - 0.5 grid cell in each direction
-    ! This is to deal with the grid stagger
-    REAL(num), DIMENSION(sf_min:sf_max) :: hx
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx
 
     REAL(num) :: cell_x_r, cell_frac_x
 
