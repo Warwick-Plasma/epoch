@@ -930,7 +930,7 @@ CONTAINS
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2
+    REAL(num) :: m1, m2, q1, q2, w1, w2
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
 
     p1 = current%part_p / c
@@ -1040,12 +1040,26 @@ CONTAINS
 
     p4 = -p3
 
-    p5 = p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc
-    p6 = p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc
+    p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+    p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+
+#ifndef PER_SPECIES_WEIGHT
+    w1 = current%weight
+    w2 = impact%weight
+#else
+    w1 = weight1
+    w2 = weight2
+#endif
+
+    IF (w1 > w2) THEN
+      CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+    ELSE IF (w2 > w1) THEN
+      CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+    END IF
 
     ! Update particle properties
-    current%part_p = p5 * c
-    impact%part_p = p6 * c
+    current%part_p = p5
+    impact%part_p = p6
 
   END SUBROUTINE scatter_np
 
