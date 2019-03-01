@@ -48,6 +48,7 @@ end:species
 
 
 begin:output
+  name = normal
   dt_snapshot = 1e-10
 
   # Properties at particle positions

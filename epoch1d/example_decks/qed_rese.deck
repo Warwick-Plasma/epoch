@@ -157,7 +157,16 @@ begin:species
 end:species
 
 
+begin:output_global
+
+  force_final_to_be_restartable = T
+
+end:output_global
+
+
 begin:output
+
+  name = normal
 
   # If use_offset_grid is true then the code dumps a grid which displays
   # positions relative to the left hand edge of the window
@@ -165,11 +174,6 @@ begin:output
 
   # number of timesteps between output dumps
   dt_snapshot = 100.0e-15 / 100.0
-
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 10
-  restart_dump_every = -1
-  force_final_to_be_restartable = T
 
   # Properties at particle positions
   particles = never

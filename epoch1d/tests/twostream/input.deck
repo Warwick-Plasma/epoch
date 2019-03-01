@@ -50,8 +50,6 @@ end:species
 begin:output
   # Number of timesteps between output dumps
   dt_snapshot = 10.5e-3
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 1
   dump_last = F
 
   # Properties at particle positions

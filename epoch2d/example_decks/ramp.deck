@@ -96,12 +96,10 @@ end:species
 
 
 begin:output
+  name = normal
+
   # Number of timesteps between output dumps
   dt_snapshot = 5 * femto
-  # Number of snapshots between full dumps
-  full_dump_every = 10
-  restart_dump_every = -1
-  force_final_to_be_restartable = F
 
   # Properties at particle positions
   particles = always

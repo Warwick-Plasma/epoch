@@ -66,16 +66,16 @@ begin:species
 end:species
 
 
+begin:output_global
+  force_final_to_be_restartable = T
+end:output_global
+
+
 begin:output
+  name = normal
+
   # Number of timesteps between output dumps
   dt_snapshot = 1.0e-15
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 10
-  force_final_to_be_restartable = T
-
-  # Properties at particle positions
-  particles = full
-  particle_weight = full
 
   # Properties on grid
   grid = always
@@ -96,6 +96,18 @@ begin:output
 
   # Extended io
   distribution_functions = always
+end:output
+
+
+begin:output
+  name = large
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 10.0e-15
+
+  # Properties at particle positions
+  particles = full
+  particle_weight = full
 end:output
 
 

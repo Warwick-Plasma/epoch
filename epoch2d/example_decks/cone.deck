@@ -64,27 +64,40 @@ begin:laser
 end:laser
 
 
+begin:output_global
+  force_final_to_be_restartable = T
+end:output_global
+
+
 begin:output
+  name = normal
+
   # Number of timesteps between output dumps
   dt_snapshot = 1 * femto
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 10
-  force_final_to_be_restartable = T
-
-  # Properties at particle positions
-  particles = full
-  particle_weight = full
 
   # Properties on grid
   grid = always
   ey = always
   ekbar = always
-  charge_density = full
   number_density = always + species
   temperature = always + species
 
   # Extended io
   distribution_functions = always
+end:output
+
+
+begin:output
+  name = large
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 10 * femto
+
+  # Properties at particle positions
+  particles = always
+  particle_weight = always
+
+  charge_density = always
 end:output
 
 

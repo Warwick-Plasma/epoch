@@ -51,6 +51,8 @@ end:laser
 
 
 begin:output
+  name = normal
+
   # Number of timesteps between output dumps
   dt_snapshot = 25 * femto
 

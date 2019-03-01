@@ -70,10 +70,10 @@ end:species
 
 
 begin:output
+  name = normal
+
   # Number of timesteps between output dumps
   dt_snapshot = 0.5e-2
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 1
   dump_last = T
 
   # Properties at particle positions
