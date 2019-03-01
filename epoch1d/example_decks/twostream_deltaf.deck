@@ -7,7 +7,8 @@ begin:constant
   pt_ion      = sqrt(2 * mass_ion * kb * background_temp)
   pt_electron = sqrt(2 * me * kb * background_temp)
   vel_ion = sqrt(2 * kb * background_temp / mass_ion)
-  lambda_db = sqrt(epsilon0 * kb * background_temp / background_number_density / qe^2)
+  lambda_db = sqrt(epsilon0 * kb * background_temp \
+                   / background_number_density / qe^2)
   grid_spacing = lambda_db * 0.5
   nxgrid = 300
   x_length = nxgrid * grid_spacing
@@ -22,12 +23,11 @@ end:constant
 
 begin:control
   nx = nxgrid
-  npart = nx * 300.0
 
-  # final time of simulation
+  # Final time of simulation
   t_end = simtime
 
-  # size of domain
+  # Size of domain
   x_min = 0.0
   x_max = nx * grid_spacing
 end:control
@@ -43,11 +43,11 @@ begin:species
   name = proton
   charge = 1.0
   mass = ion_mass_e
-  frac = 0.4
   number_density = background_number_density
   temp = 1e8
   number_density_back = number_density(proton)
   temp_back = 1e8
+  npart = nx * 120
 end:species
 
 
@@ -55,13 +55,13 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  frac = 0.3
   temp = 1e8
   number_density = background_number_density * (1.0 - frac_beam)
   drift_x = 0.0 - frac_beam * 5.0 * pt_electron
   number_density_back = number_density(electron)
   temp_back = 1e8
   drift_x_back = 0.0 - frac_beam * 5.0 * pt_electron
+  npart = nx * 90
 end:species
 
 
@@ -69,36 +69,50 @@ begin:species
   name = electron_beam
   charge = -1.0
   mass = 1.0
-  frac = 0.3
   temp = 1e7
   number_density = background_number_density * frac_beam
   drift_x = (1.0 - frac_beam) * 5.0 * pt_electron
   number_density_back = 0.0
   temp_back = background_temp
+  npart = nx * 90
 end:species
 
 
-begin:output
-  # number of timesteps between output dumps
-  dt_snapshot = diagtime
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 100
+begin:output_global
   force_final_to_be_restartable = T
+end:output_global
 
-  # Properties at particle positions
-  particles = full
-  particle_weight = full
+
+begin:output
+  name = normal
+
+  # Number of timesteps between output dumps
+  dt_snapshot = diagtime
 
   # Properties on grid
   grid = always
   ey = always
   ex = always
   ekbar = always
-  charge_density = full
   number_density = always + species
 
-  #Extended IO
+  # Extended IO
   distribution_functions = always
+end:output
+
+
+begin:output
+  name = full
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 10 * diagtime
+
+  # Properties at particle positions
+  particles = always
+  particle_weight = always
+
+  # Properties on grid
+  charge_density = always
 end:output
 
 
@@ -109,11 +123,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-22, 3.0e-22)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 
@@ -131,11 +145,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-22, 3.0e-22)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 
