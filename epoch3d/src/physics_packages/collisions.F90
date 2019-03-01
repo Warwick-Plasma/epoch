@@ -930,7 +930,7 @@ CONTAINS
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2, w1, w2
+    REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
 
     p1 = current%part_p / c
@@ -970,6 +970,10 @@ CONTAINS
     ! Pre-collision velocities
     v1 = p1 / gm1
     v2 = p2 / gm2
+
+    ! Pre-collision energies
+    e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+    e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
 
     ! Velocity of centre-of-momentum (COM) reference frame
     vc = (p1 + p2) / gm
@@ -1042,6 +1046,9 @@ CONTAINS
 
     p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
     p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+
+    e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+    e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
 #ifndef PER_SPECIES_WEIGHT
     w1 = current%weight
