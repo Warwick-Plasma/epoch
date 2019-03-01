@@ -2,10 +2,10 @@ begin:control
   nx = 400
   npart = 3200
 
-  # final time of simulation
+  # Final time of simulation
   t_end = 3.0e-1
 
-  # size of domain
+  # Size of domain
   x_start = 0
   x_end = 5.0e5
 end:control
@@ -45,7 +45,7 @@ end:species
 
 
 begin:output
-  # number of timesteps between output dumps
+  # Number of timesteps between output dumps
   dt_snapshot = 21e-3
   # Number of dt_snapshot between full dumps
   full_dump_every = 1
@@ -71,7 +71,7 @@ begin:output
   number_density = always + species
   #temperature = always + species
 
-  # extended io
+  # Extended io
   distribution_functions = always
 end:output
 
@@ -83,11 +83,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-10e-24, 10e-24)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 200
 

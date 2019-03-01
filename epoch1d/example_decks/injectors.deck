@@ -1,11 +1,11 @@
 begin:control
   nx = 128
-  # final time of simulation
+  # Final time of simulation
   t_end = 3.0e-1
 
-  # size of domain
+  # Size of domain
   x_min = 0
-  x_max = 2.5e5
+  x_max =  2.5e5
   stdout_frequency = 1000
 end:control
 
@@ -51,16 +51,16 @@ begin:species
   name = Beam
   charge = -1
   mass = 1.0
-#  temp_x = temp
-#  drift_x = drift_p
-#  number_density = dens
+  #temp_x = temp
+  #drift_x = drift_p
+  #number_density = dens
   bc_x_min = simple_outflow
   bc_x_max = simple_outflow
 end:species
 
 
 begin:output
-  # number of timesteps between output dumps
+  # Number of timesteps between output dumps
   dt_snapshot = 0.5e-2
   # Number of dt_snapshot between full dumps
   full_dump_every = 1
@@ -86,7 +86,7 @@ begin:output
   number_density = always + species
   #temperature = always + species
 
-  # extended io
+  # Extended io
   distribution_functions = always
 end:output
 
@@ -98,11 +98,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-5e-24, 5e-24)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 200
 

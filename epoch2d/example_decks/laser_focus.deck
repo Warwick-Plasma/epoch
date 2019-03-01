@@ -2,10 +2,10 @@ begin:control
   nx = 500
   ny = nx
 
-  # final time of simulation
+  # Final time of simulation
   t_end = 100 * femto
 
-  # size of domain
+  # Size of domain
   x_min = -10 * micron
   x_max = -x_min
   y_min = x_min
@@ -26,17 +26,16 @@ end:boundaries
 begin:constant
   lambda0 = 1.0 * micron
 
-  #These two set the beam focus
-  w_0 = 0.9 * micron #Beam waist size
-  x_spot = 15 * micron #Distance from x_min to spot
+  # These two set the beam focus
+  w_0 = 0.9 * micron # Beam waist size
+  x_spot = 15 * micron # Distance from x_min to spot
 
-  #These are the parameters calculated for driving the laser
-  #These should not need to be modified
-  x_R = pi * w_0^2 / lambda0 #Rayleigh range
-  RC = x_spot * (1.0 + (x_R/x_spot)^2) #Radius of curvature on x_min
-  w_bnd = w_0 * sqrt( 1.0 + (x_spot/x_R)^2) #Spot size at x_min
-  gouy = atan(x_spot/x_R) #Gouy phase shift at x_min
-
+  # These are the parameters calculated for driving the laser
+  # These should not need to be modified
+  x_R = pi * w_0^2 / lambda0 # Rayleigh range
+  RC = x_spot * (1.0 + (x_R/x_spot)^2) # Radius of curvature on x_min
+  w_bnd = w_0 * sqrt( 1.0 + (x_spot/x_R)^2) # Spot size at x_min
+  gouy = atan(x_spot/x_R) # Gouy phase shift at x_min
 end:constant
 
 
@@ -52,7 +51,7 @@ end:laser
 
 
 begin:output
-  # number of timesteps between output dumps
+  # Number of timesteps between output dumps
   dt_snapshot = 25 * femto
 
   # Properties on grid

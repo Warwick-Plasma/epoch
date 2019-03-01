@@ -24,9 +24,9 @@ begin:control
 
   # size of domain
   x_min = -3e-6
-  x_max = 20e-6
+  x_max =  20e-6
   y_min = -10e-6
-  y_max = 10e-6
+  y_max = -y_min
 
   dt_multiplier = 0.8
 
@@ -133,23 +133,23 @@ end:species
 
 begin:species
 
-  name = Photon  
+  name = Photon
   npart = 0 # npart=0 since there are no initial photons in the system
-  dump = T 
+  dump = T
 
   # This is the key line here. It identifies that this species is a photon
   # species. Without this line this species won't work properly. Presently you
   # can't specify initial conditions for photons.
- identify:photon
+  identify:photon
 
 end:species
 
 
 begin:species
 
-  name = Positron  
+  name = Positron
   npart = 0 # npart=0 since no initial positrons in the system
-  dump = T 
+  dump = T
 
   # This identifies this species as a positron. In most senses it's still a
   # normal charged particle species. You can specify initial conditions as
@@ -170,7 +170,7 @@ begin:output
   use_offset_grid = F
 
   # number of timesteps between output dumps
-  dt_snapshot = 100.0e-15/100.0
+  dt_snapshot = 100.0e-15 / 100.0
 
   # Number of dt_snapshot between full dumps
   full_dump_every = 10

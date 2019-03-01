@@ -7,7 +7,8 @@ begin:constant
   pt_ion      = sqrt(2 * mass_ion * kb * background_temp)
   pt_electron = sqrt(2 * me * kb * background_temp)
   vel_ion = sqrt(2 * kb * background_temp / mass_ion)
-  lambda_db = sqrt(epsilon0 * kb * background_temp / background_number_density / qe^2)
+  lambda_db = sqrt(epsilon0 * kb * background_temp \
+                   / background_number_density / qe^2)
   grid_spacing = lambda_db * 0.5
   nxgrid = 300
   x_length = nxgrid * grid_spacing
@@ -24,10 +25,10 @@ begin:control
   nx = nxgrid
   npart = nx * 300.0
 
-  # final time of simulation
+  # Final time of simulation
   t_end = simtime
 
-  # size of domain
+  # Size of domain
   x_min = 0.0
   x_max = nx * grid_spacing
 end:control
@@ -79,7 +80,7 @@ end:species
 
 
 begin:output
-  # number of timesteps between output dumps
+  # Number of timesteps between output dumps
   dt_snapshot = diagtime
   # Number of dt_snapshot between full dumps
   full_dump_every = 100
@@ -97,7 +98,7 @@ begin:output
   charge_density = full
   number_density = always + species
 
-  #Extended IO
+  # Extended IO
   distribution_functions = always
 end:output
 
@@ -109,11 +110,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-22, 3.0e-22)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 
@@ -131,11 +132,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-22, 3.0e-22)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 

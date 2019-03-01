@@ -2,10 +2,10 @@ begin:control
   nx = 240
   ny = nx/3
 
-  # final time of simulation
+  # Final time of simulation
   t_end = 75 * femto
 
-  # size of domain
+  # Size of domain
   x_min = -12 * micron
   x_max = -x_min
   y_min = x_min
@@ -43,7 +43,7 @@ end:laser
 
 
 begin:output
-  # number of timesteps between output dumps
+  # Number of timesteps between output dumps
   dt_snapshot = 25 * femto
 
   # Properties on grid
