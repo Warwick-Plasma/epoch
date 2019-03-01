@@ -2,7 +2,6 @@ begin:control
   nx = 64
   ny = 64
   nz = 64
-  npart = nx * ny * nz * 4
 
   # Final time of simulation
   t_end = 1.5e-1
@@ -45,10 +44,10 @@ begin:species
   name = Right
   charge = -1
   mass = 1.0
-  frac = 0.5
   temp_x = temp
   drift_x = drift_p
   number_density = dens
+  npart = nx * ny * nz * 2
 end:species
 
 
@@ -57,10 +56,10 @@ begin:species
   name = Left
   charge = -1
   mass = 1.0
-  frac = 0.5
   temp_x = temp
   drift_x = -drift_p
   number_density = dens
+  npart = nx * ny * nz * 2
 end:species
 
 

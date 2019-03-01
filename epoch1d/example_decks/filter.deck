@@ -1,6 +1,5 @@
 begin:control
   nx = 400
-  npart = nx * 8
 
   # Final time of simulation
   t_end = 1.5e-1
@@ -33,10 +32,10 @@ begin:species
   name = Right
   charge = -1
   mass = 1.0
-  frac = 0.5
   temp_x = temp
   drift_x = drift_p
   number_density = dens
+  npart = nx * 4
 end:species
 
 
@@ -45,10 +44,10 @@ begin:species
   name = Left
   charge = -1
   mass = 1.0
-  frac = 0.5
   temp_x = temp
   drift_x = -drift_p
   number_density = dens
+  npart = nx * 4
 end:species
 
 

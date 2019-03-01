@@ -1,7 +1,6 @@
 begin:control
   nx = 100
   ny = 100
-  npart = nx * 30000
 
   # Final time of simulation
   t_end = 0
@@ -38,11 +37,11 @@ begin:species
   name = Electron_pl
   charge = -1
   mass = 1.0
-  frac = 0.5
   number_density = dens
   # Truncated power law distribution in px
   dist_fn = exp(-p0/px) * (px/p0)^(alpha)
   dist_fn_px_range = (0, pmax)
+  npart = nx * ny * 150
 end:species
 
 
@@ -50,9 +49,9 @@ begin:species
   name = Electron_back
   charge = -1
   mass = 1.0
-  frac = 0.5
   number_density = dens
   temp = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
+  npart = nx * ny * 150
 end:species
 
 

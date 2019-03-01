@@ -23,7 +23,6 @@ end:constant
 
 begin:control
   nx = nxgrid
-  npart = nx * 300.0
 
   # Final time of simulation
   t_end = simtime
@@ -44,11 +43,11 @@ begin:species
   name = proton
   charge = 1.0
   mass = ion_mass_e
-  frac = 0.4
   number_density = background_number_density
   temp = 1e8
   number_density_back = number_density(proton)
   temp_back = 1e8
+  npart = nx * 120
 end:species
 
 
@@ -56,13 +55,13 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  frac = 0.3
   temp = 1e8
   number_density = background_number_density * (1.0 - frac_beam)
   drift_x = 0.0 - frac_beam * 5.0 * pt_electron
   number_density_back = number_density(electron)
   temp_back = 1e8
   drift_x_back = 0.0 - frac_beam * 5.0 * pt_electron
+  npart = nx * 90
 end:species
 
 
@@ -70,12 +69,12 @@ begin:species
   name = electron_beam
   charge = -1.0
   mass = 1.0
-  frac = 0.3
   temp = 1e7
   number_density = background_number_density * frac_beam
   drift_x = (1.0 - frac_beam) * 5.0 * pt_electron
   number_density_back = 0.0
   temp_back = background_temp
+  npart = nx * 90
 end:species
 
 

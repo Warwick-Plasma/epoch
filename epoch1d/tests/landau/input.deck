@@ -1,6 +1,5 @@
 begin:control
   nx = 400
-  npart = 3200
 
   # Final time of simulation
   t_end = 3.0e-1
@@ -27,10 +26,10 @@ begin:species
   name = electrons
   charge = -1
   mass = 1.0
-  frac = 0.5
   temp_x = temp
   number_density = dens + 0.8*dens * sin(2*pi*x/lengthx)
   number_density_min = 0.0
+  npart = 1600
 end:species
 
 
@@ -38,9 +37,9 @@ begin:species
   name = protons
   charge = 1
   mass = 1836.2
-  frac = 0.5
   temp_x = temp_x(electrons)
   number_density = number_density(electrons)
+  npart = 1600
 end:species
 
 

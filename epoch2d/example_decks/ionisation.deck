@@ -2,7 +2,6 @@ begin:control
   # Global number of gridpoints
   nx = 400 # in x
   ny = 400 # in y
-  npart = 16.0e5
 
   # Maximum number of iterations
   # Set to -1 to run until finished
@@ -40,8 +39,8 @@ begin:species
   name = Electron
   charge = -1.0
   mass = 1.0
-  frac = 0.5
   tracer = T
+  npart = nx * ny * 5
 end:species
 
 
@@ -49,7 +48,6 @@ begin:species
   name = Palladium
   charge = 22.0
   mass = 1836.2 * 105.0
-  frac = 0.5
   tracer = T
 
   number_density = den_max
@@ -57,6 +55,7 @@ begin:species
 
   ionisation_electron_species = Electron
   ionisation_energies = (54.4*ev, 24.6*ev)
+  npart = nx * ny * 5
 end:species
 
 

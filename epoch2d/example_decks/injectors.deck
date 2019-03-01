@@ -44,10 +44,10 @@ begin:species
   name = Background
   charge = -1
   mass = 1.0
-  npart = ppc * nx * ny
   temp = temp
   drift_x = -drift_p / 1000
   number_density = dens * 1000
+  npart = ppc * nx * ny
 end:species
 
 
