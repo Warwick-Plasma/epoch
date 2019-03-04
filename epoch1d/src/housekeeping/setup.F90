@@ -27,6 +27,7 @@ MODULE setup
   USE window
   USE timer
   USE helper
+  USE balance
   USE sdf
 
   IMPLICIT NONE
@@ -36,7 +37,7 @@ MODULE setup
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
-  PUBLIC :: read_cpu_split
+  PUBLIC :: read_cpu_split, pre_load_balance
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #ifndef NO_IO
@@ -96,6 +97,11 @@ CONTAINS
     nsteps = -1
     t_end = HUGE(1.0_num)
     particles_max_id = 0
+    n_zeros = 4
+
+    laser_inject_local = 0.0_num
+    laser_absorb_local = 0.0_num
+    old_elapsed_time = 0.0_num
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -199,6 +205,9 @@ CONTAINS
     CALL setup_split_particles
     CALL setup_field_boundaries
 
+    cpml_x_min = .FALSE.
+    cpml_x_max = .FALSE.
+
     IF (cpml_boundaries) THEN
       CALL allocate_cpml_fields
       CALL set_cpml_helpers(nx, nx_global_min, nx_global_max)
@@ -226,6 +235,10 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
 
     IF (.NOT. any_average) RETURN
+
+    averaged_var_dims = 1
+    averaged_var_dims(c_dump_ekflux) = 6
+    averaged_var_dims(c_dump_poynt_flux) = 3
 
     DO io = 1, n_io_blocks
       IF (io_block_list(io)%any_average) THEN
@@ -255,6 +268,7 @@ CONTAINS
             nspec_local = nspec_local + n_species
 
         IF (nspec_local <= 0) CYCLE
+        nspec_local = nspec_local * averaged_var_dims(io)
 
         avg => io_block_list(ib)%averaged_data(io)
         IF (avg%dump_single) THEN
@@ -268,9 +282,9 @@ CONTAINS
         avg%species_sum = 0
         avg%n_species = 0
         IF (IAND(mask, c_io_no_sum) == 0) &
-            avg%species_sum = 1
+            avg%species_sum = averaged_var_dims(io)
         IF (IAND(mask, c_io_species) /= 0) &
-            avg%n_species = n_species
+            avg%n_species = n_species * averaged_var_dims(io)
         avg%real_time = 0.0_num
         avg%started = .FALSE.
       END IF
@@ -302,7 +316,6 @@ CONTAINS
       species_list(ispecies)%global_count = 0
       species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
-      species_list(ispecies)%sampling_function = c_sf_drifting_tri_maxwellian
       species_list(ispecies)%immobile = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
@@ -320,7 +333,12 @@ CONTAINS
         CALL set_stack_zero  (species_list(ispecies)%temperature_function(n))
         CALL initialise_stack(species_list(ispecies)%drift_function(n))
         CALL set_stack_zero  (species_list(ispecies)%drift_function(n))
+        CALL initialise_stack(species_list(ispecies)%dist_fn_range(n))
+        CALL set_stack_zero  (species_list(ispecies)%dist_fn_range(n), &
+            n_zeros=2)
       END DO
+      species_list(ispecies)%fractional_tail_cutoff = 0.0001_num
+      species_list(ispecies)%ic_df_type = c_ic_df_thermal
       species_list(ispecies)%electron = .FALSE.
       species_list(ispecies)%ionise = .FALSE.
       species_list(ispecies)%ionise_to_species = -1
@@ -340,6 +358,7 @@ CONTAINS
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
+      species_list(ispecies)%field_aligned_initialisation = .FALSE.
 #ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%tracer = .FALSE.
 #endif
@@ -484,6 +503,7 @@ CONTAINS
 
     INTEGER :: ispecies, ix
     REAL(num) :: min_dt, omega2, omega, k_max, fac1, fac2, clipped_dens
+    TYPE(initial_condition_block), POINTER :: ic
 
     IF (ic_from_restart) RETURN
 
@@ -494,25 +514,26 @@ CONTAINS
     ! Note that this doesn't get strongly relativistic plasmas right
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type /= c_species_id_photon) THEN
+        CALL setup_ic_density(ispecies)
+        CALL setup_ic_temp(ispecies)
+
+        ic => species_list(ispecies)%initial_conditions
+
         fac1 = q0**2 / species_list(ispecies)%mass / epsilon0
         fac2 = 3.0_num * k_max**2 * kb / species_list(ispecies)%mass
-        IF (species_list(ispecies)%initial_conditions%density_max > 0) THEN
+        IF (ic%density_max > 0) THEN
           DO ix = 1, nx
-            clipped_dens = MIN(&
-                species_list(ispecies)%initial_conditions%density(ix), &
-                species_list(ispecies)%initial_conditions%density_max)
-            omega2 = fac1 * clipped_dens + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,:))
+            clipped_dens = MIN(species_density(ix), ic%density_max)
+            omega2 = fac1 * clipped_dens &
+                + fac2 * MAXVAL(species_temp(ix,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
           END DO ! ix
         ELSE
           DO ix = 1, nx
-            omega2 = fac1 &
-                * species_list(ispecies)%initial_conditions%density(ix) &
-                + fac2 * MAXVAL(&
-                species_list(ispecies)%initial_conditions%temp(ix,:))
+            omega2 = fac1 * species_density(ix) &
+                + fac2 * MAXVAL(species_temp(ix,:))
             IF (omega2 <= c_tiny) CYCLE
             omega = SQRT(omega2)
             IF (2.0_num * pi / omega < min_dt) min_dt = 2.0_num * pi / omega
@@ -727,6 +748,7 @@ CONTAINS
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
+    INTEGER, ALLOCATABLE :: random_states_per_proc_old(:)
     REAL(num), DIMENSION(2*c_ndims) :: extents
     LOGICAL :: restart_flag, got_full
     LOGICAL, ALLOCATABLE :: species_found(:)
@@ -940,10 +962,37 @@ CONTAINS
       CASE(c_blocktype_array)
         IF (use_exact_restart .AND. need_random_state &
             .AND. str_cmp(block_id, 'random_states')) THEN
-          ALLOCATE(random_states_per_proc(4*nproc))
-          CALL sdf_read_srl(sdf_handle, random_states_per_proc)
-          CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
-          DEALLOCATE(random_states_per_proc)
+          IF (datatype == c_datatype_integer4 .AND. ndims == 4) THEN
+            ! Older form of random_states output
+            ! Missing the box_muller_cache entry
+            ALLOCATE(random_states_per_proc(5*nproc))
+            ALLOCATE(random_states_per_proc_old(4*nproc))
+            CALL sdf_read_srl(sdf_handle, random_states_per_proc)
+            DO i = 0, nproc - 1
+              random_states_per_proc(5*i+1:5*(i+1)-1) = &
+                  random_states_per_proc_old(4*i+1:4*(i+1))
+              random_states_per_proc(5*(i+1)) = 0
+            END DO
+            DEALLOCATE(random_states_per_proc_old)
+            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+            DEALLOCATE(random_states_per_proc)
+          ELSE IF (rank == 0) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Unrecognised format for random_states block in ', &
+                    'the restart file. Ignoring.'
+          END IF
+        ELSE IF (use_exact_restart .AND. need_random_state &
+            .AND. str_cmp(block_id, 'random_states_full')) THEN
+          IF (datatype == c_datatype_integer4 .AND. ndims == 5) THEN
+            ALLOCATE(random_states_per_proc(5*nproc))
+            CALL sdf_read_srl(sdf_handle, random_states_per_proc)
+            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+            DEALLOCATE(random_states_per_proc)
+          ELSE IF (rank == 0) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'Unrecognised format for random_states_full block in ', &
+                    'the restart file. Ignoring.'
+          END IF
         ELSE IF (str_cmp(block_id, 'file_numbers')) THEN
           CALL sdf_read_array_info(sdf_handle, dims)
           IF (ndims /= 1 .OR. dims(1) /= SIZE(file_numbers)) THEN
@@ -1167,6 +1216,9 @@ CONTAINS
             PRINT*, 'To use, please recompile with the -DPARTICLE_ID option.'
           END IF
 #endif
+        ELSE IF (block_id(1:18) == 'persistent_subset/') THEN
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes_i8(ispecies), it_persistent_subset)
 
         ELSE IF (block_id(1:7) == 'weight/') THEN
 #ifndef PER_SPECIES_WEIGHT
@@ -1253,11 +1305,30 @@ CONTAINS
       CALL create_moved_window(offset_x_min, window_offset)
     END IF
 
-    CALL set_thermal_bcs
+    CALL set_thermal_bcs_all
+    CALL setup_persistent_subsets
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
   END SUBROUTINE restart_data
+
+
+
+  SUBROUTINE setup_persistent_subsets
+
+    INTEGER :: isub
+    TYPE(subset), POINTER :: sub
+
+    DO isub = 1, SIZE(subset_list)
+      sub => subset_list(isub)
+      IF (sub%persistent) THEN
+        IF (time < sub%persist_start_time &
+            .AND. step < sub%persist_start_step) CYCLE
+        sub%locked = .TRUE.
+      END IF
+    END DO
+
+  END SUBROUTINE setup_persistent_subsets
 
 
 
@@ -1524,6 +1595,28 @@ CONTAINS
 
 
 
+  FUNCTION it_persistent_subset(array, npart_this_it, start, param)
+
+    USE constants
+    USE particle_id_hash_mod
+    INTEGER(i8) :: it_persistent_subset
+    INTEGER(i8), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      CALL id_registry%add_with_map(iterator_list, array(ipart))
+      iterator_list => iterator_list%next
+    END DO
+
+    it_persistent_subset = 0
+
+  END FUNCTION it_persistent_subset
+
+
+
 #ifdef PHOTONS
   FUNCTION it_optical_depth(array, npart_this_it, start, param)
 
@@ -1623,5 +1716,21 @@ CONTAINS
     window_shift = window_offset
 
   END SUBROUTINE
+
+
+
+  SUBROUTINE pre_load_balance
+
+    IF (.NOT.use_pre_balance .OR. nproc == 1) RETURN
+
+    pre_loading = .TRUE.
+
+    CALL auto_load
+
+    CALL pre_balance_workload
+
+    pre_loading = .FALSE.
+
+  END SUBROUTINE pre_load_balance
 
 END MODULE setup

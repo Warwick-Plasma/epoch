@@ -33,6 +33,7 @@ CONTAINS
     CALL MPI_COMM_DUP(MPI_COMM_WORLD, comm, errcode)
     CALL MPI_COMM_SIZE(comm, nproc, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
+    done_mpi_initialise = .FALSE.
 #ifdef MPI_DEBUG
     CALL mpi_set_error_handler
 #endif
@@ -41,13 +42,9 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_communicator
+  SUBROUTINE split_domain
 
-    INTEGER, PARAMETER :: ndims = 1
-    INTEGER :: dims(ndims), idim, old_comm
-    LOGICAL :: periods(ndims), reorder, op
-    INTEGER :: test_coords(ndims)
-    INTEGER :: ix
+    INTEGER :: old_comm
     INTEGER :: nxsplit
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
@@ -108,8 +105,21 @@ CONTAINS
       CALL MPI_COMM_FREE(old_comm, errcode)
     END IF
 
+    CALL setup_communicator
+
+  END SUBROUTINE split_domain
+
+
+
+  SUBROUTINE setup_communicator
+
+    INTEGER :: dims(c_ndims), idim, old_comm
+    LOGICAL :: periods(c_ndims), reorder, op
+    INTEGER :: test_coords(c_ndims)
+    INTEGER :: ix
+
     dims = (/nprocx/)
-    CALL MPI_DIMS_CREATE(nproc, ndims, dims, errcode)
+    CALL MPI_DIMS_CREATE(nproc, c_ndims, dims, errcode)
 
     periods = .FALSE.
     reorder = .TRUE.
@@ -131,10 +141,11 @@ CONTAINS
     END IF
 
     old_comm = comm
-    CALL MPI_CART_CREATE(old_comm, ndims, dims, periods, reorder, comm, errcode)
+    CALL MPI_CART_CREATE(old_comm, c_ndims, dims, periods, reorder, comm, &
+                         errcode)
     CALL MPI_COMM_FREE(old_comm, errcode)
     CALL MPI_COMM_RANK(comm, rank, errcode)
-    CALL MPI_CART_COORDS(comm, rank, ndims, coordinates, errcode)
+    CALL MPI_CART_COORDS(comm, rank, c_ndims, coordinates, errcode)
     CALL MPI_CART_SHIFT(comm, 0, 1, proc_x_min, proc_x_max, errcode)
 
     nprocx = dims(1)
@@ -154,7 +165,7 @@ CONTAINS
 
       ! For some stupid reason MPI_CART_RANK returns an error rather than
       ! MPI_PROC_NULL if the coords are out of range.
-      DO idim = 1, ndims
+      DO idim = 1, c_ndims
         IF ((test_coords(idim) < 0 &
             .OR. test_coords(idim) >= dims(idim)) &
             .AND. .NOT. periods(idim)) op = .FALSE.
@@ -170,11 +181,10 @@ CONTAINS
 
     INTEGER :: ispecies, idim
     INTEGER :: nx0, nxp
-    INTEGER :: bc_x_min, bc_x_max
 
     IF (.NOT.cpml_boundaries) cpml_thickness = 0
 
-    CALL setup_communicator
+    CALL split_domain
 
     ALLOCATE(npart_each_rank(nproc))
     ALLOCATE(x_grid_mins(0:nprocx-1), x_grid_maxs(0:nprocx-1))
@@ -258,15 +268,10 @@ CONTAINS
       NULLIFY(species_list(ispecies)%attached_list%prev)
       CALL create_empty_partlist(species_list(ispecies)%attached_list)
 
-      bc_x_min = species_list(ispecies)%bc_particle(c_bd_x_min)
-      bc_x_max = species_list(ispecies)%bc_particle(c_bd_x_max)
-
-      IF (bc_x_min == c_bc_thermal .OR. &
-          bc_x_min == c_bc_sampling_function) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_min(1:3))
       END IF
-      IF (bc_x_max == c_bc_thermal .OR. &
-          bc_x_max == c_bc_sampling_function) THEN
+      IF (species_list(ispecies)%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1:3))
       END IF
     END DO

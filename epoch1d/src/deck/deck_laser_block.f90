@@ -36,6 +36,9 @@ CONTAINS
 
   SUBROUTINE laser_deck_initialise
 
+    n_laser_x_min = 0
+    n_laser_x_max = 0
+
   END SUBROUTINE laser_deck_initialise
 
 

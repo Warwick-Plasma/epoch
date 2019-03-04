@@ -17,11 +17,11 @@
 MODULE boundary
 
   USE partlist
-  USE particle_ring_beam
   USE particle_temperature
   USE laser
   USE mpi_subtype_control
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -34,11 +34,11 @@ CONTAINS
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
     CHARACTER(LEN=2*c_max_string_length) :: bc_error
-    REAL(num), DIMENSION(3), PARAMETER :: zero_drifts = 0.0_num
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    add_laser(:) = .FALSE.
     any_open = .FALSE.
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
@@ -105,7 +105,6 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
-        .OR. boundary == c_bc_sampling_function &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
@@ -582,11 +581,10 @@ CONTAINS
     INTEGER(i8) :: ixp
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: out_of_bounds
-    INTEGER :: bc, ispecies, i, ix
+    INTEGER :: sgn, bc, ispecies, i, ix
     REAL(num) :: temp(3)
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer
-    TYPE(particle_species), POINTER :: species
 
     boundary_shift = dx * REAL((1 + png) / 2, num)
 
@@ -594,11 +592,9 @@ CONTAINS
     x_max_outer = x_max + boundary_shift
 
     DO ispecies = 1, n_species
-      species => species_list(ispecies)
+      cur => species_list(ispecies)%attached_list%head
 
-      cur => species%attached_list%head
-
-      bc_species = species%bc_particle
+      bc_species = species_list(ispecies)%bc_particle
 
       DO ix = -1, 1, 2
         CALL create_empty_partlist(send(ix))
@@ -612,6 +608,7 @@ CONTAINS
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos
+        sgn = -1
         IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
@@ -622,12 +619,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < x_min_local) xbd = -1
+            IF (part_pos < x_min_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
-            xbd = -1
+            xbd = sgn
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
@@ -636,8 +633,8 @@ CONTAINS
                 cur%part_pos = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = -1
-                cur%part_pos = part_pos + length_x
+                xbd = sgn
+                cur%part_pos = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos < x_min_outer) THEN
@@ -646,9 +643,11 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 END DO
 
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -661,30 +660,17 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ELSE IF (bc == c_bc_sampling_function) THEN
-                IF (species%sampling_function .EQ. c_sf_ring_beam) &
-                    THEN
-                  CALL setup_particle_ring_beam(cur, &
-                      species%initial_conditions%temp, &
-                      species%initial_conditions%drift, &
-                      species%mass, INT(-1, i8))
-                ELSE
-                  ! default - drifting tri maxwellian
-                  CALL setup_particle_temperature(cur, &
-                      species%initial_conditions%temp, &
-                      species%initial_conditions%drift, &
-                      species%mass)
-                ENDIF
+                cur%part_pos = 2.0_num * x_min_outer - part_pos
+
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
-              ! Doesn't matter if out_of_bounds whether we do this or not
-              cur%part_pos = 2.0_num * x_min_outer - part_pos
             END IF
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
@@ -695,12 +681,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= x_max_local) xbd = 1
+            IF (part_pos >= x_max_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
-            xbd = 1
+            xbd = sgn
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
@@ -709,8 +695,8 @@ CONTAINS
                 cur%part_pos = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = 1
-                cur%part_pos = part_pos - length_x
+                xbd = sgn
+                cur%part_pos = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos >= x_max_outer) THEN
@@ -719,9 +705,11 @@ CONTAINS
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 END DO
 
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -734,26 +722,12 @@ CONTAINS
                 cur%part_p(i) = momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
-              ELSE IF (bc == c_bc_sampling_function) THEN
-                IF (species%sampling_function .EQ. c_sf_ring_beam) &
-                    THEN
-                  CALL setup_particle_ring_beam(cur, &
-                      species%initial_conditions%temp, &
-                      species%initial_conditions%drift, &
-                      species%mass, INT(-1, i8))
-                ELSE
-                  ! default - drifting tri maxwellian
-                  CALL setup_particle_temperature(cur, &
-                      species%initial_conditions%temp, &
-                      species%initial_conditions%drift, &
-                      species%mass)
-                ENDIF
+                cur%part_pos = 2.0_num * x_max_outer - part_pos
+
               ELSE
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
-              ! Doesn't matter if out_of_bounds whether we do this or not
-              cur%part_pos = 2.0_num * x_max_outer - part_pos
             END IF
           END IF
         END IF
@@ -766,7 +740,7 @@ CONTAINS
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
           ELSE
-            DEALLOCATE(cur)
+            CALL destroy_particle(cur)
           END IF
         ELSE IF (ABS(xbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour

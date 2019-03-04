@@ -1,3 +1,4 @@
+
     ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
     cell_x_r = part_x * idx - 0.5_num

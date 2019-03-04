@@ -19,6 +19,13 @@ begin:constant
   simtime = grid_spacing / c
   diagtime = simtime * 2
   pdfn_limit = 2 * abs(pring_beam)
+  
+  p_ring_th = sqrt(2 * qe * temp_ring_ev * mass_ion)
+  p_beam_th = sqrt(2 * qe * temp_beam_ev * mass_ion)
+
+  px_min_limit = (pring - 6*p_ring_th gt 0) * (pring - 6*p_ring_th)
+  px_peak = pring / 2 * (1 + sqrt(1 + (2*p_ring_th/pring)^2))
+
 end:constant
 
 
@@ -50,15 +57,13 @@ begin:species
   mass = ion_mass_e
   frac = 1.0
   density = 1.0e20
-# the drift_x parameter is hijacked for the ring drift / width
-  drift_x = pring
-# the drift_z parameter is hijacked for the beam drift
-  drift_z = pbeam
-# the temp_x parameter is hijacked for the ring temperature
-  temp_x_ev = temp_ring_ev
-# the temp_z parameter is hijacked for the beam temperature
-  temp_z_ev = temp_beam_ev
-  sampling_function = ring_beam
+  dist_fn = px / px_peak * exp(-(px - pring)^2/2/p_ring_th^2) * exp(-(pz - pbeam)^2/2/p_beam_th^2)
+  dist_fn_px_range = (px_min_limit, pring + 6*p_ring_th)
+# deliberately ignore this dist_fn_py_range
+# dist_fn_py_range = (0, 0)
+  dist_fn_pz_range = (pbeam - 6*p_ring_th, pbeam + 6*p_ring_th)
+  field_aligned_initialisation = T
+  x_perp_y_ignored_z_para = T
 end:species
 
 

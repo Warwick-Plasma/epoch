@@ -217,7 +217,7 @@ CONTAINS
     collstate = 1.0_num
     IF (str_cmp(TRIM(tstr2), 'on') .OR. str_cmp(TRIM(tstr2), '')) THEN
       collstate = 1.0_num
-    ELSEIF (str_cmp(TRIM(tstr2), 'off')) THEN
+    ELSE IF (str_cmp(TRIM(tstr2), 'off')) THEN
       collstate = -1.0_num
     ELSE
       collstate = as_real(tstr2, errcode)
@@ -239,9 +239,9 @@ CONTAINS
     END IF
 
     coll_pairs(sp1, sp2) = collstate
-!    coll_pairs(sp2, sp1) = collstate
+    coll_pairs(sp2, sp1) = collstate
     coll_pairs_touched(sp1, sp2) = .TRUE.
-!    coll_pairs_touched(sp2, sp1) = .TRUE.
+    coll_pairs_touched(sp2, sp1) = .TRUE.
 
   END SUBROUTINE set_collision_matrix
 

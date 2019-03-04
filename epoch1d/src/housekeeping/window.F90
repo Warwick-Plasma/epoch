@@ -19,7 +19,6 @@ MODULE window
   USE boundary
   USE partlist
   USE evaluator
-  USE shared_data
 
   IMPLICIT NONE
 
@@ -173,11 +172,12 @@ CONTAINS
 
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
-    INTEGER :: ispecies, i
+    INTEGER :: ispecies, i, errcode
     INTEGER(i8) :: ipart, npart_per_cell, n_frac
     REAL(num) :: temp_local, drift_local, npart_frac
     REAL(num) :: x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
+    REAL(num), DIMENSION(c_ndirs, 2) :: ranges
 
     ! This subroutine injects particles at the right hand edge of the box
 
@@ -225,12 +225,39 @@ CONTAINS
         CALL create_particle(current)
         current%part_pos = x0 + random() * dx
 
-        DO i = 1, 3
-          temp_local = temperature(i)
-          drift_local = drift(i)
-          current%part_p(i) = momentum_from_temperature(&
-              species_list(ispecies)%mass, temp_local, drift_local)
-        END DO
+        IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+          DO i = 1, c_ndirs
+            temp_local = temperature(i)
+            drift_local = drift(i)
+            current%part_p(i) = momentum_from_temperature(&
+                species_list(ispecies)%mass, temp_local, drift_local)
+          END DO
+        ELSE IF (species_list(ispecies)%ic_df_type &
+            == c_ic_df_relativistic_thermal) THEN
+          current%part_p = momentum_from_temperature_relativistic(&
+              species_list(ispecies)%mass, temperature, &
+              species_list(ispecies)%fractional_tail_cutoff)
+          CALL particle_drift_lorentz_transform(current, &
+              species_list(ispecies)%mass, drift)
+        ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
+          parameters%use_grid_position = .FALSE.
+          parameters%pack_pos = current%part_pos
+          errcode = c_err_none
+          CALL evaluate_with_parameters_to_array(&
+              species_list(ispecies)%dist_fn_range(1), parameters, 2, &
+              ranges(1,:), errcode)
+          CALL evaluate_with_parameters_to_array(&
+              species_list(ispecies)%dist_fn_range(2), parameters, 2, &
+              ranges(2,:), errcode)
+          CALL evaluate_with_parameters_to_array(&
+              species_list(ispecies)%dist_fn_range(3), parameters, 2, &
+              ranges(3,:), errcode)
+
+          CALL sample_from_deck_expression(current, &
+              species_list(ispecies)%dist_fn, parameters, ranges)
+          CALL particle_drift_lorentz_transform(current, &
+              species_list(ispecies)%mass, drift)
+        END IF
 
         current%weight = density * wdata
 #ifdef PARTICLE_DEBUG
@@ -261,7 +288,7 @@ CONTAINS
           IF (current%part_pos < x_min) THEN
             CALL remove_particle_from_partlist(&
                 species_list(ispecies)%attached_list, current)
-            DEALLOCATE(current)
+            CALL destroy_particle(current)
           END IF
           current => next
         END DO
