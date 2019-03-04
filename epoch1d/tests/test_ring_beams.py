@@ -21,7 +21,7 @@ import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import unittest
 import platform
-#from . import SimTest
+from . import SimTest
 
 
 def showdatafields(sdffile):
@@ -72,7 +72,7 @@ def createplots():
     save_contourf('py_pz/ion_ring_beam')
 
 
-class test_ring_beam(unittest.TestCase):#SimTest):
+class test_ring_beam(SimTest):
 
     def test_createplots(self):
         createplots()

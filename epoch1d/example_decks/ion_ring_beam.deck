@@ -8,8 +8,13 @@ begin:constant
   pring_beam = sqrt(2 * mass_ion * qe * ring_beam_energy)
   pbeam = pring_beam * sin(-pi/3)
   pring = pring_beam * cos(-pi/3)
-  temp_beam = ring_beam_energy / 1000
-  temp_ring = ring_beam_energy / 100
+
+  p_ring_th = pring_beam / 100
+  p_beam_th = pring_beam / 1000
+
+  px_min_limit = (pring - 6*p_ring_th gt 0) * (pring - 6*p_ring_th)
+  px_peak = pring / 2 * (1 + sqrt(1 + (2*p_ring_th/pring)^2))
+
   vel_ion = sqrt(2 * kb * background_temp / mass_ion)
   lambda_db = sqrt(epsilon0 * kb * background_temp / background_density / qe^2)
   grid_spacing = lambda_db * 0.5
@@ -43,6 +48,11 @@ begin:boundaries
 end:boundaries
 
 
+begin:fields
+  by = 1.0
+end:fields
+
+
 begin:species
   name = proton
   charge = 1.0
@@ -68,11 +78,15 @@ begin:species
   mass = ion_mass_e
   frac = 0.4
   density = background_density * frac_beam
-  drift_x = pring
-  drift_z = pbeam
-  temp_x = temp_ring
-  temp_z = temp_beam
-  sampling_function = ring_beam
+
+  dist_fn = px / px_peak * exp(-(px - pring)^2/2/p_ring_th^2) * exp(-(pz - pbeam)^2/2/p_beam_th^2)
+  dist_fn_px_range = (px_min_limit, pring + 6*p_ring_th)
+# deliberately ignore this dist_fn_py_range
+# dist_fn_py_range = (0, 0)
+  dist_fn_pz_range = (pbeam - 6*p_ring_th, pbeam + 6*p_ring_th)
+  field_aligned_initialisation = T
+  x_perp_y_ignored_z_para = T
+
 end:species
 
 
