@@ -6,6 +6,16 @@
    MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
    older versions of the MPI library.
 
+ * Added collisions block option "use_nanbu". If set to true then the
+   scattering algorithm of Nanbu, with relativistic corrections by
+   Perez will be used in the collisions module. If false, the previous
+   Sentoku-Kemp algorithm will be used. Due to known issues in the Sentoku-Kemp
+   method for some test problems, the Nanbu method is now the default.
+
+ * Bugfixes for Sentoku-Kemp collisions. These changes will affect the results
+   for some problems. Note that some test problems continue to demonstrate
+   unexpected behaviour and users are advised to use the Nanbu method instead.
+
  * Added "number_density" aliases for "density" in the species and injector
    blocks.
    These include:
