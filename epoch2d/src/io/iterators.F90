@@ -17,9 +17,8 @@
 MODULE iterators
 
   USE particle_pointer_advance
-#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
   USE partlist
-#endif
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -406,7 +405,6 @@ CONTAINS
 
 
 
-#if defined(PARTICLE_ID)
   FUNCTION it_output_integer8(array, npoint_it, start, param)
 
     INTEGER(i8) :: it_output_integer8
@@ -425,11 +423,24 @@ CONTAINS
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
-      DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-        part_count = part_count + 1
-        array(part_count) = cur%id
-        cur => cur%next
-      END DO
+      SELECT CASE (param)
+#ifdef PARTICLE_ID
+      CASE (c_dump_part_id) ! particle weight
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%id
+          cur => cur%next
+        END DO
+#endif
+      CASE (c_dump_persistent_ids) ! particle weight
+        IF (any_persistent_subset) THEN
+          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+            part_count = part_count + 1
+            array(part_count) = id_registry%map(cur)
+            cur => cur%next
+          END DO
+        END IF
+      END SELECT
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) THEN
         CALL advance_particle_list(current_list, cur)
@@ -443,6 +454,5 @@ CONTAINS
     it_output_integer8 = 0
 
   END FUNCTION it_output_integer8
-#endif
 
 END MODULE iterators

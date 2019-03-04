@@ -116,6 +116,7 @@ CONTAINS
       ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
         CALL setup_particle_dist_fn(species, species_drift)
       END IF
+<<<<<<< HEAD
     END DO
 
     DO ispecies = 1, n_species
@@ -123,6 +124,8 @@ CONTAINS
       IF (species%field_aligned_initialisation) THEN
         CALL rotate_species_momenta_for_field_aligned_initialisation(species)
       END IF
+=======
+>>>>>>> master
     END DO
 
     IF (pre_loading) RETURN
@@ -927,6 +930,7 @@ CONTAINS
     CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
+
 
   ! Subroutine to initialise a ring beam particle distribution
   ! Assumes linear interpolation of temperatures between cells

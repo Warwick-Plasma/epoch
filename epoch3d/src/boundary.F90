@@ -21,6 +21,7 @@ MODULE boundary
   USE laser
   USE mpi_subtype_control
   USE utilities
+  USE particle_id_hash_mod
 
   IMPLICIT NONE
 
@@ -31,12 +32,13 @@ CONTAINS
     INTEGER :: i, ispecies
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
-        boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max' /)
+        boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max' /)
     CHARACTER(LEN=2*c_max_string_length) :: bc_error
 
     ! For some types of boundary, fields and particles are treated in
     ! different ways, deal with that here
 
+    add_laser(:) = .FALSE.
     any_open = .FALSE.
     cpml_boundaries = .FALSE.
     DO i = 1, 2*c_ndims
@@ -121,21 +123,24 @@ CONTAINS
   SUBROUTINE field_bc(field, ng)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
 
-    CALL do_field_mpi_with_lengths(field, ng, nx, ny)
+    CALL do_field_mpi_with_lengths(field, ng, nx, ny, nz)
 
   END SUBROUTINE field_bc
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths_slice(field, direction, ng, n1_local)
+  SUBROUTINE do_field_mpi_with_lengths_slice(field, direction, ng, n1_local, &
+      n2_local)
 
     INTEGER, INTENT(IN) :: direction, ng
-    REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
-    INTEGER, INTENT(IN) :: n1_local
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: n1_local, n2_local
     INTEGER :: proc1_min, proc1_max
-    INTEGER :: basetype, i, n
+    INTEGER :: proc2_min, proc2_max
+    INTEGER, DIMENSION(c_ndims-1) :: sizes, subsizes, starts
+    INTEGER :: subarray, basetype, sz, szmax, i, j, n
     REAL(num), ALLOCATABLE :: temp(:)
 
     basetype = mpireal
@@ -143,54 +148,22 @@ CONTAINS
     IF (direction == c_dir_x) THEN
       proc1_min = proc_y_min
       proc1_max = proc_y_max
+      proc2_min = proc_z_min
+      proc2_max = proc_z_max
+    ELSE IF (direction == c_dir_y) THEN
+      proc1_min = proc_x_min
+      proc1_max = proc_x_max
+      proc2_min = proc_z_min
+      proc2_max = proc_z_max
     ELSE
       proc1_min = proc_x_min
       proc1_max = proc_x_max
+      proc2_min = proc_y_min
+      proc2_max = proc_y_max
     END IF
 
-    ALLOCATE(temp(ng))
-
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc1_min, &
-        tag, temp, ng, basetype, proc1_max, tag, comm, status, errcode)
-
-    IF (proc1_max /= MPI_PROC_NULL) THEN
-      n = 1
-      DO i = n1_local+1, ng+n1_local
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
-
-    CALL MPI_SENDRECV(field(n1_local+1-ng), ng, basetype, proc1_max, &
-        tag, temp, ng, basetype, proc1_min, tag, comm, status, errcode)
-
-    IF (proc1_min /= MPI_PROC_NULL) THEN
-      n = 1
-      DO i = 1-ng, 0
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
-
-    DEALLOCATE(temp)
-
-  END SUBROUTINE do_field_mpi_with_lengths_slice
-
-
-
-  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local)
-
-    INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
-    INTEGER, INTENT(IN) :: nx_local, ny_local
-    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, basetype, sz, szmax, i, j, n
-    REAL(num), ALLOCATABLE :: temp(:)
-
-    basetype = mpireal
-
-    sizes(1) = nx_local + 2 * ng
-    sizes(2) = ny_local + 2 * ng
+    sizes(1) = n1_local + 2 * ng
+    sizes(2) = n2_local + 2 * ng
     starts = 1
 
     szmax = sizes(1) * ng
@@ -206,23 +179,23 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
-        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc1_min, &
+        tag, temp, sz, basetype, proc1_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (proc1_max /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
-      DO i = nx_local+1, subsizes(1)+nx_local
+      DO i = n1_local+1, subsizes(1)+n1_local
         field(i,j) = temp(n)
         n = n + 1
       END DO
       END DO
     END IF
 
-    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
-        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(n1_local+1-ng,1-ng), 1, subarray, proc1_max, &
+        tag, temp, sz, basetype, proc1_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (proc1_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
@@ -241,12 +214,12 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
-        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc2_min, &
+        tag, temp, sz, basetype, proc2_max, tag, comm, status, errcode)
 
-    IF (proc_y_max /= MPI_PROC_NULL) THEN
+    IF (proc2_max /= MPI_PROC_NULL) THEN
       n = 1
-      DO j = ny_local+1, subsizes(2)+ny_local
+      DO j = n2_local+1, subsizes(2)+n2_local
       DO i = 1-ng, subsizes(1)-ng
         field(i,j) = temp(n)
         n = n + 1
@@ -254,15 +227,166 @@ CONTAINS
       END DO
     END IF
 
-    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
-        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,n2_local+1-ng), 1, subarray, proc2_max, &
+        tag, temp, sz, basetype, proc2_min, tag, comm, status, errcode)
 
-    IF (proc_y_min /= MPI_PROC_NULL) THEN
+    IF (proc2_min /= MPI_PROC_NULL) THEN
       n = 1
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
         field(i,j) = temp(n)
         n = n + 1
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    DEALLOCATE(temp)
+
+  END SUBROUTINE do_field_mpi_with_lengths_slice
+
+
+
+  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local, &
+      nz_local)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, basetype, sz, szmax, i, j, k, n
+    REAL(num), ALLOCATABLE :: temp(:)
+
+    basetype = mpireal
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    sizes(3) = nz_local + 2 * ng
+    starts = 1
+
+    szmax = sizes(1) * sizes(2) * ng
+    sz = sizes(1) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+    sz = sizes(2) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (proc_x_max /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (proc_x_min /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (proc_y_max /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    IF (proc_y_min /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = sizes(2)
+    subsizes(3) = ng
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
+        tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
+
+    IF (proc_z_max /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = nz_local+1, subsizes(3)+nz_local
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
+        tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
+
+    IF (proc_z_min /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
       END DO
       END DO
     END IF
@@ -275,56 +399,65 @@ CONTAINS
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local)
+  SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local, &
+      nz_local)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(r4), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
-    INTEGER, INTENT(IN) :: nx_local, ny_local
+    REAL(r4), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, basetype, sz, szmax, i, j, n
+    INTEGER :: subarray, basetype, sz, szmax, i, j, k, n
     REAL(r4), ALLOCATABLE :: temp(:)
 
     basetype = MPI_REAL4
 
     sizes(1) = nx_local + 2 * ng
     sizes(2) = ny_local + 2 * ng
+    sizes(3) = nz_local + 2 * ng
     starts = 1
 
-    szmax = sizes(1) * ng
-    sz = sizes(2) * ng
+    szmax = sizes(1) * sizes(2) * ng
+    sz = sizes(1) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+    sz = sizes(2) * sizes(3) * ng
     IF (sz > szmax) szmax = sz
 
     ALLOCATE(temp(szmax))
 
     subsizes(1) = ng
     subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
 
-    sz = subsizes(1) * subsizes(2)
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
 
-    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
+    CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
     IF (proc_x_max /= MPI_PROC_NULL) THEN
       n = 1
+      DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
       DO i = nx_local+1, subsizes(1)+nx_local
-        field(i,j) = temp(n)
+        field(i,j,k) = temp(n)
         n = n + 1
+      END DO
       END DO
       END DO
     END IF
 
-    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
     IF (proc_x_min /= MPI_PROC_NULL) THEN
       n = 1
+      DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
-        field(i,j) = temp(n)
+        field(i,j,k) = temp(n)
         n = n + 1
+      END DO
       END DO
       END DO
     END IF
@@ -333,33 +466,78 @@ CONTAINS
 
     subsizes(1) = sizes(1)
     subsizes(2) = ng
+    subsizes(3) = sizes(3)
 
-    sz = subsizes(1) * subsizes(2)
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
 
-    subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
 
-    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
+    CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
     IF (proc_y_max /= MPI_PROC_NULL) THEN
       n = 1
+      DO k = 1-ng, subsizes(3)-ng
       DO j = ny_local+1, subsizes(2)+ny_local
       DO i = 1-ng, subsizes(1)-ng
-        field(i,j) = temp(n)
+        field(i,j,k) = temp(n)
         n = n + 1
+      END DO
       END DO
       END DO
     END IF
 
-    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
     IF (proc_y_min /= MPI_PROC_NULL) THEN
       n = 1
+      DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
       DO i = 1-ng, subsizes(1)-ng
-        field(i,j) = temp(n)
+        field(i,j,k) = temp(n)
         n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = sizes(2)
+    subsizes(3) = ng
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
+        tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
+
+    IF (proc_z_max /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = nz_local+1, subsizes(3)+nz_local
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
+        tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
+
+    IF (proc_z_min /= MPI_PROC_NULL) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
       END DO
       END DO
     END IF
@@ -374,7 +552,7 @@ CONTAINS
 
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
 
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: stagger_type, boundary
     INTEGER :: i, nn
 
@@ -383,44 +561,66 @@ CONTAINS
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng
-          field(i-ng,:) = field(ng-i,:)
+          field(i-ng,:,:) = field(ng-i,:,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(i-ng,:) = field(ng+1-i,:)
+          field(i-ng,:,:) = field(ng+1-i,:,:)
         END DO
       END IF
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
       nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng
-          field(nn+i,:) = field(nn-i,:)
+          field(nn+i,:,:) = field(nn-i,:,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(nn+i,:) = field(nn+1-i,:)
+          field(nn+i,:,:) = field(nn+1-i,:,:)
         END DO
       END IF
 
     ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng
-          field(:,i-ng) = field(:,ng-i)
+          field(:,i-ng,:) = field(:,ng-i,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(:,i-ng) = field(:,ng+1-i)
+          field(:,i-ng,:) = field(:,ng+1-i,:)
         END DO
       END IF
     ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
       nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng
-          field(:,nn+i) = field(:,nn-i)
+          field(:,nn+i,:) = field(:,nn-i,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(:,nn+i) = field(:,nn+1-i)
+          field(:,nn+i,:) = field(:,nn+1-i,:)
+        END DO
+      END IF
+
+    ELSE IF (boundary == c_bd_z_min .AND. z_min_boundary) THEN
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        DO i = 1, ng
+          field(:,:,i-ng) = field(:,:,ng-i)
+        END DO
+      ELSE
+        DO i = 1, ng
+          field(:,:,i-ng) = field(:,:,ng+1-i)
+        END DO
+      END IF
+    ELSE IF (boundary == c_bd_z_max .AND. z_max_boundary) THEN
+      nn = nz
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        DO i = 1, ng
+          field(:,:,nn+i) = field(:,:,nn-i)
+        END DO
+      ELSE
+        DO i = 1, ng
+          field(:,:,nn+i) = field(:,:,nn+1-i)
         END DO
       END IF
     END IF
@@ -432,7 +632,7 @@ CONTAINS
   SUBROUTINE field_clamp_zero(field, ng, stagger_type, boundary)
 
     INTEGER, INTENT(IN) :: ng, stagger_type, boundary
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, nn
 
     IF (bc_field(boundary) == c_bc_periodic) RETURN
@@ -440,48 +640,72 @@ CONTAINS
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
         DO i = 1, ng-1
-          field(i-ng,:) = -field(ng-i,:)
+          field(i-ng,:,:) = -field(ng-i,:,:)
         END DO
-        field(0,:) = 0.0_num
+        field(0,:,:) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(i-ng,:) = -field(ng+1-i,:)
+          field(i-ng,:,:) = -field(ng+1-i,:,:)
         END DO
       END IF
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
       nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
-        field(nn,:) = 0.0_num
+        field(nn,:,:) = 0.0_num
         DO i = 1, ng-1
-          field(nn+i,:) = -field(nn-i,:)
+          field(nn+i,:,:) = -field(nn-i,:,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(nn+i,:) = -field(nn+1-i,:)
+          field(nn+i,:,:) = -field(nn+1-i,:,:)
         END DO
       END IF
 
     ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
         DO i = 1, ng-1
-          field(:,i-ng) = -field(:,ng-i)
+          field(:,i-ng,:) = -field(:,ng-i,:)
         END DO
-        field(:,0) = 0.0_num
+        field(:,0,:) = 0.0_num
       ELSE
         DO i = 1, ng
-          field(:,i-ng) = -field(:,ng+1-i)
+          field(:,i-ng,:) = -field(:,ng+1-i,:)
         END DO
       END IF
     ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
       nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
-        field(:,nn) = 0.0_num
+        field(:,nn,:) = 0.0_num
         DO i = 1, ng-1
-          field(:,nn+i) = -field(:,nn-i)
+          field(:,nn+i,:) = -field(:,nn-i,:)
         END DO
       ELSE
         DO i = 1, ng
-          field(:,nn+i) = -field(:,nn+1-i)
+          field(:,nn+i,:) = -field(:,nn+1-i,:)
+        END DO
+      END IF
+
+    ELSE IF (boundary == c_bd_z_min .AND. z_min_boundary) THEN
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        DO i = 1, ng-1
+          field(:,:,i-ng) = -field(:,:,ng-i)
+        END DO
+        field(:,:,0) = 0.0_num
+      ELSE
+        DO i = 1, ng
+          field(:,:,i-ng) = -field(:,:,ng+1-i)
+        END DO
+      END IF
+    ELSE IF (boundary == c_bd_z_max .AND. z_max_boundary) THEN
+      nn = nz
+      IF (stagger(c_dir_z,stagger_type)) THEN
+        field(:,:,nn) = 0.0_num
+        DO i = 1, ng-1
+          field(:,:,nn+i) = -field(:,:,nn-i)
+        END DO
+      ELSE
+        DO i = 1, ng
+          field(:,:,nn+i) = -field(:,:,nn+1-i)
         END DO
       END IF
     END IF
@@ -493,7 +717,7 @@ CONTAINS
   SUBROUTINE particle_reflection_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     INTEGER, INTENT(IN), OPTIONAL :: species
     INTEGER, DIMENSION(c_ndims) :: sizes
@@ -522,13 +746,13 @@ CONTAINS
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
-          array(i,:) = array(i,:) - array(-i,:)
-          array(-i,:) = 0.0_num
+          array(i,:,:) = array(i,:,:) - array(-i,:,:)
+          array(-i,:,:) = 0.0_num
         END DO
       ELSE
         DO i = 1, ng-1
-          array(i,:) = array(i,:) + array(1-i,:)
-          array(1-i,:) = 0.0_num
+          array(i,:,:) = array(i,:,:) + array(1-i,:,:)
+          array(1-i,:,:) = 0.0_num
         END DO
       END IF
     END IF
@@ -539,13 +763,13 @@ CONTAINS
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
-          array(nn-i,:) = array(nn-i,:) - array(nn+i,:)
-          array(nn+i,:) = 0.0_num
+          array(nn-i,:,:) = array(nn-i,:,:) - array(nn+i,:,:)
+          array(nn+i,:,:) = 0.0_num
         END DO
       ELSE
         DO i = 1, ng
-          array(nn+1-i,:) = array(nn+1-i,:) + array(nn+i,:)
-          array(nn+i,:) = 0.0_num
+          array(nn+1-i,:,:) = array(nn+1-i,:,:) + array(nn+i,:,:)
+          array(nn+i,:,:) = 0.0_num
         END DO
       END IF
     END IF
@@ -558,13 +782,13 @@ CONTAINS
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng-1
-          array(:,i) = array(:,i) - array(:,-i)
-          array(:,-i) = 0.0_num
+          array(:,i,:) = array(:,i,:) - array(:,-i,:)
+          array(:,-i,:) = 0.0_num
         END DO
       ELSE
         DO i = 1, ng-1
-          array(:,i) = array(:,i) + array(:,1-i)
-          array(:,1-i) = 0.0_num
+          array(:,i,:) = array(:,i,:) + array(:,1-i,:)
+          array(:,1-i,:) = 0.0_num
         END DO
       END IF
     END IF
@@ -575,13 +799,49 @@ CONTAINS
       IF (flip_dir == (n-1)/2 + 1) THEN
         ! Currents get reversed in the direction of the boundary
         DO i = 1, ng
-          array(:,nn-i) = array(:,nn-i) - array(:,nn+i)
-          array(:,nn+i) = 0.0_num
+          array(:,nn-i,:) = array(:,nn-i,:) - array(:,nn+i,:)
+          array(:,nn+i,:) = 0.0_num
         END DO
       ELSE
         DO i = 1, ng
-          array(:,nn+1-i) = array(:,nn+1-i) + array(:,nn+i)
-          array(:,nn+i) = 0.0_num
+          array(:,nn+1-i,:) = array(:,nn+1-i,:) + array(:,nn+i,:)
+          array(:,nn+i,:) = 0.0_num
+        END DO
+      END IF
+    END IF
+
+    nn = sizes(n/2+1) - 2 * ng
+
+    n = n + 1
+    bc = bc_species(n)
+    IF (z_min_boundary .AND. bc == c_bc_reflect) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng-1
+          array(:,:,i) = array(:,:,i) - array(:,:,-i)
+          array(:,:,-i) = 0.0_num
+        END DO
+      ELSE
+        DO i = 1, ng-1
+          array(:,:,i) = array(:,:,i) + array(:,:,1-i)
+          array(:,:,1-i) = 0.0_num
+        END DO
+      END IF
+    END IF
+
+    n = n + 1
+    bc = bc_species(n)
+    IF (z_max_boundary .AND. bc == c_bc_reflect) THEN
+      IF (flip_dir == (n-1)/2 + 1) THEN
+        ! Currents get reversed in the direction of the boundary
+        DO i = 1, ng
+          array(:,:,nn-i) = array(:,:,nn-i) - array(:,:,nn+i)
+          array(:,:,nn+i) = 0.0_num
+        END DO
+      ELSE
+        DO i = 1, ng
+          array(:,:,nn+1-i) = array(:,:,nn+1-i) + array(:,:,nn+i)
+          array(:,:,nn+i) = 0.0_num
         END DO
       END IF
     END IF
@@ -593,9 +853,9 @@ CONTAINS
   SUBROUTINE particle_periodic_bcs(array, ng, species)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: species
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: temp
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
     INTEGER :: n, nn, sz, subarray, i
     INTEGER, DIMENSION(-1:1) :: neighbour_local
@@ -621,13 +881,13 @@ CONTAINS
     subsizes(n/2+1) = ng
     nn = sizes(n/2+1) - 2 * ng
 
-    subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
+    subarray = create_3d_array_subtype(mpireal, subsizes, sizes, starts)
 
-    sz = subsizes(1) * subsizes(2)
-    ALLOCATE(temp(subsizes(1), subsizes(2)))
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+    ALLOCATE(temp(subsizes(1), subsizes(2), subsizes(3)))
 
     ! Don't bother communicating non-periodic boundaries
-    neighbour_local = neighbour(:,0)
+    neighbour_local = neighbour(:,0,0)
     n = n + 1
     IF (x_min_boundary) THEN
       IF (bc_species(n) /= c_bc_periodic) THEN
@@ -643,20 +903,20 @@ CONTAINS
     n = n - 2
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(nn+1,1-ng), 1, subarray, &
+    CALL MPI_SENDRECV(array(nn+1,1-ng,1-ng), 1, subarray, &
         neighbour_local( 1), tag, temp, sz, mpireal, &
         neighbour_local(-1), tag, comm, status, errcode)
 
     n = n + 1
-    array(1:ng,:) = array(1:ng,:) + temp
+    array(1:ng,:,:) = array(1:ng,:,:) + temp
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng,1-ng), 1, subarray, &
+    CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
         neighbour_local(-1), tag, temp, sz, mpireal, &
         neighbour_local( 1), tag, comm, status, errcode)
 
     n = n + 1
-    array(nn+1-ng:nn,:) = array(nn+1-ng:nn,:) + temp
+    array(nn+1-ng:nn,:,:) = array(nn+1-ng:nn,:,:) + temp
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -665,13 +925,13 @@ CONTAINS
     subsizes(n/2+1) = ng
     nn = sizes(n/2+1) - 2 * ng
 
-    subarray = create_2d_array_subtype(mpireal, subsizes, sizes, starts)
+    subarray = create_3d_array_subtype(mpireal, subsizes, sizes, starts)
 
-    sz = subsizes(1) * subsizes(2)
-    ALLOCATE(temp(subsizes(1), subsizes(2)))
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+    ALLOCATE(temp(subsizes(1), subsizes(2), subsizes(3)))
 
     ! Don't bother communicating non-periodic boundaries
-    neighbour_local = neighbour(0,:)
+    neighbour_local = neighbour(0,:,0)
     n = n + 1
     IF (y_min_boundary) THEN
       IF (bc_species(n) /= c_bc_periodic) THEN
@@ -687,20 +947,64 @@ CONTAINS
     n = n - 2
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng,nn+1), 1, subarray, &
+    CALL MPI_SENDRECV(array(1-ng,nn+1,1-ng), 1, subarray, &
         neighbour_local( 1), tag, temp, sz, mpireal, &
         neighbour_local(-1), tag, comm, status, errcode)
 
     n = n + 1
-    array(:,1:ng) = array(:,1:ng) + temp
+    array(:,1:ng,:) = array(:,1:ng,:) + temp
 
     temp = 0.0_num
-    CALL MPI_SENDRECV(array(1-ng,1-ng), 1, subarray, &
+    CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
         neighbour_local(-1), tag, temp, sz, mpireal, &
         neighbour_local( 1), tag, comm, status, errcode)
 
     n = n + 1
-    array(:,nn+1-ng:nn) = array(:,nn+1-ng:nn) + temp
+    array(:,nn+1-ng:nn,:) = array(:,nn+1-ng:nn,:) + temp
+
+    DEALLOCATE(temp)
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes = sizes
+    subsizes(n/2+1) = ng
+    nn = sizes(n/2+1) - 2 * ng
+
+    subarray = create_3d_array_subtype(mpireal, subsizes, sizes, starts)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+    ALLOCATE(temp(subsizes(1), subsizes(2), subsizes(3)))
+
+    ! Don't bother communicating non-periodic boundaries
+    neighbour_local = neighbour(0,0,:)
+    n = n + 1
+    IF (z_min_boundary) THEN
+      IF (bc_species(n) /= c_bc_periodic) THEN
+        neighbour_local(-1) = MPI_PROC_NULL
+      END IF
+    END IF
+    n = n + 1
+    IF (z_max_boundary) THEN
+      IF (bc_species(n) /= c_bc_periodic) THEN
+        neighbour_local( 1) = MPI_PROC_NULL
+      END IF
+    END IF
+    n = n - 2
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(1-ng,1-ng,nn+1), 1, subarray, &
+        neighbour_local( 1), tag, temp, sz, mpireal, &
+        neighbour_local(-1), tag, comm, status, errcode)
+
+    n = n + 1
+    array(:,:,1:ng) = array(:,:,1:ng) + temp
+
+    temp = 0.0_num
+    CALL MPI_SENDRECV(array(1-ng,1-ng,1-ng), 1, subarray, &
+        neighbour_local(-1), tag, temp, sz, mpireal, &
+        neighbour_local( 1), tag, comm, status, errcode)
+
+    n = n + 1
+    array(:,:,nn+1-ng:nn) = array(:,:,nn+1-ng:nn) + temp
 
     DEALLOCATE(temp)
     CALL MPI_TYPE_FREE(subarray, errcode)
@@ -714,7 +1018,7 @@ CONTAINS
   SUBROUTINE particle_clear_bcs(array, ng)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, DIMENSION(c_ndims) :: sizes
     INTEGER :: n, nn
 
@@ -724,16 +1028,23 @@ CONTAINS
     nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
-    array(:0,:) = 0.0_num
+    array(:0,:,:) = 0.0_num
     n = n + 1
-    array(nn+1:,:) = 0.0_num
+    array(nn+1:,:,:) = 0.0_num
 
     nn = sizes(n/2+1) - 2 * ng
 
     n = n + 1
-    array(:,:0) = 0.0_num
+    array(:,:0,:) = 0.0_num
     n = n + 1
-    array(:,nn+1:) = 0.0_num
+    array(:,nn+1:,:) = 0.0_num
+
+    nn = sizes(n/2+1) - 2 * ng
+
+    n = n + 1
+    array(:,:,:0) = 0.0_num
+    n = n + 1
+    array(:,:,nn+1:) = 0.0_num
 
   END SUBROUTINE particle_clear_bcs
 
@@ -742,7 +1053,7 @@ CONTAINS
   SUBROUTINE processor_summation_bcs(array, ng, flip_direction, species)
 
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: array
     INTEGER, INTENT(IN), OPTIONAL :: flip_direction
     INTEGER, INTENT(IN), OPTIONAL :: species
 
@@ -785,6 +1096,13 @@ CONTAINS
       IF (bc_field(i) == c_bc_conduct) THEN
         CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
         CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
+      END IF
+    END DO
+
+    DO i = c_bd_z_min, c_bd_z_max, c_bd_z_max - c_bd_z_min
+      IF (bc_field(i) == c_bc_conduct) THEN
+        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
+        CALL field_clamp_zero(ez, ng, c_stagger_ey, i)
       END IF
     END DO
 
@@ -838,6 +1156,14 @@ CONTAINS
         CALL field_clamp_zero(by, ng, c_stagger_by, i)
         CALL field_zero_gradient(bx, c_stagger_bx, i)
         CALL field_zero_gradient(bz, c_stagger_bz, i)
+      END IF
+    END DO
+
+    DO i = c_bd_z_min, c_bd_z_max, c_bd_z_max - c_bd_z_min
+      IF (bc_field(i) == c_bc_conduct) THEN
+        CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
+        CALL field_zero_gradient(bx, c_stagger_bx, i)
+        CALL field_zero_gradient(by, c_stagger_by, i)
       END IF
     END DO
 
@@ -896,6 +1222,18 @@ CONTAINS
           CALL outflow_bcs_y_max
     END IF
 
+    IF (z_min_boundary) THEN
+      i = c_bd_z_min
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
+          CALL outflow_bcs_z_min
+    END IF
+
+    IF (z_max_boundary) THEN
+      i = c_bd_z_max
+      IF (add_laser(i) .OR. bc_field(i) == c_bc_simple_outflow) &
+          CALL outflow_bcs_z_max
+    END IF
+
     CALL bfield_bcs(.TRUE.)
 
   END SUBROUTINE bfield_final_bcs
@@ -905,19 +1243,21 @@ CONTAINS
   SUBROUTINE particle_bcs
 
     TYPE(particle), POINTER :: cur, next
-    TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
-    INTEGER :: xbd, ybd
-    INTEGER(i8) :: ixp, iyp
+    TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
+    INTEGER :: xbd, ybd, zbd
+    INTEGER(i8) :: ixp, iyp, izp
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: out_of_bounds
-    INTEGER :: bc, ispecies, i, ix, iy
-    INTEGER :: cell_x, cell_y
-    REAL(num), DIMENSION(-1:1) :: gx, gy
+    INTEGER :: sgn, bc, ispecies, i, ix, iy, iz
+    INTEGER :: cell_x, cell_y, cell_z
+    REAL(num), DIMENSION(-1:1) :: gx, gy, gz
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
+    REAL(num) :: cell_z_r, cell_frac_z
     REAL(num) :: cf2, temp(3)
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
+    REAL(num) :: z_min_outer, z_max_outer
 
     boundary_shift = dx * REAL((1 + png) / 2, num)
 
@@ -927,16 +1267,21 @@ CONTAINS
     y_min_outer = y_min - boundary_shift
     y_max_outer = y_max + boundary_shift
 
+    z_min_outer = z_min - boundary_shift
+    z_max_outer = z_max + boundary_shift
+
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
 
       bc_species = species_list(ispecies)%bc_particle
 
-      DO iy = -1, 1
-        DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) == 0) CYCLE
-          CALL create_empty_partlist(send(ix, iy))
-          CALL create_empty_partlist(recv(ix, iy))
+      DO iz = -1, 1
+        DO iy = -1, 1
+          DO ix = -1, 1
+            IF (ABS(ix) + ABS(iy) + ABS(iz) == 0) CYCLE
+            CALL create_empty_partlist(send(ix, iy, iz))
+            CALL create_empty_partlist(recv(ix, iy, iz))
+          END DO
         END DO
       END DO
 
@@ -945,9 +1290,11 @@ CONTAINS
 
         xbd = 0
         ybd = 0
+        zbd = 0
         out_of_bounds = .FALSE.
 
         part_pos = cur%part_pos(1)
+        sgn = -1
         IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
           IF (x_min_boundary) THEN
@@ -958,12 +1305,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < x_min_local) xbd = -1
+            IF (part_pos < x_min_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
-            xbd = -1
+            xbd = sgn
             ! Particle has left the system
             IF (x_min_boundary) THEN
               xbd = 0
@@ -972,8 +1319,8 @@ CONTAINS
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = -1
-                cur%part_pos(1) = part_pos + length_x
+                xbd = sgn
+                cur%part_pos(1) = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos < x_min_outer) THEN
@@ -984,22 +1331,37 @@ CONTAINS
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
 
+                cell_z_r = (cur%part_pos(3) - z_grid_min_local) / dz
+                cell_z = FLOOR(cell_z_r + 0.5_num)
+                cell_frac_z = REAL(cell_z, num) - cell_z_r
+                cell_z = cell_z + 1
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
 
+                cf2 = cell_frac_z**2
+                gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
+                gz( 0) = 0.75_num - cf2
+                gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
-                  DO iy = -1, 1
-                    temp(i) = temp(i) + gy(iy) &
-                        * species_list(ispecies)%ext_temp_x_min(cell_y+iy, i)
+                  DO iz = -1, 1
+                    DO iy = -1, 1
+                      temp(i) = temp(i) + gy(iy) * gz(iz) &
+                          * species_list(ispecies)&
+                          %ext_temp_x_min(cell_y+iy, cell_z+iz, i)
+                    END DO
                   END DO
                 END DO
 
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -1022,6 +1384,7 @@ CONTAINS
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
           IF (x_max_boundary) THEN
@@ -1032,12 +1395,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= x_max_local) xbd = 1
+            IF (part_pos >= x_max_local) xbd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
-            xbd = 1
+            xbd = sgn
             ! Particle has left the system
             IF (x_max_boundary) THEN
               xbd = 0
@@ -1046,8 +1409,8 @@ CONTAINS
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
-                xbd = 1
-                cur%part_pos(1) = part_pos - length_x
+                xbd = sgn
+                cur%part_pos(1) = part_pos - sgn * length_x
               END IF
             END IF
             IF (part_pos >= x_max_outer) THEN
@@ -1058,22 +1421,37 @@ CONTAINS
                 cell_frac_y = REAL(cell_y, num) - cell_y_r
                 cell_y = cell_y + 1
 
+                cell_z_r = (cur%part_pos(3) - z_grid_min_local) / dz
+                cell_z = FLOOR(cell_z_r + 0.5_num)
+                cell_frac_z = REAL(cell_z, num) - cell_z_r
+                cell_z = cell_z + 1
+
                 cf2 = cell_frac_y**2
                 gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
                 gy( 0) = 0.75_num - cf2
                 gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
 
+                cf2 = cell_frac_z**2
+                gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
+                gz( 0) = 0.75_num - cf2
+                gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
-                  DO iy = -1, 1
-                    temp(i) = temp(i) + gy(iy) &
-                        * species_list(ispecies)%ext_temp_x_max(cell_y+iy, i)
+                  DO iz = -1, 1
+                    DO iy = -1, 1
+                      temp(i) = temp(i) + gy(iy) * gz(iz) &
+                          * species_list(ispecies)&
+                          %ext_temp_x_max(cell_y+iy, cell_z+iz, i)
+                    END DO
                   END DO
                 END DO
 
+                CALL id_registry%delete_all(cur)
+
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! y-direction
@@ -1097,6 +1475,7 @@ CONTAINS
         END IF
 
         part_pos = cur%part_pos(2)
+        sgn = -1
         IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
           IF (y_min_boundary) THEN
@@ -1107,12 +1486,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos < y_min_local) ybd = -1
+            IF (part_pos < y_min_local) ybd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos < y_min_local) THEN
-            ybd = -1
+            ybd = sgn
             ! Particle has left the system
             IF (y_min_boundary) THEN
               ybd = 0
@@ -1121,8 +1500,8 @@ CONTAINS
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
-                ybd = -1
-                cur%part_pos(2) = part_pos + length_y
+                ybd = sgn
+                cur%part_pos(2) = part_pos - sgn * length_y
               END IF
             END IF
             IF (part_pos < y_min_outer) THEN
@@ -1133,18 +1512,33 @@ CONTAINS
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
 
+                cell_z_r = (cur%part_pos(3) - z_grid_min_local) / dz
+                cell_z = FLOOR(cell_z_r + 0.5_num)
+                cell_frac_z = REAL(cell_z, num) - cell_z_r
+                cell_z = cell_z + 1
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
 
+                cf2 = cell_frac_z**2
+                gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
+                gz( 0) = 0.75_num - cf2
+                gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
-                  DO ix = -1, 1
-                    temp(i) = temp(i) + gx(ix) &
-                        * species_list(ispecies)%ext_temp_y_min(cell_x+ix, i)
+                  DO iz = -1, 1
+                    DO ix = -1, 1
+                      temp(i) = temp(i) + gx(ix) * gz(iz) &
+                          * species_list(ispecies)&
+                          %ext_temp_y_min(cell_x+ix, cell_z+iz, i)
+                    END DO
                   END DO
                 END DO
+
+                CALL id_registry%delete_all(cur)
 
                 ! x-direction
                 i = 1
@@ -1153,7 +1547,7 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! z-direction
@@ -1171,6 +1565,7 @@ CONTAINS
           END IF
         END IF
 
+        sgn = 1
         IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
             .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
           IF (y_max_boundary) THEN
@@ -1181,12 +1576,12 @@ CONTAINS
             END IF
           ELSE
             ! Particle has left this processor
-            IF (part_pos >= y_max_local) ybd = 1
+            IF (part_pos >= y_max_local) ybd = sgn
           END IF
         ELSE
           ! Particle has left this processor
           IF (part_pos >= y_max_local) THEN
-            ybd = 1
+            ybd = sgn
             ! Particle has left the system
             IF (y_max_boundary) THEN
               ybd = 0
@@ -1195,8 +1590,8 @@ CONTAINS
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
-                ybd = 1
-                cur%part_pos(2) = part_pos - length_y
+                ybd = sgn
+                cur%part_pos(2) = part_pos - sgn * length_y
               END IF
             END IF
             IF (part_pos >= y_max_outer) THEN
@@ -1207,18 +1602,33 @@ CONTAINS
                 cell_frac_x = REAL(cell_x, num) - cell_x_r
                 cell_x = cell_x + 1
 
+                cell_z_r = (cur%part_pos(3) - z_grid_min_local) / dz
+                cell_z = FLOOR(cell_z_r + 0.5_num)
+                cell_frac_z = REAL(cell_z, num) - cell_z_r
+                cell_z = cell_z + 1
+
                 cf2 = cell_frac_x**2
                 gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
                 gx( 0) = 0.75_num - cf2
                 gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
 
+                cf2 = cell_frac_z**2
+                gz(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_z)
+                gz( 0) = 0.75_num - cf2
+                gz( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_z)
+
                 DO i = 1, 3
                   temp(i) = 0.0_num
-                  DO ix = -1, 1
-                    temp(i) = temp(i) + gx(ix) &
-                        * species_list(ispecies)%ext_temp_y_max(cell_x+ix, i)
+                  DO iz = -1, 1
+                    DO ix = -1, 1
+                      temp(i) = temp(i) + gx(ix) * gz(iz) &
+                          * species_list(ispecies)&
+                          %ext_temp_y_max(cell_x+ix, cell_z+iz, i)
+                    END DO
                   END DO
                 END DO
+
+                CALL id_registry%delete_all(cur)
 
                 ! x-direction
                 i = 1
@@ -1227,7 +1637,7 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = -flux_momentum_from_temperature(&
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
                     species_list(ispecies)%mass, temp(i), 0.0_num)
 
                 ! z-direction
@@ -1245,6 +1655,187 @@ CONTAINS
           END IF
         END IF
 
+        part_pos = cur%part_pos(3)
+        sgn = -1
+        IF (bc_field(c_bd_z_min) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+          IF (z_min_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos < z_min_outer) THEN
+              zbd = 0
+              out_of_bounds = .TRUE.
+            END IF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos < z_min_local) zbd = sgn
+          END IF
+        ELSE
+          ! Particle has left this processor
+          IF (part_pos < z_min_local) THEN
+            zbd = sgn
+            ! Particle has left the system
+            IF (z_min_boundary) THEN
+              zbd = 0
+              bc = bc_species(c_bd_z_min)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(3) = 2.0_num * z_min - part_pos
+                cur%part_p(3) = -cur%part_p(3)
+              ELSE IF (bc == c_bc_periodic) THEN
+                zbd = sgn
+                cur%part_pos(3) = part_pos - sgn * length_z
+              END IF
+            END IF
+            IF (part_pos < z_min_outer) THEN
+              IF (bc == c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
+                cell_x = FLOOR(cell_x_r + 0.5_num)
+                cell_frac_x = REAL(cell_x, num) - cell_x_r
+                cell_x = cell_x + 1
+
+                cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
+                cell_y = FLOOR(cell_y_r + 0.5_num)
+                cell_frac_y = REAL(cell_y, num) - cell_y_r
+                cell_y = cell_y + 1
+
+                cf2 = cell_frac_x**2
+                gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
+                gx( 0) = 0.75_num - cf2
+                gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
+
+                cf2 = cell_frac_y**2
+                gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
+                gy( 0) = 0.75_num - cf2
+                gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
+
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO iy = -1, 1
+                    DO ix = -1, 1
+                      temp(i) = temp(i) + gx(ix) * gy(iy) &
+                          * species_list(ispecies)&
+                          %ext_temp_z_min(cell_x+ix, cell_y+iy, i)
+                    END DO
+                  END DO
+                END DO
+
+                CALL id_registry%delete_all(cur)
+
+                ! x-direction
+                i = 1
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                ! z-direction
+                i = 3
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                cur%part_pos(3) = 2.0_num * z_min_outer - part_pos
+
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              END IF
+            END IF
+          END IF
+        END IF
+
+        sgn = 1
+        IF (bc_field(c_bd_z_max) == c_bc_cpml_laser &
+            .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+          IF (z_max_boundary) THEN
+            ! Particle has left the system
+            IF (part_pos >= z_max_outer) THEN
+              zbd = 0
+              out_of_bounds = .TRUE.
+            END IF
+          ELSE
+            ! Particle has left this processor
+            IF (part_pos >= z_max_local) zbd = sgn
+          END IF
+        ELSE
+          ! Particle has left this processor
+          IF (part_pos >= z_max_local) THEN
+            zbd = sgn
+            ! Particle has left the system
+            IF (z_max_boundary) THEN
+              zbd = 0
+              bc = bc_species(c_bd_z_max)
+              IF (bc == c_bc_reflect) THEN
+                cur%part_pos(3) = 2.0_num * z_max - part_pos
+                cur%part_p(3) = -cur%part_p(3)
+              ELSE IF (bc == c_bc_periodic) THEN
+                zbd = sgn
+                cur%part_pos(3) = part_pos - sgn * length_z
+              END IF
+            END IF
+            IF (part_pos >= z_max_outer) THEN
+              IF (bc == c_bc_thermal) THEN
+                ! Always use the triangle particle weighting for simplicity
+                cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
+                cell_x = FLOOR(cell_x_r + 0.5_num)
+                cell_frac_x = REAL(cell_x, num) - cell_x_r
+                cell_x = cell_x + 1
+
+                cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
+                cell_y = FLOOR(cell_y_r + 0.5_num)
+                cell_frac_y = REAL(cell_y, num) - cell_y_r
+                cell_y = cell_y + 1
+
+                cf2 = cell_frac_x**2
+                gx(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_x)
+                gx( 0) = 0.75_num - cf2
+                gx( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_x)
+
+                cf2 = cell_frac_y**2
+                gy(-1) = 0.5_num * (0.25_num + cf2 + cell_frac_y)
+                gy( 0) = 0.75_num - cf2
+                gy( 1) = 0.5_num * (0.25_num + cf2 - cell_frac_y)
+
+                DO i = 1, 3
+                  temp(i) = 0.0_num
+                  DO iy = -1, 1
+                    DO ix = -1, 1
+                      temp(i) = temp(i) + gx(ix) * gy(iy) &
+                          * species_list(ispecies)&
+                          %ext_temp_z_max(cell_x+ix, cell_y+iy, i)
+                    END DO
+                  END DO
+                END DO
+
+                CALL id_registry%delete_all(cur)
+
+                ! x-direction
+                i = 1
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                ! y-direction
+                i = 2
+                cur%part_p(i) = momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                ! z-direction
+                i = 3
+                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num)
+
+                cur%part_pos(3) = 2.0_num * z_max_outer - part_pos
+
+              ELSE
+                ! Default to open boundary conditions - remove particle
+                out_of_bounds = .TRUE.
+              END IF
+            END IF
+          END IF
+        END IF
+
         IF (out_of_bounds) THEN
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
@@ -1253,13 +1844,13 @@ CONTAINS
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
           ELSE
-            DEALLOCATE(cur)
+            CALL destroy_particle(cur)
           END IF
-        ELSE IF (ABS(xbd) + ABS(ybd) > 0) THEN
+        ELSE IF (ABS(xbd) + ABS(ybd) + ABS(zbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour
           CALL remove_particle_from_partlist(&
               species_list(ispecies)%attached_list, cur)
-          CALL add_particle_to_partlist(send(xbd, ybd), cur)
+          CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
         END IF
 
         ! Move to next particle
@@ -1267,23 +1858,28 @@ CONTAINS
       END DO
 
       ! swap Particles
-      DO iy = -1, 1
-        DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) == 0) CYCLE
-          ixp = -ix
-          iyp = -iy
-          CALL partlist_sendrecv(send(ix, iy), recv(ixp, iyp), &
-              neighbour(ix, iy), neighbour(ixp, iyp))
-          CALL append_partlist(species_list(ispecies)%attached_list, &
-              recv(ixp, iyp))
+      DO iz = -1, 1
+        DO iy = -1, 1
+          DO ix = -1, 1
+            IF (ABS(ix) + ABS(iy) + ABS(iz) == 0) CYCLE
+            ixp = -ix
+            iyp = -iy
+            izp = -iz
+            CALL partlist_sendrecv(send(ix, iy, iz), recv(ixp, iyp, izp), &
+                neighbour(ix, iy, iz), neighbour(ixp, iyp, izp))
+            CALL append_partlist(species_list(ispecies)%attached_list, &
+                recv(ixp, iyp, izp))
+          END DO
         END DO
       END DO
 
-      DO iy = -1, 1
-        DO ix = -1, 1
-          IF (ABS(ix) + ABS(iy) == 0) CYCLE
-          CALL destroy_partlist(send(ix, iy))
-          CALL destroy_partlist(recv(ix, iy))
+      DO iz = -1, 1
+        DO iy = -1, 1
+          DO ix = -1, 1
+            IF (ABS(ix) + ABS(iy) + ABS(iz) == 0) CYCLE
+            CALL destroy_partlist(send(ix, iy, iz))
+            CALL destroy_partlist(recv(ix, iy, iz))
+          END DO
         END DO
       END DO
 
@@ -1307,17 +1903,20 @@ CONTAINS
 
 
   SUBROUTINE set_cpml_helpers(nx, nx_global_min, nx_global_max, &
-      ny, ny_global_min, ny_global_max)
+      ny, ny_global_min, ny_global_max, nz, nz_global_min, nz_global_max)
 
     INTEGER, INTENT(IN) :: nx, nx_global_min, nx_global_max
     INTEGER, INTENT(IN) :: ny, ny_global_min, ny_global_max
+    INTEGER, INTENT(IN) :: nz, nz_global_min, nz_global_max
     INTEGER :: i
     INTEGER :: ix, ix_glob
     INTEGER :: iy, iy_glob
+    INTEGER :: iz, iz_glob
     INTEGER, PARAMETER :: cpml_m = 3
     INTEGER, PARAMETER :: cpml_ma = 1
     REAL(num) :: x_pos, x_pos_m, x_pos_ma
     REAL(num) :: y_pos, y_pos_m, y_pos_ma
+    REAL(num) :: z_pos, z_pos_m, z_pos_ma
     REAL(num) :: cpml_sigma_maxval
 
     ALLOCATE(cpml_kappa_ex(1-ng:nx+ng), cpml_kappa_bx(1-ng:nx+ng))
@@ -1327,6 +1926,10 @@ CONTAINS
     ALLOCATE(cpml_kappa_ey(1-ng:ny+ng), cpml_kappa_by(1-ng:ny+ng))
     ALLOCATE(cpml_a_ey(1-ng:ny+ng), cpml_a_by(1-ng:ny+ng))
     ALLOCATE(cpml_sigma_ey(1-ng:ny+ng), cpml_sigma_by(1-ng:ny+ng))
+
+    ALLOCATE(cpml_kappa_ez(1-ng:nz+ng), cpml_kappa_bz(1-ng:nz+ng))
+    ALLOCATE(cpml_a_ez(1-ng:nz+ng), cpml_a_bz(1-ng:nz+ng))
+    ALLOCATE(cpml_sigma_ez(1-ng:nz+ng), cpml_sigma_bz(1-ng:nz+ng))
 
     cpml_kappa_ex = 1.0_num
     cpml_kappa_bx = 1.0_num
@@ -1343,6 +1946,14 @@ CONTAINS
     cpml_sigma_ey = 0.0_num
     cpml_a_by = 0.0_num
     cpml_sigma_by = 0.0_num
+
+    cpml_kappa_ez = 1.0_num
+    cpml_kappa_bz = 1.0_num
+
+    cpml_a_ez = 0.0_num
+    cpml_sigma_ez = 0.0_num
+    cpml_a_bz = 0.0_num
+    cpml_sigma_bz = 0.0_num
 
     cpml_sigma_maxval = cpml_sigma_max * c * 0.8_num * (cpml_m + 1.0_num) / dx
 
@@ -1594,10 +2205,136 @@ CONTAINS
       END IF
     END IF
 
+    ! ============= z_min boundary =============
+
+    i = c_bd_z_min
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
+      cpml_z_min_start = nz+1
+      cpml_z_min_end = 0
+      cpml_z_min_offset = 0
+
+      IF (nz_global_min <= cpml_thickness) THEN
+        cpml_z_min = .TRUE.
+        cpml_z_min_start = 1 ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nz_global_max >= cpml_thickness) THEN
+          ! in local grid coordinates
+          ! global -> local: izl = izg - nz_global_min + 1
+          cpml_z_min_end = cpml_thickness - nz_global_min + 1
+          cpml_z_min_offset = cpml_thickness - nz_global_min + 1
+        ELSE
+          cpml_z_min_end = nz ! in local grid coordinates
+          cpml_z_min_offset = cpml_thickness
+        END IF
+
+        DO iz = cpml_z_min_start,cpml_z_min_end
+          ! runs from 1 to cpml_thickness in global coordinates
+          ! local -> global: izg = izl + nz_global_min - 1
+          iz_glob = iz + nz_global_min - 1
+
+          ! runs from 1.0 to nearly 0.0 (actually 0.0 at cpml_thickness+1)
+          z_pos = 1.0_num - REAL(iz_glob-1,num) / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_maxval * z_pos_m
+          cpml_a_ez(iz) = cpml_a_max * z_pos_ma
+
+          ! runs from nearly 1.0 to nearly 0.0 on the half intervals
+          ! 1.0 at iz_glob=1-1/2 and 0.0 at iz_glob=cpml_thickness+1/2
+          z_pos = 1.0_num - (REAL(iz_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_bz(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_bz(iz) = cpml_sigma_maxval * z_pos_m
+          cpml_a_bz(iz) = cpml_a_max * z_pos_ma
+        END DO
+      END IF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nz_global_min <= cpml_thickness + fng + 1 &
+          .AND. nz_global_max >= cpml_thickness + fng + 1) THEN
+        add_laser(i) = .TRUE.
+        cpml_z_min_laser_idx = cpml_thickness + fng + 1 - nz_global_min
+      END IF
+    END IF
+
+    ! ============= z_max boundary =============
+
+    i = c_bd_z_max
+    ! Same as z_min using the transformation iz -> nz_global - iz + 1
+    IF (bc_field(i) == c_bc_cpml_laser &
+        .OR. bc_field(i) == c_bc_cpml_outflow) THEN
+      cpml_z_max_start = nz+1
+      cpml_z_max_end = 0
+      cpml_z_max_offset = 0
+
+      IF (nz_global_max >= nz_global - cpml_thickness + 1) THEN
+        cpml_z_max = .TRUE.
+        cpml_z_max_end = nz ! in local grid coordinates
+
+        ! The following distinction is necessary because, in principle, it is
+        ! possible for the local domain to lie completely within the boundary
+        ! layer.
+        IF (nz_global_min <= nz_global - cpml_thickness + 1) THEN
+          ! in local grid coordinates
+          ! global -> local: izl = izg - nz_global_min + 1
+          cpml_z_max_start = nz_global - cpml_thickness + 1 - nz_global_min + 1
+          cpml_z_max_offset = cpml_thickness - nz_global + nz_global_max
+        ELSE
+          cpml_z_max_start = 1 ! in local grid coordinates
+          cpml_z_max_offset = cpml_thickness
+        END IF
+
+        DO iz = cpml_z_max_start,cpml_z_max_end
+          ! runs from cpml_thickness to 1 in global coordinates
+          ! local -> global: izg = izl + nz_global_min - 1
+          iz_glob = nz_global - (iz + nz_global_min - 1) + 1
+
+          ! runs from nearly 0.0 (actually 0.0 at cpml_thickness+1) to 1.0
+          z_pos = 1.0_num - REAL(iz_glob-1,num) / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_ez(iz) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_ez(iz) = cpml_sigma_maxval * z_pos_m
+          cpml_a_ez(iz) = cpml_a_max * z_pos_ma
+
+          ! runs from nearly 0.0 to nearly 1.0 on the half intervals
+          ! 0.0 at iz_glob=cpml_thickness+1/2 and 1.0 at iz_glob=1-1/2
+          z_pos = 1.0_num - (REAL(iz_glob,num) - 0.5_num) &
+              / REAL(cpml_thickness,num)
+          z_pos_m = z_pos**cpml_m
+          z_pos_ma = (1.0_num - z_pos)**cpml_ma
+
+          cpml_kappa_bz(iz-1) = 1.0_num + (cpml_kappa_max - 1.0_num) * z_pos_m
+          cpml_sigma_bz(iz-1) = cpml_sigma_maxval * z_pos_m
+          cpml_a_bz(iz-1) = cpml_a_max * z_pos_ma
+        END DO
+      END IF
+
+      ! Ghost cells start at the edge of the CPML boundary
+      IF (nz_global_min <= nz_global - cpml_thickness - fng + 2 &
+          .AND. nz_global_max >= nz_global - cpml_thickness - fng + 2) THEN
+        add_laser(i) = .TRUE.
+        cpml_z_max_laser_idx = &
+            nz_global - cpml_thickness - fng + 2 - nz_global_min
+      END IF
+    END IF
+
     x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
     y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
     y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
+    z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
+    z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
 
   END SUBROUTINE set_cpml_helpers
 
@@ -1607,15 +2344,20 @@ CONTAINS
 
     ! I will ignore memory consumption issues and, for simplicity,
     ! allocate the boundary fields throughout the whole simulation box.
-    ALLOCATE(cpml_psi_eyx(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_ezx(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_byx(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_bzx(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_eyx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_ezx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_byx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_bzx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
-    ALLOCATE(cpml_psi_exy(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_ezy(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_bxy(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(cpml_psi_bzy(1-ng:nx+ng,1-ng:ny+ng))
+    ALLOCATE(cpml_psi_exy(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_ezy(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_bxy(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_bzy(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+
+    ALLOCATE(cpml_psi_exz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_eyz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_bxz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+    ALLOCATE(cpml_psi_byz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
     cpml_psi_eyx = 0.0_num
     cpml_psi_ezx = 0.0_num
@@ -1626,6 +2368,11 @@ CONTAINS
     cpml_psi_ezy = 0.0_num
     cpml_psi_bxy = 0.0_num
     cpml_psi_bzy = 0.0_num
+
+    cpml_psi_exz = 0.0_num
+    cpml_psi_eyz = 0.0_num
+    cpml_psi_bxz = 0.0_num
+    cpml_psi_byz = 0.0_num
 
   END SUBROUTINE allocate_cpml_fields
 
@@ -1641,6 +2388,10 @@ CONTAINS
     DEALLOCATE(cpml_a_ey, cpml_a_by)
     DEALLOCATE(cpml_sigma_ey, cpml_sigma_by)
 
+    DEALLOCATE(cpml_kappa_ez, cpml_kappa_bz)
+    DEALLOCATE(cpml_a_ez, cpml_a_bz)
+    DEALLOCATE(cpml_sigma_ez, cpml_sigma_bz)
+
   END SUBROUTINE deallocate_cpml_helpers
 
 
@@ -1648,7 +2399,7 @@ CONTAINS
   SUBROUTINE cpml_advance_e_currents(tstep)
 
     REAL(num), INTENT(IN) :: tstep
-    INTEGER :: ipos, ix, iy
+    INTEGER :: ipos, ix, iy, iz
     REAL(num) :: acoeff, bcoeff, ccoeff_d, fac
     REAL(num) :: kappa, sigma
 
@@ -1658,22 +2409,24 @@ CONTAINS
 
     IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
-      DO iy = 1,ny
-        DO ipos = cpml_x_min_start,cpml_x_min_end
-          kappa = cpml_kappa_ex(ipos)
-          sigma = cpml_sigma_ex(ipos)
-          acoeff = cpml_a_ex(ipos)
-          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-              / (sigma + kappa * acoeff) / dx
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_min_start,cpml_x_min_end
+            kappa = cpml_kappa_ex(ipos)
+            sigma = cpml_sigma_ex(ipos)
+            acoeff = cpml_a_ex(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
 
-          cpml_psi_eyx(ipos,iy) = bcoeff * cpml_psi_eyx(ipos,iy) &
-              + ccoeff_d * (bz(ipos,iy) - bz(ipos-1,iy))
-          ey(ipos,iy) = ey(ipos,iy) - fac * cpml_psi_eyx(ipos,iy)
+            cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
+                + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            ey(ipos,iy,iz) = ey(ipos,iy,iz) - fac * cpml_psi_eyx(ipos,iy,iz)
 
-          cpml_psi_ezx(ipos,iy) = bcoeff * cpml_psi_ezx(ipos,iy) &
-              + ccoeff_d * (by(ipos,iy) - by(ipos-1,iy))
-          ez(ipos,iy) = ez(ipos,iy) + fac * cpml_psi_ezx(ipos,iy)
+            cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
+                + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+            ez(ipos,iy,iz) = ez(ipos,iy,iz) + fac * cpml_psi_ezx(ipos,iy,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1682,22 +2435,24 @@ CONTAINS
 
     IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
-      DO iy = 1,ny
-        DO ipos = cpml_x_max_start,cpml_x_max_end
-          kappa = cpml_kappa_ex(ipos)
-          sigma = cpml_sigma_ex(ipos)
-          acoeff = cpml_a_ex(ipos)
-          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-              / (sigma + kappa * acoeff) / dx
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_max_start,cpml_x_max_end
+            kappa = cpml_kappa_ex(ipos)
+            sigma = cpml_sigma_ex(ipos)
+            acoeff = cpml_a_ex(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
 
-          cpml_psi_eyx(ipos,iy) = bcoeff * cpml_psi_eyx(ipos,iy) &
-              + ccoeff_d * (bz(ipos,iy) - bz(ipos-1,iy))
-          ey(ipos,iy) = ey(ipos,iy) - fac * cpml_psi_eyx(ipos,iy)
+            cpml_psi_eyx(ipos,iy,iz) = bcoeff * cpml_psi_eyx(ipos,iy,iz) &
+                + ccoeff_d * (bz(ipos,iy,iz) - bz(ipos-1,iy,iz))
+            ey(ipos,iy,iz) = ey(ipos,iy,iz) - fac * cpml_psi_eyx(ipos,iy,iz)
 
-          cpml_psi_ezx(ipos,iy) = bcoeff * cpml_psi_ezx(ipos,iy) &
-              + ccoeff_d * (by(ipos,iy) - by(ipos-1,iy))
-          ez(ipos,iy) = ez(ipos,iy) + fac * cpml_psi_ezx(ipos,iy)
+            cpml_psi_ezx(ipos,iy,iz) = bcoeff * cpml_psi_ezx(ipos,iy,iz) &
+                + ccoeff_d * (by(ipos,iy,iz) - by(ipos-1,iy,iz))
+            ez(ipos,iy,iz) = ez(ipos,iy,iz) + fac * cpml_psi_ezx(ipos,iy,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1706,22 +2461,24 @@ CONTAINS
 
     IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
-      DO ipos = cpml_y_min_start,cpml_y_min_end
-        kappa = cpml_kappa_ey(ipos)
-        sigma = cpml_sigma_ey(ipos)
-        acoeff = cpml_a_ey(ipos)
-        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-            / (sigma + kappa * acoeff) / dy
+      DO iz = 1,nz
+        DO ipos = cpml_y_min_start,cpml_y_min_end
+          kappa = cpml_kappa_ey(ipos)
+          sigma = cpml_sigma_ey(ipos)
+          acoeff = cpml_a_ey(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
 
-        DO ix = 1,nx
-          cpml_psi_exy(ix,ipos) = bcoeff * cpml_psi_exy(ix,ipos) &
-              + ccoeff_d * (bz(ix,ipos) - bz(ix,ipos-1))
-          ex(ix,ipos) = ex(ix,ipos) + fac * cpml_psi_exy(ix,ipos)
+          DO ix = 1,nx
+            cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
+                + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            ex(ix,ipos,iz) = ex(ix,ipos,iz) + fac * cpml_psi_exy(ix,ipos,iz)
 
-          cpml_psi_ezy(ix,ipos) = bcoeff * cpml_psi_ezy(ix,ipos) &
-              + ccoeff_d * (bx(ix,ipos) - bx(ix,ipos-1))
-          ez(ix,ipos) = ez(ix,ipos) - fac * cpml_psi_ezy(ix,ipos)
+            cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
+                + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+            ez(ix,ipos,iz) = ez(ix,ipos,iz) - fac * cpml_psi_ezy(ix,ipos,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1730,22 +2487,76 @@ CONTAINS
 
     IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
-      DO ipos = cpml_y_max_start,cpml_y_max_end
-        kappa = cpml_kappa_ey(ipos)
-        sigma = cpml_sigma_ey(ipos)
-        acoeff = cpml_a_ey(ipos)
+      DO iz = 1,nz
+        DO ipos = cpml_y_max_start,cpml_y_max_end
+          kappa = cpml_kappa_ey(ipos)
+          sigma = cpml_sigma_ey(ipos)
+          acoeff = cpml_a_ey(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_psi_exy(ix,ipos,iz) = bcoeff * cpml_psi_exy(ix,ipos,iz) &
+                + ccoeff_d * (bz(ix,ipos,iz) - bz(ix,ipos-1,iz))
+            ex(ix,ipos,iz) = ex(ix,ipos,iz) + fac * cpml_psi_exy(ix,ipos,iz)
+
+            cpml_psi_ezy(ix,ipos,iz) = bcoeff * cpml_psi_ezy(ix,ipos,iz) &
+                + ccoeff_d * (bx(ix,ipos,iz) - bx(ix,ipos-1,iz))
+            ez(ix,ipos,iz) = ez(ix,ipos,iz) - fac * cpml_psi_ezy(ix,ipos,iz)
+          END DO
+        END DO
+      END DO
+    END IF
+
+    ! ============= z_min boundary =============
+
+    IF (bc_field(c_bd_z_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_min_start,cpml_z_min_end
+        kappa = cpml_kappa_ez(ipos)
+        sigma = cpml_sigma_ez(ipos)
+        acoeff = cpml_a_ez(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-            / (sigma + kappa * acoeff) / dy
+            / (sigma + kappa * acoeff) / dz
 
-        DO ix = 1,nx
-          cpml_psi_exy(ix,ipos) = bcoeff * cpml_psi_exy(ix,ipos) &
-              + ccoeff_d * (bz(ix,ipos) - bz(ix,ipos-1))
-          ex(ix,ipos) = ex(ix,ipos) + fac * cpml_psi_exy(ix,ipos)
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
+                + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            ex(ix,iy,ipos) = ex(ix,iy,ipos) - fac * cpml_psi_exz(ix,iy,ipos)
 
-          cpml_psi_ezy(ix,ipos) = bcoeff * cpml_psi_ezy(ix,ipos) &
-              + ccoeff_d * (bx(ix,ipos) - bx(ix,ipos-1))
-          ez(ix,ipos) = ez(ix,ipos) - fac * cpml_psi_ezy(ix,ipos)
+            cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
+                + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+            ey(ix,iy,ipos) = ey(ix,iy,ipos) + fac * cpml_psi_eyz(ix,iy,ipos)
+          END DO
+        END DO
+      END DO
+    END IF
+
+    ! ============= z_max boundary =============
+
+    IF (bc_field(c_bd_z_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_max_start,cpml_z_max_end
+        kappa = cpml_kappa_ez(ipos)
+        sigma = cpml_sigma_ez(ipos)
+        acoeff = cpml_a_ez(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_psi_exz(ix,iy,ipos) = bcoeff * cpml_psi_exz(ix,iy,ipos) &
+                + ccoeff_d * (by(ix,iy,ipos) - by(ix,iy,ipos-1))
+            ex(ix,iy,ipos) = ex(ix,iy,ipos) - fac * cpml_psi_exz(ix,iy,ipos)
+
+            cpml_psi_eyz(ix,iy,ipos) = bcoeff * cpml_psi_eyz(ix,iy,ipos) &
+                + ccoeff_d * (bx(ix,iy,ipos) - bx(ix,iy,ipos-1))
+            ey(ix,iy,ipos) = ey(ix,iy,ipos) + fac * cpml_psi_eyz(ix,iy,ipos)
+          END DO
         END DO
       END DO
     END IF
@@ -1757,7 +2568,7 @@ CONTAINS
   SUBROUTINE cpml_advance_b_currents(tstep)
 
     REAL(num), INTENT(IN) :: tstep
-    INTEGER :: ipos, ix, iy
+    INTEGER :: ipos, ix, iy, iz
     REAL(num) :: acoeff, bcoeff, ccoeff_d
     REAL(num) :: kappa, sigma
 
@@ -1765,22 +2576,24 @@ CONTAINS
 
     IF (bc_field(c_bd_x_min) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
-      DO iy = 1,ny
-        DO ipos = cpml_x_min_start,cpml_x_min_end
-          kappa = cpml_kappa_bx(ipos)
-          sigma = cpml_sigma_bx(ipos)
-          acoeff = cpml_a_bx(ipos)
-          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-              / (sigma + kappa * acoeff) / dx
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_min_start,cpml_x_min_end
+            kappa = cpml_kappa_bx(ipos)
+            sigma = cpml_sigma_bx(ipos)
+            acoeff = cpml_a_bx(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
 
-          cpml_psi_byx(ipos,iy) = bcoeff * cpml_psi_byx(ipos,iy) &
-              + ccoeff_d * (ez(ipos+1,iy) - ez(ipos,iy))
-          by(ipos,iy) = by(ipos,iy) + tstep * cpml_psi_byx(ipos,iy)
+            cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
+                + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            by(ipos,iy,iz) = by(ipos,iy,iz) + tstep * cpml_psi_byx(ipos,iy,iz)
 
-          cpml_psi_bzx(ipos,iy) = bcoeff * cpml_psi_bzx(ipos,iy) &
-              + ccoeff_d * (ey(ipos+1,iy) - ey(ipos,iy))
-          bz(ipos,iy) = bz(ipos,iy) - tstep * cpml_psi_bzx(ipos,iy)
+            cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
+                + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+            bz(ipos,iy,iz) = bz(ipos,iy,iz) - tstep * cpml_psi_bzx(ipos,iy,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1789,22 +2602,24 @@ CONTAINS
 
     IF (bc_field(c_bd_x_max) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
-      DO iy = 1,ny
-        DO ipos = cpml_x_max_start-1,cpml_x_max_end-1
-          kappa = cpml_kappa_bx(ipos)
-          sigma = cpml_sigma_bx(ipos)
-          acoeff = cpml_a_bx(ipos)
-          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-              / (sigma + kappa * acoeff) / dx
+      DO iz = 1,nz
+        DO iy = 1,ny
+          DO ipos = cpml_x_max_start-1,cpml_x_max_end-1
+            kappa = cpml_kappa_bx(ipos)
+            sigma = cpml_sigma_bx(ipos)
+            acoeff = cpml_a_bx(ipos)
+            bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+            ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+                / (sigma + kappa * acoeff) / dx
 
-          cpml_psi_byx(ipos,iy) = bcoeff * cpml_psi_byx(ipos,iy) &
-              + ccoeff_d * (ez(ipos+1,iy) - ez(ipos,iy))
-          by(ipos,iy) = by(ipos,iy) + tstep * cpml_psi_byx(ipos,iy)
+            cpml_psi_byx(ipos,iy,iz) = bcoeff * cpml_psi_byx(ipos,iy,iz) &
+                + ccoeff_d * (ez(ipos+1,iy,iz) - ez(ipos,iy,iz))
+            by(ipos,iy,iz) = by(ipos,iy,iz) + tstep * cpml_psi_byx(ipos,iy,iz)
 
-          cpml_psi_bzx(ipos,iy) = bcoeff * cpml_psi_bzx(ipos,iy) &
-              + ccoeff_d * (ey(ipos+1,iy) - ey(ipos,iy))
-          bz(ipos,iy) = bz(ipos,iy) - tstep * cpml_psi_bzx(ipos,iy)
+            cpml_psi_bzx(ipos,iy,iz) = bcoeff * cpml_psi_bzx(ipos,iy,iz) &
+                + ccoeff_d * (ey(ipos+1,iy,iz) - ey(ipos,iy,iz))
+            bz(ipos,iy,iz) = bz(ipos,iy,iz) - tstep * cpml_psi_bzx(ipos,iy,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1813,22 +2628,24 @@ CONTAINS
 
     IF (bc_field(c_bd_y_min) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
-      DO ipos = cpml_y_min_start,cpml_y_min_end
-        kappa = cpml_kappa_by(ipos)
-        sigma = cpml_sigma_by(ipos)
-        acoeff = cpml_a_by(ipos)
-        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
-        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-            / (sigma + kappa * acoeff) / dy
+      DO iz = 1,nz
+        DO ipos = cpml_y_min_start,cpml_y_min_end
+          kappa = cpml_kappa_by(ipos)
+          sigma = cpml_sigma_by(ipos)
+          acoeff = cpml_a_by(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
 
-        DO ix = 1,nx
-          cpml_psi_bxy(ix,ipos) = bcoeff * cpml_psi_bxy(ix,ipos) &
-              + ccoeff_d * (ez(ix,ipos+1) - ez(ix,ipos))
-          bx(ix,ipos) = bx(ix,ipos) - tstep * cpml_psi_bxy(ix,ipos)
+          DO ix = 1,nx
+            cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
+                + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            bx(ix,ipos,iz) = bx(ix,ipos,iz) - tstep * cpml_psi_bxy(ix,ipos,iz)
 
-          cpml_psi_bzy(ix,ipos) = bcoeff * cpml_psi_bzy(ix,ipos) &
-              + ccoeff_d * (ex(ix,ipos+1) - ex(ix,ipos))
-          bz(ix,ipos) = bz(ix,ipos) + tstep * cpml_psi_bzy(ix,ipos)
+            cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
+                + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+            bz(ix,ipos,iz) = bz(ix,ipos,iz) + tstep * cpml_psi_bzy(ix,ipos,iz)
+          END DO
         END DO
       END DO
     END IF
@@ -1837,22 +2654,76 @@ CONTAINS
 
     IF (bc_field(c_bd_y_max) == c_bc_cpml_laser &
         .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
-      DO ipos = cpml_y_max_start-1,cpml_y_max_end-1
-        kappa = cpml_kappa_by(ipos)
-        sigma = cpml_sigma_by(ipos)
-        acoeff = cpml_a_by(ipos)
+      DO iz = 1,nz
+        DO ipos = cpml_y_max_start-1,cpml_y_max_end-1
+          kappa = cpml_kappa_by(ipos)
+          sigma = cpml_sigma_by(ipos)
+          acoeff = cpml_a_by(ipos)
+          bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+          ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+              / (sigma + kappa * acoeff) / dy
+
+          DO ix = 1,nx
+            cpml_psi_bxy(ix,ipos,iz) = bcoeff * cpml_psi_bxy(ix,ipos,iz) &
+                + ccoeff_d * (ez(ix,ipos+1,iz) - ez(ix,ipos,iz))
+            bx(ix,ipos,iz) = bx(ix,ipos,iz) - tstep * cpml_psi_bxy(ix,ipos,iz)
+
+            cpml_psi_bzy(ix,ipos,iz) = bcoeff * cpml_psi_bzy(ix,ipos,iz) &
+                + ccoeff_d * (ex(ix,ipos+1,iz) - ex(ix,ipos,iz))
+            bz(ix,ipos,iz) = bz(ix,ipos,iz) + tstep * cpml_psi_bzy(ix,ipos,iz)
+          END DO
+        END DO
+      END DO
+    END IF
+
+    ! ============= z_min boundary =============
+
+    IF (bc_field(c_bd_z_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_min_start,cpml_z_min_end
+        kappa = cpml_kappa_bz(ipos)
+        sigma = cpml_sigma_bz(ipos)
+        acoeff = cpml_a_bz(ipos)
         bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
         ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
-            / (sigma + kappa * acoeff) / dy
+            / (sigma + kappa * acoeff) / dz
 
-        DO ix = 1,nx
-          cpml_psi_bxy(ix,ipos) = bcoeff * cpml_psi_bxy(ix,ipos) &
-              + ccoeff_d * (ez(ix,ipos+1) - ez(ix,ipos))
-          bx(ix,ipos) = bx(ix,ipos) - tstep * cpml_psi_bxy(ix,ipos)
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
+                + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            bx(ix,iy,ipos) = bx(ix,iy,ipos) + tstep * cpml_psi_bxz(ix,iy,ipos)
 
-          cpml_psi_bzy(ix,ipos) = bcoeff * cpml_psi_bzy(ix,ipos) &
-              + ccoeff_d * (ex(ix,ipos+1) - ex(ix,ipos))
-          bz(ix,ipos) = bz(ix,ipos) + tstep * cpml_psi_bzy(ix,ipos)
+            cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
+                + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+            by(ix,iy,ipos) = by(ix,iy,ipos) - tstep * cpml_psi_byz(ix,iy,ipos)
+          END DO
+        END DO
+      END DO
+    END IF
+
+    ! ============= z_max boundary =============
+
+    IF (bc_field(c_bd_z_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+      DO ipos = cpml_z_max_start-1,cpml_z_max_end-1
+        kappa = cpml_kappa_bz(ipos)
+        sigma = cpml_sigma_bz(ipos)
+        acoeff = cpml_a_bz(ipos)
+        bcoeff = EXP(-(sigma / kappa + acoeff) * tstep)
+        ccoeff_d = (bcoeff - 1.0_num) * sigma / kappa &
+            / (sigma + kappa * acoeff) / dz
+
+        DO iy = 1,ny
+          DO ix = 1,nx
+            cpml_psi_bxz(ix,iy,ipos) = bcoeff * cpml_psi_bxz(ix,iy,ipos) &
+                + ccoeff_d * (ey(ix,iy,ipos+1) - ey(ix,iy,ipos))
+            bx(ix,iy,ipos) = bx(ix,iy,ipos) + tstep * cpml_psi_bxz(ix,iy,ipos)
+
+            cpml_psi_byz(ix,iy,ipos) = bcoeff * cpml_psi_byz(ix,iy,ipos) &
+                + ccoeff_d * (ex(ix,iy,ipos+1) - ex(ix,iy,ipos))
+            by(ix,iy,ipos) = by(ix,iy,ipos) - tstep * cpml_psi_byz(ix,iy,ipos)
+          END DO
         END DO
       END DO
     END IF

@@ -34,10 +34,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_mass_density(data_array, current_species)
+  SUBROUTINE calc_mass_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_m
     ! The data to be weighted onto the grid
@@ -117,10 +118,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_ekbar(data_array, current_species)
+  SUBROUTINE calc_ekbar(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
@@ -232,7 +234,8 @@ CONTAINS
   SUBROUTINE calc_ekflux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_ux, part_uy, part_uz, part_mc, part_u2
     ! The weight of a particle
@@ -378,10 +381,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_poynt_flux(data_array, direction)
+  SUBROUTINE calc_poynt_flux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     INTEGER :: ix, iy, iz
     REAL(num) :: ex_cc, ey_cc, ez_cc, bx_cc, by_cc, bz_cc
 
@@ -434,10 +438,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_charge_density(data_array, current_species)
+  SUBROUTINE calc_charge_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q
     ! The data to be weighted onto the grid
@@ -517,10 +522,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_number_density(data_array, current_species)
+  SUBROUTINE calc_number_density(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: idx
@@ -544,7 +550,8 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (spec_sum &
+          .AND. io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
 #endif
@@ -584,10 +591,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_ppc(data_array, current_species)
+  SUBROUTINE calc_ppc(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     INTEGER :: ispecies, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
@@ -637,10 +645,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_average_weight(data_array, current_species)
+  SUBROUTINE calc_average_weight(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count
@@ -707,10 +716,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_temperature(sigma, current_species)
+  SUBROUTINE calc_temperature(sigma, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: sigma
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_pmx, part_pmy, part_pmz, sqrt_part_m
     ! The weight of a particle
@@ -720,6 +730,9 @@ CONTAINS
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
+    REAL(num) :: dof, wdata
+    INTEGER :: dir
+
 #include "particle_head.inc"
 
     ALLOCATE(meanx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -731,6 +744,14 @@ CONTAINS
     meanz = 0.0_num
     part_count = 0.0_num
     sigma = 0.0_num
+
+    IF (PRESENT(direction)) THEN
+      dir = direction
+      dof = 1.0_num
+    ELSE
+      dir = -1
+      dof = 3.0_num
+    END IF
 
     spec_start = current_species
     spec_end = current_species
@@ -765,32 +786,91 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz) * part_w
-          meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
-          meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
-          meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
-          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-        END DO
-        END DO
-        END DO
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_y)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_z)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE DEFAULT
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz) * part_w
+              meanx(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanx(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmx
+              meany(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meany(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmy
+              meanz(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  meanz(cell_x+ix, cell_y+iy, cell_z+iz) + gf * part_pmz
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+        END SELECT
         current => current%next
       END DO
-      CALL calc_boundary(meanx, ispecies)
-      CALL calc_boundary(meany, ispecies)
-      CALL calc_boundary(meanz, ispecies)
+
+      SELECT CASE(dir)
+        CASE(c_dir_x)
+          CALL calc_boundary(meanx, ispecies)
+        CASE(c_dir_y)
+          CALL calc_boundary(meany, ispecies)
+        CASE(c_dir_z)
+          CALL calc_boundary(meanz, ispecies)
+        CASE DEFAULT
+          CALL calc_boundary(meanx, ispecies)
+          CALL calc_boundary(meany, ispecies)
+          CALL calc_boundary(meanz, ispecies)
+      END SELECT
+
       CALL calc_boundary(part_count, ispecies)
     END DO
 
-    CALL calc_boundary(meanx)
-    CALL calc_boundary(meany)
-    CALL calc_boundary(meanz)
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL calc_boundary(meanx)
+      CASE(c_dir_y)
+        CALL calc_boundary(meany)
+      CASE(c_dir_z)
+        CALL calc_boundary(meanz)
+      CASE DEFAULT
+        CALL calc_boundary(meanx)
+        CALL calc_boundary(meany)
+        CALL calc_boundary(meanz)
+    END SELECT
     CALL calc_boundary(part_count)
 
     part_count = MAX(part_count, 1.e-6_num)
@@ -798,6 +878,20 @@ CONTAINS
     meanx = meanx / part_count
     meany = meany / part_count
     meanz = meanz / part_count
+
+    ! Restore ghost cell values for means
+    SELECT CASE(dir)
+      CASE(c_dir_x)
+        CALL field_bc(meanx, ng)
+      CASE(c_dir_y)
+        CALL field_bc(meany, ng)
+      CASE(c_dir_z)
+        CALL field_bc(meanz, ng)
+      CASE DEFAULT
+        CALL field_bc(meanx, ng)
+        CALL field_bc(meany, ng)
+        CALL field_bc(meanz, ng)
+    END SELECT
 
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
@@ -819,20 +913,62 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz)
-          sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf &
-              * ((part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-              + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
-              + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2)
-          part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
-        END DO
-        END DO
-        END DO
+        SELECT CASE(dir)
+          CASE(c_dir_x)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_y)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE(c_dir_z)
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+          CASE DEFAULT
+            DO iz = sf_min, sf_max
+            DO iy = sf_min, sf_max
+            DO ix = sf_min, sf_max
+              gf = gx(ix) * gy(iy) * gz(iz)
+              wdata = (part_pmx - meanx(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+                    + (part_pmy - meany(cell_x+ix, cell_y+iy, cell_z+iz))**2 &
+                    + (part_pmz - meanz(cell_x+ix, cell_y+iy, cell_z+iz))**2
+              sigma(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  sigma(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
+              part_count(cell_x+ix, cell_y+iy, cell_z+iz) = &
+                  part_count(cell_x+ix, cell_y+iy, cell_z+iz) + gf
+            END DO
+            END DO
+            END DO
+        END SELECT
         current => current%next
       END DO
       CALL calc_boundary(sigma, ispecies)
@@ -843,7 +979,7 @@ CONTAINS
     CALL calc_boundary(part_count)
 
     ! 3/2 kT = <p^2>/(2m)
-    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / 3.0_num
+    sigma = sigma / MAX(part_count, 1.e-6_num) / kb / dof
 
     DEALLOCATE(part_count, meanx, meany, meanz)
 
@@ -851,79 +987,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_on_grid_with_evaluator(data_array, current_species, evaluator)
-
-    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    ! The data to be weighted onto the grid
-    REAL(num) :: wdata
-    INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
-    TYPE(particle), POINTER :: current
-    LOGICAL :: spec_sum
-#include "particle_head.inc"
-
-    INTERFACE
-      FUNCTION evaluator(a_particle, species_eval)
-        USE shared_data
-        TYPE(particle), POINTER :: a_particle
-        INTEGER, INTENT(IN) :: species_eval
-        REAL(num) :: evaluator
-      END FUNCTION evaluator
-    END INTERFACE
-
-    data_array = 0.0_num
-
-    spec_start = current_species
-    spec_end = current_species
-    spec_sum = .FALSE.
-
-    IF (current_species <= 0) THEN
-      spec_start = 1
-      spec_end = n_species
-      spec_sum = .TRUE.
-    END IF
-
-    DO ispecies = spec_start, spec_end
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
-#endif
-      current => io_list(ispecies)%attached_list%head
-
-      DO WHILE (ASSOCIATED(current))
-#include "particle_to_grid.inc"
-
-        wdata = evaluator(current, ispecies)
-
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) &
-              + gx(ix) * gy(iy) * gz(iz) * wdata
-        END DO
-        END DO
-        END DO
-
-        current => current%next
-      END DO
-      CALL calc_boundary(data_array, ispecies)
-    END DO
-
-    CALL calc_boundary(data_array)
-
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    END DO
-
-  END SUBROUTINE calc_on_grid_with_evaluator
-
-
-
   SUBROUTINE calc_per_species_current(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species, direction
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: part_q, part_mc
     REAL(num) :: part_px, part_py, part_pz
@@ -1021,10 +1089,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jx(data_array, current_species)
+  SUBROUTINE calc_per_species_jx(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_x)
 
@@ -1032,10 +1101,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jy(data_array, current_species)
+  SUBROUTINE calc_per_species_jy(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_y)
 
@@ -1043,10 +1113,11 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jz(data_array, current_species)
+  SUBROUTINE calc_per_species_jz(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
 
     CALL calc_per_species_current(data_array, current_species, c_dir_z)
 

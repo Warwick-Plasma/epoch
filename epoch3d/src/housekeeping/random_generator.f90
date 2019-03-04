@@ -20,11 +20,14 @@ MODULE random_generator
   PUBLIC :: random, random_init, get_random_state, set_random_state
   PUBLIC :: random_box_muller, random_state_type
 
+  INTEGER, PARAMETER :: init_x = 123456789
+  INTEGER, PARAMETER :: init_y = 362436069
+  INTEGER, PARAMETER :: init_z = 521288629
+  INTEGER, PARAMETER :: init_w = 916191069
+
   TYPE :: random_state_type
-    INTEGER :: x = 123456789
-    INTEGER :: y = 362436069
-    INTEGER :: z = 521288629
-    INTEGER :: w = 916191069
+    INTEGER :: x, y, z, w
+    LOGICAL :: box_muller_cached
   END TYPE random_state_type
 
   TYPE(random_state_type), TARGET, SAVE :: global_random
@@ -89,10 +92,11 @@ CONTAINS
       current_state => global_random
     END IF
 
-    current_state%x = current_state%x + seed
-    current_state%y = current_state%y + seed
-    current_state%z = current_state%z + seed
-    current_state%w = current_state%w + seed
+    current_state%x = init_x + seed
+    current_state%y = init_y + seed
+    current_state%z = init_z + seed
+    current_state%w = init_w + seed
+    current_state%box_muller_cached = .FALSE.
 
     ! 'Warm-up' the generator by cycling through a few times
     DO i = 1, 1000
@@ -124,6 +128,8 @@ CONTAINS
       mu_val = 0.0D0
     END IF
 
+    IF (PRESENT(state)) cached = state%box_muller_cached
+
     IF (cached) THEN
       cached = .FALSE.
       random_box_muller = cached_random_value * stdev + mu_val
@@ -148,6 +154,8 @@ CONTAINS
       cached_random_value = rand2 * w
     END IF
 
+    IF (PRESENT(state)) state%box_muller_cached = cached
+
   END FUNCTION random_box_muller
 
 
@@ -160,6 +168,11 @@ CONTAINS
     state(2) = global_random%y
     state(3) = global_random%z
     state(4) = global_random%w
+    IF (global_random%box_muller_cached) THEN
+      state(5) = 1
+    ELSE
+      state(5) = 0
+    END IF
 
   END SUBROUTINE get_random_state
 
@@ -173,6 +186,11 @@ CONTAINS
     global_random%y = state(2)
     global_random%z = state(3)
     global_random%w = state(4)
+    IF (state(5) == 1) THEN
+      global_random%box_muller_cached = .TRUE.
+    ELSE
+      global_random%box_muller_cached = .FALSE.
+    END IF
 
   END SUBROUTINE set_random_state
 

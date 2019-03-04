@@ -417,6 +417,13 @@ MODULE shared_data
     TYPE(primitive_stack) :: dist_fn
     TYPE(primitive_stack) :: dist_fn_range(3)
 
+    ! Parameters for relativistic and arbitrary particle loader
+    INTEGER :: ic_df_type
+    REAL(num) :: fractional_tail_cutoff
+
+    TYPE(primitive_stack) :: dist_fn
+    TYPE(primitive_stack) :: dist_fn_range(3)
+
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
 #endif

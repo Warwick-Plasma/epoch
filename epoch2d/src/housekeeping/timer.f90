@@ -15,7 +15,7 @@
 
 MODULE timer
 
-  USE shared_data
+  USE constants
   USE mpi
 
   IMPLICIT NONE

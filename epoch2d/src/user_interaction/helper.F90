@@ -18,79 +18,113 @@ MODULE helper
 
   USE balance
   USE boundary
-  USE strings
   USE partlist
-  USE calc_df
   USE simple_io
   USE deltaf_loader
 
   IMPLICIT NONE
 
+  REAL(num), POINTER :: species_density(:,:)
+  REAL(num), POINTER :: species_temp(:,:,:)
+  REAL(num), POINTER :: species_drift(:,:,:)
+
 CONTAINS
 
-  SUBROUTINE set_thermal_bcs
+  SUBROUTINE set_thermal_bcs(ispecies)
 
-    INTEGER :: ispecies
+    INTEGER, INTENT(IN) :: ispecies
     TYPE(particle_species), POINTER :: species
 
-    DO ispecies = 1, n_species
-      species => species_list(ispecies)
+    ! Set temperature at boundary for thermal bcs.
 
-      ! Set temperature at boundary for thermal bcs.
+    species => species_list(ispecies)
 
-      IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_min(:,:) = &
-            species_list(ispecies)%initial_conditions%temp(1,:,:)
-      END IF
-      IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_x_max(:,:) = &
-            species_list(ispecies)%initial_conditions%temp(nx,:,:)
-      END IF
-      IF (species%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_min(:,:) = &
-            species_list(ispecies)%initial_conditions%temp(:,1,:)
-      END IF
-      IF (species%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
-        species_list(ispecies)%ext_temp_y_max(:,:) = &
-            species_list(ispecies)%initial_conditions%temp(:,ny,:)
-      END IF
-    END DO
+    IF (species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+      species%ext_temp_x_min(:,:) = species_temp(1,:,:)
+    END IF
+    IF (species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+      species%ext_temp_x_max(:,:) = species_temp(nx,:,:)
+    END IF
+    IF (species%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+      species%ext_temp_y_min(:,:) = species_temp(:,1,:)
+    END IF
+    IF (species%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+      species%ext_temp_y_max(:,:) = species_temp(:,ny,:)
+    END IF
 
   END SUBROUTINE set_thermal_bcs
 
 
 
-  SUBROUTINE auto_load
+  SUBROUTINE set_thermal_bcs_all
 
     INTEGER :: ispecies
-    TYPE(particle_species), POINTER :: species
 
-    CALL set_thermal_bcs
+    ! Set temperature at boundary for thermal bcs.
+
+    DO ispecies = 1, n_species
+      CALL setup_ic_density(ispecies)
+      CALL setup_ic_temp(ispecies)
+      CALL setup_ic_drift(ispecies)
+      CALL set_thermal_bcs(ispecies)
+    END DO
+
+  END SUBROUTINE set_thermal_bcs_all
+
+
+
+  SUBROUTINE auto_load
+
+    INTEGER :: ispecies, n
+    TYPE(particle_species), POINTER :: species
+    INTEGER :: i0, i1
+    TYPE(initial_condition_block), POINTER :: ic
+
+    IF (pre_loading .AND. n_species > 0) THEN
+      i0 = 1 - ng
+      IF (use_field_ionisation) i0 = -ng
+      i1 = 1 - i0
+
+      ALLOCATE(npart_per_cell_array(i0:nx+i1, i0:ny+i1))
+      npart_per_cell_array = 0
+    ELSE IF (n_species > 0) THEN
+      IF (rank == 0) WRITE(*,*) 'Attempting to load particles'
+    END IF
 
     DO ispecies = 1, n_species
       species => species_list(ispecies)
+      ic => species%initial_conditions
+
+      CALL setup_ic_density(ispecies)
 
 #ifdef PER_SPECIES_WEIGHT
-      CALL non_uniform_load_particles(&
-          species_list(ispecies)%initial_conditions%density, species, &
-          species_list(ispecies)%initial_conditions%density_min, &
-          species_list(ispecies)%initial_conditions%density_max)
+      CALL non_uniform_load_particles(species_density, species, &
+          ic%density_min, ic%density_max)
 #else
-      CALL setup_particle_density(&
-          species_list(ispecies)%initial_conditions%density, species, &
-          species_list(ispecies)%initial_conditions%density_min, &
-          species_list(ispecies)%initial_conditions%density_max)
+      CALL setup_particle_density(species_density, species, &
+          ic%density_min, ic%density_max)
 #endif
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,:,1), c_dir_x, &
-          species, species_list(ispecies)%initial_conditions%drift(:,:,1))
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,:,2), c_dir_y, &
-          species, species_list(ispecies)%initial_conditions%drift(:,:,2))
-      CALL setup_particle_temperature(&
-          species_list(ispecies)%initial_conditions%temp(:,:,3), c_dir_z, &
-          species, species_list(ispecies)%initial_conditions%drift(:,:,3))
+      IF (pre_loading) CYCLE
+
+      CALL setup_ic_temp(ispecies)
+      CALL setup_ic_drift(ispecies)
+      CALL set_thermal_bcs(ispecies)
+
+      IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+        DO n = 1, 3
+          CALL setup_particle_temperature(&
+              species_temp(:,:,n), n, species, species_drift(:,:,n))
+        END DO
+      ELSE IF (species_list(ispecies)%ic_df_type &
+          == c_ic_df_relativistic_thermal) THEN
+        CALL setup_particle_temperature_relativistic(species_temp, species, &
+            species_drift)
+      ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
+        CALL setup_particle_dist_fn(species, species_drift)
+      END IF
     END DO
+
+    IF (pre_loading) RETURN
 
     IF (rank == 0) THEN
       DO ispecies = 1, n_species
@@ -116,23 +150,19 @@ CONTAINS
   SUBROUTINE allocate_ic
 
     INTEGER :: ispecies
+    TYPE(initial_condition_block), POINTER :: ic
 
     DO ispecies = 1, n_species
-      ALLOCATE(species_list(ispecies)%initial_conditions&
-          %density(1-ng:nx+ng,1-ng:ny+ng))
-      ALLOCATE(species_list(ispecies)%initial_conditions&
-          %temp(1-ng:nx+ng,1-ng:ny+ng,1:3))
-      ALLOCATE(species_list(ispecies)%initial_conditions&
-          %drift(1-ng:nx+ng,1-ng:ny+ng,1:3))
+      ic => species_list(ispecies)%initial_conditions
+      NULLIFY(ic%density)
+      NULLIFY(ic%temp)
+      NULLIFY(ic%drift)
 
-      species_list(ispecies)%initial_conditions%density = 1.0_num
-      species_list(ispecies)%initial_conditions%temp = 0.0_num
-      species_list(ispecies)%initial_conditions%drift = 0.0_num
-      species_list(ispecies)%initial_conditions%density_min = EPSILON(1.0_num)
-      species_list(ispecies)%initial_conditions%density_max = HUGE(1.0_num)
-      species_list(ispecies)%initial_conditions%density_back = 0.0_num
-      species_list(ispecies)%initial_conditions%temp_back = 0.0_num
-      species_list(ispecies)%initial_conditions%drift_back = 0.0_num
+      ic%density_min = EPSILON(1.0_num)
+      ic%density_max = HUGE(1.0_num)
+      ic%density_back = 0.0_num
+      ic%temp_back = 0.0_num
+      ic%drift_back = 0.0_num
     END DO
 
   END SUBROUTINE allocate_ic
@@ -142,11 +172,16 @@ CONTAINS
   SUBROUTINE deallocate_ic
 
     INTEGER :: ispecies
+    TYPE(initial_condition_block), POINTER :: ic
 
     DO ispecies = 1, n_species
-      DEALLOCATE(species_list(ispecies)%initial_conditions%density)
-      DEALLOCATE(species_list(ispecies)%initial_conditions%temp)
-      DEALLOCATE(species_list(ispecies)%initial_conditions%drift)
+      ic => species_list(ispecies)%initial_conditions
+      IF (ASSOCIATED(ic%density)) DEALLOCATE(ic%density)
+      IF (ASSOCIATED(ic%temp)) DEALLOCATE(ic%temp)
+      IF (ASSOCIATED(ic%drift)) DEALLOCATE(ic%drift)
+      IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
+      IF (ALLOCATED(global_species_temp)) DEALLOCATE(global_species_temp)
+      IF (ALLOCATED(global_species_drift)) DEALLOCATE(global_species_drift)
     END DO
 
   END SUBROUTINE deallocate_ic
@@ -206,10 +241,23 @@ CONTAINS
         MPI_SUM, comm, errcode)
     density_average = density_total_global / REAL(num_valid_cells_global, num)
 
+    IF (pre_loading) THEN
+      DO iy = 1, ny
+      DO ix = 1, nx
+        npart_per_cell = NINT(density(ix,iy) / density_average &
+            * npart_per_cell_average)
+        npart_per_cell_array(ix,iy) = &
+            npart_per_cell_array(ix,iy) + INT(npart_per_cell)
+      END DO ! ix
+      END DO ! iy
+
+      RETURN
+    END IF
+
     npart_this_proc_new = 0
     DO iy = 1, ny
     DO ix = 1, nx
-      npart_per_cell = NINT(density(ix, iy) / density_average &
+      npart_per_cell = NINT(density(ix,iy) / density_average &
           * npart_per_cell_average)
       npart_this_proc_new = npart_this_proc_new + npart_per_cell
     END DO ! ix
@@ -222,7 +270,7 @@ CONTAINS
     current => partlist%head
     DO iy = 1, ny
     DO ix = 1, nx
-      npart_per_cell = NINT(density(ix, iy) / density_average &
+      npart_per_cell = NINT(density(ix,iy) / density_average &
           * npart_per_cell_average)
 
       ipart = 0
@@ -253,7 +301,7 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL remove_particle_from_partlist(partlist, current)
-      DEALLOCATE(current)
+      CALL destroy_particle(current)
       current => next
     END DO
 
@@ -345,7 +393,7 @@ CONTAINS
     num_valid_cells_local = 0
     DO iy = iy_min, iy_max
     DO ix = ix_min, ix_max
-      IF (load_list(ix, iy)) num_valid_cells_local = num_valid_cells_local + 1
+      IF (load_list(ix,iy)) num_valid_cells_local = num_valid_cells_local + 1
     END DO ! ix
     END DO ! iy
 
@@ -440,6 +488,21 @@ CONTAINS
       npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
     END IF
 
+    IF (pre_loading) THEN
+      IF (npart_per_cell <= 0) RETURN
+
+      DO iy = iy_min, iy_max
+      DO ix = ix_min, ix_max
+        IF (.NOT. load_list(ix,iy)) CYCLE
+
+        npart_per_cell_array(ix,iy) = &
+            npart_per_cell_array(ix,iy) + INT(npart_per_cell)
+      END DO ! ix
+      END DO ! iy
+
+      RETURN
+    END IF
+
     partlist => species%attached_list
 
     CALL destroy_partlist(partlist)
@@ -452,7 +515,7 @@ CONTAINS
 
       DO iy = iy_min, iy_max
       DO ix = ix_min, ix_max
-        IF (.NOT. load_list(ix, iy)) CYCLE
+        IF (.NOT. load_list(ix,iy)) CYCLE
 
         ipart = 0
         DO WHILE(ASSOCIATED(current) .AND. ipart < npart_per_cell)
@@ -535,7 +598,7 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL remove_particle_from_partlist(partlist, current)
-      DEALLOCATE(current)
+      CALL destroy_particle(current)
       current => next
     END DO
 
@@ -711,7 +774,7 @@ CONTAINS
         IF (current%part_pos(1) < x0 .OR. current%part_pos(1) >= x1 &
             .OR. current%part_pos(2) < y0 .OR. current%part_pos(2) >= y1) THEN
           CALL remove_particle_from_partlist(partlist, current)
-          DEALLOCATE(current)
+          CALL destroy_particle(current)
         END IF
         current => next
       END DO
@@ -936,5 +999,129 @@ CONTAINS
     CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
+
+
+
+  SUBROUTINE setup_ic_density(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix, iy
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%density)) THEN
+      species_density => ic%density
+      RETURN
+    END IF
+
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%density(1-ng:nx+ng,1-ng:ny+ng))
+      species_density => ic%density
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_density)) THEN
+        ALLOCATE(global_species_density(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+      species_density => global_species_density
+    END IF
+
+    DO iy = 1-ng, ny+ng
+      parameters%pack_iy = iy
+      DO ix = 1-ng, nx+ng
+        parameters%pack_ix = ix
+        species_density(ix,iy) = &
+            evaluate_with_parameters(species%density_function, &
+                parameters, errcode)
+      END DO
+    END DO
+
+  END SUBROUTINE setup_ic_density
+
+
+
+  SUBROUTINE setup_ic_temp(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix, iy, n
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%temp)) THEN
+      species_temp => ic%temp
+      RETURN
+    END IF
+
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      species_temp => ic%temp
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_temp)) THEN
+        ALLOCATE(global_species_temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      END IF
+      species_temp => global_species_temp
+    END IF
+
+    DO n = 1, 3
+      DO iy = 1-ng, ny+ng
+        parameters%pack_iy = iy
+        DO ix = 1-ng, nx+ng
+          parameters%pack_ix = ix
+          species_temp(ix,iy,n) = &
+              evaluate_with_parameters(species%temperature_function(n), &
+                  parameters, errcode)
+        END DO
+      END DO
+    END DO
+
+  END SUBROUTINE setup_ic_temp
+
+
+
+  SUBROUTINE setup_ic_drift(ispecies)
+
+    INTEGER, INTENT(IN) :: ispecies
+    TYPE(particle_species), POINTER :: species
+    TYPE(initial_condition_block), POINTER :: ic
+    TYPE(parameter_pack) :: parameters
+    INTEGER :: ix, iy, n
+
+    species => species_list(ispecies)
+    ic => species%initial_conditions
+
+    IF (ASSOCIATED(ic%drift)) THEN
+      species_drift => ic%drift
+      RETURN
+    END IF
+
+    IF (use_more_setup_memory) THEN
+      ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      species_drift => ic%drift
+    ELSE
+      IF (.NOT. ALLOCATED(global_species_drift)) THEN
+        ALLOCATE(global_species_drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      END IF
+      species_drift => global_species_drift
+    END IF
+
+    DO n = 1, 3
+      DO iy = 1-ng, ny+ng
+        parameters%pack_iy = iy
+        DO ix = 1-ng, nx+ng
+          parameters%pack_ix = ix
+          species_drift(ix,iy,n) = &
+              evaluate_with_parameters(species%drift_function(n), &
+                  parameters, errcode)
+        END DO
+      END DO
+    END DO
+
+  END SUBROUTINE setup_ic_drift
 
 END MODULE helper

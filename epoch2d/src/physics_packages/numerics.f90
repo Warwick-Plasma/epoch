@@ -222,7 +222,7 @@ CONTAINS
         gamma_fn = c_largest_number
         RETURN
       END IF
-    ELSEIF (y < 12.0_num) THEN
+    ELSE IF (y < 12.0_num) THEN
       y1 = y
       IF (y < 1.0_num) THEN
 !----------------------------------------------------------------------
@@ -253,7 +253,7 @@ CONTAINS
 !  Adjust result for case  0.0 < argument < 1.0
 !----------------------------------------------------------------------
         res = res / y1
-      ELSEIF (y1 > y) THEN
+      ELSE IF (y1 > y) THEN
 !----------------------------------------------------------------------
 !  Adjust result for case  2.0 < argument < 12.0
 !----------------------------------------------------------------------
@@ -628,7 +628,7 @@ CONTAINS
           END IF
           wminf = estf(1) * ex + estf(2)
         END IF
-      ELSEIF (eps * ex > 1.0_num) THEN
+      ELSE IF (eps * ex > 1.0_num) THEN
 !--------------------------------------------------------------------
 !  X > 1/EPS
 !--------------------------------------------------------------------
