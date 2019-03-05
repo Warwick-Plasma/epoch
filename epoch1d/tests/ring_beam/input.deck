@@ -1,10 +1,10 @@
 begin:constant
   background_density = 1e20
   background_temp = 1e8
-  ion_mass_e = 1836.2
-  mass_ion = me * ion_mass_e
+  mass_e = 1836.2
+  mass = me * mass_e
   ring_beam_energy_ev = 1.0e6
-  pring_beam = sqrt(2 * mass_ion * qe * ring_beam_energy_ev)
+  pring_beam = sqrt(2 * mass * qe * ring_beam_energy_ev)
   theta = -pi/3
   ! -2.005E-20 ! but with obviously change if anything above is changed
   pbeam = pring_beam * sin(theta)
@@ -20,11 +20,11 @@ begin:constant
   diagtime = simtime * 2
   pdfn_limit = 2 * abs(pring_beam)
   
-  p_ring_th = sqrt(2 * qe * temp_ring_ev * mass_ion)
-  p_beam_th = sqrt(2 * qe * temp_beam_ev * mass_ion)
+  p_ring_th = sqrt(2 * qe * temp_ring_ev * mass)
+  p_beam_th = sqrt(2 * qe * temp_beam_ev * mass)
 
   px_min_limit = (pring - 6*p_ring_th gt 0) * (pring - 6*p_ring_th)
-  px_peak = pring / 2 * (1 + sqrt(1 + (2*p_ring_th/pring)^2))
+  px_peak = (pring + sqrt(pring^2 + (2*p_ring_th)^2)) / 2
 
 end:constant
 
@@ -52,9 +52,9 @@ end:boundaries
 
 
 begin:species
-  name = ion_ring_beam
+  name = ring_beam_2d
   charge = 1.0
-  mass = ion_mass_e
+  mass = mass_e
   frac = 1.0
   density = 1.0e20
   dist_fn = px / px_peak * exp(-(px - pring)^2/2/p_ring_th^2) * exp(-(pz - pbeam)^2/2/p_beam_th^2)
@@ -65,6 +65,21 @@ begin:species
   field_aligned_initialisation = T
   x_perp_y_ignored_z_para = T
 end:species
+
+begin:species
+  name = ring_beam_3d
+  charge = 1.0
+  mass = mass_e
+  frac = 1.0
+  density = 1.0e20
+  dist_fn = exp(-(sqrt(px^2 + py^2) - pring)^2/2/p_ring_th^2) * exp(-(pz-pbeam)^2/2/p_beam_th^2)
+  dist_fn_px_range = (-pdfn_limit, pdfn_limit)
+  dist_fn_py_range = (-pdfn_limit, pdfn_limit)
+  dist_fn_pz_range = (pbeam - 6*p_ring_th, pbeam + 6*p_ring_th)
+  field_aligned_initialisation = T
+end:species
+
+
 
 
 begin:output
@@ -109,7 +124,8 @@ begin:dist_fn
   resolution1 = 100
   resolution2 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn
 
 begin:dist_fn
@@ -127,7 +143,8 @@ begin:dist_fn
   resolution1 = 100
   resolution2 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn
 
 
@@ -146,7 +163,8 @@ begin:dist_fn
   resolution1 = 100
   resolution2 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn
 
 
@@ -162,7 +180,8 @@ begin:dist_fn
   # resolution is ignored for spatial coordinates
   resolution1 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn
 
 begin:dist_fn
@@ -177,7 +196,8 @@ begin:dist_fn
   # resolution is ignored for spatial coordinates
   resolution1 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn
 
 begin:dist_fn
@@ -192,5 +212,6 @@ begin:dist_fn
   # resolution is ignored for spatial coordinates
   resolution1 = 100
 
-  include_species:ion_ring_beam
+  include_species:ring_beam_2d
+  include_species:ring_beam_3d
 end:dist_fn

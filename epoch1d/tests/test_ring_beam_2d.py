@@ -1,1 +1,0 @@
-import ring_beams_test_helper
