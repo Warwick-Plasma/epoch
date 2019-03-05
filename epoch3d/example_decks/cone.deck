@@ -4,10 +4,10 @@ begin:control
   nz = 250
   npart = nx * ny * nz * 1.123
 
-  # final time of simulation
+  # Final time of simulation
   t_end = 50 * femto
 
-  # size of domain
+  # Size of domain
   x_min = -10 * micron
   x_max = -x_min
   y_min = x_min
@@ -46,7 +46,8 @@ begin:species
   mass = 1836.2
   frac = 0.5
   number_density = if((r gt ri) and (r lt ro), den_cone, 0.0)
-  number_density = if((x gt xi) and (x lt xo) and (r lt ri), den_cone, number_density(proton))
+  number_density = if((x gt xi) and (x lt xo) and (r lt ri), \
+                      den_cone, number_density(proton))
   number_density = if(x gt xo, 0.0, number_density(proton))
 end:species
 
@@ -68,23 +69,40 @@ begin:laser
 end:laser
 
 
-begin:output
-  # number of timesteps between output dumps
-  dt_snapshot = 1 * femto
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 10
+begin:output_global
   force_final_to_be_restartable = T
+end:output_global
 
-  # Properties at particle positions
-  particles = full
-  particle_weight = full
+
+begin:output
+  name = normal
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 1 * femto
 
   # Properties on grid
   grid = always
   ey = always
   ekbar = always
-  charge_density = full
   number_density = always + species
+  temperature = always + species
+
+  # Extended io
+  distribution_functions = always
+end:output
+
+
+begin:output
+  name = large
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 10 * femto
+
+  # Properties at particle positions
+  particles = always
+  particle_weight = always
+
+  charge_density = always
 end:output
 
 
@@ -95,11 +113,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-20, 3.0e-20)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 
@@ -117,12 +135,12 @@ begin:dist_fn
   direction2 = dir_px
   direction3 = dir_py
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1, 1)
   range2 = (-3.0e-20, 3.0e-20)
   range3 = (-3.0e-20, 3.0e-20)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
   resolution3 = 100

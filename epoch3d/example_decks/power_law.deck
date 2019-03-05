@@ -2,12 +2,11 @@ begin:control
   nx = 100
   ny = 100
   nz = 100
-  npart = nx * ny * nz * 30
 
-  # final time of simulation
+  # Final time of simulation
   t_end = 0
 
-  # size of domain
+  # Size of domain
   x_min = 0
   x_max = 5.0e5
 
@@ -45,11 +44,11 @@ begin:species
   name = Electron_pl
   charge = -1
   mass = 1.0
-  frac = 0.5
   number_density = dens
-  #Truncated power law distribution in px
+  # Truncated power law distribution in px
   dist_fn = exp(-p0/px) * (px/p0)^(alpha)
   dist_fn_px_range = (0, pmax)
+  npart = nx * ny * nz * 15
 end:species
 
 
@@ -57,17 +56,17 @@ begin:species
   name = Electron_back
   charge = -1
   mass = 1.0
-  frac = 0.5
   number_density = dens
-  temp = (v0/4)^2*me/kb #Thermal velocity of 1/4 power law peak
+  temp = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
+  npart = nx * ny * nz * 15
 end:species
 
 
 begin:output
-  # number of timesteps between output dumps
+  name = normal
+
+  # Number of timesteps between output dumps
   dt_snapshot = 10.5e-3
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 1
   dump_last = F
 
   # Properties at particle positions
@@ -78,7 +77,7 @@ begin:output
   grid = always
   number_density = always + species
 
-  # extended io
+  # Extended io
   distribution_functions = always
 end:output
 
@@ -90,15 +89,14 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_px
 
-  # range is ignored for spatial coordinates
+  # Range is ignored for spatial coordinates
   range1 = (1,1)
   range2 = (-pmax, pmax)
 
-  # resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 200
 
   include_species:Electron_pl
   include_species:Electron_back
-
 end:dist_fn
