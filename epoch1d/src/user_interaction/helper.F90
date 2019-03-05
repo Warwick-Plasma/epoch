@@ -942,7 +942,7 @@ CONTAINS
     partlist => species%attached_list
     current => partlist%head
     ipart = 0
-    DO WHILE(ipart < partlist%count)
+    DO WHILE (ipart < partlist%count)
       CALL rotate_particle_momentum_for_field_aligned_initialisation(current, &
         ipart, species%x_perp_y_ignored_z_para)
       current => current%next

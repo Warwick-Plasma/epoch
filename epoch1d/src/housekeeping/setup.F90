@@ -317,6 +317,8 @@ CONTAINS
       species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
       species_list(ispecies)%immobile = .FALSE.
+      species_list(ispecies)%field_aligned_initialisation = .FALSE.
+      species_list(ispecies)%x_perp_y_ignored_z_para = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
       NULLIFY(species_list(ispecies)%ext_temp_x_min)
