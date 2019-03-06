@@ -340,10 +340,15 @@ MODULE shared_data
 #endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     REAL(num) :: particle_energy
-#ifdef TRIDENT_PHOTONS
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     REAL(num) :: optical_depth_tri
 #endif
+#ifdef BREMSSTRAHLUNG
+    REAL(num) :: optical_depth_bremsstrahlung
 #endif
   END TYPE particle
 
@@ -417,6 +422,11 @@ MODULE shared_data
 
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: tracer
+#endif
+
+#ifdef BREMSSTRAHLUNG
+    INTEGER :: atomic_no
+    LOGICAL :: atomic_no_set = .FALSE.
 #endif
 
     ! ID code which identifies if a species is of a special type
@@ -537,16 +547,17 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_temperature_x     = 55
   INTEGER, PARAMETER :: c_dump_temperature_y     = 56
   INTEGER, PARAMETER :: c_dump_temperature_z     = 57
+  INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 58
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 58
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 59
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 60
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 61
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 62
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 63
-  INTEGER, PARAMETER :: num_vars_to_dump         = 63
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 59
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 60
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 61
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 62
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 63
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 64
+  INTEGER, PARAMETER :: num_vars_to_dump         = 64
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 57
+  INTEGER, PARAMETER :: num_vars_to_dump         = 58
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
@@ -855,6 +866,39 @@ MODULE shared_data
   CHARACTER(LEN=string_length) :: qed_table_location
 #endif
   LOGICAL :: use_qed = .FALSE.
+
+#ifdef BREMSSTRAHLUNG
+  !----------------------------------------------------------------------------
+  ! Bremsstrahlung
+  !----------------------------------------------------------------------------
+  ! Table declarations
+  TYPE brem_tables
+    REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
+    REAL(num), ALLOCATABLE :: cross_section(:), E_table(:)
+    INTEGER :: size_k, size_T
+  END TYPE brem_tables
+  TYPE(brem_tables), ALLOCATABLE :: brem_array(:)
+  INTEGER, ALLOCATABLE :: Z_values(:)
+  INTEGER, ALLOCATABLE :: Z_to_index(:)
+  INTEGER :: size_brem_array
+
+  ! Bremsstrahlung photon species flag
+  INTEGER :: bremsstrahlung_photon_species = -1
+#ifndef PHOTONS
+  INTEGER :: photon_species = -1
+#endif
+
+  ! Deck variables
+  REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
+  REAL(num) :: bremsstrahlung_start_time = 0.0_num
+  REAL(num) :: photon_weight = 1.0_num
+  LOGICAL :: use_bremsstrahlung_recoil = .TRUE.
+  LOGICAL :: produce_bremsstrahlung_photons = .FALSE.
+  LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
+  LOGICAL :: use_plasma_screening = .FALSE.
+  CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+#endif
+  LOGICAL :: use_bremsstrahlung = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data

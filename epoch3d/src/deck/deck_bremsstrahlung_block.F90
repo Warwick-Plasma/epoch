@@ -14,7 +14,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-MODULE deck_qed_block
+MODULE deck_bremsstrahlung_block
 
   USE strings_advanced
   USE utilities
@@ -22,90 +22,91 @@ MODULE deck_qed_block
   IMPLICIT NONE
 
   PRIVATE
-  PUBLIC :: qed_deck_initialise, qed_deck_finalise
-  PUBLIC :: qed_block_start, qed_block_end
-  PUBLIC :: qed_block_handle_element, qed_block_check
+  PUBLIC :: bremsstrahlung_deck_initialise, bremsstrahlung_deck_finalise
+  PUBLIC :: bremsstrahlung_block_start, bremsstrahlung_block_end
+  PUBLIC :: bremsstrahlung_block_handle_element, bremsstrahlung_block_check
 
 CONTAINS
 
-  SUBROUTINE qed_deck_initialise
+  SUBROUTINE bremsstrahlung_deck_initialise
 
-#ifdef PHOTONS
+#ifdef BREMSSTRAHLUNG
     IF (deck_state == c_ds_first) THEN
-      qed_table_location = 'src/physics_packages/TABLES'
-      use_radiation_reaction = .TRUE.
-      use_qed = .FALSE.
+      bremsstrahlung_table_location = 'src/physics_packages/TABLES/br'
+      use_bremsstrahlung_recoil = .TRUE.
+      use_bremsstrahlung = .FALSE.
+      bremsstrahlung_photon_species = -1
+#ifndef PHOTONS
       photon_species = -1
-      trident_electron_species = -1
-      breit_wheeler_electron_species = -1
-      trident_positron_species = -1
-      breit_wheeler_positron_species = -1
-      photon_energy_min = EPSILON(1.0_num)
-      qed_start_time = 0.0_num
-      produce_pairs = .FALSE.
-      use_radiation_reaction = .TRUE.
-      produce_photons = .FALSE.
-      photon_dynamics = .FALSE.
+#endif
+      photon_energy_min_bremsstrahlung = EPSILON(1.0_num)
+      bremsstrahlung_start_time = 0.0_num
+      photon_weight = 1.0_num
+      produce_bremsstrahlung_photons = .FALSE.
+      bremsstrahlung_photon_dynamics = .FALSE.
+      use_plasma_screening = .FALSE.
     END IF
 #endif
 
-  END SUBROUTINE qed_deck_initialise
+END SUBROUTINE bremsstrahlung_deck_initialise
 
 
 
-  SUBROUTINE qed_deck_finalise
+  SUBROUTINE bremsstrahlung_deck_finalise
 
     INTEGER :: io, iu
-#ifdef PHOTONS
+#ifdef BREMSSTRAHLUNG
     LOGICAL :: exists
 
     IF (deck_state == c_ds_first) RETURN
 
-    IF (rank == 0 .AND. use_qed) THEN
-      INQUIRE(file=TRIM(qed_table_location)//'/hsokolov.table', exist=exists)
+    IF (rank == 0 .AND. use_bremsstrahlung) THEN
+      INQUIRE(file=TRIM(bremsstrahlung_table_location)//'/br1', exist=exists)
       IF (.NOT.exists) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Unable to find QED tables in the ', &
+          WRITE(io,*) 'Unable to find bremsstrahlung tables in the ', &
               'directory "' // TRIM(qed_table_location) // '"'
         END DO
         CALL abort_code(c_err_io_error)
       END IF
     END IF
 
-    IF (use_qed) need_random_state = .TRUE.
+    IF (use_bremsstrahlung) need_random_state = .TRUE.
 #else
-    IF (use_qed) THEN
+    IF (use_bremsstrahlung) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Unable to set "use_qed=T" in the "qed" block.'
-          WRITE(io,*) 'Please recompile with the -DPHOTONS preprocessor flag.'
+          WRITE(io,*) 'Unable to set "use_bremsstrahlung=T" in the', &
+              ' "bremsstrahlung" block.'
+          WRITE(io,*) 'Please recompile with the -DBREMSSTRAHLUNG', &
+              ' preprocessor flag.'
         END DO
       END IF
       CALL abort_code(c_err_pp_options_missing)
     END IF
 #endif
 
-  END SUBROUTINE qed_deck_finalise
+END SUBROUTINE bremsstrahlung_deck_finalise
 
 
 
-  SUBROUTINE qed_block_start
+  SUBROUTINE bremsstrahlung_block_start
 
-  END SUBROUTINE qed_block_start
-
-
-
-  SUBROUTINE qed_block_end
-
-  END SUBROUTINE qed_block_end
+  END SUBROUTINE bremsstrahlung_block_start
 
 
 
-  FUNCTION qed_block_handle_element(element, value) RESULT(errcode)
+  SUBROUTINE bremsstrahlung_block_end
+
+  END SUBROUTINE bremsstrahlung_block_end
+
+
+
+  FUNCTION bremsstrahlung_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
@@ -114,81 +115,107 @@ CONTAINS
     IF (deck_state == c_ds_first) RETURN
     IF (element == blank .OR. value == blank) RETURN
 
-    IF (str_cmp(element, 'use_qed') .OR. str_cmp(element, 'qed')) THEN
-      use_qed = as_logical_print(value, element, errcode)
+    IF (str_cmp(element, 'use_bremsstrahlung') &
+        .OR. str_cmp(element, 'bremsstrahlung')) THEN
+      use_bremsstrahlung = as_logical_print(value, element, errcode)
       RETURN
     END IF
 
-#ifdef PHOTONS
-    IF (str_cmp(element, 'qed_start_time')) THEN
-      qed_start_time = as_real_print(value, element, errcode)
+#ifdef BREMSSTRAHLUNG
+    IF (str_cmp(element, 'bremsstrahlung_start_time') &
+        .OR. str_cmp(element, 'start_time')) THEN
+      bremsstrahlung_start_time = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'produce_photons')) THEN
-      produce_photons = as_logical_print(value, element, errcode)
+    IF (str_cmp(element, 'produce_bremsstrahlung_photons') &
+        .OR. str_cmp(element, 'produce_photons')) THEN
+      produce_bremsstrahlung_photons = as_logical_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'use_radiation_reaction')) THEN
-      use_radiation_reaction = as_logical_print(value, element, errcode)
+    IF (str_cmp(element, 'use_bremsstrahlung_recoil') &
+        .OR. str_cmp(element, 'use_radiation_reaction')) THEN
+      use_bremsstrahlung_recoil = as_logical_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'photon_energy_min') &
-        .OR. str_cmp(element, 'min_photon_energy')) THEN
-      photon_energy_min = as_real_print(value, element, errcode)
+        .OR. str_cmp(element, 'min_photon_energy') &
+        .OR. str_cmp(element, 'photon_energy_min_bremsstrahlung')) THEN
+      photon_energy_min_bremsstrahlung = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'produce_pairs')) THEN
-      produce_pairs = as_logical_print(value, element, errcode)
+    IF (str_cmp(element, 'photon_weight') &
+        .OR. str_cmp(element, 'photon_weight_multiplier')) THEN
+      photon_weight = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'qed_table_location')) THEN
-      qed_table_location = TRIM(ADJUSTL(value))
+    IF (str_cmp(element, 'bremsstrahlung_table_location')) THEN
+      bremsstrahlung_table_location = TRIM(ADJUSTL(value))
       RETURN
     END IF
 
-    IF (str_cmp(element, 'photon_dynamics')) THEN
-      photon_dynamics = as_logical_print(value, element, errcode)
+    IF (str_cmp(element, 'photon_dynamics') &
+        .OR. str_cmp(element, 'bremsstrahlung_photon_dynamics')) THEN
+      bremsstrahlung_photon_dynamics = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_plasma_screening')) THEN
+      use_plasma_screening = as_logical_print(value, element, errcode)
       RETURN
     END IF
 
     errcode = c_err_unknown_element
 #endif
 
-  END FUNCTION qed_block_handle_element
+  END FUNCTION bremsstrahlung_block_handle_element
 
 
 
-  FUNCTION qed_block_check() RESULT(errcode)
+  FUNCTION bremsstrahlung_block_check() RESULT(errcode)
 
     INTEGER :: errcode
-#ifdef PHOTONS
+#ifdef BREMSSTRAHLUNG
     INTEGER :: io, iu
 #endif
 
     errcode = c_err_none
 
-#ifdef PHOTONS
-    IF (produce_pairs .AND. .NOT. photon_dynamics) THEN
+#ifdef BREMSSTRAHLUNG
+
+    IF (photon_weight <= 0.0_num) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'You cannot set photon_dynamics=F when ', &
-            'produce_pairs=T. Without ', 'photon motion, pair ', &
-            'creation will be incorrect.'
+          WRITE(io,*) 'You cannot set the photon_weight to less than or equal &
+              to zero. To prevent bremsstrahlung photons from being emitted, &
+              set use_bremsstrahlung = F.'
           WRITE(io,*) 'Code will terminate.'
         END DO
       END IF
       errcode = c_err_bad_value + c_err_terminate
     END IF
+
+    IF (photon_weight > 1.0_num) THEN
+      photon_weight = 1.0_num
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'You cannot set photon_weight > 1.0. This variable &
+              been truncated to 1.0.'
+        END DO
+      END IF
+    END IF
 #endif
 
-  END FUNCTION qed_block_check
+END FUNCTION bremsstrahlung_block_check
 
-END MODULE deck_qed_block
+END MODULE deck_bremsstrahlung_block
