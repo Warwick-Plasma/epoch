@@ -26,6 +26,10 @@
      - number_density_max for density_max
      - number_density_back for density_back
 
+ * Added a "zero_weight" alias for "tracer" in the species blocks. The use of
+   "tracer" has now been deprecated and will be removed in version 5.0.
+   At that time, the compiler flag will also be renamed.
+
 
 ## v4.14.0 to v4.15.0 (2019-01-15)
 
