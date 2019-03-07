@@ -163,9 +163,8 @@ CONTAINS
 
     IF (str_cmp(name, '(')) THEN
       as_parenthesis = c_paren_left_bracket
-    END IF
 
-    IF (str_cmp(name, ')')) THEN
+    ELSE IF (str_cmp(name, ')')) THEN
       as_parenthesis = c_paren_right_bracket
     END IF
 
@@ -487,27 +486,25 @@ CONTAINS
       RETURN
     END IF
 
-    IF (iblock%ptype == c_pt_deck_constant) THEN
-      const = deck_constant_list(iblock%value)
-      DO ipoint = 1, const%execution_stream%stack_point
-        CALL push_to_stack(output, const%execution_stream%entries(ipoint))
-      END DO
-    END IF
-
     IF (iblock%ptype /= c_pt_parenthesis &
         .AND. iblock%ptype /= c_pt_null) THEN
       last_block_type = iblock%ptype
     END IF
 
-    IF (iblock%ptype == c_pt_variable &
+    IF (iblock%ptype == c_pt_deck_constant) THEN
+      const = deck_constant_list(iblock%value)
+      DO ipoint = 1, const%execution_stream%stack_point
+        CALL push_to_stack(output, const%execution_stream%entries(ipoint))
+      END DO
+
+    ELSE IF (iblock%ptype == c_pt_variable &
         .OR. iblock%ptype == c_pt_constant &
         .OR. iblock%ptype == c_pt_default_constant &
         .OR. iblock%ptype == c_pt_species &
         .OR. iblock%ptype == c_pt_subset) THEN
       CALL push_to_stack(output, iblock)
-    END IF
 
-    IF (iblock%ptype == c_pt_parenthesis) THEN
+    ELSE IF (iblock%ptype == c_pt_parenthesis) THEN
       IF (iblock%value == c_paren_left_bracket) THEN
         CALL push_to_stack(stack, iblock)
       ELSE
@@ -529,14 +526,12 @@ CONTAINS
           END IF
         END DO
       END IF
-    END IF
 
-    IF (iblock%ptype == c_pt_function) THEN
+    ELSE IF (iblock%ptype == c_pt_function) THEN
       ! Just push functions straight onto the stack
       CALL push_to_stack(stack, iblock)
-    END IF
 
-    IF (iblock%ptype == c_pt_separator) THEN
+    ELSE IF (iblock%ptype == c_pt_separator) THEN
       DO
         CALL stack_snoop(stack, block2, 0)
         IF (block2%ptype /= c_pt_parenthesis) THEN
@@ -549,9 +544,8 @@ CONTAINS
           EXIT
         END IF
       END DO
-    END IF
 
-    IF (iblock%ptype == c_pt_operator) THEN
+    ELSE IF (iblock%ptype == c_pt_operator) THEN
       DO
         IF (stack%stack_point == 0) THEN
           ! stack is empty, so just push operator onto stack and
