@@ -214,6 +214,9 @@ DEFINES := $(DEFINE)
 # Use the Trident process for pair production
 #DEFINES += $(D)TRIDENT_PHOTONS
 
+# Include bremsstrahlung routines
+#DEFINES += $(D)BREMSSTRAHLUNG
+
 # Use Intel-specific 'mm_prefetch' calls to load next particle in the list
 # into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
 # WARNING: Under some circumstances this causes SEGFAULTS or incorrect results
@@ -289,9 +292,10 @@ PREPROFLAGS = $(DEFINES) $(D)_COMMIT='"$(COMMIT)"' $(D)_DATE=$(DATE) \
 FC_INFO := $(shell ${FC} --version 2>/dev/null \
     || ${FC} -V 2>/dev/null | grep '[a-zA-Z]' | head -n 1)
 
-SRCFILES = balance.F90 boundary.F90 calc_df.F90 collisions.F90 constants.F90 \
-  current_smooth.F90 custom_deck.f90 custom_laser.f90 custom_parser.f90 \
-  deck.F90 deck_boundaries_block.f90 deck_collision_block.F90 \
+SRCFILES = balance.F90 boundary.F90 bremsstrahlung.F90 calc_df.F90 \
+  collisions.F90 constants.F90 current_smooth.F90 custom_deck.f90 \
+	custom_laser.f90 custom_parser.f90 deck.F90 deck_boundaries_block.f90 \
+	deck_bremsstrahlung_block.F90 deck_collision_block.F90 \
   deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
   deck_fields_block.f90 deck_injector_block.f90 deck_io_block.F90 \
   deck_io_global_block.F90 deck_laser_block.f90 deck_part_from_file_block.F90 \
@@ -431,6 +435,7 @@ balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
   redblack_module.o timer.o utilities.o
 boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_id_hash.o \
   particle_temperature.o partlist.o utilities.o
+bremsstrahlung.o: bremsstrahlung.F90 calc_df.o partlist.o
 calc_df.o: calc_df.F90 boundary.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 constants.o: constants.F90 $(SDFMOD)
@@ -438,15 +443,18 @@ current_smooth.o: current_smooth.F90 boundary.o shape_functions.o shared_data.o
 custom_deck.o: custom_deck.f90 constants.o
 custom_laser.o: custom_laser.f90 shared_data.o
 custom_parser.o: custom_parser.f90 shared_data.o stack.o tokenizer_blocks.o
-deck.o: deck.F90 custom_deck.o deck_boundaries_block.o deck_collision_block.o \
-  deck_constant_block.o deck_control_block.o deck_dist_fn_block.o \
-  deck_fields_block.o deck_injector_block.o deck_io_block.o \
-  deck_io_global_block.o deck_laser_block.o deck_part_from_file_block.o \
-  deck_particle_probe_block.o deck_qed_block.o deck_species_block.o \
-  deck_stencil_block.o deck_subset_block.o deck_window_block.o photons.o \
-  strings.o utilities.o version_data.o $(SDFMOD)
+deck.o: deck.F90 bremsstrahlung.o custom_deck.o deck_boundaries_block.o \
+	deck_bremsstrahlung_block.o	deck_collision_block.o deck_constant_block.o \
+	deck_control_block.o deck_dist_fn_block.o deck_fields_block.o \
+	deck_injector_block.o deck_io_block.o deck_io_global_block.o \
+	deck_laser_block.o deck_part_from_file_block.o deck_particle_probe_block.o \
+	deck_qed_block.o deck_species_block.o deck_stencil_block.o \
+	deck_subset_block.o deck_window_block.o photons.o strings.o utilities.o \
+	version_data.o $(SDFMOD)
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
+deck_bremsstrahlung_block.o: deck_bremsstrahlung_block.F90 strings_advanced.o \
+	utilities.o
 deck_collision_block.o: deck_collision_block.F90 collisions.o strings_advanced.o
 deck_constant_block.o: deck_constant_block.f90 evaluate.o shunt.o
 deck_control_block.o: deck_control_block.F90 fields.o strings_advanced.o \

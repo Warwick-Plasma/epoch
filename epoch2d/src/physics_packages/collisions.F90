@@ -1500,7 +1500,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num

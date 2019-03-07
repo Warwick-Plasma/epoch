@@ -610,12 +610,18 @@ CONTAINS
 #ifdef PHOTONS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
             'Optical depth', '', it_output_real)
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         CALL write_particle_variable(c_dump_part_qed_energy, code, &
             'QED energy', 'J', it_output_real)
-#ifdef TRIDENT_PHOTONS
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
         CALL write_particle_variable(c_dump_part_opdepth_tri, code, &
             'Trident Depth', '', it_output_real)
 #endif
+#ifdef BREMSSTRAHLUNG
+        CALL write_particle_variable(c_dump_part_opdepth_brem, code, &
+            'Bremsstrahlung Depth', '', it_output_real)
 #endif
 #ifdef WORK_DONE_INTEGRATED
         CALL write_particle_variable(c_dump_part_work_x, code, &

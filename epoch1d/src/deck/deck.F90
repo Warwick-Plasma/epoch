@@ -35,7 +35,11 @@ MODULE deck
 #ifdef PHOTONS
   USE photons
 #endif
+#ifdef BREMSSTRAHLUNG
+  USE bremsstrahlung
+#endif
   USE deck_qed_block
+  USE deck_bremsstrahlung_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -343,6 +347,12 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_qed_variables())
 #endif
       errcode_deck = IOR(errcode_deck, qed_block_check())
+    END IF
+    IF (use_bremsstrahlung) THEN
+#ifdef BREMSSTRAHLUNG
+      errcode_deck = IOR(errcode_deck, check_bremsstrahlung_variables())
+#endif
+      errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
     END IF
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())

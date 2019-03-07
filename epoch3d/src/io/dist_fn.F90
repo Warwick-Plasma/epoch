@@ -416,7 +416,7 @@ CONTAINS
         particle_data(1:c_ndims) = current%part_pos
         IF (io_list(species)%species_type == c_species_id_photon) THEN
           particle_data(c_dir_gamma_m1) = 0.0_num
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           particle_data(c_dir_px) = px
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
@@ -552,7 +552,7 @@ CONTAINS
       particle_data(1:c_ndims) = current%part_pos
       IF (io_list(species)%species_type == c_species_id_photon) THEN
         particle_data(c_dir_gamma_m1) = 0.0_num
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         particle_data(c_dir_px) = px
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz

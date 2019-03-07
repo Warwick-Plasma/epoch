@@ -1248,14 +1248,14 @@ CONTAINS
 #endif
 
         ELSE IF (block_id(1:11) == 'qed energy/') THEN
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_qed_energy)
 #else
           IF (rank == 0) THEN
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with QED energies.'
-            PRINT*, 'Please recompile with the -DPHOTONS option.'
+            PRINT*, 'Please recompile with -DPHOTONS or -DBREMSSTRAHLUNG.'
           END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
@@ -1270,6 +1270,20 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with Trident optical depths.'
             PRINT*, 'Please recompile with the -DTRIDENT_PHOTONS option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:21) == 'bremsstrahlung depth/') THEN
+#ifdef BREMSSTRAHLUNG
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_bremsstrahlung)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with bremsstrahlung optical depths.'
+            PRINT*, 'Please recompile with the -DBREMSSTRAHLUNG option.'
           END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
@@ -1637,26 +1651,6 @@ CONTAINS
 
 
 
-  FUNCTION it_qed_energy(array, npart_this_it, start, param)
-
-    REAL(num) :: it_qed_energy
-    REAL(num), DIMENSION(:), INTENT(IN) :: array
-    INTEGER, INTENT(INOUT) :: npart_this_it
-    LOGICAL, INTENT(IN) :: start
-    INTEGER, INTENT(IN), OPTIONAL :: param
-    INTEGER :: ipart
-
-    DO ipart = 1, npart_this_it
-      iterator_list%particle_energy = array(ipart)
-      iterator_list => iterator_list%next
-    END DO
-
-    it_qed_energy = 0
-
-  END FUNCTION it_qed_energy
-
-
-
 #ifdef TRIDENT_PHOTONS
   FUNCTION it_optical_depth_trident(array, npart_this_it, start, param)
 
@@ -1676,6 +1670,50 @@ CONTAINS
 
   END FUNCTION it_optical_depth_trident
 #endif
+#endif
+
+
+
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+  FUNCTION it_qed_energy(array, npart_this_it, start, param)
+
+    REAL(num) :: it_qed_energy
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%particle_energy = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_qed_energy = 0
+
+  END FUNCTION it_qed_energy
+#endif
+
+
+
+#ifdef BREMSSTRAHLUNG
+  FUNCTION it_optical_depth_bremsstrahlung(array, npart_this_it, start, param)
+
+    REAL(num) :: it_optical_depth_bremsstrahlung
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_bremsstrahlung = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_optical_depth_bremsstrahlung = 0
+
+  END FUNCTION it_optical_depth_bremsstrahlung
 #endif
 
 
