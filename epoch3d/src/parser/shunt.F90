@@ -62,6 +62,9 @@ CONTAINS
     iblock%ptype = c_pt_bad
     iblock%value = 0
     iblock%numerical_data = 0.0_num
+#ifdef PARSER_DEBUG
+    iblock%text = TRIM(name)
+#endif
     work = 0
 
     IF (LEN(TRIM(name)) == 0) THEN
