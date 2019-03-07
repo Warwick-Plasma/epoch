@@ -1,8 +1,10 @@
 begin:control
 
   # global number of gridpoints
-  nx = 256 # in x
-  npart = nx * 256
+  nx = 64 # in x
+  ny = 6  # in y (keep even)
+  nz = 6  # in z (keep even)
+  npart = nx * ny * nz * 16
 
   # maximum number of iterations
   # set to -1 to run until finished
@@ -14,6 +16,10 @@ begin:control
   # size of domain
   x_min = 0
   x_max = 5.50e-3
+  y_min = -5.0e-6
+  y_max = 5.0e-6
+  z_min = -5.0e-6
+  z_max = 5.0e-6
 
   dt_multiplier = 0.8
 
@@ -58,6 +64,10 @@ begin:boundaries
 
   bc_x_min = simple_laser
   bc_x_max = simple_laser
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
 
 end:boundaries
 
@@ -69,13 +79,18 @@ begin:species
   frac = 0.8
   dump = T
 
-  # Put 10^5 electrons in the first three cells in x
-  rho = 1.0e5 * nx / (x_max - x_min)
-  rho = if (x lt 3*x_max/nx, density(Electron_Beam), 0)
+  # Put 10^5 electrons in the first cell in x, between y=0 and y=(1 cell width)
+  # (needs even ny), and z=0 and z=(1 cell width) (needs even nz)
+  rho = 1.0e5 * nx * ny * nz / ((x_max - x_min)*(y_max - y_min)*(z_max - z_min))
+  rho = if (x lt x_max/nx, density(Electron_Beam), 0)
+  rho = if (y gt 0, density(Electron_Beam), 0)
+  rho = if (y lt 1 * (y_max - y_min) / ny, density(Electron_Beam), 0 )
+  rho = if (z gt 0, density(Electron_Beam), 0)
+  rho = if (z lt 1 * (z_max - z_min) / nz, density(Electron_Beam), 0 )
 
   minrho = 1
   temp = 0
-  drift_x = 5.34e-19 # Momentum: 100 MeV/c = 5.34e-20
+  drift_x = 5.341e-20  # kgm/s (5.341e-20 = 100 MeV/c)
 
   # This identify tag is required to mark this species as the species which
   # undergoes bremsstrahlung radiation. It automatically sets the mass
@@ -90,8 +105,8 @@ begin:species
   # Target information
   name = Aluminium
   atomic_number = 13  #Must specify the atomic number for bremsstrahlung
-  mass = 49218
-  rho = 6.022e28
+  mass = 49218        
+  rho = 6.022e28      
 
   # name = Gold
   # atomic_number = 79
@@ -178,8 +193,8 @@ begin:probe
 
   name = electron_probe
 
-  point = 5.0e-3    # Point on the plane
-  normal = 1.0      # Vector normal to the plane
+  point = (5.0e-3, 0.0, 0.0)    # Point on the plane
+  normal = (1.0, 0.0, 0.0)      # Vector normal to the plane
 
   ek_min = 0.0
   ek_max = -1.0       # Set to -1 for no maximum ek to sample

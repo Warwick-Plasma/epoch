@@ -94,8 +94,8 @@ CONTAINS
       IF (species_list(ispecies)%species_type == c_species_id_electron &
           .AND. first_electron == -1) THEN
         first_electron = ispecies
-      END IF
-    END DO
+      ENDIF
+    ENDDO
 
     ! Print warning if there is no electron species
     IF (first_electron < 0) THEN
@@ -107,11 +107,11 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:electron".'
           WRITE(io,*) 'Bremsstrahlung routines require at least one species' , &
               ' of electrons.'
-        END DO
-      END IF
+        ENDDO
+      ENDIF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    END IF
+    ENDIF
 
 #ifdef PHOTONS
     ! photon_species can act as bremsstrahlung_photon_species if no
@@ -130,11 +130,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No photon species specified. Specify using ', &
               '"identify:brem_photon"'
-        END DO
-      END IF
+        ENDDO
+      ENDIF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    END IF
+    ENDIF
 
   END FUNCTION check_bremsstrahlung_variables
 
@@ -419,30 +419,32 @@ CONTAINS
   ! also calling the function which calculates the optical depth change, and
   ! calling the generate_photon subroutine. This subroutine serves as the main
   ! interface to the bremsstrahlung module for main-loop processes in
-  ! epoch2d.F90
+  ! epoch3d.F90
   SUBROUTINE bremsstrahlung_update_optical_depth
 
-    INTEGER :: ispecies, iZ, Z_temp, iArray, jArray
+    INTEGER :: ispecies, iZ, Z_temp, iArray, jArray, kArray
     TYPE(particle), POINTER :: current
-    REAL(num), ALLOCATABLE :: grid_num_density_electron_temp(:,:)
-    REAL(num), ALLOCATABLE :: grid_num_density_electron(:,:)
-    REAL(num), ALLOCATABLE :: grid_temperature_electron_temp(:,:)
-    REAL(num), ALLOCATABLE :: grid_temperature_electron(:,:)
-    REAL(num), ALLOCATABLE :: grid_root_temp_over_num(:,:)
-    REAL(num) :: grid_num_density_ion(1-ng:nx+ng, 1-ng:ny+ng)
+    REAL(num), ALLOCATABLE :: grid_num_density_electron_temp(:,:,:)
+    REAL(num), ALLOCATABLE :: grid_num_density_electron(:,:,:)
+    REAL(num), ALLOCATABLE :: grid_temperature_electron_temp(:,:,:)
+    REAL(num), ALLOCATABLE :: grid_temperature_electron(:,:,:)
+    REAL(num), ALLOCATABLE :: grid_root_temp_over_num(:,:,:)
+    REAL(num) :: grid_num_density_ion(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng)
     REAL(num) :: part_ux, part_uy, part_uz, gamma_rel
-    REAL(num) :: part_x, part_y, part_E, part_ni, part_v
+    REAL(num) :: part_x, part_y, part_z, part_E, part_ni, part_v
     REAL(num) :: part_root_Te_over_ne, plasma_factor
 
     ! Calculate electron number density and temperature, summed over all
     ! electron species
     IF (use_plasma_screening) THEN
 
-      ALLOCATE(grid_num_density_electron_temp(1-ng:nx+ng, 1-ng:ny+ng))
-      ALLOCATE(grid_num_density_electron(1-ng:nx+ng, 1-ng:ny+ng))
-      ALLOCATE(grid_temperature_electron_temp(1-ng:nx+ng, 1-ng:ny+ng))
-      ALLOCATE(grid_temperature_electron(1-ng:nx+ng, 1-ng:ny+ng))
-      ALLOCATE(grid_root_temp_over_num(1-ng:nx+ng, 1-ng:ny+ng))
+      ALLOCATE(grid_num_density_electron_temp(1-ng:nx+ng, 1-ng:ny+ng, &
+          1-ng:nz+ng))
+      ALLOCATE(grid_num_density_electron(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+      ALLOCATE(grid_temperature_electron_temp(1-ng:nx+ng, 1-ng:ny+ng, &
+          1-ng:nz+ng))
+      ALLOCATE(grid_temperature_electron(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+      ALLOCATE(grid_root_temp_over_num(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
       grid_num_density_electron = 0.0_num
       grid_temperature_electron = 0.0_num
 
@@ -462,17 +464,21 @@ CONTAINS
           grid_num_density_electron
 
       ! Create a grid of sqrt(Te/ne) values
-      DO jArray = 1-ng, ny+ng
-        DO iArray = 1-ng, nx+ng
-          IF (grid_num_density_electron(iArray, jArray) < 1.0e-10_num) THEN
-            grid_root_temp_over_num(iArray, jArray) = 0.0_num
-          ELSE IF (grid_temperature_electron(iArray, jArray) < 1.0e-10_num) THEN
-            grid_root_temp_over_num(iArray, jArray) = 0.0_num
-          ELSE
-            grid_root_temp_over_num(iArray, jArray) = &
-                SQRT(grid_temperature_electron(iArray, jArray) / &
-                grid_num_density_electron(iArray, jArray))
-          END IF
+      DO kArray = 1-ng, nz+ng
+        DO jArray = 1-ng, ny+ng
+          DO iArray = 1-ng, nx+ng
+            IF (grid_num_density_electron(iArray, jArray, kArray) < &
+                1.0e-10_num) THEN
+              grid_root_temp_over_num(iArray, jArray, kArray) = 0.0_num
+            ELSE IF (grid_temperature_electron(iArray, jArray, kArray) < &
+                1.0e-10_num) THEN
+              grid_root_temp_over_num(iArray, jArray, kArray) = 0.0_num
+            ELSE
+              grid_root_temp_over_num(iArray, jArray, kArray) = &
+                  SQRT(grid_temperature_electron(iArray, jArray, kArray) / &
+                  grid_num_density_electron(iArray, jArray, kArray))
+            END IF
+          END DO
         END DO
       END DO
 
@@ -531,14 +537,15 @@ CONTAINS
             !Get number density at electron
             part_x = current%part_pos(1) - x_grid_min_local
             part_y = current%part_pos(2) - y_grid_min_local
-            CALL grid_centred_var_at_particle(part_x, part_y, part_ni, iZ, &
-                grid_num_density_ion)
+            part_z = current%part_pos(3) - z_grid_min_local
+            CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni,&
+                iZ, grid_num_density_ion)
 
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
 
               !Obtain extra parameters needed for plasma screening model
-              CALL grid_centred_var_at_particle(part_x, part_y, &
+              CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
                   part_root_Te_over_ne, iZ, grid_root_temp_over_num)
 
               plasma_factor = get_plasma_factor( &
@@ -701,20 +708,22 @@ CONTAINS
 
 
 
-  ! Calculates the value of a grid-centred variable part_var stored in the grid
-  ! grid_var, averaged over the particle shape for a particle at position
-  ! (part_x, part_y) and of species current_species
-  SUBROUTINE grid_centred_var_at_particle(part_x, part_y, part_var, &
+  ! Calculates the value of a grid-centred variable stored in grid_var, averaged
+  ! over the particle shape for a particle at position (part_x, part_y, part_z)
+  ! and of species current_species
+  SUBROUTINE grid_centred_var_at_particle(part_x, part_y, part_z, part_var, &
       current_species, grid_var)
 
-    REAL(num), INTENT(in) :: part_x, part_y
+    REAL(num), INTENT(in) :: part_x, part_y, part_z
     INTEGER, INTENT(in) :: current_species
-    REAL(num), INTENT(in) :: grid_var(1-ng:nx+ng, 1-ng:ny+ng)
+    REAL(num), INTENT(in) :: grid_var(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng)
     REAL(num), INTENT(out) :: part_var
-    INTEGER :: cell_x1, cell_y1
-    REAL(num) :: cell_x_r, cell_y_r
-    REAL(num) :: cell_frac_x, cell_frac_y
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy
+    INTEGER :: cell_x1, cell_y1, cell_z1
+    REAL(num) :: cell_x_r, cell_y_r, cell_z_r
+    REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
+
+    ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
@@ -730,9 +739,11 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     cell_x_r = part_x / dx - 0.5_num
     cell_y_r = part_y / dy - 0.5_num
+    cell_z_r = part_z / dz - 0.5_num
 #else
     cell_x_r = part_x / dx
     cell_y_r = part_y / dy
+    cell_z_r = part_z / dz
 #endif
     cell_x1 = FLOOR(cell_x_r + 0.5_num)
     cell_frac_x = REAL(cell_x1, num) - cell_x_r
@@ -740,54 +751,19 @@ CONTAINS
     cell_y1 = FLOOR(cell_y_r + 0.5_num)
     cell_frac_y = REAL(cell_y1, num) - cell_y_r
     cell_y1 = cell_y1 + 1
+    cell_z1 = FLOOR(cell_z_r + 0.5_num)
+    cell_frac_z = REAL(cell_z1, num) - cell_z_r
+    cell_z1 = cell_z1 + 1
 
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
-    part_var = &
-          gy(-2) * (gx(-2) * grid_var(cell_x1-2,cell_y1-2) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1-2) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-2) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-2) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1-2)) &
-        + gy(-1) * (gx(-2) * grid_var(cell_x1-2,cell_y1-1) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1-1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-1) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1-1)) &
-        + gy( 0) * (gx(-2) * grid_var(cell_x1-2,cell_y1  ) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1  ) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  ) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1  )) &
-        + gy( 1) * (gx(-2) * grid_var(cell_x1-2,cell_y1+1) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1+1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1+1)) &
-        + gy( 2) * (gx(-2) * grid_var(cell_x1-2,cell_y1+2) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1+2) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+2) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+2) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1+2))
+#include "bspline3/part_var.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
-    part_var = &
-          gy( 0) * (gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  )) &
-        + gy( 1) * (gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1))
+#include "tophat/part_var.inc"
 #else
 #include "triangle/gx.inc"
-    part_var = &
-          gy(-1) * (gx(-1) * grid_var(cell_x1-1,cell_y1-1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-1)) &
-        + gy( 0) * (gx(-1) * grid_var(cell_x1-1,cell_y1  ) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  )) &
-        + gy( 1) * (gx(-1) * grid_var(cell_x1-1,cell_y1+1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1))
+#include "triangle/part_var.inc"
 #endif
     part_var = fac*part_var
 
