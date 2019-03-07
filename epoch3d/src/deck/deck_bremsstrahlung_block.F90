@@ -67,7 +67,7 @@ END SUBROUTINE bremsstrahlung_deck_initialise
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Unable to find bremsstrahlung tables in the ', &
-              'directory "' // TRIM(qed_table_location) // '"'
+              'directory "' // TRIM(bremsstrahlung_table_location) // '"'
         END DO
         CALL abort_code(c_err_io_error)
       END IF
@@ -186,16 +186,15 @@ END SUBROUTINE bremsstrahlung_deck_finalise
     errcode = c_err_none
 
 #ifdef BREMSSTRAHLUNG
-
     IF (photon_weight <= 0.0_num) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'You cannot set the photon_weight to less than or equal &
-              to zero. To prevent bremsstrahlung photons from being emitted, &
-              set use_bremsstrahlung = F.'
+          WRITE(io,*) 'You cannot set the photon_weight to less than or ', &
+              'equal to zero. To prevent bremsstrahlung photons from being ', &
+              'emitted, set use_bremsstrahlung = F.'
           WRITE(io,*) 'Code will terminate.'
         END DO
       END IF
@@ -209,8 +208,8 @@ END SUBROUTINE bremsstrahlung_deck_finalise
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'You cannot set photon_weight > 1.0. This variable &
-              been truncated to 1.0.'
+          WRITE(io,*) 'You cannot set photon_weight > 1.0. This variable ', &
+              'has been truncated to 1.0.'
         END DO
       END IF
     END IF
