@@ -1196,7 +1196,7 @@ CONTAINS
       CALL push_to_stack(stack, iblock)
       IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
-      CALL tokenize(value, stack, errcode)
+      CALL tokenize(value, stack, errcode, species_id)
       IF (ABS(mult - 1.0_num) > c_tiny) &
           CALL tokenize(mult_string, stack, errcode)
 
