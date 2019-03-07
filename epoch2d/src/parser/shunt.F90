@@ -366,11 +366,12 @@ CONTAINS
 
 
 
-  SUBROUTINE tokenize(expression, output, err)
+  SUBROUTINE tokenize(expression, output, err, ispecies)
 
     CHARACTER(LEN=*), INTENT(IN) :: expression
     TYPE(primitive_stack), INTENT(INOUT) :: output
     INTEGER, INTENT(INOUT) :: err
+    INTEGER, INTENT(IN), OPTIONAL :: ispecies
     LOGICAL :: maybe_e
 
     CHARACTER(LEN=500) :: current
@@ -428,6 +429,8 @@ CONTAINS
 #endif
     IF (err /= c_err_none) RETURN
 
+    CALL fixup_species_functions(current, stack, output, ispecies)
+
     DO i = 1, stack%stack_point
       CALL pop_to_stack(stack, output)
     END DO
@@ -447,6 +450,53 @@ CONTAINS
     CALL stack_sanity_check(output)
 
   END SUBROUTINE tokenize
+
+
+
+  SUBROUTINE fixup_species_functions(current, stack, output, ispecies)
+
+    ! This routine adds the current species as an argument to any functions
+    ! that failed to supply one. If no species is available, it exits with
+    ! an error
+
+    CHARACTER(LEN=*), INTENT(IN) :: current
+    TYPE(primitive_stack), INTENT(INOUT) :: stack, output
+    INTEGER, INTENT(IN), OPTIONAL :: ispecies
+    TYPE(stack_element) :: iblock, block2
+    INTEGER :: io, iu
+    LOGICAL :: error
+
+    IF (PRESENT(ispecies)) THEN
+      iblock%ptype = c_pt_species
+      iblock%value = ispecies
+    END IF
+
+    error = .FALSE.
+    DO io = 1, stack%stack_point
+      CALL stack_snoop(stack, block2, 0)
+      IF (block2%ptype == c_pt_function) THEN
+        IF (PRESENT(ispecies)) THEN
+          CALL push_to_stack(output, iblock)
+          CALL add_function_to_stack(block2%value, stack, output)
+        ELSE
+          error = .TRUE.
+        END IF
+      END IF
+    END DO
+
+    IF (error) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Missing function arguments in expression ', TRIM(current)
+        END DO
+        CALL abort_code(c_err_bad_value)
+      END IF
+    END IF
+
+  END SUBROUTINE fixup_species_functions
 
 
 
