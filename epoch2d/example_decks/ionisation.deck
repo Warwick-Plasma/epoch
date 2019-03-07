@@ -39,7 +39,6 @@ begin:species
   name = Electron
   charge = -1.0
   mass = 1.0
-  zero_weight = T
   npart = nx * ny * 5
 end:species
 
@@ -48,7 +47,6 @@ begin:species
   name = Palladium
   charge = 22.0
   mass = 1836.2 * 105.0
-  zero_weight = T
 
   number_density = den_max
   temp = 1e6
