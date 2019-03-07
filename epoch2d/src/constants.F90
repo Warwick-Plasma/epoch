@@ -212,7 +212,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_split_part_after_push = 2**3
   INTEGER(i8), PARAMETER :: c_def_per_particle_weight = 2**4
   INTEGER(i8), PARAMETER :: c_def_particle_count_update = 2**5
-  INTEGER(i8), PARAMETER :: c_def_tracer_particles = 2**6
+  INTEGER(i8), PARAMETER :: c_def_zero_weight_particles = 2**6
   INTEGER(i8), PARAMETER :: c_def_particle_probes = 2**7
   INTEGER(i8), PARAMETER :: c_def_per_particle_chargemass = 2**8
   INTEGER(i8), PARAMETER :: c_def_particle_ionise = 2**9

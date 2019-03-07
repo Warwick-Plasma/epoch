@@ -599,11 +599,11 @@ CONTAINS
     END IF
 
     ! *************************************************************
-    ! This section sets properties for tracer particles
+    ! This section sets properties for zero_weight particles
     ! *************************************************************
-    IF (str_cmp(element, 'tracer')) THEN
+    IF (str_cmp(element, 'zero_weight')) THEN
 #ifndef NO_TRACER_PARTICLES
-      species_list(species_id)%tracer = &
+      species_list(species_id)%zero_weight = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
