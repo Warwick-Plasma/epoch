@@ -730,7 +730,7 @@ CONTAINS
       END IF
 
       CALL push_on_eval(val_local)
-      err = err_simplify
+      err = c_err_none
       RETURN
     END IF
 
@@ -783,7 +783,7 @@ CONTAINS
       END IF
 
       CALL push_on_eval(convert * val_local)
-      err = err_simplify
+      err = c_err_none
       RETURN
     END IF
 

@@ -350,6 +350,7 @@ CONTAINS
     REAL(num), POINTER :: array(:,:)
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
+    LOGICAL, SAVE :: warn_tracer = .TRUE.
     INTEGER :: i, j, io, iu, n
     TYPE(initial_condition_block), POINTER :: ic
 
@@ -592,11 +593,11 @@ CONTAINS
     END IF
 
     ! *************************************************************
-    ! This section sets properties for tracer particles
+    ! This section sets properties for zero_current particles
     ! *************************************************************
-    IF (str_cmp(element, 'tracer')) THEN
+    IF (str_cmp(element, 'zero_current') .OR. str_cmp(element, 'tracer')) THEN
 #ifndef NO_TRACER_PARTICLES
-      species_list(species_id)%tracer = &
+      species_list(species_id)%zero_current = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
@@ -604,6 +605,23 @@ CONTAINS
         extended_error_string = '-DNO_TRACER_PARTICLES'
       END IF
 #endif
+      IF (warn_tracer .AND. rank == 0 .AND. str_cmp(element, 'tracer')) THEN
+        warn_tracer = .FALSE.
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'The "tracer" species do not behave in the way that ', &
+                      'many users expect them to'
+          WRITE(io,*) 'and can lead to unexpected and undesirable results. ', &
+                      'Please see the'
+          WRITE(io,*) 'documentation for further details.'
+          WRITE(io,*) 'For this reason, the "tracer" flag is being renamed ', &
+                      'to "zero_current".'
+          WRITE(io,*) 'As of version 5.0, the "tracer" flag will be removed ', &
+                      'entirely.'
+          WRITE(io,*)
+        END DO
+      END IF
       RETURN
     END IF
 
@@ -1189,7 +1207,7 @@ CONTAINS
       CALL push_to_stack(stack, iblock)
       IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
-      CALL tokenize(value, stack, errcode)
+      CALL tokenize(value, stack, errcode, species_id)
       IF (ABS(mult - 1.0_num) > c_tiny) &
           CALL tokenize(mult_string, stack, errcode)
 

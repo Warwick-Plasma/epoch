@@ -420,7 +420,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: dist_fn_range(3)
 
 #ifndef NO_TRACER_PARTICLES
-    LOGICAL :: tracer
+    LOGICAL :: zero_current
 #endif
 
     ! ID code which identifies if a species is of a special type

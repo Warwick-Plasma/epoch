@@ -68,7 +68,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_m  = io_list(ispecies)%mass
@@ -153,7 +153,7 @@ CONTAINS
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -266,7 +266,7 @@ CONTAINS
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -451,7 +451,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_q  = io_list(ispecies)%charge
@@ -529,7 +529,7 @@ CONTAINS
       IF (spec_sum &
           .AND. io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       wdata = io_list(ispecies)%weight
@@ -589,7 +589,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
 
@@ -645,7 +645,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       wdata = io_list(ispecies)%weight
@@ -730,7 +730,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
@@ -853,7 +853,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
@@ -978,7 +978,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -1057,7 +1057,7 @@ CONTAINS
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
 #ifndef NO_TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
       part_mc = c * species_list(ispecies)%mass
@@ -1147,7 +1147,7 @@ CONTAINS
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
       part_mc = c * species_list(ispecies)%mass
