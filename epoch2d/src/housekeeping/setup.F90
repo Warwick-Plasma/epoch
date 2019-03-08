@@ -401,7 +401,7 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
 #ifndef NO_TRACER_PARTICLES
-      species_list(ispecies)%tracer = .FALSE.
+      species_list(ispecies)%zero_current = .FALSE.
 #endif
 #ifndef NO_PARTICLE_PROBES
       NULLIFY(species_list(ispecies)%attached_probes)
