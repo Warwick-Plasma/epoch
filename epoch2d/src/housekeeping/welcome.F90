@@ -192,9 +192,9 @@ CONTAINS
     defines = IOR(defines, c_def_per_particle_weight)
 #endif
 #ifdef NO_TRACER_PARTICLES
-    WRITE(*,*) 'No zero-weight particle support -DNO_TRACER_PARTICLES'
+    WRITE(*,*) 'No zero-current particle support -DNO_TRACER_PARTICLES'
 #else
-    defines = IOR(defines, c_def_zero_weight_particles)
+    defines = IOR(defines, c_def_zero_current_particles)
 #endif
 #ifdef NO_PARTICLE_PROBES
     WRITE(*,*) 'No particle probe support -DNO_PARTICLE_PROBES'

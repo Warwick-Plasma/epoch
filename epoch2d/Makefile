@@ -185,9 +185,9 @@ DEFINES := $(DEFINE)
 # real particles.
 #DEFINES += $(D)PER_SPECIES_WEIGHT
 
-# Don't enable support for zero-weight particles (in order to make the particle
+# Don't enable support for zero-current particles (in order to make the particle
 # push slightly faster).
-# Zero-weight particles which behave like normal particles but do not affect
+# Zero-current particles which behave like normal particles but do not affect
 # the field, current or each other.
 #DEFINES += $(D)NO_TRACER_PARTICLES
 

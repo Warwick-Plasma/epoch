@@ -594,11 +594,11 @@ CONTAINS
     END IF
 
     ! *************************************************************
-    ! This section sets properties for zero_weight particles
+    ! This section sets properties for zero_current particles
     ! *************************************************************
-    IF (str_cmp(element, 'zero_weight') .OR. str_cmp(element, 'tracer')) THEN
+    IF (str_cmp(element, 'zero_current') .OR. str_cmp(element, 'tracer')) THEN
 #ifndef NO_TRACER_PARTICLES
-      species_list(species_id)%zero_weight = &
+      species_list(species_id)%zero_current = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
@@ -617,7 +617,7 @@ CONTAINS
                       'Please see the'
           WRITE(io,*) 'documentation for further details.'
           WRITE(io,*) 'For this reason, the "tracer" flag is being renamed ', &
-                      'to "zero_weight".'
+                      'to "zero_current".'
           WRITE(io,*) 'As of version 5.0, the "tracer" flag will be removed ', &
                       'entirely.'
           WRITE(io,*)
