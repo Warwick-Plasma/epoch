@@ -1,3 +1,36 @@
+## v4.15.0 to v4.16.0
+
+ * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
+
+ * Add NO_MPI3 compiler flag to disable MPI-3 features such as the
+   MPI_TYPE_SIZE_X routine. This allows the code to be compiled against
+   older versions of the MPI library.
+
+ * Added collisions block option "use_nanbu". If set to true then the
+   scattering algorithm of Nanbu, with relativistic corrections by
+   Perez will be used in the collisions module. If false, the previous
+   Sentoku-Kemp algorithm will be used. Due to known issues in the Sentoku-Kemp
+   method for some test problems, the Nanbu method is now the default.
+
+ * Bugfixes for Sentoku-Kemp collisions. These changes will affect the results
+   for some problems. Note that some test problems continue to demonstrate
+   unexpected behaviour and users are advised to use the Nanbu method instead.
+
+ * Added "number_density" aliases for "density" in the species and injector
+   blocks.
+   These include:
+     - number_density for density
+     - promote_number_density for promote_density
+     - demote_number_density for demote_density
+     - number_density_min for density_min
+     - number_density_max for density_max
+     - number_density_back for density_back
+
+ * Added a "zero_current" alias for "tracer" in the species blocks. The use of
+   "tracer" has now been deprecated and will be removed in version 5.0.
+   At that time, the compiler flag will also be renamed.
+
+
 ## v4.14.0 to v4.15.0 (2019-01-15)
 
  * Enabled averaging of poynt_flux and ekflux variables

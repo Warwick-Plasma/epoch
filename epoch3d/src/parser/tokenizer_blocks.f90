@@ -122,118 +122,282 @@ CONTAINS
     as_constant = c_prc_not_this_type
 
     ! Numeric constants
-    IF (str_cmp(name, 'pi')) as_constant = c_const_pi
-    IF (str_cmp(name, 'kb')) as_constant = c_const_kb
-    IF (str_cmp(name, 'me')) as_constant = c_const_me
-    IF (str_cmp(name, 'qe')) as_constant = c_const_qe
-    IF (str_cmp(name, 'c')) as_constant = c_const_c
-    IF (str_cmp(name, 'eps0') .OR. str_cmp(name, 'epsilon0') &
-        .OR. str_cmp(name, 'epsilonnought')) as_constant = c_const_eps0
-    IF (str_cmp(name, 'mu0') &
-        .OR. str_cmp(name, 'munought')) as_constant = c_const_mu0
-    IF (str_cmp(name, 'ev')) as_constant = c_const_ev
-    IF (str_cmp(name, 'kev')) as_constant = c_const_kev
-    IF (str_cmp(name, 'mev')) as_constant = c_const_mev
-    IF (str_cmp(name, 'milli')) as_constant = c_const_milli
-    IF (str_cmp(name, 'micro') &
+    IF (str_cmp(name, 'pi')) THEN
+      as_constant = c_const_pi
+
+    ELSE IF (str_cmp(name, 'kb')) THEN
+      as_constant = c_const_kb
+
+    ELSE IF (str_cmp(name, 'me')) THEN
+      as_constant = c_const_me
+
+    ELSE IF (str_cmp(name, 'qe')) THEN
+      as_constant = c_const_qe
+
+    ELSE IF (str_cmp(name, 'c')) THEN
+      as_constant = c_const_c
+
+    ELSE IF (str_cmp(name, 'eps0') &
+        .OR. str_cmp(name, 'epsilon0') &
+        .OR. str_cmp(name, 'epsilonnought')) THEN
+      as_constant = c_const_eps0
+
+    ELSE IF (str_cmp(name, 'mu0') &
+        .OR. str_cmp(name, 'munought')) THEN
+      as_constant = c_const_mu0
+
+    ELSE IF (str_cmp(name, 'ev')) THEN
+      as_constant = c_const_ev
+
+    ELSE IF (str_cmp(name, 'kev')) THEN
+      as_constant = c_const_kev
+
+    ELSE IF (str_cmp(name, 'mev')) THEN
+      as_constant = c_const_mev
+
+    ELSE IF (str_cmp(name, 'milli')) THEN
+      as_constant = c_const_milli
+
+    ELSE IF (str_cmp(name, 'micro') &
         .OR. str_cmp(name, 'micron') &
         .OR. str_cmp(name, 'cm3') &
-        .OR. str_cmp(name, 'cc')) as_constant = c_const_micro
-    IF (str_cmp(name, 'nano')) as_constant = c_const_nano
-    IF (str_cmp(name, 'pico')) as_constant = c_const_pico
-    IF (str_cmp(name, 'femto')) as_constant = c_const_femto
-    IF (str_cmp(name, 'atto')) as_constant = c_const_atto
-    IF (str_cmp(name, 'time')) as_constant = c_const_time
-    IF (str_cmp(name, 'x'))  as_constant = c_const_x
-    IF (str_cmp(name, 'y'))  as_constant = c_const_y
-    IF (str_cmp(name, 'z'))  as_constant = c_const_z
-    IF (str_cmp(name, 'xb')) as_constant = c_const_xb
-    IF (str_cmp(name, 'yb')) as_constant = c_const_yb
-    IF (str_cmp(name, 'zb')) as_constant = c_const_zb
-    IF (str_cmp(name, 'ix')) as_constant = c_const_ix
-    IF (str_cmp(name, 'iy')) as_constant = c_const_iy
-    IF (str_cmp(name, 'iz')) as_constant = c_const_iz
-    IF (str_cmp(name, 'nx')) as_constant = c_const_nx
-    IF (str_cmp(name, 'ny')) as_constant = c_const_ny
-    IF (str_cmp(name, 'nz')) as_constant = c_const_nz
-    IF (str_cmp(name, 'dx')) as_constant = c_const_dx
-    IF (str_cmp(name, 'dy')) as_constant = c_const_dy
-    IF (str_cmp(name, 'dz')) as_constant = c_const_dz
-    IF (str_cmp(name, 'x_min') .OR. str_cmp(name, 'x_start')) &
-        as_constant = c_const_x_min
-    IF (str_cmp(name, 'y_min') .OR. str_cmp(name, 'y_start')) &
-        as_constant = c_const_y_min
-    IF (str_cmp(name, 'z_min') .OR. str_cmp(name, 'z_start')) &
-        as_constant = c_const_z_min
-    IF (str_cmp(name, 'x_max') .OR. str_cmp(name, 'x_end')) &
-        as_constant = c_const_x_max
-    IF (str_cmp(name, 'y_max') .OR. str_cmp(name, 'y_end')) &
-        as_constant = c_const_y_max
-    IF (str_cmp(name, 'z_max') .OR. str_cmp(name, 'z_end')) &
-        as_constant = c_const_z_max
-    IF (str_cmp(name, 'lengthx') .OR. str_cmp(name, 'length_x')) &
-        as_constant = c_const_lx
-    IF (str_cmp(name, 'lengthy') .OR. str_cmp(name, 'length_y')) &
-        as_constant = c_const_ly
-    IF (str_cmp(name, 'lengthz') .OR. str_cmp(name, 'length_z')) &
-        as_constant = c_const_lz
-    IF (str_cmp(name, 'r_xy')) as_constant = c_const_r_xy
-    IF (str_cmp(name, 'r_yz')) as_constant = c_const_r_yz
-    IF (str_cmp(name, 'r_xz')) as_constant = c_const_r_xz
-    IF (str_cmp(name, 'r_xyz')) as_constant = c_const_r_xyz
-    IF (str_cmp(name, 'nprocx')) as_constant = c_const_nprocx
-    IF (str_cmp(name, 'nprocy')) as_constant = c_const_nprocy
-    IF (str_cmp(name, 'nprocz')) as_constant = c_const_nprocz
-    IF (str_cmp(name, 'nsteps')) as_constant = c_const_nsteps
-    IF (str_cmp(name, 't_end')) as_constant = c_const_t_end
-    IF (str_cmp(name, 'ndims')) as_constant = c_const_ndims
+        .OR. str_cmp(name, 'cc')) THEN
+      as_constant = c_const_micro
+
+    ELSE IF (str_cmp(name, 'nano')) THEN
+      as_constant = c_const_nano
+
+    ELSE IF (str_cmp(name, 'pico')) THEN
+      as_constant = c_const_pico
+
+    ELSE IF (str_cmp(name, 'femto')) THEN
+      as_constant = c_const_femto
+
+    ELSE IF (str_cmp(name, 'atto')) THEN
+      as_constant = c_const_atto
+
+    ELSE IF (str_cmp(name, 'time')) THEN
+      as_constant = c_const_time
+
+    ELSE IF (str_cmp(name, 'x')) THEN
+      IF (stagger(c_dir_x,tokenize_stagger)) THEN
+        as_constant = c_const_xb
+      ELSE
+        as_constant = c_const_x
+      END IF
+
+    ELSE IF (str_cmp(name, 'y')) THEN
+      IF (stagger(c_dir_y,tokenize_stagger)) THEN
+        as_constant = c_const_yb
+      ELSE
+        as_constant = c_const_y
+      END IF
+
+    ELSE IF (str_cmp(name, 'z')) THEN
+      IF (stagger(c_dir_z,tokenize_stagger)) THEN
+        as_constant = c_const_zb
+      ELSE
+        as_constant = c_const_z
+      END IF
+
+    ELSE IF (str_cmp(name, 'xb')) THEN
+      as_constant = c_const_xb
+
+    ELSE IF (str_cmp(name, 'yb')) THEN
+      as_constant = c_const_yb
+
+    ELSE IF (str_cmp(name, 'zb')) THEN
+      as_constant = c_const_zb
+
+    ELSE IF (str_cmp(name, 'ix')) THEN
+      as_constant = c_const_ix
+
+    ELSE IF (str_cmp(name, 'iy')) THEN
+      as_constant = c_const_iy
+
+    ELSE IF (str_cmp(name, 'iz')) THEN
+      as_constant = c_const_iz
+
+    ELSE IF (str_cmp(name, 'nx')) THEN
+      as_constant = c_const_nx
+
+    ELSE IF (str_cmp(name, 'ny')) THEN
+      as_constant = c_const_ny
+
+    ELSE IF (str_cmp(name, 'nz')) THEN
+      as_constant = c_const_nz
+
+    ELSE IF (str_cmp(name, 'dx')) THEN
+      as_constant = c_const_dx
+
+    ELSE IF (str_cmp(name, 'dy')) THEN
+      as_constant = c_const_dy
+
+    ELSE IF (str_cmp(name, 'dz')) THEN
+      as_constant = c_const_dz
+
+    ELSE IF (str_cmp(name, 'x_min') .OR. str_cmp(name, 'x_start')) THEN
+      as_constant = c_const_x_min
+
+    ELSE IF (str_cmp(name, 'y_min') .OR. str_cmp(name, 'y_start')) THEN
+      as_constant = c_const_y_min
+
+    ELSE IF (str_cmp(name, 'z_min') .OR. str_cmp(name, 'z_start')) THEN
+      as_constant = c_const_z_min
+
+    ELSE IF (str_cmp(name, 'x_max') .OR. str_cmp(name, 'x_end')) THEN
+      as_constant = c_const_x_max
+
+    ELSE IF (str_cmp(name, 'y_max') .OR. str_cmp(name, 'y_end')) THEN
+      as_constant = c_const_y_max
+
+    ELSE IF (str_cmp(name, 'z_max') .OR. str_cmp(name, 'z_end')) THEN
+      as_constant = c_const_z_max
+
+    ELSE IF (str_cmp(name, 'lengthx') .OR. str_cmp(name, 'length_x')) THEN
+      as_constant = c_const_lx
+
+    ELSE IF (str_cmp(name, 'lengthy') .OR. str_cmp(name, 'length_y')) THEN
+      as_constant = c_const_ly
+
+    ELSE IF (str_cmp(name, 'lengthz') .OR. str_cmp(name, 'length_z')) THEN
+      as_constant = c_const_lz
+
+    ELSE IF (str_cmp(name, 'r_xy')) THEN
+      as_constant = c_const_r_xy
+
+    ELSE IF (str_cmp(name, 'r_yz')) THEN
+      as_constant = c_const_r_yz
+
+    ELSE IF (str_cmp(name, 'r_xz')) THEN
+      as_constant = c_const_r_xz
+
+    ELSE IF (str_cmp(name, 'r_xyz')) THEN
+      as_constant = c_const_r_xyz
+
+    ELSE IF (str_cmp(name, 'nprocx')) THEN
+      as_constant = c_const_nprocx
+
+    ELSE IF (str_cmp(name, 'nprocy')) THEN
+      as_constant = c_const_nprocy
+
+    ELSE IF (str_cmp(name, 'nprocz')) THEN
+      as_constant = c_const_nprocz
+
+    ELSE IF (str_cmp(name, 'nsteps')) THEN
+      as_constant = c_const_nsteps
+
+    ELSE IF (str_cmp(name, 't_end')) THEN
+      as_constant = c_const_t_end
+
+    ELSE IF (str_cmp(name, 'ndims')) THEN
+      as_constant = c_const_ndims
 
     ! Dumpmask constants
-    IF (str_cmp(name, 'never')) as_constant = c_const_io_never
-    IF (str_cmp(name, 'always')) as_constant = c_const_io_always
-    IF (str_cmp(name, 'full')) as_constant = c_const_io_full
-    IF (str_cmp(name, 'restartable')) as_constant = c_const_io_restartable
-    IF (str_cmp(name, 'restart')) as_constant = c_const_io_restartable
-    IF (str_cmp(name, 'average')) as_constant = c_const_io_average
-    IF (str_cmp(name, 'snapshot')) as_constant = c_const_io_snapshot
-    IF (str_cmp(name, 'species')) as_constant = c_const_io_species
-    IF (str_cmp(name, 'no_sum')) as_constant = c_const_io_no_sum
-    IF (str_cmp(name, 'single')) as_constant = c_const_io_dump_single
-    IF (str_cmp(name, 'average_single')) as_constant = c_const_io_average_single
+    ELSE IF (str_cmp(name, 'never')) THEN
+      as_constant = c_const_io_never
+
+    ELSE IF (str_cmp(name, 'always')) THEN
+      as_constant = c_const_io_always
+
+    ELSE IF (str_cmp(name, 'full')) THEN
+      as_constant = c_const_io_full
+
+    ELSE IF (str_cmp(name, 'restartable')) THEN
+      as_constant = c_const_io_restartable
+
+    ELSE IF (str_cmp(name, 'restart')) THEN
+      as_constant = c_const_io_restartable
+
+    ELSE IF (str_cmp(name, 'average')) THEN
+      as_constant = c_const_io_average
+
+    ELSE IF (str_cmp(name, 'snapshot')) THEN
+      as_constant = c_const_io_snapshot
+
+    ELSE IF (str_cmp(name, 'species')) THEN
+      as_constant = c_const_io_species
+
+    ELSE IF (str_cmp(name, 'no_sum')) THEN
+      as_constant = c_const_io_no_sum
+
+    ELSE IF (str_cmp(name, 'single')) THEN
+      as_constant = c_const_io_dump_single
+
+    ELSE IF (str_cmp(name, 'average_single')) THEN
+      as_constant = c_const_io_average_single
 
     ! Distribution function constants
-    IF (str_cmp(name, 'dir_x')) as_constant = c_const_dir_x
-    IF (str_cmp(name, 'dir_y')) as_constant = c_const_dir_y
-    IF (str_cmp(name, 'dir_z')) as_constant = c_const_dir_z
-    IF (str_cmp(name, 'dir_px')) as_constant = c_const_dir_px
-    IF (str_cmp(name, 'dir_py')) as_constant = c_const_dir_py
-    IF (str_cmp(name, 'dir_pz')) as_constant = c_const_dir_pz
-    IF (str_cmp(name, 'dir_en')) as_constant = c_const_dir_en
-    IF (str_cmp(name, 'dir_gamma_m1')) as_constant = c_const_dir_gamma_m1
-    IF (str_cmp(name, 'dir_xy_angle')) as_constant = c_const_dir_xy_angle
-    IF (str_cmp(name, 'dir_yz_angle')) as_constant = c_const_dir_yz_angle
-    IF (str_cmp(name, 'dir_zx_angle')) as_constant = c_const_dir_zx_angle
-    IF (str_cmp(name, 'dir_mod_p')) as_constant = c_const_dir_mod_p
+    ELSE IF (str_cmp(name, 'dir_x')) THEN
+      as_constant = c_const_dir_x
 
-    IF (as_constant == c_const_x .AND. stagger(c_dir_x,tokenize_stagger)) &
-        as_constant = c_const_xb
-    IF (as_constant == c_const_y .AND. stagger(c_dir_y,tokenize_stagger)) &
-        as_constant = c_const_yb
-    IF (as_constant == c_const_z .AND. stagger(c_dir_z,tokenize_stagger)) &
-        as_constant = c_const_zb
+    ELSE IF (str_cmp(name, 'dir_y')) THEN
+      as_constant = c_const_dir_y
 
-    IF (str_cmp(name, 'px')) as_constant = c_const_px
-    IF (str_cmp(name, 'py')) as_constant = c_const_py
-    IF (str_cmp(name, 'pz')) as_constant = c_const_pz
+    ELSE IF (str_cmp(name, 'dir_z')) THEN
+      as_constant = c_const_dir_z
 
-    IF (str_cmp(name, 'yee')) as_constant = c_const_maxwell_solver_yee
-    IF (str_cmp(name, 'cowan')) as_constant = c_const_maxwell_solver_cowan
-    IF (str_cmp(name, 'pukhov')) as_constant = c_const_maxwell_solver_pukhov
-    IF (str_cmp(name, 'lehe_x')) as_constant = c_const_maxwell_solver_lehe_x
-    IF (str_cmp(name, 'lehe_y')) as_constant = c_const_maxwell_solver_lehe_y
-    IF (str_cmp(name, 'lehe_z')) as_constant = c_const_maxwell_solver_lehe_z
-    IF (str_cmp(name, 'lehe')) as_constant = c_const_maxwell_solver_lehe
-    IF (str_cmp(name, 'custom')) as_constant = c_const_maxwell_solver_custom
+    ELSE IF (str_cmp(name, 'dir_px')) THEN
+      as_constant = c_const_dir_px
+
+    ELSE IF (str_cmp(name, 'dir_py')) THEN
+      as_constant = c_const_dir_py
+
+    ELSE IF (str_cmp(name, 'dir_pz')) THEN
+      as_constant = c_const_dir_pz
+
+    ELSE IF (str_cmp(name, 'dir_en')) THEN
+      as_constant = c_const_dir_en
+
+    ELSE IF (str_cmp(name, 'dir_gamma_m1')) THEN
+      as_constant = c_const_dir_gamma_m1
+
+    ELSE IF (str_cmp(name, 'dir_xy_angle')) THEN
+      as_constant = c_const_dir_xy_angle
+
+    ELSE IF (str_cmp(name, 'dir_yz_angle')) THEN
+      as_constant = c_const_dir_yz_angle
+
+    ELSE IF (str_cmp(name, 'dir_zx_angle')) THEN
+      as_constant = c_const_dir_zx_angle
+
+    ELSE IF (str_cmp(name, 'dir_mod_p')) THEN
+      as_constant = c_const_dir_mod_p
+
+    ELSE IF (str_cmp(name, 'px')) THEN
+      as_constant = c_const_px
+
+    ELSE IF (str_cmp(name, 'py')) THEN
+      as_constant = c_const_py
+
+    ELSE IF (str_cmp(name, 'pz')) THEN
+      as_constant = c_const_pz
+
+    ELSE IF (str_cmp(name, 'yee')) THEN
+      as_constant = c_const_maxwell_solver_yee
+
+    ELSE IF (str_cmp(name, 'cowan')) THEN
+      as_constant = c_const_maxwell_solver_cowan
+
+    ELSE IF (str_cmp(name, 'pukhov')) THEN
+      as_constant = c_const_maxwell_solver_pukhov
+
+    ELSE IF (str_cmp(name, 'lehe_x')) THEN
+      as_constant = c_const_maxwell_solver_lehe_x
+
+    ELSE IF (str_cmp(name, 'lehe_y')) THEN
+      as_constant = c_const_maxwell_solver_lehe_y
+
+    ELSE IF (str_cmp(name, 'lehe_z')) THEN
+      as_constant = c_const_maxwell_solver_lehe_z
+
+    ELSE IF (str_cmp(name, 'lehe')) THEN
+      as_constant = c_const_maxwell_solver_lehe
+
+    ELSE IF (str_cmp(name, 'custom')) THEN
+      as_constant = c_const_maxwell_solver_custom
+
+    END IF
 
     ! User submitted constant using 'Register'
     DO i = 1, n_new_constant
@@ -283,50 +447,126 @@ CONTAINS
 
     as_function = c_prc_not_this_type
 
-    IF (str_cmp(name, '-'))     as_function = c_func_neg
-    IF (str_cmp(name, 'abs'))   as_function = c_func_abs
-    IF (str_cmp(name, 'floor')) as_function = c_func_floor
-    IF (str_cmp(name, 'ceil'))  as_function = c_func_ceil
-    IF (str_cmp(name, 'nint'))  as_function = c_func_nint
-    IF (str_cmp(name, 'sqrt'))  as_function = c_func_sqrt
-    IF (str_cmp(name, 'sin'))   as_function = c_func_sine
-    IF (str_cmp(name, 'cos'))   as_function = c_func_cosine
-    IF (str_cmp(name, 'tan'))   as_function = c_func_tan
-    IF (str_cmp(name, 'asin'))  as_function = c_func_arcsine
-    IF (str_cmp(name, 'acos'))  as_function = c_func_arccosine
-    IF (str_cmp(name, 'atan'))  as_function = c_func_arctan
-    IF (str_cmp(name, 'atan2')) as_function = c_func_arctan2
-    IF (str_cmp(name, 'sinh'))  as_function = c_func_sinh
-    IF (str_cmp(name, 'cosh'))  as_function = c_func_cosh
-    IF (str_cmp(name, 'tanh'))  as_function = c_func_tanh
-    IF (str_cmp(name, 'exp'))   as_function = c_func_exp
-    IF (str_cmp(name, 'loge'))  as_function = c_func_loge
-    IF (str_cmp(name, 'log10')) as_function = c_func_log10
-    IF (str_cmp(name, 'log_base')) as_function = c_func_log_base
-    IF (str_cmp(name, 'gauss')) as_function = c_func_gauss
-    IF (str_cmp(name, 'semigauss')) as_function = c_func_semigauss
-    IF (str_cmp(name, 'supergauss')) as_function = c_func_supergauss
-    IF (str_cmp(name, 'interpolate')) as_function = c_func_interpolate
-    IF (str_cmp(name, 'if')) as_function = c_func_if
+    IF (str_cmp(name, '-')) THEN
+      as_function = c_func_neg
 
-    IF (str_cmp(name, 'density') .OR. str_cmp(name, 'rho')) &
-        as_function = c_func_rho
-    IF (str_cmp(name, 'temp_x') .OR. str_cmp(name, 'temp_x_k')) &
-        as_function = c_func_tempx
-    IF (str_cmp(name, 'temp_y') .OR. str_cmp(name, 'temp_y_k')) &
-        as_function = c_func_tempy
-    IF (str_cmp(name, 'temp_z') .OR. str_cmp(name, 'temp_z_k')) &
-        as_function = c_func_tempz
-    IF (str_cmp(name, 'temp_x_ev')) as_function = c_func_tempx_ev
-    IF (str_cmp(name, 'temp_y_ev')) as_function = c_func_tempy_ev
-    IF (str_cmp(name, 'temp_z_ev')) as_function = c_func_tempz_ev
-    IF (str_cmp(name, 'ex')) as_function = c_func_ex
-    IF (str_cmp(name, 'ey')) as_function = c_func_ey
-    IF (str_cmp(name, 'ez')) as_function = c_func_ez
-    IF (str_cmp(name, 'bx')) as_function = c_func_bx
-    IF (str_cmp(name, 'by')) as_function = c_func_by
-    IF (str_cmp(name, 'bz')) as_function = c_func_bz
-    IF (str_cmp(name, 'critical')) as_function = c_func_crit
+    ELSE IF (str_cmp(name, 'abs')) THEN
+      as_function = c_func_abs
+
+    ELSE IF (str_cmp(name, 'floor')) THEN
+      as_function = c_func_floor
+
+    ELSE IF (str_cmp(name, 'ceil')) THEN
+      as_function = c_func_ceil
+
+    ELSE IF (str_cmp(name, 'nint')) THEN
+      as_function = c_func_nint
+
+    ELSE IF (str_cmp(name, 'sqrt')) THEN
+      as_function = c_func_sqrt
+
+    ELSE IF (str_cmp(name, 'sin')) THEN
+      as_function = c_func_sine
+
+    ELSE IF (str_cmp(name, 'cos')) THEN
+      as_function = c_func_cosine
+
+    ELSE IF (str_cmp(name, 'tan')) THEN
+      as_function = c_func_tan
+
+    ELSE IF (str_cmp(name, 'asin')) THEN
+      as_function = c_func_arcsine
+
+    ELSE IF (str_cmp(name, 'acos')) THEN
+      as_function = c_func_arccosine
+
+    ELSE IF (str_cmp(name, 'atan')) THEN
+      as_function = c_func_arctan
+
+    ELSE IF (str_cmp(name, 'atan2')) THEN
+      as_function = c_func_arctan2
+
+    ELSE IF (str_cmp(name, 'sinh')) THEN
+      as_function = c_func_sinh
+
+    ELSE IF (str_cmp(name, 'cosh')) THEN
+      as_function = c_func_cosh
+
+    ELSE IF (str_cmp(name, 'tanh')) THEN
+      as_function = c_func_tanh
+
+    ELSE IF (str_cmp(name, 'exp')) THEN
+      as_function = c_func_exp
+
+    ELSE IF (str_cmp(name, 'loge')) THEN
+      as_function = c_func_loge
+
+    ELSE IF (str_cmp(name, 'log10')) THEN
+      as_function = c_func_log10
+
+    ELSE IF (str_cmp(name, 'log_base')) THEN
+      as_function = c_func_log_base
+
+    ELSE IF (str_cmp(name, 'gauss')) THEN
+      as_function = c_func_gauss
+
+    ELSE IF (str_cmp(name, 'semigauss')) THEN
+      as_function = c_func_semigauss
+
+    ELSE IF (str_cmp(name, 'supergauss')) THEN
+      as_function = c_func_supergauss
+
+    ELSE IF (str_cmp(name, 'interpolate')) THEN
+      as_function = c_func_interpolate
+
+    ELSE IF (str_cmp(name, 'if')) THEN
+      as_function = c_func_if
+
+    ELSE IF (str_cmp(name, 'density') &
+        .OR. str_cmp(name, 'rho') &
+        .OR. str_cmp(name, 'number_density')) THEN
+      as_function = c_func_rho
+
+    ELSE IF (str_cmp(name, 'temp_x') .OR. str_cmp(name, 'temp_x_k')) THEN
+      as_function = c_func_tempx
+
+    ELSE IF (str_cmp(name, 'temp_y') .OR. str_cmp(name, 'temp_y_k')) THEN
+      as_function = c_func_tempy
+
+    ELSE IF (str_cmp(name, 'temp_z') .OR. str_cmp(name, 'temp_z_k')) THEN
+      as_function = c_func_tempz
+
+    ELSE IF (str_cmp(name, 'temp_x_ev')) THEN
+      as_function = c_func_tempx_ev
+
+    ELSE IF (str_cmp(name, 'temp_y_ev')) THEN
+      as_function = c_func_tempy_ev
+
+    ELSE IF (str_cmp(name, 'temp_z_ev')) THEN
+      as_function = c_func_tempz_ev
+
+    ELSE IF (str_cmp(name, 'ex')) THEN
+      as_function = c_func_ex
+
+    ELSE IF (str_cmp(name, 'ey')) THEN
+      as_function = c_func_ey
+
+    ELSE IF (str_cmp(name, 'ez')) THEN
+      as_function = c_func_ez
+
+    ELSE IF (str_cmp(name, 'bx')) THEN
+      as_function = c_func_bx
+
+    ELSE IF (str_cmp(name, 'by')) THEN
+      as_function = c_func_by
+
+    ELSE IF (str_cmp(name, 'bz')) THEN
+      as_function = c_func_bz
+
+    ELSE IF (str_cmp(name, 'critical')) THEN
+      as_function = c_func_crit
+
+    END IF
 
     DO i = 1, n_new_func
       IF (str_cmp(TRIM(name), TRIM(new_func_name(i)%value))) THEN
@@ -356,8 +596,8 @@ CONTAINS
       ELSE
         as_operator = c_opcode_unary_plus
       END IF
-    END IF
-    IF (str_cmp(name, '-'))  THEN
+
+    ELSE IF (str_cmp(name, '-'))  THEN
       IF (last_block_type == c_pt_variable &
           .OR. last_block_type == c_pt_constant &
           .OR. last_block_type == c_pt_default_constant &
@@ -368,24 +608,35 @@ CONTAINS
       ELSE
         as_operator = c_opcode_unary_minus
       END IF
-    END IF
-    IF (str_cmp(name, '*')) THEN
+
+    ELSE IF (str_cmp(name, '*')) THEN
       as_operator = c_opcode_times
-    END IF
-    IF (str_cmp(name, '/')) THEN
+
+    ELSE IF (str_cmp(name, '/')) THEN
       as_operator = c_opcode_divide
-    END IF
-    IF (str_cmp(name, '^')) THEN
+
+    ELSE IF (str_cmp(name, '^')) THEN
       as_operator = c_opcode_power
-    END IF
-    IF (str_cmp(name, 'e')) THEN
+
+    ELSE IF (str_cmp(name, 'e')) THEN
       as_operator = c_opcode_expo
+
+    ELSE IF (str_cmp(name, 'lt')) THEN
+      as_operator = c_opcode_lt
+
+    ELSE IF (str_cmp(name, 'gt')) THEN
+      as_operator = c_opcode_gt
+
+    ELSE IF (str_cmp(name, 'eq')) THEN
+      as_operator = c_opcode_eq
+
+    ELSE IF (str_cmp(name, 'and')) THEN
+      as_operator = c_opcode_and
+
+    ELSE IF (str_cmp(name, 'or')) THEN
+      as_operator = c_opcode_or
+
     END IF
-    IF (str_cmp(name, 'lt')) as_operator = c_opcode_lt
-    IF (str_cmp(name, 'gt')) as_operator = c_opcode_gt
-    IF (str_cmp(name, 'eq')) as_operator = c_opcode_eq
-    IF (str_cmp(name, 'and')) as_operator = c_opcode_and
-    IF (str_cmp(name, 'or'))  as_operator = c_opcode_or
 
   END FUNCTION as_operator
 

@@ -29,7 +29,7 @@ end:window
 begin:constant
   x0 = 1.31
   r0 = 0.4^2
-  r2 = (x-x0)^2
+  r2 = (x - x0)^2
 end:constant
 
 begin:species
@@ -39,15 +39,16 @@ begin:species
   mass = 1.0
   npart_per_cell = 5
 
-  #density = if(r2 lt r0,2*exp(-((time*5e8)^2)),1)
-  density = if(abs(x-x0) lt 0.3, 2, 1)
+  #number_density = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
+  number_density = if(abs(x-x0) lt 0.3, 2, 1)
 
-  #temp_ev = if(r2 lt r0,2*exp(-((time*5e8)^2)),1)
+  #temp_ev = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
   temp_ev = 0
 end:species
 
 
 begin:output
+  name = normal
   dt_snapshot = 1e-10
 
   # Properties at particle positions

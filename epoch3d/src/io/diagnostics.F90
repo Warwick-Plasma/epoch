@@ -216,7 +216,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
-    INTEGER :: random_state(5)
+    INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER, SAVE :: nstep_prev = -1
@@ -230,6 +230,9 @@ CONTAINS
         (/'x_max', 'y_max', 'z_max', 'x_min', 'y_min', 'z_min'/)
     INTEGER, DIMENSION(6) :: fluxdir = &
         (/c_dir_x, c_dir_y, c_dir_z, -c_dir_x, -c_dir_y, -c_dir_z/)
+
+    ! Clean-up any cached RNG state
+    CALL random_flush_cache
 
 #ifdef NO_IO
     RETURN
@@ -443,10 +446,10 @@ CONTAINS
 
         IF (need_random_state) THEN
           CALL get_random_state(random_state)
-          ALLOCATE(random_states_per_proc(5*nproc))
-          CALL MPI_GATHER(random_state, 5, MPI_INTEGER, &
-              random_states_per_proc, 5, MPI_INTEGER, 0, comm, errcode)
-          CALL sdf_write_srl(sdf_handle, 'random_states_full', &
+          ALLOCATE(random_states_per_proc(4*nproc))
+          CALL MPI_GATHER(random_state, 4, MPI_INTEGER, &
+              random_states_per_proc, 4, MPI_INTEGER, 0, comm, errcode)
+          CALL sdf_write_srl(sdf_handle, 'random_states', &
               'Random States', random_states_per_proc)
           DEALLOCATE(random_states_per_proc)
         END IF
@@ -676,15 +679,15 @@ CONTAINS
 
         CALL write_nspecies_field(c_dump_jx, code, &
             'jx', 'Jx', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jx, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_x/))
 
         CALL write_nspecies_field(c_dump_jy, code, &
             'jy', 'Jy', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jy, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_y/))
 
         CALL write_nspecies_field(c_dump_jz, code, &
             'jz', 'Jz', 'A/m^2', &
-            c_stagger_cell_centre, calc_per_species_jz, array)
+            c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_z/))
 
         CALL write_nspecies_field(c_dump_ekflux, code, &
             'ekflux', 'EkFlux', 'W/m^2', &
@@ -2333,7 +2336,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
@@ -2408,7 +2411,7 @@ CONTAINS
     LOGICAL :: use_particle
     REAL(num) :: part_mc
     TYPE(subset), POINTER :: sub
-    TYPE(particle_id_hash), POINTER :: current_hash
+    CLASS(particle_id_hash), POINTER :: current_hash
 
     IF (.NOT. any_persistent_subset) RETURN
 

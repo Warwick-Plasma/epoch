@@ -28,6 +28,7 @@ MODULE deck_collision_block
   PUBLIC :: collision_block_handle_element, collision_block_check
 
   LOGICAL, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_touched
+  LOGICAL :: got_nanbu
 
 CONTAINS
 
@@ -36,6 +37,7 @@ CONTAINS
     IF (deck_state == c_ds_first) THEN
       use_collisions = .FALSE.
       use_collisional_ionisation = .FALSE.
+      got_nanbu = .FALSE.
     ELSE
       ALLOCATE(coll_pairs_touched(1:n_species, 1:n_species))
       coll_pairs_touched = .FALSE.
@@ -49,6 +51,7 @@ CONTAINS
   SUBROUTINE collision_deck_finalise
 
     INTEGER :: i, j
+    LOGICAL, SAVE :: first = .TRUE.
 
     IF (deck_state == c_ds_first) RETURN
     DEALLOCATE(coll_pairs_touched)
@@ -65,6 +68,25 @@ CONTAINS
       END DO
       use_particle_lists = use_particle_lists .OR. use_collisions
       need_random_state = .TRUE.
+
+      IF (first) THEN
+        first = .FALSE.
+        IF (rank == 0 .AND. .NOT.got_nanbu) THEN
+          IF (use_nanbu) THEN
+            PRINT*, '*** WARNING ***'
+            PRINT*, 'The collision routine now uses the Nanbu-Perez scheme ', &
+                'by default, rather than'
+            PRINT*, 'Sentoku-Kemp. This method is faster and does not ', &
+                'appear to suffer from some'
+            PRINT*, 'unusual behaviour exhibited by Sentoku-Kemp under ', &
+                'certain conditions.'
+            PRINT*, 'To revert to Sentoku-Kemp, specify "use_nanbu = F" in ', &
+                'the collisions block.'
+            PRINT*, 'To remove this warning message, specify "use_nanbu = T".'
+            PRINT*
+          END IF
+        END IF
+      END IF
     END IF
 
   END SUBROUTINE collision_deck_finalise
@@ -101,6 +123,12 @@ CONTAINS
 
     IF (str_cmp(element, 'use_collisions')) THEN
       use_collisions = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_nanbu')) THEN
+      use_nanbu = as_logical_print(value, element, errcode)
+      got_nanbu = .TRUE.
       RETURN
     END IF
 

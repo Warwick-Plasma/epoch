@@ -109,6 +109,8 @@ CONTAINS
           CALL setup_particle_temperature(&
               species_temp(:,n), n, species, species_drift(:,n))
         END DO
+        CALL deltaf_load(ispecies, species_temp, &
+            species_drift)
       ELSE IF (species_list(ispecies)%ic_df_type &
           == c_ic_df_relativistic_thermal) THEN
         CALL setup_particle_temperature_relativistic(species_temp, species, &
@@ -134,8 +136,6 @@ CONTAINS
         END IF
       END DO
     END IF
-
-    CALL deltaf_load
 
   END SUBROUTINE auto_load
 
