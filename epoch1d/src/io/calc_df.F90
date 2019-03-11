@@ -1075,7 +1075,7 @@ CONTAINS
     idx = 1.0_num / dx
 
     DO ispecies = 1, n_species
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
       IF (species_list(ispecies)%zero_current) CYCLE
 #endif
