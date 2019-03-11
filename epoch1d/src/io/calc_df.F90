@@ -67,7 +67,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -149,7 +149,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -258,7 +258,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -431,7 +431,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -506,7 +506,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (spec_sum &
           .AND. io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -563,7 +563,7 @@ CONTAINS
     END IF
 
     DO ispecies = spec_start, spec_end
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -616,7 +616,7 @@ CONTAINS
     part_count = 0.0_num
 
     DO ispecies = spec_start, spec_end
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -698,7 +698,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -803,7 +803,7 @@ CONTAINS
     part_count = 0.0_num
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -912,7 +912,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
@@ -988,7 +988,7 @@ CONTAINS
 
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
@@ -1076,7 +1076,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head

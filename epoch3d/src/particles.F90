@@ -123,7 +123,7 @@ CONTAINS
     LOGICAL :: probes_for_species
     REAL(num) :: gamma_rel_m1
 #endif
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
     LOGICAL :: not_zero_current_species
 #endif
     ! Particle weighting multiplication factor
@@ -182,7 +182,7 @@ CONTAINS
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
 #endif
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       not_zero_current_species = .NOT. species_list(ispecies)%zero_current
 #endif
 
@@ -433,7 +433,7 @@ CONTAINS
 
         ! If the code is compiled with zero-current particle support then put in
         ! an IF statement so that the current is not calculated for this species
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
         IF (not_zero_current_species) THEN
 #endif
           ! Now advance to t+1.5dt to calculate current. This is detailed in
@@ -554,7 +554,7 @@ CONTAINS
               END DO
             END DO
           END DO
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
         END IF
 #endif
 #ifndef NO_PARTICLE_PROBES
