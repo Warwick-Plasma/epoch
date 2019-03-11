@@ -419,7 +419,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: dist_fn
     TYPE(primitive_stack) :: dist_fn_range(3)
 
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
     LOGICAL :: zero_current
 #endif
 

@@ -491,7 +491,7 @@ CONTAINS
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       species_list(ispecies)%zero_current = .FALSE.
 #endif
 #ifndef NO_PARTICLE_PROBES

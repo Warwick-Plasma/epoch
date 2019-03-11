@@ -105,7 +105,7 @@ CONTAINS
 #ifdef PER_SPECIES_WEIGHT
     found = .TRUE.
 #endif
-#ifdef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
     found = .TRUE.
 #endif
 #ifdef NO_PARTICLE_PROBES
@@ -191,10 +191,9 @@ CONTAINS
 #else
     defines = IOR(defines, c_def_per_particle_weight)
 #endif
-#ifdef NO_TRACER_PARTICLES
-    WRITE(*,*) 'No zero-current particle support -DNO_TRACER_PARTICLES'
-#else
+#ifdef ZERO_CURRENT_PARTICLES
     defines = IOR(defines, c_def_zero_current_particles)
+    WRITE(*,*) 'Zero-current particle support -DZERO_CURRENT_PARTICLES'
 #endif
 #ifdef NO_PARTICLE_PROBES
     WRITE(*,*) 'No particle probe support -DNO_PARTICLE_PROBES'

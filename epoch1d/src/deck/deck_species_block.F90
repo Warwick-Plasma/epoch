@@ -589,30 +589,30 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for zero_current particles
     ! *************************************************************
-    IF (str_cmp(element, 'zero_current') .OR. str_cmp(element, 'tracer')) THEN
-#ifndef NO_TRACER_PARTICLES
+    IF (str_cmp(element, 'zero_current')) THEN
+#ifdef ZERO_CURRENT_PARTICLES
       species_list(species_id)%zero_current = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = '-DNO_TRACER_PARTICLES'
+        extended_error_string = '-DZERO_CURRENT_PARTICLES'
       END IF
 #endif
-      IF (warn_tracer .AND. rank == 0 .AND. str_cmp(element, 'tracer')) THEN
+    END IF
+
+    IF (str_cmp(element, 'tracer')) THEN
+      IF (warn_tracer .AND. rank == 0) THEN
         warn_tracer = .FALSE.
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The "tracer" species do not behave in the way that ', &
                       'many users expect them to'
-          WRITE(io,*) 'and can lead to unexpected and undesirable results. ', &
-                      'Please see the'
-          WRITE(io,*) 'documentation for further details.'
-          WRITE(io,*) 'For this reason, the "tracer" flag is being renamed ', &
+          WRITE(io,*) 'and can lead to unexpected and undesirable results. '
+          WRITE(io,*) 'For this reason, the "tracer" flag has been renamed ', &
                       'to "zero_current".'
-          WRITE(io,*) 'As of version 5.0, the "tracer" flag will be removed ', &
-                      'entirely.'
+          WRITE(io,*) 'Please see the documentation for further details.'
           WRITE(io,*)
         END DO
       END IF
