@@ -24,6 +24,10 @@
 
  * Allow subset restrictions to be time-varying functions
 
+ * The NO_TRACER_PARTICLES compiler flag has been renamed to
+   ZERO_CURRENT_PARTICLES. Support for zero_current species is
+   disabled by default. Removed support for the "tracer" flag.
+
 
 ## v4.15.0 to v4.16.0
 
