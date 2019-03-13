@@ -124,9 +124,7 @@ CONTAINS
       END DO
 
       current%part_p = momentum_from_temperature_relativistic(mass, &
-          temp_local, part_species%fractional_tail_cutoff)
-
-      CALL particle_drift_lorentz_transform(current, mass, drift_local)
+          temp_local, part_species%fractional_tail_cutoff, drift_local)
 
       current => current%next
       ipart = ipart + 1
@@ -189,9 +187,8 @@ CONTAINS
           parameters, 2, ranges(3,:), err)
 
       CALL sample_from_deck_expression(current, part_species%dist_fn, &
-          parameters, ranges, iit)
+          parameters, ranges, mass, drift_local, iit)
 
-      CALL particle_drift_lorentz_transform(current, mass, drift_local)
       current => current%next
       ipart = ipart + 1
     END DO
@@ -228,11 +225,13 @@ CONTAINS
 
 
 
-  FUNCTION momentum_from_temperature_relativistic(mass, temperature, cutoff)
+  FUNCTION momentum_from_temperature_relativistic(mass, temperature, cutoff, &
+      drift)
 
     REAL(num), INTENT(IN) :: mass
     REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: temperature
     REAL(num), INTENT(IN) :: cutoff
+    REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
     REAL(num), DIMENSION(c_ndirs) :: momentum_from_temperature_relativistic
 
     ! Three parameters for calculating the range of momenta
@@ -242,10 +241,11 @@ CONTAINS
     ! c^2/kb
     REAL(num), PARAMETER :: c2_k = 6.509658203714208e39_num
     REAL(num) :: rand, probability
-    REAL(num) :: momentum_x, momentum_y, momentum_z, momentum
+    REAL(num), DIMENSION(c_ndirs) :: momentum, mmc
+    REAL(num) :: mod_momentum
     REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
     INTEGER :: dof
-    REAL(num) :: inter1, inter2, inter3
+    REAL(num) :: inter1, inter2, inter3, gamma_a, gamma_b, gamma_f
 
     temp = SUM(temperature)
     temp_max = MAXVAL(temperature)
@@ -267,44 +267,50 @@ CONTAINS
     ! Loop around until a momentum is accepted for this particle
     DO
       ! Generate random x and y momenta between p_min and p_max
-      momentum_x = random() * 2.0_num * p_max_x - p_max_x
-      momentum_y = random() * 2.0_num * p_max_y - p_max_y
-      momentum_z = random() * 2.0_num * p_max_z - p_max_z
-      momentum = SQRT(momentum_x**2 + momentum_y**2 + momentum_z**2)
+      momentum(1) = random() * 2.0_num * p_max_x - p_max_x
+      momentum(2) = random() * 2.0_num * p_max_y - p_max_y
+      momentum(3) = random() * 2.0_num * p_max_z - p_max_z
+      mod_momentum = SQRT(momentum(1)**2 + momentum(2)**2 + momentum(3)**2)
       ! From that value, have to generate the probability that a particle
       ! with that momentum should be accepted.
       ! This is just the particle distribution function scaled to have
       ! a maximum of 1 (or lower).
       ! In general you will have to work this out yourself
-      inter1 = momentum_x**2 / MAX(temperature(1) / temp, c_tiny)
-      inter2 = momentum_y**2 / MAX(temperature(2) / temp, c_tiny)
-      inter3 = momentum_z**2 / MAX(temperature(3) / temp, c_tiny)
+      inter1 = momentum(1)**2 / MAX(temperature(1) / temp, c_tiny)
+      inter2 = momentum(2)**2 / MAX(temperature(2) / temp, c_tiny)
+      inter3 = momentum(3)**2 / MAX(temperature(3) / temp, c_tiny)
       probability = EXP(-c2_k * mass / temp * (SQRT(1.0_num &
           + inter1 + inter2 + inter3) - 1.0_num))
       ! Once you know your probability you just generate a random number
       ! between 0 and 1 and if the generated number is less than the
       ! probability then accept the particle and exit this loop.
       rand = random()
-      IF (rand <= probability) EXIT
+      IF (rand > probability) CYCLE
+      mmc = momentum * mass * c
+      CALL drift_lorentz_transform(mmc, mass, drift, &
+          gamma_b, gamma_a, gamma_f)
+     rand = random()
+     IF (rand < 0.5_num/gamma_f * (gamma_a/gamma_b)) EXIT
     END DO
 
-    momentum_from_temperature_relativistic = &
-        (/ momentum_x, momentum_y, momentum_z /) * mass * c
+    momentum_from_temperature_relativistic = mmc
 
   END FUNCTION momentum_from_temperature_relativistic
 
 
 
-  ! Subroutine takes a particle and a drift momentum and Lorentz transforms
-  ! The particle momentum subject to the specified drift
-  SUBROUTINE particle_drift_lorentz_transform(part, mass, drift)
+  ! Subroutine takes a rest frame momentum and a drift momentum and Lorentz 
+  ! transforms the momentum subject to the specified drift.
+  SUBROUTINE drift_lorentz_transform(p, mass, drift, &
+      gamma_before, gamma_after, gamma_frame)
 
-    TYPE(particle), POINTER :: part
+    REAL(num), DIMENSION(c_ndirs), INTENT(INOUT) :: p
     REAL(num), INTENT(IN) :: mass
-    REAL(num), DIMENSION(3), INTENT(IN) :: drift
-    REAL(num), DIMENSION(3) :: drift_mc, part_mc, beta
-    REAL(num), DIMENSION(4) :: p4_in
-    REAL(num), DIMENSION(3,4) :: boost_tensor
+    REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
+    REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_frame
+    REAL(num), DIMENSION(c_ndirs) :: drift_mc, p_mc, beta
+    REAL(num), DIMENSION(c_ndirs + 1) :: p4_in
+    REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
     REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1_beta2
     INTEGER :: i, j
 
@@ -312,12 +318,14 @@ CONTAINS
 
     imc = 1.0_num / mass / c
     drift_mc = drift * imc
-    part_mc = part%part_p * imc
+    p_mc = p * imc
     gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift_mc, drift_mc))
-    gamma_part = SQRT(1.0_num + DOT_PRODUCT(part_mc, part_mc))
+    gamma_part = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
+    gamma_before = gamma_part
+    gamma_frame = gamma_drift
     e_prime = gamma_part * mass * c
 
-    beta = -drift * imc / gamma_drift ! Lorentz beta vector
+    beta = -drift_mc / gamma_drift ! Lorentz beta vector
 
     gamma_m1_beta2 = (gamma_drift - 1.0_num) / DOT_PRODUCT(beta, beta)
 
@@ -337,16 +345,18 @@ CONTAINS
     boost_tensor(2,4) = gamma_m1_beta2 * beta(2) * beta(3)
     boost_tensor(3,4) = 1.0_num + gamma_m1_beta2 * beta(3)**2
 
-    p4_in = [e_prime, part%part_p(1), part%part_p(2), part%part_p(3)]
-    part%part_p = 0.0_num
+    p4_in = [e_prime, p(1), p(2), p(3)]
+    p = 0.0_num
 
     DO i = 1, 3
       DO j = 1, 4
-        part%part_p(i) = part%part_p(i) + p4_in(j) * boost_tensor(i,j)
+        p(i) = p(i) + p4_in(j) * boost_tensor(i,j)
       END DO
     END DO
 
-  END SUBROUTINE particle_drift_lorentz_transform
+    gamma_after = SQRT(1.0_num + DOT_PRODUCT(p*imc, p*imc))
+
+  END SUBROUTINE drift_lorentz_transform
 
 
 
@@ -386,14 +396,16 @@ CONTAINS
 
   ! Function to take a deck expression and sample until it returns a value
   SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
-      ranges, iit_r)
+      ranges, mass, drift, iit_r)
 
     TYPE(particle), INTENT(INOUT) :: part
     TYPE(primitive_stack), INTENT(INOUT) :: stack
     TYPE(parameter_pack), INTENT(INOUT) :: parameters
-    REAL(num), DIMENSION(3,2), INTENT(IN) :: ranges
+    REAL(num), DIMENSION(c_ndirs,2), INTENT(IN) :: ranges
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), DIMENSION(c_ndirs) , INTENT(IN) :: drift
     INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
-    REAL(num) :: setlevel
+    REAL(num) :: setlevel, gamma_a, gamma_b, gamma_f
     INTEGER :: err
     INTEGER(i8) :: iit
 
@@ -418,7 +430,10 @@ CONTAINS
 
       iit = iit + 1
 
-      IF (random() <= setlevel) EXIT
+      IF (random() > setlevel) CYCLE
+      CALL drift_lorentz_transform(parameters%pack_p, mass, drift, &
+          gamma_b, gamma_a, gamma_f)
+      IF (random() < 0.5_num/gamma_f * (gamma_a/gamma_b)) EXIT
     ENDDO
 
     IF (PRESENT(iit_r)) iit_r = iit
