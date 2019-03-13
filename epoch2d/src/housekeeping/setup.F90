@@ -401,7 +401,7 @@ CONTAINS
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
 #ifndef NO_TRACER_PARTICLES
-      species_list(ispecies)%tracer = .FALSE.
+      species_list(ispecies)%zero_current = .FALSE.
 #endif
 #ifndef NO_PARTICLE_PROBES
       NULLIFY(species_list(ispecies)%attached_probes)
@@ -964,8 +964,17 @@ CONTAINS
         CYCLE
       END IF
 
-      CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
-      CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+      ispecies = 0
+      IF (blocktype == c_blocktype_point_mesh) THEN
+        CALL sdf_read_point_mesh_info(sdf_handle, npart, geometry, species_id)
+        CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+      ELSE IF (blocktype == c_blocktype_cpu_split) THEN
+        IF (block_id(1:3) == 'cpu') THEN
+          species_id = block_id(5:LEN(block_id))
+          CALL find_species_by_id_or_blockid(species_id, block_id, ispecies)
+        END IF
+      END IF
+
       IF (ispecies == 0) THEN
         IF (rank == 0) THEN
           IF (.NOT. str_cmp(species_id(1:6), 'subset')) THEN
@@ -1040,19 +1049,13 @@ CONTAINS
       CASE(c_blocktype_array)
         IF (use_exact_restart .AND. need_random_state &
             .AND. str_cmp(block_id, 'random_states')) THEN
-          IF (datatype == c_datatype_integer4 .AND. ndims == 4) THEN
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (datatype == c_datatype_integer4 .AND. dims(1) == 4*nproc) THEN
             ! Older form of random_states output
             ! Missing the box_muller_cache entry
-            ALLOCATE(random_states_per_proc(5*nproc))
-            ALLOCATE(random_states_per_proc_old(4*nproc))
+            ALLOCATE(random_states_per_proc(4*nproc))
             CALL sdf_read_srl(sdf_handle, random_states_per_proc)
-            DO i = 0, nproc - 1
-              random_states_per_proc(5*i+1:5*(i+1)-1) = &
-                  random_states_per_proc_old(4*i+1:4*(i+1))
-              random_states_per_proc(5*(i+1)) = 0
-            END DO
-            DEALLOCATE(random_states_per_proc_old)
-            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+            CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
             DEALLOCATE(random_states_per_proc)
           ELSE IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'
@@ -1061,10 +1064,17 @@ CONTAINS
           END IF
         ELSE IF (use_exact_restart .AND. need_random_state &
             .AND. str_cmp(block_id, 'random_states_full')) THEN
-          IF (datatype == c_datatype_integer4 .AND. ndims == 5) THEN
-            ALLOCATE(random_states_per_proc(5*nproc))
-            CALL sdf_read_srl(sdf_handle, random_states_per_proc)
-            CALL set_random_state(random_states_per_proc(5*rank+1:5*(rank+1)))
+          CALL sdf_read_array_info(sdf_handle, dims)
+          IF (datatype == c_datatype_integer4 .AND. dims(1) == 5*nproc) THEN
+            ALLOCATE(random_states_per_proc(4*nproc))
+            ALLOCATE(random_states_per_proc_old(5*nproc))
+            CALL sdf_read_srl(sdf_handle, random_states_per_proc_old)
+            DO i = 0, nproc - 1
+              random_states_per_proc(4*i+1:4*(i+1)) = &
+                  random_states_per_proc_old(5*i+1:5*(i+1)-1)
+            END DO
+            DEALLOCATE(random_states_per_proc_old)
+            CALL set_random_state(random_states_per_proc(4*rank+1:4*(rank+1)))
             DEALLOCATE(random_states_per_proc)
           ELSE IF (rank == 0) THEN
             PRINT*, '*** WARNING ***'

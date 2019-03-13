@@ -421,7 +421,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: dist_fn_range(3)
 
 #ifndef NO_TRACER_PARTICLES
-    LOGICAL :: tracer
+    LOGICAL :: zero_current
 #endif
 
 #ifdef BREMSSTRAHLUNG
@@ -821,6 +821,7 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto, use_collisions
+  LOGICAL :: use_nanbu = .TRUE.
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi

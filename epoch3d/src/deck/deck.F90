@@ -808,8 +808,10 @@ CONTAINS
     END IF
 
 #ifndef NO_IO
-    CLOSE(du)
-    CLOSE(duc)
+    IF (first_call .AND. rank == 0) THEN
+      CLOSE(du)
+      CLOSE(duc)
+    ENDIF
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)

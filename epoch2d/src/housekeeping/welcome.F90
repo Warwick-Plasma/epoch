@@ -153,6 +153,12 @@ CONTAINS
 #ifdef HC_PUSH
     found = .TRUE.
 #endif
+#ifdef NO_USE_ISATTY
+    found = .TRUE.
+#endif
+#ifdef NO_MPI3
+    found = .TRUE.
+#endif
 
     IF (.NOT.found) THEN
       WRITE(*,*) '*************************************************************'
@@ -189,9 +195,9 @@ CONTAINS
     defines = IOR(defines, c_def_per_particle_weight)
 #endif
 #ifdef NO_TRACER_PARTICLES
-    WRITE(*,*) 'No tracer particle support -DNO_TRACER_PARTICLES'
+    WRITE(*,*) 'No zero-current particle support -DNO_TRACER_PARTICLES'
 #else
-    defines = IOR(defines, c_def_tracer_particles)
+    defines = IOR(defines, c_def_zero_current_particles)
 #endif
 #ifdef NO_PARTICLE_PROBES
     WRITE(*,*) 'No particle probe support -DNO_PARTICLE_PROBES'
@@ -255,6 +261,16 @@ CONTAINS
 #ifdef HC_PUSH
     defines = IOR(defines, c_def_hc_push)
     WRITE(*,*) 'Higuera-Cary particle push -DHC_PUSH'
+#endif
+#ifdef NO_USE_ISATTY
+    WRITE(*,*) 'Disable isatty C-call -DNO_USE_ISATTY'
+#else
+    defines = IOR(defines, c_def_use_isatty)
+#endif
+#ifdef NO_MPI3
+    WRITE(*,*) 'Disable MPI3 features -DNO_MPI3'
+#else
+    defines = IOR(defines, c_def_use_mpi3)
 #endif
     WRITE(*,*) '*************************************************************'
 

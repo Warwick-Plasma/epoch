@@ -29,7 +29,7 @@ CONTAINS
   SUBROUTINE params_local(current, temperature, drift, temp_local, drift_local)
 
     TYPE(particle), POINTER, INTENT(IN) :: current
-    REAL(num), DIMENSION(-2:,-2:), INTENT(IN) :: temperature, drift
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(IN) :: temperature, drift
     REAL(num), INTENT(INOUT) :: temp_local, drift_local
     REAL(num) :: gf
     INTEGER :: ix, iy
@@ -54,8 +54,10 @@ CONTAINS
 
 
 
-  SUBROUTINE deltaf_load
+  SUBROUTINE deltaf_load(ispecies, species_temp, species_drift)
 
+    REAL(num), DIMENSION(:,:,:), POINTER :: species_temp, species_drift
+    INTEGER, INTENT(IN) :: ispecies
 #ifdef DELTAF_METHOD
     REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz
     REAL(num) :: f0_exponent, distribution, mass, npart_per_cell, idx
@@ -64,7 +66,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current
     TYPE(particle_species), POINTER :: species
-    INTEGER :: ipart, ispecies
+    INTEGER :: ipart
 #if DELTAF_DEBUG
     REAL(num) :: weight_back, f0_back
 #endif
@@ -76,59 +78,57 @@ CONTAINS
 
     idx = 1.0_num / dx / dy
 
-    DO ispecies = 1, n_species
-      species => species_list(ispecies)
-      partlist => species%attached_list
-      current => partlist%head
+    species => species_list(ispecies)
+    partlist => species%attached_list
+    current => partlist%head
 
-      mass = species%mass
+    mass = species%mass
+    two_kb_mass = two_kb * mass
+    two_pi_kb_mass3 = (pi * two_kb_mass)**3
+    part_weight = species_list(ispecies)%weight
+
+    ipart = 0
+    DO WHILE(ipart < partlist%count)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      mass = current%mass
       two_kb_mass = two_kb * mass
       two_pi_kb_mass3 = (pi * two_kb_mass)**3
-      part_weight = species_list(ispecies)%weight
-
-      ipart = 0
-      DO WHILE(ipart < partlist%count)
-#ifdef PER_PARTICLE_CHARGE_MASS
-        mass = current%mass
-        two_kb_mass = two_kb * mass
-        two_pi_kb_mass3 = (pi * two_kb_mass)**3
 #endif
-        CALL params_local(current, species_temp(:,:,1), species_drift(:,:,1), &
-            Tx, driftx)
-        CALL params_local(current, species_temp(:,:,2), species_drift(:,:,2), &
-            Ty, drifty)
-        CALL params_local(current, species_temp(:,:,3), species_drift(:,:,3), &
-            Tz, driftz)
+      CALL params_local(current, species_temp(:,:,1), &
+          species_drift(:,:,1), Tx, driftx)
+      CALL params_local(current, species_temp(:,:,2), &
+          species_drift(:,:,2), Ty, drifty)
+      CALL params_local(current, species_temp(:,:,3), &
+          species_drift(:,:,3), Tz, driftz)
 
-        f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
-                     + (current%part_p(2) - drifty)**2 / Ty &
-                     + (current%part_p(3) - driftz)**2 / Tz) / two_kb_mass
+      f0_exponent = ((current%part_p(1) - driftx)**2 / Tx &
+                   + (current%part_p(2) - drifty)**2 / Ty &
+                   + (current%part_p(3) - driftz)**2 / Tz) / two_kb_mass
 
-        npart_per_cell = current%pvol
+      npart_per_cell = current%pvol
 
-        ! We want to calculate the distribution of markers.
-        distribution = EXP(-f0_exponent) * npart_per_cell * idx &
-            / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
-        current%pvol = 1.0_num / distribution
+      ! We want to calculate the distribution of markers.
+      distribution = EXP(-f0_exponent) * npart_per_cell * idx &
+          / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+      current%pvol = 1.0_num / distribution
 
 #if DELTAF_DEBUG
-        f0_back = f0(ispecies, mass, current%part_p)
+      f0_back = f0(ispecies, mass, current%part_p)
 
-        ! Checks for correct particle weight calculation.
-        weight_back = f0_back * current%pvol
+      ! Checks for correct particle weight calculation.
+      weight_back = f0_back * current%pvol
 #ifndef PER_SPECIES_WEIGHT
-        part_weight = current%weight
+      part_weight = current%weight
 #endif
-        WRITE(*,*) ipart, distribution, f0_exponent, npart_per_cell, &
-            SQRT(two_pi_kb_mass3 * Tx * Ty * Tz), kb, mass
-        WRITE(*,*) ipart, 'R', EXP(-f0_exponent), EXP(-f0_exponent) &
-            * npart_per_cell / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
-        WRITE(*,*) ipart, 'Q', distribution, f0_back, weight_back, part_weight
+      WRITE(*,*) ipart, distribution, f0_exponent, npart_per_cell, &
+          SQRT(two_pi_kb_mass3 * Tx * Ty * Tz), kb, mass
+      WRITE(*,*) ipart, 'R', EXP(-f0_exponent), EXP(-f0_exponent) &
+          * npart_per_cell / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+      WRITE(*,*) ipart, 'Q', distribution, f0_back, weight_back, part_weight
 #endif
 
-        current => current%next
-        ipart = ipart + 1
-      END DO
+      current => current%next
+      ipart = ipart + 1
     END DO
 #endif
 

@@ -349,8 +349,11 @@ CONTAINS
     INTEGER :: errcode
     TYPE(primitive_stack) :: stack
     REAL(num) :: dmin, mult
+    REAL(num), TARGET :: dummy(1,1)
+    REAL(num), POINTER :: array(:,:)
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
+    LOGICAL, SAVE :: warn_tracer = .TRUE.
     INTEGER :: i, j, io, iu, n
     TYPE(initial_condition_block), POINTER :: ic
 
@@ -436,6 +439,14 @@ CONTAINS
 
     IF (str_cmp(element, 'bc_y_max')) THEN
       species_bc_particle(c_bd_y_max) = as_bc_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_z_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_z_max')) THEN
       RETURN
     END IF
 
@@ -601,6 +612,14 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'bc_z_min')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bc_z_max')) THEN
+      RETURN
+    END IF
+
     ! *************************************************************
     ! This section sets properties for bremsstrahlung emission
     ! *************************************************************
@@ -625,11 +644,11 @@ CONTAINS
     END IF
 
     ! *************************************************************
-    ! This section sets properties for tracer particles
+    ! This section sets properties for zero_current particles
     ! *************************************************************
-    IF (str_cmp(element, 'tracer')) THEN
+    IF (str_cmp(element, 'zero_current') .OR. str_cmp(element, 'tracer')) THEN
 #ifndef NO_TRACER_PARTICLES
-      species_list(species_id)%tracer = &
+      species_list(species_id)%zero_current = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
@@ -637,6 +656,23 @@ CONTAINS
         extended_error_string = '-DNO_TRACER_PARTICLES'
       END IF
 #endif
+      IF (warn_tracer .AND. rank == 0 .AND. str_cmp(element, 'tracer')) THEN
+        warn_tracer = .FALSE.
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'The "tracer" species do not behave in the way that ', &
+                      'many users expect them to'
+          WRITE(io,*) 'and can lead to unexpected and undesirable results. ', &
+                      'Please see the'
+          WRITE(io,*) 'documentation for further details.'
+          WRITE(io,*) 'For this reason, the "tracer" flag is being renamed ', &
+                      'to "zero_current".'
+          WRITE(io,*) 'As of version 5.0, the "tracer" flag will be removed ', &
+                      'entirely.'
+          WRITE(io,*)
+        END DO
+      END IF
       RETURN
     END IF
 
@@ -688,13 +724,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'promote_density')) THEN
+    IF (str_cmp(element, 'promote_density') &
+        .OR. str_cmp(element, 'promote_number_density')) THEN
       species_list(species_id)%migrate%promotion_density = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'demote_density')) THEN
+    IF (str_cmp(element, 'demote_density') &
+        .OR. str_cmp(element, 'demote_number_density')) THEN
       species_list(species_id)%migrate%demotion_density = &
           as_real_print(value, element, errcode)
       RETURN
@@ -707,20 +745,23 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho')) THEN
+    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho') &
+        .OR. str_cmp(element, 'number_density_min')) THEN
       dmin = as_real_print(value, element, errcode)
       IF (dmin <= 0.0_num) dmin = EPSILON(1.0_num)
       species_list(species_id)%initial_conditions%density_min = dmin
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho')) THEN
+    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho') &
+        .OR. str_cmp(element, 'number_density_max')) THEN
       species_list(species_id)%initial_conditions%density_max = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_back')) THEN
+    IF (str_cmp(element, 'density_back') &
+        .OR. str_cmp(element, 'number_density_back')) THEN
       species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
@@ -731,6 +772,7 @@ CONTAINS
     mult = 1.0_num
 
     IF (str_cmp(element, 'density') .OR. str_cmp(element, 'rho') &
+        .OR. str_cmp(element, 'number_density') &
         .OR. str_cmp(element, 'mass_density')) THEN
 
       IF (str_cmp(element, 'mass_density')) THEN
@@ -739,51 +781,68 @@ CONTAINS
       END IF
 
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%density)) THEN
-        ALLOCATE(ic%density(1-ng:nx+ng,1-ng:ny+ng))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%density)) THEN
+          ALLOCATE(ic%density(1-ng:nx+ng,1-ng:ny+ng))
+        END IF
+        array => ic%density
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%density_function, &
-          ic%density, mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_x')) THEN
       n = 1
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
-        ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+          ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%drift(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
-          got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_y')) THEN
       n = 2
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
-        ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+          ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%drift(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
-          got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_z')) THEN
       n = 3
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%drift)) THEN
-        ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+          ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%drift(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%drift_function(n), &
-          ic%drift(:,:,n), mult, mult_string, element, value, filename, &
-          got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -841,19 +900,26 @@ CONTAINS
       IF (str_cmp(element, 'temp_ev')) mult = ev / kb
 
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
-        ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+          ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+      ELSE
+        array => dummy
       END IF
 
       n = 1
+      IF (got_file) array => ic%temp(:,:,n)
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       n = 2
+      IF (got_file) array => ic%temp(:,:,n)
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       n = 3
+      IF (got_file) array => ic%temp(:,:,n)
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
 
       debug_mode = .FALSE.
       RETURN
@@ -905,12 +971,17 @@ CONTAINS
 
       n = 1
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
-        ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+          ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%temp(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -920,12 +991,17 @@ CONTAINS
 
       n = 2
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
-        ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+          ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%temp(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -935,12 +1011,17 @@ CONTAINS
 
       n = 3
       ic => species_list(species_id)%initial_conditions
-      IF (got_file .AND. .NOT. ASSOCIATED(ic%temp)) THEN
-        ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+      IF (got_file) THEN
+        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+          ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+        END IF
+        array => ic%temp(:,:,n)
+      ELSE
+        array => dummy
       END IF
 
       CALL fill_array(species_list(species_id)%temperature_function(n), &
-          ic%temp(:,:,n), mult, mult_string, element, value, filename, got_file)
+          array, mult, mult_string, element, value, filename, got_file)
       RETURN
     END IF
 
@@ -1208,7 +1289,7 @@ CONTAINS
       CALL push_to_stack(stack, iblock)
       IF (ABS(mult - 1.0_num) > c_tiny) array = mult * array
     ELSE
-      CALL tokenize(value, stack, errcode)
+      CALL tokenize(value, stack, errcode, species_id)
       IF (ABS(mult - 1.0_num) > c_tiny) &
           CALL tokenize(mult_string, stack, errcode)
 

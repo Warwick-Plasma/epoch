@@ -34,11 +34,15 @@ CONTAINS
   SUBROUTINE load_single_array_from_file(filename, array, offset, err)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
-    REAL(num), DIMENSION(:), INTENT(INOUT) :: array
+    REAL(num), DIMENSION(:,:,:), INTENT(INOUT) :: array
     INTEGER(KIND=MPI_OFFSET_KIND), INTENT(IN) :: offset
     INTEGER, INTENT(INOUT) :: err
-    INTEGER :: subtype, subarray, fh, i
+    INTEGER :: subtype, subarray, fh, i, oerr
+#ifdef NO_MPI3
+    INTEGER :: iasz
+#else
     INTEGER(KIND=MPI_COUNT_KIND) :: asz
+#endif
     INTEGER(KIND=MPI_OFFSET_KIND) :: sz
     INTEGER(KIND=i8) :: asz8, tsz
 
@@ -55,16 +59,28 @@ CONTAINS
     subarray = create_current_field_subarray(ng)
 
     ! Check that file size is divisible by the total size of a field array
+#ifdef NO_MPI3
+    CALL MPI_TYPE_SIZE(subtype, iasz, errcode)
+    asz8 = INT(iasz, i8)
+#else
     CALL MPI_TYPE_SIZE_X(subarray, asz, errcode)
     asz8 = INT(asz, i8)
+#endif
+    oerr = errcode
     CALL MPI_REDUCE(asz8, tsz, 1, MPI_INTEGER8, MPI_SUM, 0, comm, errcode)
 
     IF (rank == 0) THEN
       CALL MPI_FILE_GET_SIZE(fh, sz, errcode)
-      IF (MOD(sz-offset, tsz) /= 0) THEN
+      IF (oerr == MPI_UNDEFINED) THEN
         PRINT*, '*** WARNING ***'
-        PRINT*, 'Binary input file "' // TRIM(filename) // '"', ' does not ', &
-            'appear to match the domain dimensions'
+        PRINT*, 'Cannot automatically test size of file"' // TRIM(filename) &
+            // '". Ensure that file is of correct size'
+      ELSE
+        IF (MOD(sz-offset, tsz) /= 0) THEN
+          PRINT*, '*** WARNING ***'
+          PRINT*, 'Binary input file "' // TRIM(filename) // '"', &
+              ' does not appear to match the domain dimensions'
+        END IF
       END IF
     END IF
 
