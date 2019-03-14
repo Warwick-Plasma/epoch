@@ -252,8 +252,8 @@ CONTAINS
               ranges(3,:), errcode)
 
           CALL sample_from_deck_expression(current, &
-              species_list(ispecies)%dist_fn, parameters, &
-              ranges, species_list(ispecies)%mass, drift)
+              species_list(ispecies)%dist_fn, parameters, ranges, &
+              species_list(ispecies)%mass, drift)
         END IF
 
         current%weight = density * wdata

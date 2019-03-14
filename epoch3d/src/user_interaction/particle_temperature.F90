@@ -256,15 +256,17 @@ CONTAINS
     INTEGER :: dof
     REAL(num) :: inter1, inter2, inter3, gamma_a, gamma_b, gamma_f
 
-    temp = SUM(temperature)
-    temp_max = MAXVAL(temperature)
     dof = COUNT(temperature > c_tiny)
+
     ! If there are no degrees of freedom them sampling is unnecessary
     ! plasma is cold
     IF (dof == 0) THEN
       momentum_from_temperature_relativistic = 0.0_num
       RETURN
     ENDIF
+
+    temp = SUM(temperature)
+    temp_max = MAXVAL(temperature)
 
     p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
         + param2 * temp**2 * LOG(cutoff)**2) / mass
@@ -280,6 +282,7 @@ CONTAINS
       momentum(2) = random() * 2.0_num * p_max_y - p_max_y
       momentum(3) = random() * 2.0_num * p_max_z - p_max_z
       mod_momentum = SQRT(momentum(1)**2 + momentum(2)**2 + momentum(3)**2)
+
       ! From that value, have to generate the probability that a particle
       ! with that momentum should be accepted.
       ! This is just the particle distribution function scaled to have
@@ -290,16 +293,19 @@ CONTAINS
       inter3 = momentum(3)**2 / MAX(temperature(3) / temp, c_tiny)
       probability = EXP(-c2_k * mass / temp * (SQRT(1.0_num &
           + inter1 + inter2 + inter3) - 1.0_num))
+
       ! Once you know your probability you just generate a random number
       ! between 0 and 1 and if the generated number is less than the
       ! probability then accept the particle and exit this loop.
       rand = random()
       IF (rand > probability) CYCLE
+
       mmc = momentum * mass * c
       CALL drift_lorentz_transform(mmc, mass, drift, &
           gamma_b, gamma_a, gamma_f)
-     rand = random()
-     IF (rand < 0.5_num/gamma_f * (gamma_a/gamma_b)) EXIT
+
+      rand = random()
+      IF (rand < 0.5_num / gamma_f * (gamma_a / gamma_b)) EXIT
     END DO
 
     momentum_from_temperature_relativistic = mmc
@@ -308,7 +314,7 @@ CONTAINS
 
 
 
-  ! Subroutine takes a rest frame momentum and a drift momentum and Lorentz 
+  ! Subroutine takes a rest frame momentum and a drift momentum and Lorentz
   ! transforms the momentum subject to the specified drift.
   SUBROUTINE drift_lorentz_transform(p, mass, drift, &
       gamma_before, gamma_after, gamma_frame)
@@ -318,7 +324,7 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
     REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_frame
     REAL(num), DIMENSION(c_ndirs) :: drift_mc, p_mc, beta
-    REAL(num), DIMENSION(c_ndirs + 1) :: p4_in
+    REAL(num), DIMENSION(c_ndirs+1) :: p4_in
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
     REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1_beta2
     INTEGER :: i, j
@@ -363,7 +369,8 @@ CONTAINS
       END DO
     END DO
 
-    gamma_after = SQRT(1.0_num + DOT_PRODUCT(p*imc, p*imc))
+    p_mc = p * imc
+    gamma_after = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
 
   END SUBROUTINE drift_lorentz_transform
 
