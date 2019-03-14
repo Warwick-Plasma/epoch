@@ -246,6 +246,7 @@ CONTAINS
     REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
     INTEGER :: dof
     REAL(num) :: inter1, inter2, inter3, gamma_a, gamma_b, gamma_f
+    LOGICAL :: no_drift
 
     dof = COUNT(temperature > c_tiny)
 
@@ -265,6 +266,12 @@ CONTAINS
     p_max_x = p_max * SQRT(temperature(1) / temp)
     p_max_y = p_max * SQRT(temperature(2) / temp)
     p_max_z = p_max * SQRT(temperature(3) / temp)
+
+    IF (DOT_PRODUCT(drift, drift) < c_tiny) THEN
+      no_drift = .TRUE.
+    ELSE
+      no_drift = .FALSE.
+    END IF
 
     ! Loop around until a momentum is accepted for this particle
     DO
@@ -292,6 +299,8 @@ CONTAINS
       IF (rand > probability) CYCLE
 
       mmc = momentum * mass * c
+      IF (no_drift) EXIT
+
       CALL drift_lorentz_transform(mmc, mass, drift, &
           gamma_b, gamma_a, gamma_f)
 
@@ -319,8 +328,6 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
     REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1_beta2
     INTEGER :: i, j
-
-    IF (DOT_PRODUCT(drift, drift) < c_tiny) RETURN
 
     imc = 1.0_num / mass / c
     drift_mc = drift * imc
