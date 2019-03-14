@@ -242,14 +242,14 @@ CONTAINS
     REAL(num), PARAMETER :: c2_k = 6.509658203714208e39_num
     REAL(num) :: rand, probability
     REAL(num), DIMENSION(c_ndirs) :: momentum, mmc
-    REAL(num) :: mod_momentum, mc, pfac
+    REAL(num) :: mod_momentum, mass_c, pfac, drift_2
     REAL(num) :: momentum1_2, momentum2_2, momentum3_2
     REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
     REAL(num) :: temp_norm1, temp_norm2, temp_norm3
     REAL(num) :: temp_fac1, temp_fac2, temp_fac3
     INTEGER :: dof
     REAL(num) :: inter1, inter2, inter3
-    REAL(num) :: gamma_before, gamma_after, gamma_drift
+    REAL(num) :: gamma_before, gamma_after, gamma_drift, gamma_drift_fac
     LOGICAL :: no_drift
 
     dof = COUNT(temperature > c_tiny)
@@ -269,7 +269,7 @@ CONTAINS
     temp_fac1 = 1.0_num / MAX(temp_norm1, c_tiny)
     temp_fac2 = 1.0_num / MAX(temp_norm1, c_tiny)
     temp_fac3 = 1.0_num / MAX(temp_norm1, c_tiny)
-    mc = mass * c
+    mass_c = mass * c
 
     p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
         + param2 * temp**2 * LOG(cutoff)**2) / mass
@@ -280,10 +280,13 @@ CONTAINS
 
     pfac = -c2_k * mass / temp
 
-    IF (DOT_PRODUCT(drift, drift) < c_tiny) THEN
+    drift_2 = DOT_PRODUCT(drift, drift)
+    IF (drift_2 < c_tiny) THEN
       no_drift = .TRUE.
     ELSE
       no_drift = .FALSE.
+      gamma_drift = SQRT(1.0_num + drift_2 / mass_c**2)
+      gamma_drift_fac = 0.5_num / gamma_drift
     END IF
 
     ! Loop around until a momentum is accepted for this particle
@@ -316,14 +319,14 @@ CONTAINS
       rand = random()
       IF (rand > probability) CYCLE
 
-      mmc = momentum * mc
+      mmc = momentum * mass_c
       IF (no_drift) EXIT
 
-      CALL drift_lorentz_transform(mmc, mass, drift, &
+      CALL drift_lorentz_transform(mmc, mass_c, drift, &
           gamma_before, gamma_after, gamma_drift)
 
       rand = random()
-      IF (rand < 0.5_num / gamma_drift * (gamma_after / gamma_before)) EXIT
+      IF (rand < gamma_drift_fac * (gamma_after / gamma_before)) EXIT
     END DO
 
     momentum_from_temperature_relativistic = mmc
@@ -334,27 +337,25 @@ CONTAINS
 
   ! Subroutine takes a rest frame momentum and a drift momentum and Lorentz
   ! transforms the momentum subject to the specified drift.
-  SUBROUTINE drift_lorentz_transform(p, mass, drift, &
+  SUBROUTINE drift_lorentz_transform(p, mass_c, drift, &
       gamma_before, gamma_after, gamma_drift)
 
     REAL(num), DIMENSION(c_ndirs), INTENT(INOUT) :: p
-    REAL(num), INTENT(IN) :: mass
+    REAL(num), INTENT(IN) :: mass_c
     REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
     REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_drift
-    REAL(num), DIMENSION(c_ndirs) :: drift_mc, p_mc, beta
+    REAL(num), DIMENSION(c_ndirs) :: p_mc, beta
     REAL(num), DIMENSION(c_ndirs+1) :: p4_in
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
     REAL(num) :: e_prime, imc, gamma_m1_beta2
     INTEGER :: i, j
 
-    imc = 1.0_num / mass / c
-    drift_mc = drift * imc
+    imc = 1.0_num / mass_c
     p_mc = p * imc
-    gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift_mc, drift_mc))
     gamma_before = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
-    e_prime = gamma_before * mass * c
+    e_prime = gamma_before * mass_c
 
-    beta = -drift_mc / gamma_drift ! Lorentz beta vector
+    beta = -drift * imc / gamma_drift ! Lorentz beta vector
 
     gamma_m1_beta2 = (gamma_drift - 1.0_num) / DOT_PRODUCT(beta, beta)
 
