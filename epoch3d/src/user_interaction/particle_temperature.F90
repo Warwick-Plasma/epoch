@@ -251,8 +251,11 @@ CONTAINS
     REAL(num), PARAMETER :: c2_k = 6.509658203714208e39_num
     REAL(num) :: rand, probability
     REAL(num), DIMENSION(c_ndirs) :: momentum, mmc
-    REAL(num) :: mod_momentum
+    REAL(num) :: mod_momentum, mc, pfac
+    REAL(num) :: momentum1_2, momentum2_2, momentum3_2
     REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
+    REAL(num) :: temp_norm1, temp_norm2, temp_norm3
+    REAL(num) :: temp_fac1, temp_fac2, temp_fac3
     INTEGER :: dof
     REAL(num) :: inter1, inter2, inter3
     REAL(num) :: gamma_before, gamma_after, gamma_drift
@@ -269,13 +272,22 @@ CONTAINS
 
     temp = SUM(temperature)
     temp_max = MAXVAL(temperature)
+    temp_norm1 = temperature(1) / temp
+    temp_norm2 = temperature(2) / temp
+    temp_norm3 = temperature(3) / temp
+    temp_fac1 = 1.0_num / MAX(temp_norm1, c_tiny)
+    temp_fac2 = 1.0_num / MAX(temp_norm1, c_tiny)
+    temp_fac3 = 1.0_num / MAX(temp_norm1, c_tiny)
+    mc = mass * c
 
     p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
         + param2 * temp**2 * LOG(cutoff)**2) / mass
 
-    p_max_x = p_max * SQRT(temperature(1) / temp)
-    p_max_y = p_max * SQRT(temperature(2) / temp)
-    p_max_z = p_max * SQRT(temperature(3) / temp)
+    p_max_x = p_max * SQRT(temp_norm1)
+    p_max_y = p_max * SQRT(temp_norm2)
+    p_max_z = p_max * SQRT(temp_norm3)
+
+    pfac = -c2_k * mass / temp
 
     IF (DOT_PRODUCT(drift, drift) < c_tiny) THEN
       no_drift = .TRUE.
@@ -289,18 +301,23 @@ CONTAINS
       momentum(1) = random() * 2.0_num * p_max_x - p_max_x
       momentum(2) = random() * 2.0_num * p_max_y - p_max_y
       momentum(3) = random() * 2.0_num * p_max_z - p_max_z
-      mod_momentum = SQRT(momentum(1)**2 + momentum(2)**2 + momentum(3)**2)
+
+      momentum1_2 = momentum(1)**2
+      momentum2_2 = momentum(2)**2
+      momentum3_2 = momentum(3)**2
+
+      mod_momentum = SQRT(momentum1_2 + momentum2_2 + momentum3_2)
 
       ! From that value, have to generate the probability that a particle
       ! with that momentum should be accepted.
       ! This is just the particle distribution function scaled to have
       ! a maximum of 1 (or lower).
       ! In general you will have to work this out yourself
-      inter1 = momentum(1)**2 / MAX(temperature(1) / temp, c_tiny)
-      inter2 = momentum(2)**2 / MAX(temperature(2) / temp, c_tiny)
-      inter3 = momentum(3)**2 / MAX(temperature(3) / temp, c_tiny)
-      probability = EXP(-c2_k * mass / temp * (SQRT(1.0_num &
-          + inter1 + inter2 + inter3) - 1.0_num))
+      inter1 = momentum1_2 * temp_fac1
+      inter2 = momentum2_2 * temp_fac2
+      inter3 = momentum3_2 * temp_fac3
+      probability = EXP(pfac * (SQRT(1.0_num + inter1 + inter2 + inter3) &
+                                - 1.0_num))
 
       ! Once you know your probability you just generate a random number
       ! between 0 and 1 and if the generated number is less than the
@@ -308,7 +325,7 @@ CONTAINS
       rand = random()
       IF (rand > probability) CYCLE
 
-      mmc = momentum * mass * c
+      mmc = momentum * mc
       IF (no_drift) EXIT
 
       CALL drift_lorentz_transform(mmc, mass, drift, &
