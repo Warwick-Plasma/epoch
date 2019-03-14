@@ -254,7 +254,8 @@ CONTAINS
     REAL(num) :: mod_momentum
     REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
     INTEGER :: dof
-    REAL(num) :: inter1, inter2, inter3, gamma_a, gamma_b, gamma_f
+    REAL(num) :: inter1, inter2, inter3
+    REAL(num) :: gamma_before, gamma_after, gamma_drift
     LOGICAL :: no_drift
 
     dof = COUNT(temperature > c_tiny)
@@ -311,10 +312,10 @@ CONTAINS
       IF (no_drift) EXIT
 
       CALL drift_lorentz_transform(mmc, mass, drift, &
-          gamma_b, gamma_a, gamma_f)
+          gamma_before, gamma_after, gamma_drift)
 
       rand = random()
-      IF (rand < 0.5_num / gamma_f * (gamma_a / gamma_b)) EXIT
+      IF (rand < 0.5_num / gamma_drift * (gamma_after / gamma_before)) EXIT
     END DO
 
     momentum_from_temperature_relativistic = mmc
@@ -326,26 +327,24 @@ CONTAINS
   ! Subroutine takes a rest frame momentum and a drift momentum and Lorentz
   ! transforms the momentum subject to the specified drift.
   SUBROUTINE drift_lorentz_transform(p, mass, drift, &
-      gamma_before, gamma_after, gamma_frame)
+      gamma_before, gamma_after, gamma_drift)
 
     REAL(num), DIMENSION(c_ndirs), INTENT(INOUT) :: p
     REAL(num), INTENT(IN) :: mass
     REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
-    REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_frame
+    REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_drift
     REAL(num), DIMENSION(c_ndirs) :: drift_mc, p_mc, beta
     REAL(num), DIMENSION(c_ndirs+1) :: p4_in
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
-    REAL(num) :: gamma_drift, gamma_part, e_prime, imc, gamma_m1_beta2
+    REAL(num) :: e_prime, imc, gamma_m1_beta2
     INTEGER :: i, j
 
     imc = 1.0_num / mass / c
     drift_mc = drift * imc
     p_mc = p * imc
     gamma_drift = SQRT(1.0_num + DOT_PRODUCT(drift_mc, drift_mc))
-    gamma_part = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
-    gamma_before = gamma_part
-    gamma_frame = gamma_drift
-    e_prime = gamma_part * mass * c
+    gamma_before = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
+    e_prime = gamma_before * mass * c
 
     beta = -drift_mc / gamma_drift ! Lorentz beta vector
 
