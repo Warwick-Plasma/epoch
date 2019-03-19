@@ -77,7 +77,7 @@ CONTAINS
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
 
-    ALLOCATE(wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng))
+    ALLOCATE(wk_array(nx,ny,nz))
 
     DO iz = 1, nz
     DO iy = 1, ny
@@ -98,7 +98,7 @@ CONTAINS
     END DO
     END DO
 
-    array(1:nx,1:ny,1:nz) = wk_array(1:nx,1:ny,1:nz)
+    array(1:nx,1:ny,1:nz) = wk_array(:,:,:)
 
     DEALLOCATE(wk_array)
 #else
@@ -113,8 +113,9 @@ CONTAINS
     beta = (1.0_num - alpha) / 6.0_num
 
     ALLOCATE(wk_array (1-ng_l:nx+ng_l,1-ng_l:ny+ng_l,1-ng_l:nz+ng_l))
-    ALLOCATE(wk_array2(1-ng_l:nx+ng_l,1-ng_l:ny+ng_l,1-ng_l:nz+ng_l))
+    ALLOCATE(wk_array2(nx,ny,nz))
 
+    wk_array = 0.0_num
     wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
         array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng)
 
@@ -133,14 +134,15 @@ CONTAINS
         END DO
         END DO
         END DO
-        wk_array = wk_array2
+        wk_array(1:nx,1:ny,1:nz) = wk_array2(:,:,:)
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO
 
-    array(1:nx,1:ny,1:nz) = wk_array(1:nx,1:ny,1:nz)
+    array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
+        wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng)
 
     DEALLOCATE(wk_array, wk_array2)
     DEALLOCATE(stride_inner)
