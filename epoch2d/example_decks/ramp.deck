@@ -72,7 +72,7 @@ begin:species
                       number_density(electron))
   number_density = if(x gt 75*micron, 0.0, number_density(electron))
   #number_density = number_density(electron) \
-                    * (0.8 + 0.2 * gauss(y, 0, 0.5*las_scale_y))
+  #                 * (0.8 + 0.2 * gauss(y, 0, 0.5*las_scale_y))
   number_density_min = 0.0001 * n_crit
   number_density_max = n_crit
 
