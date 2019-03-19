@@ -68,7 +68,6 @@ CONTAINS
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
     REAL(num) :: val, w1, w2, w3
 #else
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wk_array2
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
     INTEGER :: ng_l, iit, istride, cstride
     REAL(num) :: alpha, beta
@@ -112,8 +111,7 @@ CONTAINS
     alpha = 0.5_num
     beta = (1.0_num - alpha) / 6.0_num
 
-    ALLOCATE(wk_array (1-ng_l:nx+ng_l,1-ng_l:ny+ng_l,1-ng_l:nz+ng_l))
-    ALLOCATE(wk_array2(nx,ny,nz))
+    ALLOCATE(wk_array(1-ng_l:nx+ng_l,1-ng_l:ny+ng_l,1-ng_l:nz+ng_l))
 
     wk_array = 0.0_num
     wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
@@ -126,7 +124,7 @@ CONTAINS
         DO iz = 1, nz
         DO iy = 1, ny
         DO ix = 1, nx
-          wk_array2(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
+          array(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
               + (wk_array(ix-cstride,iy,iz) + wk_array(ix+cstride,iy,iz) &
               +  wk_array(ix,iy-cstride,iz) + wk_array(ix,iy+cstride,iz) &
               +  wk_array(ix,iy,iz-cstride) + wk_array(ix,iy,iz+cstride)) &
@@ -134,7 +132,7 @@ CONTAINS
         END DO
         END DO
         END DO
-        wk_array(1:nx,1:ny,1:nz) = wk_array2(:,:,:)
+        wk_array(1:nx,1:ny,1:nz) = array(1:nx,1:ny,1:nz)
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
@@ -144,7 +142,7 @@ CONTAINS
     array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
         wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng)
 
-    DEALLOCATE(wk_array, wk_array2)
+    DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
 #endif
 

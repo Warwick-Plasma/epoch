@@ -68,7 +68,6 @@ CONTAINS
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
     REAL(num) :: val, w1
 #else
-    REAL(num), DIMENSION(:), ALLOCATABLE :: wk_array2
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
     INTEGER :: ng_l, iit, istride, cstride
     REAL(num) :: alpha, beta
@@ -102,8 +101,7 @@ CONTAINS
     alpha = 0.5_num
     beta = (1.0_num - alpha) * 0.5_num
 
-    ALLOCATE(wk_array (1-ng_l:nx+ng_l))
-    ALLOCATE(wk_array2(nx))
+    ALLOCATE(wk_array(1-ng_l:nx+ng_l))
 
     wk_array = 0.0_num
     wk_array(1-jng:nx+jng) = array(1-jng:nx+jng)
@@ -113,10 +111,10 @@ CONTAINS
         CALL field_bc(wk_array, ng_l)
         cstride = stride_inner(istride)
         DO ix = 1, nx
-          wk_array2(ix) = alpha * wk_array(ix) &
+          array(ix) = alpha * wk_array(ix) &
               + (wk_array(ix-cstride) + wk_array(ix+cstride)) * beta
         END DO
-        wk_array(1:nx) = wk_array2(:)
+        wk_array(1:nx) = array(1:nx)
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
@@ -125,7 +123,7 @@ CONTAINS
 
     array(1-jng:nx+jng) = wk_array(1-jng:nx+jng)
 
-    DEALLOCATE(wk_array, wk_array2)
+    DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
 #endif
 
