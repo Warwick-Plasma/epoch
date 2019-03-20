@@ -187,9 +187,8 @@ CONTAINS
     WRITE(*,*) 'Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT'
 #endif
 #ifdef PER_SPECIES_WEIGHT
-    WRITE(*,*) 'Per species weighting -DPER_SPECIES_WEIGHT'
-#else
     defines = IOR(defines, c_def_per_particle_weight)
+    WRITE(*,*) 'Per species weighting -DPER_SPECIES_WEIGHT'
 #endif
 #ifdef ZERO_CURRENT_PARTICLES
     defines = IOR(defines, c_def_zero_current_particles)
