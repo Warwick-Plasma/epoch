@@ -31,6 +31,10 @@ CONTAINS
 
     CALL current_bcs
 
+    CALL field_bc(jx, jng)
+    CALL field_bc(jy, jng)
+    CALL field_bc(jz, jng)
+
     IF (smooth_currents) CALL smooth_current
 
     IF (use_current_correction) THEN
@@ -121,7 +125,7 @@ CONTAINS
       END IF
     END DO
 
-    array(1-jng:nx+jng) = wk_array(1-jng:nx+jng)
+    array(1:nx) = wk_array(1:nx)
 
     DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
