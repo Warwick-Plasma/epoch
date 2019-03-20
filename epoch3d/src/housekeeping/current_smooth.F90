@@ -31,6 +31,10 @@ CONTAINS
 
     CALL current_bcs
 
+    CALL field_bc(jx, jng)
+    CALL field_bc(jy, jng)
+    CALL field_bc(jz, jng)
+
     IF (smooth_currents) CALL smooth_current
 
     IF (use_current_correction) THEN
@@ -61,29 +65,22 @@ CONTAINS
     INTEGER, INTENT(IN) :: its
     INTEGER, INTENT(IN) :: comp_its
     INTEGER, INTENT(IN), DIMENSION(:), ALLOCATABLE :: stride
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wk_array, wk_array2
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy, iz
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: isubx, isuby, isubz
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
     REAL(num) :: val, w1, w2, w3
-#endif
+#else
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
     INTEGER :: ng_l, iit, istride, cstride
-    REAL(num) :: alpha
-
-    IF (ALLOCATED(stride)) THEN
-      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
-    ELSE
-      ALLOCATE(stride_inner(1), SOURCE=[1])
-    END IF
-    ng_l = MAX(sng, jng)
-    alpha = 0.5_num
-    ALLOCATE(wk_array(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l, 1-ng_l:nz+ng_l))
-    ALLOCATE(wk_array2(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l, 1-ng_l:nz+ng_l))
+    REAL(num) :: alpha, beta
+#endif
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
+
+    ALLOCATE(wk_array(nx,ny,nz))
 
     DO iz = 1, nz
     DO iy = 1, ny
@@ -103,9 +100,27 @@ CONTAINS
     END DO
     END DO
     END DO
+
+    array(1:nx,1:ny,1:nz) = wk_array(:,:,:)
+
+    DEALLOCATE(wk_array)
 #else
+    IF (ALLOCATED(stride)) THEN
+      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
+    ELSE
+      ALLOCATE(stride_inner(1), SOURCE=[1])
+    END IF
+
+    ng_l = MAX(sng, jng)
+    alpha = 0.5_num
+    beta = (1.0_num - alpha) / 6.0_num
+
+    ALLOCATE(wk_array(1-ng_l:nx+ng_l,1-ng_l:ny+ng_l,1-ng_l:nz+ng_l))
+
+    wk_array = 0.0_num
     wk_array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng) = &
         array(1-jng:nx+jng,1-jng:ny+jng,1-jng:nz+jng)
+
     DO iit = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
         CALL field_bc(wk_array, ng_l)
@@ -113,25 +128,26 @@ CONTAINS
         DO iz = 1, nz
         DO iy = 1, ny
         DO ix = 1, nx
-          wk_array2(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
+          array(ix,iy,iz) = alpha * wk_array(ix,iy,iz) &
               + (wk_array(ix-cstride,iy,iz) + wk_array(ix+cstride,iy,iz) &
               +  wk_array(ix,iy-cstride,iz) + wk_array(ix,iy+cstride,iz) &
               +  wk_array(ix,iy,iz-cstride) + wk_array(ix,iy,iz+cstride)) &
-              * (1.0_num - alpha) / 6.0_num
+              * beta
         END DO
         END DO
         END DO
-        wk_array = wk_array2
+        wk_array(1:nx,1:ny,1:nz) = array(1:nx,1:ny,1:nz)
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO
-#endif
+
     array(1:nx,1:ny,1:nz) = wk_array(1:nx,1:ny,1:nz)
 
-    DEALLOCATE(wk_array, wk_array2)
+    DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
+#endif
 
   END SUBROUTINE smooth_array
 

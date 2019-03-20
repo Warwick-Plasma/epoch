@@ -31,6 +31,10 @@ CONTAINS
 
     CALL current_bcs
 
+    CALL field_bc(jx, jng)
+    CALL field_bc(jy, jng)
+    CALL field_bc(jz, jng)
+
     IF (smooth_currents) CALL smooth_current
 
     IF (use_current_correction) THEN
@@ -61,29 +65,22 @@ CONTAINS
     INTEGER, INTENT(IN) :: its
     INTEGER, INTENT(IN) :: comp_its
     INTEGER, INTENT(IN), DIMENSION(:), ALLOCATABLE :: stride
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array, wk_array2
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: wk_array
     INTEGER :: ix, iy
 #ifdef HIGH_ORDER_SMOOTHING
     INTEGER :: isubx, isuby
     REAL(num), DIMENSION(sf_min:sf_max) :: weight_fn
     REAL(num) :: val, w1, w2
-#endif
+#else
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
     INTEGER :: ng_l, iit, istride, cstride
-    REAL(num) :: alpha
-
-    IF (ALLOCATED(stride)) THEN
-      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
-    ELSE
-      ALLOCATE(stride_inner(1), SOURCE=[1])
-    END IF
-    ng_l = MAX(sng, jng)
-    alpha = 0.5_num
-    ALLOCATE(wk_array(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l))
-    ALLOCATE(wk_array2(1-ng_l:nx+ng_l, 1-ng_l:ny+ng_l))
+    REAL(num) :: alpha, beta
+#endif
 
 #ifdef HIGH_ORDER_SMOOTHING
     CALL particle_to_grid(0.0_num, weight_fn)
+
+    ALLOCATE(wk_array(nx,ny))
 
     DO iy = 1, ny
     DO ix = 1, nx
@@ -98,31 +95,49 @@ CONTAINS
       wk_array(ix,iy) = val
     END DO
     END DO
+
+    array(1:nx,1:ny) = wk_array(:,:)
+
+    DEALLOCATE(wk_array)
 #else
+    IF (ALLOCATED(stride)) THEN
+      ALLOCATE(stride_inner(SIZE(stride)), SOURCE=stride)
+    ELSE
+      ALLOCATE(stride_inner(1), SOURCE=[1])
+    END IF
+
+    ng_l = MAX(sng, jng)
+    alpha = 0.5_num
+    beta = (1.0_num - alpha) * 0.25_num
+
+    ALLOCATE(wk_array(1-ng_l:nx+ng_l,1-ng_l:ny+ng_l))
+
+    wk_array = 0.0_num
     wk_array(1-jng:nx+jng,1-jng:ny+jng) = array(1-jng:nx+jng,1-jng:ny+jng)
+
     DO iit = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
         CALL field_bc(wk_array, ng_l)
         cstride = stride_inner(istride)
         DO iy = 1, ny
         DO ix = 1, nx
-          wk_array2(ix,iy) = alpha * wk_array(ix,iy) &
+          array(ix,iy) = alpha * wk_array(ix,iy) &
               + (wk_array(ix-cstride,iy) + wk_array(ix+cstride,iy) &
-              +  wk_array(ix,iy-cstride) + wk_array(ix,iy+cstride)) &
-              * (1.0_num - alpha) * 0.25_num
+              +  wk_array(ix,iy-cstride) + wk_array(ix,iy+cstride)) * beta
         END DO
         END DO
-        wk_array = wk_array2
+        wk_array(1:nx,1:ny) = array(1:nx,1:ny)
       END DO
       IF (iit > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO
-#endif
+
     array(1:nx,1:ny) = wk_array(1:nx,1:ny)
 
-    DEALLOCATE(wk_array, wk_array2)
+    DEALLOCATE(wk_array)
     DEALLOCATE(stride_inner)
+#endif
 
   END SUBROUTINE smooth_array
 
