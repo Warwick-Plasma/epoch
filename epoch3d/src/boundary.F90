@@ -1373,7 +1373,7 @@ CONTAINS
                     * REAL(cpml_thickness, num))
               END IF
             END IF
-            IF (part_pos < x_min_outer) THEN
+            IF (part_pos < x_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
@@ -1464,7 +1464,7 @@ CONTAINS
                     * REAL(cpml_thickness, num))
               END IF
             END IF
-            IF (part_pos >= x_max_outer) THEN
+            IF (part_pos >= x_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
@@ -1556,7 +1556,7 @@ CONTAINS
                     * REAL(cpml_thickness, num))
               END IF
             END IF
-            IF (part_pos < y_min_outer) THEN
+            IF (part_pos < y_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
@@ -1647,7 +1647,7 @@ CONTAINS
                     * REAL(cpml_thickness, num))
               END IF
             END IF
-            IF (part_pos >= y_max_outer) THEN
+            IF (part_pos >= y_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
