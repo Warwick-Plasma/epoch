@@ -938,11 +938,11 @@ CONTAINS
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
 
-    boundary_shift = dx * REAL((1 + png) / 2, num)
-
+    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift
     x_max_outer = x_max + boundary_shift
 
+    boundary_shift = dy * REAL((1 + png + cpml_thickness) / 2, num)
     y_min_outer = y_min - boundary_shift
     y_max_outer = y_max + boundary_shift
 
@@ -993,7 +993,8 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos(1) = part_pos - sgn * length_x
+                cur%part_pos(1) = part_pos - sgn * (length_x + 2.0_num * dx &
+                    * REAL(cpml_thickness, num))
               END IF
             END IF
             IF (part_pos < x_min_outer) THEN
@@ -1070,7 +1071,8 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos(1) = part_pos - sgn * length_x
+                cur%part_pos(1) = part_pos - sgn * (length_x + 2.0_num * dx &
+                    * REAL(cpml_thickness, num))
               END IF
             END IF
             IF (part_pos >= x_max_outer) THEN
@@ -1148,7 +1150,8 @@ CONTAINS
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
-                cur%part_pos(2) = part_pos - sgn * length_y
+                cur%part_pos(2) = part_pos - sgn * (length_y + 2.0_num * dy &
+                    * REAL(cpml_thickness, num))
               END IF
             END IF
             IF (part_pos < y_min_outer) THEN
@@ -1225,7 +1228,8 @@ CONTAINS
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
-                cur%part_pos(2) = part_pos - sgn * length_y
+                cur%part_pos(2) = part_pos - sgn * (length_y + 2.0_num * dy &
+                    * REAL(cpml_thickness, num))
               END IF
             END IF
             IF (part_pos >= y_max_outer) THEN
