@@ -428,12 +428,26 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass
     REAL(num), DIMENSION(c_ndirs) , INTENT(IN) :: drift
     INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
-    REAL(num) :: setlevel, gamma_a, gamma_b, gamma_f
+    REAL(num) :: rand, probability, mass_c, drift_2
+    REAL(num) :: gamma_before, gamma_after, gamma_drift, gamma_drift_fac
     INTEGER :: err
     INTEGER(i8) :: iit
+    LOGICAL :: no_drift
 
     err = c_err_none
     IF (PRESENT(iit_r)) iit = iit_r
+
+    mass_c = mass * c
+
+    drift_2 = DOT_PRODUCT(drift, drift)
+    IF (drift_2 < c_tiny) THEN
+      no_drift = .TRUE.
+    ELSE
+      no_drift = .FALSE.
+      gamma_drift = SQRT(1.0_num + drift_2 / mass_c**2)
+      gamma_drift_fac = 0.5_num / gamma_drift
+    END IF
+
     DO
       ! These lines are setting global variables that are later used by
       ! the deck parser
@@ -445,7 +459,7 @@ CONTAINS
           + ranges(3,1)
 
       ! pack spatial information has already been set before calling
-      setlevel = evaluate_with_parameters(stack, parameters, err)
+      probability = evaluate_with_parameters(stack, parameters, err)
       IF (err /= c_err_none .AND. rank == 0) THEN
         PRINT*, 'Unable to evaluate distribution function'
         CALL abort_code(c_err_bad_setup)
@@ -453,10 +467,16 @@ CONTAINS
 
       iit = iit + 1
 
-      IF (random() > setlevel) CYCLE
-      CALL drift_lorentz_transform(parameters%pack_p, mass, drift, &
-          gamma_b, gamma_a, gamma_f)
-      IF (random() < 0.5_num/gamma_f * (gamma_a/gamma_b)) EXIT
+      rand = random()
+      IF (rand > probability) CYCLE
+
+      IF (no_drift) EXIT
+
+      CALL drift_lorentz_transform(parameters%pack_p, mass_c, drift, &
+          gamma_before, gamma_after, gamma_drift)
+
+      rand = random()
+      IF (rand < gamma_drift_fac * (gamma_after / gamma_before)) EXIT
     ENDDO
 
     IF (PRESENT(iit_r)) iit_r = iit
