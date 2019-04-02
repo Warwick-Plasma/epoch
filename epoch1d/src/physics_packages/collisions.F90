@@ -50,7 +50,7 @@ MODULE collisions
     END SUBROUTINE scatter_proto
   END INTERFACE
 
-  PROCEDURE(scatter_proto), POINTER :: scatter_fn => NULL()
+  PROCEDURE(scatter_proto), POINTER, SAVE :: scatter_fn => NULL()
 
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
 
@@ -118,12 +118,6 @@ CONTAINS
     ALLOCATE(part_count(1-ng:nx+ng))
     ALLOCATE(iekbar(1-ng:nx+ng))
     ALLOCATE(jekbar(1-ng:nx+ng))
-
-    IF (use_nanbu) THEN
-      scatter_fn => scatter_np
-    ELSE
-      scatter_fn => scatter_sk
-    END IF
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -252,12 +246,6 @@ CONTAINS
     ALLOCATE(iekbar(1-ng:nx+ng))
     ALLOCATE(jekbar(1-ng:nx+ng))
     ALLOCATE(e_ekbar(1-ng:nx+ng))
-
-    IF (use_nanbu) THEN
-      scatter_fn => scatter_np
-    ELSE
-      scatter_fn => scatter_sk
-    END IF
 
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
@@ -1694,6 +1682,12 @@ CONTAINS
     coll_pairs = 1.0_num
     coll_sort_array_size = 1
     ALLOCATE(coll_sort_array(coll_sort_array_size))
+
+    IF (use_nanbu) THEN
+      scatter_fn => scatter_np
+    ELSE
+      scatter_fn => scatter_sk
+    END IF
 
   END SUBROUTINE setup_collisions
 
