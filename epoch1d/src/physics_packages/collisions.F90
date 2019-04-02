@@ -253,6 +253,12 @@ CONTAINS
     ALLOCATE(jekbar(1-ng:nx+ng))
     ALLOCATE(e_ekbar(1-ng:nx+ng))
 
+    IF (use_nanbu) THEN
+      scatter_fn => scatter_np
+    ELSE
+      scatter_fn => scatter_sk
+    END IF
+
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
 
