@@ -356,7 +356,7 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs) :: p_mc, beta
     REAL(num), DIMENSION(c_ndirs+1) :: p4_in
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
-    REAL(num) :: e_prime, imc, gamma_m1_beta2
+    REAL(num) :: e_prime, imc, gamma_m1_beta2, p2
     INTEGER :: i, j
 
     imc = 1.0_num / mass_c
@@ -385,16 +385,17 @@ CONTAINS
     boost_tensor(3,4) = 1.0_num + gamma_m1_beta2 * beta(3)**2
 
     p4_in = [e_prime, p(1), p(2), p(3)]
-    p = 0.0_num
+    p2 = 0.0_num
 
     DO i = 1, 3
+      p(i) = 0.0_num
       DO j = 1, 4
         p(i) = p(i) + p4_in(j) * boost_tensor(i,j)
       END DO
+      p2 = p2 + (p(i) * imc)**2
     END DO
 
-    p_mc = p * imc
-    gamma_after = SQRT(1.0_num + DOT_PRODUCT(p_mc, p_mc))
+    gamma_after = SQRT(1.0_num + p2)
 
   END SUBROUTINE drift_lorentz_transform
 
@@ -447,6 +448,7 @@ CONTAINS
     INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
     REAL(num) :: rand, probability, mass_c, drift_2
     REAL(num) :: gamma_before, gamma_after, gamma_drift, gamma_drift_fac
+    REAL(num) :: range_diff1, range_diff2, range_diff3
     INTEGER :: err
     INTEGER(i8) :: iit
     LOGICAL :: no_drift
@@ -454,26 +456,26 @@ CONTAINS
     err = c_err_none
     IF (PRESENT(iit_r)) iit = iit_r
 
-    mass_c = mass * c
-
     drift_2 = DOT_PRODUCT(drift, drift)
     IF (drift_2 < c_tiny) THEN
       no_drift = .TRUE.
     ELSE
       no_drift = .FALSE.
+      mass_c = mass * c
       gamma_drift = SQRT(1.0_num + drift_2 / mass_c**2)
       gamma_drift_fac = 0.5_num / gamma_drift
     END IF
 
+    range_diff1 = ranges(1,2) - ranges(1,1)
+    range_diff2 = ranges(2,2) - ranges(2,1)
+    range_diff3 = ranges(3,2) - ranges(3,1)
+
     DO
       ! These lines are setting global variables that are later used by
       ! the deck parser
-      parameters%pack_p(1) = random() * (ranges(1,2) - ranges(1,1)) &
-          + ranges(1,1)
-      parameters%pack_p(2) = random() * (ranges(2,2) - ranges(2,1)) &
-          + ranges(2,1)
-      parameters%pack_p(3) = random() * (ranges(3,2) - ranges(3,1)) &
-          + ranges(3,1)
+      parameters%pack_p(1) = random() * range_diff1 + ranges(1,1)
+      parameters%pack_p(2) = random() * range_diff2 + ranges(2,1)
+      parameters%pack_p(3) = random() * range_diff3 + ranges(3,1)
 
       ! pack spatial information has already been set before calling
       probability = evaluate_with_parameters(stack, parameters, err)
