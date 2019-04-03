@@ -293,9 +293,7 @@ CONTAINS
               == c_ic_df_relativistic_thermal) THEN
             current%part_p = momentum_from_temperature_relativistic(&
                 species_list(ispecies)%mass, temp_local, &
-                species_list(ispecies)%fractional_tail_cutoff)
-            CALL particle_drift_lorentz_transform(current, &
-                species_list(ispecies)%mass, drift_local)
+                species_list(ispecies)%fractional_tail_cutoff, drift_local)
           ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
             parameters%use_grid_position = .FALSE.
             parameters%pack_pos = current%part_pos
@@ -312,8 +310,7 @@ CONTAINS
                 ranges(3,:), errcode)
 
             CALL sample_from_deck_expression(current, &
-                species_list(ispecies)%dist_fn, parameters, ranges)
-            CALL particle_drift_lorentz_transform(current, &
+                species_list(ispecies)%dist_fn, parameters, ranges, &
                 species_list(ispecies)%mass, drift)
           END IF
 
