@@ -818,6 +818,8 @@ CONTAINS
           END IF
           mask = IAND(mask, NOT(c_io_species))
           mask = IOR(mask, c_io_no_sum)
+          IF (mask_element == c_dump_poynt_flux) &
+              mask = IAND(mask, NOT(c_io_no_sum))
         END IF
       END IF
 
