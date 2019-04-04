@@ -15,6 +15,9 @@
  * Added the DECK_DEBUG compiler flag. If enabled then this forces
    "deck_warnings_fatal" to always be set to "T"
 
+ * Added "drift_p{x,y,z}" and "drift_p{x,y,z}_back" as aliases for
+   "drift_{x,y,z}" and "drift_{x,y,z}_back"
+
 
 ## v4.15.0 to v4.16.0
 

@@ -175,21 +175,21 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x')) THEN
+    IF (str_cmp(element, 'drift_x') .OR. str_cmp(element, 'drift_px')) THEN
       i = 1
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y')) THEN
+    IF (str_cmp(element, 'drift_y') .OR. str_cmp(element, 'drift_py')) THEN
       i = 2
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z')) THEN
+    IF (str_cmp(element, 'drift_z') .OR. str_cmp(element, 'drift_pz')) THEN
       i = 3
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
