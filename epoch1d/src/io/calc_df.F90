@@ -1018,12 +1018,12 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
+
       wdata = io_list(ispecies)%weight
       weight = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-
 #ifndef PER_SPECIES_WEIGHT
         wdata = current%weight
         weight = current%weight
@@ -1058,7 +1058,7 @@ CONTAINS
     CALL calc_boundary(data_array)
     CALL calc_boundary(part_count)
 
-    data_array = data_array/MAX(part_count, c_tiny)
+    data_array = data_array / MAX(part_count, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     END DO

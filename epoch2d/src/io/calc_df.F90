@@ -1086,6 +1086,7 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
+
       wdata = io_list(ispecies)%weight
       weight = io_list(ispecies)%weight
 
@@ -1133,6 +1134,7 @@ CONTAINS
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     END DO
+
     DEALLOCATE(part_count)
 
   END SUBROUTINE calc_per_species_momentum

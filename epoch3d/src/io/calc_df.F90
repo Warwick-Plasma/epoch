@@ -1147,7 +1147,6 @@ CONTAINS
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-
 #ifndef PER_SPECIES_WEIGHT
         wdata = current%weight
         weight = current%weight
