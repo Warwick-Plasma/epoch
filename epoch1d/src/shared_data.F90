@@ -536,16 +536,19 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_temperature_x     = 51
   INTEGER, PARAMETER :: c_dump_temperature_y     = 52
   INTEGER, PARAMETER :: c_dump_temperature_z     = 53
+  INTEGER, PARAMETER :: c_dump_average_px        = 54
+  INTEGER, PARAMETER :: c_dump_average_py        = 55
+  INTEGER, PARAMETER :: c_dump_average_pz        = 56
 #ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 54
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 55
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 56
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 57
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 58
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 59
-  INTEGER, PARAMETER :: num_vars_to_dump         = 59
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 57
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 58
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 59
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 60
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 61
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 62
+  INTEGER, PARAMETER :: num_vars_to_dump         = 62
 #else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 53
+  INTEGER, PARAMETER :: num_vars_to_dump         = 56
 #endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 

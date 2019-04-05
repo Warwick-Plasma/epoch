@@ -681,6 +681,18 @@ CONTAINS
             'average_weight', 'Particles_Average_Weight', 'weight', &
             c_stagger_cell_centre, calc_average_weight, array)
 
+        CALL write_nspecies_field(c_dump_average_px, code, &
+            'average_px', 'Particles_Average_Px', 'kg.m/s', &
+            c_stagger_cell_centre, calc_average_momentum, array, (/c_dir_x/))
+
+        CALL write_nspecies_field(c_dump_average_py, code, &
+            'average_py', 'Particles_Average_Py', 'kg.m/s', &
+            c_stagger_cell_centre, calc_average_momentum, array, (/c_dir_y/))
+
+        CALL write_nspecies_field(c_dump_average_pz, code, &
+            'average_pz', 'Particles_Average_Pz', 'kg.m/s', &
+            c_stagger_cell_centre, calc_average_momentum, array, (/c_dir_z/))
+
         CALL write_nspecies_field(c_dump_temperature, code, &
             'temperature', 'Temperature', 'K', &
             c_stagger_cell_centre, calc_temperature, array)
@@ -1487,6 +1499,30 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+      CASE(c_dump_average_px)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_x)
+          avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_average_py)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_y)
+          avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_average_pz)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_z)
+          avg%r4array(:,:,:,ispecies) = avg%r4array(:,:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
       CASE(c_dump_temperature)
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
@@ -1602,6 +1638,27 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
         DO ispecies = 1, n_species_local
           CALL calc_average_weight(array, ispecies-avg%species_sum)
+          avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_average_px)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_x)
+          avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_average_py)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_y)
+          avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_average_pz)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_average_momentum(array, ispecies-avg%species_sum, c_dir_z)
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
