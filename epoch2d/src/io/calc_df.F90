@@ -1042,7 +1042,7 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_momentum(data_array, current_species, direction)
+  SUBROUTINE calc_average_momentum(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
@@ -1059,8 +1059,7 @@ CONTAINS
 
     IF (.NOT. PRESENT(direction)) THEN
       IF (rank == 0) THEN
-        PRINT*, 'Error: No direction argument supplied to ', &
-            'calc_per_species_momentum'
+        PRINT*, 'Error: No direction argument supplied to calc_average_momentum'
         CALL abort_code(c_err_bad_value)
       END IF
     END IF
@@ -1137,7 +1136,7 @@ CONTAINS
 
     DEALLOCATE(part_count)
 
-  END SUBROUTINE calc_per_species_momentum
+  END SUBROUTINE calc_average_momentum
 
 
 
