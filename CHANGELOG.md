@@ -1,7 +1,7 @@
 ## v4.16.0 to v4.17.0
 
  * Added diagnostic for the average particle momentum per cell. This adds
-   the flags "p{x,y,z}_bulk" to the output block.
+   the flags "average_p{x,y,z}" to the output block.
 
 
 ## v4.15.0 to v4.16.0

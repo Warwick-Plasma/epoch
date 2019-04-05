@@ -537,9 +537,9 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_temperature_x     = 55
   INTEGER, PARAMETER :: c_dump_temperature_y     = 56
   INTEGER, PARAMETER :: c_dump_temperature_z     = 57
-  INTEGER, PARAMETER :: c_dump_px                = 58
-  INTEGER, PARAMETER :: c_dump_py                = 59
-  INTEGER, PARAMETER :: c_dump_pz                = 60
+  INTEGER, PARAMETER :: c_dump_average_px        = 58
+  INTEGER, PARAMETER :: c_dump_average_py        = 59
+  INTEGER, PARAMETER :: c_dump_average_pz        = 60
 #ifdef WORK_DONE_INTEGRATED
   INTEGER, PARAMETER :: c_dump_part_work_x       = 61
   INTEGER, PARAMETER :: c_dump_part_work_y       = 62

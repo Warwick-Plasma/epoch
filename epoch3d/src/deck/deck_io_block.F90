@@ -608,14 +608,14 @@ CONTAINS
     ELSE IF (str_cmp(element, 'jz')) THEN
       elementselected = c_dump_jz
 
-    ELSE IF (str_cmp(element, 'px_bulk')) THEN
-      elementselected = c_dump_px
+    ELSE IF (str_cmp(element, 'average_px')) THEN
+      elementselected = c_dump_average_px
 
-    ELSE IF (str_cmp(element, 'py_bulk')) THEN
-      elementselected = c_dump_py
+    ELSE IF (str_cmp(element, 'average_py')) THEN
+      elementselected = c_dump_average_py
 
-    ELSE IF (str_cmp(element, 'pz_bulk')) THEN
-      elementselected = c_dump_pz
+    ELSE IF (str_cmp(element, 'average_pz')) THEN
+      elementselected = c_dump_average_pz
 
     ELSE IF (str_cmp(element, 'ekbar')) THEN
       elementselected = c_dump_ekbar
@@ -826,9 +826,9 @@ CONTAINS
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
-        IF (mask_element == c_dump_px) bad = .FALSE.
-        IF (mask_element == c_dump_py) bad = .FALSE.
-        IF (mask_element == c_dump_pz) bad = .FALSE.
+        IF (mask_element == c_dump_average_px) bad = .FALSE.
+        IF (mask_element == c_dump_average_py) bad = .FALSE.
+        IF (mask_element == c_dump_average_pz) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0 .AND. IAND(mask, c_io_species) /= 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
