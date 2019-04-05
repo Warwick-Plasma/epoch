@@ -1,3 +1,9 @@
+## v4.16.0 to v4.17.0
+
+ * Added diagnostic for the average particle momentum per cell. This adds
+   the flags "average_p{x,y,z}" to the output block.
+
+
 ## v4.15.0 to v4.16.0
 
  * Replaced USE_ISATTY compiler flag with NO_USE_ISATTY
