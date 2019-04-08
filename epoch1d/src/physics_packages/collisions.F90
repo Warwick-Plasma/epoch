@@ -843,7 +843,7 @@ CONTAINS
           np = np + impact%weight
           impact => impact%next
         END DO
-      END DO
+      END IF
 
       current => p_list1%head
       impact => p_list2%head
