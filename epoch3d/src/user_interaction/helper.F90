@@ -383,39 +383,45 @@ CONTAINS
     IF (species%fill_ghosts) THEN
       IF (x_min_boundary) THEN
         IF (ASSOCIATED(injector_x_min) &
-            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_x_min) == c_bc_continue) THEN
           ix_min = ix_min - png
         END IF
       END IF
       IF (x_max_boundary) THEN
         IF (ASSOCIATED(injector_x_max) &
-            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_x_max) == c_bc_continue) THEN
           ix_max = ix_max + png
         END IF
       END IF
 
       IF (y_min_boundary) THEN
         IF (ASSOCIATED(injector_y_min) &
-            .OR. species%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_y_min) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_y_min) == c_bc_continue) THEN
           iy_min = iy_min - png
         END IF
       END IF
       IF (y_max_boundary) THEN
         IF (ASSOCIATED(injector_y_max) &
-            .OR. species%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_y_max) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_y_max) == c_bc_continue) THEN
           iy_max = iy_max + png
         END IF
       END IF
 
       IF (z_min_boundary) THEN
         IF (ASSOCIATED(injector_z_min) &
-            .OR. species%bc_particle(c_bd_z_min) == c_bc_thermal) THEN
+             .OR. species%bc_particle(c_bd_z_min) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_z_min) == c_bc_continue) THEN
           iz_min = iz_min - png
         END IF
       END IF
       IF (z_max_boundary) THEN
         IF (ASSOCIATED(injector_z_max) &
-            .OR. species%bc_particle(c_bd_z_max) == c_bc_thermal) THEN
+            .OR. species%bc_particle(c_bd_z_max) == c_bc_thermal &
+            .OR. species%bc_particle(c_bd_z_max) == c_bc_continue) THEN
           iz_max = iz_max + png
         END IF
       END IF
@@ -830,19 +836,37 @@ CONTAINS
     ! Overlap with the injection region
     IF (species%fill_ghosts .AND. use_injectors) THEN
       x0 = x_min
-      IF (ASSOCIATED(injector_x_min)) x0 = x0 - 0.5_num * dx * png
+      IF (ASSOCIATED(injector_x_min) .OR. &
+          species%bc_particle(c_bd_x_min) == c_bc_continue) THEN
+        x0 = x0 - 0.5_num * dx * png
+      END IF
       x1 = x_max
-      IF (ASSOCIATED(injector_x_max)) x1 = x1 + 0.5_num * dx * png
+      IF (ASSOCIATED(injector_x_max) .OR. &
+          species%bc_particle(c_bd_x_max) == c_bc_continue) THEN
+        x1 = x1 + 0.5_num * dx * png
+      END IF
 
       y0 = y_min
-      IF (ASSOCIATED(injector_y_min)) y0 = y0 - 0.5_num * dy * png
+      IF (ASSOCIATED(injector_y_min) .OR. &
+          species%bc_particle(c_bd_y_min) == c_bc_continue) THEN
+        y0 = y0 - 0.5_num * dy * png
+      END IF
       y1 = y_max
-      IF (ASSOCIATED(injector_y_max)) y1 = y1 + 0.5_num * dy * png
+      IF (ASSOCIATED(injector_y_max) .OR. &
+          species%bc_particle(c_bd_y_max) == c_bc_continue) THEN
+        y1 = y1 + 0.5_num * dy * png
+      END IF
 
       z0 = z_min
-      IF (ASSOCIATED(injector_z_min)) z0 = z0 - 0.5_num * dz * png
+      IF (ASSOCIATED(injector_z_min) .OR. &
+          species%bc_particle(c_bd_z_min) == c_bc_continue) THEN
+        z0 = z0 - 0.5_num * dz * png
+      END IF
       z1 = z_max
-      IF (ASSOCIATED(injector_z_max)) z1 = z1 + 0.5_num * dz * png
+      IF (ASSOCIATED(injector_z_max) .OR. &
+          species%bc_particle(c_bd_z_max) == c_bc_continue) THEN
+        z1 = z1 + 0.5_num * dz * png
+      END IF
 
       current => partlist%head
       DO WHILE(ASSOCIATED(current))

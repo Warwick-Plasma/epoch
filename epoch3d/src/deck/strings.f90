@@ -255,6 +255,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'continue')) THEN
+      as_bc = c_bc_continue
+      RETURN
+    END IF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_laser')) THEN
       as_bc = c_bc_cpml_laser
       RETURN
