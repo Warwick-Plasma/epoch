@@ -861,10 +861,17 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
 
-      DO k = 1, icount
-        np = np + current%weight
-        current => current%next
-      END DO
+      IF (icount >= jcount) THEN
+        DO k = 1, icount
+          np = np + current%weight
+          current => current%next
+        END DO
+      ELSE
+        DO k = 1, jcount
+          np = np + impact%weight
+          impact => impact%next
+        END DO
+      END IF
 
       current => p_list1%head
       impact => p_list2%head
