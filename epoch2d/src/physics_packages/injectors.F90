@@ -38,6 +38,7 @@ CONTAINS
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%use_flux_injector = .FALSE.
+    injector%user_specified = .TRUE.
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:ny+ng))
@@ -84,6 +85,8 @@ CONTAINS
     TYPE(injector_block), POINTER :: list
     TYPE(injector_block), POINTER :: injector
     TYPE(injector_block), POINTER :: current
+
+    NULLIFY(injector%next)
 
     IF (ASSOCIATED(list)) THEN
       current => list
@@ -336,8 +339,13 @@ CONTAINS
 
         DO idir = 1, 3
           IF (flux_fn) THEN
-            new%part_p(idir) = flux_momentum_from_temperature(mass, &
-                temperature(idir), drift(idir)) * dir_mult(idir)
+            IF (ABS(drift(idir)) > c_tiny) THEN
+              new%part_p(idir) = drifting_flux_momentum_from_temperature(&
+                  mass, temperature(idir), drift(idir)) * dir_mult(idir)
+            ELSE
+              new%part_p(idir) = flux_momentum_from_temperature(mass, &
+                  temperature(idir), drift(idir)) * dir_mult(idir)
+            END IF
           ELSE
             new%part_p(idir) = momentum_from_temperature(mass, &
                 temperature(idir), drift(idir))

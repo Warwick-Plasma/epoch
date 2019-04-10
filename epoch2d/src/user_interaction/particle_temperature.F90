@@ -411,6 +411,7 @@ CONTAINS
   ! These satisfy a Rayleigh distribution, formed by combining two
   ! normally-distributed (~N(0,sigma)) random variables as follows:
   ! Z = SQRT(X**2 + Y**2)
+  ! This DOES NOT work if there is a drift
   FUNCTION flux_momentum_from_temperature(mass, temperature, drift)
 
     REAL(num), INTENT(IN) :: mass, temperature, drift
@@ -423,6 +424,42 @@ CONTAINS
     flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
 
   END FUNCTION flux_momentum_from_temperature
+
+
+  ! Function for generating momenta of thermal particles in a particular
+  ! direction, e.g. the +x direction.
+  ! Samples distribution v f(v - drift) where f is Maxwellian
+
+  FUNCTION drifting_flux_momentum_from_temperature(mass, temperature, drift)
+
+    REAL(num), INTENT(IN) :: mass, temperature, drift
+    REAL(num) :: drifting_flux_momentum_from_temperature
+    REAL(num) :: vth2, vth, ran, random_roll, flmt, norm, max_vel, dvel
+    LOGICAL :: accepted
+
+    accepted = .FALSE.
+    ! 3 thermal velocity range - 0.25% error
+    vth2 = kb * temperature / mass
+    vth = SQRT(vth2)
+    ran = 3.0 * vth
+    dvel = drift / mass
+    max_vel = -dvel + SQRT(dvel**2 + 4.0_num * vth2)
+    norm = 1.0_num / ((max_vel + dvel) * EXP(-0.5_num * max_vel**2 / vth2))
+
+    DO WHILE(.NOT. accepted)
+      flmt = 2.0_num * (random() - 0.5_num) * ran
+      ! If flmt is on other side of 0, always reject
+      IF (flmt / drift .LE. 0.0_num) CONTINUE
+      random_roll = random()
+      IF (random_roll &
+          < norm * (flmt + dvel) * EXP(-0.5_num * flmt**2 / vth2)) THEN
+        accepted = .TRUE.
+        drifting_flux_momentum_from_temperature = mass * (flmt + dvel)
+      END IF
+    END DO
+
+  END FUNCTION drifting_flux_momentum_from_temperature
+
 
 
 
