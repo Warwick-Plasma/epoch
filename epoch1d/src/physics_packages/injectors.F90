@@ -72,6 +72,8 @@ CONTAINS
     TYPE(injector_block), POINTER :: injector
     TYPE(injector_block), POINTER :: current
 
+    NULLIFY(injector%next)
+
     IF (ASSOCIATED(list)) THEN
       current => list
       DO WHILE(ASSOCIATED(current%next))
