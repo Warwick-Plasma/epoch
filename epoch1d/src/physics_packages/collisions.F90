@@ -37,7 +37,7 @@ MODULE collisions
 
   ABSTRACT INTERFACE
     SUBROUTINE scatter_proto(current, impact, mass1, mass2, charge1, charge2, &
-        weight1, weight2, idens, jdens, log_lambda, factor)
+        weight1, weight2, idens, jdens, log_lambda, factor, np)
 
       IMPORT particle, num
 
@@ -46,7 +46,7 @@ MODULE collisions
       REAL(num), INTENT(IN) :: charge1, charge2
       REAL(num), INTENT(IN) :: weight1, weight2
       REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-      REAL(num), INTENT(IN) :: factor
+      REAL(num), INTENT(IN) :: factor, np
     END SUBROUTINE scatter_proto
   END INTERFACE
 
@@ -755,14 +755,14 @@ CONTAINS
       factor = factor + MIN(impact%weight, impact%next%weight)
     END IF
 
-    factor = user_factor * np / factor
+    factor = user_factor / factor
 #endif
 
     current => p_list%head
     impact => current%next
     DO k = 2, icount-2, 2
       CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor, np)
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -773,18 +773,18 @@ CONTAINS
 
     IF (MOD(icount, 2_i8) == 0) THEN
       CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor)
+          weight, weight, dens, dens, log_lambda, factor, np)
     ELSE
       CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor, np)
       current => impact%next
       impact => current%prev%prev
       CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor, np)
       current => current%prev
       impact => current%next
       CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
+          weight, weight, dens, dens, log_lambda, 0.5_num*factor, np)
     END IF
 
   END SUBROUTINE intra_species_collisions
@@ -864,7 +864,7 @@ CONTAINS
       DO k = 1, pcount
         CALL scatter_fn(current, impact, mass1, mass2, charge1, charge2, &
             weight1, weight2, idens, jdens, log_lambda, &
-            user_factor * np / factor)
+            user_factor / factor, np)
         current => current%next
         impact => impact%next
 #ifdef PREFETCH
@@ -886,16 +886,16 @@ CONTAINS
   ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
   ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
   SUBROUTINE scatter_np(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor)
+      weight1, weight2, idens, jdens, log_lambda, factor, np)
 
     TYPE(particle), POINTER :: current, impact
     REAL(num), INTENT(IN) :: mass1, mass2
     REAL(num), INTENT(IN) :: charge1, charge2
     REAL(num), INTENT(IN) :: weight1, weight2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-    REAL(num), INTENT(IN) :: factor
-    REAL(num) :: ran1, ran2, s12, cosp, sinp
-    REAL(num) :: sinp_cos, sinp_sin
+    REAL(num), INTENT(IN) :: factor, np
+    REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
+    REAL(num) :: sinp_cos, sinp_sin, s_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
     REAL(num) :: p_perp2, p_perp_inv
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
@@ -905,6 +905,9 @@ CONTAINS
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
     REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
+    REAL(num), PARAMETER :: pi_fac = &
+                                (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
 
     p1 = current%part_p / c
     p2 = impact%part_p / c
@@ -967,9 +970,16 @@ CONTAINS
     p_mag2 = DOT_PRODUCT(p3, p3)
     p_mag = SQRT(p_mag2)
 
-    fac = (q1 * q2)**2 * jdens * log_lambda * dt * factor &
-        / (pi4_eps2_c4 * gm1 * gm2)
+    s_fac = idens * jdens * dt * factor
+    fac = (q1 * q2)**2 * log_lambda * s_fac / (pi4_eps2_c4 * gm1 * gm2)
     s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
+
+    ! Cold plasma upper limit for s12
+    v_rel = gm * p_mag / (gm3 * gm4 * gc)
+    s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
+        / MAX(m1 * idens**two_thirds, m2 * jdens**two_thirds)
+
+    s12 = MIN(s12, s_prime)
 
     ran1 = random()
     ran2 = random() * 2.0_num * pi
@@ -1048,7 +1058,7 @@ CONTAINS
   ! Binary collision scattering operator based on that of
   ! Y. Sentoku and A. J. Kemp. [J Comput Phys, 227, 6846 (2008)]
   SUBROUTINE scatter_sk(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor)
+      weight1, weight2, idens, jdens, log_lambda, factor, np)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
@@ -1060,7 +1070,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: charge1, charge2
     REAL(num), INTENT(IN) :: weight1, weight2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-    REAL(num), INTENT(IN) :: factor
+    REAL(num), INTENT(IN) :: factor, np
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
     REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
@@ -1144,7 +1154,7 @@ CONTAINS
 
     ! Collision frequency
     nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
-    nu = MIN(nu * factor * dt, 0.02_num)
+    nu = MIN(nu * factor * np * dt, 0.02_num)
 
     ! NOTE: nu is now the number of collisions per timestep, NOT collision
     ! frequency
