@@ -898,7 +898,9 @@ CONTAINS
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
     REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
-    REAL(num), PARAMETER :: third = 1.0_num / 3.0_num
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
+    REAL(num), PARAMETER :: pi_fac = &
+                                (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
 
     p1 = current%part_p / c
     p2 = impact%part_p / c
@@ -967,8 +969,8 @@ CONTAINS
 
     ! Cold plasma upper limit for s12
     v_rel = gm * p_mag / (gm3 * gm4 * gc)
-    s_prime = (4.0_num * pi * third) * s_fac * (m1 + m2) * v_rel &
-        / MAX(m1*(idens**third)**2, m2*(jdens**third)**2)
+    s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
+        / MAX(m1 * idens**two_thirds, m2 * jdens**two_thirds)
 
     s12 = MIN(s12, s_prime)
 
