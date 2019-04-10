@@ -38,6 +38,7 @@ CONTAINS
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%use_flux_injector = .FALSE.
+    injector%user_specified = .TRUE.
 
     injector%depth = 1.0_num
     injector%dt_inject = -1.0_num
@@ -254,8 +255,13 @@ CONTAINS
 
       DO idir = 1, 3
         IF (flux_fn) THEN
-          new%part_p(idir) = flux_momentum_from_temperature(mass, &
-              temperature(idir), drift(idir)) * dir_mult(idir)
+          IF (ABS(drift(idir)) > c_tiny) THEN
+            new%part_p(idir) = drifting_flux_momentum_from_temperature(&
+                mass, temperature(idir), drift(idir)) * dir_mult(idir)
+          ELSE
+            new%part_p(idir) = flux_momentum_from_temperature(mass, &
+                temperature(idir), drift(idir)) * dir_mult(idir)
+          END IF
         ELSE
           new%part_p(idir) = momentum_from_temperature(mass, &
               temperature(idir), drift(idir))

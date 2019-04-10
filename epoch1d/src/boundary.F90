@@ -105,6 +105,7 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_continue &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
