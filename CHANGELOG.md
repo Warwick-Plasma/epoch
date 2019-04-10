@@ -1,7 +1,12 @@
 ## v4.16.0 to v4.17.0
 
+ * Added volume correction sampling Zenitani 2015 DOI 10.1063/1.4919383
+
  * Added diagnostic for the average particle momentum per cell. This adds
    the flags "average_p{x,y,z}" to the output block.
+
+ * Added low temperature correction to the Nanbu collision algorithm
+   (Pérez 2012 DOI 10.1063/1.4742167)
 
 
 ## v4.15.0 to v4.16.0
