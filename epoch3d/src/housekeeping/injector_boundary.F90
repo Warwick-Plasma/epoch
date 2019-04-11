@@ -79,6 +79,7 @@ CONTAINS
 
       ALLOCATE(working_injector)
       CALL init_injector(i, working_injector)
+      working_injector%use_flux_injector = .TRUE.
 
       CALL copy_stack(species_list(ispecies)%drift_function(1), &
           working_injector%drift_function(1))
