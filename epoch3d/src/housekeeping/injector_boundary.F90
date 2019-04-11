@@ -65,8 +65,7 @@ CONTAINS
 
   ! Create an injector for a return-boundary species
 
-  !SUBROUTINE create_return_injector(bcs, ispecies, is_return)
-  SUBROUTINE create_return_injector(bcs, ispecies)
+  SUBROUTINE create_boundary_injectors(bcs, ispecies)
 
     INTEGER, INTENT(IN) :: ispecies
     INTEGER, DIMENSION(c_ndims*2), INTENT(IN) :: bcs
@@ -114,7 +113,7 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: working_injector, next
     INTEGER, DIMENSION(c_ndims*2) :: bcs
-    INTEGER :: i, bnd, species
+    INTEGER :: bnd, species
 
     working_injector => auto_injectors
 

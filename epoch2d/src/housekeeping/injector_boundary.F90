@@ -114,7 +114,7 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: working_injector, next
     INTEGER, DIMENSION(c_ndims*2) :: bcs
-    INTEGER :: i, bnd, species
+    INTEGER :: bnd, species
 
 
     working_injector => auto_injectors
