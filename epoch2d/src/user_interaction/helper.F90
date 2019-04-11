@@ -77,7 +77,7 @@ CONTAINS
 
     INTEGER :: ispecies, n
     TYPE(particle_species), POINTER :: species
-    INTEGER :: i0, i1
+    INTEGER :: i0, i1, iu, io
     TYPE(initial_condition_block), POINTER :: ic
 
     IF (pre_loading .AND. n_species > 0) THEN
@@ -130,12 +130,11 @@ CONTAINS
       DO ispecies = 1, n_species
         species => species_list(ispecies)
         IF (species%count < 0) THEN
-          WRITE(*,*) 'No particles specified for species ', &
-              '"' // TRIM(species%name) // '"'
-#ifndef NO_IO
-          WRITE(stat_unit,*) 'No particles specified for species ', &
-              '"' // TRIM(species%name) // '"'
-#endif
+          DO iu = 1, nio_units
+            io = ios_units(iu)
+            WRITE(io,*) 'No particles specified for species ', &
+                '"' // TRIM(species%name) // '"'
+          END DO
           species%count = 0
         END IF
       END DO
@@ -202,6 +201,7 @@ CONTAINS
     CHARACTER(LEN=15) :: string
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current, next
+    INTEGER :: iu, io
 
     partlist => species%attached_list
 
@@ -311,12 +311,11 @@ CONTAINS
 
     IF (rank == 0) THEN
       CALL integer_as_string(npart_this_species, string)
-      WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', '"' // TRIM(species%name) // '"'
-#ifndef NO_IO
-      WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', '"' // TRIM(species%name) // '"'
-#endif
+      DO iu = 1, nio_units
+        io = ios_units(iu)
+        WRITE(io,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+            ' particles of species ', '"' // TRIM(species%name) // '"'
+      END DO
     END IF
 
     CALL particle_bcs
@@ -348,6 +347,7 @@ CONTAINS
     INTEGER :: ix_min, ix_max, iy_min, iy_max
     CHARACTER(LEN=15) :: string
     LOGICAL :: sweep
+    INTEGER :: iu, io
 
     npart_this_species = species%count
     IF (npart_this_species <= 0) RETURN
@@ -607,12 +607,11 @@ CONTAINS
 
     IF (rank == 0) THEN
       CALL integer_as_string(npart_this_species, string)
-      WRITE(*,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', '"' // TRIM(species%name) // '"'
-#ifndef NO_IO
-      WRITE(stat_unit,*) 'Loaded ', TRIM(ADJUSTL(string)), &
-          ' particles of species ', '"' // TRIM(species%name) // '"'
-#endif
+      DO iu = 1, nio_units
+        io = ios_units(iu)
+        WRITE(io,*) 'Loaded ', TRIM(ADJUSTL(string)), &
+            ' particles of species ', '"' // TRIM(species%name) // '"'
+      END DO
     END IF
 
     CALL particle_bcs
@@ -827,7 +826,7 @@ CONTAINS
 
     LOGICAL :: file_inconsistencies
     INTEGER :: current_loader_num
-    INTEGER :: part_count, read_count
+    INTEGER :: part_count, read_count, iu, io
     CHARACTER(LEN=string_length) :: stra
     REAL(num), DIMENSION(:), POINTER :: xbuf, ybuf
     REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
@@ -983,12 +982,11 @@ CONTAINS
 
       IF (rank == 0) THEN
         CALL integer_as_string(species%count, stra)
-        WRITE(*,*) 'Inserted ', TRIM(stra), &
-            ' custom particles of species "', TRIM(species%name), '"'
-#ifndef NO_IO
-        WRITE(stat_unit,*) 'Inserted ', TRIM(stra), &
-            ' custom particles of species "', TRIM(species%name), '"'
-#endif
+        DO iu = 1, nio_units
+          io = ios_units(iu)
+          WRITE(io,*) 'Inserted ', TRIM(stra), &
+              ' custom particles of species "', TRIM(species%name), '"'
+        END DO
       END IF
     END DO
 
