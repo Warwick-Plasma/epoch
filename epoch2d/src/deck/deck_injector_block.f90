@@ -79,6 +79,8 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, i
     INTEGER :: io, iu
+    REAL(num) :: mult
+    CHARACTER(LEN=string_length) :: mult_string
 
     errcode = c_err_none
     IF (deck_state == c_ds_first) RETURN
@@ -148,32 +150,55 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_x')) THEN
-      i = 1
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
+    mult_string = '* ev / kb'
+    mult = ev / kb
 
-    IF (str_cmp(element, 'temp_y')) THEN
-      i = 2
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'temp_z')) THEN
-      i = 3
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'temp')) THEN
+    IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev')) THEN
       DO i = 1, 3
         CALL initialise_stack(working_injector%temperature_function(i))
         CALL tokenize(value, working_injector%temperature_function(i), errcode)
+        IF (str_cmp(element, 'temp_ev')) THEN
+          CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                        errcode)
+        END IF
       END DO
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev')) THEN
+      i = 1
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temp_x_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev')) THEN
+      i = 2
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temp_y_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev')) THEN
+      i = 3
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temp_z_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
       RETURN
     END IF
 
