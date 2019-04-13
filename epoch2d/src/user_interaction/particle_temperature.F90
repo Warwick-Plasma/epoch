@@ -428,7 +428,10 @@ CONTAINS
 
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
+  ! Drift should be signed and resulting velocity will have the same sign
+  ! values on the 'other side' of the origin are NOT returned
   ! Samples distribution v f(v - drift) where f is Maxwellian
+  ! Do not use if drift is zero - use flux_momentum_from_temperature
 
   FUNCTION drifting_flux_momentum_from_temperature(mass, temperature, drift)
 
@@ -443,18 +446,18 @@ CONTAINS
     vth = SQRT(vth2)
     ran = 3.0 * vth
     dvel = drift / mass
-    max_vel = -dvel + SQRT(dvel**2 + 4.0_num * vth2)
-    norm = 1.0_num / ((max_vel + dvel) * EXP(-0.5_num * max_vel**2 / vth2))
+    max_vel = 0.5_num * (dvel + SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
+    norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel-dvel)/ vth)**2))
 
     DO WHILE(.NOT. accepted)
-      flmt = 2.0_num * (random() - 0.5_num) * ran
+      flmt = dvel + 2.0_num * (random() - 0.5_num) * ran
       ! If flmt is on other side of 0, always reject
       IF (flmt / drift .LE. 0.0_num) CONTINUE
       random_roll = random()
       IF (random_roll &
-          < norm * (flmt + dvel) * EXP(-0.5_num * flmt**2 / vth2)) THEN
+          < norm * flmt * EXP(-0.5_num * ((flmt - dvel) / vth)**2)) THEN
         accepted = .TRUE.
-        drifting_flux_momentum_from_temperature = mass * (flmt + dvel)
+        drifting_flux_momentum_from_temperature = mass * flmt
       END IF
     END DO
 
