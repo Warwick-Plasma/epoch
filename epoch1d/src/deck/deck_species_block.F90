@@ -54,6 +54,16 @@ MODULE deck_species_block
 
 CONTAINS
 
+  SUBROUTINE alloc_and_zero_vector(ptr)
+    REAL(num), DIMENSION(:,:), POINTER, INTENT(OUT) ::ptr
+
+    ALLOCATE(ptr(1-ng:nx+ng, 3))
+    ptr = 0.0_num
+
+  END SUBROUTINE alloc_and_zero_vector
+
+
+
   SUBROUTINE species_deck_initialise
 
     current_block = 0
@@ -744,7 +754,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
-          ALLOCATE(ic%drift(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%drift)
         END IF
         array => ic%drift(:,n)
       ELSE
@@ -761,7 +771,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
-          ALLOCATE(ic%drift(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%drift)
         END IF
         array => ic%drift(:,n)
       ELSE
@@ -778,7 +788,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
-          ALLOCATE(ic%drift(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%drift)
         END IF
         array => ic%drift(:,n)
       ELSE
@@ -846,7 +856,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
-          ALLOCATE(ic%temp(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%temp)
         END IF
       ELSE
         array => dummy
@@ -917,7 +927,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
-          ALLOCATE(ic%temp(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%temp)
         END IF
         array => ic%temp(:,n)
       ELSE
@@ -937,7 +947,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
-          ALLOCATE(ic%temp(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%temp)
         END IF
         array => ic%temp(:,n)
       ELSE
@@ -957,7 +967,7 @@ CONTAINS
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
-          ALLOCATE(ic%temp(1-ng:nx+ng,3))
+          CALL alloc_and_zero_vector(ic%temp)
         END IF
         array => ic%temp(:,n)
       ELSE
