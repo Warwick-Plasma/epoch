@@ -339,15 +339,9 @@ CONTAINS
 
         DO idir = 1, 3
           IF (flux_fn) THEN
-            IF (ABS(drift(idir)) > c_tiny) THEN
-              ! Drift is signed - we divide by dir_mult to get the inwards
-              ! drift and multiply final mom to be inwards too
-              new%part_p(idir) = drifting_flux_momentum_from_temperature(&
-                  mass, temperature(idir), drift(idir))
-            ELSE
-              new%part_p(idir) = flux_momentum_from_temperature(mass, &
-                  temperature(idir), drift(idir)) * dir_mult(idir)
-            END IF
+            ! Drift is signed - dir mult is the direciton we want to get
+            new%part_p(idir) = flux_momentum_from_temperature(&
+                mass, temperature(idir), drift(idir), dir_mult(idir))
           ELSE
             new%part_p(idir) = momentum_from_temperature(mass, &
                 temperature(idir), drift(idir))

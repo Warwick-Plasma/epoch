@@ -404,66 +404,61 @@ CONTAINS
 
   END FUNCTION momentum_from_temperature
 
-
-
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
-  ! These satisfy a Rayleigh distribution, formed by combining two
-  ! normally-distributed (~N(0,sigma)) random variables as follows:
-  ! Z = SQRT(X**2 + Y**2)
-  ! This DOES NOT work if there is a drift
-  FUNCTION flux_momentum_from_temperature(mass, temperature, drift)
-
-    REAL(num), INTENT(IN) :: mass, temperature, drift
-    REAL(num) :: flux_momentum_from_temperature
-    REAL(num) :: mom1, mom2
-
-    mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
-    mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
-
-    flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
-
-  END FUNCTION flux_momentum_from_temperature
-
-
-  ! Function for generating momenta of thermal particles in a particular
-  ! direction, e.g. the +x direction.
-  ! Drift should be signed and resulting velocity will have the same sign
-  ! values on the 'other side' of the origin are NOT returned
   ! Samples distribution v f(v - drift) where f is Maxwellian
-  ! Do not use if drift is zero - use flux_momentum_from_temperature
+  ! including for drift == 0
+  ! Drift is signed, and direction should be +/- 1 giving the sign of wanted
+  ! velocity
 
-  FUNCTION drifting_flux_momentum_from_temperature(mass, temperature, drift)
+  FUNCTION flux_momentum_from_temperature(mass, temperature, drift, direction)
 
-    REAL(num), INTENT(IN) :: mass, temperature, drift
-    REAL(num) :: drifting_flux_momentum_from_temperature
+    REAL(num), INTENT(IN) :: mass, temperature, drift, direction
+    REAL(num) :: flux_momentum_from_temperature, mom1, mom2
     REAL(num) :: vth2, vth, ran, random_roll, flmt, norm, max_vel, dvel
+    REAL(num) :: ran1, ran2
     LOGICAL :: accepted
 
-    accepted = .FALSE.
-    ! 3 thermal velocity range - 0.25% error
-    vth2 = kb * temperature / mass
-    vth = SQRT(vth2)
-    ran = 3.0 * vth
-    dvel = drift / mass
-    max_vel = 0.5_num * (dvel + SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
-    norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel-dvel)/ vth)**2))
-
-    DO WHILE(.NOT. accepted)
-      flmt = dvel + 2.0_num * (random() - 0.5_num) * ran
-      ! If flmt is on other side of 0, always reject
-      IF (flmt / drift .LE. 0.0_num) CONTINUE
-      random_roll = random()
-      IF (random_roll &
-          < norm * flmt * EXP(-0.5_num * ((flmt - dvel) / vth)**2)) THEN
-        accepted = .TRUE.
-        drifting_flux_momentum_from_temperature = mass * flmt
+    IF (ABS(drift) > c_tiny) THEN
+      accepted = .FALSE.
+      ! 3 thermal velocity range - 0.25% error
+      vth2 = kb * temperature / mass
+      vth = SQRT(vth2)
+      ran = 3.0 * vth
+      dvel = drift / mass
+      IF(direction > 0) THEN
+        ran1 = MAX(dvel - ran, 0d0)
+        ran2 = MAX(dvel + ran, 0d0)
+        max_vel = 0.5_num * (dvel - SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
+      ELSE
+        ran1 = MIN(dvel - ran, 0d0)
+        ran2 = MIN(dvel + ran, 0d0)
+        max_vel = 0.5_num * (dvel + SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
       END IF
-    END DO
+      ! Norm can be -ve if drift is counter to direction
+      ! This is OK - the distribution will also be -ve
+      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel)/ vth)**2))
 
-  END FUNCTION drifting_flux_momentum_from_temperature
+      DO WHILE(.NOT. accepted)
+        flmt = ran1 + random() * (ran2 - ran1)
 
+        random_roll = random()
+        IF (random_roll &
+            < norm * flmt * EXP(-0.5_num * ((flmt-dvel)/vth)**2)) THEN
+          accepted = .TRUE.
+          flux_momentum_from_temperature = mass * flmt
+        END IF
+      END DO
 
+    ELSE
+      mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
+      mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
+
+      flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2)
+
+    END IF
+
+  END FUNCTION flux_momentum_from_temperature
 
 
   ! Function to take a deck expression and sample until it returns a value
