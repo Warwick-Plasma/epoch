@@ -20,8 +20,11 @@ MODULE injectors
   USE particle_temperature
   USE evaluator
   USE random_generator
+  USE utilities
 
   IMPLICIT NONE
+
+  REAL(num) :: flow_limit_val = 5.0_num
 
 CONTAINS
 
@@ -179,6 +182,48 @@ CONTAINS
   END SUBROUTINE run_injectors
 
 
+  ! Return the average inwards velocity for a drifting flux
+  ! distribution, with given drift, where direc is 1 is inwards
+  ! means +ve velocity and -1 else
+  FUNCTION average_inflow_drifting(p_inject, p_therm_in, direc)
+
+    REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
+    REAL(num) :: p_inject_drift, p_therm
+    REAL(num) :: average_inflow_drifting, v_inj_tmp1, v_inj_tmp2
+
+    ! Drift adjusted so that +ve is 'inwards' through boundary
+    p_inject_drift = p_inject * direc
+    ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
+    p_therm = p_therm_in * SQRT(2.0)
+
+    v_inj_tmp1 = 1.0_num + ERF(p_inject_drift/p_therm)
+    v_inj_tmp2 = EXP(-(p_inject_drift/p_therm)**2)
+    average_inflow_drifting = direc * (p_inject_drift + v_inj_tmp2 * p_therm / &
+        (SQRT(pi) * (v_inj_tmp1 + c_tiny)))
+
+  END FUNCTION average_inflow_drifting
+
+
+
+  ! Fraction of the drifting Maxwellian distribution which is 'inflowing'
+  FUNCTION inflow_density_correction(p_inject, p_therm_in, direc)
+
+    REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
+    REAL(num) :: p_inject_drift, p_therm
+    REAL(num) :: inflow_density_correction
+
+    ! Drift adjusted so that +ve is 'inwards' through boundary
+    p_inject_drift = p_inject * direc
+    ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
+    p_therm = p_therm_in * SQRT(2.0)
+
+    inflow_density_correction = 0.5_num * &
+        (1.0_num + ERF(p_inject_drift/p_therm))
+
+  END FUNCTION inflow_density_correction
+
+
+
 
   SUBROUTINE run_single_injector(injector, direction)
 
@@ -189,7 +234,7 @@ CONTAINS
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
     REAL(num) :: gamma_mass, v_inject, density, vol
-    REAL(num) :: npart_ideal, itemp, v_inject_s
+    REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index, ii
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
@@ -302,11 +347,32 @@ CONTAINS
       p_therm = SQRT(mass * kb * MAXVAL(temperature))
       p_inject_drift = drift(dir_index)
       gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
-      v_inject_s = p_inject_drift / gamma_mass
+
+      ! Average momentum of inflowing part
+      ! For large inwards drift, is asymptotic to drift
+      ! Otherwise it is a complicated expression
+      ! Inwards drift - lhs terms are same sign -> +ve
+      IF (p_inject_drift*dir_mult(dir_index) > flow_limit_val * p_therm) THEN
+        ! For sufficiently large drifts, net inflow -> p_drift
+        v_inject_s = p_inject_drift / gamma_mass
+        density_correction = 1.0_num
+      ELSE IF (p_inject_drift*dir_mult(dir_index) < -flow_limit_val * p_therm) THEN
+        ! Net is outflow - inflow velocity is zero
+        v_inject_s = 0.0_num
+        ! Since we inject nothing, no need to correct density
+        density_correction = 1.0_num
+      ELSE
+        v_inject_s = average_inflow_drifting( &
+            p_inject_drift, p_therm, dir_mult(dir_index))/gamma_mass
+        density_correction = inflow_density_correction(p_inject_drift, &
+            p_therm, dir_mult(dir_index))
+      END IF
       v_inject = ABS(v_inject_s)
 
       injector%dt_inject(ii) = ABS(bdy_space) &
-          / MAX(injector%npart_per_cell * v_inject, c_tiny)
+        / MAX(injector%npart_per_cell * v_inject * density_correction, &
+        c_tiny)
+
       IF (first_inject) THEN
         ! On the first run of the injectors it isn't possible to decrement
         ! the optical depth until this point
