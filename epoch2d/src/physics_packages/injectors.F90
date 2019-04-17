@@ -356,7 +356,8 @@ CONTAINS
         ! For sufficiently large drifts, net inflow -> p_drift
         v_inject_s = p_inject_drift / gamma_mass
         density_correction = 1.0_num
-      ELSE IF (p_inject_drift*dir_mult(dir_index) < -flow_limit_val * p_therm) THEN
+      ELSE IF (p_inject_drift*dir_mult(dir_index) &
+          < -flow_limit_val * p_therm) THEN
         ! Net is outflow - inflow velocity is zero
         v_inject_s = 0.0_num
         ! Since we inject nothing, no need to correct density
