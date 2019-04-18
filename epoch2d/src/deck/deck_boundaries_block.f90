@@ -233,6 +233,24 @@ CONTAINS
       CALL abort_code(c_err_bad_value)
     END IF
 
+    ! Sanity check on continue boundaries
+    error = .FALSE.
+    DO idx = 1, c_ndims*2
+      IF (bc_field(2*idx) == c_bc_continue) error = .TRUE.
+    END DO
+
+    IF (error) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Continue boundaries apply to particles only'
+        END DO
+      END IF
+      CALL abort_code(c_err_bad_value)
+    END IF
+
   END FUNCTION boundary_block_check
 
 END MODULE deck_boundaries_block
