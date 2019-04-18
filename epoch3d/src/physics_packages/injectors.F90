@@ -407,7 +407,8 @@ CONTAINS
           ! For large inwards drift, is asymptotic to drift
           ! Otherwise it is a complicated expression
           ! Inwards drift - lhs terms are same sign -> +ve
-          IF (p_inject_drift*dir_mult(dir_index) > flow_limit_val * p_therm) THEN
+          IF (p_inject_drift*dir_mult(dir_index) &
+              > flow_limit_val * p_therm) THEN
             ! For sufficiently large drifts, net inflow -> p_drift
             gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
             v_inject_s = p_inject_drift / gamma_mass

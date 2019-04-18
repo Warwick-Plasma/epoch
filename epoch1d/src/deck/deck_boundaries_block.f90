@@ -226,7 +226,7 @@ CONTAINS
     ! Sanity check on continue boundaries
     error = .FALSE.
     DO idx = 1, c_ndims*2
-      IF (bc_field(2*idx) == c_bc_continue) error = .TRUE.
+      IF (bc_field(idx) == c_bc_continue) error = .TRUE.
     END DO
 
     IF (error) THEN
