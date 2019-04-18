@@ -267,28 +267,40 @@ CONTAINS
     ! like hottest component
     p_therm = SQRT(mass * kb * MAXVAL(temperature))
     p_inject_drift = drift(dir_index)
-    gamma_mass = SQRT((p_therm + p_inject_drift)**2 + typical_mc2) / c
 
-    ! Average momentum of inflowing part
-    ! For large inwards drift, is asymptotic to drift
-    ! Otherwise it is a complicated expression
-    ! Inwards drift - lhs terms are same sign -> +ve
-    IF (p_inject_drift*dir_mult(dir_index) > flow_limit_val * p_therm) THEN
-      ! For sufficiently large drifts, net inflow -> p_drift
+    IF (flux_fn) THEN
+      ! Average momentum of inflowing part
+      ! For large inwards drift, is asymptotic to drift
+      ! Otherwise it is a complicated expression
+      ! Inwards drift - lhs terms are same sign -> +ve
+      IF (p_inject_drift*dir_mult(dir_index) > flow_limit_val * p_therm) THEN
+        ! For sufficiently large drifts, net inflow -> p_drift
+        gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
+        v_inject_s = p_inject_drift / gamma_mass
+        density_correction = 1.0_num
+      ELSE IF (p_inject_drift*dir_mult(dir_index) &
+          < -flow_limit_val * p_therm) THEN
+        ! Net is outflow - inflow velocity is zero
+        gamma_mass = 1.0_num
+        v_inject_s = 0.0_num
+        ! Since we inject nothing, no need to correct density
+        density_correction = 1.0_num
+      ELSE
+        ! Below is actually MOMENTUM, will correct on next line
+        v_inject_s = average_inflow_drifting( &
+            p_inject_drift, p_therm, dir_mult(dir_index))
+        gamma_mass = SQRT((v_inject_s)**2 + typical_mc2) / c
+        v_inject_s = v_inject_s / gamma_mass
+        density_correction = inflow_density_correction(p_inject_drift, &
+            p_therm, dir_mult(dir_index))
+      END IF
+    ELSE
+      ! User asked for Maxwellian only - no correction to apply
+      gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
       v_inject_s = p_inject_drift / gamma_mass
       density_correction = 1.0_num
-    ELSE IF (p_inject_drift*dir_mult(dir_index) &
-        < -flow_limit_val * p_therm) THEN
-      ! Net is outflow - inflow velocity is zero
-      v_inject_s = 0.0_num
-      ! Since we inject nothing, no need to correct density
-      density_correction = 1.0_num
-    ELSE
-      v_inject_s = average_inflow_drifting( &
-          p_inject_drift, p_therm, dir_mult(dir_index))/gamma_mass
-      density_correction = inflow_density_correction(p_inject_drift, &
-          p_therm, dir_mult(dir_index))
     END IF
+
     v_inject = ABS(v_inject_s)
 
     injector%dt_inject = ABS(bdy_space) &
