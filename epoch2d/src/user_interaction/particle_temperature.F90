@@ -429,11 +429,11 @@ CONTAINS
       IF(direction > 0) THEN
         ran1 = MAX(dvel - ran, 0d0)
         ran2 = MAX(dvel + ran, 0d0)
-        max_vel = 0.5_num * (dvel - SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
+        max_vel = 0.5_num * (dvel + SQRT(dvel**2 + 4.0_num * vth2))
       ELSE
         ran1 = MIN(dvel - ran, 0d0)
         ran2 = MIN(dvel + ran, 0d0)
-        max_vel = 0.5_num * (dvel + SIGN(SQRT(dvel**2 + 4.0_num * vth2), dvel))
+        max_vel = 0.5_num * (dvel - SQRT(dvel**2 + 4.0_num * vth2))
       END IF
       ! Norm can be -ve if drift is counter to direction
       ! This is OK - the distribution will also be -ve
