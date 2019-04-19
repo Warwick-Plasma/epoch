@@ -44,6 +44,7 @@ CONTAINS
   END SUBROUTINE reset_auto_list
 
 
+
   ! Attach an auto injector to the list
   SUBROUTINE attach_auto_injector(working_injector)
 
@@ -72,7 +73,7 @@ CONTAINS
     TYPE(injector_block), POINTER :: working_injector
     INTEGER :: i
 
-    DO i = 1, 2
+    DO i = 1, 2 * c_ndims
       IF (bcs(i) /= c_bc_continue) CYCLE
       use_injectors = .TRUE.
       need_random_state = .TRUE.
@@ -134,15 +135,13 @@ CONTAINS
 
         ! Attach to main injector list
         CALL attach_injector(working_injector)
-
       END IF
 
       working_injector => next
-
     END DO
-    NULLIFY(auto_injectors)
+
+    NULLIFY(auto_injectors, prev_inj)
 
   END SUBROUTINE finish_setup_injector_boundaries
 
-
-END MODULE
+END MODULE injector_boundary

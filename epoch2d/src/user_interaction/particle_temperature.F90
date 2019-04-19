@@ -404,6 +404,8 @@ CONTAINS
 
   END FUNCTION momentum_from_temperature
 
+
+
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
   ! Samples distribution v f(v - drift) where f is Maxwellian
@@ -426,42 +428,44 @@ CONTAINS
       vth = SQRT(vth2)
       ran = 3.0 * vth
       dvel = drift / mass
-      IF(direction > 0) THEN
-        ran1 = MAX(dvel - ran, 0d0)
-        ran2 = MAX(dvel + ran, 0d0)
+
+      IF (direction > 0) THEN
+        ran1 = MAX(dvel - ran, 0.0_num)
+        ran2 = MAX(dvel + ran, 0.0_num)
         max_vel = 0.5_num * (dvel + SQRT(dvel**2 + 4.0_num * vth2))
       ELSE
-        ran1 = MIN(dvel - ran, 0d0)
-        ran2 = MIN(dvel + ran, 0d0)
+        ran1 = MIN(dvel - ran, 0.0_num)
+        ran2 = MIN(dvel + ran, 0.0_num)
         max_vel = 0.5_num * (dvel - SQRT(dvel**2 + 4.0_num * vth2))
       END IF
+
       ! Norm can be -ve if drift is counter to direction
       ! This is OK - the distribution will also be -ve
-      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel)/ vth)**2))
+      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel) / vth)**2))
 
       DO WHILE(.NOT. accepted)
         flmt = ran1 + random() * (ran2 - ran1)
 
         random_roll = random()
         IF (random_roll &
-            < norm * flmt * EXP(-0.5_num * ((flmt-dvel)/vth)**2)) THEN
+            < norm * flmt * EXP(-0.5_num * ((flmt - dvel) / vth)**2)) THEN
           accepted = .TRUE.
           flux_momentum_from_temperature = mass * flmt
         END IF
       END DO
-
     ELSE
       mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
       mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
 
       flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2)
-
     END IF
 
   END FUNCTION flux_momentum_from_temperature
 
 
+
   ! Function to take a deck expression and sample until it returns a value
+
   SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
       ranges, mass, drift, iit_r)
 

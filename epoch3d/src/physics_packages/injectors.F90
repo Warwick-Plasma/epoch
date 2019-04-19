@@ -209,9 +209,11 @@ CONTAINS
   END SUBROUTINE run_injectors
 
 
+
   ! Return the average inwards velocity for a drifting flux
   ! distribution, with given drift, where direc is 1 is inwards
   ! means +ve velocity and -1 else
+
   FUNCTION average_inflow_drifting(p_inject, p_therm_in, direc)
 
     REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
@@ -223,16 +225,17 @@ CONTAINS
     ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
     p_therm = p_therm_in * SQRT(2.0)
 
-    v_inj_tmp1 = 1.0_num + ERF(p_inject_drift/p_therm)
-    v_inj_tmp2 = EXP(-(p_inject_drift/p_therm)**2)
-    average_inflow_drifting = direc * (p_inject_drift + v_inj_tmp2 * p_therm / &
-        (SQRT(pi) * (v_inj_tmp1 + c_tiny)))
+    v_inj_tmp1 = 1.0_num + ERF(p_inject_drift / p_therm)
+    v_inj_tmp2 = EXP(-(p_inject_drift / p_therm)**2)
+    average_inflow_drifting = direc * (p_inject_drift + v_inj_tmp2 * p_therm &
+        / (SQRT(pi) * (v_inj_tmp1 + c_tiny)))
 
   END FUNCTION average_inflow_drifting
 
 
 
   ! Fraction of the drifting Maxwellian distribution which is 'inflowing'
+
   FUNCTION inflow_density_correction(p_inject, p_therm_in, direc)
 
     REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
@@ -242,10 +245,10 @@ CONTAINS
     ! Drift adjusted so that +ve is 'inwards' through boundary
     p_inject_drift = p_inject * direc
     ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
-    p_therm = p_therm_in * SQRT(2.0)
+    p_therm = p_therm_in * SQRT(2.0_num)
 
-    inflow_density_correction = 0.5_num * &
-        (1.0_num + ERF(p_inject_drift/p_therm))
+    inflow_density_correction = &
+        0.5_num * (1.0_num + ERF(p_inject_drift / p_therm))
 
   END FUNCTION inflow_density_correction
 
@@ -407,13 +410,13 @@ CONTAINS
           ! For large inwards drift, is asymptotic to drift
           ! Otherwise it is a complicated expression
           ! Inwards drift - lhs terms are same sign -> +ve
-          IF (p_inject_drift*dir_mult(dir_index) &
+          IF (p_inject_drift * dir_mult(dir_index) &
               > flow_limit_val * p_therm) THEN
             ! For sufficiently large drifts, net inflow -> p_drift
             gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
             v_inject_s = p_inject_drift / gamma_mass
             density_correction = 1.0_num
-          ELSE IF (p_inject_drift*dir_mult(dir_index) &
+          ELSE IF (p_inject_drift * dir_mult(dir_index) &
               < -flow_limit_val * p_therm) THEN
             ! Net is outflow - inflow velocity is zero
             v_inject_s = 0.0_num

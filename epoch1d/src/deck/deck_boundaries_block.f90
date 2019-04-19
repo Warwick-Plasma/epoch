@@ -225,7 +225,7 @@ CONTAINS
 
     ! Sanity check on continue boundaries
     error = .FALSE.
-    DO idx = 1, c_ndims*2
+    DO idx = 1, 2 * c_ndims
       IF (bc_field(idx) == c_bc_continue) error = .TRUE.
     END DO
 
@@ -240,7 +240,6 @@ CONTAINS
       END IF
       CALL abort_code(c_err_bad_value)
     END IF
-
 
   END FUNCTION boundary_block_check
 
