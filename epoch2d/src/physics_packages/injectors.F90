@@ -200,7 +200,8 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
     REAL(num), DIMENSION(3) :: dir_mult
     LOGICAL :: first_inject, flux_fn
-    REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / SQRT(2.0_num)
+    REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
+    REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
     REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
@@ -326,6 +327,12 @@ CONTAINS
           gamma_mass = 1.0_num
           ! Since we inject nothing, no need to correct density
           density_correction = 1.0_num
+        ELSE IF (ABS(p_drift) < p_therm * 1.0e-9_num) THEN
+          v_inject_s = 2.0_num * sqrt2pi_inv * p_therm &
+              + (1.0_num - 2.0_num * sqrt2 / pi) * p_drift
+          gamma_mass = SQRT(v_inject_s**2 + typical_mc2) / c
+          v_inject_s = v_inject_s / gamma_mass
+          density_correction = 0.5_num
         ELSE
           p_ratio = sqrt2_inv * p_drift / p_therm
 
