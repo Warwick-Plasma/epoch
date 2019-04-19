@@ -32,7 +32,6 @@ CONTAINS
 
     CALL reset_auto_list
 
-
   END SUBROUTINE setup_injector_boundaries
 
 
@@ -43,6 +42,7 @@ CONTAINS
     prev_inj => auto_injectors
 
   END SUBROUTINE reset_auto_list
+
 
 
   ! Attach an auto injector to the list
@@ -63,18 +63,17 @@ CONTAINS
   END SUBROUTINE attach_auto_injector
 
 
-  ! Create an injector for a boundary
+
+  ! Create an injector for a return-boundary species
 
   SUBROUTINE create_boundary_injectors(bcs, ispecies)
-
 
     INTEGER, INTENT(IN) :: ispecies
     INTEGER, DIMENSION(c_ndims*2), INTENT(IN) :: bcs
     TYPE(injector_block), POINTER :: working_injector
     INTEGER :: i
 
-
-    DO i = 1, 2*c_ndims
+    DO i = 1, 2 * c_ndims
       IF (bcs(i) /= c_bc_continue) CYCLE
       use_injectors = .TRUE.
       need_random_state = .TRUE.
@@ -110,13 +109,13 @@ CONTAINS
 
   ! Fix up the ppc now we've loaded the particles
   ! attach the injectors to the main injector lists
-  ! and fix up boundary valuesa
+  ! and fix up boundary values
+
   SUBROUTINE finish_setup_injector_boundaries
 
     TYPE(injector_block), POINTER :: working_injector, next
     INTEGER, DIMENSION(c_ndims*2) :: bcs
     INTEGER :: bnd, species
-
 
     working_injector => auto_injectors
 
@@ -131,21 +130,18 @@ CONTAINS
         ! Fix nppc
         working_injector%npart_per_cell = &
             FLOOR(species_list(species)%npart_per_cell)
-         ! Set boundary to open for future
+        ! Set boundary to open for future
         species_list(species)%bc_particle(bnd) = c_bc_open
 
         ! Attach to main injector list
         CALL attach_injector(working_injector)
-
       END IF
 
       working_injector => next
-
     END DO
+
     NULLIFY(auto_injectors, prev_inj)
 
-
   END SUBROUTINE finish_setup_injector_boundaries
-
 
 END MODULE injector_boundary

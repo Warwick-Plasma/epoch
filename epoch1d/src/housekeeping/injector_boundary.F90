@@ -14,7 +14,6 @@ MODULE injector_boundary
   TYPE(injector_block), POINTER :: auto_injectors
   TYPE(injector_block), POINTER :: prev_inj
 
-
 CONTAINS
 
   SUBROUTINE setup_injector_boundaries
@@ -36,12 +35,14 @@ CONTAINS
   END SUBROUTINE setup_injector_boundaries
 
 
+
   ! Point prev_inj back to the start of the auto list
   SUBROUTINE reset_auto_list
 
     prev_inj => auto_injectors
 
   END SUBROUTINE reset_auto_list
+
 
 
   ! Attach an auto injector to the list
@@ -63,22 +64,22 @@ CONTAINS
 
 
 
-  SUBROUTINE create_boundary_injectors(bcs, ispecies)
+  ! Create an injector for a return-boundary species
 
+  SUBROUTINE create_boundary_injectors(bcs, ispecies)
 
     INTEGER, INTENT(IN) :: ispecies
     INTEGER, DIMENSION(c_ndims*2), INTENT(IN) :: bcs
     TYPE(injector_block), POINTER :: working_injector
     INTEGER :: i
 
-    DO i = 1, 2*c_ndims
+    DO i = 1, 2 * c_ndims
       IF (bcs(i) /= c_bc_continue) CYCLE
       use_injectors = .TRUE.
       need_random_state = .TRUE.
 
       ALLOCATE(working_injector)
       CALL init_injector(i, working_injector)
-      working_injector%user_specified = .FALSE.
       working_injector%use_flux_injector = .TRUE.
 
       CALL copy_stack(species_list(ispecies)%drift_function(1), &
@@ -106,7 +107,7 @@ CONTAINS
 
 
 
-  ! Fix up the ppc now we've loaded the particles,
+  ! Fix up the ppc now we've loaded the particles
   ! attach the injectors to the main injector lists
   ! and fix up boundary values
 
@@ -129,19 +130,18 @@ CONTAINS
         ! Fix nppc
         working_injector%npart_per_cell = &
             FLOOR(species_list(species)%npart_per_cell)
+        ! Set boundary to open for future
         species_list(species)%bc_particle(bnd) = c_bc_open
 
         ! Attach to main injector list
         CALL attach_injector(working_injector)
-
       END IF
 
       working_injector => next
-
     END DO
-    NULLIFY(auto_injectors)
+
+    NULLIFY(auto_injectors, prev_inj)
 
   END SUBROUTINE finish_setup_injector_boundaries
 
-
-END MODULE
+END MODULE injector_boundary

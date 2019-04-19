@@ -251,13 +251,14 @@ CONTAINS
 
 
 
-  !----------------------------------------
-  !Approximation to ERF from Abramowitz and Stegun
-  !"Handbook Of Mathematical Functions"
-  ! 7.1.28
-  !Should be accurate to a few parts in 10^7
-  !---------------------------------------
+  !----------------------------------------------------------------------------
+  ! Approximation to ERF from Abramowitz and Stegun
+  ! "Handbook Of Mathematical Functions" - 7.1.28
+  ! Should be accurate to a few parts in 10^7
+  !----------------------------------------------------------------------------
+
   FUNCTION ERF(val)
+
    REAL(num), INTENT(IN) :: val
    REAL(num), PARAMETER :: a1 = 0.0705230784_num
    REAL(num), PARAMETER :: a2 = 0.0422820123_num
@@ -270,11 +271,11 @@ CONTAINS
    REAL(num) :: ERF
 
    y = ABS(val)
-   denom = unity+y*(a1+y*(a2+y*(a3+y*(a4+y*(a5+y*a6)))))
-   !Use ERF(-ABS(X)) = -ERF(ABS(X))
-   ERF = SIGN(unity-unity/denom**16, val)
+   denom = unity + y * (a1 + y * (a2 + y * (a3 + y * (a4 + y * (a5 + y * a6)))))
+
+   ! Use ERF(-ABS(X)) = -ERF(ABS(X))
+   ERF = SIGN(unity - unity / denom**16, val)
 
   END FUNCTION ERF
-
 
 END MODULE utilities
