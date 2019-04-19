@@ -164,7 +164,7 @@ CONTAINS
     ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
     p_therm = p_therm_in * SQRT(2.0)
 
-    v_inj_tmp1 = 1.0_num + err_func(p_inject_drift / p_therm)
+    v_inj_tmp1 = 1.0_num + erf_func(p_inject_drift / p_therm)
     v_inj_tmp2 = EXP(-(p_inject_drift / p_therm)**2)
     average_inflow_drifting = direc * (p_inject_drift + v_inj_tmp2 * p_therm &
         / (SQRT(pi) * (v_inj_tmp1 + c_tiny)))
@@ -187,7 +187,7 @@ CONTAINS
     p_therm = p_therm_in * SQRT(2.0_num)
 
     inflow_density_correction = &
-        0.5_num * (1.0_num + err_func(p_inject_drift / p_therm))
+        0.5_num * (1.0_num + erf_func(p_inject_drift / p_therm))
 
   END FUNCTION inflow_density_correction
 
