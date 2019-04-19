@@ -24,7 +24,7 @@ MODULE utilities
                      grow_real_array2d, grow_integer_array2d
   END INTERFACE grow_array
 
-  PUBLIC :: ERF
+  PUBLIC :: erf_func
 
   PRIVATE :: grow_real_array, grow_integer_array, grow_string_array
   PRIVATE :: grow_real_array2d, grow_integer_array2d
@@ -257,7 +257,7 @@ CONTAINS
   ! Should be accurate to a few parts in 10^7
   !----------------------------------------------------------------------------
 
-  FUNCTION ERF(val)
+  FUNCTION erf_func(val)
 
    REAL(num), INTENT(IN) :: val
    REAL(num), PARAMETER :: a1 = 0.0705230784_num
@@ -268,14 +268,14 @@ CONTAINS
    REAL(num), PARAMETER :: a6 = 0.0000430638_num
    REAL(num), PARAMETER :: unity = 1.0_num
    REAL(num) :: y, denom
-   REAL(num) :: ERF
+   REAL(num) :: erf_func
 
    y = ABS(val)
    denom = unity + y * (a1 + y * (a2 + y * (a3 + y * (a4 + y * (a5 + y * a6)))))
 
    ! Use ERF(-ABS(X)) = -ERF(ABS(X))
-   ERF = SIGN(unity - unity / denom**16, val)
+   erf_func = SIGN(unity - unity / denom**16, val)
 
-  END FUNCTION ERF
+  END FUNCTION erf_func
 
 END MODULE utilities
