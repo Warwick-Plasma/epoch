@@ -149,50 +149,6 @@ CONTAINS
 
 
 
-  ! Return the average inwards velocity for a drifting flux
-  ! distribution, with given drift, where direc is 1 is inwards
-  ! means +ve velocity and -1 else
-
-  FUNCTION average_inflow_drifting(p_inject, p_therm_in, direc)
-
-    REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
-    REAL(num) :: p_inject_drift, p_therm
-    REAL(num) :: average_inflow_drifting, v_inj_tmp1, v_inj_tmp2
-
-    ! Drift adjusted so that +ve is 'inwards' through boundary
-    p_inject_drift = p_inject * direc
-    ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
-    p_therm = p_therm_in * SQRT(2.0)
-
-    v_inj_tmp1 = 1.0_num + erf_func(p_inject_drift / p_therm)
-    v_inj_tmp2 = EXP(-(p_inject_drift / p_therm)**2)
-    average_inflow_drifting = direc * (p_inject_drift + v_inj_tmp2 * p_therm &
-        / (SQRT(pi) * (v_inj_tmp1 + c_tiny)))
-
-  END FUNCTION average_inflow_drifting
-
-
-
-  ! Fraction of the drifting Maxwellian distribution which is 'inflowing'
-
-  FUNCTION inflow_density_correction(p_inject, p_therm_in, direc)
-
-    REAL(num), INTENT(IN) :: p_inject, p_therm_in, direc
-    REAL(num) :: p_inject_drift, p_therm
-    REAL(num) :: inflow_density_correction
-
-    ! Drift adjusted so that +ve is 'inwards' through boundary
-    p_inject_drift = p_inject * direc
-    ! Thermal velocity in expression below is defined from exp(-p^2/p_therm^2)
-    p_therm = p_therm_in * SQRT(2.0_num)
-
-    inflow_density_correction = &
-        0.5_num * (1.0_num + erf_func(p_inject_drift / p_therm))
-
-  END FUNCTION inflow_density_correction
-
-
-
   SUBROUTINE run_single_injector(injector, direction)
 
     TYPE(injector_block), POINTER :: injector
@@ -201,13 +157,15 @@ CONTAINS
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
-    REAL(num) :: gamma_mass, v_inject, density, vol
+    REAL(num) :: gamma_mass, v_inject, density, vol, p_drift, p_ratio
     REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index
     TYPE(parameter_pack) :: parameters
     REAL(num), DIMENSION(3) :: dir_mult
     LOGICAL :: first_inject, flux_fn
+    REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / SQRT(2.0_num)
+    REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
 
     IF (time < injector%t_start .OR. time > injector%t_end) RETURN
 
@@ -272,35 +230,40 @@ CONTAINS
     p_inject_drift = drift(dir_index)
 
     IF (flux_fn) THEN
+      ! Drift adjusted so that +ve is 'inwards' through boundary
+      p_drift = p_inject_drift * dir_mult(dir_index)
+
       ! Average momentum of inflowing part
       ! For large inwards drift, is asymptotic to drift
       ! Otherwise it is a complicated expression
       ! Inwards drift - lhs terms are same sign -> +ve
-      IF (p_inject_drift * dir_mult(dir_index) &
-          > flow_limit_val * p_therm) THEN
+      IF (p_drift > flow_limit_val * p_therm) THEN
         ! For sufficiently large drifts, net inflow -> p_drift
-        gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
+        gamma_mass = SQRT(p_inject_drift**2 + typical_mc2) / c
         v_inject_s = p_inject_drift / gamma_mass
         density_correction = 1.0_num
-      ELSE IF (p_inject_drift * dir_mult(dir_index) &
-          < -flow_limit_val * p_therm) THEN
+      ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
         ! Net is outflow - inflow velocity is zero
         v_inject_s = 0.0_num
         gamma_mass = 1.0_num
         ! Since we inject nothing, no need to correct density
         density_correction = 1.0_num
       ELSE
+        p_ratio = sqrt2_inv * p_drift / p_therm
+
+        ! Fraction of the drifting Maxwellian distribution inflowing
+        density_correction = 0.5_num * (1.0_num + erf_func(p_ratio))
+
         ! Below is actually MOMENTUM, will correct on next line
-        v_inject_s = average_inflow_drifting( &
-            p_inject_drift, p_therm, dir_mult(dir_index))
-        gamma_mass = SQRT((v_inject_s)**2 + typical_mc2) / c
+        v_inject_s = dir_mult(dir_index) * (p_drift &
+            + sqrt2pi_inv * p_therm * EXP(-p_ratio**2) / density_correction)
+
+        gamma_mass = SQRT(v_inject_s**2 + typical_mc2) / c
         v_inject_s = v_inject_s / gamma_mass
-        density_correction = inflow_density_correction(p_inject_drift, &
-            p_therm, dir_mult(dir_index))
       END IF
     ELSE
       ! User asked for Maxwellian only - no correction to apply
-      gamma_mass = SQRT((p_inject_drift)**2 + typical_mc2) / c
+      gamma_mass = SQRT(p_inject_drift**2 + typical_mc2) / c
       v_inject_s = p_inject_drift / gamma_mass
       density_correction = 1.0_num
     END IF
