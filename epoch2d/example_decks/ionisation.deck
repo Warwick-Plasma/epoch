@@ -72,7 +72,7 @@ end:output_global
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 1.0e-15
 
   # Properties on grid
@@ -100,7 +100,7 @@ end:output
 begin:output
   name = large
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 10.0e-15
 
   # Properties at particle positions
