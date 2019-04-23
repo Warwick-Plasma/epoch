@@ -220,13 +220,13 @@ CONTAINS
     REAL(num) :: gamma_mass, v_inject, density, vol, p_drift, p_ratio
     REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction
     REAL(num), DIMENSION(3) :: temperature, drift
-    INTEGER :: parts_this_time, ipart, idir, dir_index, ii, jj
+    INTEGER :: parts_this_time, ipart, idir, dir_index, flux_dir, ii, jj
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
     INTEGER, DIMENSION(2) :: i2d
     REAL(num), DIMENSION(3) :: dir_mult
-    LOGICAL :: first_inject, flux_fn
+    LOGICAL :: first_inject
     REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
     REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
     REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
@@ -238,7 +238,7 @@ CONTAINS
     IF (move_window .AND. window_started .AND. .NOT. injector%has_t_end) &
         RETURN
 
-    flux_fn = .FALSE.
+    flux_dir = -1
     dir_mult = 1.0_num
 
     IF (direction == c_bd_x_min) THEN
@@ -250,7 +250,7 @@ CONTAINS
       bdy_pos = x_min
       bdy_space = -dx
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_x_max) THEN
@@ -262,7 +262,7 @@ CONTAINS
       bdy_pos = x_max
       bdy_space = dx
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = -1.0_num
       END IF
     ELSE IF (direction == c_bd_y_min) THEN
@@ -274,7 +274,7 @@ CONTAINS
       bdy_pos = y_min
       bdy_space = -dy
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_y_max) THEN
@@ -286,7 +286,7 @@ CONTAINS
       bdy_pos = y_max
       bdy_space = dy
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = -1.0_num
       END IF
     ELSE IF (direction == c_bd_z_min) THEN
@@ -298,7 +298,7 @@ CONTAINS
       bdy_pos = z_min
       bdy_space = -dz
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = 1.0_num
       END IF
     ELSE IF (direction == c_bd_z_max) THEN
@@ -310,7 +310,7 @@ CONTAINS
       bdy_pos = z_max
       bdy_space = dz
       IF (injector%use_flux_injector) THEN
-        flux_fn = .TRUE.
+        flux_dir = dir_index
         dir_mult(dir_index) = -1.0_num
       END IF
     ELSE
@@ -364,7 +364,7 @@ CONTAINS
         p_therm = SQRT(mass * kb * MAXVAL(temperature))
         p_inject_drift = drift(dir_index)
 
-        IF (flux_fn) THEN
+        IF (flux_dir /= -1) THEN
           ! Drift adjusted so that +ve is 'inwards' through boundary
           p_drift = p_inject_drift * dir_mult(dir_index)
 
@@ -446,7 +446,7 @@ CONTAINS
               temperature, drift)
 
           DO idir = 1, 3
-            IF (flux_fn) THEN
+            IF (idir == flux_dir) THEN
               ! Drift is signed - dir mult is the direciton we want to get
               new%part_p(idir) = flux_momentum_from_temperature(&
                   mass, temperature(idir), drift(idir), dir_mult(idir))
