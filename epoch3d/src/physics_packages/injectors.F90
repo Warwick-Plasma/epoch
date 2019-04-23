@@ -33,7 +33,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
     TYPE(injector_block), INTENT(INOUT) :: injector
 
-    injector%npart_per_cell = 0.0_num
+    injector%npart_per_cell = -1.0_num
     injector%species = -1
     injector%boundary = boundary
     injector%t_start = 0.0_num
@@ -611,5 +611,26 @@ CONTAINS
     END DO
 
   END SUBROUTINE finish_single_injector_setup
+
+
+
+  SUBROUTINE create_boundary_injector(ispecies, bnd)
+
+    INTEGER, INTENT(IN) :: ispecies, bnd
+    TYPE(injector_block), POINTER :: working_injector
+
+    species_list(ispecies)%bc_particle(bnd) = c_bc_open
+    use_injectors = .TRUE.
+    need_random_state = .TRUE.
+
+    ALLOCATE(working_injector)
+
+    CALL init_injector(bnd, working_injector)
+    working_injector%use_flux_injector = .TRUE.
+    working_injector%species = ispecies
+
+    CALL attach_injector(working_injector)
+
+  END SUBROUTINE create_boundary_injector
 
 END MODULE injectors

@@ -22,6 +22,7 @@ MODULE boundary
   USE mpi_subtype_control
   USE utilities
   USE particle_id_hash_mod
+  USE injectors
 
   IMPLICIT NONE
 
@@ -29,7 +30,7 @@ CONTAINS
 
   SUBROUTINE setup_boundaries
 
-    INTEGER :: i, ispecies
+    INTEGER :: i, ispecies, bc
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max' /)
@@ -59,10 +60,15 @@ CONTAINS
     error = .FALSE.
     DO ispecies = 1, n_species
       DO i = 1, 2*c_ndims
+        bc = species_list(ispecies)%bc_particle(i)
         bc_error = 'Unrecognised "' // TRIM(boundary(i)) // '" boundary for ' &
             // 'species "' // TRIM(species_list(ispecies)%name) // '"'
-        error = error .OR. setup_particle_boundary(&
-            species_list(ispecies)%bc_particle(i), bc_error)
+        error = error .OR. setup_particle_boundary(bc, bc_error)
+
+        IF (bc == c_bc_continue) THEN
+          CALL create_boundary_injector(ispecies, i)
+          species_list(ispecies)%bc_particle(i) = c_bc_open
+        END IF
       END DO
     END DO
 
