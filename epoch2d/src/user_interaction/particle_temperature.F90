@@ -417,47 +417,47 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: mass, temperature, drift, direction
     REAL(num) :: flux_momentum_from_temperature, mom1, mom2
-    REAL(num) :: vth2, vth, ran, random_roll, flmt, norm, max_vel, dvel
-    REAL(num) :: ran1, ran2
-    LOGICAL :: accepted
+    REAL(num) :: v, vt2, vt, vd, vmin, vmax, vrange, vexp
+    REAL(num) :: norm, fac
+    INTEGER :: i
 
     IF (ABS(drift) > c_tiny) THEN
-      accepted = .FALSE.
-      ! 3 thermal velocity range - 0.25% error
-      vth2 = kb * temperature / mass
-      vth = SQRT(vth2)
-      ran = 3.0 * vth
-      dvel = drift / mass
-
-      IF (direction > 0) THEN
-        ran1 = MAX(dvel - ran, 0.0_num)
-        ran2 = MAX(dvel + ran, 0.0_num)
-        max_vel = 0.5_num * (dvel + SQRT(dvel**2 + 4.0_num * vth2))
-      ELSE
-        ran1 = MIN(dvel - ran, 0.0_num)
-        ran2 = MIN(dvel + ran, 0.0_num)
-        max_vel = 0.5_num * (dvel - SQRT(dvel**2 + 4.0_num * vth2))
+      vt2 = kb * temperature / mass
+      IF (vt2 < c_tiny) THEN
+        flux_momentum_from_temperature = direction * drift
+        RETURN
       END IF
 
-      ! Norm can be -ve if drift is counter to direction
-      ! This is OK - the distribution will also be -ve
-      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel) / vth)**2))
+      vt = SQRT(vt2)
+      vrange = 3.0_num * vt
+      vd = direction * drift / mass
+      vmax = vd + vrange
 
-      DO WHILE(.NOT. accepted)
-        flmt = ran1 + random() * (ran2 - ran1)
+      IF (vmax < c_tiny) THEN
+        flux_momentum_from_temperature = 0.0_num
+        RETURN
+      END IF
 
-        random_roll = random()
-        IF (random_roll &
-            < norm * flmt * EXP(-0.5_num * ((flmt - dvel) / vth)**2)) THEN
-          accepted = .TRUE.
-          flux_momentum_from_temperature = mass * flmt
+      vmin = MAX(vd - vrange, 0.0_num)
+      vrange = vmax - vmin
+
+      fac = -0.5_num / vt2
+      vexp = 0.5_num * (vd + SQRT(vd**2 + 4.0_num * vt2))
+      norm = 1.0_num / (vexp * EXP(fac * (vexp - vd)**2))
+
+      DO i = 1, 1000
+        v = vmin + random() * vrange
+
+        IF (random() < norm * v * EXP(fac * (v - vd)**2)) THEN
+          flux_momentum_from_temperature = direction * v * mass
+          RETURN
         END IF
       END DO
     ELSE
       mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
       mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
 
-      flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2)
+      flux_momentum_from_temperature = direction * SQRT(mom1**2 + mom2**2)
     END IF
 
   END FUNCTION flux_momentum_from_temperature
