@@ -22,6 +22,7 @@ MODULE boundary
   USE mpi_subtype_control
   USE utilities
   USE particle_id_hash_mod
+  USE injectors
 
   IMPLICIT NONE
 
@@ -63,6 +64,8 @@ CONTAINS
             // 'species "' // TRIM(species_list(ispecies)%name) // '"'
         error = error .OR. setup_particle_boundary(&
             species_list(ispecies)%bc_particle(i), bc_error)
+
+        IF (i == c_bc_continue) CALL create_boundary_injector(ispecies, i)
       END DO
     END DO
 

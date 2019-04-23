@@ -33,7 +33,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
     TYPE(injector_block), INTENT(INOUT) :: injector
 
-    injector%npart_per_cell = 0.0_num
+    injector%npart_per_cell = -1.0_num
     injector%species = -1
     injector%boundary = boundary
     injector%t_start = 0.0_num
@@ -274,6 +274,10 @@ CONTAINS
     typical_mc2 = (mass * c)**2
     cur_cell = 0.0_num
 
+    IF (injector%npart_per_cell < 0.0_num) THEN
+      injector%npart_per_cell = species_list(injector%species)%npart_per_cell
+    END IF
+
     CALL create_empty_partlist(plist)
     DO ii = 1, nel(1)
       DO idir = 1, c_ndims-1
@@ -464,5 +468,43 @@ CONTAINS
     END IF
 
   END SUBROUTINE assign_pack_value
+
+
+
+  ! Create an injector for a return-boundary species
+
+  SUBROUTINE create_boundary_injector(ispecies, bnd)
+
+    INTEGER, INTENT(IN) :: ispecies, bnd
+    TYPE(injector_block), POINTER :: working_injector
+
+    species_list(ispecies)%bc_particle(bnd) = c_bc_open
+    use_injectors = .TRUE.
+    need_random_state = .TRUE.
+
+    ALLOCATE(working_injector)
+
+    CALL init_injector(bnd, working_injector)
+    working_injector%use_flux_injector = .TRUE.
+    working_injector%species = ispecies
+
+    CALL copy_stack(species_list(ispecies)%drift_function(1), &
+        working_injector%drift_function(1))
+    CALL copy_stack(species_list(ispecies)%drift_function(2), &
+        working_injector%drift_function(2))
+    CALL copy_stack(species_list(ispecies)%drift_function(3), &
+        working_injector%drift_function(3))
+    CALL copy_stack(species_list(ispecies)%density_function, &
+        working_injector%density_function)
+    CALL copy_stack(species_list(ispecies)%temperature_function(1), &
+        working_injector%temperature_function(1))
+    CALL copy_stack(species_list(ispecies)%temperature_function(2), &
+        working_injector%temperature_function(2))
+    CALL copy_stack(species_list(ispecies)%temperature_function(3), &
+        working_injector%temperature_function(3))
+
+    CALL attach_injector(working_injector)
+
+  END SUBROUTINE create_boundary_injector
 
 END MODULE injectors
