@@ -98,7 +98,7 @@ CONTAINS
           working_injector%temperature_function(3))
 
       working_injector%species = ispecies
-      working_injector%npart_per_cell = 1 ! Temporary, fixed after load
+      working_injector%npart_per_cell = 1.0_num ! Temporary, fixed after load
 
       CALL attach_auto_injector(working_injector)
     END DO
@@ -128,8 +128,7 @@ CONTAINS
 
       IF (bcs(bnd) == c_bc_continue) THEN
         ! Fix nppc
-        working_injector%npart_per_cell = &
-            FLOOR(species_list(species)%npart_per_cell)
+        working_injector%npart_per_cell = species_list(species)%npart_per_cell
         ! Set boundary to open for future
         species_list(species)%bc_particle(bnd) = c_bc_open
 

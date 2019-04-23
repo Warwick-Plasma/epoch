@@ -33,7 +33,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: boundary
     TYPE(injector_block), INTENT(INOUT) :: injector
 
-    injector%npart_per_cell = 0
+    injector%npart_per_cell = 0.0_num
     injector%species = -1
     injector%boundary = boundary
     injector%t_start = 0.0_num
@@ -343,7 +343,7 @@ CONTAINS
         IF (injector%dt_inject(ii,jj) > 0.0_num) THEN
           npart_ideal = dt / injector%dt_inject(ii,jj)
           itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-              * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+              * (1.0_num - npart_ideal / injector%npart_per_cell))) &
               + npart_ideal
           injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
           first_inject = .FALSE.
@@ -418,7 +418,7 @@ CONTAINS
           ! the optical depth until this point
           npart_ideal = dt / injector%dt_inject(ii,jj)
           itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-              * (1.0_num - npart_ideal / REAL(injector%npart_per_cell, num)))) &
+              * (1.0_num - npart_ideal / injector%npart_per_cell))) &
               + npart_ideal
           injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
         END IF
@@ -459,7 +459,7 @@ CONTAINS
           new%mass = mass
 #endif
 #ifndef PER_SPECIES_WEIGHT
-          new%weight = vol * density / REAL(injector%npart_per_cell, num)
+          new%weight = vol * density / injector%npart_per_cell
 #endif
           CALL add_particle_to_partlist(plist, new)
         END DO
