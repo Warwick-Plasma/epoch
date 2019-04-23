@@ -213,19 +213,22 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: injector
     INTEGER, INTENT(IN) :: direction
-    REAL(num) :: bdy_pos, bdy_space
+    REAL(num) :: bdy_pos, cell_size
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
     REAL(num) :: gamma_mass, v_inject, density, vol, p_drift, p_ratio
-    REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction
+    REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction, dir_mult
+    REAL(num) :: v_inject_dt
+#ifndef PER_SPECIES_WEIGHT
+    REAL(num) :: weight_fac
+#endif
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index, flux_dir, ii, jj
-    INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nel
+    INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nperp
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
     INTEGER, DIMENSION(2) :: i2d
-    REAL(num), DIMENSION(3) :: dir_mult
     LOGICAL :: first_inject
     REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
     REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
@@ -238,98 +241,90 @@ CONTAINS
     IF (move_window .AND. window_started .AND. .NOT. injector%has_t_end) &
         RETURN
 
-    flux_dir = -1
-    dir_mult = 1.0_num
-
     IF (direction == c_bd_x_min) THEN
-      parameters%pack_ix = 0
-      nel = (/ny, nz/)
-      perp_cell_size = (/dy, dz/)
-      perp_dir_index = (/2, 3/)
-      dir_index = 1
       bdy_pos = x_min
-      bdy_space = -dx
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = 1.0_num
-      END IF
-    ELSE IF (direction == c_bd_x_max) THEN
-      parameters%pack_ix = nx
-      nel = (/ny, nz/)
-      perp_cell_size = (/dy, dz/)
-      perp_dir_index = (/2, 3/)
+      parameters%pack_ix = 0
+      dir_mult = 1.0_num
+      ! x-direction
       dir_index = 1
+      cell_size = dx
+      perp_dir_index = (/2, 3/)
+      perp_cell_size = (/dy, dz/)
+      nperp = (/ny, nz/)
+    ELSE IF (direction == c_bd_x_max) THEN
       bdy_pos = x_max
-      bdy_space = dx
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = -1.0_num
-      END IF
+      parameters%pack_ix = nx
+      dir_mult = -1.0_num
+      ! x-direction
+      dir_index = 1
+      cell_size = dx
+      perp_dir_index = (/2, 3/)
+      perp_cell_size = (/dy, dz/)
+      nperp = (/ny, nz/)
     ELSE IF (direction == c_bd_y_min) THEN
-      parameters%pack_iy = 0
-      nel = (/nx, nz/)
-      perp_cell_size = (/dx, dz/)
-      perp_dir_index = (/1, 3/)
-      dir_index = 2
       bdy_pos = y_min
-      bdy_space = -dy
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = 1.0_num
-      END IF
-    ELSE IF (direction == c_bd_y_max) THEN
-      parameters%pack_iy = ny
-      nel = (/nx, nz/)
-      perp_cell_size = (/dx, dz/)
-      perp_dir_index = (/1, 3/)
+      parameters%pack_iy = 0
+      dir_mult = 1.0_num
+      ! y-direction
       dir_index = 2
+      cell_size = dy
+      perp_dir_index = (/1, 3/)
+      perp_cell_size = (/dx, dz/)
+      nperp = (/nx, nz/)
+    ELSE IF (direction == c_bd_y_max) THEN
       bdy_pos = y_max
-      bdy_space = dy
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = -1.0_num
-      END IF
+      parameters%pack_iy = ny
+      dir_mult = -1.0_num
+      ! y-direction
+      dir_index = 2
+      cell_size = dy
+      perp_dir_index = (/1, 3/)
+      perp_cell_size = (/dx, dz/)
+      nperp = (/nx, nz/)
     ELSE IF (direction == c_bd_z_min) THEN
-      parameters%pack_iz = 0
-      nel = (/nx, ny/)
-      perp_cell_size = (/dx, dy/)
-      perp_dir_index = (/1, 2/)
-      dir_index = 3
       bdy_pos = z_min
-      bdy_space = -dz
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = 1.0_num
-      END IF
-    ELSE IF (direction == c_bd_z_max) THEN
-      parameters%pack_iz = nz
-      nel = (/nx, ny/)
-      perp_cell_size = (/dx, dy/)
-      perp_dir_index = (/1, 2/)
+      parameters%pack_iz = 0
+      dir_mult = 1.0_num
+      ! z-direction
       dir_index = 3
+      cell_size = dz
+      perp_dir_index = (/1, 2/)
+      perp_cell_size = (/dx, dy/)
+      nperp = (/nx, ny/)
+    ELSE IF (direction == c_bd_z_max) THEN
       bdy_pos = z_max
-      bdy_space = dz
-      IF (injector%use_flux_injector) THEN
-        flux_dir = dir_index
-        dir_mult(dir_index) = -1.0_num
-      END IF
+      parameters%pack_iz = nz
+      dir_mult = -1.0_num
+      ! z-direction
+      dir_index = 3
+      cell_size = dz
+      perp_dir_index = (/1, 2/)
+      perp_cell_size = (/dx, dy/)
+      nperp = (/nx, ny/)
     ELSE
       RETURN
     END IF
 
-    vol = ABS(bdy_space)
-    DO idir = 1, c_ndims-1
-      vol = vol * perp_cell_size(idir)
-    END DO
+    IF (injector%use_flux_injector) THEN
+      flux_dir = dir_index
+    ELSE
+      flux_dir = -1
+    END IF
+
+    vol = dx * dy * dz
+    bdy_pos = bdy_pos - 0.5_num * dir_mult * cell_size * png
 
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
     cur_cell = 0.0_num
+#ifndef PER_SPECIES_WEIGHT
+    weight_fac = vol / injector%npart_per_cell
+#endif
 
     CALL create_empty_partlist(plist)
 
-    DO ii = 1, nel(1)
-      DO jj = 1, nel(2)
+    DO ii = 1, nperp(1)
+      DO jj = 1, nperp(2)
         i2d = (/ii, jj/)
         DO idir = 1, c_ndims-1
           IF (perp_dir_index(idir) == 1) cur_cell(idir) = x(i2d(idir))
@@ -366,7 +361,7 @@ CONTAINS
 
         IF (flux_dir /= -1) THEN
           ! Drift adjusted so that +ve is 'inwards' through boundary
-          p_drift = p_inject_drift * dir_mult(dir_index)
+          p_drift = p_inject_drift * dir_mult
 
           ! Average momentum of inflowing part
           ! For large inwards drift, is asymptotic to drift
@@ -396,7 +391,7 @@ CONTAINS
             density_correction = 0.5_num * (1.0_num + erf_func(p_ratio))
 
             ! Below is actually MOMENTUM, will correct on next line
-            v_inject_s = dir_mult(dir_index) * (p_drift &
+            v_inject_s = dir_mult * (p_drift &
                 + sqrt2pi_inv * p_therm * EXP(-p_ratio**2) / density_correction)
 
             gamma_mass = SQRT(v_inject_s**2 + typical_mc2) / c
@@ -410,8 +405,9 @@ CONTAINS
         END IF
 
         v_inject = ABS(v_inject_s)
+        v_inject_dt = dt * v_inject_s
 
-        injector%dt_inject(ii,jj) = ABS(bdy_space) &
+        injector%dt_inject(ii,jj) = cell_size &
             / MAX(injector%npart_per_cell * v_inject * density_correction, &
             c_tiny)
         IF (first_inject) THEN
@@ -437,8 +433,7 @@ CONTAINS
                 (random() - 0.5_num) * perp_cell_size(idir) + cur_cell(idir)
           END DO
 
-          new%part_pos(dir_index) = bdy_pos + 0.5_num * bdy_space * png &
-              - random() * v_inject_s * dt
+          new%part_pos(dir_index) = bdy_pos - random() * v_inject_dt
           parameters%pack_pos = new%part_pos
           parameters%use_grid_position = .FALSE.
 
@@ -449,7 +444,7 @@ CONTAINS
             IF (idir == flux_dir) THEN
               ! Drift is signed - dir mult is the direciton we want to get
               new%part_p(idir) = flux_momentum_from_temperature(&
-                  mass, temperature(idir), drift(idir), dir_mult(idir))
+                  mass, temperature(idir), drift(idir), dir_mult)
             ELSE
               new%part_p(idir) = momentum_from_temperature(mass, &
                   temperature(idir), drift(idir))
@@ -460,7 +455,7 @@ CONTAINS
           new%mass = mass
 #endif
 #ifndef PER_SPECIES_WEIGHT
-          new%weight = vol * density / injector%npart_per_cell
+          new%weight = weight_fac * density
 #endif
           CALL add_particle_to_partlist(plist, new)
         END DO
