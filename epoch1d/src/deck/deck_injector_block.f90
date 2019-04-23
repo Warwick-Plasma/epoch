@@ -128,8 +128,7 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'npart_per_cell')) THEN
-      working_injector%npart_per_cell = as_integer_print(value, element, &
-          errcode)
+      working_injector%npart_per_cell = as_real_print(value, element, errcode)
       RETURN
     END IF
 
