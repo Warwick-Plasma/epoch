@@ -463,6 +463,10 @@ CONTAINS
         END IF
       END DO
     ELSE
+      ! These satisfy a Rayleigh distribution, formed by combining two
+      ! normally-distributed (~N(0,sigma)) random variables as follows:
+      ! Z = SQRT(X**2 + Y**2)
+
       mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
       mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
 
