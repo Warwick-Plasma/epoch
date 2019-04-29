@@ -1,5 +1,5 @@
 ! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -109,8 +109,7 @@ CONTAINS
           CALL setup_particle_temperature(&
               species_temp(:,n), n, species, species_drift(:,n))
         END DO
-        CALL deltaf_load(ispecies, species_temp, &
-            species_drift)
+        CALL deltaf_load(ispecies, species_temp, species_drift)
       ELSE IF (species_list(ispecies)%ic_df_type &
           == c_ic_df_relativistic_thermal) THEN
         CALL setup_particle_temperature_relativistic(species_temp, species, &
