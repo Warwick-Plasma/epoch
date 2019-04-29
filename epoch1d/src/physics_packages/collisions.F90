@@ -1009,9 +1009,9 @@ CONTAINS
     w2 = weight2
 #endif
 
-    IF (w1 > w2) THEN
+    IF (w1 > w2 + eps) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1) THEN
+    ELSE IF (w2 > w1 + eps) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     END IF
 
@@ -1192,9 +1192,9 @@ CONTAINS
     w2 = weight2
 #endif
 
-    IF (w1 > w2) THEN
+    IF (w1 > w2 + eps) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1) THEN
+    ELSE IF (w2 > w1 + eps) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     END IF
 
