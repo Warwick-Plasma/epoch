@@ -357,6 +357,8 @@ CONTAINS
       species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
       species_list(ispecies)%immobile = .FALSE.
+      species_list(ispecies)%field_aligned_initialisation = .FALSE.
+      species_list(ispecies)%x_perp_y_ignored_z_para = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
       NULLIFY(species_list(ispecies)%ext_temp_x_min)
@@ -400,6 +402,7 @@ CONTAINS
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
+      species_list(ispecies)%field_aligned_initialisation = .FALSE.
 #ifndef NO_TRACER_PARTICLES
       species_list(ispecies)%zero_current = .FALSE.
 #endif

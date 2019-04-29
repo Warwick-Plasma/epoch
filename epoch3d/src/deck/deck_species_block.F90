@@ -563,6 +563,20 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'field_aligned_initialisation') &
+        .OR. str_cmp(element, 'field_aligned')) THEN
+      species_list(species_id)%field_aligned_initialisation = &
+          as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'x_perp_y_ignored_z_para') &
+        .OR. str_cmp(element, 'perpendicular_and_parallel')) THEN
+      species_list(species_id)%x_perp_y_ignored_z_para = &
+          as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'bc_x_min')) THEN
       species_list(species_id)%bc_particle(c_bd_x_min) = &
           species_bc_particle(c_bd_x_min)

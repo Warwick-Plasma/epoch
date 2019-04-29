@@ -407,6 +407,8 @@ MODULE shared_data
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
+    LOGICAL :: field_aligned_initialisation
+    LOGICAL :: x_perp_y_ignored_z_para
 
     ! Parameters for relativistic and arbitrary particle loader
     INTEGER :: ic_df_type
