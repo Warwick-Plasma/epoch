@@ -415,37 +415,6 @@ CONTAINS
   ! These subroutines are the in depth detail of how the parser works
   !----------------------------------------------------------------------------
 
-  FUNCTION get_free_lun()
-
-    ! This subroutine simply cycles round until it finds a free lun between
-    ! min_lun and max_lun
-    INTEGER :: get_free_lun
-    INTEGER :: lun
-    INTEGER, PARAMETER :: min_lun = 10, max_lun = 20
-    LOGICAL :: is_open
-
-    is_open = .TRUE.
-
-    lun = min_lun
-    DO
-      INQUIRE(unit=lun, opened=is_open)
-      IF (.NOT. is_open) EXIT
-      lun = lun+1
-      IF (lun > max_lun) THEN
-        IF (rank == 0) THEN
-          WRITE(*,*) '*** ERROR ***'
-          WRITE(*,*) 'Unable to open lun for input deck read'
-        END IF
-        CALL abort_code(c_err_io_error)
-      END IF
-    END DO
-
-    get_free_lun = lun
-
-  END FUNCTION get_free_lun
-
-
-
   RECURSIVE SUBROUTINE read_deck(filename, first_call, deck_state_in)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
