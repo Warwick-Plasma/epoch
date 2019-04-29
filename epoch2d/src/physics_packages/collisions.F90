@@ -101,7 +101,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: iekbar, jekbar
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
@@ -115,7 +115,6 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng))
-    ALLOCATE(jekbar(1-ng:nx+ng,1-ng:ny+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -137,7 +136,6 @@ CONTAINS
       IF (.NOT.collide_species) CYCLE
 
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -162,7 +160,6 @@ CONTAINS
 
         IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
-          CALL calc_coll_ekbar(jekbar, jspecies)
         END IF
 
         m2 = species_list(jspecies)%mass
@@ -170,6 +167,7 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
+          CALL calc_coll_ekbar(iekbar, ispecies)
           CALL calc_coll_temperature_ev(itemp, ispecies)
           IF (ispecies == jspecies) THEN
             log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
@@ -188,15 +186,14 @@ CONTAINS
           IF (ispecies == jspecies) THEN
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
-                m1, q1, w1, idens(ix,iy), iekbar(ix,iy), &
+                m1, q1, w1, idens(ix,iy), &
                 log_lambda(ix,iy), user_factor)
           ELSE
             CALL inter_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
                 species_list(jspecies)%secondary_list(ix,iy), &
                 m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
-                iekbar(ix,iy), jekbar(ix,iy), log_lambda(ix,iy), &
-                user_factor)
+                log_lambda(ix,iy), user_factor)
           END IF
         END DO ! ix
         END DO ! iy
@@ -205,7 +202,7 @@ CONTAINS
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
-    DEALLOCATE(iekbar, jekbar)
+    DEALLOCATE(iekbar)
 
   END SUBROUTINE particle_collisions
 
@@ -364,8 +361,8 @@ CONTAINS
           DO ix = 1, nx
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
-                m1, q1, w1, idens(ix,iy), iekbar(ix,iy), &
-                log_lambda(ix,iy), user_factor)
+                m1, q1, w1, idens(ix,iy), iekbar(ix,iy), log_lambda(ix,iy), &
+                user_factor)
           END DO ! ix
           END DO ! iy
         ELSE IF (species_list(ispecies)%ionise &
@@ -384,8 +381,7 @@ CONTAINS
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix,iy), jdens(ix,iy), &
-                  e_ekbar(ix,iy), jekbar(ix,iy), e_log_lambda(ix,iy), &
-                  e_user_factor)
+                  e_log_lambda(ix,iy), e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
@@ -394,8 +390,7 @@ CONTAINS
                   species_list(ispecies)%secondary_list(ix,iy), &
                   species_list(jspecies)%secondary_list(ix,iy), &
                   m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
-                  iekbar(ix,iy), jekbar(ix,iy), log_lambda(ix,iy), &
-                  user_factor)
+                  log_lambda(ix,iy), user_factor)
             END IF
             ! Put ions and electrons into respective lists
             CALL append_partlist( &
@@ -421,8 +416,7 @@ CONTAINS
               CALL inter_species_collisions(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix,iy), e_dens(ix,iy), &
-                  iekbar(ix,iy), e_ekbar(ix,iy), e_log_lambda(ix,iy), &
-                  e_user_factor)
+                  e_log_lambda(ix,iy), e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
@@ -431,8 +425,7 @@ CONTAINS
                   species_list(ispecies)%secondary_list(ix,iy), &
                   species_list(jspecies)%secondary_list(ix,iy), &
                   m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
-                  iekbar(ix,iy), jekbar(ix,iy), log_lambda(ix,iy), &
-                  user_factor)
+                  log_lambda(ix,iy), user_factor)
             END IF
             ! Put electrons into respective lists
             CALL append_partlist( &
@@ -449,8 +442,7 @@ CONTAINS
                 species_list(ispecies)%secondary_list(ix,iy), &
                 species_list(jspecies)%secondary_list(ix,iy), &
                 m1, m2, q1, q2, w1, w2, idens(ix,iy), jdens(ix,iy), &
-                iekbar(ix,iy), jekbar(ix,iy), log_lambda(ix,iy), &
-                user_factor)
+                log_lambda(ix,iy), user_factor)
           END DO ! ix
           END DO ! iy
         END IF
@@ -718,7 +710,7 @@ CONTAINS
 
 
   SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
-      dens, ekbar, log_lambda, user_factor)
+      dens, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
@@ -726,8 +718,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: user_factor
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
-    REAL(num) :: dens, ekbar, log_lambda
-    INTEGER(i8) :: icount, pcount, k
+    REAL(num) :: dens, log_lambda
+    INTEGER(i8) :: icount, k, pcount
 
     factor = 0.0_num
     np = 0.0_num
@@ -787,7 +779,7 @@ CONTAINS
 
   SUBROUTINE inter_species_collisions(p_list1, p_list2, mass1, mass2, &
       charge1, charge2, weight1, weight2, &
-      idens, jdens, iekbar, jekbar, log_lambda, user_factor )
+      idens, jdens, log_lambda, user_factor )
 
     TYPE(particle_list), INTENT(INOUT) :: p_list1
     TYPE(particle_list), INTENT(INOUT) :: p_list2
@@ -796,7 +788,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass2, charge2, weight2
 
     REAL(num), INTENT(IN) :: idens, jdens
-    REAL(num), INTENT(IN) :: iekbar, jekbar, log_lambda
+    REAL(num), INTENT(IN) :: log_lambda
     REAL(num), INTENT(IN) :: user_factor
 
     TYPE(particle), POINTER :: current, impact
