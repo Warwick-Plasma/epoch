@@ -28,3 +28,12 @@
     ! Unvarying multiplication factors
     idx = 1.0_num / dx
     idy = 1.0_num / dy
+
+    ! These prevent -Werror fail on unused variable
+    ! TODO: sort this out so this isn't necessary
+    cell_x3 = 0
+    cell_y3 = 0
+    cell_x = 0
+    cell_y = 0
+    cx2 = 0
+    cy2 = 0
