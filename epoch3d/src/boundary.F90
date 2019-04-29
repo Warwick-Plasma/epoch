@@ -146,20 +146,68 @@ CONTAINS
     basetype = mpireal
 
     IF (direction == c_dir_x) THEN
-      proc1_min = proc_y_min
-      proc1_max = proc_y_max
-      proc2_min = proc_z_min
-      proc2_max = proc_z_max
+      IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+        proc1_min = proc_y_min
+      ELSE
+        proc1_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+        proc1_max = proc_y_max
+      ELSE
+        proc1_max = MPI_PROC_NULL
+      END IF
+      IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
+        proc2_min = proc_z_min
+      ELSE
+        proc2_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
+        proc2_max = proc_z_max
+      ELSE
+        proc2_max = MPI_PROC_NULL
+      END IF
     ELSE IF (direction == c_dir_y) THEN
-      proc1_min = proc_x_min
-      proc1_max = proc_x_max
-      proc2_min = proc_z_min
-      proc2_max = proc_z_max
+      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+        proc1_min = proc_x_min
+      ELSE
+        proc1_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+        proc1_max = proc_x_max
+      ELSE
+        proc1_max = MPI_PROC_NULL
+      END IF
+      IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
+        proc2_min = proc_z_min
+      ELSE
+        proc2_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
+        proc2_max = proc_z_max
+      ELSE
+        proc2_max = MPI_PROC_NULL
+      END IF
     ELSE
-      proc1_min = proc_x_min
-      proc1_max = proc_x_max
-      proc2_min = proc_y_min
-      proc2_max = proc_y_max
+      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+        proc1_min = proc_x_min
+      ELSE
+        proc1_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+        proc1_max = proc_x_max
+      ELSE
+        proc1_max = MPI_PROC_NULL
+      END IF
+      IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+        proc2_min = proc_y_min
+      ELSE
+        proc2_min = MPI_PROC_NULL
+      END IF
+      IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+        proc2_max = proc_y_max
+      ELSE
+        proc2_max = MPI_PROC_NULL
+      END IF
     END IF
 
     sizes(1) = n1_local + 2 * ng
@@ -284,7 +332,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -299,7 +347,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -324,7 +372,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = ny_local+1, subsizes(2)+ny_local
@@ -339,7 +387,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -364,7 +412,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
         tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
 
-    IF (proc_z_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
       n = 1
       DO k = nz_local+1, subsizes(3)+nz_local
       DO j = 1-ng, subsizes(2)-ng
@@ -379,7 +427,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
         tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
 
-    IF (proc_z_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -435,7 +483,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -450,7 +498,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -475,7 +523,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    IF (proc_y_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = ny_local+1, subsizes(2)+ny_local
@@ -490,7 +538,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-    IF (proc_y_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -515,7 +563,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
         tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
 
-    IF (proc_z_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
       n = 1
       DO k = nz_local+1, subsizes(3)+nz_local
       DO j = 1-ng, subsizes(2)-ng
@@ -530,7 +578,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
         tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
 
-    IF (proc_z_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
       n = 1
       DO k = 1-ng, subsizes(3)-ng
       DO j = 1-ng, subsizes(2)-ng
@@ -1258,17 +1306,22 @@ CONTAINS
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
     REAL(num) :: z_min_outer, z_max_outer
+    REAL(num) :: x_shift, y_shift, z_shift
 
-    boundary_shift = dx * REAL((1 + png) / 2, num)
-
+    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift
     x_max_outer = x_max + boundary_shift
+    x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
 
+    boundary_shift = dy * REAL((1 + png + cpml_thickness) / 2, num)
     y_min_outer = y_min - boundary_shift
     y_max_outer = y_max + boundary_shift
+    y_shift = length_y + 2.0_num * dy * REAL(cpml_thickness, num)
 
+    boundary_shift = dz * REAL((1 + png + cpml_thickness) / 2, num)
     z_min_outer = z_min - boundary_shift
     z_max_outer = z_max + boundary_shift
+    z_shift = length_z + 2.0_num * dz * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
@@ -1320,10 +1373,10 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos(1) = part_pos - sgn * length_x
+                cur%part_pos(1) = part_pos - sgn * x_shift
               END IF
             END IF
-            IF (part_pos < x_min_outer) THEN
+            IF (part_pos < x_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
@@ -1410,10 +1463,10 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos(1) = part_pos - sgn * length_x
+                cur%part_pos(1) = part_pos - sgn * x_shift
               END IF
             END IF
-            IF (part_pos >= x_max_outer) THEN
+            IF (part_pos >= x_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_y_r = (cur%part_pos(2) - y_grid_min_local) / dy
@@ -1501,10 +1554,10 @@ CONTAINS
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
-                cur%part_pos(2) = part_pos - sgn * length_y
+                cur%part_pos(2) = part_pos - sgn * y_shift
               END IF
             END IF
-            IF (part_pos < y_min_outer) THEN
+            IF (part_pos < y_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
@@ -1591,10 +1644,10 @@ CONTAINS
                 cur%part_p(2) = -cur%part_p(2)
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
-                cur%part_pos(2) = part_pos - sgn * length_y
+                cur%part_pos(2) = part_pos - sgn * y_shift
               END IF
             END IF
-            IF (part_pos >= y_max_outer) THEN
+            IF (part_pos >= y_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
@@ -1682,10 +1735,10 @@ CONTAINS
                 cur%part_p(3) = -cur%part_p(3)
               ELSE IF (bc == c_bc_periodic) THEN
                 zbd = sgn
-                cur%part_pos(3) = part_pos - sgn * length_z
+                cur%part_pos(3) = part_pos - sgn * z_shift
               END IF
             END IF
-            IF (part_pos < z_min_outer) THEN
+            IF (part_pos < z_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx
@@ -1772,10 +1825,10 @@ CONTAINS
                 cur%part_p(3) = -cur%part_p(3)
               ELSE IF (bc == c_bc_periodic) THEN
                 zbd = sgn
-                cur%part_pos(3) = part_pos - sgn * length_z
+                cur%part_pos(3) = part_pos - sgn * z_shift
               END IF
             END IF
-            IF (part_pos >= z_max_outer) THEN
+            IF (part_pos >= z_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 ! Always use the triangle particle weighting for simplicity
                 cell_x_r = (cur%part_pos(1) - x_grid_min_local) / dx

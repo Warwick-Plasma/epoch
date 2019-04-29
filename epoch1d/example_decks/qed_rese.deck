@@ -23,7 +23,7 @@ begin:control
 
   # size of domain
   x_min = -3e-6
-  x_max = 20e-6
+  x_max =  20e-6
 
   dt_multiplier = 0.8
 
@@ -84,8 +84,8 @@ begin:species
   dump = T
 
   temp = 0
-  rho = if (x gt -1e-6, nel * 1.0e6, 0)
-  minrho = 1
+  number_density = if (x gt -1e-6, nel * 1.0e6, 0)
+  number_density_min = 1
 
   # In EPOCH-QED you have to identify the type of a charged particle. This is
   # done with the "identify" directive. You have to know which species the
@@ -113,9 +113,9 @@ begin:species
   frac = 0.5
   dump = T
 
-  rho = rho(Electron)
+  number_density = number_density(Electron)
   temp = temp_x(Electron)
-  minrho = 1
+  number_density_min = 1
 
   # You don't have to identify protons, since they're not used in the QED
   # routines, but the alias exists and it's quicker than specifying it manually.
@@ -127,23 +127,23 @@ end:species
 
 begin:species
 
-  name = Photon  
+  name = Photon
   npart = 0 # npart=0 since there are no initial photons in the system
-  dump = T 
+  dump = T
 
   # This is the key line here. It identifies that this species is a photon
   # species. Without this line this species won't work properly. Presently you
   # can't specify initial conditions for photons.
- identify:photon
+  identify:photon
 
 end:species
 
 
 begin:species
 
-  name = Positron  
+  name = Positron
   npart = 0 # npart=0 since no initial positrons in the system
-  dump = T 
+  dump = T
 
   # This identifies this species as a positron. In most senses it's still a
   # normal charged particle species. You can specify initial conditions as
@@ -157,19 +157,23 @@ begin:species
 end:species
 
 
+begin:output_global
+
+  force_final_to_be_restartable = T
+
+end:output_global
+
+
 begin:output
+
+  name = normal
 
   # If use_offset_grid is true then the code dumps a grid which displays
   # positions relative to the left hand edge of the window
   use_offset_grid = F
 
   # number of timesteps between output dumps
-  dt_snapshot = 100.0e-15/100.0
-
-  # Number of dt_snapshot between full dumps
-  full_dump_every = 10
-  restart_dump_every = -1
-  force_final_to_be_restartable = T
+  dt_snapshot = 100.0e-15 / 100.0
 
   # Properties at particle positions
   particles = never

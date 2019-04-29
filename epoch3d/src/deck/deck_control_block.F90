@@ -31,6 +31,7 @@ MODULE deck_control_block
   PUBLIC :: control_block_handle_element, control_block_check
 
   LOGICAL :: got_time, got_grid(2*c_ndims)
+  LOGICAL :: got_optimal_layout, got_nproc
 
 CONTAINS
 
@@ -55,6 +56,8 @@ CONTAINS
     use_particle_migration = .FALSE.
     use_pre_balance = .TRUE.
     use_optimal_layout = .TRUE.
+    got_optimal_layout = .FALSE.
+    got_nproc = .FALSE.
     restart_number = 0
     check_stop_frequency = 10
     stop_at_walltime = -1.0_num
@@ -79,6 +82,7 @@ CONTAINS
 
     CHARACTER(LEN=22) :: filename_fmt, str
     INTEGER :: io, iu
+    LOGICAL, SAVE :: warn = .TRUE.
 
     IF (n_zeros_control > 0) THEN
       IF (n_zeros_control < n_zeros) THEN
@@ -157,6 +161,22 @@ CONTAINS
         END DO
         CALL abort_code(c_err_missing_elements)
       END IF
+    END IF
+
+    IF (got_nproc .AND. got_optimal_layout) THEN
+      IF (warn .AND. rank == 0) THEN
+        warn = .FALSE.
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Both "use_optimal_layout" and "nprocx/y/z" specified ', &
+                      'in the input deck.'
+          WRITE(io,*) 'The specified processor layout will be ignored.'
+          WRITE(io,*)
+        END DO
+      END IF
+    ELSE IF (got_nproc .AND. .NOT.got_optimal_layout) THEN
+      use_optimal_layout = .FALSE.
     END IF
 
     IF (deck_state == c_ds_first) RETURN
@@ -242,12 +262,15 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'nprocx')) THEN
       nprocx = as_integer_print(value, element, errcode)
+      got_nproc = .TRUE.
 
     ELSE IF (str_cmp(element, 'nprocy')) THEN
       nprocy = as_integer_print(value, element, errcode)
+      got_nproc = .TRUE.
 
     ELSE IF (str_cmp(element, 'nprocz')) THEN
       nprocz = as_integer_print(value, element, errcode)
+      got_nproc = .TRUE.
 
     ELSE IF (str_cmp(element, 'npart')) THEN
       npart_global = as_long_integer_print(value, element, errcode)
@@ -421,6 +444,7 @@ CONTAINS
     ELSE IF (str_cmp(element, 'use_optimal_layout') &
         .OR. str_cmp(element, 'optimal_layout')) THEN
       use_optimal_layout = as_logical_print(value, element, errcode)
+      got_optimal_layout = use_optimal_layout
 
     ELSE IF (str_cmp(element, 'smooth_iterations')) THEN
       smooth_its = as_integer_print(value, element, errcode)

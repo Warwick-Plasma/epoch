@@ -133,12 +133,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density_min')) THEN
+    IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho') &
+        .OR. str_cmp(element, 'number_density_min')) THEN
       working_injector%density_min = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'density')) THEN
+    IF (str_cmp(element, 'density') &
+        .OR. str_cmp(element, 'number_density')) THEN
       CALL initialise_stack(working_injector%density_function)
       CALL tokenize(value, working_injector%density_function, errcode)
       RETURN

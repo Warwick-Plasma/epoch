@@ -1,21 +1,20 @@
 begin:control
-  #global number of gridpoints
-  nx = 400 #in x
-  ny = 400 #in y
-  npart = 16.0e5
+  # Global number of gridpoints
+  nx = 400 # in x
+  ny = 400 # in y
 
-  #maximum number of iterations
-  #set to -1 to run until finished
+  # Maximum number of iterations
+  # Set to -1 to run until finished
   nsteps = 0
 
-  #final time of simulation
+  # Final time of simulation
   t_end = 50.0e-15
 
-  #size of domain
+  # Size of domain
   x_min = -10e-6
-  x_max = 10e-6
-  y_min = -10e-6
-  y_max = 10e-6
+  x_max = -x_min
+  y_min =  x_min
+  y_max =  x_max
 end:control
 
 
@@ -40,45 +39,43 @@ begin:species
   name = Electron
   charge = -1.0
   mass = 1.0
-  frac = 0.5
-  tracer = T
+  npart = nx * ny * 5
 end:species
 
 
 begin:species
   name = Palladium
   charge = 22.0
-  mass = 1836.2*105.0
-  frac = 0.5
-  tracer = T
+  mass = 1836.2 * 105.0
 
-  rho = den_max
+  number_density = den_max
   temp = 1e6
 
-  ionisation_electron_species=Electron
-  ionisation_energies=(54.4*ev,24.6*ev)
+  ionisation_electron_species = Electron
+  ionisation_energies = (54.4*ev, 24.6*ev)
+  npart = nx * ny * 5
 end:species
 
 
 begin:species
   name = Electron
-  rho = rho(Palladium) * 22.0
+  number_density = number_density(Palladium) * 22.0
   temp = 1e6
 end:species
 
 
-begin:output
-  #number of timesteps between output dumps
-  dt_snapshot = 1.0e-15
-  #Number of dt_snapshot between full dumps
-  full_dump_every = 10
+begin:output_global
   force_final_to_be_restartable = T
+end:output_global
 
-  #Properties at particle positions
-  particles = full
-  particle_weight = full
 
-  #Properties on grid
+begin:output
+  name = normal
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 1.0e-15
+
+  # Properties on grid
   grid = always
   ex = always
   ey = always
@@ -95,8 +92,20 @@ begin:output
   number_density = always + species
   temperature = always + species
 
-  #extended io
+  # Extended io
   distribution_functions = always
+end:output
+
+
+begin:output
+  name = large
+
+  # Number of timesteps between output dumps
+  dt_snapshot = 10.0e-15
+
+  # Properties at particle positions
+  particles = full
+  particle_weight = full
 end:output
 
 
@@ -104,7 +113,7 @@ begin:laser
   boundary = x_min
   amp = 1e13
   lambda = lambda
-  profile = y/(2.5e-6) * gauss(y,0.0,2.5e-6)
+  profile = y / (2.5e-6) * gauss(y, 0.0, 2.5e-6)
 end:laser
 
 
@@ -115,11 +124,11 @@ begin:dist_fn
   direction1 = dir_x
   direction2 = dir_en
 
-  #range is ignored for spatial coordinates
-  range1 = (1,1)
-  range2 = (0,10*kev)
+  # Range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (0, 10*kev)
 
-  #resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
 
@@ -134,10 +143,10 @@ begin:dist_fn
 
   direction1 = dir_en
 
-  #range is ignored for spatial coordinates
-  range1 = (0,2.0*kev)
+  # Range is ignored for spatial coordinates
+  range1 = (0, 2.0*kev)
 
-  #resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 100
 
   include_species:Electron
@@ -154,12 +163,12 @@ begin:dist_fn
   direction2 = dir_px
   direction3 = dir_py
 
-  #range is ignored for spatial coordinates
-  range1 = (1,1)
-  range2 = (-3.0e-20,3.0e-20)
-  range3 = (-3.0e-20,3.0e-20)
+  # Range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (-3.0e-20, 3.0e-20)
+  range3 = (-3.0e-20, 3.0e-20)
 
-  #resolution is ignored for spatial coordinates
+  # Resolution is ignored for spatial coordinates
   resolution1 = 1
   resolution2 = 100
   resolution3 = 100
@@ -172,8 +181,8 @@ end:dist_fn
 begin:probe
   name = electron_back_probe
 
-  point = ((x_max+x_min)/2.0,y_min)
-  normal = (1,0)
+  point = (0.5 * (x_max + x_min), y_min)
+  normal = (1, 0)
 
   ek_min = 0.0
   ek_max = -1.0

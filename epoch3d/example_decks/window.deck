@@ -43,7 +43,7 @@ begin:constant
   y0 = 0.5
   z0 = 0.5
   r0 = 0.4^2
-  r2 = (x-x0)^2 + (y-y0)^2 + (z-z0)^2
+  r2 = (x - x0)^2 + (y - y0)^2 + (z - z0)^2
 end:constant
 
 begin:species
@@ -53,19 +53,20 @@ begin:species
   mass = 1.0
   npart_per_cell = 5
 
-  #density = if(r2 lt r0,2*exp(-((time*5e8)^2)),1)
-  density = if(abs(x-x0) lt 0.3, 2, 1)
-  density = if(abs(y-y0) lt 0.2, density(electron), 1)
-  density = if(abs(z-z0) lt 0.2, density(electron), 1)
-  #density = if(abs(x-x0) lt 0.3, if(abs(y-y0) lt 0.2, \
+  #number_density = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
+  number_density = if(abs(x-x0) lt 0.3, 2, 1)
+  number_density = if(abs(y-y0) lt 0.2, number_density(electron), 1)
+  number_density = if(abs(z-z0) lt 0.2, number_density(electron), 1)
+  #number_density = if(abs(x-x0) lt 0.3, if(abs(y-y0) lt 0.2, \
   #    if(abs(z-z0) lt 0.2, 2, 1), 1), 1)
 
-  #temp_ev = if(r2 lt r0,2*exp(-((time*5e8)^2)),1)
+  #temp_ev = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
   temp_ev = 0
 end:species
 
 
 begin:output
+  name = normal
   dt_snapshot = 1e-10
 
   # Properties at particle positions

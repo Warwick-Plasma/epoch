@@ -146,7 +146,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
         tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO i = nx_local+1, nx_local+ng
         field(i) = temp(n)
@@ -157,7 +157,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
         tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO i = 1-ng, 0
         field(i) = temp(n)
@@ -186,7 +186,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
         tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (proc_x_max /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
       n = 1
       DO i = nx_local+1, nx_local+ng
         field(i) = temp(n)
@@ -197,7 +197,7 @@ CONTAINS
     CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
         tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (proc_x_min /= MPI_PROC_NULL) THEN
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
       n = 1
       DO i = 1-ng, 0
         field(i) = temp(n)
@@ -585,11 +585,12 @@ CONTAINS
     REAL(num) :: temp(3)
     REAL(num) :: part_pos, boundary_shift
     REAL(num) :: x_min_outer, x_max_outer
+    REAL(num) :: x_shift
 
-    boundary_shift = dx * REAL((1 + png) / 2, num)
-
+    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift
     x_max_outer = x_max + boundary_shift
+    x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
       cur => species_list(ispecies)%attached_list%head
@@ -634,10 +635,10 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos = part_pos - sgn * length_x
+                cur%part_pos = part_pos - sgn * x_shift
               END IF
             END IF
-            IF (part_pos < x_min_outer) THEN
+            IF (part_pos < x_min_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
@@ -696,10 +697,10 @@ CONTAINS
                 cur%part_p(1) = -cur%part_p(1)
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
-                cur%part_pos = part_pos - sgn * length_x
+                cur%part_pos = part_pos - sgn * x_shift
               END IF
             END IF
-            IF (part_pos >= x_max_outer) THEN
+            IF (part_pos >= x_max_outer .AND. bc /= c_bc_periodic) THEN
               IF (bc == c_bc_thermal) THEN
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)

@@ -68,7 +68,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_m  = io_list(ispecies)%mass
@@ -150,7 +150,7 @@ CONTAINS
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -259,7 +259,7 @@ CONTAINS
       IF (spec_sum .AND. &
           io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -432,7 +432,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_q  = io_list(ispecies)%charge
@@ -507,7 +507,7 @@ CONTAINS
       IF (spec_sum &
           .AND. io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       wdata = io_list(ispecies)%weight
@@ -564,7 +564,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
 
@@ -617,7 +617,7 @@ CONTAINS
 
     DO ispecies = spec_start, spec_end
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       wdata = io_list(ispecies)%weight
@@ -699,7 +699,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
@@ -804,7 +804,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       sqrt_part_m  = SQRT(io_list(ispecies)%mass)
@@ -886,6 +886,14 @@ CONTAINS
     LOGICAL :: spec_sum
 #include "particle_head.inc"
 
+    IF (.NOT. PRESENT(direction)) THEN
+      IF (rank == 0) THEN
+        PRINT*, 'Error: No direction argument supplied to ', &
+            'calc_per_species_current'
+        CALL abort_code(c_err_bad_value)
+      END IF
+    END IF
+
     data_array = 0.0_num
     part_q = 0.0_num
     fac = 0.0_num
@@ -905,7 +913,7 @@ CONTAINS
     DO ispecies = spec_start, spec_end
       IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (spec_sum .AND. io_list(ispecies)%tracer) CYCLE
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
       part_mc = c * io_list(ispecies)%mass
@@ -966,42 +974,6 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_jx(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_x)
-
-  END SUBROUTINE calc_per_species_jx
-
-
-
-  SUBROUTINE calc_per_species_jy(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_y)
-
-  END SUBROUTINE calc_per_species_jy
-
-
-
-  SUBROUTINE calc_per_species_jz(data_array, current_species, direction)
-
-    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
-    INTEGER, INTENT(IN) :: current_species
-    INTEGER, INTENT(IN), OPTIONAL :: direction
-
-    CALL calc_per_species_current(data_array, current_species, c_dir_z)
-
-  END SUBROUTINE calc_per_species_jz
-
-
-
   SUBROUTINE calc_total_energy_sum
 
     REAL(num) :: particle_energy, field_energy
@@ -1017,7 +989,7 @@ CONTAINS
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
 #ifndef NO_TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
       part_mc = c * species_list(ispecies)%mass
@@ -1103,9 +1075,9 @@ CONTAINS
     idx = 1.0_num / dx
 
     DO ispecies = 1, n_species
-      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
 #ifndef NO_TRACER_PARTICLES
-      IF (species_list(ispecies)%tracer) CYCLE
+      IF (species_list(ispecies)%zero_current) CYCLE
 #endif
       current => species_list(ispecies)%attached_list%head
       part_mc = c * species_list(ispecies)%mass
