@@ -724,9 +724,6 @@ CONTAINS
     ! If there aren't enough particles to collide, then don't bother
     IF (icount <= 1) RETURN
 
-    ! No collisions in cold plasma so return
-    IF (ekbar <= c_tiny) RETURN
-
     ! Number of collisions
     pcount = icount / 2 + MOD(icount, 2_i8)
 
@@ -795,9 +792,6 @@ CONTAINS
 
     factor = 0.0_num
     np = 0.0_num
-
-    ! No collisions in cold plasma so return
-    IF (iekbar <= c_tiny .AND. jekbar <= c_tiny) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
