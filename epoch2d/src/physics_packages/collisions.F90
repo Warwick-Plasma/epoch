@@ -51,6 +51,8 @@ MODULE collisions
   PROCEDURE(scatter_proto), POINTER, SAVE :: scatter_fn => NULL()
 
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
+  REAL(num), PARAMETER :: one_m_2eps = 1.0_num - 2.0_num * eps
+  REAL(num), PARAMETER :: one_p_2eps = 1.0_num + 2.0_num * eps
 
   REAL(num), PARAMETER :: e_rest = m0 * c**2
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
@@ -884,7 +886,7 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
     REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
@@ -1024,9 +1026,10 @@ CONTAINS
     w2 = weight2
 #endif
 
-    IF (w1 > w2 + eps) THEN
+    wr = w1 / w2
+    IF (wr > one_p_2eps) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1 + eps) THEN
+    ELSE IF (wr < one_m_2eps) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     END IF
 
@@ -1070,9 +1073,8 @@ CONTAINS
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
-    REAL(num) :: vrabs, denominator
+    REAL(num) :: vrabs, denominator, wr
     REAL(num) :: nu, ran1, ran2
-    !REAL(num) :: m_red
 
     ! Copy all of the necessary particle data into variables with easier to
     ! read names
@@ -1208,9 +1210,10 @@ CONTAINS
     w2 = weight2
 #endif
 
-    IF (w1 > w2 + eps) THEN
+    wr = w1 / w2
+    IF (wr > one_p_2eps) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1 + eps) THEN
+    ELSE IF (wr < one_m_2eps) THEN
       CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
     END IF
 
