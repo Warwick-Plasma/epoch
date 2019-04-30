@@ -53,7 +53,7 @@ end:laser
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 25 * femto
 
   # Properties on grid
