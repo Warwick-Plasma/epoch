@@ -322,10 +322,8 @@ MODULE shared_data
     INTEGER :: processor
     INTEGER :: processor_at_t0
 #endif
-#ifdef PARTICLE_ID4
-    INTEGER :: id
-#elif PARTICLE_ID
-    INTEGER(i8) :: id
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    INTEGER(idkind) :: id
 #endif
 #ifdef COLLISIONS_TEST
     INTEGER :: coll_count
@@ -347,6 +345,12 @@ MODULE shared_data
 #endif
   END TYPE particle
 
+  ! Particle ID generation
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+  INTEGER(idkind) :: id_exemplar, cpu_id, highest_id
+#endif
+  INTEGER :: n_cpu_bits
+
   ! Data for migration between species
   TYPE particle_species_migration
     LOGICAL :: this_species, fluid, done
@@ -354,7 +358,7 @@ MODULE shared_data
     INTEGER :: promote_to_species, demote_to_species
     REAL(num) :: promotion_energy_factor, demotion_energy_factor
     REAL(num) :: promotion_density, demotion_density
-    REAL(num), DIMENSION(:), POINTER :: fluid_energy, fluid_density
+    REAL(num), DIMENSION(:), ALLOCATABLE :: fluid_energy, fluid_density
   END TYPE particle_species_migration
 
   LOGICAL :: use_particle_migration = .FALSE.
@@ -378,9 +382,9 @@ MODULE shared_data
 
   ! Represents the initial conditions of a species
   TYPE initial_condition_block
-    REAL(num), DIMENSION(:), POINTER :: density
-    REAL(num), DIMENSION(:,:), POINTER :: temp
-    REAL(num), DIMENSION(:,:), POINTER :: drift
+    REAL(num), DIMENSION(:), ALLOCATABLE :: density
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: drift
 
     REAL(num) :: density_min
     REAL(num) :: density_max
@@ -417,7 +421,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: dist_fn
     TYPE(primitive_stack) :: dist_fn_range(3)
 
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
     LOGICAL :: zero_current
 #endif
 
@@ -429,7 +433,7 @@ MODULE shared_data
     LOGICAL :: split
     INTEGER(i8) :: npart_max
     ! Secondary list
-    TYPE(particle_list), DIMENSION(:), POINTER :: secondary_list
+    TYPE(particle_list), DIMENSION(:), ALLOCATABLE :: secondary_list
 
     ! Injection of particles
     REAL(num) :: npart_per_cell
@@ -437,7 +441,7 @@ MODULE shared_data
     TYPE(primitive_stack) :: drift_function(3)
 
     ! Thermal boundaries
-    REAL(num), DIMENSION(:), POINTER :: ext_temp_x_min, ext_temp_x_max
+    REAL(num), DIMENSION(:), ALLOCATABLE :: ext_temp_x_min, ext_temp_x_max
 
     ! Species_ionisation
     LOGICAL :: electron
@@ -554,8 +558,8 @@ MODULE shared_data
   ! Time averaged IO
   !----------------------------------------------------------------------------
   TYPE averaged_data_block
-    REAL(num), DIMENSION(:,:), POINTER :: array
-    REAL(r4), DIMENSION(:,:), POINTER :: r4array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
+    REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4array
     REAL(num) :: real_time
     INTEGER :: species_sum, n_species
     LOGICAL :: started, dump_single
@@ -569,9 +573,9 @@ MODULE shared_data
     REAL(num) :: time_start, time_stop
     REAL(num) :: walltime_interval, walltime_prev
     REAL(num) :: walltime_start, walltime_stop
-    REAL(num), POINTER :: dump_at_times(:)
-    REAL(num), POINTER :: dump_at_walltimes(:)
-    INTEGER, POINTER :: dump_at_nsteps(:)
+    REAL(num), ALLOCATABLE :: dump_at_times(:)
+    REAL(num), ALLOCATABLE :: dump_at_walltimes(:)
+    INTEGER, ALLOCATABLE :: dump_at_nsteps(:)
     INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
     INTEGER :: dump_cycle_first_index
@@ -583,7 +587,7 @@ MODULE shared_data
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
 
-  TYPE(io_block_type), POINTER :: io_block_list(:)
+  TYPE(io_block_type), ALLOCATABLE, TARGET :: io_block_list(:)
   INTEGER :: n_io_blocks
   LOGICAL :: track_ejected_particles, new_style_io_block
   INTEGER, DIMENSION(num_vars_to_dump) :: averaged_var_block
@@ -614,7 +618,7 @@ MODULE shared_data
     INTEGER, DIMENSION(c_df_maxdims) :: directions
     REAL(num), DIMENSION(2,c_df_maxdims) :: ranges
     INTEGER, DIMENSION(c_df_maxdims) :: resolution
-    LOGICAL, DIMENSION(:), POINTER :: use_species
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
     REAL(num), DIMENSION(2,c_df_maxdirs) :: restrictions
     LOGICAL, DIMENSION(c_df_maxdirs) :: use_restrictions
 
@@ -626,34 +630,45 @@ MODULE shared_data
   END TYPE distribution_function_block
   TYPE(distribution_function_block), POINTER :: dist_fns
 
+  INTEGER, PARAMETER :: c_subset_random     = 1
+  INTEGER, PARAMETER :: c_subset_gamma_min  = 2
+  INTEGER, PARAMETER :: c_subset_gamma_max  = 3
+  INTEGER, PARAMETER :: c_subset_x_min      = 4
+  INTEGER, PARAMETER :: c_subset_x_max      = 5
+  INTEGER, PARAMETER :: c_subset_px_min     = 6
+  INTEGER, PARAMETER :: c_subset_px_max     = 7
+  INTEGER, PARAMETER :: c_subset_py_min     = 8
+  INTEGER, PARAMETER :: c_subset_py_max     = 9
+  INTEGER, PARAMETER :: c_subset_pz_min     = 10
+  INTEGER, PARAMETER :: c_subset_pz_max     = 11
+  INTEGER, PARAMETER :: c_subset_weight_min = 12
+  INTEGER, PARAMETER :: c_subset_weight_max = 13
+  INTEGER, PARAMETER :: c_subset_charge_min = 14
+  INTEGER, PARAMETER :: c_subset_charge_max = 15
+  INTEGER, PARAMETER :: c_subset_mass_min   = 16
+  INTEGER, PARAMETER :: c_subset_mass_max   = 17
+  INTEGER, PARAMETER :: c_subset_id_min     = 18
+  INTEGER, PARAMETER :: c_subset_id_max     = 19
+  INTEGER, PARAMETER :: c_subset_max        = 19
+
   ! Represents a data subset
   TYPE subset
     CHARACTER(LEN=string_length) :: name
 
     ! The dumpmask for the subset
     INTEGER :: mask
-    INTEGER, DIMENSION(:,:), POINTER :: dumpmask
-    LOGICAL, DIMENSION(:), POINTER :: use_species
-    LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
-    LOGICAL :: use_x_min, use_x_max
-    LOGICAL :: use_px_min, use_px_max
-    LOGICAL :: use_py_min, use_py_max
-    LOGICAL :: use_pz_min, use_pz_max
-    LOGICAL :: use_weight_min, use_weight_max
-    LOGICAL :: use_charge_min, use_charge_max
-    LOGICAL :: use_mass_min, use_mass_max
-    LOGICAL :: use_id_min, use_id_max
+    INTEGER, DIMENSION(:,:), ALLOCATABLE :: dumpmask
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
+    LOGICAL :: use_gamma
+    LOGICAL :: use_restriction(c_subset_max)
+    LOGICAL :: use_restriction_function(c_subset_max)
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
-    REAL(num) :: gamma_min, gamma_max, random_fraction
-    REAL(num) :: x_min, x_max
-    REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
-    REAL(num) :: weight_min, weight_max
-    REAL(num) :: charge_min, charge_max
-    REAL(num) :: mass_min, mass_max
-    INTEGER(i8) :: id_min, id_max
+    LOGICAL :: time_varying
+    REAL(num) :: restriction(c_subset_max)
+    TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
-    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
     ! Persistent subset
     LOGICAL :: persistent, locked
     REAL(num) :: persist_start_time
@@ -662,7 +677,7 @@ MODULE shared_data
     ! Pointer to next subset
     TYPE(subset), POINTER :: next
   END TYPE subset
-  TYPE(subset), DIMENSION(:), POINTER :: subset_list
+  TYPE(subset), DIMENSION(:), ALLOCATABLE, TARGET :: subset_list
   INTEGER :: n_subsets
   LOGICAL :: any_persistent_subset
 
@@ -675,7 +690,7 @@ MODULE shared_data
     REAL(num) :: ek_min, ek_max
     CHARACTER(LEN=string_length) :: name
 
-    LOGICAL, DIMENSION(:), POINTER :: use_species
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: use_species
     TYPE(particle_list) :: sampled_particles
     TYPE(particle_probe), POINTER :: next
     INTEGER :: dumpmask
@@ -732,9 +747,10 @@ MODULE shared_data
 
   REAL(num) :: initial_jx, initial_jy, initial_jz
 
-  TYPE(particle_species), DIMENSION(:), POINTER :: species_list
-  TYPE(particle_species), DIMENSION(:), POINTER :: ejected_list
-  TYPE(particle_species), DIMENSION(:), POINTER :: io_list, io_list_data
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: species_list
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: ejected_list
+  TYPE(particle_species), DIMENSION(:), ALLOCATABLE, TARGET :: io_list_data
+  TYPE(particle_species), DIMENSION(:), POINTER :: io_list
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb
 
@@ -784,7 +800,7 @@ MODULE shared_data
     TYPE(particle), POINTER :: particle
   END TYPE particle_sort_element
 
-  TYPE(particle_sort_element), POINTER, DIMENSION(:) :: coll_sort_array
+  TYPE(particle_sort_element), ALLOCATABLE, DIMENSION(:) :: coll_sort_array
   INTEGER :: coll_sort_array_size = 0
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
@@ -984,6 +1000,6 @@ MODULE shared_data
 #endif
   END TYPE custom_particle_loader
 
-  TYPE(custom_particle_loader), DIMENSION(:), POINTER :: custom_loaders_list
+  TYPE(custom_particle_loader), ALLOCATABLE, TARGET :: custom_loaders_list(:)
 
 END MODULE shared_data

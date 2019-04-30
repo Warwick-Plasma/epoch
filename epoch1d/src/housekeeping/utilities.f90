@@ -20,18 +20,18 @@ MODULE utilities
   IMPLICIT NONE
 
   INTERFACE grow_array
-    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_string_array, &
-                     grow_real_array2d, grow_integer_array2d
+    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_logical_array, &
+                     grow_string_array, grow_real_array2d, grow_integer_array2d
   END INTERFACE grow_array
 
-  PRIVATE :: grow_real_array, grow_integer_array, grow_string_array
-  PRIVATE :: grow_real_array2d, grow_integer_array2d
+  PRIVATE
+  PUBLIC :: abort_code, grow_array
 
 CONTAINS
 
   SUBROUTINE grow_real_array(array, idx)
 
-    REAL(num), DIMENSION(:), POINTER :: array
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     REAL(num), DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -63,7 +63,7 @@ CONTAINS
 
   SUBROUTINE grow_integer_array(array, idx)
 
-    INTEGER, DIMENSION(:), POINTER :: array
+    INTEGER, DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     INTEGER, DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -93,9 +93,38 @@ CONTAINS
 
 
 
+  SUBROUTINE grow_logical_array(array, idx)
+
+    LOGICAL, DIMENSION(:), POINTER :: array
+    INTEGER, INTENT(IN) :: idx
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: tmp_array
+    INTEGER :: old_size, new_size, i
+
+    old_size = SIZE(array)
+    IF (idx <= old_size) RETURN
+
+    ALLOCATE(tmp_array(old_size))
+    DO i = 1, old_size
+      tmp_array(i) = array(i)
+    END DO
+
+    new_size = 2 * old_size
+    DEALLOCATE(array)
+    ALLOCATE(array(new_size))
+
+    DO i = 1, old_size
+      array(i) = tmp_array(i)
+    END DO
+
+    DEALLOCATE(tmp_array)
+
+  END SUBROUTINE grow_logical_array
+
+
+
   SUBROUTINE grow_string_array(array, idx)
 
-    CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: array
+    CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i
@@ -127,7 +156,7 @@ CONTAINS
 
   SUBROUTINE grow_real_array2d(array, idx, idy)
 
-    REAL(num), DIMENSION(:,:), POINTER :: array
+    REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx, idy
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size(2), new_size(2), i, j, idxy, idir
@@ -177,7 +206,7 @@ CONTAINS
 
   SUBROUTINE grow_integer_array2d(array, idx, idy)
 
-    INTEGER, DIMENSION(:,:), POINTER :: array
+    INTEGER, DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx, idy
     INTEGER, DIMENSION(:,:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size(2), new_size(2), i, j, idxy, idir

@@ -34,20 +34,20 @@ MODULE deck_species_block
 
   INTEGER :: species_id, current_block
   INTEGER(KIND=MPI_OFFSET_KIND) :: offset = 0
-  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: species_names
-  INTEGER, DIMENSION(:), POINTER :: species_blocks
+  CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: species_names
+  INTEGER, DIMENSION(:), ALLOCATABLE :: species_blocks
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
   LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
   INTEGER :: n_secondary_species_in_block
   CHARACTER(LEN=string_length) :: release_species_list
-  CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
-  REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
-  REAL(num), DIMENSION(:), POINTER :: ionisation_energies
-  REAL(num), DIMENSION(:), POINTER :: mass, charge
-  INTEGER, DIMENSION(:), POINTER :: principle, angular, part_count
-  INTEGER, DIMENSION(:), POINTER :: ionise_to_species, dumpmask_array
-  INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
+  CHARACTER(LEN=string_length), DIMENSION(:), ALLOCATABLE :: release_species
+  REAL(num), DIMENSION(:), ALLOCATABLE :: species_ionisation_energies
+  REAL(num), DIMENSION(:), ALLOCATABLE :: ionisation_energies
+  REAL(num), DIMENSION(:), ALLOCATABLE :: mass, charge
+  INTEGER, DIMENSION(:), ALLOCATABLE :: principle, angular, part_count
+  INTEGER, DIMENSION(:), ALLOCATABLE :: ionise_to_species, dumpmask_array
+  INTEGER, DIMENSION(:,:), ALLOCATABLE :: bc_particle_array
   REAL(num) :: species_mass, species_charge
   INTEGER :: species_dumpmask
   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
@@ -373,7 +373,6 @@ CONTAINS
     IF (str_cmp(element, 'ionisation_energies') &
         .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
-        NULLIFY(species_ionisation_energies)
         CALL initialise_stack(stack)
         CALL tokenize(value, stack, errcode)
         CALL evaluate_and_return_all(stack, &
@@ -610,30 +609,30 @@ CONTAINS
     ! *************************************************************
     ! This section sets properties for zero_current particles
     ! *************************************************************
-    IF (str_cmp(element, 'zero_current') .OR. str_cmp(element, 'tracer')) THEN
-#ifndef NO_TRACER_PARTICLES
+    IF (str_cmp(element, 'zero_current')) THEN
+#ifdef ZERO_CURRENT_PARTICLES
       species_list(species_id)%zero_current = &
           as_logical_print(value, element, errcode)
 #else
       IF (as_logical_print(value, element, errcode)) THEN
         errcode = c_err_pp_options_wrong
-        extended_error_string = '-DNO_TRACER_PARTICLES'
+        extended_error_string = '-DZERO_CURRENT_PARTICLES'
       END IF
 #endif
-      IF (warn_tracer .AND. rank == 0 .AND. str_cmp(element, 'tracer')) THEN
+    END IF
+
+    IF (str_cmp(element, 'tracer')) THEN
+      IF (warn_tracer .AND. rank == 0) THEN
         warn_tracer = .FALSE.
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'The "tracer" species do not behave in the way that ', &
                       'many users expect them to'
-          WRITE(io,*) 'and can lead to unexpected and undesirable results. ', &
-                      'Please see the'
-          WRITE(io,*) 'documentation for further details.'
-          WRITE(io,*) 'For this reason, the "tracer" flag is being renamed ', &
+          WRITE(io,*) 'and can lead to unexpected and undesirable results. '
+          WRITE(io,*) 'For this reason, the "tracer" flag has been renamed ', &
                       'to "zero_current".'
-          WRITE(io,*) 'As of version 5.0, the "tracer" flag will be removed ', &
-                      'entirely.'
+          WRITE(io,*) 'Please see the documentation for further details.'
           WRITE(io,*)
         END DO
       END IF
@@ -746,7 +745,7 @@ CONTAINS
 
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%density)) THEN
+        IF (.NOT. ALLOCATED(ic%density)) THEN
           ALLOCATE(ic%density(1-ng:nx+ng,1-ng:ny+ng))
         END IF
         array => ic%density
@@ -763,7 +762,7 @@ CONTAINS
       n = 1
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+        IF (.NOT. ALLOCATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%drift = 0.0_num
         END IF
@@ -781,7 +780,7 @@ CONTAINS
       n = 2
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+        IF (.NOT. ALLOCATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%drift = 0.0_num
         END IF
@@ -799,7 +798,7 @@ CONTAINS
       n = 3
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%drift)) THEN
+        IF (.NOT. ALLOCATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%drift = 0.0_num
         END IF
@@ -868,7 +867,7 @@ CONTAINS
 
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%temp = 0.0_num
         END IF
@@ -940,7 +939,7 @@ CONTAINS
       n = 1
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%temp = 0.0_num
         END IF
@@ -961,7 +960,7 @@ CONTAINS
       n = 2
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%temp = 0.0_num
         END IF
@@ -982,7 +981,7 @@ CONTAINS
       n = 3
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
-        IF (.NOT. ASSOCIATED(ic%temp)) THEN
+        IF (.NOT. ALLOCATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
           ic%temp = 0.0_num
         END IF

@@ -21,6 +21,7 @@ MODULE diagnostics
   USE sdf
   USE deck
   USE dist_fn
+  USE evaluator
   USE epoch_source_info
   USE iterators
   USE probes
@@ -30,6 +31,7 @@ MODULE diagnostics
   USE strings
   USE window
   USE timer
+  USE antennae
   USE particle_id_hash_mod
 
   IMPLICIT NONE
@@ -73,12 +75,13 @@ MODULE diagnostics
     INTEGER :: count
   END TYPE string_list
 
-  TYPE(string_list), POINTER :: file_list(:)
+  TYPE(string_list), ALLOCATABLE, TARGET :: file_list(:)
 
   INTERFACE write_particle_variable
     MODULE PROCEDURE &
 #if defined(PARTICLE_ID4) || defined(PARTICLE_DEBUG)
         write_particle_variable_i4, &
+        write_particle_variable_i8, &
 #endif
         write_particle_variable_i8, &
         write_particle_variable_num
@@ -113,7 +116,7 @@ CONTAINS
     INTEGER :: i, step_orig, n_dumps
     REAL(num) :: time_orig
     INTEGER, ALLOCATABLE :: file_numbers_orig(:)
-    TYPE(io_block_type), POINTER :: io_block_orig(:)
+    TYPE(io_block_type), ALLOCATABLE :: io_block_orig(:)
     INTEGER :: ndt
     INTEGER(i8) :: istep, step_interval
     REAL(num) :: time_start, time0, time1, dt_interval
@@ -215,7 +218,8 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: x_reduced
     REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
-    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval
+    INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval, n
+    INTEGER :: errcode
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
@@ -375,6 +379,18 @@ CONTAINS
 
       nstep_prev = step
 
+      DO isubset = 1, n_subsets
+        errcode = 0
+        sub => subset_list(isubset)
+        IF (.NOT. sub%time_varying) CYCLE
+        DO n = 1, c_subset_max
+          IF (sub%use_restriction_function(n)) THEN
+            sub%restriction(n) = evaluate(sub%restriction_function(n), errcode)
+          END IF
+        END DO
+        IF (sub%space_restrictions) CALL create_subset_subtypes(isubset)
+      END DO
+
       ! open the file
       CALL sdf_open(sdf_handle, full_filename, comm, c_sdf_write)
       CALL sdf_set_string_length(sdf_handle, c_max_string_length)
@@ -407,6 +423,10 @@ CONTAINS
             'laser_x_min_phase')
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
+
+        CALL write_antenna_phases(sdf_handle)
+
+        CALL write_id_starts(sdf_handle)
 
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
@@ -925,6 +945,51 @@ CONTAINS
 
 
 
+  SUBROUTINE write_antenna_phases(sdf_handle)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    REAL(num), DIMENSION(:), ALLOCATABLE :: antenna_phases
+    INTEGER :: iant
+
+    IF (any_antennae) THEN
+      ALLOCATE(antenna_phases(SIZE(antenna_list)))
+      DO iant = 1, SIZE(antenna_list)
+        antenna_phases(iant) = antenna_list(iant)%contents%phase_history
+      END DO
+      CALL sdf_write_srl(sdf_handle, 'antenna_phases', 'antenna_phases', &
+          SIZE(antenna_list), antenna_phases, 0)
+      DEALLOCATE(antenna_phases)
+    END IF
+
+  END SUBROUTINE write_antenna_phases
+
+
+
+  SUBROUTINE write_id_starts(sdf_handle)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: id_starts
+    INTEGER(i8) :: start_local
+    INTEGER :: ierr
+
+    ALLOCATE(id_starts(1:nproc+1))
+
+    start_local = INT(highest_id, i8)
+    CALL MPI_GATHER(start_local, 1, MPI_INTEGER8, id_starts(2), 1, &
+        MPI_INTEGER8, 0, comm, ierr)
+
+    id_starts(1) = n_cpu_bits
+
+    CALL sdf_write_srl(sdf_handle, "id_starts", "id_starts", id_starts, 0)
+
+    DEALLOCATE(id_starts)
+#endif
+
+  END SUBROUTINE write_id_starts
+
+
+
   SUBROUTINE check_name_length(shorten, string)
 
     CHARACTER(LEN=*), INTENT(IN) :: shorten, string
@@ -1039,7 +1104,7 @@ CONTAINS
     INTEGER :: i, n, nlist, stat
     TYPE(string_entry), POINTER :: current, next
 
-    IF (ASSOCIATED(file_list)) THEN
+    IF (ALLOCATED(file_list)) THEN
       DO i = 1, n_io_blocks+2
         nlist = file_list(i)%count
         IF (nlist > 0) THEN
@@ -1116,7 +1181,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_nsteps)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
           IF (step >= io_block_list(io)%dump_at_nsteps(is)) THEN
             io_block_list(io)%dump = .TRUE.
@@ -1125,7 +1190,7 @@ CONTAINS
         END DO
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_times)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_times)
           IF (time >= io_block_list(io)%dump_at_times(is)) THEN
             io_block_list(io)%dump = .TRUE.
@@ -1134,7 +1199,7 @@ CONTAINS
         END DO
       END IF
 
-      IF (ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+      IF (ALLOCATED(io_block_list(io)%dump_at_walltimes)) THEN
         DO is = 1, SIZE(io_block_list(io)%dump_at_walltimes)
           IF (elapsed_time >= io_block_list(io)%dump_at_walltimes(is)) THEN
             io_block_list(io)%dump = .TRUE.
@@ -2346,7 +2411,6 @@ CONTAINS
         IF (.NOT. sub%use_species(ispec)) THEN
           CYCLE
         END IF
-        CALL generate_particle_ids(species_list(ispec)%attached_list)
 
         part_mc = c * species_list(ispec)%mass
 
@@ -2380,6 +2444,7 @@ CONTAINS
     REAL(num), INTENT(INOUT) :: part_mc
     LOGICAL :: use_particle
     REAL(num) :: gamma_rel, random_num
+    INTEGER :: n
 
     use_particle = .TRUE.
 
@@ -2388,85 +2453,123 @@ CONTAINS
       part_mc = c * current%mass
 #endif
       gamma_rel = SQRT(SUM((current%part_p / part_mc)**2) + 1.0_num)
-      IF (sub%use_gamma_min &
-          .AND. gamma_rel < sub%gamma_min) use_particle = .FALSE.
-      IF (sub%use_gamma_max &
-          .AND. gamma_rel > sub%gamma_max) use_particle = .FALSE.
+
+      n = c_subset_gamma_min
+      IF (sub%use_restriction(n)) THEN
+        IF (gamma_rel < sub%restriction(n)) &
+            use_particle = .FALSE.
+      END IF
+
+      n = c_subset_gamma_max
+      IF (sub%use_restriction(n)) THEN
+        IF (gamma_rel > sub%restriction(n)) &
+            use_particle = .FALSE.
+      END IF
     END IF
 
-    IF (sub%use_x_min &
-        .AND. current%part_pos < sub%x_min) &
-            use_particle = .FALSE.
+    n = c_subset_x_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_pos < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_x_max &
-        .AND. current%part_pos > sub%x_max) &
-            use_particle = .FALSE.
+    n = c_subset_x_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_pos > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_px_min &
-        .AND. current%part_p(1) < sub%px_min) &
-            use_particle = .FALSE.
+    n = c_subset_px_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(1) < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_px_max &
-        .AND. current%part_p(1) > sub%px_max) &
-            use_particle = .FALSE.
+    n = c_subset_px_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(1) > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_py_min &
-        .AND. current%part_p(2) < sub%py_min) &
-            use_particle = .FALSE.
+    n = c_subset_py_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(2) < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_py_max &
-        .AND. current%part_p(2) > sub%py_max) &
-            use_particle = .FALSE.
+    n = c_subset_py_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(2) > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_pz_min &
-        .AND. current%part_p(3) < sub%pz_min) &
-            use_particle = .FALSE.
+    n = c_subset_pz_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(3) < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_pz_max &
-        .AND. current%part_p(3) > sub%pz_max) &
-            use_particle = .FALSE.
+    n = c_subset_pz_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%part_p(3) > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-#ifdef PER_SPECIES_WEIGHT
-    IF (sub%use_weight_min &
-        .AND. current%weight < sub%weight_min) &
-            use_particle = .FALSE.
+#ifndef PER_SPECIES_WEIGHT
+    n = c_subset_weight_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%weight < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_weight_max &
-        .AND. current%weight > sub%weight_max) &
-            use_particle = .FALSE.
-
+    n = c_subset_weight_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%weight > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
-    IF (sub%use_charge_min &
-        .AND. current%charge < sub%charge_min) &
-            use_particle = .FALSE.
+    n = c_subset_charge_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%charge < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_charge_max &
-        .AND. current%charge > sub%charge_max) &
-            use_particle = .FALSE.
+    n = c_subset_charge_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%charge > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_mass_min &
-        .AND. current%mass < sub%mass_min) &
-            use_particle = .FALSE.
+    n = c_subset_mass_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%mass < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_mass_max &
-        .AND. current%mass > sub%mass_max) &
-            use_particle = .FALSE.
-
+    n = c_subset_mass_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%mass > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    IF (sub%use_id_min &
-        .AND. current%id < sub%id_min) &
-            use_particle = .FALSE.
+    n = c_subset_id_min
+    IF (sub%use_restriction(n)) THEN
+      IF (current%id < sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 
-    IF (sub%use_id_max &
-        .AND. current%id > sub%id_max) &
-            use_particle = .FALSE.
+    n = c_subset_id_max
+    IF (sub%use_restriction(n)) THEN
+      IF (current%id > sub%restriction(n)) &
+          use_particle = .FALSE.
+    END IF
 #endif
-
-    IF (sub%use_random) THEN
+    n = c_subset_random
+    IF (sub%use_restriction(n)) THEN
       random_num = random()
-      IF (random_num > sub%random_fraction) &
+      IF (random_num > sub%restriction(n)) &
           use_particle = .FALSE.
     END IF
 

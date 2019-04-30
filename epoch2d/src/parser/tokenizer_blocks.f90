@@ -80,7 +80,7 @@ CONTAINS
     INTEGER :: i
 
     as_species = c_prc_not_this_type
-    IF (.NOT. ASSOCIATED(species_list)) RETURN
+    IF (.NOT. ALLOCATED(species_list)) RETURN
 
     DO i = 1, n_species
       IF (str_cmp(name, species_list(i)%name)) THEN
@@ -100,7 +100,7 @@ CONTAINS
     INTEGER :: i
 
     as_subset = c_prc_not_this_type
-    IF (.NOT. ASSOCIATED(subset_list)) RETURN
+    IF (.NOT. ALLOCATED(subset_list)) RETURN
 
     DO i = 1, n_subsets
       IF (str_cmp(name, subset_list(i)%name)) THEN

@@ -30,6 +30,7 @@ MODULE setup
   USE balance
   USE mpi_routines
   USE sdf
+  USE antennae
 
   IMPLICIT NONE
 
@@ -38,9 +39,14 @@ MODULE setup
   PUBLIC :: after_control, minimal_init, restart_data
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
-  PUBLIC :: read_cpu_split, pre_load_balance
+  PUBLIC :: read_cpu_split, after_load, pre_load_balance
 
   TYPE(particle), POINTER, SAVE :: iterator_list
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  LOGICAL, SAVE :: restart_found_ids = .FALSE.
+  LOGICAL, SAVE :: restart_found_id_starts = .FALSE.
+  INTEGER(i8) :: restart_max_id
+#endif
 #ifndef NO_IO
   CHARACTER(LEN=c_max_path_length), SAVE :: stat_file
 #endif
@@ -105,12 +111,14 @@ CONTAINS
     restart_dump_every = -1
     nsteps = -1
     t_end = HUGE(1.0_num)
-    particles_max_id = 0
     n_zeros = 4
-
     laser_inject_local = 0.0_num
     laser_absorb_local = 0.0_num
     old_elapsed_time = 0.0_num
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    particles_max_id = 0
+    n_cpu_bits = 0
+#endif
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -120,7 +128,6 @@ CONTAINS
     NULLIFY(laser_z_min)
 
     NULLIFY(dist_fns)
-    NULLIFY(io_block_list)
 
     run_date = get_unix_time()
 
@@ -166,6 +173,85 @@ CONTAINS
     CALL set_initial_values
 
   END SUBROUTINE after_control
+
+
+
+  SUBROUTINE setup_ids
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER :: n_id_bits, err, n_cpu_bits_calc
+
+    CALL MPI_SIZEOF(id_exemplar, n_id_bits, err)
+    n_id_bits = n_id_bits * 8 !Bytes to bits
+
+    n_cpu_bits_calc = CEILING(LOG(REAL(nproc,num))/LOG(2.0_num))
+    IF (n_cpu_bits > 0 .AND. n_cpu_bits < n_cpu_bits_calc) THEN
+      IF (rank == 0) PRINT '(A,I2,A, I2)', &
+          'Requested number of CPU ID bits (', n_cpu_bits, ') is too small &
+          &for number of processors requested. Switching to ', n_cpu_bits_calc
+      n_cpu_bits = n_cpu_bits_calc
+    END IF
+
+    IF (n_cpu_bits == 0) THEN
+      n_cpu_bits = n_cpu_bits_calc
+#ifdef PARTICLE_ID4
+      n_cpu_bits = MAX(n_cpu_bits, 8)
+#else
+      n_cpu_bits = MAX(n_cpu_bits, 16)
+#endif
+    END IF
+    highest_id = 1
+    cpu_id = rank
+    cpu_id = reverse_bits(cpu_id)
+#endif
+
+  END SUBROUTINE setup_ids
+
+
+
+  !> Function to reverse the bits in a number and then shift down by
+  !> one bit to guarantee empty sign bit
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+  FUNCTION reverse_bits(inval) RESULT(revval)
+
+    INTEGER(idkind), INTENT(IN) :: inval
+#ifdef PARTICLE_ID
+    INTEGER, PARAMETER :: nbits = 8 * 8 !8 bits per byte
+#else
+    INTEGER, PARAMETER :: nbits = 8 * 4 !8 bits per byte
+#endif
+    INTEGER(idkind) :: revval, tval, sval
+    INTEGER :: ibit
+
+    tval = 1_idkind
+    sval = ISHFT(1_idkind, INT(nbits, idkind) - 2_idkind)
+    revval = 0_idkind
+    DO ibit = 1, INT(nbits) - 1
+      IF (IAND(inval, tval) /= 0_idkind) revval = IOR(revval, sval)
+      tval = ISHFT(tval, 1_idkind)
+      sval = ISHFT(sval, -1_idkind)
+    END DO
+
+  END FUNCTION reverse_bits
+#endif
+
+
+
+  SUBROUTINE print_id_info
+
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (rank /= 0) RETURN
+    WRITE (*,'(A, I2, A)') 'Particle ID will use ', n_cpu_bits, &
+        ' bits for CPU ID'
+    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
+      PRINT *, '***WARNING*** restarting from a file containing ', &
+          'old style particle IDs. This should work as expected, but beware ', &
+          'of possible duplicate particle IDs'
+    END IF
+#endif
+
+  END SUBROUTINE print_id_info
 
 
 
@@ -302,7 +388,17 @@ CONTAINS
       END DO
     END IF
 
+    CALL setup_ids
+
   END SUBROUTINE after_deck_last
+
+
+
+  SUBROUTINE after_load
+
+    CALL print_id_info
+
+  END SUBROUTINE after_load
 
 
 
@@ -399,13 +495,6 @@ CONTAINS
       species_list(ispecies)%x_perp_y_ignored_z_para = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
-      NULLIFY(species_list(ispecies)%ext_temp_x_min)
-      NULLIFY(species_list(ispecies)%ext_temp_x_max)
-      NULLIFY(species_list(ispecies)%ext_temp_y_min)
-      NULLIFY(species_list(ispecies)%ext_temp_y_max)
-      NULLIFY(species_list(ispecies)%ext_temp_z_min)
-      NULLIFY(species_list(ispecies)%ext_temp_z_max)
-      NULLIFY(species_list(ispecies)%secondary_list)
       species_list(ispecies)%bc_particle = c_bc_null
     END DO
 
@@ -442,8 +531,7 @@ CONTAINS
       species_list(ispecies)%migrate%promotion_density = HUGE(1.0_num)
       species_list(ispecies)%migrate%demotion_density = 0.0_num
       species_list(ispecies)%fill_ghosts = .TRUE.
-      species_list(ispecies)%field_aligned_initialisation = .FALSE.
-#ifndef NO_TRACER_PARTICLES
+#ifdef ZERO_CURRENT_PARTICLES
       species_list(ispecies)%zero_current = .FALSE.
 #endif
 #ifndef NO_PARTICLE_PROBES
@@ -909,6 +997,10 @@ CONTAINS
     INTEGER :: blocktype, datatype, code_io_version, string_len, ispecies
     INTEGER :: i, is, iblock, nblocks, ndims, geometry
     INTEGER(i8) :: npart, npart_local
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER :: ierr
+    INTEGER(i8) :: global_max_id
+#endif
     INTEGER(i8), ALLOCATABLE :: nparts(:), npart_locals(:), npart_proc(:)
     INTEGER, DIMENSION(4) :: dims
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
@@ -918,8 +1010,8 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: species_found(:)
     TYPE(sdf_file_handle) :: sdf_handle
     TYPE(particle_species), POINTER :: species
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     REAL(num) :: window_offset, offset_x_min, full_x_min, offset_x_max
 
     got_full = .FALSE.
@@ -988,14 +1080,14 @@ CONTAINS
         io_block_list(i)%nstep_prev = 0
       END IF
       io_block_list(i)%walltime_prev = time
-      IF (ASSOCIATED(io_block_list(i)%dump_at_nsteps)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_nsteps)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_nsteps)
           IF (step >= io_block_list(i)%dump_at_nsteps(is)) THEN
             io_block_list(i)%dump_at_nsteps(is) = HUGE(1)
           END IF
         END DO
       END IF
-      IF (ASSOCIATED(io_block_list(i)%dump_at_times)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_times)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_times)
           IF (time >= io_block_list(i)%dump_at_times(is)) THEN
             io_block_list(i)%dump_at_times(is) = HUGE(1.0_num)
@@ -1191,6 +1283,10 @@ CONTAINS
             block_id, ndims, 'laser_z_min_phase', 'z_min')
         CALL read_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
             block_id, ndims, 'laser_z_max_phase', 'z_max')
+
+        CALL read_antenna_phases(sdf_handle, block_id, ndims)
+
+        CALL read_id_starts(sdf_handle, block_id)
 
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
@@ -1439,6 +1535,7 @@ CONTAINS
           ! PARTICLE_ID[4] flag used when writing the file. We must read in
           ! the data using the precision written to file and then convert to
           ! the currently used precision.
+          restart_found_ids = .TRUE.
           IF (datatype == c_datatype_integer8) THEN
             CALL sdf_read_point_variable(sdf_handle, npart_local, &
                 species_subtypes_i8(ispecies), it_id8)
@@ -1520,9 +1617,17 @@ CONTAINS
     CALL free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
         species_subtypes_i8)
 
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    IF (restart_found_ids .AND. .NOT. restart_found_id_starts) THEN
+      CALL MPI_ALLREDUCE(restart_max_id, global_max_id, 1, MPI_INTEGER8, &
+          MPI_MAX, comm, ierr)
+      highest_id = INT(global_max_id, idkind)
+    END IF
+#endif
+
     ! Reset dump_at_walltimes
     DO i = 1, n_io_blocks
-      IF (ASSOCIATED(io_block_list(i)%dump_at_walltimes)) THEN
+      IF (ALLOCATED(io_block_list(i)%dump_at_walltimes)) THEN
         DO is = 1, SIZE(io_block_list(i)%dump_at_walltimes)
           IF (old_elapsed_time >= io_block_list(i)%dump_at_walltimes(is)) THEN
             io_block_list(i)%dump_at_walltimes(is) = HUGE(1.0_num)
@@ -1600,6 +1705,61 @@ CONTAINS
     END IF
 
   END SUBROUTINE read_laser_phases
+
+
+
+  SUBROUTINE read_antenna_phases(sdf_handle, block_id_in, ndims)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    REAL(num), DIMENSION(:), ALLOCATABLE :: antenna_phases
+    INTEGER, DIMENSION(4) :: dims
+    INTEGER :: iant
+
+    IF (str_cmp(block_id_in, 'antenna_phases')) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      IF (ndims /= 1 .OR. dims(1) /= SIZE(antenna_list)) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of antenna phases does not match number of antennae.'
+        PRINT*, 'Antennae will be populated in order, but correct operation ', &
+            'is not guaranteed'
+      END IF
+
+      ALLOCATE(antenna_phases(dims(1)))
+      CALL sdf_read_srl(sdf_handle, antenna_phases)
+      DO iant = 1, SIZE(antenna_list)
+        antenna_list(iant)%contents%phase_history = antenna_phases(iant)
+      END DO
+      DEALLOCATE(antenna_phases)
+    END IF
+
+  END SUBROUTINE read_antenna_phases
+
+
+
+  SUBROUTINE read_id_starts(sdf_handle, block_id)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    CHARACTER(LEN=*), INTENT(IN) :: block_id
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    INTEGER, DIMENSION(1) :: dims
+    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: values
+
+    IF (str_cmp(block_id, 'id_starts')) THEN
+      restart_found_id_starts = .TRUE.
+      CALL sdf_read_array_info(sdf_handle, dims)
+      ALLOCATE(values(dims(1)))
+      CALL sdf_read_srl(sdf_handle, values)
+      n_cpu_bits = MAX(n_cpu_bits, INT(values(1)))
+      CALL setup_ids
+      highest_id = INT(values(rank + 2), idkind)
+      DEALLOCATE(values)
+    END IF
+#endif
+
+  END SUBROUTINE read_id_starts
 
 
 
@@ -1804,6 +1964,7 @@ CONTAINS
 #else
       iterator_list%id = array(ipart)
 #endif
+      IF (iterator_list%id > restart_max_id) restart_max_id = iterator_list%id
       iterator_list => iterator_list%next
     END DO
 
@@ -1829,6 +1990,7 @@ CONTAINS
 #else
       iterator_list%id = INT(array(ipart),i4)
 #endif
+      IF (iterator_list%id > restart_max_id) restart_max_id = iterator_list%id
       iterator_list => iterator_list%next
     END DO
 

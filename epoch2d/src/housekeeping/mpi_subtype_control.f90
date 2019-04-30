@@ -57,11 +57,7 @@ CONTAINS
 
   SUBROUTINE create_subtypes
 
-    INTEGER :: i, j, rd, n_min, n_max, mpitype, npd, npdm, n0
-    INTEGER, DIMENSION(c_ndims) :: n_local, n_global, starts
-    TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) :: ranges
-    LOGICAL :: proc_outside_range
+    INTEGER :: i
 
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when writing data
@@ -75,118 +71,177 @@ CONTAINS
     subarray_field_r4 = create_current_field_subarray(ng, MPI_REAL4)
     subarray_field_big_r4 = create_current_field_subarray(jng, MPI_REAL4)
 
-    n_local = (/nx, ny/)
+    DO i = 1, n_subsets
+      CALL create_subset_subtypes(i)
+    END DO
+
+  END SUBROUTINE create_subtypes
+
+
+
+  !----------------------------------------------------------------------------
+  ! Creates the subtypes used by the main output routines for subsets
+  ! Run every time a time-varying subset is considered for output
+  !----------------------------------------------------------------------------
+
+  SUBROUTINE create_subset_subtypes(subset_index)
+
+    INTEGER, INTENT(IN) :: subset_index
+    INTEGER :: j, rd, n_min, n_max, mpitype, npd, npdm, n0
+    INTEGER, DIMENSION(c_ndims) :: n_global, sn_local, sn_global, starts
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
+    LOGICAL :: proc_outside_range
+    TYPE(subset), POINTER :: sub
+
+    sub => subset_list(subset_index)
+
     n_global = (/nx_global, ny_global/)
     starts = 0
     n0 = 1
 
-    DO i = 1, n_subsets
-      sub => subset_list(i)
+    ranges = cell_global_ranges(global_ranges(sub))
+    sn_global = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
+    ranges = cell_local_ranges(global_ranges(sub))
 
-      ranges = cell_global_ranges(global_ranges(sub))
-      sub%n_global = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
-      ranges = cell_local_ranges(global_ranges(sub))
+    ! These calculations rely on the original domain size, so will be wrong
+    ! for skipped sets as yet
+    proc_outside_range = .FALSE.
+    IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
+    IF (ranges(2,2) - ranges(1,2) <= c_tiny) proc_outside_range = .TRUE.
+    sn_local =  (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
+    starts = cell_starts(ranges, global_ranges(sub))
 
-      ! These calculations rely on the original domain size, so will be wrong
-      ! for skipped sets as yet
-      proc_outside_range = .FALSE.
-      IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
-      IF (ranges(2,2) - ranges(1,2) <= c_tiny) proc_outside_range = .TRUE.
-      sub%n_local =  (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
-      starts = cell_starts(ranges, global_ranges(sub))
+    ranges = cell_section_ranges(ranges)
 
-      ranges = cell_section_ranges(ranges)
+    IF (sub%skip) THEN
+      DO j = 1, c_ndims
+        rd = sub%skip_dir(j)
+        n_min = n_global_min(j)
+        n_max = n_global_max(j)
+        npd = (n_max - n0) / rd + 1
+        npdm = (n_min - 1 - n0) / rd + 1
+        IF (n_min < 2) npdm = 0
+        sn_global(j) = (n_global(j) - n0) / rd + 1
+        sn_local(j) = npd - npdm
+        sub%n_start(j) = n0 + npdm * rd - n_min
+        starts(j) = npdm
+      END DO
 
-      IF (sub%skip) THEN
-        DO j = 1, c_ndims
-          rd = sub%skip_dir(j)
-          n_min = n_global_min(j)
-          n_max = n_global_max(j)
-          npd = (n_max - n0) / rd + 1
-          npdm = (n_min - 1 - n0) / rd + 1
-          IF (n_min < 2) npdm = 0
-          sub%n_global(j) = (n_global(j) - n0) / rd + 1
-          sub%n_local(j) = npd - npdm
-          sub%n_start(j) = n0 + npdm * rd - n_min
-          starts(j) = npdm
-        END DO
-
-        mpitype = MPI_DATATYPE_NULL
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subtype = mpitype
-
-        mpitype = MPI_DATATYPE_NULL
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subtype_r4 = mpitype
-
-        starts = 0
-        mpitype = MPI_DATATYPE_NULL
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subarray = mpitype
-
-        mpitype = MPI_DATATYPE_NULL
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subarray_r4 = mpitype
-      ELSE
-        mpitype = MPI_DATATYPE_NULL
-        IF (proc_outside_range) THEN
-          CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-        ELSE
-          CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-              starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+      ! Just exit if the subset hasn't changed extents since last time
+      IF (equal(sub%n_global, sn_global)) THEN
+        IF (equal(sub%n_local, sn_local)) THEN
+          IF (equal(sub%starts, starts)) THEN
+            RETURN
+          END IF
         END IF
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subtype = mpitype
-        mpitype = MPI_DATATYPE_NULL
-        IF (proc_outside_range) THEN
-          CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-        ELSE
-          CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-              starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-        END IF
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subtype_r4 = mpitype
-
-        starts = 0
-        mpitype = MPI_DATATYPE_NULL
-        IF (proc_outside_range) THEN
-          CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-        ELSE
-          CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-              starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-        END IF
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subarray = mpitype
-
-        mpitype = MPI_DATATYPE_NULL
-        IF (proc_outside_range) THEN
-          CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-        ELSE
-          CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-              starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-        END IF
-        CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-        sub%subarray_r4 = mpitype
       END IF
-    END DO
 
-  END SUBROUTINE create_subtypes
+      sub%n_global(:) = sn_global(:)
+      sub%n_local(:) = sn_local(:)
+      sub%starts(:) = starts(:)
+
+      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
+        CALL MPI_TYPE_FREE(sub%subtype, errcode)
+        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+      END IF
+
+      mpitype = MPI_DATATYPE_NULL
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subtype = mpitype
+
+      mpitype = MPI_DATATYPE_NULL
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subtype_r4 = mpitype
+
+      starts = 0
+      mpitype = MPI_DATATYPE_NULL
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subarray = mpitype
+
+      mpitype = MPI_DATATYPE_NULL
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subarray_r4 = mpitype
+    ELSE
+      ! Just exit if the subset hasn't changed extents since last time
+      IF (equal(sub%n_global, sn_global)) THEN
+        IF (equal(sub%n_local, sn_local)) THEN
+          IF (equal(sub%starts, starts)) THEN
+            RETURN
+          END IF
+        END IF
+      END IF
+
+      sub%n_global(:) = sn_global(:)
+      sub%n_local(:) = sn_local(:)
+      sub%starts(:) = starts(:)
+
+      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
+        CALL MPI_TYPE_FREE(sub%subtype, errcode)
+        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray, errcode)
+        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+      END IF
+
+      mpitype = MPI_DATATYPE_NULL
+      IF (proc_outside_range) THEN
+        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+      ELSE
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+      END IF
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subtype = mpitype
+      mpitype = MPI_DATATYPE_NULL
+      IF (proc_outside_range) THEN
+        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+      ELSE
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+      END IF
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subtype_r4 = mpitype
+
+      starts = 0
+      mpitype = MPI_DATATYPE_NULL
+      IF (proc_outside_range) THEN
+        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+      ELSE
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+      END IF
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subarray = mpitype
+
+      mpitype = MPI_DATATYPE_NULL
+      IF (proc_outside_range) THEN
+        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+      ELSE
+        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+      END IF
+      CALL MPI_TYPE_COMMIT(mpitype, errcode)
+
+      sub%subarray_r4 = mpitype
+    END IF
+
+  END SUBROUTINE create_subset_subtypes
 
 
 
@@ -196,9 +251,6 @@ CONTAINS
 
   SUBROUTINE free_subtypes
 
-    INTEGER :: i
-    TYPE(subset), POINTER :: sub
-
     CALL MPI_TYPE_FREE(subtype_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big, errcode)
@@ -206,14 +258,6 @@ CONTAINS
     CALL MPI_TYPE_FREE(subtype_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_r4, errcode)
     CALL MPI_TYPE_FREE(subarray_field_big_r4, errcode)
-
-    DO i = 1, n_subsets
-      sub => subset_list(i)
-      CALL MPI_TYPE_FREE(sub%subtype, errcode)
-      CALL MPI_TYPE_FREE(sub%subarray, errcode)
-      CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-      CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-    END DO
 
   END SUBROUTINE free_subtypes
 
@@ -278,8 +322,8 @@ CONTAINS
     ! This subroutines creates the MPI types which represent the data for the
     ! field and particles data. It is used when reading data.
 
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     subtype_field = create_current_field_subtype()
@@ -309,8 +353,8 @@ CONTAINS
   SUBROUTINE free_subtypes_for_load(species_subtypes, species_subtypes_i4, &
       species_subtypes_i8)
 
-    INTEGER, POINTER :: species_subtypes(:)
-    INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
+    INTEGER, ALLOCATABLE :: species_subtypes(:)
+    INTEGER, ALLOCATABLE :: species_subtypes_i4(:), species_subtypes_i8(:)
     INTEGER :: i
 
     CALL MPI_TYPE_FREE(subtype_field, errcode)
@@ -344,10 +388,8 @@ CONTAINS
     INTEGER, INTENT(OUT) :: subtype, subtype_i4, subtype_i8
     INTEGER(i8), DIMENSION(1) :: npart_local
     INTEGER(i8), DIMENSION(:), ALLOCATABLE :: npart_each_rank
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND), DIMENSION(3) :: disp
     INTEGER(KIND=MPI_ADDRESS_KIND) :: particles_to_skip, total_particles
-    INTEGER :: i, mpitype, basetype, typesize
+    INTEGER :: i, mpitype, basetype, typesize, intertype
 
     npart_local = npart_in
 
@@ -360,78 +402,47 @@ CONTAINS
 
     particles_to_skip = 0
     DO i = 1, rank
-      particles_to_skip = particles_to_skip + npart_each_rank(i)
+      particles_to_skip = particles_to_skip &
+          + INT(npart_each_rank(i), MPI_ADDRESS_KIND)
     END DO
 
     total_particles = particles_to_skip
     DO i = rank+1, nproc
-      total_particles = total_particles + npart_each_rank(i)
+      total_particles = total_particles &
+          + INT(npart_each_rank(i), MPI_ADDRESS_KIND)
     END DO
 
     DEALLOCATE(npart_each_rank)
 
+    mpitype = 0
     basetype = mpireal
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype, errcode)
+    CALL MPI_TYPE_COMMIT(subtype, errcode)
 
     mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
-    subtype = mpitype
-
     basetype = MPI_INTEGER4
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype_i4, errcode)
+    CALL MPI_TYPE_COMMIT(subtype_i4, errcode)
 
     mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
-    subtype_i4 = mpitype
-
     basetype = MPI_INTEGER8
     CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-
-    ! If npart_in is bigger than an integer then the data will not
-    ! get written/read properly. This would require about 48GB per processor
-    ! so it is unlikely to be a problem any time soon.
-    lengths(1) = 1
-    lengths(2) = INT(npart_in)
-    lengths(3) = 1
-    disp(1) = 0
-    disp(2) = particles_to_skip * typesize
-    disp(3) = total_particles * typesize
-    types(1) = MPI_LB
-    types(2) = basetype
-    types(3) = MPI_UB
-
-    mpitype = 0
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, mpitype, errcode)
-    CALL MPI_TYPE_COMMIT(mpitype, errcode)
-    subtype_i8 = mpitype
+    CALL MPI_TYPE_CREATE_HINDEXED(1, [INT(total_particles,i4)], &
+        [particles_to_skip * INT(typesize, MPI_ADDRESS_KIND)], basetype, &
+        intertype, errcode)
+    CALL MPI_TYPE_CREATE_RESIZED(intertype, 0_MPI_ADDRESS_KIND, &
+        total_particles * INT(typesize, MPI_ADDRESS_KIND), subtype_i8, errcode)
+    CALL MPI_TYPE_COMMIT(subtype_i8, errcode)
 
   END SUBROUTINE create_particle_subtypes
 
@@ -478,30 +489,12 @@ CONTAINS
     INTEGER, DIMENSION(1), INTENT(IN) :: n_local
     INTEGER, DIMENSION(1), INTENT(IN) :: n_global
     INTEGER, DIMENSION(1), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(1)
-    INTEGER :: vec1d, vec1d_sub, typesize
-
-    vec1d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CONTIGUOUS(n_local(1), basetype, vec1d, errcode)
-    CALL MPI_TYPE_COMMIT(vec1d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * starts(1)
-    disp(3) = typesize * n_global(1)
-    types(1) = MPI_LB
-    types(2) = vec1d
-    types(3) = MPI_UB
+    INTEGER :: vec1d_sub
 
     vec1d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec1d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(1, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec1d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec1d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec1d, errcode)
 
   END FUNCTION create_1d_array_subtype
 
@@ -520,31 +513,12 @@ CONTAINS
     INTEGER, DIMENSION(2), INTENT(IN) :: n_local
     INTEGER, DIMENSION(2), INTENT(IN) :: n_global
     INTEGER, DIMENSION(2), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(2)
-    INTEGER :: vec2d, vec2d_sub, typesize
-
-    vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
-        vec2d, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
-    disp(3) = typesize * n_global(1) * n_global(2)
-    types(1) = MPI_LB
-    types(2) = vec2d
-    types(3) = MPI_UB
+    INTEGER :: vec2d_sub
 
     vec2d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(2, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec2d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec2d, errcode)
 
   END FUNCTION create_2d_array_subtype
 
@@ -563,49 +537,12 @@ CONTAINS
     INTEGER, DIMENSION(3), INTENT(IN) :: n_local
     INTEGER, DIMENSION(3), INTENT(IN) :: n_global
     INTEGER, DIMENSION(3), INTENT(IN) :: start
-    INTEGER, DIMENSION(3) :: lengths, types
-    INTEGER(KIND=MPI_ADDRESS_KIND) :: disp(3), starts(3)
-    INTEGER :: vec2d, vec2d_sub
-    INTEGER :: vec3d, vec3d_sub, typesize
-
-    vec2d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_VECTOR(n_local(2), n_local(1), n_global(1), basetype, &
-        vec2d, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d, errcode)
-
-    CALL MPI_TYPE_SIZE(basetype, typesize, errcode)
-    starts = start - 1
-    lengths = 1
-
-    disp(1) = 0
-    disp(2) = typesize * (starts(1) + n_global(1) * starts(2))
-    disp(3) = typesize * n_global(1) * n_global(2)
-    types(1) = MPI_LB
-    types(2) = vec2d
-    types(3) = MPI_UB
-
-    vec2d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec2d_sub, errcode)
-    CALL MPI_TYPE_COMMIT(vec2d_sub, errcode)
-
-    vec3d = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CONTIGUOUS(n_local(3), vec2d_sub, vec3d, errcode)
-    CALL MPI_TYPE_COMMIT(vec3d, errcode)
-
-    disp(1) = 0
-    disp(2) = typesize * n_global(1) * n_global(2) * starts(3)
-    disp(3) = typesize * n_global(1) * n_global(2) * n_global(3)
-    types(1) = MPI_LB
-    types(2) = vec3d
-    types(3) = MPI_UB
+    INTEGER :: vec3d_sub
 
     vec3d_sub = MPI_DATATYPE_NULL
-    CALL MPI_TYPE_CREATE_STRUCT(3, lengths, disp, types, vec3d_sub, errcode)
+    CALL MPI_TYPE_CREATE_SUBARRAY(3, n_global, n_local, start - 1, &
+        MPI_ORDER_FORTRAN, basetype, vec3d_sub, errcode)
     CALL MPI_TYPE_COMMIT(vec3d_sub, errcode)
-
-    CALL MPI_TYPE_FREE(vec2d, errcode)
-    CALL MPI_TYPE_FREE(vec2d_sub, errcode)
-    CALL MPI_TYPE_FREE(vec3d, errcode)
 
   END FUNCTION create_3d_array_subtype
 
@@ -658,7 +595,7 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
     REAL(num) :: dir_min, dir_max, dir_d
-    INTEGER :: idim
+    INTEGER :: idim, n
 
     global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
@@ -668,18 +605,22 @@ CONTAINS
         dir_min = x_min
         dir_max = x_max
         dir_d = dx
-        IF (current_subset%use_x_min) &
-            global_ranges(1,idim) = current_subset%x_min
-        IF (current_subset%use_x_max) &
-            global_ranges(2,idim) = current_subset%x_max
+        n = c_subset_x_min
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(1,idim) = current_subset%restriction(n)
+        n = c_subset_x_max
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(2,idim) = current_subset%restriction(n)
       ELSE IF (idim == 2) THEN
         dir_min = y_min
         dir_max = y_max
         dir_d = dy
-        IF (current_subset%use_y_min) &
-            global_ranges(1,idim) = current_subset%y_min
-        IF (current_subset%use_y_max) &
-            global_ranges(2,idim) = current_subset%y_max
+        n = c_subset_y_min
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(1,idim) = current_subset%restriction(n)
+        n = c_subset_y_max
+        IF (current_subset%use_restriction(n)) &
+            global_ranges(2,idim) = current_subset%restriction(n)
       END IF
       IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
         global_ranges = 0
@@ -804,5 +745,24 @@ CONTAINS
     cell_starts(2) = ranges(1,2) - range_global_min - 1
 
   END FUNCTION cell_starts
+
+
+
+  ! Check if two 1-dimensional arrays are equal
+  PURE LOGICAL FUNCTION equal(array1, array2)
+
+    INTEGER, DIMENSION(:), INTENT(IN) :: array1, array2
+    INTEGER :: i
+
+    equal = SIZE(array1) == SIZE(array2)
+
+    IF (equal) THEN
+      DO i = 1, SIZE(array1)
+        equal = array1(i) == array2(i)
+        IF (.NOT. equal) RETURN
+      END DO
+    END IF
+
+  END FUNCTION equal
 
 END MODULE mpi_subtype_control

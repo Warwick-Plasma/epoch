@@ -589,14 +589,14 @@ CONTAINS
 
       ic => species_list(ispecies)%initial_conditions
 
-      IF (ASSOCIATED(ic%density)) THEN
+      IF (ALLOCATED(ic%density)) THEN
         CALL remap_field(ic%density, temp)
         DEALLOCATE(ic%density)
         ALLOCATE(ic%density(1-ng:nx_new+ng,1-ng:ny_new+ng))
         ic%density = temp
       END IF
 
-      IF (ASSOCIATED(ic%temp)) THEN
+      IF (ALLOCATED(ic%temp)) THEN
         IF (.NOT. ALLOCATED(temp_sum)) &
             ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
 
@@ -609,7 +609,7 @@ CONTAINS
         ic%temp = temp_sum
       END IF
 
-      IF (ASSOCIATED(ic%temp)) THEN
+      IF (ALLOCATED(ic%temp)) THEN
         IF (.NOT. ALLOCATED(temp_sum)) &
             ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
         CALL remap_field(ic%drift(:,:,1), temp_sum(:,:,1))
@@ -689,7 +689,7 @@ CONTAINS
       nspec_local = nspec_local * averaged_var_dims(id)
 
       IF (io_block_list(io)%averaged_data(id)%dump_single) THEN
-        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
+        IF (.NOT. ALLOCATED(io_block_list(io)%averaged_data(id)%r4array)) CYCLE
 
         ALLOCATE(r4temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, nspec_local))
 
@@ -707,7 +707,7 @@ CONTAINS
 
         DEALLOCATE(r4temp_sum)
       ELSE
-        IF (.NOT. ASSOCIATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
+        IF (.NOT. ALLOCATED(io_block_list(io)%averaged_data(id)%array)) CYCLE
 
         ALLOCATE(temp_sum(1-ng:nx_new+ng, 1-ng:ny_new+ng, nspec_local))
 

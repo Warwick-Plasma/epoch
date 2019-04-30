@@ -444,6 +444,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_const_dir_z) THEN
+      CALL push_on_eval(REAL(c_dir_z, num))
+      RETURN
+    END IF
+
     IF (opcode == c_const_dir_px) THEN
       CALL push_on_eval(REAL(c_dir_px, num))
       RETURN
@@ -690,7 +695,7 @@ CONTAINS
       ! If the initial conditions array has been deallocated then we return
       ! the species number and fall back to evaluating the functional form.
       err = -ispec
-      IF (.NOT. ASSOCIATED(ic%density)) RETURN
+      IF (.NOT. ALLOCATED(ic%density)) RETURN
 
       IF (parameters%use_grid_position) THEN
         ix = parameters%pack_ix; iy = parameters%pack_iy
@@ -740,7 +745,7 @@ CONTAINS
       ! If the initial conditions array has been deallocated then we return
       ! the species number and fall back to evaluating the functional form.
       err = -ispec
-      IF (.NOT. ASSOCIATED(ic%temp)) RETURN
+      IF (.NOT. ALLOCATED(ic%temp)) RETURN
 
       IF (parameters%use_grid_position) THEN
         ix = parameters%pack_ix; iy = parameters%pack_iy

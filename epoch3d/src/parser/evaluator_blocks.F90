@@ -265,11 +265,11 @@ CONTAINS
 
     IF (opcode == c_const_r_xy) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(x(parameters%pack_ix)**2 &
-            + y(parameters%pack_iy)**2))
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(1)**2 &
-            + parameters%pack_pos(2)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2))
       END IF
       err = err_simplify_xt
       RETURN
@@ -277,11 +277,11 @@ CONTAINS
 
     IF (opcode == c_const_r_xz) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(x(parameters%pack_ix)**2 &
-            + z(parameters%pack_iz)**2))
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + z(parameters%pack_iz)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(1)**2 &
-            + parameters%pack_pos(3)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(3)**2))
       END IF
       err = err_simplify_xt
       RETURN
@@ -289,11 +289,11 @@ CONTAINS
 
     IF (opcode == c_const_r_yz) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(y(parameters%pack_iy)**2 &
-            + z(parameters%pack_iz)**2))
+        CALL push_on_eval(&
+            SQRT(y(parameters%pack_iy)**2 + z(parameters%pack_iz)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(2)**2 &
-            + parameters%pack_pos(3)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(2)**2 + parameters%pack_pos(3)**2))
       END IF
       err = err_simplify
       RETURN
@@ -301,11 +301,13 @@ CONTAINS
 
     IF (opcode == c_const_r_xyz) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(SQRT(x(parameters%pack_ix)**2 &
-            + y(parameters%pack_iy)**2 + z(parameters%pack_iz)**2))
+        CALL push_on_eval(&
+            SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2 &
+               + z(parameters%pack_iy)**2))
       ELSE
-        CALL push_on_eval(SQRT(parameters%pack_pos(1)**2 &
-            + parameters%pack_pos(2)**2 + parameters%pack_pos(3)**2))
+        CALL push_on_eval(&
+            SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2 &
+               + parameters%pack_pos(3)**2))
       END IF
       err = err_simplify_xt
       RETURN
@@ -708,7 +710,7 @@ CONTAINS
       ! If the initial conditions array has been deallocated then we return
       ! the species number and fall back to evaluating the functional form.
       err = -ispec
-      IF (.NOT. ASSOCIATED(ic%density)) RETURN
+      IF (.NOT. ALLOCATED(ic%density)) RETURN
 
       IF (parameters%use_grid_position) THEN
         ix = parameters%pack_ix; iy = parameters%pack_iy
@@ -761,7 +763,7 @@ CONTAINS
       ! If the initial conditions array has been deallocated then we return
       ! the species number and fall back to evaluating the functional form.
       err = -ispec
-      IF (.NOT. ASSOCIATED(ic%temp)) RETURN
+      IF (.NOT. ALLOCATED(ic%temp)) RETURN
 
       IF (parameters%use_grid_position) THEN
         ix = parameters%pack_ix; iy = parameters%pack_iy

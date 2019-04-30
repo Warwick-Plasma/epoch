@@ -132,8 +132,8 @@ CONTAINS
       next => current%next
       IF (current%density_function%init) &
           CALL deallocate_stack(current%density_function)
-      IF (ASSOCIATED(current%dt_inject)) DEALLOCATE(current%dt_inject)
-      IF (ASSOCIATED(current%depth)) DEALLOCATE(current%depth)
+      IF (ALLOCATED(current%dt_inject)) DEALLOCATE(current%dt_inject)
+      IF (ALLOCATED(current%depth)) DEALLOCATE(current%depth)
       DO i = 1, 3
         IF (current%temperature_function(i)%init) &
             CALL deallocate_stack(current%temperature_function(i))

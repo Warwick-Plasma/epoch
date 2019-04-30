@@ -32,6 +32,7 @@ PROGRAM pic
   ! University of Warwick, UK
   ! PSC written by Hartmut Ruhl
 
+  USE antennae
   USE balance
   USE deck
   USE diagnostics
@@ -131,6 +132,8 @@ PROGRAM pic
   CALL deallocate_ic
   CALL update_particle_count
 
+  CALL after_load
+
   npart_global = 0
   DO ispecies = 1, n_species
     npart_global = npart_global + species_list(ispecies)%count
@@ -177,9 +180,6 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-    IF ((step >= nsteps .AND. nsteps >= 0) &
-        .OR. (time >= t_end) .OR. halt) EXIT
-
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -224,10 +224,17 @@ PROGRAM pic
       CALL update_particle_count
     END IF
 
-    CALL check_for_stop_condition(halt, force_dump)
-    IF (halt) EXIT
     step = step + 1
     time = time + dt / 2.0_num
+
+    CALL check_for_stop_condition(halt, force_dump)
+
+    IF ((step >= nsteps .AND. nsteps >= 0) &
+        .OR. (time >= t_end) .OR. halt) EXIT
+
+    IF (any_antennae) THEN
+      CALL generate_antennae_currents
+    END IF
     CALL output_routines(step)
     time = time + dt / 2.0_num
 

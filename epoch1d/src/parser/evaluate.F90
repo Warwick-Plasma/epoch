@@ -390,11 +390,11 @@ CONTAINS
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
     INTEGER, INTENT(OUT) :: n_elements
-    REAL(num), DIMENSION(:), POINTER :: array
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(INOUT) :: err
     INTEGER :: i
 
-    IF (ASSOCIATED(array)) DEALLOCATE(array)
+    IF (ALLOCATED(array)) DEALLOCATE(array)
 
     CALL basic_evaluate(input_stack, parameters, err)
 
@@ -414,7 +414,7 @@ CONTAINS
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, INTENT(OUT) :: n_elements
-    REAL(num), DIMENSION(:), POINTER :: array
+    REAL(num), DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(INOUT) :: err
     TYPE(parameter_pack) :: parameters
 

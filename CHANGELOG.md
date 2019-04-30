@@ -1,3 +1,34 @@
+## v5.0.0
+
+ * Assign particle IDs at creation time. See the user manual for further details
+
+ * Added antennae that allow you to specify an external time varying current
+   in the simulation domain
+
+ * Added "antenna" block to the input deck with the following keys
+
+   - jx - Profile for x current due to antenna
+
+   - jy - Profile for y current due to antenna
+
+   - jz - Profile for z current due to antenna
+
+   - ranges - Spatial range over which to try to specify antenna currents
+
+   - omega - Frequency of antenna if you want a simple single frequency
+     oscillator
+
+   - start_time - Time at which to start applying antenna
+
+   - stop_time - Time at which to stop applying antenna
+
+ * Allow subset restrictions to be time-varying functions
+
+ * The NO_TRACER_PARTICLES compiler flag has been renamed to
+   ZERO_CURRENT_PARTICLES. Support for zero_current species is
+   disabled by default. Removed support for the "tracer" flag.
+
+
 ## v4.16.0 to v4.17.0
 
  * Added volume correction sampling Zenitani 2015 DOI 10.1063/1.4919383

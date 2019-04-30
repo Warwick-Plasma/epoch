@@ -154,9 +154,6 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ic => species_list(ispecies)%initial_conditions
-      NULLIFY(ic%density)
-      NULLIFY(ic%temp)
-      NULLIFY(ic%drift)
 
       ic%density_min = EPSILON(1.0_num)
       ic%density_max = HUGE(1.0_num)
@@ -176,9 +173,9 @@ CONTAINS
 
     DO ispecies = 1, n_species
       ic => species_list(ispecies)%initial_conditions
-      IF (ASSOCIATED(ic%density)) DEALLOCATE(ic%density)
-      IF (ASSOCIATED(ic%temp)) DEALLOCATE(ic%temp)
-      IF (ASSOCIATED(ic%drift)) DEALLOCATE(ic%drift)
+      IF (ALLOCATED(ic%density)) DEALLOCATE(ic%density)
+      IF (ALLOCATED(ic%temp)) DEALLOCATE(ic%temp)
+      IF (ALLOCATED(ic%drift)) DEALLOCATE(ic%drift)
       IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
       IF (ALLOCATED(global_species_temp)) DEALLOCATE(global_species_temp)
       IF (ALLOCATED(global_species_drift)) DEALLOCATE(global_species_drift)
@@ -763,16 +760,16 @@ CONTAINS
     INTEGER :: current_loader_num
     INTEGER :: part_count, read_count
     CHARACTER(LEN=string_length) :: stra
-    REAL(num), DIMENSION(:), POINTER :: xbuf
-    REAL(num), DIMENSION(:), POINTER :: pxbuf, pybuf, pzbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: xbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: pxbuf, pybuf, pzbuf
 #if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
-    REAL(num), DIMENSION(:), POINTER :: wbuf
+    REAL(num), DIMENSION(:), ALLOCATABLE :: wbuf
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
-    INTEGER(KIND=i4), DIMENSION(:), POINTER :: idbuf4
-    INTEGER(KIND=i8), DIMENSION(:), POINTER :: idbuf8
+    INTEGER(KIND=i4), DIMENSION(:), ALLOCATABLE :: idbuf4
+    INTEGER(KIND=i8), DIMENSION(:), ALLOCATABLE :: idbuf8
     INTEGER :: i, id_offset
-    INTEGER, DIMENSION(:), POINTER :: part_counts
+    INTEGER, DIMENSION(:), ALLOCATABLE :: part_counts
 #endif
     TYPE(particle_species), POINTER :: species
     TYPE(custom_particle_loader), POINTER :: curr_loader
@@ -881,25 +878,13 @@ CONTAINS
         END IF
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
         IF (curr_loader%id_data_given) THEN
-#if defined(PARTICLE_ID4)
           IF (curr_loader%id_data_4byte) THEN
-            new_particle%id = idbuf4(read_count)
+            new_particle%id = INT(idbuf4(read_count), idkind)
           ELSE
-            new_particle%id = INT(idbuf8(read_count), i4)
+            new_particle%id = INT(idbuf8(read_count), idkind)
           END IF
-#else
-          IF (curr_loader%id_data_4byte) THEN
-            new_particle%id = INT(idbuf4(read_count), i8)
-          ELSE
-            new_particle%id = idbuf8(read_count)
-          END IF
-#endif
         ELSE
-#if defined(PARTICLE_ID4)
-          new_particle%id = INT(id_offset + read_count, i4)
-#else
-          new_particle%id = INT(id_offset + read_count, i8)
-#endif
+          new_particle%id = INT(id_offset + read_count, idkind)
         END IF
 #endif
         ! Just being careful
@@ -1053,7 +1038,7 @@ CONTAINS
     species => species_list(ispecies)
     ic => species%initial_conditions
 
-    IF (ASSOCIATED(ic%density)) THEN
+    IF (ALLOCATED(ic%density)) THEN
       species_density => ic%density
       RETURN
     END IF
@@ -1090,7 +1075,7 @@ CONTAINS
     species => species_list(ispecies)
     ic => species%initial_conditions
 
-    IF (ASSOCIATED(ic%temp)) THEN
+    IF (ALLOCATED(ic%temp)) THEN
       species_temp => ic%temp
       RETURN
     END IF
@@ -1129,7 +1114,7 @@ CONTAINS
     species => species_list(ispecies)
     ic => species%initial_conditions
 
-    IF (ASSOCIATED(ic%drift)) THEN
+    IF (ALLOCATED(ic%drift)) THEN
       species_drift => ic%drift
       RETURN
     END IF
