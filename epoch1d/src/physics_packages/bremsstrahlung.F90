@@ -525,11 +525,11 @@ CONTAINS
               CYCLE
             END IF
 
-            !Get electron speed
+            ! Get electron speed
             part_v = SQRT(current%part_p(1)**2 + current%part_p(2)**2 &
                 + current%part_p(3)**2) * c**2 / part_E
 
-            !Get number density at electron
+            ! Get number density at electron
             part_x = current%part_pos - x_grid_min_local
             CALL grid_centred_var_at_particle(part_x, part_ni, iZ, &
                 grid_num_density_ion)
@@ -537,7 +537,7 @@ CONTAINS
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
 
-              !Obtain extra parameters needed for plasma screening model
+              ! Obtain extra parameters needed for plasma screening model
               CALL grid_centred_var_at_particle(part_x, &
                   part_root_Te_over_ne, iZ, grid_root_temp_over_num)
 
