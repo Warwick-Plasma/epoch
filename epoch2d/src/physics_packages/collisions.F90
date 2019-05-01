@@ -1933,7 +1933,6 @@ CONTAINS
       part1%weight = wt1
       part2%weight = wt2
 
-
       en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
       en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
 

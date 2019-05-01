@@ -2,8 +2,8 @@ begin:control
 
   # global number of gridpoints
   nx = 64 # in x
-  ny = 6  # in y (keep even)
-  nz = 6  # in z (keep even)
+  ny = 6  # in y (must be even)
+  nz = 6  # in z (must be even)
   npart = nx * ny * nz * 16
 
   # maximum number of iterations
@@ -30,12 +30,12 @@ begin:bremsstrahlung
 
   use_bremsstrahlung = T # Turn on or off bremsstrahlung radiation
 
-  start_time = 0 # Time after which QED effects should start.
+  start_time = 0 # Time after which QED/bremsstrahlung effects should start.
 
   produce_photons = T # Should the code actually produce and track photons.
                       # If F then the code calculates the recoil due to emitting
-                      # photons, but the photon is not tracked. qed must be on
-                      # to Ever produce photons
+                      # photons, but the photon is not tracked. QED must be on
+                      # to ever produce photons
 
   photon_energy_min = 1 * kev  # Minimum energy for a tracked photon. Photons
                                # emitted with lower energy still cause electron
@@ -90,7 +90,7 @@ begin:species
 
   minrho = 1
   temp = 0
-  drift_x = 5.341e-20  # kgm/s (5.341e-20 = 100 MeV/c)
+  drift_x = 5.344e-20  # Momentum: 100 MeV/c = 5.3443e-20 kg.m/s
 
   # This identify tag is required to mark this species as the species which
   # undergoes bremsstrahlung radiation. It automatically sets the mass
@@ -105,8 +105,8 @@ begin:species
   # Target information
   name = Aluminium
   atomic_number = 13  #Must specify the atomic number for bremsstrahlung
-  mass = 49218        
-  rho = 6.022e28      
+  mass = 49218
+  rho = 6.022e28
 
   # name = Gold
   # atomic_number = 79

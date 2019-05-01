@@ -523,7 +523,7 @@ CONTAINS
 #endif
 #ifdef PHOTONS
     a_particle%optical_depth = array(cpos)
-    cpos = cpos + 1
+    cpos = cpos+1
 #endif
 #if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     a_particle%particle_energy = array(cpos)

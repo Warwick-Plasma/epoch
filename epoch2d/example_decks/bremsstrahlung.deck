@@ -27,12 +27,12 @@ begin:bremsstrahlung
 
   use_bremsstrahlung = T # Turn on or off bremsstrahlung radiation
 
-  start_time = 0 # Time after which bremsstrahlung effects should start.
+  start_time = 0 # Time after which QED/bremsstrahlung effects should start.
 
   produce_photons = T # Should the code actually produce and track photons.
                       # If F then the code calculates the recoil due to emitting
-                      # photons, but the photon is not tracked. bremsstrahlung
-                      # must be on to ever produce photons
+                      # photons, but the photon is not tracked. QED must be on
+                      # to ever produce photons
 
   photon_energy_min = 1 * kev  # Minimum energy for a tracked photon. Photons
                                # emitted with lower energy still cause electron
@@ -74,7 +74,7 @@ begin:species
   frac = 0.8
   dump = T
 
-  # Put 10^5 electrons in the first cell in x, between y=0 to y=(1 cell width)
+  # Put 10^5 electrons in the first cell in x, between y=0 and y=(1 cell width)
   # (needs even ny)
   rho = 1.0e5 * nx * ny / ((x_max - x_min)*(y_max - y_min))
   rho = if (x lt x_max/nx, density(Electron_Beam), 0)
@@ -83,7 +83,7 @@ begin:species
 
   minrho = 1
   temp = 0
-  drift_x = 5.34e-19 # Momentum: 100 MeV/c = 5.34e-20
+  drift_x = 5.344e-19  # Momentum: 100 MeV/c = 5.3443e-20 kg.m/s
 
   # This identify tag is required to mark this species as the species which
   # undergoes bremsstrahlung radiation. It automatically sets the mass
