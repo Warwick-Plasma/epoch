@@ -215,7 +215,6 @@ CONTAINS
         OPEN(unit = lu, file = TRIM(bremsstrahlung_table_location) // '/br' &
             // Z_string, status = 'OLD')
 
-
         ! Extract data from the table file
         ! File format: (number of k values) (number of e- energy values)
         !              Line of electron eneries [J]

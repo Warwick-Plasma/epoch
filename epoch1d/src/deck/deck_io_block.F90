@@ -588,7 +588,6 @@ ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
       elementselected = c_dump_part_work_z_total
 #endif
 
-
     ELSE IF (str_cmp(element, 'ex')) THEN
       elementselected = c_dump_ex
 
