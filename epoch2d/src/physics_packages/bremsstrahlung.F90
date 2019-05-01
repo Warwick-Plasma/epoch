@@ -476,6 +476,8 @@ CONTAINS
         END DO
       END DO
 
+      CALL field_bc(grid_root_temp_over_num, ng)
+
       DEALLOCATE(grid_num_density_electron_temp)
       DEALLOCATE(grid_temperature_electron_temp)
       DEALLOCATE(grid_num_density_electron)
@@ -499,6 +501,7 @@ CONTAINS
         CYCLE
       ENDIF
       CALL calc_number_density(grid_num_density_ion,iZ)
+      CALL field_bc(grid_num_density_ion, ng)
 
       ! Update the optical depth for each electron species
       DO ispecies = 1, n_species
