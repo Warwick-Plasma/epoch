@@ -48,7 +48,7 @@ CONTAINS
     END IF
 #endif
 
-END SUBROUTINE bremsstrahlung_deck_initialise
+  END SUBROUTINE bremsstrahlung_deck_initialise
 
 
 
@@ -61,7 +61,7 @@ END SUBROUTINE bremsstrahlung_deck_initialise
     IF (deck_state == c_ds_first) RETURN
 
     IF (rank == 0 .AND. use_bremsstrahlung) THEN
-      INQUIRE(file=TRIM(bremsstrahlung_table_location)//'/br1', exist=exists)
+      INQUIRE(file=TRIM(bremsstrahlung_table_location) // '/br1', exist=exists)
       IF (.NOT.exists) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
@@ -80,10 +80,10 @@ END SUBROUTINE bremsstrahlung_deck_initialise
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Unable to set "use_bremsstrahlung=T" in the', &
-              ' "bremsstrahlung" block.'
-          WRITE(io,*) 'Please recompile with the -DBREMSSTRAHLUNG', &
-              ' preprocessor flag.'
+          WRITE(io,*) 'Unable to set "use_bremsstrahlung=T" in the ', &
+              '"bremsstrahlung" block.'
+          WRITE(io,*) 'Please recompile with the -DBREMSSTRAHLUNG ', &
+              'preprocessor flag.'
         END DO
       END IF
       CALL abort_code(c_err_pp_options_missing)
@@ -215,6 +215,6 @@ END SUBROUTINE bremsstrahlung_deck_finalise
     END IF
 #endif
 
-END FUNCTION bremsstrahlung_block_check
+  END FUNCTION bremsstrahlung_block_check
 
 END MODULE deck_bremsstrahlung_block

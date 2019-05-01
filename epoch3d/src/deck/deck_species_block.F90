@@ -1472,8 +1472,8 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_photon
       species_charge_set(species_id) = .TRUE.
 #ifdef BREMSSTRAHLUNG
-    IF (bremsstrahlung_photon_species == -1) bremsstrahlung_photon_species &
-        = species_id
+      IF (bremsstrahlung_photon_species == -1) &
+          bremsstrahlung_photon_species = species_id
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
 #else

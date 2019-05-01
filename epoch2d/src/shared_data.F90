@@ -875,12 +875,12 @@ MODULE shared_data
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
-    REAL(num), ALLOCATABLE :: cross_section(:), E_table(:)
-    INTEGER :: size_k, size_T
+    REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
+    INTEGER :: size_k, size_t
   END TYPE brem_tables
   TYPE(brem_tables), ALLOCATABLE :: brem_array(:)
-  INTEGER, ALLOCATABLE :: Z_values(:)
-  INTEGER, ALLOCATABLE :: Z_to_index(:)
+  INTEGER, ALLOCATABLE :: z_values(:)
+  INTEGER, ALLOCATABLE :: z_to_index(:)
   INTEGER :: size_brem_array
 
   ! Bremsstrahlung photon species flag

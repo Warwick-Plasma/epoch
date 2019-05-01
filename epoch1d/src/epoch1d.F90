@@ -200,8 +200,8 @@ PROGRAM pic
 #endif
 
 #ifdef BREMSSTRAHLUNG
-    IF (push .AND. use_bremsstrahlung .AND. time > bremsstrahlung_start_time) &
-        THEN
+    IF (push .AND. use_bremsstrahlung &
+        .AND. time > bremsstrahlung_start_time) THEN
       CALL bremsstrahlung_update_optical_depth()
     END IF
 #endif

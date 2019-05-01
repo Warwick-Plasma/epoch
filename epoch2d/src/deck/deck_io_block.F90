@@ -563,12 +563,11 @@ CONTAINS
 #endif
 
 #ifdef BREMSSTRAHLUNG
-ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
+    ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
       elementselected = c_dump_part_opdepth_brem
 #endif
 
 #ifdef WORK_DONE_INTEGRATED
-
     ELSE IF (str_cmp(element, 'work_x')) THEN
       elementselected = c_dump_part_work_x
 
