@@ -94,8 +94,8 @@ CONTAINS
       IF (species_list(ispecies)%species_type == c_species_id_electron &
           .AND. first_electron == -1) THEN
         first_electron = ispecies
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Print warning if there is no electron species
     IF (first_electron < 0) THEN
@@ -107,11 +107,11 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:electron".'
           WRITE(io,*) 'Bremsstrahlung routines require at least one species' , &
               ' of electrons.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
 #ifdef PHOTONS
     ! photon_species can act as bremsstrahlung_photon_species if no
@@ -130,11 +130,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No photon species specified. Specify using ', &
               '"identify:brem_photon"'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
   END FUNCTION check_bremsstrahlung_variables
 
@@ -568,7 +568,7 @@ CONTAINS
               CALL generate_photon(current, Z_temp, &
                   bremsstrahlung_photon_species)
               current%optical_depth_bremsstrahlung = reset_optical_depth()
-            ENDIF
+            END IF
 
             current => current%next
 
@@ -711,9 +711,9 @@ CONTAINS
 
 
 
-  ! Calculates the value of a grid-centred variable stored in grid_var, averaged
-  ! over the particle shape for a particle at position (part_x, part_y, part_z)
-  ! and of species current_species
+  ! Calculates the value of a grid-centred variable part_var stored in the grid
+  ! grid_var, averaged over the particle shape for a particle at position
+  ! (part_x, part_y, part_z) and of species current_species
   SUBROUTINE grid_centred_var_at_particle(part_x, part_y, part_z, part_var, &
       current_species, grid_var)
 
@@ -725,8 +725,6 @@ CONTAINS
     REAL(num) :: cell_x_r, cell_y_r, cell_z_r
     REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
     REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-
-    ! Particle weighting multiplication factor
 #ifdef PARTICLE_SHAPE_BSPLINE3
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims

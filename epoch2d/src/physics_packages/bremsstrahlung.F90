@@ -561,7 +561,7 @@ CONTAINS
               CALL generate_photon(current, Z_temp, &
                   bremsstrahlung_photon_species)
               current%optical_depth_bremsstrahlung = reset_optical_depth()
-            ENDIF
+            END IF
 
             current => current%next
 
@@ -746,51 +746,13 @@ CONTAINS
 
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
-    part_var = &
-          gy(-2) * (gx(-2) * grid_var(cell_x1-2,cell_y1-2) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1-2) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-2) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-2) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1-2)) &
-        + gy(-1) * (gx(-2) * grid_var(cell_x1-2,cell_y1-1) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1-1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-1) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1-1)) &
-        + gy( 0) * (gx(-2) * grid_var(cell_x1-2,cell_y1  ) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1  ) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  ) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1  )) &
-        + gy( 1) * (gx(-2) * grid_var(cell_x1-2,cell_y1+1) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1+1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1+1)) &
-        + gy( 2) * (gx(-2) * grid_var(cell_x1-2,cell_y1+2) &
-        +           gx(-1) * grid_var(cell_x1-1,cell_y1+2) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+2) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+2) &
-        +           gx( 2) * grid_var(cell_x1+2,cell_y1+2))
+#include "bspline3/part_var.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
-    part_var = &
-          gy( 0) * (gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  )) &
-        + gy( 1) * (gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1))
+#include "tophat/part_var.inc"
 #else
 #include "triangle/gx.inc"
-    part_var = &
-          gy(-1) * (gx(-1) * grid_var(cell_x1-1,cell_y1-1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1-1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1-1)) &
-        + gy( 0) * (gx(-1) * grid_var(cell_x1-1,cell_y1  ) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1  ) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1  )) &
-        + gy( 1) * (gx(-1) * grid_var(cell_x1-1,cell_y1+1) &
-        +           gx( 0) * grid_var(cell_x1  ,cell_y1+1) &
-        +           gx( 1) * grid_var(cell_x1+1,cell_y1+1))
+#include "triangle/part_var.inc"
 #endif
     part_var = fac*part_var
 

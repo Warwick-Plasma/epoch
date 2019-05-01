@@ -94,8 +94,8 @@ CONTAINS
       IF (species_list(ispecies)%species_type == c_species_id_electron &
           .AND. first_electron == -1) THEN
         first_electron = ispecies
-      ENDIF
-    ENDDO
+      END IF
+    END DO
 
     ! Print warning if there is no electron species
     IF (first_electron < 0) THEN
@@ -107,11 +107,11 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:electron".'
           WRITE(io,*) 'Bremsstrahlung routines require at least one species' , &
               ' of electrons.'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
 #ifdef PHOTONS
     ! photon_species can act as bremsstrahlung_photon_species if no
@@ -130,11 +130,11 @@ CONTAINS
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'No photon species specified. Specify using ', &
               '"identify:brem_photon"'
-        ENDDO
-      ENDIF
+        END DO
+      END IF
       check_bremsstrahlung_variables = c_err_missing_elements
       RETURN
-    ENDIF
+    END IF
 
   END FUNCTION check_bremsstrahlung_variables
 
@@ -538,8 +538,8 @@ CONTAINS
             IF (use_plasma_screening) THEN
 
               !Obtain extra parameters needed for plasma screening model
-              CALL grid_centred_var_at_particle(part_x, part_root_Te_over_ne, &
-                  iZ, grid_root_temp_over_num)
+              CALL grid_centred_var_at_particle(part_x, &
+                  part_root_Te_over_ne, iZ, grid_root_temp_over_num)
 
               plasma_factor = get_plasma_factor( &
                   NINT(species_list(iZ)%charge/q0), Z_temp, &
@@ -663,7 +663,6 @@ CONTAINS
         brem_array(brem_index)%E_table, brem_array(brem_index)%k_table, &
         brem_array(brem_index)%cdf_table)
 
-
     ! Calculate electron recoil
     IF (use_bremsstrahlung_recoil) THEN
       mag_p = mag_p - photon_weight * photon_energy / c
@@ -702,11 +701,11 @@ CONTAINS
 
 
 
-  ! Calculates the value of a grid-centred variable "part_var" stored in the
-  ! grid "grid_var", averaged over the particle shape for a particle at part_x
-  ! of species current_species
-  SUBROUTINE grid_centred_var_at_particle(part_x, part_var, current_species, &
-      grid_var)
+  ! Calculates the value of a grid-centred variable part_var stored in the grid
+  ! grid_var, averaged over the particle shape for a particle at position
+  ! part_x and of species current_species
+  SUBROUTINE grid_centred_var_at_particle(part_x, part_var, &
+      current_species, grid_var)
 
     REAL(num), INTENT(in) :: part_x
     INTEGER, INTENT(in) :: current_species
@@ -739,23 +738,13 @@ CONTAINS
 
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
-    part_var = &
-          gx(-2) * grid_var(cell_x1-2) &
-        + gx(-1) * grid_var(cell_x1-1) &
-        + gx( 0) * grid_var(cell_x1  ) &
-        + gx( 1) * grid_var(cell_x1+1) &
-        + gx( 2) * grid_var(cell_x1+2)
+#include "bspline3/part_var.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
-    part_var = &
-          gx(0) * grid_var(cell_x1  ) &
-        + gx(1) * grid_var(cell_x1+1)
+#include "tophat/part_var.inc"
 #else
 #include "triangle/gx.inc"
-    part_var = &
-          gx(-1) * grid_var(cell_x1-1) &
-        + gx( 0) * grid_var(cell_x1  ) &
-        + gx( 1) * grid_var(cell_x1+1)
+#include "triangle/part_var.inc"
 #endif
     part_var = fac*part_var
 

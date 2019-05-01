@@ -1959,6 +1959,7 @@ CONTAINS
 #endif
 
 
+
   SUBROUTINE shift_particles_to_window(window_offset)
 
     REAL(num), INTENT(IN) :: window_offset
