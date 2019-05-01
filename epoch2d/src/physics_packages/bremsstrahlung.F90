@@ -452,14 +452,14 @@ CONTAINS
           CALL calc_temperature(grid_temperature_electron_temp, ispecies)
 
           ! Sum the densities, perform a weighted mean to find mean temperature
-          grid_num_density_electron = grid_num_density_electron + &
-              grid_num_density_electron_temp
-          grid_temperature_electron = grid_temperature_electron + &
-              grid_temperature_electron_temp*grid_num_density_electron_temp
+          grid_num_density_electron = grid_num_density_electron &
+              + grid_num_density_electron_temp
+          grid_temperature_electron = grid_temperature_electron &
+              + grid_temperature_electron_temp*grid_num_density_electron_temp
         END IF
       END DO
-      grid_temperature_electron = grid_temperature_electron / &
-          grid_num_density_electron
+      grid_temperature_electron = grid_temperature_electron &
+          / grid_num_density_electron
 
       ! Create a grid of sqrt(Te/ne) values
       DO jArray = 1-ng, ny+ng
@@ -470,8 +470,8 @@ CONTAINS
             grid_root_temp_over_num(iArray, jArray) = 0.0_num
           ELSE
             grid_root_temp_over_num(iArray, jArray) = &
-                SQRT(grid_temperature_electron(iArray, jArray) / &
-                grid_num_density_electron(iArray, jArray))
+                SQRT(grid_temperature_electron(iArray, jArray) &
+                / grid_num_density_electron(iArray, jArray))
           END IF
         END DO
       END DO
@@ -528,8 +528,8 @@ CONTAINS
             END IF
 
             !Get electron speed
-            part_v = SQRT(current%part_p(1)**2 + current%part_p(2)**2 + &
-                current%part_p(3)**2) * c**2 / part_E
+            part_v = SQRT(current%part_p(1)**2 + current%part_p(2)**2 &
+                + current%part_p(3)**2) * c**2 / part_E
 
             !Get number density at electron
             part_x = current%part_pos(1) - x_grid_min_local
@@ -618,8 +618,8 @@ CONTAINS
     A_third = A**(1.0_num/3.0_num)
     term1 = LOG(plasma_screen_const_1/A_third)
     term2 = LOG(plasma_screen_const_2 * part_root_Te_over_ne * A_third)
-    get_plasma_factor = 1.0_num + &
-       ((REAL(Z,num)/REAL(A,num))**2 * term2 / term1)
+    get_plasma_factor = 1.0_num &
+       + ((REAL(Z,num)/REAL(A,num))**2 * term2 / term1)
     get_plasma_factor = MAX(1.0_num, get_plasma_factor)
 
   END FUNCTION get_plasma_factor
