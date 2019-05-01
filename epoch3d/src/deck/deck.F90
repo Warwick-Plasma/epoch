@@ -71,6 +71,7 @@ MODULE deck
 
   TYPE(file_buffer), POINTER :: file_buffer_head
   INTEGER :: nbuffers = 0
+  LOGICAL :: has_errors
 
 CONTAINS
 
@@ -79,6 +80,11 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE deck_initialise
+
+    has_errors = .FALSE.
+#ifdef DECK_FATAL
+    all_deck_fatal = .TRUE.
+#endif
 
     CALL boundary_deck_initialise
     CALL collision_deck_initialise
@@ -716,6 +722,7 @@ CONTAINS
           continuation = .FALSE.
           u0 = ' '
         END IF
+        IF (errcode_deck /= c_err_none) has_errors = .TRUE.
         IF (got_eof) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, comm, errcode)
           CLOSE(lun)
@@ -795,6 +802,20 @@ CONTAINS
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
+
+    IF (all_deck_fatal .AND. has_errors) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Deck has warnings and you have requested all_deck_fatal.'
+          WRITE(io,*) 'Please fix input deck and rerun' &
+            //'code or disable this option'
+        END DO
+      END IF
+      CALL abort_code(c_err_generic_error)
+    END IF
 
     CALL MPI_BARRIER(comm, errcode)
 
