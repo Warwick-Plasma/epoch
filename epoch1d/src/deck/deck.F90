@@ -82,9 +82,6 @@ CONTAINS
   SUBROUTINE deck_initialise
 
     has_errors = .FALSE.
-#ifdef DECK_FATAL
-    all_deck_fatal = .TRUE.
-#endif
 
     CALL boundary_deck_initialise
     CALL collision_deck_initialise
@@ -474,6 +471,10 @@ CONTAINS
     ! housekeeping. Put any initialisation code that is needed in here
     IF (first_call) CALL deck_initialise
 
+#ifdef DECK_DEBUG
+     IF (deck_state == c_ds_first) all_deck_errcodes_fatal = .TRUE.
+#endif
+
     ! Flag which tells the code when a # or \ character has been
     ! found and everything beyond it is to be ignored
     ignore = .FALSE.
@@ -803,15 +804,16 @@ CONTAINS
 
     IF (terminate) CALL abort_code(c_err_generic_error)
 
-    IF (all_deck_fatal .AND. has_errors) THEN
+    IF (all_deck_errcodes_fatal .AND. has_errors) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Deck has warnings and you have requested all_deck_fatal.'
+          WRITE(io,*) 'Deck has warnings and you have requested'&
+              //' deck_warnings_fatal.'
           WRITE(io,*) 'Please fix input deck and rerun' &
-            //'code or disable this option'
+              //'code or disable this option'
         END DO
       END IF
       CALL abort_code(c_err_generic_error)

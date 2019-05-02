@@ -794,7 +794,7 @@ MODULE shared_data
   LOGICAL :: use_accurate_n_zeros = .FALSE.
   LOGICAL :: use_injectors = .FALSE.
   LOGICAL :: use_more_setup_memory = .FALSE.
-  LOGICAL :: all_deck_fatal = .FALSE.
+  LOGICAL :: all_deck_errcodes_fatal = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
