@@ -8,6 +8,13 @@
  * Added low temperature correction to the Nanbu collision algorithm
    (Pérez 2012 DOI 10.1063/1.4742167)
 
+ * Added "deck_warnings_fatal" flag to the control block. If set to "T" then the
+   code will abort if any warnings are encountered during the deck parse. The
+   default value is "F".
+
+ * Added the DECK_DEBUG compiler flag. If enabled then this forces
+   "deck_warnings_fatal" to always be set to "T"
+
 
 ## v4.15.0 to v4.16.0
 
