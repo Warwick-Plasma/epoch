@@ -260,6 +260,10 @@ DEFINES := $(DEFINE)
 # Disable MPI3 features
 #DEFINES += $(D)NO_MPI3
 
+# Set options for debugging deck
+# Sets warning messages to be errors
+#DEFINES += $(D)DECK_DEBUG
+
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
 # following line.
@@ -269,6 +273,7 @@ DEFINES := $(DEFINE)
 # Automatically add -DPARSER_CHECKING for debug builds
 ifeq ($(strip $(MODE)),debug)
   DEFINES += $(D)PARSER_CHECKING
+  DEFINES += $(D)DECK_DEBUG
 endif
 
 
