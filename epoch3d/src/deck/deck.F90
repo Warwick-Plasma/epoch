@@ -472,7 +472,7 @@ CONTAINS
     IF (first_call) CALL deck_initialise
 
 #ifdef DECK_DEBUG
-     IF (deck_state == c_ds_first) all_deck_errcodes_fatal = .TRUE.
+    IF (deck_state == c_ds_first) all_deck_errcodes_fatal = .TRUE.
 #endif
 
     ! Flag which tells the code when a # or \ character has been
@@ -810,10 +810,10 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Deck has warnings and you have requested' &
-              //' deck_warning_fatal.'
-          WRITE(io,*) 'Please fix input deck and rerun' &
-              //'code or disable this option'
+          WRITE(io,*) 'Deck has warnings and you have requested ' &
+              // 'deck_warning_fatal.'
+          WRITE(io,*) 'Please fix input deck and rerun ' &
+              // 'code or disable this option'
         END DO
       END IF
       CALL abort_code(c_err_generic_error)
