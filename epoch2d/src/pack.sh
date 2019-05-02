@@ -301,6 +301,11 @@ else
   fi
 
   if [ $? -ne 0 ]; then
+    cp $gitdiff $gitdiff.tmp
+    filterdiff $gitdiff.tmp > $gitdiff
+    if [ $? -ne 0 ]; then
+      mv $gitdiff.tmp $gitdiff
+    fi
     get_bytes_checksum $gitdiff
     gzip -c $gitdiff > ${gitdiff}.gz
     rm $gitdiff
