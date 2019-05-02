@@ -262,7 +262,7 @@ DEFINES := $(DEFINE)
 
 # Set options for debugging deck
 # Sets warning messages to be errors
-DEFINES += $(D)DECK_DEBUG
+#DEFINES += $(D)DECK_DEBUG
 
 # If you are having trouble compiling the encoded_source module or
 # don't want embedded source code in restart dumps, uncomment the
