@@ -414,8 +414,23 @@ else:
     else:
         sp.call(["git diff > %s" % gitdiff], shell=True)
     if os.path.getsize(gitdiff) != 0:
-        checksum = get_bytes_checksum([gitdiff])
+        # Remove TABLES directory from diff
+        f_in = open(gitdiff, 'rb')
+        lines = f_in.readlines()
+        f_in.close()
+        f_in = open(gitdiff, 'wb')
+        ignore = False
+        for l in lines:
+            if l.startswith("diff"):
+                if l.find("/TABLES/") != -1:
+                    ignore = True
+                else:
+                    ignore = False
+            if not ignore:
+                f_in.write(l)
+        f_in.close()
 
+        checksum = get_bytes_checksum([gitdiff])
         zgitdiff = gitdiff + '.gz'
         f_in = open(gitdiff, 'rb')
         f_out = gzip.open(zgitdiff, 'wb')
