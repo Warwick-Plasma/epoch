@@ -241,7 +241,7 @@ CONTAINS
         ! non-flux Maxwellian
         flux_dir_cell = -1
       ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
-        ! Net is outflow - inflow velocity is zero
+        ! Net is outflow - inflow velocity is zero. No particles injected
         RETURN
       ELSE IF (ABS(p_drift) < p_therm * 1.0e-9_num) THEN
         v_inject_s = 2.0_num * sqrt2pi_inv * p_therm &
@@ -283,6 +283,8 @@ CONTAINS
 
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
     injector%depth = injector%depth + REAL(parts_this_time, num)
+
+    IF (parts_this_time < 1) RETURN
 
     CALL create_empty_partlist(plist)
 
