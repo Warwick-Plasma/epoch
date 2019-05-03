@@ -194,23 +194,6 @@ CONTAINS
       RETURN
     END IF
 
-    IF (injector%use_flux_injector) THEN
-      flux_dir = dir_index
-    ELSE
-      flux_dir = -1
-    END IF
-
-    vol = dx
-    bdy_pos = bdy_pos - 0.5_num * dir_mult * cell_size * png
-
-    mass = species_list(injector%species)%mass
-    typical_mc2 = (mass * c)**2
-#ifndef PER_SPECIES_WEIGHT
-    weight_fac = vol / injector%npart_per_cell
-#endif
-
-    parameters%use_grid_position = .TRUE.
-
     IF (injector%dt_inject > 0.0_num) THEN
       npart_ideal = dt / injector%dt_inject
       itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
@@ -223,10 +206,28 @@ CONTAINS
       first_inject = .TRUE.
     END IF
 
+    parameters%use_grid_position = .TRUE.
+
     CALL populate_injector_properties(injector, parameters, density_grid, &
         temperature, drift)
 
     IF (density_grid < injector%density_min) RETURN
+
+    IF (injector%use_flux_injector) THEN
+      flux_dir = dir_index
+    ELSE
+      flux_dir = -1
+    END IF
+
+    vol = dx
+    bdy_pos = bdy_pos - 0.5_num * dir_mult * cell_size * png
+
+    mass = species_list(injector%species)%mass
+    typical_mc2 = (mass * c)**2
+
+#ifndef PER_SPECIES_WEIGHT
+    weight_fac = vol / injector%npart_per_cell
+#endif
 
     ! Assume agressive maximum thermal momentum, all components
     ! like hottest component
