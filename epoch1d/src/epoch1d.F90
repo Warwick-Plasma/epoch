@@ -128,6 +128,7 @@ PROGRAM pic
 
   CALL custom_particle_load
   CALL manual_load
+  CALL finish_injector_setup
 
   CALL finish_setup_injector_boundaries
 

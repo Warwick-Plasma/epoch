@@ -327,6 +327,7 @@ CONTAINS
     cur_cell = 0.0_num
 
     CALL create_empty_partlist(plist)
+
     DO ii = 1, nel(1)
       DO jj = 1, nel(2)
         i2d = (/ii, jj/)
@@ -524,5 +525,91 @@ CONTAINS
     END IF
 
   END SUBROUTINE assign_pack_value
+
+
+
+  SUBROUTINE finish_injector_setup
+
+    TYPE(injector_block), POINTER :: current
+
+    IF (x_min_boundary) THEN
+      current => injector_x_min
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_x_min)
+        current => current%next
+      END DO
+    END IF
+
+    IF (x_max_boundary) THEN
+      current => injector_x_max
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_x_max)
+        current => current%next
+      END DO
+    END IF
+
+    IF (y_min_boundary) THEN
+      current => injector_y_min
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_y_min)
+        current => current%next
+      END DO
+    END IF
+
+    IF (y_max_boundary) THEN
+      current => injector_y_max
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_y_max)
+        current => current%next
+      END DO
+    END IF
+
+    IF (z_min_boundary) THEN
+      current => injector_z_min
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_z_min)
+        current => current%next
+      END DO
+    END IF
+
+    IF (z_max_boundary) THEN
+      current => injector_z_max
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_z_max)
+        current => current%next
+      END DO
+    END IF
+
+  END SUBROUTINE finish_injector_setup
+
+
+
+  SUBROUTINE finish_single_injector_setup(injector, boundary)
+
+    TYPE(injector_block), POINTER :: injector
+    INTEGER, INTENT(IN) :: boundary
+    TYPE(particle_species), POINTER :: species
+    INTEGER :: i
+
+    species => species_list(injector%species)
+    IF (injector%npart_per_cell < 0.0_num) THEN
+      injector%npart_per_cell = species%npart_per_cell
+    END IF
+
+    IF (.NOT.injector%density_function%init) THEN
+      CALL copy_stack(species%density_function, injector%density_function)
+    END IF
+
+    DO i = 1, 3
+      IF (.NOT.injector%drift_function(i)%init) THEN
+        CALL copy_stack(species%drift_function(i), injector%drift_function(i))
+      END IF
+      IF (.NOT.injector%temperature_function(i)%init) THEN
+        CALL copy_stack(species%temperature_function(i), &
+            injector%temperature_function(i))
+      END IF
+    END DO
+
+  END SUBROUTINE finish_single_injector_setup
 
 END MODULE injectors
