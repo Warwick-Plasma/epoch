@@ -431,14 +431,16 @@ CONTAINS
       END IF
       ! Norm can be -ve if drift is counter to direction
       ! This is OK - the distribution will also be -ve
-      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel)/ vth)**2))
+      norm = 1.0_num / (max_vel * EXP(-0.5_num * ((max_vel - dvel) &
+          / MAX(vth, c_tiny))**2))
 
       DO WHILE(.NOT. accepted)
         flmt = ran1 + random() * (ran2 - ran1)
 
         random_roll = random()
         IF (random_roll &
-            < norm * flmt * EXP(-0.5_num * ((flmt-dvel)/vth)**2)) THEN
+            < norm * flmt * EXP(-0.5_num * ((flmt - dvel) &
+            / MAX(vth, c_tiny))**2)) THEN
           accepted = .TRUE.
           flux_momentum_from_temperature = mass * flmt
         END IF
