@@ -37,6 +37,8 @@ CONTAINS
 
   SUBROUTINE injector_deck_initialise
 
+    IF (deck_state /= c_ds_first) RETURN
+
     NULLIFY(injector_x_min)
     NULLIFY(injector_x_max)
 
