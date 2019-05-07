@@ -974,7 +974,7 @@ CONTAINS
     s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
 
     ! Cold plasma upper limit for s12
-    v_rel = gm * p_mag / (gm3 * gm4 * gc)
+    v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
     s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
         / MAX(m1 * idens**two_thirds, m2 * jdens**two_thirds)
 
