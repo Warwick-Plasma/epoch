@@ -216,7 +216,7 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: idens, jdens, e_dens
     REAL(num), DIMENSION(:), ALLOCATABLE :: itemp, jtemp, e_temp
     REAL(num), DIMENSION(:), ALLOCATABLE :: log_lambda, e_log_lambda
-    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar, jekbar, e_ekbar
+    REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar, e_ekbar
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
     LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
@@ -241,7 +241,6 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng))
     ALLOCATE(part_count(1-ng:nx+ng))
     ALLOCATE(iekbar(1-ng:nx+ng))
-    ALLOCATE(jekbar(1-ng:nx+ng))
     ALLOCATE(e_ekbar(1-ng:nx+ng))
 
     CALL create_empty_partlist(ionising_e)
@@ -270,7 +269,6 @@ CONTAINS
         e_species = species_list(ispecies)%release_species
         CALL calc_coll_number_density(e_dens, e_species)
         CALL calc_coll_temperature_ev(e_temp, e_species)
-        CALL calc_coll_ekbar(e_ekbar, e_species)
         m_e = species_list(e_species)%mass
         q_e = species_list(e_species)%charge
         w_e = species_list(e_species)%weight
@@ -303,7 +301,6 @@ CONTAINS
 
         CALL calc_coll_number_density(jdens, jspecies)
         CALL calc_coll_temperature_ev(jtemp, jspecies)
-        CALL calc_coll_ekbar(jekbar, jspecies)
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
@@ -343,6 +340,7 @@ CONTAINS
             e_user_factor = coll_pairs(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
+            CALL calc_coll_ekbar(e_ekbar, e_species)
             e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, &
                 jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
@@ -439,7 +437,7 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
-    DEALLOCATE(iekbar, jekbar, e_ekbar)
+    DEALLOCATE(iekbar, e_ekbar)
 #endif
 
   END SUBROUTINE collisional_ionisation
