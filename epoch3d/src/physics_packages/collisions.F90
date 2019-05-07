@@ -1442,23 +1442,22 @@ CONTAINS
 
   SUBROUTINE calc_coll_number_density(data_array, ispecies)
 
-    ! This subroutine calculates the grid-based number density of a given
-    ! particle species.
-    ! It is almost identical to the calc_number_density subroutine in calc_df,
-    ! except it uses the secondary_list rather than the attached_list.
+    ! This routine calculates an approximate number density
+    ! It assumes each particle only contributes to a single cell
+    ! Returns zero if species_type == c_species_id_photon
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: gf
     REAL(num) :: idx
-    INTEGER :: ix, iy, iz
     INTEGER :: jx, jy, jz
     TYPE(particle), POINTER :: current
 #include "particle_head.inc"
 
     data_array = 0.0_num
+
+    IF (species_list(ispecies)%species_type == c_species_id_photon) RETURN
 
     idx = 1.0_num / dx / dy / dz
 
@@ -1467,7 +1466,6 @@ CONTAINS
     DO jz = 1, nz
     DO jy = 1, ny
     DO jx = 1, nx
-      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
       current => species_list(ispecies)%secondary_list(jx,jy,jz)%head
 
       DO WHILE (ASSOCIATED(current))
@@ -1477,15 +1475,8 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz)
-          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
-        END DO
-        END DO
-        END DO
+        data_array(cell_x, cell_y, cell_z) = &
+            data_array(cell_x, cell_y, cell_z) + wdata
 
         current => current%next
       END DO
@@ -1493,12 +1484,7 @@ CONTAINS
     END DO ! jy
     END DO ! jz
 
-    CALL calc_boundary(data_array)
-
     data_array = data_array * idx
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    END DO
 
   END SUBROUTINE calc_coll_number_density
 

@@ -1408,30 +1408,28 @@ CONTAINS
 
   SUBROUTINE calc_coll_number_density(data_array, ispecies)
 
-    ! This subroutine calculates the grid-based number density of a given
-    ! particle species.
-    ! It is almost identical to the calc_number_density subroutine in calc_df,
-    ! except it uses the secondary_list rather than the attached_list.
+    ! This routine calculates an approximate number density
+    ! It assumes each particle only contributes to a single cell
+    ! Returns zero if species_type == c_species_id_photon
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: gf
     REAL(num) :: idx
-    INTEGER :: ix
     INTEGER :: jx
     TYPE(particle), POINTER :: current
 #include "particle_head.inc"
 
     data_array = 0.0_num
 
+    IF (species_list(ispecies)%species_type == c_species_id_photon) RETURN
+
     idx = 1.0_num / dx
 
     wdata = species_list(ispecies)%weight
 
     DO jx = 1, nx
-      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
       current => species_list(ispecies)%secondary_list(jx)%head
 
       DO WHILE (ASSOCIATED(current))
@@ -1440,23 +1438,13 @@ CONTAINS
 #endif
 
 #include "particle_to_grid.inc"
-
-        DO ix = sf_min, sf_max
-          gf = gx(ix)
-          data_array(cell_x+ix) = &
-              data_array(cell_x+ix) + gf * wdata
-        END DO
+        data_array(cell_x) = data_array(cell_x) + wdata
 
         current => current%next
       END DO
     END DO ! jx
 
-    CALL calc_boundary(data_array)
-
     data_array = data_array * idx
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    END DO
 
   END SUBROUTINE calc_coll_number_density
 
