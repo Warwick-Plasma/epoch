@@ -275,13 +275,13 @@ CONTAINS
     ELSE IF (str_cmp(name, 'r_xyz')) THEN
       as_constant = c_const_r_xyz
 
-    ELSE IF (str_cmp(name, 'nprocx')) THEN
+    ELSE IF (str_cmp(name, 'nprocx') .OR. str_cmp(name, 'nproc_x')) THEN
       as_constant = c_const_nprocx
 
-    ELSE IF (str_cmp(name, 'nprocy')) THEN
+    ELSE IF (str_cmp(name, 'nprocy') .OR. str_cmp(name, 'nproc_y')) THEN
       as_constant = c_const_nprocy
 
-    ELSE IF (str_cmp(name, 'nprocz')) THEN
+    ELSE IF (str_cmp(name, 'nprocz') .OR. str_cmp(name, 'nproc_z')) THEN
       as_constant = c_const_nprocz
 
     ELSE IF (str_cmp(name, 'nsteps')) THEN
