@@ -955,7 +955,7 @@ CONTAINS
     p_mag2 = DOT_PRODUCT(p3, p3)
     p_mag = SQRT(p_mag2)
 
-    s_fac = idens * jdens * dt * factor
+    s_fac = idens * jdens * dt * factor * dx
     fac = (q1 * q2)**2 * log_lambda * s_fac / (pi4_eps2_c4 * gm1 * gm2)
     s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
 
