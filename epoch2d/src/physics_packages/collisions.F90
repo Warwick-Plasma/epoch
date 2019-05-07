@@ -361,8 +361,7 @@ CONTAINS
           DO ix = 1, nx
             CALL intra_species_collisions( &
                 species_list(ispecies)%secondary_list(ix,iy), &
-                m1, q1, w1, idens(ix,iy), iekbar(ix,iy), log_lambda(ix,iy), &
-                user_factor)
+                m1, q1, w1, idens(ix,iy), log_lambda(ix,iy), user_factor)
           END DO ! ix
           END DO ! iy
         ELSE IF (species_list(ispecies)%ionise &
