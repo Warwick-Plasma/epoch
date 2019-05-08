@@ -40,7 +40,7 @@ CONTAINS
     injector%t_end = t_end
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
-    injector%use_flux_injector = .FALSE.
+    injector%use_flux_injector = .TRUE.
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
       ALLOCATE(injector%dt_inject(1-ng:ny+ng))
@@ -544,7 +544,6 @@ CONTAINS
     ALLOCATE(working_injector)
 
     CALL init_injector(bnd, working_injector)
-    working_injector%use_flux_injector = .TRUE.
     working_injector%species = ispecies
 
     CALL attach_injector(working_injector)
