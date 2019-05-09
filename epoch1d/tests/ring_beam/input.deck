@@ -19,7 +19,7 @@ begin:constant
   simtime = grid_spacing / c
   diagtime = simtime * 2
   pdfn_limit = 2 * abs(pring_beam)
-  
+
   p_ring_th = sqrt(2 * qe * temp_ring_ev * mass)
   p_beam_th = sqrt(2 * qe * temp_beam_ev * mass)
 
@@ -41,9 +41,6 @@ begin:control
   x_max = nx * grid_spacing
 end:control
 
-begin:fields
-  by = 1.0
-end:fields
 
 begin:boundaries
   bc_x_min = periodic
@@ -51,13 +48,19 @@ begin:boundaries
 end:boundaries
 
 
+begin:fields
+  by = 1.0
+end:fields
+
+
 begin:species
   name = ring_beam_2d
   charge = 1.0
   mass = mass_e
   frac = 1.0
-  density = 1.0e20
-  dist_fn = px / px_peak * exp(-(px - pring)^2/2/p_ring_th^2) * exp(-(pz - pbeam)^2/2/p_beam_th^2)
+  number_density = 1.0e20
+  dist_fn = px / px_peak * exp(-0.5 * ((px - pring) / p_ring_th)^2) \
+          * exp(-0.5 * ((pz - pbeam) / p_beam_th)^2)
   dist_fn_px_range = (px_min_limit, pring + 6*p_ring_th)
 # deliberately ignore this dist_fn_py_range
 # dist_fn_py_range = (0, 0)
@@ -66,20 +69,20 @@ begin:species
   x_perp_y_ignored_z_para = T
 end:species
 
+
 begin:species
   name = ring_beam_3d
   charge = 1.0
   mass = mass_e
   frac = 1.0
-  density = 1.0e20
-  dist_fn = exp(-(sqrt(px^2 + py^2) - pring)^2/2/p_ring_th^2) * exp(-(pz-pbeam)^2/2/p_beam_th^2)
+  number_density = 1.0e20
+  dist_fn = exp(-0.5 * ((sqrt(px^2 + py^2) - pring) / p_ring_th)^2) \
+          * exp(-0.5 * ((pz - pbeam) / p_beam_th)^2)
   dist_fn_px_range = (-pdfn_limit, pdfn_limit)
   dist_fn_py_range = (-pdfn_limit, pdfn_limit)
   dist_fn_pz_range = (pbeam - 6*p_ring_th, pbeam + 6*p_ring_th)
   field_aligned_initialisation = T
 end:species
-
-
 
 
 begin:output
@@ -127,6 +130,7 @@ begin:dist_fn
   include_species:ring_beam_2d
   include_species:ring_beam_3d
 end:dist_fn
+
 
 begin:dist_fn
   name = px_pz
@@ -184,6 +188,7 @@ begin:dist_fn
   include_species:ring_beam_3d
 end:dist_fn
 
+
 begin:dist_fn
   name = py
   ndims = 1
@@ -199,6 +204,7 @@ begin:dist_fn
   include_species:ring_beam_2d
   include_species:ring_beam_3d
 end:dist_fn
+
 
 begin:dist_fn
   name = pz
