@@ -41,24 +41,6 @@ CONTAINS
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%use_flux_injector = .TRUE.
-
-    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:ny+ng, 1-ng:nz+ng))
-      ALLOCATE(injector%depth(1-ng:ny+ng, 1-ng:nz+ng))
-    END IF
-
-    IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:nz+ng))
-      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:nz+ng))
-    END IF
-
-    IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:ny+ng))
-      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:ny+ng))
-    END IF
-
-    injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
@@ -604,6 +586,24 @@ CONTAINS
             injector%temperature_function(i))
       END IF
     END DO
+
+    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+      ALLOCATE(injector%dt_inject(1-ng:ny+ng, 1-ng:nz+ng))
+      ALLOCATE(injector%depth(1-ng:ny+ng, 1-ng:nz+ng))
+    END IF
+
+    IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:nz+ng))
+      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:nz+ng))
+    END IF
+
+    IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
+      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:ny+ng))
+      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:ny+ng))
+    END IF
+
+    injector%depth = 1.0_num
+    injector%dt_inject = -1.0_num
 
   END SUBROUTINE finish_single_injector_setup
 

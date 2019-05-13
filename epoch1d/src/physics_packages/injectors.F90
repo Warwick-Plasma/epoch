@@ -41,8 +41,6 @@ CONTAINS
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%use_flux_injector = .TRUE.
-    injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
@@ -420,6 +418,9 @@ CONTAINS
             injector%temperature_function(i))
       END IF
     END DO
+
+    injector%depth = 1.0_num
+    injector%dt_inject = -1.0_num
 
   END SUBROUTINE finish_single_injector_setup
 
