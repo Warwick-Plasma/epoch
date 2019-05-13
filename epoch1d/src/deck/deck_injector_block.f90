@@ -141,6 +141,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho') &
+        .OR. str_cmp(element, 'number_density_max')) THEN
+      working_injector%density_max = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'density') &
         .OR. str_cmp(element, 'number_density')) THEN
       CALL initialise_stack(working_injector%density_function)

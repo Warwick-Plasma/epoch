@@ -348,6 +348,7 @@ CONTAINS
         new%mass = mass
 #endif
 #ifndef PER_SPECIES_WEIGHT
+        density = MIN(density, injector%density_max)
         new%weight = vol * density / REAL(injector%npart_per_cell, num)
 #endif
         CALL add_particle_to_partlist(plist, new)
