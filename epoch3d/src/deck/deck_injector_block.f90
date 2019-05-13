@@ -148,6 +148,9 @@ CONTAINS
     IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho') &
         .OR. str_cmp(element, 'number_density_max')) THEN
       working_injector%density_max = as_real_print(value, element, errcode)
+      IF (working_injector%density_max < 0.0_num) THEN
+        working_injector%density_max = HUGE(1.0_num)
+      END IF
       RETURN
     END IF
 
