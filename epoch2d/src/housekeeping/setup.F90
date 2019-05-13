@@ -108,11 +108,7 @@ CONTAINS
     laser_absorb_local = 0.0_num
     old_elapsed_time = 0.0_num
 
-    NULLIFY(laser_x_min)
-    NULLIFY(laser_x_max)
-    NULLIFY(laser_y_max)
-    NULLIFY(laser_y_min)
-
+    NULLIFY(lasers)
     NULLIFY(dist_fns)
     NULLIFY(io_block_list)
 
@@ -1096,14 +1092,9 @@ CONTAINS
           END IF
         END IF
 
-        CALL read_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
-            block_id, ndims, 'laser_x_min_phase', 'x_min')
-        CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
-            block_id, ndims, 'laser_x_max_phase', 'x_max')
-        CALL read_laser_phases(sdf_handle, n_laser_y_min, laser_y_min, &
-            block_id, ndims, 'laser_y_min_phase', 'y_min')
-        CALL read_laser_phases(sdf_handle, n_laser_y_max, laser_y_max, &
-            block_id, ndims, 'laser_y_max_phase', 'y_max')
+        DO i = 1, 2 * c_ndims
+          CALL read_laser_phases(sdf_handle, block_id, ndims, i)
+        END DO
 
         CALL read_injector_depths(sdf_handle, injector_x_min, &
             block_id, ndims, 'injector_x_min_depths', c_dir_x, x_min_boundary)
@@ -1476,25 +1467,25 @@ CONTAINS
 
 
 
-  SUBROUTINE read_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
-      block_id_in, ndims, block_id_compare, direction_name)
+  SUBROUTINE read_laser_phases(sdf_handle, block_id_in, ndims, boundary)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
-    INTEGER, INTENT(IN) :: laser_count
-    TYPE(laser_block), POINTER :: laser_base_pointer
     CHARACTER(LEN=*), INTENT(IN) :: block_id_in
-    INTEGER, INTENT(IN) :: ndims
-    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
-    CHARACTER(LEN=*), INTENT(IN) :: direction_name
+    INTEGER, INTENT(IN) :: ndims, boundary
     REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
     INTEGER, DIMENSION(4) :: dims
+    CHARACTER(LEN=17) :: block_id_compare
+    CHARACTER(LEN=5), DIMENSION(6) :: direction_name = &
+        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
+
+    block_id_compare = 'laser_' // direction_name(boundary) // '_phase'
 
     IF (str_cmp(block_id_in, block_id_compare)) THEN
       CALL sdf_read_array_info(sdf_handle, dims)
 
-      IF (ndims /= 1 .OR. dims(1) /= laser_count) THEN
+      IF (ndims /= 1 .OR. dims(1) /= n_lasers(boundary)) THEN
         PRINT*, '*** WARNING ***'
-        PRINT*, 'Number of laser phases on ', TRIM(direction_name), &
+        PRINT*, 'Number of laser phases on ', TRIM(direction_name(boundary)), &
             ' does not match number of lasers.'
         PRINT*, 'Lasers will be populated in order, but correct operation ', &
             'is not guaranteed'
@@ -1502,7 +1493,7 @@ CONTAINS
 
       ALLOCATE(laser_phases(dims(1)))
       CALL sdf_read_srl(sdf_handle, laser_phases)
-      CALL setup_laser_phases(laser_base_pointer, laser_phases)
+      CALL setup_laser_phases(laser_phases)
       DEALLOCATE(laser_phases)
     END IF
 

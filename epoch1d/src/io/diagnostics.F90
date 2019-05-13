@@ -416,10 +416,9 @@ CONTAINS
         CALL sdf_write_srl(sdf_handle, 'x_grid_min', &
             'Minimum grid position', x_grid_min)
 
-        CALL write_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
-            'laser_x_min_phase')
-        CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
-            'laser_x_max_phase')
+        DO i = 1, 2 * c_ndims
+          CALL write_laser_phases(sdf_handle, i)
+        END DO
 
         CALL write_injector_depths(sdf_handle, injector_x_min, &
             'injector_x_min_depths', c_dir_x, x_min_boundary)
@@ -951,32 +950,36 @@ CONTAINS
 
 
 
-  SUBROUTINE write_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
-      block_name)
+  SUBROUTINE write_laser_phases(sdf_handle, boundary)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
-    INTEGER, INTENT(IN) :: laser_count
-    TYPE(laser_block), POINTER :: laser_base_pointer
-    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: boundary
     REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
     INTEGER :: ilas
     TYPE(laser_block), POINTER :: current_laser
+    CHARACTER(LEN=17) :: block_name
+    CHARACTER(LEN=5), DIMENSION(6) :: direction_name = &
+        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
 
-    IF (laser_count > 0) THEN
-      ALLOCATE(laser_phases(laser_count))
-      ilas = 1
-      current_laser => laser_base_pointer
+    IF (n_lasers(boundary) < 1) RETURN
 
-      DO WHILE(ASSOCIATED(current_laser))
+    block_name = 'laser_' // direction_name(boundary) // '_phase'
+
+    ALLOCATE(laser_phases(n_lasers(boundary)))
+    ilas = 1
+    current_laser => lasers
+
+    DO WHILE(ASSOCIATED(current_laser))
+      IF (current_laser%boundary == boundary) THEN
         laser_phases(ilas) = current_laser%current_integral_phase
         ilas = ilas + 1
-        current_laser => current_laser%next
-      END DO
+      END IF
+      current_laser => current_laser%next
+    END DO
 
-      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
-          laser_count, laser_phases, 0)
-      DEALLOCATE(laser_phases)
-    END IF
+    CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+        n_lasers(boundary), laser_phases, 0)
+    DEALLOCATE(laser_phases)
 
   END SUBROUTINE write_laser_phases
 
