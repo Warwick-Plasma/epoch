@@ -46,9 +46,45 @@ MODULE collisions
       REAL(num), INTENT(IN) :: idens, jdens, log_lambda
       REAL(num), INTENT(IN) :: factor, np
     END SUBROUTINE scatter_proto
+
+
+    SUBROUTINE intra_collisions_proto(p_list, mass, charge, weight, &
+        dens, log_lambda, user_factor)
+
+      IMPORT particle_list, num
+
+      TYPE(particle_list), INTENT(INOUT) :: p_list
+      REAL(num), INTENT(IN) :: mass, charge, weight
+      REAL(num), INTENT(IN) :: user_factor
+      REAL(num), INTENT(IN) :: dens, log_lambda
+
+    END SUBROUTINE intra_collisions_proto
+
+
+
+    SUBROUTINE inter_collisions_proto(p_list1, p_list2, mass1, mass2, &
+      charge1, charge2, weight1, weight2, &
+      idens, jdens, log_lambda, user_factor )
+
+      IMPORT particle_list, num
+
+      TYPE(particle_list), INTENT(INOUT) :: p_list1
+      TYPE(particle_list), INTENT(INOUT) :: p_list2
+
+      REAL(num), INTENT(IN) :: mass1, charge1, weight1
+      REAL(num), INTENT(IN) :: mass2, charge2, weight2
+
+      REAL(num), INTENT(IN) :: idens, jdens
+      REAL(num), INTENT(IN) :: log_lambda
+      REAL(num), INTENT(IN) :: user_factor
+
+    END SUBROUTINE inter_collisions_proto
+
   END INTERFACE
 
   PROCEDURE(scatter_proto), POINTER, SAVE :: scatter_fn => NULL()
+  PROCEDURE(intra_collisions_proto), POINTER, SAVE :: intra_coll_fn => NULL()
+  PROCEDURE(inter_collisions_proto), POINTER, SAVE :: inter_coll_fn => NULL()
 
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
   REAL(num), PARAMETER :: one_m_2eps = 1.0_num - 2.0_num * eps
