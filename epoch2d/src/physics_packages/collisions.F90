@@ -222,7 +222,7 @@ CONTAINS
         DO iy = 1, ny
         DO ix = 1, nx
           IF (ispecies == jspecies) THEN
-            CALL intra_species_collisions( &
+            CALL intra_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy), &
                 m1, q1, w1, idens(ix,iy), &
                 log_lambda(ix,iy), user_factor)
@@ -395,7 +395,7 @@ CONTAINS
         IF (ispecies == jspecies) THEN
           DO iy = 1, ny
           DO ix = 1, nx
-            CALL intra_species_collisions( &
+            CALL intra_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy), &
                 m1, q1, w1, idens(ix,iy), log_lambda(ix,iy), user_factor)
           END DO ! ix
@@ -744,17 +744,34 @@ CONTAINS
 
 
 
-  SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
+  SUBROUTINE intra_collisions_sk(p_list, mass, charge, weight, &
       dens, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
     REAL(num), INTENT(IN) :: mass, charge, weight
     REAL(num), INTENT(IN) :: user_factor
+    REAL(num), INTENT(IN) :: dens, log_lambda
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
-    REAL(num) :: dens, log_lambda
     INTEGER(i8) :: icount, k, pcount
+    REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
+    REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
+    REAL(num), DIMENSION(3) :: p3, p4
+    REAL(num), DIMENSION(3) :: p5, p6
+    REAL(num), DIMENSION(3) :: v3, v4
+    REAL(num), DIMENSION(3) :: vr, vcr
+    REAL(num), DIMENSION(3) :: c1, c2, c3
+    REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
+    REAL(num) :: e1, e2 ! Pre-collision energies
+    REAL(num) :: e3, e4, e5, e6
+    REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
+    REAL(num) :: tvar ! Dummy variable for temporarily storing values
+    REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
+    REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
+    REAL(num) :: vrabs, denominator, wr
+    REAL(num) :: nu, ran1, ran2
 
     factor = 0.0_num
     np = 0.0_num
@@ -808,7 +825,89 @@ CONTAINS
     ! restore the tail of the list
     NULLIFY(p_list%tail%next)
 
-  END SUBROUTINE intra_species_collisions
+  END SUBROUTINE intra_collisions_sk
+
+
+
+  SUBROUTINE intra_collisions_np(p_list, mass, charge, weight, &
+      dens, log_lambda, user_factor)
+    ! Perform collisions between particles of the same species.
+
+    TYPE(particle_list), INTENT(INOUT) :: p_list
+    REAL(num), INTENT(IN) :: mass, charge, weight
+    REAL(num), INTENT(IN) :: user_factor
+    REAL(num), INTENT(IN) :: dens, log_lambda
+    TYPE(particle), POINTER :: current, impact
+    REAL(num) :: factor, np
+    INTEGER(i8) :: icount, k, pcount
+    REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
+    REAL(num) :: sinp_cos, sinp_sin, s_prime
+    REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
+    REAL(num) :: p_perp2, p_perp_inv
+    REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm
+    REAL(num), DIMENSION(3,3) :: mat
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
+    REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
+    REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
+    REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
+    REAL(num), PARAMETER :: pi_fac = &
+                                (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
+
+    factor = 0.0_num
+    np = 0.0_num
+
+    ! Intra-species collisions
+    icount = p_list%count
+
+    ! If there aren't enough particles to collide, then don't bother
+    IF (icount <= 1) RETURN
+
+    ! Number of collisions
+    pcount = icount / 2 + MOD(icount, 2_i8)
+
+#ifdef PER_SPECIES_WEIGHT
+    np = icount * weight
+    ! Factor of 2 due to intra species collisions
+    ! See Section 4.1 of Nanbu
+    factor = user_factor * pcount * weight * 2.0_num
+#else
+    ! temporarily join tail to the head of the list to make it circular
+    p_list%tail%next => p_list%head
+
+    current => p_list%head
+    impact => current%next
+    DO k = 1, pcount
+      np = np + current%weight + impact%weight
+      factor = factor + MIN(current%weight, impact%weight)
+      current => impact%next
+      impact => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
+#endif
+    END DO
+    factor = user_factor / factor / 2.0_num
+#endif
+
+    current => p_list%head
+    impact => current%next
+    DO k = 1, pcount
+      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
+          weight, weight, dens, dens, log_lambda, factor, np)
+      current => impact%next
+      impact => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
+#endif
+    END DO
+
+    ! restore the tail of the list
+    NULLIFY(p_list%tail%next)
+
+  END SUBROUTINE intra_collisions_np
 
 
 
@@ -1727,8 +1826,10 @@ CONTAINS
 
     IF (use_nanbu) THEN
       scatter_fn => scatter_np
+      intra_coll_fn => intra_collisions_np
     ELSE
       scatter_fn => scatter_sk
+      intra_coll_fn => intra_collisions_sk
     END IF
 
   END SUBROUTINE setup_collisions
@@ -2252,7 +2353,7 @@ CONTAINS
       END DO
 
       ! call scattering routine
-      CALL intra_species_collisions(partlist, mass, charge, &
+      CALL intra_coll_fn(partlist, mass, charge, &
           1.0_num, 1.0e15_num, 1.0e4_num, 5.0_num, 1.0_num)
 
       ! diagnostics
