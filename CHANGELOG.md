@@ -15,6 +15,18 @@
  * Added the DECK_DEBUG compiler flag. If enabled then this forces
    "deck_warnings_fatal" to always be set to "T"
 
+ * Added missing "nproc_[xyz]" and isotropic "temp" parameters. These were
+   mentioned in the documentation but had been omitted from the code.
+
+ * Added "drift_p{x,y,z}" and "drift_p{x,y,z}_back" as aliases for
+   "drift_{x,y,z}" and "drift_{x,y,z}_back"
+
+ * Added the ability to specify "temp" and "temp_[xyz]" in electronvolts when
+   setting up injectors.
+
+ * Added parameter "number_density_max" to the injectors, matching the
+   functionality available in the species block.
+
 
 ## v4.15.0 to v4.16.0
 
