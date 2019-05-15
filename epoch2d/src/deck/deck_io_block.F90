@@ -665,7 +665,8 @@ CONTAINS
     ELSE IF (str_cmp(element, 'ejected_particles')) THEN
       elementselected = c_dump_ejected_particles
 
-    ELSE IF (str_cmp(element, 'ekflux')) THEN
+    ELSE IF (str_cmp(element, 'ekflux') &
+        .OR. str_cmp(element, 'particle_energy_flux')) THEN
       elementselected = c_dump_ekflux
 
     ELSE IF (str_cmp(element, 'poynt_flux')) THEN
