@@ -531,13 +531,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart')) THEN
+    IF (str_cmp(element, 'npart') &
+        .OR. str_cmp(element, 'nparticles')) THEN
       species_list(species_id)%count = &
           as_long_integer_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_per_cell')) THEN
+    IF (str_cmp(element, 'npart_per_cell') &
+        .OR. str_cmp(element, 'nparticles_per_cell')) THEN
       species_list(species_id)%npart_per_cell = &
           as_real_print(value, element, errcode)
       RETURN
@@ -634,7 +636,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_max')) THEN
+    IF (str_cmp(element, 'npart_max') &
+        .OR. str_cmp(element, 'nparticles_max')) THEN
       species_list(species_id)%npart_max = &
           as_long_integer_print(value, element, errcode)
       RETURN
@@ -1076,9 +1079,9 @@ CONTAINS
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Two forms of npart used for particle species "', &
+            WRITE(io,*) 'Two forms of nparticles used for particle species "', &
                 TRIM(species_list(i)%name), '"'
-            WRITE(io,*) 'Just using "npart_per_cell".'
+            WRITE(io,*) 'Just using "nparticles_per_cell".'
           END DO
         END IF
         species_list(i)%count = INT(species_list(i)%npart_per_cell, i8)

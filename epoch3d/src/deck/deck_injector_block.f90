@@ -133,7 +133,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_per_cell')) THEN
+    IF (str_cmp(element, 'npart_per_cell') &
+        .OR. str_cmp(element, 'nparticles_per_cell')) THEN
       working_injector%npart_per_cell = as_integer_print(value, element, &
           errcode)
       RETURN
