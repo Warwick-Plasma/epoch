@@ -233,12 +233,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'pol_angle')) THEN
+    IF (str_cmp(element, 'pol_angle') &
+        .OR. str_cmp(element, 'polarisation_angle')) THEN
       working_laser%pol_angle = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'pol')) THEN
+    IF (str_cmp(element, 'pol') &
+        .OR. str_cmp(element, 'polarisation')) THEN
       ! Convert from degrees to radians
       working_laser%pol_angle = &
           pi * as_real_print(value, element, errcode) / 180.0_num
