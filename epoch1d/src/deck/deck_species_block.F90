@@ -1349,7 +1349,8 @@ CONTAINS
     END IF
 
     ! Breit Wheeler process electron
-    IF (str_cmp(value, 'bw_electron')) THEN
+    IF (str_cmp(value, 'bw_electron') &
+        .OR. str_cmp(value, 'breit_wheeler_electron')) THEN
       species_list(species_id)%charge = -q0
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_electron
@@ -1363,7 +1364,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(value, 'bw_positron')) THEN
+    IF (str_cmp(value, 'bw_positron') &
+        .OR. str_cmp(value, 'breit_wheeler_positron')) THEN
       species_list(species_id)%charge = q0
       species_list(species_id)%mass = m0
       species_charge_set(species_id) = .TRUE.
