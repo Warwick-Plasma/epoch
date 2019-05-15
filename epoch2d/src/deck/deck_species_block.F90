@@ -711,7 +711,9 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'density_back') &
-        .OR. str_cmp(element, 'number_density_back')) THEN
+        .OR. str_cmp(element, 'number_density_back') &
+        .OR. str_cmp(element, 'density_background') &
+        .OR. str_cmp(element, 'number_density_background')) THEN
       species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
@@ -829,21 +831,27 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'drift_x_back') &
-        .OR. str_cmp(element, 'drift_px_back')) THEN
+        .OR. str_cmp(element, 'drift_px_back') &
+        .OR. str_cmp(element, 'drift_x_background') &
+        .OR. str_cmp(element, 'drift_px_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(1) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_y_back') &
-        .OR. str_cmp(element, 'drift_py_back')) THEN
+        .OR. str_cmp(element, 'drift_py_back') &
+        .OR. str_cmp(element, 'drift_y_background') &
+        .OR. str_cmp(element, 'drift_py_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(2) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'drift_z_back') &
-        .OR. str_cmp(element, 'drift_pz_back')) THEN
+        .OR. str_cmp(element, 'drift_pz_back') &
+        .OR. str_cmp(element, 'drift_z_background') &
+        .OR. str_cmp(element, 'drift_pz_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(3) = &
           as_real_print(value, element, errcode)
       RETURN
@@ -890,10 +898,10 @@ CONTAINS
     IF (str_cmp(element, 'temp_back') &
         .OR. str_cmp(element, 'temp_back_k') &
         .OR. str_cmp(element, 'temp_back_ev') &
-        .OR. str_cmp(element, 'temperature_back') &
-        .OR. str_cmp(element, 'temperature_back_k') &
-        .OR. str_cmp(element, 'temperature_back_ev')) THEN
-      IF (str_cmp(element, 'temperature_back_ev') &
+        .OR. str_cmp(element, 'temperature_background') &
+        .OR. str_cmp(element, 'temperature_background_k') &
+        .OR. str_cmp(element, 'temperature_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_background_ev') &
           .OR. str_cmp(element, 'temp_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
@@ -908,10 +916,10 @@ CONTAINS
     IF (str_cmp(element, 'temp_x_back') &
         .OR. str_cmp(element, 'temp_x_back_k') &
         .OR. str_cmp(element, 'temp_x_back_ev') &
-        .OR. str_cmp(element, 'temperature_x_back') &
-        .OR. str_cmp(element, 'temperature_x_back_k') &
-        .OR. str_cmp(element, 'temperature_x_back_ev')) THEN
-      IF (str_cmp(element, 'temperature_x_back_ev') &
+        .OR. str_cmp(element, 'temperature_x_background') &
+        .OR. str_cmp(element, 'temperature_x_background_k') &
+        .OR. str_cmp(element, 'temperature_x_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_background_ev') &
           .OR. str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
@@ -922,10 +930,10 @@ CONTAINS
     IF (str_cmp(element, 'temp_y_back') &
         .OR. str_cmp(element, 'temp_y_back_k') &
         .OR. str_cmp(element, 'temp_y_back_ev') &
-        .OR. str_cmp(element, 'temperature_y_back') &
-        .OR. str_cmp(element, 'temperature_y_back_k') &
-        .OR. str_cmp(element, 'temperature_y_back_ev')) THEN
-      IF (str_cmp(element, 'temperature_y_back_ev') &
+        .OR. str_cmp(element, 'temperature_y_background') &
+        .OR. str_cmp(element, 'temperature_y_background_k') &
+        .OR. str_cmp(element, 'temperature_y_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_background_ev') &
           .OR. str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(2) = &
@@ -936,10 +944,10 @@ CONTAINS
     IF (str_cmp(element, 'temp_z_back') &
         .OR. str_cmp(element, 'temp_z_back_k') &
         .OR. str_cmp(element, 'temp_z_back_ev') &
-        .OR. str_cmp(element, 'temperature_z_back') &
-        .OR. str_cmp(element, 'temperature_z_back_k') &
-        .OR. str_cmp(element, 'temperature_z_back_ev')) THEN
-      IF (str_cmp(element, 'temperature_z_back_ev') &
+        .OR. str_cmp(element, 'temperature_z_background') &
+        .OR. str_cmp(element, 'temperature_z_background_k') &
+        .OR. str_cmp(element, 'temperature_z_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_background_ev') &
           .OR. str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(3) = &
