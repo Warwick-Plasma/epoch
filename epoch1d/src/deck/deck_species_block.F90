@@ -845,9 +845,14 @@ CONTAINS
 
     mult_string = '* ev / kb'
 
-    IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
-        .OR. str_cmp(element, 'temp_ev')) THEN
-      IF (str_cmp(element, 'temp_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp') &
+        .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev') &
+        .OR. str_cmp(element, 'temperature') &
+        .OR. str_cmp(element, 'temperature_k') &
+        .OR. str_cmp(element, 'temperature_ev')) THEN
+      IF (str_cmp(element, 'temperature_ev') &
+          .OR. str_cmp(element, 'temp_ev')) mult = ev / kb
 
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -876,9 +881,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_back') .OR. str_cmp(element, 'temp_back_k') &
-         .OR. str_cmp(element, 'temp_back_ev')) THEN
-      IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_back') &
+        .OR. str_cmp(element, 'temp_back_k') &
+        .OR. str_cmp(element, 'temp_back_ev') &
+        .OR. str_cmp(element, 'temperature_back') &
+        .OR. str_cmp(element, 'temperature_back_k') &
+        .OR. str_cmp(element, 'temperature_back_ev')) THEN
+      IF (str_cmp(element, 'temperature_back_ev') &
+          .OR. str_cmp(element, 'temp_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
           as_real_print(value, element, errcode) * mult
@@ -890,8 +900,13 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_x_back') &
-         .OR. str_cmp(element, 'temp_x_back_ev')) THEN
-      IF (str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_x_back_k') &
+        .OR. str_cmp(element, 'temp_x_back_ev') &
+        .OR. str_cmp(element, 'temperature_x_back') &
+        .OR. str_cmp(element, 'temperature_x_back_k') &
+        .OR. str_cmp(element, 'temperature_x_back_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_back_ev') &
+          .OR. str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
           as_real_print(value, element, errcode) * mult
@@ -899,8 +914,13 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_y_back') &
-         .OR. str_cmp(element, 'temp_y_back_ev')) THEN
-      IF (str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_y_back_k') &
+        .OR. str_cmp(element, 'temp_y_back_ev') &
+        .OR. str_cmp(element, 'temperature_y_back') &
+        .OR. str_cmp(element, 'temperature_y_back_k') &
+        .OR. str_cmp(element, 'temperature_y_back_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_back_ev') &
+          .OR. str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(2) = &
           as_real_print(value, element, errcode) * mult
@@ -908,17 +928,27 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_z_back') &
-         .OR. str_cmp(element, 'temp_z_back_ev')) THEN
-      IF (str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_z_back_k') &
+        .OR. str_cmp(element, 'temp_z_back_ev') &
+        .OR. str_cmp(element, 'temperature_z_back') &
+        .OR. str_cmp(element, 'temperature_z_back_k') &
+        .OR. str_cmp(element, 'temperature_z_back_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_back_ev') &
+          .OR. str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(3) = &
           as_real_print(value, element, errcode) * mult
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
-        .OR. str_cmp(element, 'temp_x_ev')) THEN
-      IF (str_cmp(element, 'temp_x_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_x') &
+        .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temperature_x_k') &
+        .OR. str_cmp(element, 'temperature_x_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_ev') &
+          .OR. str_cmp(element, 'temp_x_ev')) mult = ev / kb
 
       n = 1
       ic => species_list(species_id)%initial_conditions
@@ -937,9 +967,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
-        .OR. str_cmp(element, 'temp_y_ev')) THEN
-      IF (str_cmp(element, 'temp_y_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_y') &
+        .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temperature_y_k') &
+        .OR. str_cmp(element, 'temperature_y_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_ev') &
+          .OR. str_cmp(element, 'temp_y_ev')) mult = ev / kb
 
       n = 2
       ic => species_list(species_id)%initial_conditions
@@ -958,9 +993,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
-        .OR. str_cmp(element, 'temp_z_ev')) THEN
-      IF (str_cmp(element, 'temp_z_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_z') &
+        .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temperature_z_k') &
+        .OR. str_cmp(element, 'temperature_z_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_ev') &
+          .OR. str_cmp(element, 'temp_z_ev')) mult = ev / kb
 
       n = 3
       ic => species_list(species_id)%initial_conditions
