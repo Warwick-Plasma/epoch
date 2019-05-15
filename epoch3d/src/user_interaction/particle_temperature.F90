@@ -22,6 +22,8 @@ MODULE particle_temperature
 
   IMPLICIT NONE
 
+  REAL(num), PARAMETER, PRIVATE :: max_average_its = 20.0_num
+
 CONTAINS
 
   ! Subroutine to initialise a thermal particle distribution
@@ -209,7 +211,7 @@ CONTAINS
         errcode)
     average_its = REAL(iit_global, num) / MAX(REAL(ipart_global, num), c_tiny)
 
-    IF (rank == 0 .AND. average_its >= 20.0_num) THEN
+    IF (rank == 0 .AND. average_its >= max_average_its) THEN
       WRITE(string,'(F8.1)') average_its
       DO iu = 1, nio_units ! Print to stdout and to file
         io = ios_units(iu)
