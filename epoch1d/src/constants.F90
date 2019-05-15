@@ -42,10 +42,13 @@ MODULE constants
   INTEGER, PARAMETER :: du = 40
   INTEGER, PARAMETER :: lu = 41
   INTEGER, PARAMETER :: duc = 42
+  INTEGER, PARAMETER :: stat_unit = 20
 #ifdef NO_IO
   INTEGER, PARAMETER :: io_units(1) = (/ stdout /)
+  INTEGER, PARAMETER :: ios_units(1) = (/ stdout /)
 #else
   INTEGER, PARAMETER :: io_units(2) = (/ stdout,du /)
+  INTEGER, PARAMETER :: ios_units(2) = (/ stdout,stat_unit /)
 #endif
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
@@ -248,8 +251,6 @@ MODULE constants
 
   ! Length of a standard string
   INTEGER, PARAMETER :: string_length = 256
-
-  INTEGER, PARAMETER :: stat_unit = 20
 
 #ifdef PARTICLE_ID4
   INTEGER, PARAMETER :: idkind = i4
