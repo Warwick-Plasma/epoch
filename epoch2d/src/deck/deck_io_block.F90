@@ -669,7 +669,8 @@ CONTAINS
         .OR. str_cmp(element, 'particle_energy_flux')) THEN
       elementselected = c_dump_ekflux
 
-    ELSE IF (str_cmp(element, 'poynt_flux')) THEN
+    ELSE IF (str_cmp(element, 'poynt_flux') &
+        .OR. str_cmp(element, 'poynting_flux')) THEN
       elementselected = c_dump_poynt_flux
 
     ELSE IF (str_cmp(element, 'cpml_psi_eyx')) THEN
