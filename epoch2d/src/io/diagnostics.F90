@@ -625,7 +625,7 @@ CONTAINS
 
         ! These are derived variables from the particles
         CALL write_nspecies_field(c_dump_ekbar, code, &
-            'ekbar', 'EkBar', 'J', &
+            'ekbar', 'Average_Particle_Energy', 'J', &
             c_stagger_cell_centre, calc_ekbar, array)
 
         CALL write_nspecies_field(c_dump_mass_density, code, &

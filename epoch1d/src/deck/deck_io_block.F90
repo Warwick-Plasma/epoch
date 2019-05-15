@@ -608,7 +608,8 @@ CONTAINS
     ELSE IF (str_cmp(element, 'jz')) THEN
       elementselected = c_dump_jz
 
-    ELSE IF (str_cmp(element, 'ekbar')) THEN
+    ELSE IF (str_cmp(element, 'ekbar') &
+        .OR. str_cmp(element, 'average_particle_energy')) THEN
       elementselected = c_dump_ekbar
 
     ELSE IF (str_cmp(element, 'mass_density')) THEN
