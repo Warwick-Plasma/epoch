@@ -794,11 +794,29 @@ CONTAINS
     factor = user_factor / factor / 2.0_num
 #endif
 
+    ! If possible, use per-species properties
+    m1 = mass
+    m2 = mass
+    q1 = charge
+    q2 = charge
+    w1 = weight
+    w2 = weight
+
     current => p_list%head
     impact => current%next
     DO k = 1, pcount
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor, np)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      m1 = current%mass
+      m2 = current%mass
+      q1 = current%charge
+      q2 = current%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = current%weight
+#endif
+      CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+          w1, w2, dens, dens, log_lambda, factor, np)
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -876,11 +894,29 @@ CONTAINS
     factor = user_factor / factor / 2.0_num
 #endif
 
+    ! If possible, use per-species properties
+    m1 = mass
+    m2 = mass
+    q1 = charge
+    q2 = charge
+    w1 = weight
+    w2 = weight
+
     current => p_list%head
     impact => current%next
     DO k = 1, pcount
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor, np)
+#ifdef PER_PARTICLE_CHARGE_MASS
+      m1 = current%mass
+      m2 = current%mass
+      q1 = current%charge
+      q2 = current%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = current%weight
+#endif
+      CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+          w1, w2, dens, dens, log_lambda, factor, np)
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -914,6 +950,8 @@ CONTAINS
 
     REAL(num) :: factor, np
     INTEGER(i8) :: icount, jcount, pcount, k
+
+    REAL(num) :: m1, m2, q1 q2, w1, w2
 
     factor = 0.0_num
     np = 0.0_num
@@ -961,11 +999,29 @@ CONTAINS
       END DO
 #endif
 
+      ! If possible, use per-species properties
+      m1 = mass1
+      m2 = mass2
+      q1 = charge1
+      q2 = charge2
+      w1 = weight1
+      w2 = weight2
+
       current => p_list1%head
       impact => p_list2%head
       DO k = 1, pcount
-        CALL scatter_fn(current, impact, mass1, mass2, charge1, charge2, &
-            weight1, weight2, idens, jdens, log_lambda, &
+#ifdef PER_PARTICLE_CHARGE_MASS
+        m1 = current%mass
+        m2 = impact%mass
+        q1 = current%charge
+        q2 = impact%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        w1 = current%weight
+        w2 = impact%weight
+#endif
+        CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+            w1, w2, idens, jdens, log_lambda, &
             user_factor / factor, np)
         current => current%next
         impact => impact%next
@@ -987,13 +1043,13 @@ CONTAINS
   ! Binary collision scattering operator based jointly on:
   ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
   ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
-  SUBROUTINE scatter_np(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor, np)
+  SUBROUTINE scatter_np(current, impact, m1, m2, q1, q2, &
+      w1, w2, idens, jdens, log_lambda, factor, np)
 
     TYPE(particle), POINTER :: current, impact
-    REAL(num), INTENT(IN) :: mass1, mass2
-    REAL(num), INTENT(IN) :: charge1, charge2
-    REAL(num), INTENT(IN) :: weight1, weight2
+    REAL(num), INTENT(IN) :: m1, m2
+    REAL(num), INTENT(IN) :: q1, q2
+    REAL(num), INTENT(IN) :: w1, w2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor, np
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
@@ -1005,7 +1061,7 @@ CONTAINS
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
+    REAL(num) :: e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     REAL(num), PARAMETER :: pi_fac = &
@@ -1024,18 +1080,6 @@ CONTAINS
     ! Ditto for two particles with the same momentum
     vc = (p1_norm - p2_norm)
     IF (DOT_PRODUCT(vc, vc) < eps) RETURN
-
-#ifdef PER_PARTICLE_CHARGE_MASS
-    m1 = current%mass
-    m2 = impact%mass
-    q1 = current%charge
-    q2 = impact%charge
-#else
-    m1 = mass1
-    m2 = mass2
-    q1 = charge1
-    q2 = charge2
-#endif
 
     p1_norm = p1 / m1
     gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
@@ -1135,14 +1179,6 @@ CONTAINS
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
-#ifndef PER_SPECIES_WEIGHT
-    w1 = current%weight
-    w2 = impact%weight
-#else
-    w1 = weight1
-    w2 = weight2
-#endif
-
     wr = w1 / w2
     IF (wr > one_p_2eps) THEN
       CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
@@ -1160,8 +1196,8 @@ CONTAINS
 
   ! Binary collision scattering operator based on that of
   ! Y. Sentoku and A. J. Kemp. [J Comput Phys, 227, 6846 (2008)]
-  SUBROUTINE scatter_sk(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor, np)
+  SUBROUTINE scatter_sk(current, impact, m1, m2, q1, q2, &
+      w1, w2, idens, jdens, log_lambda, factor, np)
 
     ! Here the Coulomb collisions are performed by rotating the momentum
     ! vector of one of the particles in the centre of momentum reference
@@ -1169,9 +1205,9 @@ CONTAINS
     ! of the second particle is simply the opposite of the first.
 
     TYPE(particle), POINTER :: current, impact
-    REAL(num), INTENT(IN) :: mass1, mass2
-    REAL(num), INTENT(IN) :: charge1, charge2
-    REAL(num), INTENT(IN) :: weight1, weight2
+    REAL(num), INTENT(IN) :: m1, m2
+    REAL(num), INTENT(IN) :: q1, q2
+    REAL(num), INTENT(IN) :: w1, w2
     REAL(num), INTENT(IN) :: idens, jdens, log_lambda
     REAL(num), INTENT(IN) :: factor, np
     REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
@@ -1182,7 +1218,6 @@ CONTAINS
     REAL(num), DIMENSION(3) :: v3, v4
     REAL(num), DIMENSION(3) :: vr, vcr
     REAL(num), DIMENSION(3) :: c1, c2, c3
-    REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
     REAL(num) :: e3, e4, e5, e6
     REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
@@ -1206,18 +1241,6 @@ CONTAINS
     ! Ditto for two particles with the same momentum
     vc = (p1_norm - p2_norm)
     IF (DOT_PRODUCT(vc, vc) < eps) RETURN
-
-#ifdef PER_PARTICLE_CHARGE_MASS
-    m1 = current%mass
-    m2 = impact%mass
-    q1 = current%charge
-    q2 = impact%charge
-#else
-    m1 = mass1
-    m2 = mass2
-    q1 = charge1
-    q2 = charge2
-#endif
 
     ! Pre-collision energies
     e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
@@ -1317,14 +1340,6 @@ CONTAINS
 
     e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
     e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
-
-#ifndef PER_SPECIES_WEIGHT
-    w1 = current%weight
-    w2 = impact%weight
-#else
-    w1 = weight1
-    w2 = weight2
-#endif
 
     wr = w1 / w2
     IF (wr > one_p_2eps) THEN
