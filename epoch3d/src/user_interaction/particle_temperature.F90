@@ -151,7 +151,7 @@ CONTAINS
     REAL(num) :: mass
     REAL(num), DIMENSION(c_ndirs) ::  drift_local
     TYPE(particle), POINTER :: current
-    INTEGER(i8) :: ipart, iit, ipart_global, iit_global
+    INTEGER(i8) :: ipart, it, ipart_global, it_global
     REAL(num) :: average_its
     INTEGER :: ix, iy, iz, idir, err
     TYPE(parameter_pack) :: parameters
@@ -163,7 +163,7 @@ CONTAINS
     partlist => part_species%attached_list
     current => partlist%head
     ipart = 0
-    iit = 0
+    it = 0
     DO WHILE(ipart < partlist%count)
 #ifdef PER_PARTICLE_CHARGE_MASS
       mass = current%mass
@@ -199,7 +199,7 @@ CONTAINS
           parameters, 2, ranges(3,:), err)
 
       CALL sample_from_deck_expression(current, part_species%dist_fn, &
-          parameters, ranges, mass, drift_local, iit)
+          parameters, ranges, mass, drift_local, it)
 
       current => current%next
       ipart = ipart + 1
@@ -207,9 +207,9 @@ CONTAINS
 
     CALL MPI_REDUCE(ipart, ipart_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
         errcode)
-    CALL MPI_REDUCE(iit, iit_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
+    CALL MPI_REDUCE(it, it_global, 1, MPI_INTEGER8, MPI_SUM, 0, comm, &
         errcode)
-    average_its = REAL(iit_global, num) / MAX(REAL(ipart_global, num), c_tiny)
+    average_its = REAL(it_global, num) / MAX(REAL(ipart_global, num), c_tiny)
 
     IF (rank == 0 .AND. average_its >= max_average_its) THEN
       WRITE(string,'(F8.1)') average_its
@@ -431,7 +431,7 @@ CONTAINS
 
   ! Function to take a deck expression and sample until it returns a value
   SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
-      ranges, mass, drift, iit_r)
+      ranges, mass, drift, it_r)
 
     TYPE(particle), INTENT(INOUT) :: part
     TYPE(primitive_stack), INTENT(INOUT) :: stack
@@ -439,16 +439,16 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs,2), INTENT(IN) :: ranges
     REAL(num), INTENT(IN) :: mass
     REAL(num), DIMENSION(c_ndirs) , INTENT(IN) :: drift
-    INTEGER(i8), INTENT(INOUT), OPTIONAL :: iit_r
+    INTEGER(i8), INTENT(INOUT), OPTIONAL :: it_r
     REAL(num) :: rand, probability, mass_c, drift_2
     REAL(num) :: gamma_before, gamma_after, gamma_drift, gamma_drift_fac
     REAL(num) :: range_diff1, range_diff2, range_diff3
     INTEGER :: err
-    INTEGER(i8) :: iit
+    INTEGER(i8) :: it
     LOGICAL :: no_drift
 
     err = c_err_none
-    IF (PRESENT(iit_r)) iit = iit_r
+    IF (PRESENT(it_r)) it = it_r
 
     drift_2 = DOT_PRODUCT(drift, drift)
     IF (drift_2 < c_tiny) THEN
@@ -478,7 +478,7 @@ CONTAINS
         CALL abort_code(c_err_bad_setup)
       ENDIF
 
-      iit = iit + 1
+      it = it + 1
 
       rand = random()
       IF (rand > probability) CYCLE
@@ -492,7 +492,7 @@ CONTAINS
       IF (rand < gamma_drift_fac * (gamma_after / gamma_before)) EXIT
     ENDDO
 
-    IF (PRESENT(iit_r)) iit_r = iit
+    IF (PRESENT(it_r)) it_r = it
 
     part%part_p = parameters%pack_p
 
