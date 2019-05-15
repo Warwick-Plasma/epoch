@@ -27,6 +27,19 @@
  * Added parameter "number_density_max" to the injectors, matching the
    functionality available in the species block.
 
+ * Added non-abbreviated aliases for the following deck keywords:
+   "temperature" in place of "temp"
+   "background" for "back"
+   "nparticles" for "npart"
+   "fraction" for "frac"
+   "energy" for "en"
+   "gamma_minus_one" for "gamma_m1"
+   "average_particle_energy" for "ekbar"
+   "particle_energy_flux" for "ekflux"
+   "poynting_flux" for "poynt_flux"
+   "polarisation" for "pol"
+   "breit_wheeler" for "bw"
+
 
 ## v4.15.0 to v4.16.0
 
