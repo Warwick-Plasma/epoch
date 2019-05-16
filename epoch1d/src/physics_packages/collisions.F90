@@ -915,8 +915,129 @@ CONTAINS
       w1 = current%weight
       w2 = current%weight
 #endif
-      CALL scatter_np(current, impact, m1, m2, q1, q2, &
-          w1, w2, dens, dens, log_lambda, factor, np)
+      p1 = current%part_p / c
+      p2 = impact%part_p / c
+
+      p1_norm = p1 / m0
+      p2_norm = p2 / m0
+
+      ! Two stationary particles can't collide, so don't try
+      IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+          .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
+
+      ! Ditto for two particles with the same momentum
+      vc = (p1_norm - p2_norm)
+      IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
+
+      p1_norm = p1 / m1
+      gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
+
+      p2_norm = p2 / m2
+      gm2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num) * m2
+
+      gm = gm1 + gm2
+
+      ! Pre-collision velocities
+      v1 = p1 / gm1
+      v2 = p2 / gm2
+
+      ! Pre-collision energies
+      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
+      ! Velocity of centre-of-momentum (COM) reference frame
+      vc = (p1 + p2) / gm
+      vc_sq = DOT_PRODUCT(vc, vc)
+
+      gamma_rel_inv = SQRT(1.0_num - vc_sq)
+      gc = 1.0_num / gamma_rel_inv
+
+      gc_m1_vc = (gc - 1.0_num) / vc_sq
+
+      p3 = p1 + (gc_m1_vc * DOT_PRODUCT(vc, v1) - gc) * gm1 * vc
+
+      v_sq = DOT_PRODUCT(vc, v1)
+      gm3 = (1.0_num - v_sq) * gc * gm1
+      v_sq = DOT_PRODUCT(vc, v2)
+      gm4 = (1.0_num - v_sq) * gc * gm2
+
+      p_mag2 = DOT_PRODUCT(p3, p3)
+      p_mag = SQRT(p_mag2)
+
+      s_fac = dens * dens * dt * factor * dx
+      fac = (q1 * q2)**2 * log_lambda * s_fac / (pi4_eps2_c4 * gm1 * gm2)
+      s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
+
+      ! Cold plasma upper limit for s12
+      v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
+      s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
+          / MAX(m1 * dens**two_thirds, m2 * dens**two_thirds)
+
+      s12 = MIN(s12, s_prime)
+
+      ran1 = random()
+      ran2 = random() * 2.0_num * pi
+
+      ! Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+      IF (s12 < 0.1_num) THEN
+        cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
+      ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
+        a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
+             + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
+             * s12) * s12) * s12) * s12) * s12
+        a = 1.0_num / a_inv
+        cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
+      ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
+        a = 3.0_num * EXP(-s12)
+        cosp = LOG(EXP(-a) + 2.0_num * ran1 * SINH(a)) / a
+      ELSE
+        cosp = 2.0_num * ran1 - 1.0_num
+      END IF
+
+      sinp = SIN(ACOS(cosp))
+
+      ! Calculate new momenta according to rotation by angle p
+      p_perp2 = p3(1)**2 + p3(2)**2
+      p_perp = SQRT(p_perp2)
+      p_tot = SQRT(p_perp2 + p3(3)**2)
+      p_perp_inv = 1.0_num / (p_perp + c_tiny)
+
+      mat(1,1) =  p3(1) * p3(3) * p_perp_inv
+      mat(1,2) = -p3(2) * p_tot * p_perp_inv
+      mat(1,3) =  p3(1)
+      mat(2,1) =  p3(2) * p3(3) * p_perp_inv
+      mat(2,2) =  p3(1) * p_tot * p_perp_inv
+      mat(2,3) =  p3(2)
+      mat(3,1) = -p_perp
+      mat(3,2) =  0.0_num
+      mat(3,3) =  p3(3)
+
+      sinp_cos = sinp * COS(ran2)
+      sinp_sin = sinp * SIN(ran2)
+
+      p3(1) = mat(1,1) * sinp_cos + mat(1,2) * sinp_sin + mat(1,3) * cosp
+      p3(2) = mat(2,1) * sinp_cos + mat(2,2) * sinp_sin + mat(2,3) * cosp
+      p3(3) = mat(3,1) * sinp_cos + mat(3,2) * sinp_sin + mat(3,3) * cosp
+
+      p4 = -p3
+
+      p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+      p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+
+      e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+      e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+      wr = w1 / w2
+      IF (wr > one_p_2eps) THEN
+        CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+      ELSE IF (wr < one_m_2eps) THEN
+        CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+      END IF
+
+      ! Update particle properties
+      current%part_p = p5
+      impact%part_p = p6
+
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
