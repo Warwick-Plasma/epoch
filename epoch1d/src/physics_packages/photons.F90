@@ -157,7 +157,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler positron species specified.'
-          WRITE(io,*) 'Specify using "identify:bw_positron".'
+          WRITE(io,*) 'Specify using "identify:breit_wheeler_positron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_positron)%name), ' instead.'
         END DO
@@ -187,7 +187,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler electron species specified.'
-          WRITE(io,*) 'Specify using "identify:bw_electron".'
+          WRITE(io,*) 'Specify using "identify:breit_wheeler_electron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_electron)%name), ' instead.'
         END DO
