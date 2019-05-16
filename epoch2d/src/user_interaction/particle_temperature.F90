@@ -149,6 +149,7 @@ CONTAINS
     TYPE(parameter_pack) :: parameters
     REAL(num), DIMENSION(c_ndirs, 2) :: ranges
     CHARACTER(LEN=25) :: string
+    INTEGER :: iu, io
 #include "particle_head.inc"
 
     partlist => part_species%attached_list
@@ -199,26 +200,17 @@ CONTAINS
         errcode)
     average_its = REAL(iit_global, num) / MAX(REAL(ipart_global, num), c_tiny)
 
-    IF (rank == 0) THEN
+    IF (rank == 0 .AND. average_its >= 20.0_num) THEN
       WRITE(string,'(F8.1)') average_its
-      WRITE(*,*) 'Setup distribution for particles of species ', '"' &
-          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
-          // ' iteratations per particle on average'
-      IF (average_its >= 20.0_num) THEN
-        WRITE(*,*) '***WARNING***'
-        WRITE(*,*) 'Average iterations is high. ', &
-            'Possibly try smaller momentum range'
-      ENDIF
-#ifndef NO_IO
-      WRITE(stat_unit,*) 'Setup distribution for particles of species ', '"' &
-          // TRIM(part_species%name) // '"', ' taking ' // TRIM(string) &
-          // ' iteratations per particle on average'
-      IF (average_its >= 20.0_num) THEN
-        WRITE(stat_unit,*) '***WARNING***'
-        WRITE(stat_unit,*) 'Average iterations is high. ', &
-            'Possibly try smaller momentum range'
-      ENDIF
-#endif
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = ios_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'Setup distribution for particles of species ', '"' &
+            // TRIM(part_species%name) // '"'
+        WRITE(io,*) 'taking ' // TRIM(ADJUSTL(string)) &
+            // ' iteratations per particle on average.'
+        WRITE(io,*) 'Possibly try smaller momentum range'
+      END DO
     ENDIF
 
   END SUBROUTINE setup_particle_dist_fn

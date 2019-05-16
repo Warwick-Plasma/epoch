@@ -764,7 +764,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x')) THEN
+    IF (str_cmp(element, 'drift_x') .OR. str_cmp(element, 'drift_px')) THEN
       n = 1
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -782,7 +782,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y')) THEN
+    IF (str_cmp(element, 'drift_y') .OR. str_cmp(element, 'drift_py')) THEN
       n = 2
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -800,7 +800,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z')) THEN
+    IF (str_cmp(element, 'drift_z') .OR. str_cmp(element, 'drift_pz')) THEN
       n = 3
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -847,19 +847,22 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x_back')) THEN
+    IF (str_cmp(element, 'drift_x_back') &
+        .OR. str_cmp(element, 'drift_px_back')) THEN
       species_list(species_id)%initial_conditions%drift_back(1) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y_back')) THEN
+    IF (str_cmp(element, 'drift_y_back') &
+        .OR. str_cmp(element, 'drift_py_back')) THEN
       species_list(species_id)%initial_conditions%drift_back(2) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z_back')) THEN
+    IF (str_cmp(element, 'drift_z_back') &
+        .OR. str_cmp(element, 'drift_pz_back')) THEN
       species_list(species_id)%initial_conditions%drift_back(3) = &
           as_real_print(value, element, errcode)
       RETURN
