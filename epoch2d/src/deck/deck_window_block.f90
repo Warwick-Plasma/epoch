@@ -72,9 +72,11 @@ CONTAINS
 
     IF (warn) THEN
       PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'an X boundary after the moving window ', &
-          'begins. These boundary conditions are ', 'not compatible with ', &
-          'moving windows and are unlikely to give correct results.'
+          'conditions for'
+      PRINT*, 'an X boundary after the moving window begins. These ', &
+          'boundary conditions are'
+      PRINT*, 'not compatible with moving windows and are unlikely to give ', &
+          'correct results.'
     END IF
 
     warn = .FALSE.
@@ -88,28 +90,28 @@ CONTAINS
 
     IF (warn) THEN
       PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'the Y boundaries. These boundary ', &
-          'conditions are not fully compatible ', 'with moving windows and ', &
-          'might give incorrect results.'
+          'conditions for'
+      PRINT*, 'the Y boundaries. These boundary conditions are not ', &
+          'fully compatible'
+      PRINT*, 'with moving windows and might give incorrect results.'
     END IF
 
     IF (n_custom_loaders > 0) THEN
       PRINT*, 'WARNING: you have specified particle loading from file in ', &
-          'conjunction with ', 'moving windows. The file contents will be ', &
-          'ignored for new particles entering ', 'the domain once the ', &
-          'window begins to move.'
+          'conjunction with'
+      PRINT*, 'moving windows. The file contents will be ignored for new ', &
+          'particles entering'
+      PRINT*, 'the domain once the window begins to move.'
     END IF
 
-    warn = .FALSE.
-    CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
-    CALL check_injector_boundary(x_max_boundary, injector_x_max, warn)
-    CALL check_injector_boundary(y_min_boundary, injector_y_min, warn)
-    CALL check_injector_boundary(y_max_boundary, injector_y_max, warn)
+    CALL check_injector_boundaries(warn)
 
     IF (warn) THEN
       PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
-          'the moving window. ', 'These are not fully compatible with ', &
-          'moving windows and are likely to give ', 'incorrect results.'
+          'the moving window.'
+      PRINT*, 'These are not fully compatible with moving windows and are ', &
+          'likely to give'
+      PRINT*, 'incorrect results.'
     END IF
 
   END SUBROUTINE window_deck_finalise
@@ -208,24 +210,23 @@ CONTAINS
 
 
 
-  SUBROUTINE check_injector_boundary(bc, injector, warn)
+  SUBROUTINE check_injector_boundaries(warn)
 
-    LOGICAL, INTENT(IN) :: bc
-    TYPE(injector_block), POINTER :: injector
-    LOGICAL, INTENT(INOUT) :: warn
+    LOGICAL, INTENT(OUT) :: warn
     TYPE(injector_block), POINTER :: current
 
-    IF (.NOT.bc .OR. warn) RETURN
-
-    current => injector_x_min
+    warn = .FALSE.
+    current => injector_list
     DO WHILE(ASSOCIATED(current))
-      IF (current%has_t_end) THEN
-        warn = .TRUE.
-        RETURN
+      IF (is_boundary(current%boundary)) THEN
+        IF (current%has_t_end) THEN
+          warn = .TRUE.
+          RETURN
+        END IF
       END IF
       current => current%next
     END DO
 
-  END SUBROUTINE check_injector_boundary
+  END SUBROUTINE check_injector_boundaries
 
 END MODULE deck_window_block

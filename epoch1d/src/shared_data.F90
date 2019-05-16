@@ -614,6 +614,7 @@ MODULE shared_data
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
+  LOGICAL :: is_boundary(2*c_ndims)
   LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
@@ -659,7 +660,8 @@ MODULE shared_data
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
 
-  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_block), POINTER :: injector_list
+  LOGICAL :: injector_boundary(2*c_ndims)
 
   !----------------------------------------------------------------------------
   ! laser boundaries

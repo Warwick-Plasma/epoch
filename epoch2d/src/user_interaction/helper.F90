@@ -367,26 +367,26 @@ CONTAINS
 
     IF (species%fill_ghosts) THEN
       IF (x_min_boundary) THEN
-        IF (ASSOCIATED(injector_x_min) &
+        IF (injector_boundary(c_bd_x_min) &
             .OR. species%bc_particle(c_bd_x_min) == c_bc_thermal) THEN
           ix_min = ix_min - png
         END IF
       END IF
       IF (x_max_boundary) THEN
-        IF (ASSOCIATED(injector_x_max) &
+        IF (injector_boundary(c_bd_x_max) &
             .OR. species%bc_particle(c_bd_x_max) == c_bc_thermal) THEN
           ix_max = ix_max + png
         END IF
       END IF
 
       IF (y_min_boundary) THEN
-        IF (ASSOCIATED(injector_y_min) &
+        IF (injector_boundary(c_bd_y_min) &
             .OR. species%bc_particle(c_bd_y_min) == c_bc_thermal) THEN
           iy_min = iy_min - png
         END IF
       END IF
       IF (y_max_boundary) THEN
-        IF (ASSOCIATED(injector_y_max) &
+        IF (injector_boundary(c_bd_y_max) &
             .OR. species%bc_particle(c_bd_y_max) == c_bc_thermal) THEN
           iy_max = iy_max + png
         END IF
@@ -764,14 +764,14 @@ CONTAINS
     ! Overlap with the injection region
     IF (species%fill_ghosts .AND. use_injectors) THEN
       x0 = x_min
-      IF (ASSOCIATED(injector_x_min)) x0 = x0 - 0.5_num * dx * png
+      IF (injector_boundary(c_bd_x_min)) x0 = x0 - 0.5_num * dx * png
       x1 = x_max
-      IF (ASSOCIATED(injector_x_max)) x1 = x1 + 0.5_num * dx * png
+      IF (injector_boundary(c_bd_x_max)) x1 = x1 + 0.5_num * dx * png
 
       y0 = y_min
-      IF (ASSOCIATED(injector_y_min)) y0 = y0 - 0.5_num * dy * png
+      IF (injector_boundary(c_bd_y_min)) y0 = y0 - 0.5_num * dy * png
       y1 = y_max
-      IF (ASSOCIATED(injector_y_max)) y1 = y1 + 0.5_num * dy * png
+      IF (injector_boundary(c_bd_y_max)) y1 = y1 + 0.5_num * dy * png
 
       current => partlist%head
       DO WHILE(ASSOCIATED(current))

@@ -664,6 +664,7 @@ MODULE shared_data
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
   LOGICAL :: z_min_boundary, z_max_boundary
+  LOGICAL :: is_boundary(2*c_ndims)
   LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
@@ -715,9 +716,8 @@ MODULE shared_data
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
 
-  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
-  TYPE(injector_block), POINTER :: injector_y_min, injector_y_max
-  TYPE(injector_block), POINTER :: injector_z_min, injector_z_max
+  TYPE(injector_block), POINTER :: injector_list
+  LOGICAL :: injector_boundary(2*c_ndims)
 
   !----------------------------------------------------------------------------
   ! laser boundaries

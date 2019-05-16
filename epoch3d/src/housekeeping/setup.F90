@@ -1166,20 +1166,8 @@ CONTAINS
 
         DO i = 1, 2 * c_ndims
           CALL read_laser_phases(sdf_handle, block_id, ndims, i)
+          CALL read_injector_depths(sdf_handle, block_id, ndims, i)
         END DO
-
-        CALL read_injector_depths(sdf_handle, injector_x_min, &
-            block_id, ndims, 'injector_x_min_depths', c_dir_x, x_min_boundary)
-        CALL read_injector_depths(sdf_handle, injector_x_max, &
-            block_id, ndims, 'injector_x_max_depths', c_dir_x, x_max_boundary)
-        CALL read_injector_depths(sdf_handle, injector_y_min, &
-            block_id, ndims, 'injector_y_min_depths', c_dir_y, y_min_boundary)
-        CALL read_injector_depths(sdf_handle, injector_y_max, &
-            block_id, ndims, 'injector_y_max_depths', c_dir_y, y_max_boundary)
-        CALL read_injector_depths(sdf_handle, injector_z_min, &
-            block_id, ndims, 'injector_z_min_depths', c_dir_z, z_min_boundary)
-        CALL read_injector_depths(sdf_handle, injector_z_max, &
-            block_id, ndims, 'injector_z_max_depths', c_dir_z, z_max_boundary)
 
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
@@ -1609,31 +1597,31 @@ CONTAINS
   ! Read injector depths from restart and initialise
   ! Requires the same injectors defined from the deck
 
-  SUBROUTINE read_injector_depths(sdf_handle, injector_base_pointer, &
-      block_id_in, ndims, block_id_compare, direction, runs_this_rank)
+  SUBROUTINE read_injector_depths(sdf_handle, block_id_in, ndims, boundary)
 
     TYPE(sdf_file_handle), INTENT(INOUT) :: sdf_handle
-    TYPE(injector_block), POINTER :: injector_base_pointer
     CHARACTER(LEN=*), INTENT(IN) :: block_id_in
-    INTEGER, INTENT(IN) :: ndims
-    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
-    INTEGER, INTENT(IN) :: direction
-    LOGICAL, INTENT(IN) :: runs_this_rank
+    INTEGER, INTENT(IN) :: ndims, boundary
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: depths
-    INTEGER :: inj_count
+    INTEGER :: injector_count
     INTEGER, DIMENSION(4) :: dims
     INTEGER, DIMENSION(c_ndims-1) :: n_els, sz, starts
+    CHARACTER(LEN=21) :: block_id_compare
+    CHARACTER(LEN=5), DIMENSION(6) :: direction_name = &
+        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
+
+    block_id_compare = 'injector_' // direction_name(boundary) // '_depths'
 
     IF (str_cmp(block_id_in, block_id_compare)) THEN
       CALL sdf_read_array_info(sdf_handle, dims)
 
       ! In 1-d there is one value, 2-d there is one strip (per bnd),
       ! in 3-d one plane etc
-      IF (direction == c_dir_x) THEN
+      IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
         n_els = (/ny, nz/)
         sz = (/ny_global, nz_global/)
         starts = (/ny_global_min, nz_global_min/)
-      ELSE IF (direction == c_dir_y) THEN
+      ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
         n_els = (/nx, nz/)
         sz = (/nx_global, nz_global/)
         starts = (/nx_global_min, nz_global_min/)
@@ -1646,12 +1634,12 @@ CONTAINS
       ALLOCATE(depths(n_els(1), n_els(2), dims(c_ndims)))
 
       CALL sdf_read_array(sdf_handle, depths, (/sz(1), sz(2), dims(c_ndims)/), &
-          (/starts(1), starts(2), 1/), null_proc=(.NOT. runs_this_rank))
+          (/starts(1), starts(2), 1/), null_proc=(.NOT. is_boundary(boundary)))
 
-      CALL setup_injector_depths(injector_base_pointer, depths, inj_count)
+      CALL setup_injector_depths(boundary, depths, injector_count)
 
       ! Got count back so can now check and message
-      IF (ndims /= c_ndims .OR. dims(c_ndims) /= inj_count) THEN
+      IF (ndims /= c_ndims .OR. dims(c_ndims) /= injector_count) THEN
         PRINT*, '*** WARNING ***'
         PRINT*, 'Number of depths on ', TRIM(block_id_in), &
             ' does not match number of injectors.'
