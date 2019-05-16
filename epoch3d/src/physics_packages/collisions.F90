@@ -845,7 +845,7 @@ CONTAINS
       w1 = current%weight
       w2 = current%weight
 #endif
-      CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+      CALL scatter_sk(current, impact, m1, m2, q1, q2, &
           w1, w2, dens, dens, log_lambda, factor, np)
       current => impact%next
       impact => current%next
@@ -945,7 +945,7 @@ CONTAINS
       w1 = current%weight
       w2 = current%weight
 #endif
-      CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+      CALL scatter_np(current, impact, m1, m2, q1, q2, &
           w1, w2, dens, dens, log_lambda, factor, np)
       current => impact%next
       impact => current%next
