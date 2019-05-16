@@ -815,8 +815,132 @@ CONTAINS
       w1 = current%weight
       w2 = current%weight
 #endif
-      CALL scatter_sk(current, impact, m1, m2, q1, q2, &
-          w1, w2, dens, dens, log_lambda, factor, np)
+
+      ! Copy all of the necessary particle data into variables with easier to
+      ! read names
+      p1 = current%part_p
+      p2 = impact%part_p
+      p1_norm = p1 / mc0
+      p2_norm = p2 / mc0
+
+      ! Two stationary particles can't collide, so don't try
+      IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+          .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
+
+      ! Ditto for two particles with the same momentum
+      vc = (p1_norm - p2_norm)
+      IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
+
+      ! Pre-collision energies
+      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
+      ! Velocity of centre-of-momentum (COM) reference frame
+      vc = (p1 + p2) * cc / (e1 + e2)
+      vc_sq = DOT_PRODUCT(vc, vc)
+      vc_sq_cc = vc_sq / cc
+
+      gamma_rel2 = 1.0_num / (1.0_num - vc_sq_cc)
+      gamma_rel = SQRT(gamma_rel2)
+      gamma_rel_m1 = gamma_rel2 * vc_sq_cc / (gamma_rel + 1.0_num)
+
+      ! Lorentz momentum transform to get into COM frame
+      p1_vc = DOT_PRODUCT(p1, vc)
+      p2_vc = DOT_PRODUCT(p2, vc)
+      tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+      p3 = p1 + vc * (tvar - gamma_rel * e1 / cc)
+      tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+      p4 = p2 + vc * (tvar - gamma_rel * e2 / cc)
+
+      p3_mag = SQRT(DOT_PRODUCT(p3, p3))
+
+      ! Lorentz energy transform
+      e3 = gamma_rel * (e1 - p1_vc)
+      e4 = gamma_rel * (e2 - p2_vc)
+      ! Pre-collision velocities in COM frame
+      v3 = p3 * cc / e3
+      v4 = p4 * cc / e4
+
+      ! Relative velocity
+      tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / cc)
+      vr = (v3 - v4) / tvar
+      vrabs = SQRT(DOT_PRODUCT(vr, vr))
+
+      ! Collision frequency
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(dens, dens))
+
+      ! Calculate number of collisions in the timestep
+      ! Limit value according to Sentoku & Kemp
+      nu = MIN(nu * factor * np * dt, 0.02_num)
+
+      ! New coordinate system to simplify scattering.
+      CALL new_coords(vr, c1, c2, c3)
+
+      ! this is to ensure that 0 < ran1 < 1
+      ! ran1=0 gives NaN in logarithm
+      ! ran1=1 could give positive logarithm due to rounding errors
+      ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
+      ran2 = 2.0_num * pi * random()
+
+      ! Box Muller method for random from Gaussian distribution,
+      ! mean 0, variance of nu
+      ! Possible place for speed up by caching the second Box Muller number
+      ! and using it later
+      ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
+      delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
+      ran2 = 2.0_num * pi * random()
+
+      ! angle theta in the One Particle at Rest frame
+      sin_theta = 2.0_num * delta / (1.0_num + delta**2)
+      cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
+
+      ! Transform angles from particle j's rest frame to COM frame
+      ! Note azimuthal angle (ran2) is invariant under this transformation
+      IF (m1 > m2) THEN
+        vcr = v3
+      ELSE
+        vcr = v4
+      END IF
+      gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / cc))
+
+      denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
+          / MAX(vrabs, c_tiny))
+      IF (ABS(denominator) > SQRT(c_tiny)) THEN
+        tan_theta_cm = sin_theta / denominator
+        tan_theta_cm2 = tan_theta_cm**2
+      ELSE
+        tan_theta_cm = c_largest_number
+        tan_theta_cm2 = c_largest_number
+      END IF
+
+      sin_theta = tan_theta_cm / SQRT(1.0_num + tan_theta_cm2)
+      cos_theta = 1.0_num / SQRT(1.0_num + tan_theta_cm2)
+
+      ! Post-collision momenta in COM frame
+      p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
+          + c3 * sin_theta * SIN(ran2))
+      p4 = -p3
+
+      ! Lorentz momentum transform to get back to lab frame
+      tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
+      p5 = p3 + vc * (tvar + gamma_rel * e3 / cc)
+      tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
+      p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
+
+      e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+      e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+      wr = w1 / w2
+      IF (wr > one_p_2eps) THEN
+        CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+      ELSE IF (wr < one_m_2eps) THEN
+        CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+      END IF
+
+      ! Update particle properties
+      current%part_p = p5
+      impact%part_p = p6
+
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
