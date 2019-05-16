@@ -763,15 +763,19 @@ CONTAINS
     REAL(num), DIMENSION(3) :: v3, v4
     REAL(num), DIMENSION(3) :: vr, vcr
     REAL(num), DIMENSION(3) :: c1, c2, c3
-    REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
+    REAL(num) :: m1, m2, q1, q2 ! Masses and charges
     REAL(num) :: e1, e2 ! Pre-collision energies
-    REAL(num) :: e3, e4, e5, e6
+    REAL(num) :: e3, e4
     REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
     REAL(num) :: tvar ! Dummy variable for temporarily storing values
     REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
     REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
-    REAL(num) :: vrabs, denominator, wr
+    REAL(num) :: vrabs, denominator
     REAL(num) :: nu, ran1, ran2
+#ifndef PER_SPECIES_WEIGHT
+    REAL(num) :: e5, e6
+    REAL(num) :: w1, w2, wr
+#endif
 
     factor = 0.0_num
     np = 0.0_num
@@ -814,8 +818,6 @@ CONTAINS
     m2 = mass
     q1 = charge
     q2 = charge
-    w1 = weight
-    w2 = weight
 
     current => p_list%head
     impact => current%next
@@ -825,10 +827,6 @@ CONTAINS
       m2 = impact%mass
       q1 = current%charge
       q2 = impact%charge
-#endif
-#ifndef PER_SPECIES_WEIGHT
-      w1 = current%weight
-      w2 = impact%weight
 #endif
 
       ! Copy all of the necessary particle data into variables with easier to
@@ -942,15 +940,22 @@ CONTAINS
       tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
       p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
 
+
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = impact%weight
+      wr = w1 / w2
+
+      ! Post collision energies. Only needed for weighted particle correction
       e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
       e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
-      wr = w1 / w2
       IF (wr > one_p_2eps) THEN
         CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
       ELSE IF (wr < one_m_2eps) THEN
         CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
       END IF
+#endif
 
       ! Update particle properties
       current%part_p = p5
@@ -989,14 +994,16 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
+    REAL(num) :: m1, m2, q1, q2
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     REAL(num), PARAMETER :: pi_fac = &
                                 (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
-
+#ifndef PER_SPECIES_WEIGHT
+    REAL(num) :: w1, w2, wr, e1, e5, e2, e6
+#endif
     factor = 0.0_num
     np = 0.0_num
 
@@ -1038,8 +1045,6 @@ CONTAINS
     m2 = mass
     q1 = charge
     q2 = charge
-    w1 = weight
-    w2 = weight
 
     current => p_list%head
     impact => current%next
@@ -1050,10 +1055,7 @@ CONTAINS
       q1 = current%charge
       q2 = impact%charge
 #endif
-#ifndef PER_SPECIES_WEIGHT
-      w1 = current%weight
-      w2 = impact%weight
-#endif
+
       p1 = current%part_p / c
       p2 = impact%part_p / c
 
@@ -1079,10 +1081,6 @@ CONTAINS
       ! Pre-collision velocities
       v1 = p1 / gm1
       v2 = p2 / gm2
-
-      ! Pre-collision energies
-      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
-      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
 
       ! Velocity of centre-of-momentum (COM) reference frame
       vc = (p1 + p2) / gm
@@ -1163,15 +1161,26 @@ CONTAINS
       p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
       p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
 
+
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = impact%weight
+      wr = w1 / w2
+
+      ! Energies before and after collision.
+      ! Only required for weighted particle correction
+      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
       e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
       e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
-      wr = w1 / w2
       IF (wr > one_p_2eps) THEN
         CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
       ELSE IF (wr < one_m_2eps) THEN
         CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
       END IF
+#endif
 
       ! Update particle properties
       current%part_p = p5
