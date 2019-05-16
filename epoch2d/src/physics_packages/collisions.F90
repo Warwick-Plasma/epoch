@@ -966,7 +966,7 @@ CONTAINS
     REAL(num) :: factor, np
     INTEGER(i8) :: icount, jcount, pcount, k
 
-    REAL(num) :: m1, m2, q1 q2, w1, w2
+    REAL(num) :: m1, m2, q1, q2, w1, w2
 
     factor = 0.0_num
     np = 0.0_num
