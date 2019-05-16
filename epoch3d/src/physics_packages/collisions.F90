@@ -837,13 +837,13 @@ CONTAINS
     DO k = 1, pcount
 #ifdef PER_PARTICLE_CHARGE_MASS
       m1 = current%mass
-      m2 = current%mass
+      m2 = impact%mass
       q1 = current%charge
-      q2 = current%charge
+      q2 = impact%charge
 #endif
 #ifndef PER_SPECIES_WEIGHT
       w1 = current%weight
-      w2 = current%weight
+      w2 = impact%weight
 #endif
 
       ! Copy all of the necessary particle data into variables with easier to
@@ -1061,13 +1061,13 @@ CONTAINS
     DO k = 1, pcount
 #ifdef PER_PARTICLE_CHARGE_MASS
       m1 = current%mass
-      m2 = current%mass
+      m2 = impact%mass
       q1 = current%charge
-      q2 = current%charge
+      q2 = impact%charge
 #endif
 #ifndef PER_SPECIES_WEIGHT
       w1 = current%weight
-      w2 = current%weight
+      w2 = impact%weight
 #endif
       p1 = current%part_p / c
       p2 = impact%part_p / c
