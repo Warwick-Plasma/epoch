@@ -645,7 +645,7 @@ CONTAINS
 
         ! These are derived variables from the particles
         CALL write_nspecies_field(c_dump_ekbar, code, &
-            'ekbar', 'EkBar', 'J', &
+            'ekbar', 'Average_Particle_Energy', 'J', &
             c_stagger_cell_centre, calc_ekbar, array)
 
         CALL write_nspecies_field(c_dump_mass_density, code, &
@@ -709,7 +709,7 @@ CONTAINS
             c_stagger_cell_centre, calc_per_species_current, array, (/c_dir_z/))
 
         CALL write_nspecies_field(c_dump_ekflux, code, &
-            'ekflux', 'EkFlux', 'W/m^2', &
+            'ekflux', 'Particle_Energy_Flux', 'W/m^2', &
             c_stagger_cell_centre, calc_ekflux, array, fluxdir, dir_tags)
 
         CALL write_nspecies_field(c_dump_poynt_flux, code, &

@@ -253,7 +253,8 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'nprocz')) THEN
 
-    ELSE IF (str_cmp(element, 'npart')) THEN
+    ELSE IF (str_cmp(element, 'npart') &
+        .OR. str_cmp(element, 'nparticles')) THEN
       npart_global = as_long_integer_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'nsteps')) THEN

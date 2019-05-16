@@ -129,7 +129,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_per_cell')) THEN
+    IF (str_cmp(element, 'npart_per_cell') &
+        .OR. str_cmp(element, 'nparticles_per_cell')) THEN
       working_injector%npart_per_cell = as_integer_print(value, element, &
           errcode)
       RETURN
@@ -160,12 +161,17 @@ CONTAINS
     mult_string = '* ev / kb'
     mult = ev / kb
 
-    IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
-        .OR. str_cmp(element, 'temp_ev')) THEN
+    IF (str_cmp(element, 'temp') &
+        .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev') &
+        .OR. str_cmp(element, 'temperature') &
+        .OR. str_cmp(element, 'temperature_k') &
+        .OR. str_cmp(element, 'temperature_ev')) THEN
       DO i = 1, 3
         CALL initialise_stack(working_injector%temperature_function(i))
         CALL tokenize(value, working_injector%temperature_function(i), errcode)
-        IF (str_cmp(element, 'temp_ev')) THEN
+        IF (str_cmp(element, 'temperature_ev') &
+            .OR. str_cmp(element, 'temp_ev')) THEN
           CALL tokenize(mult_string, working_injector%temperature_function(i), &
                         errcode)
         END IF
@@ -173,36 +179,51 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
-        .OR. str_cmp(element, 'temp_x_ev')) THEN
+    IF (str_cmp(element, 'temp_x') &
+        .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temperature_x_k') &
+        .OR. str_cmp(element, 'temperature_x_ev')) THEN
       i = 1
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      IF (str_cmp(element, 'temp_x_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_ev') &
+          .OR. str_cmp(element, 'temp_x_ev')) THEN
         CALL tokenize(mult_string, working_injector%temperature_function(i), &
                       errcode)
       END IF
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
-        .OR. str_cmp(element, 'temp_y_ev')) THEN
+    IF (str_cmp(element, 'temp_y') &
+        .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temperature_y_k') &
+        .OR. str_cmp(element, 'temperature_y_ev')) THEN
       i = 2
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      IF (str_cmp(element, 'temp_y_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_ev') &
+          .OR. str_cmp(element, 'temp_y_ev')) THEN
         CALL tokenize(mult_string, working_injector%temperature_function(i), &
                       errcode)
       END IF
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
-        .OR. str_cmp(element, 'temp_z_ev')) THEN
+    IF (str_cmp(element, 'temp_z') &
+        .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temperature_z_k') &
+        .OR. str_cmp(element, 'temperature_z_ev')) THEN
       i = 3
       CALL initialise_stack(working_injector%temperature_function(i))
       CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      IF (str_cmp(element, 'temp_z_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_ev') &
+          .OR. str_cmp(element, 'temp_z_ev')) THEN
         CALL tokenize(mult_string, working_injector%temperature_function(i), &
                       errcode)
       END IF
