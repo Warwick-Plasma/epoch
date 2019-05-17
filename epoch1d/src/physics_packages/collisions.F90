@@ -224,7 +224,7 @@ CONTAINS
                 m1, q1, w1, idens(ix), &
                 log_lambda(ix), user_factor)
           ELSE
-            CALL inter_species_collisions( &
+            CALL inter_coll_fn( &
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
@@ -403,7 +403,7 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
-              CALL inter_species_collisions(ejected_e, ionising_e, &
+              CALL inter_coll_fn(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix), jdens(ix), &
                   e_log_lambda(ix), e_user_factor)
@@ -411,7 +411,7 @@ CONTAINS
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q1) > c_tiny) THEN
-              CALL inter_species_collisions( &
+              CALL inter_coll_fn( &
                   species_list(ispecies)%secondary_list(ix), &
                   species_list(jspecies)%secondary_list(ix), &
                   m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
@@ -436,7 +436,7 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
-              CALL inter_species_collisions(ejected_e, ionising_e, &
+              CALL inter_coll_fn(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix), e_dens(ix), &
                   e_log_lambda(ix), e_user_factor)
@@ -444,7 +444,7 @@ CONTAINS
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q2) > c_tiny) THEN
-              CALL inter_species_collisions( &
+              CALL inter_coll_fn( &
                   species_list(ispecies)%secondary_list(ix), &
                   species_list(jspecies)%secondary_list(ix), &
                   m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
@@ -459,7 +459,7 @@ CONTAINS
           END DO ! ix
         ELSE
           DO ix = 1, nx
-            CALL inter_species_collisions( &
+            CALL inter_coll_fn( &
                 species_list(ispecies)%secondary_list(ix), &
                 species_list(jspecies)%secondary_list(ix), &
                 m1, m2, q1, q2, w1, w2, idens(ix), jdens(ix), &
@@ -1186,7 +1186,7 @@ CONTAINS
 
 
 
-  SUBROUTINE inter_species_collisions(p_list1, p_list2, mass1, mass2, &
+  SUBROUTINE inter_collisions_sk(p_list1, p_list2, mass1, mass2, &
       charge1, charge2, weight1, weight2, &
       idens, jdens, log_lambda, user_factor )
 
@@ -1274,7 +1274,7 @@ CONTAINS
         w1 = current%weight
         w2 = impact%weight
 #endif
-        CALL scatter_fn(current, impact, m1, m2, q1, q2, &
+        CALL scatter_sk(current, impact, m1, m2, q1, q2, &
             w1, w2, idens, jdens, log_lambda, &
             user_factor / factor, np)
         current => current%next
@@ -1290,7 +1290,115 @@ CONTAINS
       NULLIFY(p_list2%tail%next)
     END IF
 
-  END SUBROUTINE inter_species_collisions
+  END SUBROUTINE inter_collisions_sk
+
+
+
+  SUBROUTINE inter_collisions_np(p_list1, p_list2, mass1, mass2, &
+      charge1, charge2, weight1, weight2, &
+      idens, jdens, log_lambda, user_factor )
+
+    TYPE(particle_list), INTENT(INOUT) :: p_list1
+    TYPE(particle_list), INTENT(INOUT) :: p_list2
+
+    REAL(num), INTENT(IN) :: mass1, charge1, weight1
+    REAL(num), INTENT(IN) :: mass2, charge2, weight2
+
+    REAL(num), INTENT(IN) :: idens, jdens
+    REAL(num), INTENT(IN) :: log_lambda
+    REAL(num), INTENT(IN) :: user_factor
+
+    TYPE(particle), POINTER :: current, impact
+
+    REAL(num) :: factor, np
+    INTEGER(i8) :: icount, jcount, pcount, k
+
+    REAL(num) :: m1, m2, q1, q2, w1, w2
+
+    factor = 0.0_num
+    np = 0.0_num
+
+    ! Inter-species collisions
+    icount = p_list1%count
+    jcount = p_list2%count
+    pcount = MAX(icount, jcount)
+
+    IF (icount > 0 .AND. jcount > 0) THEN
+      ! temporarily join tail to the head of the lists to make them circular
+      p_list1%tail%next => p_list1%head
+      p_list2%tail%next => p_list2%head
+
+#ifdef PER_SPECIES_WEIGHT
+      np = icount * weight1
+      factor = pcount * MIN(weight1, weight2)
+#else
+      current => p_list1%head
+      impact => p_list2%head
+
+      IF (icount >= jcount) THEN
+        DO k = 1, icount
+          np = np + current%weight
+          current => current%next
+        END DO
+      ELSE
+        DO k = 1, jcount
+          np = np + impact%weight
+          impact => impact%next
+        END DO
+      END IF
+
+      current => p_list1%head
+      impact => p_list2%head
+
+      DO k = 1, pcount
+        factor = factor + MIN(current%weight, impact%weight)
+        current => current%next
+        impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
+#endif
+      END DO
+#endif
+
+      ! If possible, use per-species properties
+      m1 = mass1
+      m2 = mass2
+      q1 = charge1
+      q2 = charge2
+      w1 = weight1
+      w2 = weight2
+
+      current => p_list1%head
+      impact => p_list2%head
+      DO k = 1, pcount
+#ifdef PER_PARTICLE_CHARGE_MASS
+        m1 = current%mass
+        m2 = impact%mass
+        q1 = current%charge
+        q2 = impact%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        w1 = current%weight
+        w2 = impact%weight
+#endif
+        CALL scatter_np(current, impact, m1, m2, q1, q2, &
+            w1, w2, idens, jdens, log_lambda, &
+            user_factor / factor, np)
+        current => current%next
+        impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
+#endif
+      END DO
+
+      ! restore the tail of the lists
+      NULLIFY(p_list1%tail%next)
+      NULLIFY(p_list2%tail%next)
+    END IF
+
+  END SUBROUTINE inter_collisions_np
 
 
 
@@ -2063,9 +2171,11 @@ CONTAINS
     IF (use_nanbu) THEN
       scatter_fn => scatter_np
       intra_coll_fn => intra_collisions_np
+      inter_coll_fn => inter_collisions_np
     ELSE
       scatter_fn => scatter_sk
       intra_coll_fn => intra_collisions_sk
+      inter_coll_fn => inter_collisions_sk
     END IF
 
   END SUBROUTINE setup_collisions
