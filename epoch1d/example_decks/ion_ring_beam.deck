@@ -58,7 +58,7 @@ begin:species
   charge = 1.0
   mass = ion_mass_e
   frac = 0.3
-  density = background_density * (1.0 - frac_beam)
+  number_density = background_density * (1.0 - frac_beam)
   temp = background_temp
 end:species
 
@@ -69,24 +69,25 @@ begin:species
   mass = 1.0
   frac = 0.3
   temp = background_temp / 100
-  density = background_density
+  number_density = background_density
 end:species
+
 
 begin:species
   name = ion_ring_beam
   charge = 1.0
   mass = ion_mass_e
   frac = 0.4
-  density = background_density * frac_beam
+  number_density = background_density * frac_beam
 
-  dist_fn = px / px_peak * exp(-(px - pring)^2/2/p_ring_th^2) * exp(-(pz - pbeam)^2/2/p_beam_th^2)
+  dist_fn = px / px_peak * exp(-0.5 * ((px - pring) / p_ring_th)^2) \
+          * exp(-0.5 * ((pz - pbeam) / p_beam_th)^2)
   dist_fn_px_range = (px_min_limit, pring + 6*p_ring_th)
 # deliberately ignore this dist_fn_py_range
 # dist_fn_py_range = (0, 0)
   dist_fn_pz_range = (pbeam - 6*p_ring_th, pbeam + 6*p_ring_th)
   field_aligned_initialisation = T
   x_perp_y_ignored_z_para = T
-
 end:species
 
 

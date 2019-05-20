@@ -910,11 +910,14 @@ CONTAINS
   END SUBROUTINE custom_particle_load
 
 
+
   ! Subroutine to initialise a ring beam particle distribution
   ! Assumes linear interpolation of temperatures between cells
   ! Create a beam distribution along z, and ring distribution around x and y
   ! then rotate to point along magnetic field
+
   SUBROUTINE rotate_species_momenta_for_field_aligned_initialisation(species)
+
     TYPE(particle_species), POINTER :: species
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle), POINTER :: current
@@ -925,7 +928,7 @@ CONTAINS
     ipart = 0
     DO WHILE (ipart < partlist%count)
       CALL rotate_particle_momentum_for_field_aligned_initialisation(current, &
-        ipart, species%x_perp_y_ignored_z_para)
+          ipart, species%x_perp_y_ignored_z_para)
       current => current%next
       ipart = ipart + 1
     END DO
@@ -933,15 +936,17 @@ CONTAINS
   END SUBROUTINE rotate_species_momenta_for_field_aligned_initialisation
 
 
+
   SUBROUTINE rotate_particle_momentum_for_field_aligned_initialisation( &
       current, ipart, x_perp_y_ignored_z_para)
+
     TYPE(particle), POINTER, INTENT(INOUT) :: current
     INTEGER(i8), INTENT(IN) :: ipart
     LOGICAL, INTENT(IN) :: x_perp_y_ignored_z_para
-    REAL(num), DIMENSION(1:3, 1:3) :: rotation_matrix
+    REAL(num), DIMENSION(3,3) :: rotation_matrix
     REAL(num) :: gyrophase
     REAL(num), PARAMETER :: golden_angle = pi * (3.0_num - SQRT(5.0_num))
-    REAL(num), DIMENSION(1:3) :: aligned_momentum
+    REAL(num), DIMENSION(3) :: aligned_momentum
 
     CALL setup_rotation_matrix(current, rotation_matrix)
 
@@ -958,17 +963,20 @@ CONTAINS
     END IF
 
     ! orient particle along actual magnetic field direction
-    current%part_p(1) = DOT_PRODUCT(rotation_matrix(1, :), aligned_momentum)
-    current%part_p(2) = DOT_PRODUCT(rotation_matrix(2, :), aligned_momentum)
-    current%part_p(3) = DOT_PRODUCT(rotation_matrix(3, :), aligned_momentum)
+    current%part_p(1) = DOT_PRODUCT(rotation_matrix(1,:), aligned_momentum)
+    current%part_p(2) = DOT_PRODUCT(rotation_matrix(2,:), aligned_momentum)
+    current%part_p(3) = DOT_PRODUCT(rotation_matrix(3,:), aligned_momentum)
 
   END SUBROUTINE rotate_particle_momentum_for_field_aligned_initialisation
 
 
+
   SUBROUTINE setup_rotation_matrix(part, r)
+
     TYPE(Particle), POINTER, INTENT(IN) :: part
-    REAL(num), DIMENSION(1:3, 1:3), INTENT(INOUT) :: r ! the rotation matrix
-    REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2, part_x
+    REAL(num), DIMENSION(3,3), INTENT(INOUT) :: r ! the rotation matrix
+    REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2
+    REAL(num) :: part_x
 
 #include "particle_head.inc"
 
@@ -1001,7 +1009,7 @@ CONTAINS
     r(3,3) = 1.0_num
 
     u2 = SQRT(ux**2 + uy**2 + uz**2)
-    IF (u2 .GT. 0.0_num) THEN
+    IF (u2 > 0.0_num) THEN
       ux = ux / u2
       uy = uy / u2
       uz = uz / u2
@@ -1022,6 +1030,7 @@ CONTAINS
     r = r / det
 
   END SUBROUTINE setup_rotation_matrix
+
 
 
   SUBROUTINE setup_ic_density(ispecies)
@@ -1138,6 +1147,3 @@ CONTAINS
   END SUBROUTINE setup_ic_drift
 
 END MODULE helper
-
-
-
