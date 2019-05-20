@@ -36,8 +36,7 @@ CONTAINS
     ! This gives exact charge conservation on the grid
 
     ! Contains the integer cell position of the particle in x, y, z
-    INTEGER :: cell_x1, cell_x2, cell_x3
-    INTEGER :: cell_y1, cell_y2, cell_y3
+    INTEGER :: cell_x3, cell_y3
 
     ! Xi (space factor see page 38 in manual)
     ! The code now uses gx and hx instead of xi0 and xi1
@@ -70,26 +69,6 @@ CONTAINS
     REAL(num) :: probe_energy, part_mc2
 #endif
 
-    ! Contains the floating point version of the cell number (never actually
-    ! used)
-    REAL(num) :: cell_x_r, cell_y_r
-
-    ! The fraction of a cell between the particle position and the cell boundary
-    REAL(num) :: cell_frac_x, cell_frac_y
-
-    ! Weighting factors as Eqn 4.77 page 25 of manual
-    ! Eqn 4.77 would be written as
-    ! F(j-1) * gmx + F(j) * g0x + F(j+1) * gpx
-    ! Defined at the particle position
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx, gy
-
-    ! Defined at the particle position - 0.5 grid cell in each direction
-    ! This is to deal with the grid stagger
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx, hy
-
-    ! Fields at particle location
-    REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
-
     ! P+, P- and Tau variables from Boris1970, page27 of manual
     REAL(num) :: uxp, uxm, uyp, uym, uzp, uzm
     REAL(num) :: tau, taux, tauy, tauz, taux2, tauy2, tauz2
@@ -102,14 +81,13 @@ CONTAINS
     REAL(num) :: wx, wy, wz
 
     ! Temporary variables
-    REAL(num) :: idx, idy
     REAL(num) :: idty, idtx, idxy
     REAL(num) :: idt, dto2, dtco2
     REAL(num) :: fcx, fcy, fcz, fjx, fjy, fjz
     REAL(num) :: root, dtfac, gamma_rel, part_u2, third, igamma
     REAL(num) :: delta_x, delta_y, part_vz
     REAL(num) :: hy_iy, xfac1, yfac1, yfac2
-    INTEGER :: ispecies, ix, iy, dcellx, dcelly, cx, cy
+    INTEGER :: ispecies, ix, iy, cx, cy
     INTEGER(i8) :: ipart
 #ifdef WORK_DONE_INTEGRATED
     REAL(num) :: tmp_x, tmp_y, tmp_z
@@ -122,21 +100,13 @@ CONTAINS
 #ifdef ZERO_CURRENT_PARTICLES
     LOGICAL :: not_zero_current_species
 #endif
-    ! Particle weighting multiplication factor
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    REAL(num) :: cf2
-    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
-#elif  PARTICLE_SHAPE_TOPHAT
-    REAL(num), PARAMETER :: fac = 1.0_num
-#else
-    REAL(num) :: cf2
-    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
-#endif
 #ifdef DELTAF_METHOD
     REAL(num) :: weight_back
 #endif
 
     TYPE(particle), POINTER :: current, next
+
+#include "fields_at_particle_head.inc"
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -151,8 +121,6 @@ CONTAINS
 
     ! Unvarying multiplication factors
 
-    idx = 1.0_num / dx
-    idy = 1.0_num / dy
     idt = 1.0_num / dt
     dto2 = dt / 2.0_num
     dtco2 = c * dto2
@@ -250,72 +218,7 @@ CONTAINS
         tmp_z = part_uz * root
 #endif
 
-        ! Grid cell position as a fraction.
-#ifdef PARTICLE_SHAPE_TOPHAT
-        cell_x_r = part_x * idx - 0.5_num
-        cell_y_r = part_y * idy - 0.5_num
-#else
-        cell_x_r = part_x * idx
-        cell_y_r = part_y * idy
-#endif
-        ! Round cell position to nearest cell
-        cell_x1 = FLOOR(cell_x_r + 0.5_num)
-        ! Calculate fraction of cell between nearest cell boundary and particle
-        cell_frac_x = REAL(cell_x1, num) - cell_x_r
-        cell_x1 = cell_x1 + 1
-
-        cell_y1 = FLOOR(cell_y_r + 0.5_num)
-        cell_frac_y = REAL(cell_y1, num) - cell_y_r
-        cell_y1 = cell_y1 + 1
-
-        ! Particle weight factors as described in the manual, page25
-        ! These weight grid properties onto particles
-        ! Also used to weight particle properties onto grid, used later
-        ! to calculate J
-        ! NOTE: These weights require an additional multiplication factor!
-#ifdef PARTICLE_SHAPE_BSPLINE3
-#include "bspline3/gx.inc"
-#elif  PARTICLE_SHAPE_TOPHAT
-#include "tophat/gx.inc"
-#else
-#include "triangle/gx.inc"
-#endif
-
-        ! Now redo shifted by half a cell due to grid stagger.
-        ! Use shifted version for ex in X, ey in Y, ez in Z
-        ! And in Y&Z for bx, X&Z for by, X&Y for bz
-        cell_x2 = FLOOR(cell_x_r)
-        cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
-        cell_x2 = cell_x2 + 1
-
-        cell_y2 = FLOOR(cell_y_r)
-        cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
-        cell_y2 = cell_y2 + 1
-
-        dcellx = 0
-        dcelly = 0
-        ! NOTE: These weights require an additional multiplication factor!
-#ifdef PARTICLE_SHAPE_BSPLINE3
-#include "bspline3/hx_dcell.inc"
-#elif  PARTICLE_SHAPE_TOPHAT
-#include "tophat/hx_dcell.inc"
-#else
-#include "triangle/hx_dcell.inc"
-#endif
-
-        ! These are the electric and magnetic fields interpolated to the
-        ! particle position. They have been checked and are correct.
-        ! Actually checking this is messy.
-#ifdef PARTICLE_SHAPE_BSPLINE3
-#include "bspline3/e_part.inc"
-#include "bspline3/b_part.inc"
-#elif  PARTICLE_SHAPE_TOPHAT
-#include "tophat/e_part.inc"
-#include "tophat/b_part.inc"
-#else
-#include "triangle/e_part.inc"
-#include "triangle/b_part.inc"
-#endif
+#include "fields_at_particle.inc"
 
         ! update particle momenta using weighted fields
         uxm = part_ux + cmratio * ex_part
