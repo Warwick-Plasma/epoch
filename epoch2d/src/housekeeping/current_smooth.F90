@@ -73,7 +73,7 @@ CONTAINS
     REAL(num) :: val, w1, w2
 #else
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
-    INTEGER :: ng_l, iit, istride, cstride
+    INTEGER :: ng_l, it, istride, cstride
     REAL(num) :: alpha, beta
 #endif
 
@@ -115,7 +115,7 @@ CONTAINS
     wk_array = 0.0_num
     wk_array(1-jng:nx+jng,1-jng:ny+jng) = array(1-jng:nx+jng,1-jng:ny+jng)
 
-    DO iit = 1, its + comp_its
+    DO it = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
         CALL field_bc(wk_array, ng_l)
         cstride = stride_inner(istride)
@@ -128,7 +128,7 @@ CONTAINS
         END DO
         wk_array(1:nx,1:ny) = array(1:nx,1:ny)
       END DO
-      IF (iit > its) THEN
+      IF (it > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO

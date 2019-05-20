@@ -608,7 +608,8 @@ CONTAINS
     ELSE IF (str_cmp(element, 'jz')) THEN
       elementselected = c_dump_jz
 
-    ELSE IF (str_cmp(element, 'ekbar')) THEN
+    ELSE IF (str_cmp(element, 'ekbar') &
+        .OR. str_cmp(element, 'average_particle_energy')) THEN
       elementselected = c_dump_ekbar
 
     ELSE IF (str_cmp(element, 'mass_density')) THEN
@@ -663,10 +664,12 @@ CONTAINS
     ELSE IF (str_cmp(element, 'ejected_particles')) THEN
       elementselected = c_dump_ejected_particles
 
-    ELSE IF (str_cmp(element, 'ekflux')) THEN
+    ELSE IF (str_cmp(element, 'ekflux') &
+        .OR. str_cmp(element, 'particle_energy_flux')) THEN
       elementselected = c_dump_ekflux
 
-    ELSE IF (str_cmp(element, 'poynt_flux')) THEN
+    ELSE IF (str_cmp(element, 'poynt_flux') &
+        .OR. str_cmp(element, 'poynting_flux')) THEN
       elementselected = c_dump_poynt_flux
 
     ELSE IF (str_cmp(element, 'cpml_psi_eyx')) THEN

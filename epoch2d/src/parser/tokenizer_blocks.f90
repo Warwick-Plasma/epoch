@@ -303,10 +303,12 @@ CONTAINS
     ELSE IF (str_cmp(name, 'dir_pz')) THEN
       as_constant = c_const_dir_pz
 
-    ELSE IF (str_cmp(name, 'dir_en')) THEN
+    ELSE IF (str_cmp(name, 'dir_en') &
+        .OR. str_cmp(name, 'dir_energy')) THEN
       as_constant = c_const_dir_en
 
-    ELSE IF (str_cmp(name, 'dir_gamma_m1')) THEN
+    ELSE IF (str_cmp(name, 'dir_gamma_m1') &
+        .OR. str_cmp(name, 'dir_gamma_minus_one')) THEN
       as_constant = c_const_dir_gamma_m1
 
     ELSE IF (str_cmp(name, 'dir_xy_angle')) THEN
