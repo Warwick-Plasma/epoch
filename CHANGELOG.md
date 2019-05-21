@@ -28,6 +28,9 @@
    ZERO_CURRENT_PARTICLES. Support for zero_current species is
    disabled by default. Removed support for the "tracer" flag.
 
+ * Add "field_aligned_initialisation" and "x_perp_y_ignored_z_para" flags to
+   the species block for setting up a ring-beam simulation.
+
 
 ## v4.16.0 to v4.17.0
 
