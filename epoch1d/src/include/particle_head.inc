@@ -1,7 +1,5 @@
-    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: gx
-
+    REAL(num), DIMENSION(sf_min:sf_max) :: gx
     REAL(num) :: cell_x_r, cell_frac_x
-
     INTEGER :: cell_x
 #ifndef PARTICLE_SHAPE_TOPHAT
     REAL(num) :: cx2

@@ -1139,16 +1139,13 @@ CONTAINS
     REAL(num), DIMENSION(3,3), INTENT(INOUT) :: r ! the rotation matrix
     REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2
     REAL(num) :: part_x, part_y, part_z
-
-#include "particle_head.inc"
-
-#include "fields_at_particle_declarations_and_first_statements.inc"
+#include "fields_at_particle_head.inc"
 
     part_x = part%part_pos(1) - x_grid_min_local
     part_y = part%part_pos(2) - y_grid_min_local
     part_z = part%part_pos(3) - z_grid_min_local
 
-#include "fields_at_particle_implementation.inc"
+#include "fields_at_particle.inc"
 
     ! assign and normalise to components of vector f
     fx = bx_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)

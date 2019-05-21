@@ -323,6 +323,7 @@ OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
 
 INCLUDES = $(INCDIR)/particle_head.inc $(INCDIR)/particle_to_grid.inc \
+  $(INCDIR)/fields_at_particle.inc $(INCDIR)/fields_at_particle_head.inc \
   $(INCDIR)/bspline3/b_part.inc $(INCDIR)/bspline3/e_part.inc \
   $(INCDIR)/bspline3/gx.inc $(INCDIR)/bspline3/gxfac.inc \
   $(INCDIR)/bspline3/hx_dcell.inc \

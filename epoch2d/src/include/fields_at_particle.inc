@@ -1,15 +1,20 @@
-
     ! Grid cell position as a fraction.
 #ifdef PARTICLE_SHAPE_TOPHAT
     cell_x_r = part_x * idx - 0.5_num
+    cell_y_r = part_y * idy - 0.5_num
 #else
     cell_x_r = part_x * idx
+    cell_y_r = part_y * idy
 #endif
     ! Round cell position to nearest cell
     cell_x1 = FLOOR(cell_x_r + 0.5_num)
     ! Calculate fraction of cell between nearest cell boundary and particle
     cell_frac_x = REAL(cell_x1, num) - cell_x_r
     cell_x1 = cell_x1 + 1
+
+    cell_y1 = FLOOR(cell_y_r + 0.5_num)
+    cell_frac_y = REAL(cell_y1, num) - cell_y_r
+    cell_y1 = cell_y1 + 1
 
     ! Particle weight factors as described in the manual, page25
     ! These weight grid properties onto particles
@@ -31,7 +36,12 @@
     cell_frac_x = REAL(cell_x2, num) - cell_x_r + 0.5_num
     cell_x2 = cell_x2 + 1
 
+    cell_y2 = FLOOR(cell_y_r)
+    cell_frac_y = REAL(cell_y2, num) - cell_y_r + 0.5_num
+    cell_y2 = cell_y2 + 1
+
     dcellx = 0
+    dcelly = 0
     ! NOTE: These weights require an additional multiplication factor!
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/hx_dcell.inc"

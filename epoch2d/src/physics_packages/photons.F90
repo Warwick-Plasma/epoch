@@ -747,9 +747,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: part_x, part_y
     REAL(num), INTENT(OUT) :: e_at_part(3), b_at_part(3)
 
-#include "particle_head.inc"
-#include "fields_at_particle_declarations_and_first_statements.inc"
-#include "fields_at_particle_implementation.inc"
+#include "fields_at_particle_head.inc"
+#include "fields_at_particle.inc"
 
     ! update particle momenta using weighted fields
     ! ex_part etc are NOT fields at particle, but fac times

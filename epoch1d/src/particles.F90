@@ -35,6 +35,9 @@ CONTAINS
     ! Estimate of rho(t+1.5*dt) rather than calculating J directly
     ! This gives exact charge conservation on the grid
 
+    ! Contains the integer cell position of the particle in x, y, z
+    INTEGER :: cell_x3
+
     ! Xi (space factor see page 38 in manual)
     ! The code now uses gx and hx instead of xi0 and xi1
 
@@ -100,12 +103,11 @@ CONTAINS
 
     TYPE(particle), POINTER :: current, next
 
+#include "fields_at_particle_head.inc"
+
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
 #endif
-
-#include "particle_head.inc"
-#include "fields_at_particle_declarations_and_first_statements.inc"
 
     jx = 0.0_num
     jy = 0.0_num
@@ -205,7 +207,7 @@ CONTAINS
         tmp_z = part_uz * root
 #endif
 
-#include "fields_at_particle_implementation.inc"
+#include "fields_at_particle.inc"
 
         ! update particle momenta using weighted fields
         uxm = part_ux + cmratio * ex_part
