@@ -751,6 +751,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%drift = 0.0_num
         END IF
         array => ic%drift(:,:,n)
       ELSE
@@ -768,6 +769,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%drift = 0.0_num
         END IF
         array => ic%drift(:,:,n)
       ELSE
@@ -785,6 +787,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%drift)) THEN
           ALLOCATE(ic%drift(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%drift = 0.0_num
         END IF
         array => ic%drift(:,:,n)
       ELSE
@@ -853,6 +856,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%temp = 0.0_num
         END IF
       ELSE
         array => dummy
@@ -924,6 +928,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%temp = 0.0_num
         END IF
         array => ic%temp(:,:,n)
       ELSE
@@ -944,6 +949,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%temp = 0.0_num
         END IF
         array => ic%temp(:,:,n)
       ELSE
@@ -964,6 +970,7 @@ CONTAINS
       IF (got_file) THEN
         IF (.NOT. ASSOCIATED(ic%temp)) THEN
           ALLOCATE(ic%temp(1-ng:nx+ng,1-ng:ny+ng,3))
+          ic%temp = 0.0_num
         END IF
         array => ic%temp(:,:,n)
       ELSE
