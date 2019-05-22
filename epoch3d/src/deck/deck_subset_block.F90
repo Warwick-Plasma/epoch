@@ -82,9 +82,6 @@ CONTAINS
         sub%skip = (SUM(sub%skip_dir - 1) /= 0)
 
         ! Check for any spatial restrictions in place
-        sub%space_restrictions = sub%use_x_min .OR. sub%use_x_max &
-            .OR. sub%use_y_min .OR. sub%use_y_max &
-            .OR. sub%use_z_min .OR. sub%use_z_max
         IF (sub%skip .AND. sub%space_restrictions) THEN
           IF (rank == 0) THEN
             PRINT*, 'Skip and spatial restrictions specified for ', &
@@ -174,7 +171,7 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    INTEGER :: io, iu, ispecies
+    INTEGER :: io, iu, ispecies, n
     TYPE(subset), POINTER :: sub
 
     errcode = c_err_none
@@ -196,143 +193,96 @@ CONTAINS
 
     sub => subset_list(subset_id)
 
+    n = 0
     IF (str_cmp(element, 'random_fraction')) THEN
-      sub%random_fraction = as_real_print(value, element, errcode)
-      sub%use_random = .TRUE.
-      RETURN
-    END IF
+      n = c_subset_random
 
-    IF (str_cmp(element, 'gamma_min')) THEN
-      sub%gamma_min = as_real_print(value, element, errcode)
-      sub%use_gamma_min = .TRUE.
+    ELSE IF (str_cmp(element, 'gamma_min')) THEN
+      n = c_subset_gamma_min
       sub%use_gamma = .TRUE.
-      RETURN
-    END IF
 
-    IF (str_cmp(element, 'gamma_max')) THEN
-      sub%gamma_max = as_real_print(value, element, errcode)
-      sub%use_gamma_max = .TRUE.
+    ELSE IF (str_cmp(element, 'gamma_max')) THEN
+      n = c_subset_gamma_max
       sub%use_gamma = .TRUE.
-      RETURN
+
+    ELSE IF (str_cmp(element, 'x_min')) THEN
+      n = c_subset_x_min
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'x_max')) THEN
+      n = c_subset_x_max
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'y_min')) THEN
+      n = c_subset_y_min
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'y_max')) THEN
+      n = c_subset_y_max
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'z_min')) THEN
+      n = c_subset_z_min
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'z_max')) THEN
+      n = c_subset_z_max
+      sub%space_restrictions = .TRUE.
+
+    ELSE IF (str_cmp(element, 'px_min')) THEN
+      n = c_subset_px_min
+
+    ELSE IF (str_cmp(element, 'px_max')) THEN
+      n = c_subset_px_max
+
+    ELSE IF (str_cmp(element, 'py_min')) THEN
+      n = c_subset_py_min
+
+    ELSE IF (str_cmp(element, 'py_max')) THEN
+      n = c_subset_py_max
+
+    ELSE IF (str_cmp(element, 'pz_min')) THEN
+      n = c_subset_pz_min
+
+    ELSE IF (str_cmp(element, 'pz_max')) THEN
+      n = c_subset_pz_max
+
+    ELSE IF (str_cmp(element, 'weight_min')) THEN
+      n = c_subset_weight_min
+
+    ELSE IF (str_cmp(element, 'weight_max')) THEN
+      n = c_subset_weight_max
+
+    ELSE IF (str_cmp(element, 'charge_min')) THEN
+      n = c_subset_charge_min
+
+    ELSE IF (str_cmp(element, 'charge_max')) THEN
+      n = c_subset_charge_max
+
+    ELSE IF (str_cmp(element, 'mass_min')) THEN
+      n = c_subset_mass_min
+
+    ELSE IF (str_cmp(element, 'mass_max')) THEN
+      n = c_subset_mass_max
+
+    ELSE IF (str_cmp(element, 'id_min')) THEN
+      n = c_subset_id_min
+
+    ELSE IF (str_cmp(element, 'id_max')) THEN
+      n = c_subset_id_max
     END IF
 
-    IF (str_cmp(element, 'x_min')) THEN
-      sub%x_min = as_real_print(value, element, errcode)
-      sub%use_x_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'x_max')) THEN
-      sub%x_max = as_real_print(value, element, errcode)
-      sub%use_x_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'y_min')) THEN
-      sub%y_min = as_real_print(value, element, errcode)
-      sub%use_y_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'y_max')) THEN
-      sub%y_max = as_real_print(value, element, errcode)
-      sub%use_y_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'z_min')) THEN
-      sub%z_min = as_real_print(value, element, errcode)
-      sub%use_z_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'z_max')) THEN
-      sub%z_max = as_real_print(value, element, errcode)
-      sub%use_z_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'px_min')) THEN
-      sub%px_min = as_real_print(value, element, errcode)
-      sub%use_px_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'px_max')) THEN
-      sub%px_max = as_real_print(value, element, errcode)
-      sub%use_px_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'py_min')) THEN
-      sub%py_min = as_real_print(value, element, errcode)
-      sub%use_py_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'py_max')) THEN
-      sub%py_max = as_real_print(value, element, errcode)
-      sub%use_py_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'pz_min')) THEN
-      sub%pz_min = as_real_print(value, element, errcode)
-      sub%use_pz_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'pz_max')) THEN
-      sub%pz_max = as_real_print(value, element, errcode)
-      sub%use_pz_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'weight_min')) THEN
-      sub%weight_min = as_real_print(value, element, errcode)
-      sub%use_weight_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'weight_max')) THEN
-      sub%weight_max = as_real_print(value, element, errcode)
-      sub%use_weight_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'charge_min')) THEN
-      sub%charge_min = as_real_print(value, element, errcode)
-      sub%use_charge_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'charge_max')) THEN
-      sub%charge_max = as_real_print(value, element, errcode)
-      sub%use_charge_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'mass_min')) THEN
-      sub%mass_min = as_real_print(value, element, errcode)
-      sub%use_mass_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'mass_max')) THEN
-      sub%mass_max = as_real_print(value, element, errcode)
-      sub%use_mass_max = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'id_min')) THEN
-      sub%id_min = as_integer_print(value, element, errcode)
-      sub%use_id_min = .TRUE.
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'id_max')) THEN
-      sub%id_max = as_integer_print(value, element, errcode)
-      sub%use_id_max = .TRUE.
+    IF (n /= 0) THEN
+      CALL initialise_stack(sub%restriction_function(n))
+      CALL tokenize(value, sub%restriction_function(n), errcode)
+      sub%restriction(n) = evaluate(sub%restriction_function(n), errcode)
+      sub%use_restriction(n) = .TRUE.
+      IF (sub%restriction_function(n)%is_time_varying) THEN
+        sub%use_restriction_function(n) = .TRUE.
+        sub%time_varying = .TRUE.
+      ELSE
+        CALL deallocate_stack(sub%restriction_function(n))
+      END IF
       RETURN
     END IF
 
@@ -440,57 +390,33 @@ CONTAINS
 
     DO i = 1, n_subsets
       subset_list(i)%name = blank
-      subset_list(i)%use_random     = .FALSE.
       subset_list(i)%use_gamma      = .FALSE.
-      subset_list(i)%use_gamma_min  = .FALSE.
-      subset_list(i)%use_gamma_max  = .FALSE.
-      subset_list(i)%use_x_min      = .FALSE.
-      subset_list(i)%use_x_max      = .FALSE.
-      subset_list(i)%use_y_min      = .FALSE.
-      subset_list(i)%use_y_max      = .FALSE.
-      subset_list(i)%use_z_min      = .FALSE.
-      subset_list(i)%use_z_max      = .FALSE.
-      subset_list(i)%use_px_min     = .FALSE.
-      subset_list(i)%use_px_max     = .FALSE.
-      subset_list(i)%use_py_min     = .FALSE.
-      subset_list(i)%use_py_max     = .FALSE.
-      subset_list(i)%use_pz_min     = .FALSE.
-      subset_list(i)%use_pz_max     = .FALSE.
-      subset_list(i)%use_weight_min = .FALSE.
-      subset_list(i)%use_weight_max = .FALSE.
-      subset_list(i)%use_charge_min = .FALSE.
-      subset_list(i)%use_charge_max = .FALSE.
-      subset_list(i)%use_mass_min   = .FALSE.
-      subset_list(i)%use_mass_max   = .FALSE.
-      subset_list(i)%use_id_min     = .FALSE.
-      subset_list(i)%use_id_max     = .FALSE.
+      subset_list(i)%use_restriction(:) = .FALSE.
+      subset_list(i)%use_restriction_function(:) = .FALSE.
       subset_list(i)%skip           = .FALSE.
       subset_list(i)%dump_field_grid = .FALSE.
       subset_list(i)%space_restrictions = .FALSE.
+      subset_list(i)%time_varying = .FALSE.
       subset_list(i)%skip_dir       = 1
-      subset_list(i)%random_fraction = 0.0_num
-      subset_list(i)%gamma_min  = -HUGE(1.0_num)
-      subset_list(i)%gamma_max  =  HUGE(1.0_num)
-      subset_list(i)%x_min      = -HUGE(1.0_num)
-      subset_list(i)%x_max      =  HUGE(1.0_num)
-      subset_list(i)%y_min      = -HUGE(1.0_num)
-      subset_list(i)%y_max      =  HUGE(1.0_num)
-      subset_list(i)%z_min      = -HUGE(1.0_num)
-      subset_list(i)%z_max      =  HUGE(1.0_num)
-      subset_list(i)%px_min     = -HUGE(1.0_num)
-      subset_list(i)%px_max     =  HUGE(1.0_num)
-      subset_list(i)%py_min     = -HUGE(1.0_num)
-      subset_list(i)%py_max     =  HUGE(1.0_num)
-      subset_list(i)%pz_min     = -HUGE(1.0_num)
-      subset_list(i)%pz_max     =  HUGE(1.0_num)
-      subset_list(i)%weight_min = -HUGE(1.0_num)
-      subset_list(i)%weight_max =  HUGE(1.0_num)
-      subset_list(i)%charge_min = -HUGE(1.0_num)
-      subset_list(i)%charge_max =  HUGE(1.0_num)
-      subset_list(i)%mass_min   = -HUGE(1.0_num)
-      subset_list(i)%mass_max   =  HUGE(1.0_num)
-      subset_list(i)%id_min     = -HUGE(1)
-      subset_list(i)%id_max     =  HUGE(1)
+      subset_list(i)%subtype = MPI_DATATYPE_NULL
+      subset_list(i)%subarray = MPI_DATATYPE_NULL
+      subset_list(i)%subtype_r4 = MPI_DATATYPE_NULL
+      subset_list(i)%subarray_r4 = MPI_DATATYPE_NULL
+      subset_list(i)%starts = -1
+      subset_list(i)%n_local = -1
+      subset_list(i)%n_global = -1
+      subset_list(i)%restriction(:) = HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_gamma_min)  = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_x_min)      = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_y_min)      = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_z_min)      = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_px_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_py_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_pz_min)     = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_weight_min) = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_charge_min) = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_mass_min)   = -HUGE(1.0_num)
+      subset_list(i)%restriction(c_subset_id_min)     = -HUGE(1.0_num)
       subset_list(i)%mask = c_io_always
       ALLOCATE(subset_list(i)%dumpmask(n_io_blocks,num_vars_to_dump))
       subset_list(i)%dumpmask = c_io_none
