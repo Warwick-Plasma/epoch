@@ -222,7 +222,6 @@ CONTAINS
 
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
-
 #ifndef PER_SPECIES_WEIGHT
     weight_fac = vol / injector%npart_per_cell
 #endif
