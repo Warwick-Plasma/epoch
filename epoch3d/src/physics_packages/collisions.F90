@@ -1003,15 +1003,15 @@ CONTAINS
     REAL(num) :: factor, np
     INTEGER(i8) :: icount, k, pcount
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
-    REAL(num) :: sinp_cos, sinp_sin, s_prime
+    REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
-    REAL(num) :: p_perp2, p_perp_inv
+    REAL(num) :: p_perp2, p_perp_inv, cell_fac
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2
+    REAL(num) :: m1, m2, q1, q2, dens_23
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     REAL(num), PARAMETER :: pi_fac = &
@@ -1063,6 +1063,13 @@ CONTAINS
 
     current => p_list%head
     impact => current%next
+
+    ! Per-cell constant factors
+    cell_fac = dens**2 * dt * factor * dx * dy * dz
+    s_fac = cell_fac * log_lambda / pi4_eps2_c4
+    dens_23 = dens**two_thirds
+    s_fac_prime = cell_fac * pi_fac / dens_23
+
     DO k = 1, pcount
 #ifdef PER_PARTICLE_CHARGE_MASS
       m1 = current%mass
@@ -1116,14 +1123,12 @@ CONTAINS
       p_mag2 = DOT_PRODUCT(p3, p3)
       p_mag = SQRT(p_mag2)
 
-      s_fac = dens * dens * dt * factor * dx
-      fac = (q1 * q2)**2 * log_lambda * s_fac / (pi4_eps2_c4 * gm1 * gm2)
+      fac = (q1 * q2)**2 * s_fac / (gm1 * gm2)
       s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
 
       ! Cold plasma upper limit for s12
       v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
-      s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
-          / MAX(m1 * dens**two_thirds, m2 * dens**two_thirds)
+      s_prime = s_fac_prime * (m1 + m2) * v_rel / MAX(m1, m2)
 
       s12 = MIN(s12, s_prime)
 
