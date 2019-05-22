@@ -414,6 +414,8 @@ CONTAINS
       species_list(ispecies)%count_update_step = 0
       species_list(ispecies)%species_type = c_species_id_generic
       species_list(ispecies)%immobile = .FALSE.
+      species_list(ispecies)%field_aligned_initialisation = .FALSE.
+      species_list(ispecies)%x_perp_y_ignored_z_para = .FALSE.
       NULLIFY(species_list(ispecies)%next)
       NULLIFY(species_list(ispecies)%prev)
       species_list(ispecies)%bc_particle = c_bc_null

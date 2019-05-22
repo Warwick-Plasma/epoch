@@ -124,6 +124,13 @@ CONTAINS
       END IF
     END DO
 
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+      IF (species%field_aligned_initialisation) THEN
+        CALL rotate_species_momenta_for_field_aligned_initialisation(species)
+      END IF
+    END DO
+
     IF (pre_loading) RETURN
 
     IF (rank == 0) THEN
@@ -980,6 +987,126 @@ CONTAINS
     CALL distribute_particles
 
   END SUBROUTINE custom_particle_load
+
+
+
+  ! Subroutine to initialise a ring beam particle distribution
+  ! Assumes linear interpolation of temperatures between cells
+  ! Create a beam distribution along z, and ring distribution around x and y
+  ! then rotate to point along magnetic field
+
+  SUBROUTINE rotate_species_momenta_for_field_aligned_initialisation(species)
+
+    TYPE(particle_species), POINTER :: species
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart
+
+    partlist => species%attached_list
+    current => partlist%head
+    ipart = 0
+    DO WHILE (ipart < partlist%count)
+      CALL rotate_particle_momentum_for_field_aligned_initialisation(current, &
+          ipart, species%x_perp_y_ignored_z_para)
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+  END SUBROUTINE rotate_species_momenta_for_field_aligned_initialisation
+
+
+
+  SUBROUTINE rotate_particle_momentum_for_field_aligned_initialisation( &
+      current, ipart, x_perp_y_ignored_z_para)
+
+    TYPE(particle), POINTER, INTENT(INOUT) :: current
+    INTEGER(i8), INTENT(IN) :: ipart
+    LOGICAL, INTENT(IN) :: x_perp_y_ignored_z_para
+    REAL(num), DIMENSION(3,3) :: rotation_matrix
+    REAL(num) :: gyrophase
+    REAL(num), PARAMETER :: golden_angle = pi * (3.0_num - SQRT(5.0_num))
+    REAL(num), DIMENSION(3) :: aligned_momentum
+
+    CALL setup_rotation_matrix(current, rotation_matrix)
+
+    ! z is the dummy magnetic field direction
+    IF (x_perp_y_ignored_z_para) THEN
+      gyrophase = golden_angle * ipart
+      aligned_momentum(1) = current%part_p(1) * COS(gyrophase)
+      aligned_momentum(2) = current%part_p(1) * SIN(gyrophase)
+      aligned_momentum(3) = current%part_p(3)
+    ELSE
+      aligned_momentum(1) = current%part_p(1)
+      aligned_momentum(2) = current%part_p(2)
+      aligned_momentum(3) = current%part_p(3)
+    END IF
+
+    ! orient particle along actual magnetic field direction
+    current%part_p(1) = DOT_PRODUCT(rotation_matrix(1,:), aligned_momentum)
+    current%part_p(2) = DOT_PRODUCT(rotation_matrix(2,:), aligned_momentum)
+    current%part_p(3) = DOT_PRODUCT(rotation_matrix(3,:), aligned_momentum)
+
+  END SUBROUTINE rotate_particle_momentum_for_field_aligned_initialisation
+
+
+
+  SUBROUTINE setup_rotation_matrix(part, r)
+
+    TYPE(Particle), POINTER, INTENT(IN) :: part
+    REAL(num), DIMENSION(3,3), INTENT(INOUT) :: r ! the rotation matrix
+    REAL(num) :: th, ux, uy, uz, ax, ay, az, fx, fy, fz, det, u2
+    REAL(num) :: part_x, part_y
+#include "fields_at_particle_head.inc"
+
+    part_x = part%part_pos(1) - x_grid_min_local
+    part_y = part%part_pos(2) - y_grid_min_local
+
+#include "fields_at_particle.inc"
+
+    ! assign and normalise to components of vector f
+    fx = bx_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
+    fy = by_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
+    fz = bz_part / SQRT(bx_part**2 + by_part**2 + bz_part**2)
+
+    ! Vector points in z direction, because initially particles are loaded
+    ! as though z *is* the magnetic direction.
+    ax = 0.0_num
+    ay = 0.0_num
+    az = 1.0_num
+
+    ux = ay * fz - az * fy
+    uy = az * fx - ax * fz
+    uz = ax * fy - ay * fx
+
+    th = ACOS(ax * fx + ay * fy + az * fz)
+
+    r = 0.0_num
+    r(1,1) = 1.0_num
+    r(2,2) = 1.0_num
+    r(3,3) = 1.0_num
+
+    u2 = SQRT(ux**2 + uy**2 + uz**2)
+    IF (u2 > 0.0_num) THEN
+      ux = ux / u2
+      uy = uy / u2
+      uz = uz / u2
+      r(1,1) = ux**2 + (1 - ux**2) * COS(th)
+      r(1,2) = ux * uy * (1 - COS(th)) - uz * SIN(th)
+      r(1,3) = ux * uz * (1 - COS(th)) + uy * SIN(th)
+      r(2,1) = ux * uy * (1 - COS(th)) + uz * SIN(th)
+      r(2,2) = uy**2 + (1 - uy**2) * COS(th)
+      r(2,3) = uy * uz * (1 - COS(th)) - ux * SIN(th)
+      r(3,1) = ux * uz * (1 - COS(th)) - uy * SIN(th)
+      r(3,2) = uy * uz * (1 - COS(th)) + ux * SIN(th)
+      r(3,3) = uz**2 + (1 - uz**2) * COS(th)
+    END IF
+
+    det = r(1,1) * (r(2,2) * r(3,3) - r(2,3) * r(3,2)) &
+        + r(1,2) * (r(2,3) * r(3,1) - r(2,1) * r(3,3)) &
+        + r(1,3) * (r(2,1) * r(3,2) - r(2,2) * r(3,1))
+    r = r / det
+
+  END SUBROUTINE setup_rotation_matrix
 
 
 
