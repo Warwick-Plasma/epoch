@@ -797,7 +797,6 @@ CONTAINS
     END DO
     factor = user_factor / factor / 2.0_num
 #endif
-
     ! If possible, use per-species properties
     m1 = mass
     m2 = mass
@@ -813,7 +812,6 @@ CONTAINS
       q1 = current%charge
       q2 = impact%charge
 #endif
-
       ! Copy all of the necessary particle data into variables with easier to
       ! read names
       p1 = current%part_p
@@ -925,7 +923,6 @@ CONTAINS
       tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
       p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
 
-
 #ifndef PER_SPECIES_WEIGHT
       w1 = current%weight
       w2 = impact%weight
@@ -941,7 +938,6 @@ CONTAINS
         CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
       END IF
 #endif
-
       ! Update particle properties
       current%part_p = p5
       impact%part_p = p6
@@ -1024,7 +1020,6 @@ CONTAINS
     END DO
     factor = user_factor / factor / 2.0_num
 #endif
-
     ! If possible, use per-species properties
     m1 = mass
     m2 = mass
@@ -1047,7 +1042,6 @@ CONTAINS
       q1 = current%charge
       q2 = impact%charge
 #endif
-
       p1 = current%part_p / c
       p2 = impact%part_p / c
 
@@ -1151,7 +1145,6 @@ CONTAINS
       p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
       p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
 
-
 #ifndef PER_SPECIES_WEIGHT
       w1 = current%weight
       w2 = impact%weight
@@ -1171,7 +1164,6 @@ CONTAINS
         CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
       END IF
 #endif
-
       ! Update particle properties
       current%part_p = p5
       impact%part_p = p6
@@ -1257,7 +1249,6 @@ CONTAINS
 #endif
       END DO
 #endif
-
       ! If possible, use per-species properties
       m1 = mass1
       m2 = mass2
@@ -1365,7 +1356,6 @@ CONTAINS
 #endif
       END DO
 #endif
-
       ! If possible, use per-species properties
       m1 = mass1
       m2 = mass2
