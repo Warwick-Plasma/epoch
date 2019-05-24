@@ -880,7 +880,7 @@ CONTAINS
       vrabs = SQRT(DOT_PRODUCT(vr, vr))
 
       ! Collision frequency
-      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(dens, dens))
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, dens)
 
       ! Calculate number of collisions in the timestep
       ! Limit value according to Sentoku & Kemp
