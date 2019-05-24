@@ -488,6 +488,9 @@ Bugfixes:
 
  * Stagger grid when evaluating field components (issue #1337)
 
+ * Add missing "restrict_<flag>" properties to dist_fn block, where <flag>
+   includes the following: en, gamma_m1, xy_angle, yz_angle, zx_angle
+
 
 ## v4.7.0 to v4.7.6 (2016-02-12)
 
