@@ -424,7 +424,7 @@ CONTAINS
     IF (ABS(drift) > c_tiny) THEN
       vt2 = kb * temperature / mass
       IF (vt2 < c_tiny) THEN
-        flux_momentum_from_temperature = direction * drift
+        flux_momentum_from_temperature = drift
         RETURN
       END IF
 

@@ -37,6 +37,8 @@ CONTAINS
 
   SUBROUTINE injector_deck_initialise
 
+    IF (deck_state /= c_ds_first) RETURN
+
     NULLIFY(injector_x_min)
     NULLIFY(injector_x_max)
 
@@ -205,37 +207,34 @@ CONTAINS
 
     INTEGER :: errcode
     TYPE(injector_block), POINTER :: current
-    INTEGER :: error, io, iu
+    INTEGER :: io, iu
+    LOGICAL :: error
 
     use_injectors = .FALSE.
-
+    error = .FALSE.
     errcode = c_err_none
-    error = 0
+
     current => injector_x_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = IOR(error, 1)
-      IF (.NOT. current%density_function%init) error = IOR(error, 2)
-      IF (error == 0) use_injectors = .TRUE.
+      IF (current%species == -1) error = .TRUE.
+      use_injectors = .TRUE.
       current => current%next
     END DO
 
     current => injector_x_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = IOR(error, 1)
-      IF (.NOT. current%density_function%init) error = IOR(error, 2)
-      IF (error == 0) use_injectors = .TRUE.
+      IF (current%species == -1) error = .TRUE.
+      use_injectors = .TRUE.
       current => current%next
     END DO
 
-    IF (error /= 0) THEN
+    IF (error) THEN
+      use_injectors = .FALSE.
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          IF (IAND(error, 1) /= 1) &
-              WRITE(io,*) 'Must define a species for every injector'
-          IF (IAND(error, 2) /= 0) &
-              WRITE(io,*) 'Must define a density for every injector'
+          WRITE(io,*) 'Must define a species for every injector'
         END DO
       END IF
       errcode = c_err_missing_elements

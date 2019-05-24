@@ -40,20 +40,7 @@ CONTAINS
     injector%t_end = t_end
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
-    injector%use_flux_injector = .FALSE.
-
-    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:ny+ng))
-      ALLOCATE(injector%depth(1-ng:ny+ng))
-    END IF
-
-    IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:nx+ng))
-      ALLOCATE(injector%depth(1-ng:nx+ng))
-    END IF
-
-    injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
+    injector%use_flux_injector = .TRUE.
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
@@ -264,20 +251,17 @@ CONTAINS
     END IF
 
     vol = dx * dy
-    bdy_pos = bdy_pos + 0.5_num * dir_mult * cell_size * png
+    bdy_pos = bdy_pos - 0.5_num * dir_mult * cell_size * png
 
     mass = species_list(injector%species)%mass
     typical_mc2 = (mass * c)**2
     cur_cell = 0.0_num
-
-    IF (injector%npart_per_cell < 0.0_num) THEN
-      injector%npart_per_cell = species_list(injector%species)%npart_per_cell
-    END IF
 #ifndef PER_SPECIES_WEIGHT
     weight_fac = vol / injector%npart_per_cell
 #endif
 
     CALL create_empty_partlist(plist)
+
     DO ii = 1, nperp
       IF (perp_dir_index == 1) THEN
         cur_cell = x(ii)
@@ -465,7 +449,88 @@ CONTAINS
 
 
 
-  ! Create an injector for a return-boundary species
+  SUBROUTINE finish_injector_setup
+
+    TYPE(injector_block), POINTER :: current
+
+    IF (x_min_boundary) THEN
+      current => injector_x_min
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_x_min)
+        current => current%next
+      END DO
+    END IF
+
+    IF (x_max_boundary) THEN
+      current => injector_x_max
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_x_max)
+        current => current%next
+      END DO
+    END IF
+
+    IF (y_min_boundary) THEN
+      current => injector_y_min
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_y_min)
+        current => current%next
+      END DO
+    END IF
+
+    IF (y_max_boundary) THEN
+      current => injector_y_max
+      DO WHILE(ASSOCIATED(current))
+        CALL finish_single_injector_setup(current, c_bd_y_max)
+        current => current%next
+      END DO
+    END IF
+
+  END SUBROUTINE finish_injector_setup
+
+
+
+  SUBROUTINE finish_single_injector_setup(injector, boundary)
+
+    TYPE(injector_block), POINTER :: injector
+    INTEGER, INTENT(IN) :: boundary
+    TYPE(particle_species), POINTER :: species
+    INTEGER :: i
+
+    species => species_list(injector%species)
+    IF (injector%npart_per_cell < 0.0_num) THEN
+      injector%npart_per_cell = species%npart_per_cell
+    END IF
+
+    IF (.NOT.injector%density_function%init) THEN
+      CALL copy_stack(species%density_function, injector%density_function)
+    END IF
+
+    DO i = 1, 3
+      IF (.NOT.injector%drift_function(i)%init) THEN
+        CALL copy_stack(species%drift_function(i), injector%drift_function(i))
+      END IF
+      IF (.NOT.injector%temperature_function(i)%init) THEN
+        CALL copy_stack(species%temperature_function(i), &
+            injector%temperature_function(i))
+      END IF
+    END DO
+
+    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+      ALLOCATE(injector%dt_inject(1-ng:ny+ng))
+      ALLOCATE(injector%depth(1-ng:ny+ng))
+    END IF
+
+    IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+      ALLOCATE(injector%dt_inject(1-ng:nx+ng))
+      ALLOCATE(injector%depth(1-ng:nx+ng))
+    END IF
+
+    injector%depth = 1.0_num
+    injector%dt_inject = -1.0_num
+
+  END SUBROUTINE finish_single_injector_setup
+
+
 
   SUBROUTINE create_boundary_injector(ispecies, bnd)
 
@@ -479,23 +544,7 @@ CONTAINS
     ALLOCATE(working_injector)
 
     CALL init_injector(bnd, working_injector)
-    working_injector%use_flux_injector = .TRUE.
     working_injector%species = ispecies
-
-    CALL copy_stack(species_list(ispecies)%drift_function(1), &
-        working_injector%drift_function(1))
-    CALL copy_stack(species_list(ispecies)%drift_function(2), &
-        working_injector%drift_function(2))
-    CALL copy_stack(species_list(ispecies)%drift_function(3), &
-        working_injector%drift_function(3))
-    CALL copy_stack(species_list(ispecies)%density_function, &
-        working_injector%density_function)
-    CALL copy_stack(species_list(ispecies)%temperature_function(1), &
-        working_injector%temperature_function(1))
-    CALL copy_stack(species_list(ispecies)%temperature_function(2), &
-        working_injector%temperature_function(2))
-    CALL copy_stack(species_list(ispecies)%temperature_function(3), &
-        working_injector%temperature_function(3))
 
     CALL attach_injector(working_injector)
 
