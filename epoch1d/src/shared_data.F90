@@ -624,6 +624,27 @@ MODULE shared_data
   END TYPE distribution_function_block
   TYPE(distribution_function_block), POINTER :: dist_fns
 
+  INTEGER, PARAMETER :: c_subset_random     = 1
+  INTEGER, PARAMETER :: c_subset_gamma_min  = 2
+  INTEGER, PARAMETER :: c_subset_gamma_max  = 3
+  INTEGER, PARAMETER :: c_subset_x_min      = 4
+  INTEGER, PARAMETER :: c_subset_x_max      = 5
+  INTEGER, PARAMETER :: c_subset_px_min     = 6
+  INTEGER, PARAMETER :: c_subset_px_max     = 7
+  INTEGER, PARAMETER :: c_subset_py_min     = 8
+  INTEGER, PARAMETER :: c_subset_py_max     = 9
+  INTEGER, PARAMETER :: c_subset_pz_min     = 10
+  INTEGER, PARAMETER :: c_subset_pz_max     = 11
+  INTEGER, PARAMETER :: c_subset_weight_min = 12
+  INTEGER, PARAMETER :: c_subset_weight_max = 13
+  INTEGER, PARAMETER :: c_subset_charge_min = 14
+  INTEGER, PARAMETER :: c_subset_charge_max = 15
+  INTEGER, PARAMETER :: c_subset_mass_min   = 16
+  INTEGER, PARAMETER :: c_subset_mass_max   = 17
+  INTEGER, PARAMETER :: c_subset_id_min     = 18
+  INTEGER, PARAMETER :: c_subset_id_max     = 19
+  INTEGER, PARAMETER :: c_subset_max        = 19
+
   ! Represents a data subset
   TYPE subset
     CHARACTER(LEN=string_length) :: name
@@ -632,26 +653,16 @@ MODULE shared_data
     INTEGER :: mask
     INTEGER, DIMENSION(:,:), POINTER :: dumpmask
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
-    LOGICAL :: use_x_min, use_x_max
-    LOGICAL :: use_px_min, use_px_max
-    LOGICAL :: use_py_min, use_py_max
-    LOGICAL :: use_pz_min, use_pz_max
-    LOGICAL :: use_weight_min, use_weight_max
-    LOGICAL :: use_charge_min, use_charge_max
-    LOGICAL :: use_mass_min, use_mass_max
-    LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: use_gamma
+    LOGICAL :: use_restriction(c_subset_max)
+    LOGICAL :: use_restriction_function(c_subset_max)
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
-    REAL(num) :: gamma_min, gamma_max, random_fraction
-    REAL(num) :: x_min, x_max
-    REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
-    REAL(num) :: weight_min, weight_max
-    REAL(num) :: charge_min, charge_max
-    REAL(num) :: mass_min, mass_max
-    INTEGER(i8) :: id_min, id_max
+    LOGICAL :: time_varying
+    REAL(num) :: restriction(c_subset_max)
+    TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
-    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
     ! Persistent subset
     LOGICAL :: persistent, locked
     REAL(num) :: persist_start_time

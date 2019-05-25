@@ -40,6 +40,8 @@
    "polarisation" for "pol"
    "breit_wheeler" for "bw"
 
+ * Allow subset restrictions to be time-varying functions
+
 
 ## v4.15.0 to v4.16.0
 

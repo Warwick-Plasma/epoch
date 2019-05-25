@@ -20,12 +20,12 @@ MODULE utilities
   IMPLICIT NONE
 
   INTERFACE grow_array
-    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_string_array, &
-                     grow_real_array2d, grow_integer_array2d
+    MODULE PROCEDURE grow_real_array, grow_integer_array, grow_logical_array, &
+                     grow_string_array, grow_real_array2d, grow_integer_array2d
   END INTERFACE grow_array
 
-  PRIVATE :: grow_real_array, grow_integer_array, grow_string_array
-  PRIVATE :: grow_real_array2d, grow_integer_array2d
+  PRIVATE
+  PUBLIC :: abort_code, grow_array
 
 CONTAINS
 
@@ -90,6 +90,35 @@ CONTAINS
     DEALLOCATE(tmp_array)
 
   END SUBROUTINE grow_integer_array
+
+
+
+  SUBROUTINE grow_logical_array(array, idx)
+
+    LOGICAL, DIMENSION(:), POINTER :: array
+    INTEGER, INTENT(IN) :: idx
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: tmp_array
+    INTEGER :: old_size, new_size, i
+
+    old_size = SIZE(array)
+    IF (idx <= old_size) RETURN
+
+    ALLOCATE(tmp_array(old_size))
+    DO i = 1, old_size
+      tmp_array(i) = array(i)
+    END DO
+
+    new_size = 2 * old_size
+    DEALLOCATE(array)
+    ALLOCATE(array(new_size))
+
+    DO i = 1, old_size
+      array(i) = tmp_array(i)
+    END DO
+
+    DEALLOCATE(tmp_array)
+
+  END SUBROUTINE grow_logical_array
 
 
 
