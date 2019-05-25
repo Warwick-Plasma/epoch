@@ -251,8 +251,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'continue')) THEN
-      as_bc = c_bc_continue
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'heat_bath')) THEN
+      as_bc = c_bc_heat_bath
       RETURN
     END IF
 

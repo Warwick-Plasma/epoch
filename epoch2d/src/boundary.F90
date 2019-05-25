@@ -65,7 +65,7 @@ CONTAINS
             // 'species "' // TRIM(species_list(ispecies)%name) // '"'
         error = error .OR. setup_particle_boundary(bc, bc_error)
 
-        IF (bc == c_bc_continue) THEN
+        IF (bc == c_bc_heat_bath) THEN
           CALL create_boundary_injector(ispecies, i)
           species_list(ispecies)%bc_particle(i) = c_bc_open
         END IF
@@ -111,7 +111,7 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
-        .OR. boundary == c_bc_continue &
+        .OR. boundary == c_bc_heat_bath &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
