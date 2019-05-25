@@ -32,6 +32,7 @@ MODULE deck_io_block
   LOGICAL, DIMENSION(num_vars_to_dump) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   LOGICAL, PRIVATE :: warning_printed, got_dt_average
+  LOGICAL, PRIVATE :: dumpmask_warned
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
@@ -44,6 +45,7 @@ CONTAINS
 
     any_average = .FALSE.
     warning_printed = .FALSE.
+    dumpmask_warned = .FALSE.
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -275,6 +277,18 @@ CONTAINS
     IF (.NOT.got_dump_input_decks) THEN
       IF (io_block%restart .OR. .NOT.new_style_io_block) &
           io_block%dump_input_decks = .TRUE.
+    END IF
+
+    IF (rank == 0 .AND. new_style_io_block .AND. .NOT.dumpmask_warned) THEN
+      IF (ANY(IAND(io_block%dumpmask,c_io_restartable) == c_io_restartable) &
+          .OR. ANY(IAND(io_block%dumpmask,c_io_full) == c_io_full)) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'The use of "full" and "restart" as dumpmasks in new-style ', &
+                'output blocks is '
+        PRINT*, 'deprecated and will be removed in a future version.'
+        PRINT*
+        dumpmask_warned = .TRUE.
+      END IF
     END IF
 
     CALL set_restart_dumpmasks
