@@ -275,13 +275,13 @@ CONTAINS
     ELSE IF (str_cmp(name, 'r_xyz')) THEN
       as_constant = c_const_r_xyz
 
-    ELSE IF (str_cmp(name, 'nprocx')) THEN
+    ELSE IF (str_cmp(name, 'nprocx') .OR. str_cmp(name, 'nproc_x')) THEN
       as_constant = c_const_nprocx
 
-    ELSE IF (str_cmp(name, 'nprocy')) THEN
+    ELSE IF (str_cmp(name, 'nprocy') .OR. str_cmp(name, 'nproc_y')) THEN
       as_constant = c_const_nprocy
 
-    ELSE IF (str_cmp(name, 'nprocz')) THEN
+    ELSE IF (str_cmp(name, 'nprocz') .OR. str_cmp(name, 'nproc_z')) THEN
       as_constant = c_const_nprocz
 
     ELSE IF (str_cmp(name, 'nsteps')) THEN
@@ -346,10 +346,12 @@ CONTAINS
     ELSE IF (str_cmp(name, 'dir_pz')) THEN
       as_constant = c_const_dir_pz
 
-    ELSE IF (str_cmp(name, 'dir_en')) THEN
+    ELSE IF (str_cmp(name, 'dir_en') &
+        .OR. str_cmp(name, 'dir_energy')) THEN
       as_constant = c_const_dir_en
 
-    ELSE IF (str_cmp(name, 'dir_gamma_m1')) THEN
+    ELSE IF (str_cmp(name, 'dir_gamma_m1') &
+        .OR. str_cmp(name, 'dir_gamma_minus_one')) THEN
       as_constant = c_const_dir_gamma_m1
 
     ELSE IF (str_cmp(name, 'dir_xy_angle')) THEN

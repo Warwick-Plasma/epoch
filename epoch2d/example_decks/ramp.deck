@@ -98,7 +98,7 @@ end:species
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 5 * femto
 
   # Properties at particle positions

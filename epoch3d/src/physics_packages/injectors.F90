@@ -40,6 +40,7 @@ CONTAINS
     injector%t_end = t_end
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
+    injector%density_max = HUGE(1.0_num)
     injector%use_flux_injector = .TRUE.
     NULLIFY(injector%next)
 
@@ -437,6 +438,7 @@ CONTAINS
           new%mass = mass
 #endif
 #ifndef PER_SPECIES_WEIGHT
+          density = MIN(density, injector%density_max)
           new%weight = weight_fac * density
 #endif
           CALL add_particle_to_partlist(plist, new)

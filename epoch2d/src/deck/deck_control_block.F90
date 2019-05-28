@@ -254,7 +254,8 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'nprocz')) THEN
 
-    ELSE IF (str_cmp(element, 'npart')) THEN
+    ELSE IF (str_cmp(element, 'npart') &
+        .OR. str_cmp(element, 'nparticles')) THEN
       npart_global = as_long_integer_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'nsteps')) THEN
@@ -446,6 +447,9 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'use_more_setup_memory')) THEN
       use_more_setup_memory = as_logical_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'deck_warnings_fatal')) THEN
+      all_deck_errcodes_fatal = as_logical_print(value, element, errcode)
 
     ELSE
       errcode = c_err_unknown_element

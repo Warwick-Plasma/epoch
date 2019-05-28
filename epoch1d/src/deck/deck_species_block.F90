@@ -529,13 +529,15 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart')) THEN
+    IF (str_cmp(element, 'npart') &
+        .OR. str_cmp(element, 'nparticles')) THEN
       species_list(species_id)%count = &
           as_long_integer_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_per_cell')) THEN
+    IF (str_cmp(element, 'npart_per_cell') &
+        .OR. str_cmp(element, 'nparticles_per_cell')) THEN
       species_list(species_id)%npart_per_cell = &
           as_real_print(value, element, errcode)
       RETURN
@@ -628,7 +630,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_max')) THEN
+    IF (str_cmp(element, 'npart_max') &
+        .OR. str_cmp(element, 'nparticles_max')) THEN
       species_list(species_id)%npart_max = &
           as_long_integer_print(value, element, errcode)
       RETURN
@@ -705,7 +708,9 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'density_back') &
-        .OR. str_cmp(element, 'number_density_back')) THEN
+        .OR. str_cmp(element, 'number_density_back') &
+        .OR. str_cmp(element, 'density_background') &
+        .OR. str_cmp(element, 'number_density_background')) THEN
       species_list(species_id)%initial_conditions%density_back = &
           as_real_print(value, element, errcode)
       RETURN
@@ -739,7 +744,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x')) THEN
+    IF (str_cmp(element, 'drift_x') .OR. str_cmp(element, 'drift_px')) THEN
       n = 1
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -757,7 +762,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y')) THEN
+    IF (str_cmp(element, 'drift_y') .OR. str_cmp(element, 'drift_py')) THEN
       n = 2
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -775,7 +780,7 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z')) THEN
+    IF (str_cmp(element, 'drift_z') .OR. str_cmp(element, 'drift_pz')) THEN
       n = 3
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -822,19 +827,28 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x_back')) THEN
+    IF (str_cmp(element, 'drift_x_back') &
+        .OR. str_cmp(element, 'drift_px_back') &
+        .OR. str_cmp(element, 'drift_x_background') &
+        .OR. str_cmp(element, 'drift_px_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(1) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y_back')) THEN
+    IF (str_cmp(element, 'drift_y_back') &
+        .OR. str_cmp(element, 'drift_py_back') &
+        .OR. str_cmp(element, 'drift_y_background') &
+        .OR. str_cmp(element, 'drift_py_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(2) = &
           as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z_back')) THEN
+    IF (str_cmp(element, 'drift_z_back') &
+        .OR. str_cmp(element, 'drift_pz_back') &
+        .OR. str_cmp(element, 'drift_z_background') &
+        .OR. str_cmp(element, 'drift_pz_background')) THEN
       species_list(species_id)%initial_conditions%drift_back(3) = &
           as_real_print(value, element, errcode)
       RETURN
@@ -842,9 +856,14 @@ CONTAINS
 
     mult_string = '* ev / kb'
 
-    IF (str_cmp(element, 'temp') .OR. str_cmp(element, 'temp_k') &
-        .OR. str_cmp(element, 'temp_ev')) THEN
-      IF (str_cmp(element, 'temp_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp') &
+        .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev') &
+        .OR. str_cmp(element, 'temperature') &
+        .OR. str_cmp(element, 'temperature_k') &
+        .OR. str_cmp(element, 'temperature_ev')) THEN
+      IF (str_cmp(element, 'temperature_ev') &
+          .OR. str_cmp(element, 'temp_ev')) mult = ev / kb
 
       ic => species_list(species_id)%initial_conditions
       IF (got_file) THEN
@@ -873,9 +892,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_back') .OR. str_cmp(element, 'temp_back_k') &
-         .OR. str_cmp(element, 'temp_back_ev')) THEN
-      IF (str_cmp(element, 'temp_back_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_back') &
+        .OR. str_cmp(element, 'temp_back_k') &
+        .OR. str_cmp(element, 'temp_back_ev') &
+        .OR. str_cmp(element, 'temperature_background') &
+        .OR. str_cmp(element, 'temperature_background_k') &
+        .OR. str_cmp(element, 'temperature_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_background_ev') &
+          .OR. str_cmp(element, 'temp_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
           as_real_print(value, element, errcode) * mult
@@ -887,8 +911,13 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_x_back') &
-         .OR. str_cmp(element, 'temp_x_back_ev')) THEN
-      IF (str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_x_back_k') &
+        .OR. str_cmp(element, 'temp_x_back_ev') &
+        .OR. str_cmp(element, 'temperature_x_background') &
+        .OR. str_cmp(element, 'temperature_x_background_k') &
+        .OR. str_cmp(element, 'temperature_x_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_background_ev') &
+          .OR. str_cmp(element, 'temp_x_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(1) = &
           as_real_print(value, element, errcode) * mult
@@ -896,8 +925,13 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_y_back') &
-         .OR. str_cmp(element, 'temp_y_back_ev')) THEN
-      IF (str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_y_back_k') &
+        .OR. str_cmp(element, 'temp_y_back_ev') &
+        .OR. str_cmp(element, 'temperature_y_background') &
+        .OR. str_cmp(element, 'temperature_y_background_k') &
+        .OR. str_cmp(element, 'temperature_y_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_background_ev') &
+          .OR. str_cmp(element, 'temp_y_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(2) = &
           as_real_print(value, element, errcode) * mult
@@ -905,17 +939,27 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'temp_z_back') &
-         .OR. str_cmp(element, 'temp_z_back_ev')) THEN
-      IF (str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
+        .OR. str_cmp(element, 'temp_z_back_k') &
+        .OR. str_cmp(element, 'temp_z_back_ev') &
+        .OR. str_cmp(element, 'temperature_z_background') &
+        .OR. str_cmp(element, 'temperature_z_background_k') &
+        .OR. str_cmp(element, 'temperature_z_background_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_background_ev') &
+          .OR. str_cmp(element, 'temp_z_back_ev')) mult = ev / kb
 
       species_list(species_id)%initial_conditions%temp_back(3) = &
           as_real_print(value, element, errcode) * mult
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_x') .OR. str_cmp(element, 'temp_x_k') &
-        .OR. str_cmp(element, 'temp_x_ev')) THEN
-      IF (str_cmp(element, 'temp_x_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_x') &
+        .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temperature_x_k') &
+        .OR. str_cmp(element, 'temperature_x_ev')) THEN
+      IF (str_cmp(element, 'temperature_x_ev') &
+          .OR. str_cmp(element, 'temp_x_ev')) mult = ev / kb
 
       n = 1
       ic => species_list(species_id)%initial_conditions
@@ -934,9 +978,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_y') .OR. str_cmp(element, 'temp_y_k') &
-        .OR. str_cmp(element, 'temp_y_ev')) THEN
-      IF (str_cmp(element, 'temp_y_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_y') &
+        .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temperature_y_k') &
+        .OR. str_cmp(element, 'temperature_y_ev')) THEN
+      IF (str_cmp(element, 'temperature_y_ev') &
+          .OR. str_cmp(element, 'temp_y_ev')) mult = ev / kb
 
       n = 2
       ic => species_list(species_id)%initial_conditions
@@ -955,9 +1004,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_z') .OR. str_cmp(element, 'temp_z_k') &
-        .OR. str_cmp(element, 'temp_z_ev')) THEN
-      IF (str_cmp(element, 'temp_z_ev')) mult = ev / kb
+    IF (str_cmp(element, 'temp_z') &
+        .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temperature_z_k') &
+        .OR. str_cmp(element, 'temperature_z_ev')) THEN
+      IF (str_cmp(element, 'temperature_z_ev') &
+          .OR. str_cmp(element, 'temp_z_ev')) mult = ev / kb
 
       n = 3
       ic => species_list(species_id)%initial_conditions
@@ -1019,9 +1073,9 @@ CONTAINS
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Two forms of npart used for particle species "', &
+            WRITE(io,*) 'Two forms of nparticles used for particle species "', &
                 TRIM(species_list(i)%name), '"'
-            WRITE(io,*) 'Just using "npart_per_cell".'
+            WRITE(io,*) 'Just using "nparticles_per_cell".'
           END DO
         END IF
         species_list(i)%count = INT(species_list(i)%npart_per_cell, i8)
@@ -1295,7 +1349,8 @@ CONTAINS
     END IF
 
     ! Breit Wheeler process electron
-    IF (str_cmp(value, 'bw_electron')) THEN
+    IF (str_cmp(value, 'bw_electron') &
+        .OR. str_cmp(value, 'breit_wheeler_electron')) THEN
       species_list(species_id)%charge = -q0
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_electron
@@ -1309,7 +1364,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(value, 'bw_positron')) THEN
+    IF (str_cmp(value, 'bw_positron') &
+        .OR. str_cmp(value, 'breit_wheeler_positron')) THEN
       species_list(species_id)%charge = q0
       species_list(species_id)%mass = m0
       species_charge_set(species_id) = .TRUE.

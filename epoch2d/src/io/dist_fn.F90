@@ -312,7 +312,7 @@ CONTAINS
         units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) == c_dir_en) THEN
-        labels(idim) = 'en'
+        labels(idim) = 'energy'
         units(idim)  = 'J'
 
       ELSE IF (direction(idim) == c_dir_gamma_m1) THEN
