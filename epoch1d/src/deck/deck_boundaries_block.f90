@@ -223,10 +223,10 @@ CONTAINS
       CALL abort_code(c_err_bad_value)
     END IF
 
-    ! Sanity check on continue boundaries
+    ! Sanity check on heat_bath boundaries
     error = .FALSE.
     DO idx = 1, 2 * c_ndims
-      IF (bc_field(idx) == c_bc_continue) error = .TRUE.
+      IF (bc_field(idx) == c_bc_heat_bath) error = .TRUE.
     END DO
 
     IF (error) THEN
@@ -235,7 +235,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Continue boundaries apply to particles only'
+          WRITE(io,*) 'heat_bath boundaries apply to particles only'
         END DO
       END IF
       CALL abort_code(c_err_bad_value)
