@@ -520,37 +520,37 @@ MODULE shared_data
   INTEGER, PARAMETER :: c_dump_cpml_psi_ezy      = 38
   INTEGER, PARAMETER :: c_dump_cpml_psi_bxy      = 39
   INTEGER, PARAMETER :: c_dump_cpml_psi_bzy      = 40
-  INTEGER, PARAMETER :: c_dump_absorption        = 41
-  INTEGER, PARAMETER :: c_dump_part_ek           = 42
-  INTEGER, PARAMETER :: c_dump_part_opdepth      = 43
-  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 44
-  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 45
-  INTEGER, PARAMETER :: c_dump_total_energy      = 46
-  INTEGER, PARAMETER :: c_dump_total_energy_sum  = 47
-  INTEGER, PARAMETER :: c_dump_part_rel_mass     = 48
-  INTEGER, PARAMETER :: c_dump_part_gamma        = 49
-  INTEGER, PARAMETER :: c_dump_part_proc         = 50
-  INTEGER, PARAMETER :: c_dump_part_proc0        = 51
-  INTEGER, PARAMETER :: c_dump_ppc               = 52
-  INTEGER, PARAMETER :: c_dump_average_weight    = 53
-  INTEGER, PARAMETER :: c_dump_persistent_ids    = 54
-  INTEGER, PARAMETER :: c_dump_temperature_x     = 55
-  INTEGER, PARAMETER :: c_dump_temperature_y     = 56
-  INTEGER, PARAMETER :: c_dump_temperature_z     = 57
-  INTEGER, PARAMETER :: c_dump_average_px        = 58
-  INTEGER, PARAMETER :: c_dump_average_py        = 59
-  INTEGER, PARAMETER :: c_dump_average_pz        = 60
-#ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 61
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 62
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 63
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 64
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 65
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 66
-  INTEGER, PARAMETER :: num_vars_to_dump         = 66
-#else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 60
-#endif
+  INTEGER, PARAMETER :: c_dump_cpml_psi_exz      = 41
+  INTEGER, PARAMETER :: c_dump_cpml_psi_eyz      = 42
+  INTEGER, PARAMETER :: c_dump_cpml_psi_bxz      = 43
+  INTEGER, PARAMETER :: c_dump_cpml_psi_byz      = 44
+  INTEGER, PARAMETER :: c_dump_absorption        = 45
+  INTEGER, PARAMETER :: c_dump_part_ek           = 46
+  INTEGER, PARAMETER :: c_dump_part_opdepth      = 47
+  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 48
+  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 49
+  INTEGER, PARAMETER :: c_dump_total_energy      = 50
+  INTEGER, PARAMETER :: c_dump_total_energy_sum  = 51
+  INTEGER, PARAMETER :: c_dump_part_rel_mass     = 52
+  INTEGER, PARAMETER :: c_dump_part_gamma        = 53
+  INTEGER, PARAMETER :: c_dump_part_proc         = 54
+  INTEGER, PARAMETER :: c_dump_part_proc0        = 55
+  INTEGER, PARAMETER :: c_dump_ppc               = 56
+  INTEGER, PARAMETER :: c_dump_average_weight    = 57
+  INTEGER, PARAMETER :: c_dump_persistent_ids    = 58
+  INTEGER, PARAMETER :: c_dump_temperature_x     = 59
+  INTEGER, PARAMETER :: c_dump_temperature_y     = 60
+  INTEGER, PARAMETER :: c_dump_temperature_z     = 61
+  INTEGER, PARAMETER :: c_dump_average_px        = 62
+  INTEGER, PARAMETER :: c_dump_average_py        = 63
+  INTEGER, PARAMETER :: c_dump_average_pz        = 64
+  INTEGER, PARAMETER :: c_dump_part_work_x       = 65
+  INTEGER, PARAMETER :: c_dump_part_work_y       = 66
+  INTEGER, PARAMETER :: c_dump_part_work_z       = 67
+  INTEGER, PARAMETER :: c_dump_part_work_x_total = 68
+  INTEGER, PARAMETER :: c_dump_part_work_y_total = 69
+  INTEGER, PARAMETER :: c_dump_part_work_z_total = 70
+  INTEGER, PARAMETER :: num_vars_to_dump         = 70
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
