@@ -1447,9 +1447,9 @@ CONTAINS
     INTEGER(i8) :: icount, jcount, pcount, k
     REAL(num) :: m1, m2, q1, q2, w1, w2
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
-    REAL(num) :: sinp_cos, sinp_sin, s_prime
+    REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
-    REAL(num) :: p_perp2, p_perp_inv
+    REAL(num) :: p_perp2, p_perp_inv, cell_fac
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
@@ -1517,6 +1517,12 @@ CONTAINS
 
       current => p_list1%head
       impact => p_list2%head
+
+      ! Per-cell constant factors
+      cell_fac = idens * jdens * dt * factor * dx
+      s_fac = cell_fac * log_lambda / pi4_eps2_c4
+      s_fac_prime = cell_fac * pi_fac
+
       DO k = 1, pcount
 #ifdef PER_PARTICLE_CHARGE_MASS
         m1 = current%mass
@@ -1579,13 +1585,12 @@ CONTAINS
         p_mag2 = DOT_PRODUCT(p3, p3)
         p_mag = SQRT(p_mag2)
 
-        s_fac = idens * jdens * dt * factor * dx
-        fac = (q1 * q2)**2 * log_lambda * s_fac / (pi4_eps2_c4 * gm1 * gm2)
+        fac = (q1 * q2)**2 * s_fac / (gm1 * gm2)
         s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
 
         ! Cold plasma upper limit for s12
         v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
-        s_prime = pi_fac * s_fac * (m1 + m2) * v_rel &
+        s_prime = s_fac_prime * (m1 + m2) * v_rel &
             / MAX(m1 * idens**two_thirds, m2 * jdens**two_thirds)
 
         s12 = MIN(s12, s_prime)
