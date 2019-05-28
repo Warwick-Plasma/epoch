@@ -39,7 +39,7 @@ begin:laser
   intensity_w_cm2 = 1.0e15
   lambda = lambda0 * cos(theta)
   phase = -2.0 * pi * y * tan(theta) / lambda0
-  # pol_angle = 0 # pi / 2.0
+  # polarisation_angle = 0 # pi / 2.0
   profile = gauss(r_yz, 0, 4*micron)
   # t_profile = gauss(time,4*femto,6*femto)
 end:laser

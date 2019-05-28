@@ -34,7 +34,7 @@ begin:species
   # Truncated power law distribution in px
   dist_fn = exp(-p0/px) * (px/p0)^(alpha)
   dist_fn_px_range = (0, pmax)
-  npart = nx * 150000
+  nparticles = nx * 150000
 end:species
 
 
@@ -43,8 +43,8 @@ begin:species
   charge = -1
   mass = 1.0
   number_density = dens
-  temp = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
-  npart = nx * 150000
+  temperature = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
+  nparticles = nx * 150000
 end:species
 
 

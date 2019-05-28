@@ -1,7 +1,7 @@
 begin:control
   nx = 250
   ny = 250
-  npart = nx * ny * 8
+  nparticles = nx * ny * 8
 
   # Final time of simulation
   t_end = 50 * femto
@@ -39,7 +39,7 @@ begin:species
   name = proton
   charge = 1.0
   mass = 1836.2
-  frac = 0.5
+  fraction = 0.5
   number_density = if((r gt ri) and (r lt ro), den_cone, 0.0)
   number_density = if((x gt xi) and (x lt xo) and (r lt ri), \
                       den_cone, number_density(proton))
@@ -51,7 +51,7 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  frac = 0.5
+  fraction = 0.5
   number_density = number_density(proton)
 end:species
 
@@ -78,7 +78,7 @@ begin:output
   # Properties on grid
   grid = always
   ey = always
-  ekbar = always
+  average_particle_energy = always
   number_density = always + species
   temperature = always + species
 
