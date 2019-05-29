@@ -663,7 +663,9 @@ CONTAINS
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
-    REAL(num) :: dir_min, dir_max, dir_d
+    REAL(num) :: dir_min, dir_max, dir_dmin, dir_dmax, dir_d
+    ! fudge factor allows overshoot of the specified domain extent by about 5%
+    REAL(num), PARAMETER :: fudge = 0.019_num
     INTEGER :: idim
 
     global_ranges(1,:) = -HUGE(num)
@@ -671,46 +673,51 @@ CONTAINS
 
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
-        dir_min = x_grid_min
-        dir_max = x_grid_max
         dir_d = dx
+        dir_min = x_grid_min - 0.5_num * dir_d
+        dir_max = x_grid_max + 0.5_num * dir_d
+        dir_dmin = x_min
+        dir_dmax = x_max
         IF (current_subset%use_x_min) &
             global_ranges(1,idim) = current_subset%x_min
         IF (current_subset%use_x_max) &
             global_ranges(2,idim) = current_subset%x_max
       ELSE IF (idim == 2) THEN
-        dir_min = y_grid_min
-        dir_max = y_grid_max
         dir_d = dy
+        dir_min = y_grid_min - 0.5_num * dir_d
+        dir_max = y_grid_max + 0.5_num * dir_d
+        dir_dmin = y_min
+        dir_dmax = y_max
         IF (current_subset%use_y_min) &
             global_ranges(1,idim) = current_subset%y_min
         IF (current_subset%use_y_max) &
             global_ranges(2,idim) = current_subset%y_max
       ELSE
-        dir_min = z_grid_min
-        dir_max = z_grid_max
         dir_d = dz
+        dir_min = z_grid_min - 0.5_num * dir_d
+        dir_max = z_grid_max + 0.5_num * dir_d
+        dir_dmin = z_min
+        dir_dmax = z_max
         IF (current_subset%use_z_min) &
             global_ranges(1,idim) = current_subset%z_min
         IF (current_subset%use_z_max) &
             global_ranges(2,idim) = current_subset%z_max
       END IF
+
       IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
         global_ranges = 0
         RETURN
       END IF
 
-      ! Correct to domain size
-      global_ranges(1,idim) = &
-          MAX(global_ranges(1,idim), dir_min + dir_d / 2.0_num)
-      global_ranges(2,idim) = &
-          MIN(global_ranges(2,idim), dir_max - dir_d / 2.0_num)
-
       ! Correct to match cell edges
       global_ranges(1,idim) = dir_min &
-          + FLOOR((global_ranges(1,idim) - dir_min) / dir_d ) * dir_d
+          + FLOOR((global_ranges(1,idim) - dir_min) / dir_d + fudge) * dir_d
       global_ranges(2,idim) = dir_min &
-          + CEILING((global_ranges(2,idim) - dir_min) / dir_d) * dir_d
+          + CEILING((global_ranges(2,idim) - dir_min) / dir_d - fudge) * dir_d
+
+      ! Correct to domain size
+      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_dmin)
+      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_dmax)
     END DO
 
   END FUNCTION global_ranges
