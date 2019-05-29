@@ -444,6 +444,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_const_dir_z) THEN
+      CALL push_on_eval(REAL(c_dir_z, num))
+      RETURN
+    END IF
+
     IF (opcode == c_const_dir_px) THEN
       CALL push_on_eval(REAL(c_dir_px, num))
       RETURN

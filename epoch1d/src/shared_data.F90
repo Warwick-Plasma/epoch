@@ -25,206 +25,6 @@ MODULE shared_data
 
   IMPLICIT NONE
 
-  !----------------------------------------------------------------------------
-  ! Parser data
-  !----------------------------------------------------------------------------
-
-  INTEGER, PARAMETER :: c_char_numeric = 1
-  INTEGER, PARAMETER :: c_char_alpha = 2
-  INTEGER, PARAMETER :: c_char_delimiter = 3
-  INTEGER, PARAMETER :: c_char_space = 4
-  INTEGER, PARAMETER :: c_char_opcode = 5
-  INTEGER, PARAMETER :: c_char_unknown = 1024
-
-  INTEGER, PARAMETER :: c_prc_not_this_type = 0
-
-  ! block type constants
-  INTEGER, PARAMETER :: c_pt_variable = 1
-  INTEGER, PARAMETER :: c_pt_constant = 2
-  INTEGER, PARAMETER :: c_pt_operator = 3
-  INTEGER, PARAMETER :: c_pt_function = 4
-  INTEGER, PARAMETER :: c_pt_parenthesis = 5
-  INTEGER, PARAMETER :: c_pt_separator = 6
-  INTEGER, PARAMETER :: c_pt_character = 7
-  INTEGER, PARAMETER :: c_pt_deck_constant = 8
-  INTEGER, PARAMETER :: c_pt_species = 9
-  INTEGER, PARAMETER :: c_pt_subset = 10
-  INTEGER, PARAMETER :: c_pt_default_constant = 11
-  INTEGER, PARAMETER :: c_pt_bad = 1024
-  INTEGER, PARAMETER :: c_pt_null = 1025
-
-  ! Opcode constants
-  INTEGER, PARAMETER :: c_opcode_plus = 1
-  INTEGER, PARAMETER :: c_opcode_minus = 2
-  INTEGER, PARAMETER :: c_opcode_times = 3
-  INTEGER, PARAMETER :: c_opcode_divide = 4
-  INTEGER, PARAMETER :: c_opcode_power = 5
-  INTEGER, PARAMETER :: c_opcode_expo = 6
-  INTEGER, PARAMETER :: c_opcode_lt = 7
-  INTEGER, PARAMETER :: c_opcode_gt = 8
-  INTEGER, PARAMETER :: c_opcode_eq = 9
-  INTEGER, PARAMETER :: c_opcode_and = 10
-  INTEGER, PARAMETER :: c_opcode_or = 11
-  INTEGER, PARAMETER :: c_opcode_unary_minus = 12
-  INTEGER, PARAMETER :: c_opcode_unary_plus = 13
-  INTEGER, PARAMETER :: c_num_ops = 13
-
-  ! Associativity constants
-  INTEGER, PARAMETER :: c_assoc_a = 1
-  INTEGER, PARAMETER :: c_assoc_la = 2
-  INTEGER, PARAMETER :: c_assoc_ra = 3
-
-  INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
-      opcode_precedence = (/2, 2, 3, 3, 4, 4, 1, 1, 1, 0, 0, 4, 4/)
-  INTEGER, DIMENSION(c_num_ops), PARAMETER :: &
-      opcode_assoc = (/c_assoc_a, c_assoc_la, c_assoc_a, c_assoc_la, &
-          c_assoc_ra, c_assoc_ra, c_assoc_la, c_assoc_la, c_assoc_la, &
-          c_assoc_la, c_assoc_la, c_assoc_ra, c_assoc_ra/)
-
-  INTEGER, PARAMETER :: c_paren_left_bracket = 1
-  INTEGER, PARAMETER :: c_paren_right_bracket = 2
-
-  ! Actual constants
-  INTEGER, PARAMETER :: c_const_pi = 1
-  INTEGER, PARAMETER :: c_const_kb = 2
-  INTEGER, PARAMETER :: c_const_me = 3
-  INTEGER, PARAMETER :: c_const_qe = 4
-  INTEGER, PARAMETER :: c_const_eps0 = 5
-  INTEGER, PARAMETER :: c_const_mu0 = 6
-  INTEGER, PARAMETER :: c_const_c = 7
-  INTEGER, PARAMETER :: c_const_ev = 8
-  INTEGER, PARAMETER :: c_const_kev = 9
-  INTEGER, PARAMETER :: c_const_mev = 10
-  INTEGER, PARAMETER :: c_const_milli = 11
-  INTEGER, PARAMETER :: c_const_micro = 12
-  INTEGER, PARAMETER :: c_const_nano = 13
-  INTEGER, PARAMETER :: c_const_pico = 14
-  INTEGER, PARAMETER :: c_const_femto = 15
-  INTEGER, PARAMETER :: c_const_atto = 16
-
-  ! Constants refering to grid properties
-  INTEGER, PARAMETER :: c_const_xb = 22
-  INTEGER, PARAMETER :: c_const_yb = 23
-  INTEGER, PARAMETER :: c_const_zb = 24
-  INTEGER, PARAMETER :: c_const_x = 25
-  INTEGER, PARAMETER :: c_const_y = 26
-  INTEGER, PARAMETER :: c_const_z = 27
-  INTEGER, PARAMETER :: c_const_lx = 28
-  INTEGER, PARAMETER :: c_const_ly = 29
-  INTEGER, PARAMETER :: c_const_lz = 30
-  INTEGER, PARAMETER :: c_const_dx = 31
-  INTEGER, PARAMETER :: c_const_dy = 32
-  INTEGER, PARAMETER :: c_const_dz = 33
-  INTEGER, PARAMETER :: c_const_x_min = 34
-  INTEGER, PARAMETER :: c_const_y_min = 35
-  INTEGER, PARAMETER :: c_const_z_min = 36
-  INTEGER, PARAMETER :: c_const_x_max = 37
-  INTEGER, PARAMETER :: c_const_y_max = 38
-  INTEGER, PARAMETER :: c_const_z_max = 39
-  INTEGER, PARAMETER :: c_const_ix = 40
-  INTEGER, PARAMETER :: c_const_iy = 41
-  INTEGER, PARAMETER :: c_const_iz = 42
-  INTEGER, PARAMETER :: c_const_nx = 43
-  INTEGER, PARAMETER :: c_const_ny = 44
-  INTEGER, PARAMETER :: c_const_nz = 45
-  INTEGER, PARAMETER :: c_const_time = 46
-  INTEGER, PARAMETER :: c_const_r_xy = 47
-  INTEGER, PARAMETER :: c_const_r_yz = 48
-  INTEGER, PARAMETER :: c_const_r_xz = 49
-  INTEGER, PARAMETER :: c_const_nprocx = 50
-  INTEGER, PARAMETER :: c_const_nprocy = 51
-  INTEGER, PARAMETER :: c_const_nprocz = 52
-  INTEGER, PARAMETER :: c_const_nsteps = 53
-  INTEGER, PARAMETER :: c_const_t_end = 54
-  INTEGER, PARAMETER :: c_const_ndims = 55
-  INTEGER, PARAMETER :: c_const_r_xyz = 56
-
-  INTEGER, PARAMETER :: c_const_io_never = 60
-  INTEGER, PARAMETER :: c_const_io_always = 61
-  INTEGER, PARAMETER :: c_const_io_full = 62
-  INTEGER, PARAMETER :: c_const_io_restartable = 63
-  INTEGER, PARAMETER :: c_const_io_species = 64
-  INTEGER, PARAMETER :: c_const_io_no_sum = 65
-  INTEGER, PARAMETER :: c_const_io_average = 66
-  INTEGER, PARAMETER :: c_const_io_snapshot = 67
-  INTEGER, PARAMETER :: c_const_io_dump_single = 68
-  INTEGER, PARAMETER :: c_const_io_average_single = 69
-
-  INTEGER, PARAMETER :: c_const_dir_x = 80
-  INTEGER, PARAMETER :: c_const_dir_y = 81
-  INTEGER, PARAMETER :: c_const_dir_z = 82
-  INTEGER, PARAMETER :: c_const_dir_px = 83
-  INTEGER, PARAMETER :: c_const_dir_py = 84
-  INTEGER, PARAMETER :: c_const_dir_pz = 85
-  INTEGER, PARAMETER :: c_const_dir_en = 86
-  INTEGER, PARAMETER :: c_const_dir_gamma_m1 = 87
-  INTEGER, PARAMETER :: c_const_dir_xy_angle = 88
-  INTEGER, PARAMETER :: c_const_dir_yz_angle = 89
-  INTEGER, PARAMETER :: c_const_dir_zx_angle = 90
-  INTEGER, PARAMETER :: c_const_dir_mod_p = 91
-
-  INTEGER, PARAMETER :: c_const_maxwell_solver_yee = 100
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe = 101
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_x = 102
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_y = 103
-  INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
-  INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
-  INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
-  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
-
-  INTEGER, PARAMETER :: c_const_px = 108
-  INTEGER, PARAMETER :: c_const_py = 109
-  INTEGER, PARAMETER :: c_const_pz = 110
-
-  ! Custom constants
-  INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
-  INTEGER, PARAMETER :: c_const_custom_lowbound = 8192
-
-  INTEGER, PARAMETER :: c_func_sine = 1
-  INTEGER, PARAMETER :: c_func_cosine = 2
-  INTEGER, PARAMETER :: c_func_tan = 3
-  INTEGER, PARAMETER :: c_func_exp = 4
-  INTEGER, PARAMETER :: c_func_arcsine = 10
-  INTEGER, PARAMETER :: c_func_arccosine = 11
-  INTEGER, PARAMETER :: c_func_arctan = 12
-  INTEGER, PARAMETER :: c_func_neg = 13
-  INTEGER, PARAMETER :: c_func_if = 14
-  INTEGER, PARAMETER :: c_func_floor = 15
-  INTEGER, PARAMETER :: c_func_ceil = 16
-  INTEGER, PARAMETER :: c_func_nint = 17
-  INTEGER, PARAMETER :: c_func_rho = 18
-  INTEGER, PARAMETER :: c_func_tempx = 19
-  INTEGER, PARAMETER :: c_func_tempy = 20
-  INTEGER, PARAMETER :: c_func_tempz = 21
-  INTEGER, PARAMETER :: c_func_interpolate = 22
-  INTEGER, PARAMETER :: c_func_tanh = 23
-  INTEGER, PARAMETER :: c_func_sinh = 24
-  INTEGER, PARAMETER :: c_func_cosh = 25
-  INTEGER, PARAMETER :: c_func_ex = 26
-  INTEGER, PARAMETER :: c_func_ey = 27
-  INTEGER, PARAMETER :: c_func_ez = 28
-  INTEGER, PARAMETER :: c_func_bx = 29
-  INTEGER, PARAMETER :: c_func_by = 30
-  INTEGER, PARAMETER :: c_func_bz = 31
-  INTEGER, PARAMETER :: c_func_sqrt = 32
-  INTEGER, PARAMETER :: c_func_gauss = 33
-  INTEGER, PARAMETER :: c_func_semigauss = 34
-  INTEGER, PARAMETER :: c_func_crit = 35
-  INTEGER, PARAMETER :: c_func_abs = 36
-  INTEGER, PARAMETER :: c_func_loge = 37
-  INTEGER, PARAMETER :: c_func_log10 = 38
-  INTEGER, PARAMETER :: c_func_log_base = 39
-  INTEGER, PARAMETER :: c_func_supergauss = 40
-  INTEGER, PARAMETER :: c_func_tempx_ev = 41
-  INTEGER, PARAMETER :: c_func_tempy_ev = 42
-  INTEGER, PARAMETER :: c_func_tempz_ev = 43
-  INTEGER, PARAMETER :: c_func_driftx = 44
-  INTEGER, PARAMETER :: c_func_drifty = 45
-  INTEGER, PARAMETER :: c_func_driftz = 46
-  INTEGER, PARAMETER :: c_func_arctan2 = 47
-
-  INTEGER, PARAMETER :: c_func_custom_lowbound = 4096
-
   ! This type represents parameters given to the parser.
   ! It can be extended by a developer freely
   ! It is the responsibility of the developer to ensure that a parameter is
@@ -284,22 +84,6 @@ MODULE shared_data
   ! Time to start the particle push - 0 by default, can be set in the control
   ! block of the deck using 'particle_tstart'.
   REAL(num) :: particle_push_start_time = 0.0_num
-
-  ! The order for the spline interpolation used as a particle representation.
-  ! png is the number of ghost cells needed by the particles
-#ifdef PARTICLE_SHAPE_BSPLINE3
-  INTEGER, PARAMETER :: sf_min = -2
-  INTEGER, PARAMETER :: sf_max =  2
-  INTEGER, PARAMETER :: png =  4
-#elif  PARTICLE_SHAPE_TOPHAT
-  INTEGER, PARAMETER :: sf_min =  0
-  INTEGER, PARAMETER :: sf_max =  1
-  INTEGER, PARAMETER :: png =  2
-#else
-  INTEGER, PARAMETER :: sf_min = -1
-  INTEGER, PARAMETER :: sf_max =  1
-  INTEGER, PARAMETER :: png =  3
-#endif
 
   ! Object representing a particle
   ! If you add or remove from this section then you *must* update the
@@ -488,72 +272,6 @@ MODULE shared_data
   LOGICAL :: force_final_to_be_restartable
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros_control, n_zeros = 4
-  INTEGER, PARAMETER :: c_max_zeros = 9
-  INTEGER, PARAMETER :: c_dump_part_grid         = 1
-  INTEGER, PARAMETER :: c_dump_grid              = 2
-  INTEGER, PARAMETER :: c_dump_part_species      = 3
-  INTEGER, PARAMETER :: c_dump_part_weight       = 4
-  INTEGER, PARAMETER :: c_dump_part_px           = 5
-  INTEGER, PARAMETER :: c_dump_part_py           = 6
-  INTEGER, PARAMETER :: c_dump_part_pz           = 7
-  INTEGER, PARAMETER :: c_dump_part_vx           = 8
-  INTEGER, PARAMETER :: c_dump_part_vy           = 9
-  INTEGER, PARAMETER :: c_dump_part_vz           = 10
-  INTEGER, PARAMETER :: c_dump_part_charge       = 11
-  INTEGER, PARAMETER :: c_dump_part_mass         = 12
-  INTEGER, PARAMETER :: c_dump_part_id           = 13
-  INTEGER, PARAMETER :: c_dump_ex                = 14
-  INTEGER, PARAMETER :: c_dump_ey                = 15
-  INTEGER, PARAMETER :: c_dump_ez                = 16
-  INTEGER, PARAMETER :: c_dump_bx                = 17
-  INTEGER, PARAMETER :: c_dump_by                = 18
-  INTEGER, PARAMETER :: c_dump_bz                = 19
-  INTEGER, PARAMETER :: c_dump_jx                = 20
-  INTEGER, PARAMETER :: c_dump_jy                = 21
-  INTEGER, PARAMETER :: c_dump_jz                = 22
-  INTEGER, PARAMETER :: c_dump_ekbar             = 23
-  INTEGER, PARAMETER :: c_dump_mass_density      = 24
-  INTEGER, PARAMETER :: c_dump_charge_density    = 25
-  INTEGER, PARAMETER :: c_dump_number_density    = 26
-  INTEGER, PARAMETER :: c_dump_temperature       = 27
-  INTEGER, PARAMETER :: c_dump_dist_fns          = 28
-  INTEGER, PARAMETER :: c_dump_probes            = 29
-  INTEGER, PARAMETER :: c_dump_ejected_particles = 30
-  INTEGER, PARAMETER :: c_dump_ekflux            = 31
-  INTEGER, PARAMETER :: c_dump_poynt_flux        = 32
-  INTEGER, PARAMETER :: c_dump_cpml_psi_eyx      = 33
-  INTEGER, PARAMETER :: c_dump_cpml_psi_ezx      = 34
-  INTEGER, PARAMETER :: c_dump_cpml_psi_byx      = 35
-  INTEGER, PARAMETER :: c_dump_cpml_psi_bzx      = 36
-  INTEGER, PARAMETER :: c_dump_absorption        = 37
-  INTEGER, PARAMETER :: c_dump_part_ek           = 38
-  INTEGER, PARAMETER :: c_dump_part_opdepth      = 39
-  INTEGER, PARAMETER :: c_dump_part_qed_energy   = 40
-  INTEGER, PARAMETER :: c_dump_part_opdepth_tri  = 41
-  INTEGER, PARAMETER :: c_dump_total_energy      = 42
-  INTEGER, PARAMETER :: c_dump_total_energy_sum  = 43
-  INTEGER, PARAMETER :: c_dump_part_rel_mass     = 44
-  INTEGER, PARAMETER :: c_dump_part_gamma        = 45
-  INTEGER, PARAMETER :: c_dump_part_proc         = 46
-  INTEGER, PARAMETER :: c_dump_part_proc0        = 47
-  INTEGER, PARAMETER :: c_dump_ppc               = 48
-  INTEGER, PARAMETER :: c_dump_average_weight    = 49
-  INTEGER, PARAMETER :: c_dump_persistent_ids    = 50
-  INTEGER, PARAMETER :: c_dump_temperature_x     = 51
-  INTEGER, PARAMETER :: c_dump_temperature_y     = 52
-  INTEGER, PARAMETER :: c_dump_temperature_z     = 53
-  INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 54
-#ifdef WORK_DONE_INTEGRATED
-  INTEGER, PARAMETER :: c_dump_part_work_x       = 55
-  INTEGER, PARAMETER :: c_dump_part_work_y       = 56
-  INTEGER, PARAMETER :: c_dump_part_work_z       = 57
-  INTEGER, PARAMETER :: c_dump_part_work_x_total = 58
-  INTEGER, PARAMETER :: c_dump_part_work_y_total = 59
-  INTEGER, PARAMETER :: c_dump_part_work_z_total = 60
-  INTEGER, PARAMETER :: num_vars_to_dump         = 60
-#else
-  INTEGER, PARAMETER :: num_vars_to_dump         = 54
-#endif
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
 
   !----------------------------------------------------------------------------
@@ -640,26 +358,16 @@ MODULE shared_data
     INTEGER :: mask
     INTEGER, DIMENSION(:,:), POINTER :: dumpmask
     LOGICAL, DIMENSION(:), POINTER :: use_species
-    LOGICAL :: use_gamma, use_gamma_min, use_gamma_max, use_random
-    LOGICAL :: use_x_min, use_x_max
-    LOGICAL :: use_px_min, use_px_max
-    LOGICAL :: use_py_min, use_py_max
-    LOGICAL :: use_pz_min, use_pz_max
-    LOGICAL :: use_weight_min, use_weight_max
-    LOGICAL :: use_charge_min, use_charge_max
-    LOGICAL :: use_mass_min, use_mass_max
-    LOGICAL :: use_id_min, use_id_max
+    LOGICAL :: use_gamma
+    LOGICAL :: use_restriction(c_subset_max)
+    LOGICAL :: use_restriction_function(c_subset_max)
     LOGICAL :: space_restrictions
     LOGICAL :: skip, dump_field_grid
-    REAL(num) :: gamma_min, gamma_max, random_fraction
-    REAL(num) :: x_min, x_max
-    REAL(num) :: px_min, px_max, py_min, py_max, pz_min, pz_max
-    REAL(num) :: weight_min, weight_max
-    REAL(num) :: charge_min, charge_max
-    REAL(num) :: mass_min, mass_max
-    INTEGER(i8) :: id_min, id_max
+    LOGICAL :: time_varying
+    REAL(num) :: restriction(c_subset_max)
+    TYPE(primitive_stack) :: restriction_function(c_subset_max)
     INTEGER :: subtype, subarray, subtype_r4, subarray_r4
-    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start
+    INTEGER, DIMENSION(c_ndims) :: skip_dir, n_local, n_global, n_start, starts
     ! Persistent subset
     LOGICAL :: persistent, locked
     REAL(num) :: persist_start_time
@@ -709,12 +417,12 @@ MODULE shared_data
   INTEGER :: mpireal = MPI_DOUBLE_PRECISION
   INTEGER :: realsize
 
-  ! ng is the number of ghost cells allocated in the arrays
   ! fng is the number of ghost cells needed by the field solver
-  ! jng is the number of ghost cells needed by the current arrays
   ! sng is the number of ghost cells needed by the current smoother
-  INTEGER, PARAMETER :: ng = png + 2
-  INTEGER, PARAMETER :: jng =  MAX(ng,png)
+  ! In constants:
+  ! ng is the number of ghost cells allocated in the arrays
+  ! png is the number of ghost cells needed by the particles
+  ! jng is the number of ghost cells needed by the current arrays
   INTEGER :: sng = 1
   INTEGER :: fng, nx
   INTEGER :: nx_global
@@ -744,10 +452,7 @@ MODULE shared_data
 
   REAL(num), ALLOCATABLE, DIMENSION(:) :: x, xb
 
-  INTEGER, PARAMETER :: c_max_string_length = 64
-  INTEGER, PARAMETER :: c_max_prefix = 16
-  ! Maximum path length on Linux machines
-  INTEGER, PARAMETER :: c_max_path_length = 4096 + c_max_prefix
+  ! c_max_path_length is the maximum path length on Linux machines
   CHARACTER(LEN=c_max_path_length) :: data_dir
   CHARACTER(LEN=c_max_prefix) :: filesystem
 
@@ -758,6 +463,7 @@ MODULE shared_data
   LOGICAL :: use_accurate_n_zeros = .FALSE.
   LOGICAL :: use_injectors = .FALSE.
   LOGICAL :: use_more_setup_memory = .FALSE.
+  LOGICAL :: all_deck_errcodes_fatal = .FALSE.
 
   REAL(num) :: dt, t_end, time, dt_multiplier, dt_laser, dt_plasma_frequency
   REAL(num) :: dt_from_restart
@@ -917,6 +623,7 @@ MODULE shared_data
     INTEGER :: species
     INTEGER(i8) :: npart_per_cell
     REAL(num) :: density_min
+    REAL(num) :: density_max
     LOGICAL :: use_flux_injector
 
     TYPE(primitive_stack) :: density_function

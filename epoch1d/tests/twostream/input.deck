@@ -18,7 +18,7 @@ end:boundaries
 
 begin:constant
   drift_p = 2.5e-24
-  temp = 273
+  temperature = 273
   dens = 10
 end:constant
 
@@ -28,10 +28,10 @@ begin:species
   name = Right
   charge = -1
   mass = 1.0
-  temp_x = temp
-  drift_x = drift_p
+  temperature_x = temperature
+  drift_px = drift_p
   number_density = dens
-  npart = 4 * nx
+  nparticles = 4 * nx
 end:species
 
 
@@ -40,15 +40,15 @@ begin:species
   name = Left
   charge = -1
   mass = 1.0
-  temp_x = temp
-  drift_x = -drift_p
+  temperature_x = temperature
+  drift_px = -drift_p
   number_density = dens
-  npart = 4 * nx
+  nparticles = 4 * nx
 end:species
 
 
 begin:output
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 10.5e-3
   dump_last = F
 
@@ -65,7 +65,7 @@ begin:output
   #by = always
   #bz = always
   jx = always
-  #ekbar = always
+  #average_particle_energy = always
   #mass_density = never + species
   charge_density = always
   number_density = always + species

@@ -16,7 +16,7 @@
 
 MODULE shape_functions
 
-  USE shared_data
+  USE constants
 
   IMPLICIT NONE
 

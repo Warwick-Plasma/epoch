@@ -15,7 +15,7 @@
 
 MODULE finish
 
-  USE shared_data
+  USE constants
   USE diagnostics
   USE setup
   USE deck
@@ -100,6 +100,12 @@ CONTAINS
         current_hash => id_registry%get_hash(subset_list(i)%name)
         DEALLOCATE(current_hash)
       END IF
+      IF (.NOT. subset_list(i)%time_varying) CYCLE
+      DO n = 1, c_subset_max
+        IF (subset_list(i)%use_restriction_function(n)) THEN
+          CALL deallocate_stack(subset_list(i)%restriction_function(n))
+        END IF
+      END DO
     END DO
     DEALLOCATE(subset_list, STAT=stat)
     CALL id_registry%reset

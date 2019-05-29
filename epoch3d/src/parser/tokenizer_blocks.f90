@@ -275,13 +275,13 @@ CONTAINS
     ELSE IF (str_cmp(name, 'r_xyz')) THEN
       as_constant = c_const_r_xyz
 
-    ELSE IF (str_cmp(name, 'nprocx')) THEN
+    ELSE IF (str_cmp(name, 'nprocx') .OR. str_cmp(name, 'nproc_x')) THEN
       as_constant = c_const_nprocx
 
-    ELSE IF (str_cmp(name, 'nprocy')) THEN
+    ELSE IF (str_cmp(name, 'nprocy') .OR. str_cmp(name, 'nproc_y')) THEN
       as_constant = c_const_nprocy
 
-    ELSE IF (str_cmp(name, 'nprocz')) THEN
+    ELSE IF (str_cmp(name, 'nprocz') .OR. str_cmp(name, 'nproc_z')) THEN
       as_constant = c_const_nprocz
 
     ELSE IF (str_cmp(name, 'nsteps')) THEN
@@ -346,10 +346,12 @@ CONTAINS
     ELSE IF (str_cmp(name, 'dir_pz')) THEN
       as_constant = c_const_dir_pz
 
-    ELSE IF (str_cmp(name, 'dir_en')) THEN
+    ELSE IF (str_cmp(name, 'dir_en') &
+        .OR. str_cmp(name, 'dir_energy')) THEN
       as_constant = c_const_dir_en
 
-    ELSE IF (str_cmp(name, 'dir_gamma_m1')) THEN
+    ELSE IF (str_cmp(name, 'dir_gamma_m1') &
+        .OR. str_cmp(name, 'dir_gamma_minus_one')) THEN
       as_constant = c_const_dir_gamma_m1
 
     ELSE IF (str_cmp(name, 'dir_xy_angle')) THEN
@@ -527,22 +529,34 @@ CONTAINS
         .OR. str_cmp(name, 'number_density')) THEN
       as_function = c_func_rho
 
-    ELSE IF (str_cmp(name, 'temp_x') .OR. str_cmp(name, 'temp_x_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_x') &
+        .OR. str_cmp(name, 'temp_x_k') &
+        .OR. str_cmp(name, 'temperature_x') &
+        .OR. str_cmp(name, 'temperature_x_k')) THEN
       as_function = c_func_tempx
 
-    ELSE IF (str_cmp(name, 'temp_y') .OR. str_cmp(name, 'temp_y_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_y') &
+        .OR. str_cmp(name, 'temp_y_k') &
+        .OR. str_cmp(name, 'temperature_y') &
+        .OR. str_cmp(name, 'temperature_y_k')) THEN
       as_function = c_func_tempy
 
-    ELSE IF (str_cmp(name, 'temp_z') .OR. str_cmp(name, 'temp_z_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_z') &
+        .OR. str_cmp(name, 'temp_z_k') &
+        .OR. str_cmp(name, 'temperature_z') &
+        .OR. str_cmp(name, 'temperature_z_k')) THEN
       as_function = c_func_tempz
 
-    ELSE IF (str_cmp(name, 'temp_x_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_x_ev') &
+        .OR. str_cmp(name, 'temperature_x_ev')) THEN
       as_function = c_func_tempx_ev
 
-    ELSE IF (str_cmp(name, 'temp_y_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_y_ev') &
+        .OR. str_cmp(name, 'temperature_y_ev')) THEN
       as_function = c_func_tempy_ev
 
-    ELSE IF (str_cmp(name, 'temp_z_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_z_ev') &
+        .OR. str_cmp(name, 'temperature_z_ev')) THEN
       as_function = c_func_tempz_ev
 
     ELSE IF (str_cmp(name, 'ex')) THEN

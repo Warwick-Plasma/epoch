@@ -204,6 +204,7 @@ CONTAINS
     REAL(num) :: npart_frac
     REAL(num) :: weight_local, x0, dmin, dmax, wdata
     TYPE(parameter_pack) :: parameters
+    TYPE(particle_species), POINTER :: species
     REAL(num), DIMENSION(c_ndirs, 2) :: ranges
 
     ! This subroutine injects particles at the right hand edge of the box
@@ -223,28 +224,29 @@ CONTAINS
     errcode = c_err_none
 
     DO ispecies = 1, n_species
-      CALL create_empty_partlist(append_list)
-      npart_per_cell = FLOOR(species_list(ispecies)%npart_per_cell, KIND=i8)
-      npart_frac = species_list(ispecies)%npart_per_cell - npart_per_cell
+      species => species_list(ispecies)
 
-      dmin = species_list(ispecies)%initial_conditions%density_min
-      dmax = species_list(ispecies)%initial_conditions%density_max
+      CALL create_empty_partlist(append_list)
+      npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
+      npart_frac = species%npart_per_cell - npart_per_cell
+
+      dmin = species%initial_conditions%density_min
+      dmax = species%initial_conditions%density_max
 
       parameters%pack_ix = nx
       DO i = 1, 3
         DO iy = 0, ny+1
           parameters%pack_iy = iy
           temperature(iy,i) = evaluate_with_parameters( &
-              species_list(ispecies)%temperature_function(i), &
-              parameters, errcode)
+              species%temperature_function(i), parameters, errcode)
           drift(iy,i) = evaluate_with_parameters( &
-              species_list(ispecies)%drift_function(i), parameters, errcode)
+              species%drift_function(i), parameters, errcode)
         END DO
       END DO
       DO iy = 0, ny+1
         parameters%pack_iy = iy
-        density(iy) = evaluate_with_parameters( &
-            species_list(ispecies)%density_function, parameters, errcode)
+        density(iy) = evaluate_with_parameters(species%density_function, &
+            parameters, errcode)
         IF (density(iy) > dmax) density(iy) = dmax
         IF (density(iy) < dmin) density(iy) = 0.0_num
       END DO
@@ -284,37 +286,29 @@ CONTAINS
             END DO
           END DO
 
-          IF (species_list(ispecies)%ic_df_type == c_ic_df_thermal) THEN
+          IF (species%ic_df_type == c_ic_df_thermal) THEN
             DO i = 1, c_ndirs
-              current%part_p(i) = momentum_from_temperature(&
-                  species_list(ispecies)%mass, temp_local(i), drift_local(i))
+              current%part_p(i) = momentum_from_temperature(species%mass, &
+                  temp_local(i), drift_local(i))
             END DO
-          ELSE IF (species_list(ispecies)%ic_df_type &
-              == c_ic_df_relativistic_thermal) THEN
+          ELSE IF (species%ic_df_type == c_ic_df_relativistic_thermal) THEN
             current%part_p = momentum_from_temperature_relativistic(&
-                species_list(ispecies)%mass, temp_local, &
-                species_list(ispecies)%fractional_tail_cutoff)
-            CALL particle_drift_lorentz_transform(current, &
-                species_list(ispecies)%mass, drift_local)
-          ELSE IF (species_list(ispecies)%ic_df_type == c_ic_df_arbitrary) THEN
+                species%mass, temp_local, species%fractional_tail_cutoff, &
+                drift_local)
+          ELSE IF (species%ic_df_type == c_ic_df_arbitrary) THEN
             parameters%use_grid_position = .FALSE.
             parameters%pack_pos = current%part_pos
             parameters%pack_iy = iy
             errcode = c_err_none
-            CALL evaluate_with_parameters_to_array(&
-                species_list(ispecies)%dist_fn_range(1), parameters, 2, &
-                ranges(1,:), errcode)
-            CALL evaluate_with_parameters_to_array(&
-                species_list(ispecies)%dist_fn_range(2), parameters, 2, &
-                ranges(2,:), errcode)
-            CALL evaluate_with_parameters_to_array(&
-                species_list(ispecies)%dist_fn_range(3), parameters, 2, &
-                ranges(3,:), errcode)
+            CALL evaluate_with_parameters_to_array(species%dist_fn_range(1), &
+                parameters, 2, ranges(1,:), errcode)
+            CALL evaluate_with_parameters_to_array(species%dist_fn_range(2), &
+                parameters, 2, ranges(2,:), errcode)
+            CALL evaluate_with_parameters_to_array(species%dist_fn_range(3), &
+                parameters, 2, ranges(3,:), errcode)
 
             CALL sample_from_deck_expression(current, &
-                species_list(ispecies)%dist_fn, parameters, ranges)
-            CALL particle_drift_lorentz_transform(current, &
-                species_list(ispecies)%mass, drift)
+                species%dist_fn, parameters, ranges, species%mass, drift)
           END IF
 
           weight_local = 0.0_num
@@ -331,7 +325,7 @@ CONTAINS
         END DO
       END DO
 
-      CALL append_partlist(species_list(ispecies)%attached_list, append_list)
+      CALL append_partlist(species%attached_list, append_list)
     END DO
 
   END SUBROUTINE insert_particles
