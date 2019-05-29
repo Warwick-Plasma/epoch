@@ -529,22 +529,34 @@ CONTAINS
         .OR. str_cmp(name, 'number_density')) THEN
       as_function = c_func_rho
 
-    ELSE IF (str_cmp(name, 'temp_x') .OR. str_cmp(name, 'temp_x_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_x') &
+        .OR. str_cmp(name, 'temp_x_k') &
+        .OR. str_cmp(name, 'temperature_x') &
+        .OR. str_cmp(name, 'temperature_x_k')) THEN
       as_function = c_func_tempx
 
-    ELSE IF (str_cmp(name, 'temp_y') .OR. str_cmp(name, 'temp_y_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_y') &
+        .OR. str_cmp(name, 'temp_y_k') &
+        .OR. str_cmp(name, 'temperature_y') &
+        .OR. str_cmp(name, 'temperature_y_k')) THEN
       as_function = c_func_tempy
 
-    ELSE IF (str_cmp(name, 'temp_z') .OR. str_cmp(name, 'temp_z_k')) THEN
+    ELSE IF (str_cmp(name, 'temp_z') &
+        .OR. str_cmp(name, 'temp_z_k') &
+        .OR. str_cmp(name, 'temperature_z') &
+        .OR. str_cmp(name, 'temperature_z_k')) THEN
       as_function = c_func_tempz
 
-    ELSE IF (str_cmp(name, 'temp_x_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_x_ev') &
+        .OR. str_cmp(name, 'temperature_x_ev')) THEN
       as_function = c_func_tempx_ev
 
-    ELSE IF (str_cmp(name, 'temp_y_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_y_ev') &
+        .OR. str_cmp(name, 'temperature_y_ev')) THEN
       as_function = c_func_tempy_ev
 
-    ELSE IF (str_cmp(name, 'temp_z_ev')) THEN
+    ELSE IF (str_cmp(name, 'temp_z_ev') &
+        .OR. str_cmp(name, 'temperature_z_ev')) THEN
       as_function = c_func_tempz_ev
 
     ELSE IF (str_cmp(name, 'ex')) THEN

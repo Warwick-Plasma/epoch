@@ -1,13 +1,13 @@
 begin:constant
   background_number_density = 1e20
-  background_temp = 1e8
+  background_temperature = 1e8
   frac_beam = 1e-3
   ion_mass_e = 1836.2
   mass_ion = me * ion_mass_e
-  pt_ion      = sqrt(2 * mass_ion * kb * background_temp)
-  pt_electron = sqrt(2 * me * kb * background_temp)
-  vel_ion = sqrt(2 * kb * background_temp / mass_ion)
-  lambda_db = sqrt(epsilon0 * kb * background_temp \
+  pt_ion      = sqrt(2 * mass_ion * kb * background_temperature)
+  pt_electron = sqrt(2 * me * kb * background_temperature)
+  vel_ion = sqrt(2 * kb * background_temperature / mass_ion)
+  lambda_db = sqrt(epsilon0 * kb * background_temperature \
                    / background_number_density / qe^2)
   grid_spacing = lambda_db * 0.5
   nxgrid = 300
@@ -44,10 +44,10 @@ begin:species
   charge = 1.0
   mass = ion_mass_e
   number_density = background_number_density
-  temp = 1e8
-  number_density_back = number_density(proton)
-  temp_back = 1e8
-  npart = nx * 120
+  temperature = 1e8
+  number_density_background = number_density(proton)
+  temperature_background = 1e8
+  nparticles = nx * 120
 end:species
 
 
@@ -55,13 +55,13 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  temp = 1e8
+  temperature = 1e8
   number_density = background_number_density * (1.0 - frac_beam)
-  drift_x = 0.0 - frac_beam * 5.0 * pt_electron
-  number_density_back = number_density(electron)
-  temp_back = 1e8
-  drift_x_back = 0.0 - frac_beam * 5.0 * pt_electron
-  npart = nx * 90
+  drift_px = 0.0 - frac_beam * 5.0 * pt_electron
+  number_density_background = number_density(electron)
+  temperature_background = 1e8
+  drift_px_background = 0.0 - frac_beam * 5.0 * pt_electron
+  nparticles = nx * 90
 end:species
 
 
@@ -69,12 +69,12 @@ begin:species
   name = electron_beam
   charge = -1.0
   mass = 1.0
-  temp = 1e7
+  temperature = 1e7
   number_density = background_number_density * frac_beam
-  drift_x = (1.0 - frac_beam) * 5.0 * pt_electron
-  number_density_back = 0.0
-  temp_back = background_temp
-  npart = nx * 90
+  drift_px = (1.0 - frac_beam) * 5.0 * pt_electron
+  number_density_background = 0.0
+  temperature_background = background_temperature
+  nparticles = nx * 90
 end:species
 
 
@@ -93,7 +93,7 @@ begin:output
   grid = always
   ey = always
   ex = always
-  ekbar = always
+  average_particle_energy = always
   number_density = always + species
 
   # Extended IO

@@ -37,13 +37,13 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  npart_per_cell = 5
+  nparticles_per_cell = 5
 
   #number_density = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
   number_density = if(abs(x-x0) lt 0.3, 2, 1)
 
-  #temp_ev = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
-  temp_ev = 0
+  #temperature_ev = if(r2 lt r0, 2*exp(-((time*5e8)^2)), 1)
+  temperature_ev = 0
 end:species
 
 
