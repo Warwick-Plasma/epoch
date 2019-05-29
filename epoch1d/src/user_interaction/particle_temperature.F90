@@ -16,7 +16,7 @@
 
 MODULE particle_temperature
 
-  USE shared_data
+  USE constants
   USE random_generator
   USE evaluator
 

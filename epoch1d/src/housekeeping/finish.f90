@@ -15,7 +15,7 @@
 
 MODULE finish
 
-  USE shared_data
+  USE constants
   USE diagnostics
   USE setup
   USE deck
