@@ -658,8 +658,8 @@ CONTAINS
     global_ranges(1,:) = -HUGE(num)
     global_ranges(2,:) = HUGE(num)
 
-    dir_min = x_min
-    dir_max = x_max
+    dir_min = x_grid_min
+    dir_max = x_grid_max
     dir_d = dx
     IF (current_subset%use_x_min) &
         global_ranges(1,1) = current_subset%x_min
@@ -694,7 +694,7 @@ CONTAINS
     REAL(NUM) :: dir_d, lower_posn
 
     dir_d = dx
-    lower_posn = x_min
+    lower_posn = x_grid_min
     cell_global_ranges(1,1) = NINT((ranges(1,1) - lower_posn) / dir_d) + 1
     cell_global_ranges(2,1) = NINT((ranges(2,1) - lower_posn) / dir_d) + 1
 
@@ -712,8 +712,8 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
     REAL(NUM) :: dir_d, lower_posn
 
-    ranges(1,1) = MAX(ranges(1,1), x_grid_min_local - 0.5_num * dx)
-    ranges(2,1) = MIN(ranges(2,1), x_grid_max_local + 0.5_num * dx)
+    ranges(1,1) = MAX(ranges(1,1), x_min_local)
+    ranges(2,1) = MIN(ranges(2,1), x_max_local)
 
     dir_d = dx
     lower_posn = x_min
@@ -750,7 +750,7 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     INTEGER :: range_global_min
 
-    range_global_min = NINT((global_ranges(1,1) - x_min) / dx)
+    range_global_min = NINT((global_ranges(1,1) - x_grid_min) / dx)
 
     ! -1 because ranges is cell indexed and global_ranges isn't
     cell_starts(1) = ranges(1,1) - range_global_min - 1

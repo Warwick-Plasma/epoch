@@ -97,7 +97,6 @@ CONTAINS
       sub%n_local =  (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
           ranges(2,3) - ranges(1,3) /)
       starts = cell_starts(ranges, global_ranges(sub))
-
       ranges = cell_section_ranges(ranges)
 
       IF (sub%skip) THEN
@@ -672,24 +671,24 @@ CONTAINS
 
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
-        dir_min = x_min
-        dir_max = x_max
+        dir_min = x_grid_min
+        dir_max = x_grid_max
         dir_d = dx
         IF (current_subset%use_x_min) &
             global_ranges(1,idim) = current_subset%x_min
         IF (current_subset%use_x_max) &
             global_ranges(2,idim) = current_subset%x_max
       ELSE IF (idim == 2) THEN
-        dir_min = y_min
-        dir_max = y_max
+        dir_min = y_grid_min
+        dir_max = y_grid_max
         dir_d = dy
         IF (current_subset%use_y_min) &
             global_ranges(1,idim) = current_subset%y_min
         IF (current_subset%use_y_max) &
             global_ranges(2,idim) = current_subset%y_max
       ELSE
-        dir_min = z_min
-        dir_max = z_max
+        dir_min = z_grid_min
+        dir_max = z_grid_max
         dir_d = dz
         IF (current_subset%use_z_min) &
             global_ranges(1,idim) = current_subset%z_min
@@ -728,13 +727,13 @@ CONTAINS
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
-        lower_posn = x_min
+        lower_posn = x_grid_min
       ELSE IF (idim == 2) THEN
         dir_d = dy
-        lower_posn = y_min
+        lower_posn = y_grid_min
       ELSE
         dir_d = dz
-        lower_posn = z_min
+        lower_posn = z_grid_min
       END IF
       cell_global_ranges(1,idim) = &
           NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
@@ -757,23 +756,23 @@ CONTAINS
     REAL(NUM) :: dir_d, lower_posn
     INTEGER :: idim
 
-    ranges(1,1) = MAX(ranges(1,1), x_grid_min_local - 0.5_num * dx)
-    ranges(2,1) = MIN(ranges(2,1), x_grid_max_local + 0.5_num * dx)
-    ranges(1,2) = MAX(ranges(1,2), y_grid_min_local - 0.5_num * dy)
-    ranges(2,2) = MIN(ranges(2,2), y_grid_max_local + 0.5_num * dy)
-    ranges(1,3) = MAX(ranges(1,3), z_grid_min_local - 0.5_num * dz)
-    ranges(2,3) = MIN(ranges(2,3), z_grid_max_local + 0.5_num * dz)
+    ranges(1,1) = MAX(ranges(1,1), x_min_local)
+    ranges(2,1) = MIN(ranges(2,1), x_max_local)
+    ranges(1,2) = MAX(ranges(1,2), y_min_local)
+    ranges(2,2) = MIN(ranges(2,2), y_max_local)
+    ranges(1,3) = MAX(ranges(1,3), z_min_local)
+    ranges(2,3) = MIN(ranges(2,3), z_max_local)
 
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
-        lower_posn = x_min
+        lower_posn = x_grid_min
       ELSE IF (idim == 2) THEN
         dir_d = dy
-        lower_posn = y_min
+        lower_posn = y_grid_min
       ELSE
         dir_d = dz
-        lower_posn = z_min
+        lower_posn = z_grid_min
       END IF
       cell_local_ranges(1,idim) = &
           NINT((ranges(1,idim) - lower_posn) / dir_d) + 1
@@ -819,16 +818,16 @@ CONTAINS
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     INTEGER :: range_global_min
 
-    range_global_min = NINT((global_ranges(1,1) - x_min) / dx)
+    range_global_min = NINT((global_ranges(1,1) - x_grid_min) / dx)
 
     ! -1 because ranges is cell indexed and global_ranges isn't
     cell_starts(1) = ranges(1,1) - range_global_min - 1
 
-    range_global_min = NINT((global_ranges(1,2) - y_min) / dy)
+    range_global_min = NINT((global_ranges(1,2) - y_grid_min) / dy)
 
     cell_starts(2) = ranges(1,2) - range_global_min - 1
 
-    range_global_min = NINT((global_ranges(1,3) - z_min) / dz)
+    range_global_min = NINT((global_ranges(1,3) - z_grid_min) / dz)
 
     cell_starts(3) = ranges(1,3) - range_global_min - 1
 
