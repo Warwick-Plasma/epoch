@@ -19,7 +19,7 @@ MODULE current_smooth
 #ifdef HIGH_ORDER_SMOOTHING
   USE shape_functions
 #else
-  USE shared_data
+  USE constants
 #endif
   USE boundary
 
