@@ -42,6 +42,8 @@ CONTAINS
     injector%density_min = 0.0_num
     injector%density_max = HUGE(1.0_num)
     injector%use_flux_injector = .TRUE.
+    NULLIFY(injector%dt_inject)
+    NULLIFY(injector%depth)
     NULLIFY(injector%next)
 
   END SUBROUTINE init_injector
