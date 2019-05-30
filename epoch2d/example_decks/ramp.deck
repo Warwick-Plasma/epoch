@@ -64,7 +64,7 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  npart = nx * ny * part
+  nparticles = nx * ny * part
 
   number_density = max_dens * (exp(x/scale_x) - 1) / (exp(1) - 1)
   number_density = if(x lt 0, 0.0, number_density(electron))
@@ -76,7 +76,7 @@ begin:species
   number_density_min = 0.0001 * n_crit
   number_density_max = n_crit
 
-  temp_ev = 10^3
+  temperature_ev = 10^3
 end:species
 
 
@@ -85,13 +85,13 @@ begin:species
   name = proton
   charge = 1.0
   mass = 1836.2
-  npart = nx * ny * part
+  nparticles = nx * ny * part
 
   number_density = number_density(electron)
   number_density_min = 0.0001 * n_crit
   number_density_max = 1.2 * n_crit
 
-  temp_ev = 40
+  temperature_ev = 40
 end:species
 
 
@@ -117,7 +117,7 @@ begin:output
   jx = always
   jy = always
   jz = always
-  ekbar = always + species
+  average_particle_energy = always + species
   mass_density = never + species
   charge_density = always # + average + snapshot
   number_density = always + species
@@ -132,7 +132,7 @@ begin:dist_fn
   name = en
   ndims = 1
 
-  direction1 = dir_en
+  direction1 = dir_energy
 
   range1 = (0, 15*kev)
 
@@ -143,11 +143,11 @@ end:dist_fn
 
 
 begin:dist_fn
-  name = x_en
+  name = x_energy
   ndims = 2
 
   direction1 = dir_x
-  direction2 = dir_en
+  direction2 = dir_energy
 
   # Range is ignored for spatial coordinates
   #range1 = (1, 1)

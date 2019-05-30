@@ -1820,7 +1820,6 @@ CONTAINS
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
         USE constants
-        USE shared_data
         REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
         INTEGER, INTENT(IN) :: current_species
         INTEGER, INTENT(IN), OPTIONAL :: direction
