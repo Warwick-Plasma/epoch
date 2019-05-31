@@ -223,6 +223,24 @@ CONTAINS
       CALL abort_code(c_err_bad_value)
     END IF
 
+    ! Sanity check on heat_bath boundaries
+    error = .FALSE.
+    DO idx = 1, 2 * c_ndims
+      IF (bc_field(idx) == c_bc_heat_bath) error = .TRUE.
+    END DO
+
+    IF (error) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'heat_bath boundaries apply to particles only'
+        END DO
+      END IF
+      CALL abort_code(c_err_bad_value)
+    END IF
+
   END FUNCTION boundary_block_check
 
 END MODULE deck_boundaries_block

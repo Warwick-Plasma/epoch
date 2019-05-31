@@ -213,7 +213,7 @@ MODULE shared_data
     ! Secondary list
     TYPE(particle_list), DIMENSION(:,:), POINTER :: secondary_list
 
-    ! Injection of particles
+    ! Loading of particles
     REAL(num) :: npart_per_cell
     TYPE(primitive_stack) :: density_function, temperature_function(3)
     TYPE(primitive_stack) :: drift_function(3)
@@ -605,7 +605,7 @@ MODULE shared_data
     INTEGER :: boundary
     INTEGER :: id
     INTEGER :: species
-    INTEGER(i8) :: npart_per_cell
+    REAL(num) :: npart_per_cell
     REAL(num) :: density_min
     REAL(num) :: density_max
     LOGICAL :: use_flux_injector

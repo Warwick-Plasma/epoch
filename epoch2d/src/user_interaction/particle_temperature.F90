@@ -402,25 +402,68 @@ CONTAINS
 
   ! Function for generating momenta of thermal particles in a particular
   ! direction, e.g. the +x direction.
-  ! These satisfy a Rayleigh distribution, formed by combining two
-  ! normally-distributed (~N(0,sigma)) random variables as follows:
-  ! Z = SQRT(X**2 + Y**2)
-  FUNCTION flux_momentum_from_temperature(mass, temperature, drift)
+  ! Samples distribution v f(v - drift) where f is Maxwellian
+  ! including for drift == 0
+  ! Drift is signed, and direction should be +/- 1 giving the sign of wanted
+  ! velocity
 
-    REAL(num), INTENT(IN) :: mass, temperature, drift
-    REAL(num) :: flux_momentum_from_temperature
-    REAL(num) :: mom1, mom2
+  FUNCTION flux_momentum_from_temperature(mass, temperature, drift, direction)
 
-    mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
-    mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
+    REAL(num), INTENT(IN) :: mass, temperature, drift, direction
+    REAL(num) :: flux_momentum_from_temperature, mom1, mom2
+    REAL(num) :: v, vt2, vt, vd, vmin, vmax, vrange, vexp
+    REAL(num) :: norm, fac
+    INTEGER :: i
 
-    flux_momentum_from_temperature = SQRT(mom1**2 + mom2**2) + drift
+    IF (ABS(drift) > c_tiny) THEN
+      vt2 = kb * temperature / mass
+      IF (vt2 < c_tiny) THEN
+        flux_momentum_from_temperature = drift
+        RETURN
+      END IF
+
+      vt = SQRT(vt2)
+      vrange = 3.0_num * vt
+      vd = direction * drift / mass
+      vmax = vd + vrange
+
+      IF (vmax < c_tiny) THEN
+        flux_momentum_from_temperature = 0.0_num
+        RETURN
+      END IF
+
+      vmin = MAX(vd - vrange, 0.0_num)
+      vrange = vmax - vmin
+
+      fac = -0.5_num / vt2
+      vexp = 0.5_num * (vd + SQRT(vd**2 + 4.0_num * vt2))
+      norm = 1.0_num / (vexp * EXP(fac * (vexp - vd)**2))
+
+      DO i = 1, 1000
+        v = vmin + random() * vrange
+
+        IF (random() < norm * v * EXP(fac * (v - vd)**2)) THEN
+          flux_momentum_from_temperature = direction * v * mass
+          RETURN
+        END IF
+      END DO
+    ELSE
+      ! These satisfy a Rayleigh distribution, formed by combining two
+      ! normally-distributed (~N(0,sigma)) random variables as follows:
+      ! Z = SQRT(X**2 + Y**2)
+
+      mom1 = momentum_from_temperature(mass, temperature, 0.0_num)
+      mom2 = momentum_from_temperature(mass, temperature, 0.0_num)
+
+      flux_momentum_from_temperature = direction * SQRT(mom1**2 + mom2**2)
+    END IF
 
   END FUNCTION flux_momentum_from_temperature
 
 
 
   ! Function to take a deck expression and sample until it returns a value
+
   SUBROUTINE sample_from_deck_expression(part, stack, parameters, &
       ranges, mass, drift, it_r)
 
