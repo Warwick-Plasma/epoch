@@ -24,7 +24,7 @@ MODULE injectors
 
   IMPLICIT NONE
 
-  REAL(num) :: flow_limit_val = 5.0_num
+  REAL(num) :: flow_limit_val = 10.0_num
 
 CONTAINS
 
@@ -207,7 +207,8 @@ CONTAINS
     REAL(num) :: weight_fac
 #endif
     REAL(num), DIMENSION(3) :: temperature, drift
-    INTEGER :: parts_this_time, ipart, idir, dir_index, flux_dir, ii, jj
+    INTEGER :: parts_this_time, ipart, idir, dir_index, flux_dir, flux_dir_cell
+    INTEGER :: ii, jj
     INTEGER, DIMENSION(c_ndims-1) :: perp_dir_index, nperp
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
@@ -341,8 +342,9 @@ CONTAINS
         ! like hottest component
         p_therm = SQRT(mass * kb * MAXVAL(temperature))
         p_inject_drift = drift(dir_index)
+        flux_dir_cell = flux_dir
 
-        IF (flux_dir /= -1) THEN
+        IF (flux_dir_cell /= -1) THEN
           ! Drift adjusted so that +ve is 'inwards' through boundary
           p_drift = p_inject_drift * dir_mult
 
@@ -355,6 +357,9 @@ CONTAINS
             gamma_mass = SQRT(p_inject_drift**2 + typical_mc2) / c
             v_inject_s = p_inject_drift / gamma_mass
             density_correction = 1.0_num
+            ! Large drift flux Maxwellian can be approximated by a
+            ! non-flux Maxwellian
+            flux_dir_cell = -1
           ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
             ! Net is outflow - inflow velocity is zero
             v_inject_s = 0.0_num
@@ -424,7 +429,7 @@ CONTAINS
               temperature, drift)
 
           DO idir = 1, 3
-            IF (idir == flux_dir) THEN
+            IF (idir == flux_dir_cell) THEN
               ! Drift is signed - dir mult is the direciton we want to get
               new%part_p(idir) = flux_momentum_from_temperature(&
                   mass, temperature(idir), drift(idir), dir_mult)
