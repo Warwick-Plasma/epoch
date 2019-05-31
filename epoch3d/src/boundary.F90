@@ -22,6 +22,7 @@ MODULE boundary
   USE mpi_subtype_control
   USE utilities
   USE particle_id_hash_mod
+  USE injectors
 
   IMPLICIT NONE
 
@@ -29,7 +30,7 @@ CONTAINS
 
   SUBROUTINE setup_boundaries
 
-    INTEGER :: i, ispecies
+    INTEGER :: i, ispecies, bc
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max' /)
@@ -59,10 +60,15 @@ CONTAINS
     error = .FALSE.
     DO ispecies = 1, n_species
       DO i = 1, 2*c_ndims
+        bc = species_list(ispecies)%bc_particle(i)
         bc_error = 'Unrecognised "' // TRIM(boundary(i)) // '" boundary for ' &
             // 'species "' // TRIM(species_list(ispecies)%name) // '"'
-        error = error .OR. setup_particle_boundary(&
-            species_list(ispecies)%bc_particle(i), bc_error)
+        error = error .OR. setup_particle_boundary(bc, bc_error)
+
+        IF (bc == c_bc_heat_bath) THEN
+          CALL create_boundary_injector(ispecies, i)
+          species_list(ispecies)%bc_particle(i) = c_bc_open
+        END IF
       END DO
     END DO
 
@@ -105,6 +111,7 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_heat_bath &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
@@ -1417,8 +1424,9 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! y-direction
                 i = 2
@@ -1510,8 +1518,9 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! y-direction
                 i = 2
@@ -1609,8 +1618,9 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! z-direction
                 i = 3
@@ -1702,8 +1712,9 @@ CONTAINS
 
                 ! y-direction
                 i = 2
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! z-direction
                 i = 3
@@ -1801,8 +1812,9 @@ CONTAINS
 
                 ! z-direction
                 i = 3
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 cur%part_pos(3) = 2.0_num * z_min_outer - part_pos
 
@@ -1894,8 +1906,9 @@ CONTAINS
 
                 ! z-direction
                 i = 3
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 cur%part_pos(3) = 2.0_num * z_max_outer - part_pos
 

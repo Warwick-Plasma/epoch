@@ -25,6 +25,8 @@ MODULE utilities
   END INTERFACE grow_array
 
   PRIVATE
+
+  PUBLIC :: erf_func
   PUBLIC :: abort_code, grow_array
 
 CONTAINS
@@ -275,5 +277,34 @@ CONTAINS
     CALL MPI_ABORT(MPI_COMM_WORLD, newcode, ierr)
 
   END SUBROUTINE abort_code
+
+
+
+  !----------------------------------------------------------------------------
+  ! Approximation to ERF from Abramowitz and Stegun
+  ! "Handbook Of Mathematical Functions" - 7.1.28
+  ! Should be accurate to a few parts in 10^7
+  !----------------------------------------------------------------------------
+
+  FUNCTION erf_func(val)
+
+   REAL(num), INTENT(IN) :: val
+   REAL(num), PARAMETER :: a1 = 0.0705230784_num
+   REAL(num), PARAMETER :: a2 = 0.0422820123_num
+   REAL(num), PARAMETER :: a3 = 0.0092705272_num
+   REAL(num), PARAMETER :: a4 = 0.0001520143_num
+   REAL(num), PARAMETER :: a5 = 0.0002765672_num
+   REAL(num), PARAMETER :: a6 = 0.0000430638_num
+   REAL(num), PARAMETER :: unity = 1.0_num
+   REAL(num) :: y, denom
+   REAL(num) :: erf_func
+
+   y = ABS(val)
+   denom = unity + y * (a1 + y * (a2 + y * (a3 + y * (a4 + y * (a5 + y * a6)))))
+
+   ! Use ERF(-ABS(X)) = -ERF(ABS(X))
+   erf_func = SIGN(unity - unity / denom**16, val)
+
+  END FUNCTION erf_func
 
 END MODULE utilities

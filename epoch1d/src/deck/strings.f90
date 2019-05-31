@@ -247,6 +247,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'heat_bath')) THEN
+      as_bc = c_bc_heat_bath
+      RETURN
+    END IF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_laser')) THEN
       as_bc = c_bc_cpml_laser
       RETURN

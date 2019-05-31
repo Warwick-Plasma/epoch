@@ -442,8 +442,8 @@ FORCE:
 antennae.o: antennae.f90 evaluate.o shared_data.o shunt.o
 balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
   redblack_module.o timer.o utilities.o
-boundary.o: boundary.F90 laser.o mpi_subtype_control.o particle_id_hash.o \
-  particle_temperature.o partlist.o utilities.o
+boundary.o: boundary.F90 injectors.o laser.o mpi_subtype_control.o \
+  particle_id_hash.o particle_temperature.o partlist.o utilities.o
 calc_df.o: calc_df.F90 boundary.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 constants.o: constants.F90 $(SDFMOD)
@@ -504,7 +504,7 @@ finish.o: finish.f90 antennae.o collisions.o constants.o deck.o diagnostics.o \
 helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
-  random_generator.o
+  random_generator.o utilities.o
 ionise.o: ionise.F90 boundary.o numerics.o partlist.o random_generator.o \
   utilities.o
 iterators.o: iterators.F90 particle_id_hash.o particle_pointer_advance.o \
