@@ -42,6 +42,9 @@
 
  * Allow subset restrictions to be time-varying functions
 
+ * Added "heat_bath" particle boundary conditions. These use the particle
+   injectors to create an improved form of thermal boundary conditions.
+
 
 ## v4.15.0 to v4.16.0
 
