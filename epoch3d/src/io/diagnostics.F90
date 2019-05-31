@@ -698,6 +698,21 @@ CONTAINS
             c_stagger_cell_centre, calc_poynt_flux, array, fluxdir(1:3), &
             dim_tags)
 
+        CALL write_nspecies_field(c_dump_px, code, &
+            'px_bulk', 'Px Bulk', 'kgm/s', &
+            c_stagger_cell_centre, calc_per_species_momentum, array, &
+            (/c_dir_x/))
+
+        CALL write_nspecies_field(c_dump_py, code, &
+            'py_bulk', 'Py Bulk', 'kgm/s', &
+            c_stagger_cell_centre, calc_per_species_momentum, array, &
+            (/c_dir_y/))
+
+        CALL write_nspecies_field(c_dump_pz, code, &
+            'pz_bulk', 'Pz Bulk', 'kgm/s', &
+            c_stagger_cell_centre, calc_per_species_momentum, array, &
+            (/c_dir_z/))
+
         IF (isubset /= 1) THEN
           DO i = 1, n_species
             CALL append_partlist(species_list(i)%attached_list, &
