@@ -974,6 +974,101 @@ CONTAINS
 
 
 
+  SUBROUTINE calc_per_species_momentum(data_array, current_species, direction)
+
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
+    REAL(num), DIMENSION(:), ALLOCATABLE :: part_count
+    ! Properties of the current particle. Copy out of particle arrays for speed
+    REAL(num) :: part_px, part_py, part_pz
+    ! The data to be weighted onto the grid
+    REAL(num) :: wdata, weight
+    INTEGER :: ispecies, ix, spec_start, spec_end
+    TYPE(particle), POINTER :: current
+    LOGICAL :: spec_sum
+#include "particle_head.inc"
+
+    IF (.NOT. PRESENT(direction)) THEN
+      IF (rank == 0) THEN
+        PRINT*, 'Error: No direction argument supplied to ', &
+            'calc_per_species_momentum'
+        CALL abort_code(c_err_bad_value)
+      END IF
+    END IF
+
+    ALLOCATE(part_count(1-ng:nx+ng))
+
+    part_count = 0.0_num
+    data_array = 0.0_num
+
+    spec_start = current_species
+    spec_end = current_species
+    spec_sum = .FALSE.
+
+    IF (current_species <= 0) THEN
+      spec_start = 1
+      spec_end = n_species
+      spec_sum = .TRUE.
+    END IF
+
+    DO ispecies = spec_start, spec_end
+      IF (io_list(ispecies)%species_type == c_species_id_photon) CYCLE
+#ifndef NO_TRACER_PARTICLES
+      IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
+#endif
+      current => io_list(ispecies)%attached_list%head
+      wdata = io_list(ispecies)%weight
+      weight = io_list(ispecies)%weight
+
+      DO WHILE (ASSOCIATED(current))
+        ! Copy the particle properties out for speed
+
+#ifndef PER_SPECIES_WEIGHT
+        wdata = current%weight
+        weight = current%weight
+#endif
+
+        ! Copy the particle properties out for speed
+        part_px = current%part_p(1)
+        part_py = current%part_p(2)
+        part_pz = current%part_p(3)
+        SELECT CASE (direction)
+          CASE(c_dir_x)
+            wdata = wdata * part_px
+          CASE(c_dir_y)
+            wdata = wdata * part_py
+          CASE(c_dir_z)
+            wdata = wdata * part_pz
+        END SELECT
+
+#include "particle_to_grid.inc"
+
+        DO ix = sf_min, sf_max
+          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
+          part_count(cell_x+ix) = part_count(cell_x+ix) + gx(ix) * weight
+        END DO
+
+        current => current%next
+      END DO
+      CALL calc_boundary(data_array, ispecies)
+      CALL calc_boundary(part_count, ispecies)
+    END DO
+
+    CALL calc_boundary(data_array)
+    CALL calc_boundary(part_count)
+
+    data_array = data_array/MAX(part_count, c_tiny)
+    DO ix = 1, 2*c_ndims
+      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
+    END DO
+
+    DEALLOCATE(part_count)
+
+  END SUBROUTINE calc_per_species_momentum
+
+
+
   SUBROUTINE calc_total_energy_sum
 
     REAL(num) :: particle_energy, field_energy
