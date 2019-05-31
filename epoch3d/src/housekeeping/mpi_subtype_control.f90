@@ -606,8 +606,8 @@ CONTAINS
     REAL(num), PARAMETER :: fudge = 0.019_num
     INTEGER :: idim, n
 
-    global_ranges(1,:) = -HUGE(num)
-    global_ranges(2,:) = HUGE(num)
+    global_ranges(1,:) = -HUGE(1.0_num)
+    global_ranges(2,:) = HUGE(1.0_num)
 
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
