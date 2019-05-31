@@ -713,8 +713,8 @@ CONTAINS
     REAL(num), PARAMETER :: fudge = 0.019_num
     INTEGER :: n
 
-    global_ranges(1,:) = -HUGE(num)
-    global_ranges(2,:) = HUGE(num)
+    global_ranges(1,:) = -HUGE(1.0_num)
+    global_ranges(2,:) = HUGE(1.0_num)
 
     dir_d = dx
     dir_min = x_grid_min - 0.5_num * dir_d
