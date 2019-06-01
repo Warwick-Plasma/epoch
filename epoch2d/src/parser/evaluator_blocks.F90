@@ -605,19 +605,19 @@ CONTAINS
       CALL push_on_eval(parameters%pack_p(1))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_py) THEN
       CALL push_on_eval(parameters%pack_p(2))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_pz) THEN
       CALL push_on_eval(parameters%pack_p(3))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_maxwell_solver_yee) THEN
       CALL push_on_eval(REAL(c_maxwell_solver_yee, num))

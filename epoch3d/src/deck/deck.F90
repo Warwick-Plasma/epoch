@@ -818,7 +818,7 @@ CONTAINS
     IF (first_call .AND. rank == 0) THEN
       CLOSE(du)
       CLOSE(duc)
-    ENDIF
+    END IF
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
