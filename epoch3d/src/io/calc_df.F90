@@ -189,7 +189,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num
@@ -306,7 +306,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           fac = c / current%particle_energy
           part_ux = current%part_p(1) * fac
           part_uy = current%part_p(2) * fac
@@ -1246,7 +1246,7 @@ CONTAINS
           gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
 
           particle_energy = particle_energy + gamma_rel_m1 * fac
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         ELSE
           particle_energy = particle_energy + current%particle_energy * part_w
 #endif

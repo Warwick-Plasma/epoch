@@ -550,17 +550,24 @@ CONTAINS
 #ifdef PHOTONS
     ELSE IF (str_cmp(element, 'optical_depth')) THEN
       elementselected = c_dump_part_opdepth
+#endif
 
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     ELSE IF (str_cmp(element, 'qed_energy')) THEN
       elementselected = c_dump_part_qed_energy
+#endif
 
-#ifdef TRIDENT_PHOTONS
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     ELSE IF (str_cmp(element, 'trident_optical_depth')) THEN
       elementselected = c_dump_part_opdepth_tri
 #endif
-#endif
-#ifdef WORK_DONE_INTEGRATED
 
+#ifdef BREMSSTRAHLUNG
+    ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_brem
+#endif
+
+#ifdef WORK_DONE_INTEGRATED
     ELSE IF (str_cmp(element, 'work_x')) THEN
       elementselected = c_dump_part_work_x
 
@@ -579,7 +586,6 @@ CONTAINS
     ELSE IF (str_cmp(element, 'work_z_total')) THEN
       elementselected = c_dump_part_work_z_total
 #endif
-
 
     ELSE IF (str_cmp(element, 'ex')) THEN
       elementselected = c_dump_ex
@@ -1032,12 +1038,18 @@ CONTAINS
 #ifdef PHOTONS
     io_block%dumpmask(c_dump_part_opdepth) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     io_block%dumpmask(c_dump_part_qed_energy) = &
         IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
-#ifdef TRIDENT_PHOTONS
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     io_block%dumpmask(c_dump_part_opdepth_tri) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_tri), c_io_restartable)
 #endif
+#ifdef BREMSSTRAHLUNG
+    io_block%dumpmask(c_dump_part_opdepth_brem) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     io_block%dumpmask(c_dump_part_id) = &

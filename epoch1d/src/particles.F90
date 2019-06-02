@@ -129,6 +129,15 @@ CONTAINS
       current => species_list(ispecies)%attached_list%head
       IF (species_list(ispecies)%immobile) CYCLE
       IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
+#ifdef BREMSSTRAHLUNG
+        IF (ispecies == bremsstrahlung_photon_species) THEN
+          IF (bremsstrahlung_photon_dynamics) THEN
+            CALL push_photons(ispecies)
+          ELSE
+            CYCLE
+          END IF
+        END IF
+#endif
 #ifdef PHOTONS
         IF (photon_dynamics) CALL push_photons(ispecies)
 #endif
@@ -463,7 +472,7 @@ CONTAINS
 
 
 
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
   SUBROUTINE push_photons(ispecies)
 
     ! Very simple photon pusher

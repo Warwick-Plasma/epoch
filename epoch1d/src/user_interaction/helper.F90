@@ -760,7 +760,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: stra
     REAL(num), DIMENSION(:), ALLOCATABLE :: xbuf
     REAL(num), DIMENSION(:), ALLOCATABLE :: pxbuf, pybuf, pzbuf
-#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS) || defined(BREMSSTRAHLUNG)
     REAL(num), DIMENSION(:), ALLOCATABLE :: wbuf
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
@@ -795,7 +795,7 @@ CONTAINS
       part_count = load_1d_real_array(curr_loader%x_data, xbuf, &
           curr_loader%x_data_offset, errcode)
 
-#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS) || defined(BREMSSTRAHLUNG)
       read_count = load_1d_real_array(curr_loader%w_data, wbuf, &
           curr_loader%w_data_offset, errcode)
       IF (part_count /= read_count) file_inconsistencies = .TRUE.
@@ -862,7 +862,7 @@ CONTAINS
 
         ! Insert data to particle
         new_particle%part_pos = xbuf(read_count)
-#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined (PHOTONS) || defined(BREMSSTRAHLUNG)
         new_particle%weight = wbuf(read_count)
 #endif
         IF (curr_loader%px_data_given) THEN

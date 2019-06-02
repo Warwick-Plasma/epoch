@@ -55,6 +55,9 @@ PROGRAM pic
 #ifdef PHOTONS
   USE photons
 #endif
+#ifdef BREMSSTRAHLUNG
+  USE bremsstrahlung
+#endif
 
   IMPLICIT NONE
 
@@ -174,6 +177,9 @@ PROGRAM pic
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
+#ifdef BREMSSTRAHLUNG
+  IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
+#endif
 
   walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
@@ -192,6 +198,13 @@ PROGRAM pic
 #ifdef PHOTONS
     IF (push .AND. use_qed .AND. time > qed_start_time) THEN
       CALL qed_update_optical_depth()
+    END IF
+#endif
+
+#ifdef BREMSSTRAHLUNG
+    IF (push .AND. use_bremsstrahlung &
+        .AND. time > bremsstrahlung_start_time) THEN
+      CALL bremsstrahlung_update_optical_depth()
     END IF
 #endif
 
@@ -249,6 +262,10 @@ PROGRAM pic
 
 #ifdef PHOTONS
   IF (use_qed) CALL shutdown_qed_module()
+#endif
+
+#ifdef BREMSSTRAHLUNG
+  IF (use_bremsstrahlung) CALL shutdown_bremsstrahlung_module()
 #endif
 
   CALL output_routines(step, force_dump)

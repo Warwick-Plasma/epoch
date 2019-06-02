@@ -122,10 +122,15 @@ MODULE shared_data
 #endif
 #ifdef PHOTONS
     REAL(num) :: optical_depth
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     REAL(num) :: particle_energy
-#ifdef TRIDENT_PHOTONS
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     REAL(num) :: optical_depth_tri
 #endif
+#ifdef BREMSSTRAHLUNG
+    REAL(num) :: optical_depth_bremsstrahlung
 #endif
   END TYPE particle
 
@@ -207,6 +212,11 @@ MODULE shared_data
 
 #ifdef ZERO_CURRENT_PARTICLES
     LOGICAL :: zero_current
+#endif
+
+#ifdef BREMSSTRAHLUNG
+    INTEGER :: atomic_no
+    LOGICAL :: atomic_no_set = .FALSE.
 #endif
 
     ! ID code which identifies if a species is of a special type
@@ -543,6 +553,39 @@ MODULE shared_data
   CHARACTER(LEN=string_length) :: qed_table_location
 #endif
   LOGICAL :: use_qed = .FALSE.
+
+#ifdef BREMSSTRAHLUNG
+  !----------------------------------------------------------------------------
+  ! Bremsstrahlung
+  !----------------------------------------------------------------------------
+  ! Table declarations
+  TYPE brem_tables
+    REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
+    REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
+    INTEGER :: size_k, size_t
+  END TYPE brem_tables
+  TYPE(brem_tables), ALLOCATABLE :: brem_array(:)
+  INTEGER, ALLOCATABLE :: z_values(:)
+  INTEGER, ALLOCATABLE :: z_to_index(:)
+  INTEGER :: size_brem_array
+
+  ! Bremsstrahlung photon species flag
+  INTEGER :: bremsstrahlung_photon_species = -1
+#ifndef PHOTONS
+  INTEGER :: photon_species = -1
+#endif
+
+  ! Deck variables
+  REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
+  REAL(num) :: bremsstrahlung_start_time = 0.0_num
+  REAL(num) :: photon_weight = 1.0_num
+  LOGICAL :: use_bremsstrahlung_recoil = .TRUE.
+  LOGICAL :: produce_bremsstrahlung_photons = .FALSE.
+  LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
+  LOGICAL :: use_plasma_screening = .FALSE.
+  CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+#endif
+  LOGICAL :: use_bremsstrahlung = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data

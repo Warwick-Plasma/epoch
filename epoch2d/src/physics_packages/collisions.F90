@@ -1675,7 +1675,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num
@@ -1934,7 +1934,6 @@ CONTAINS
       part2%part_p = p2
       part1%weight = wt1
       part2%weight = wt2
-
 
       en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
       en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)

@@ -129,6 +129,9 @@ CONTAINS
     found = .TRUE.
 #endif
 #endif
+#ifdef BREMSSTRAHLUNG
+    found = .TRUE.
+#endif
 #ifdef PREFETCH
     found = .TRUE.
 #endif
@@ -223,6 +226,10 @@ CONTAINS
     defines = IOR(defines, c_def_trident_photons)
     WRITE(*,*) 'Pair production by Trident process -DTRIDENT_PHOTONS'
 #endif
+#endif
+#ifdef BREMSSTRAHLUNG
+    defines = IOR(defines, c_def_bremsstrahlung)
+    WRITE(*,*) 'Bremsstrahlung radiation -DBREMSSTRAHLUNG'
 #endif
 #ifdef PREFETCH
     defines = IOR(defines, c_def_prefetch)
