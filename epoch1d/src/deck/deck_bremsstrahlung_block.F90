@@ -116,7 +116,8 @@ END SUBROUTINE bremsstrahlung_deck_finalise
     IF (element == blank .OR. value == blank) RETURN
 
     IF (str_cmp(element, 'use_bremsstrahlung') &
-        .OR. str_cmp(element, 'bremsstrahlung')) THEN
+        .OR. str_cmp(element, 'bremsstrahlung') &
+        .OR. str_cmp(element, 'enable')) THEN
       use_bremsstrahlung = as_logical_print(value, element, errcode)
       RETURN
     END IF
@@ -153,7 +154,8 @@ END SUBROUTINE bremsstrahlung_deck_finalise
       RETURN
     END IF
 
-    IF (str_cmp(element, 'bremsstrahlung_table_location')) THEN
+    IF (str_cmp(element, 'bremsstrahlung_table_location') &
+        .OR. str_cmp(element, 'table_location')) THEN
       bremsstrahlung_table_location = TRIM(ADJUSTL(value))
       RETURN
     END IF
