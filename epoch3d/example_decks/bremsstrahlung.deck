@@ -1,0 +1,206 @@
+begin:control
+
+  # global number of gridpoints
+  nx = 64 # in x
+  ny = 6  # in y (must be even)
+  nz = 6  # in z (must be even)
+  npart = nx * ny * nz * 16
+
+  # maximum number of iterations
+  # set to -1 to run until finished
+  nsteps = -1
+
+  # final time of simulation
+  t_end = 2.0e-11
+
+  # size of domain
+  x_min = 0
+  x_max = 5.50e-3
+  y_min = -5.0e-6
+  y_max = 5.0e-6
+  z_min = -5.0e-6
+  z_max = 5.0e-6
+
+  dt_multiplier = 0.8
+
+end:control
+
+
+begin:bremsstrahlung
+
+  use_bremsstrahlung = T # Turn on or off bremsstrahlung radiation
+
+  start_time = 0 # Time after which QED/bremsstrahlung effects should start.
+
+  produce_photons = T # Should the code actually produce and track photons.
+                      # If F then the code calculates the recoil due to emitting
+                      # photons, but the photon is not tracked. QED must be on
+                      # to ever produce photons
+
+  photon_energy_min = 1 * kev  # Minimum energy for a tracked photon. Photons
+                               # emitted with lower energy still cause electron
+                               # recoil but are not tracked
+
+  photon_weight = 1.0 # Lowers the macroparticle weight of produced photons to
+                      # allow sampling of more photons. Must be  set in the
+                      # range  0.0 < photon_weight <= 1.0
+
+  photon_dynamics = F # Quite often you're more interested in where photons are
+                      # generated than where they propagate to. This option
+                      # stops the core code from moving the photons.
+                      # This is also much faster.
+
+  use_bremsstrahlung_recoil = T # Do we recoil electrons after emission of a
+                                # photon?
+
+  use_plasma_screening = F # From theory, calculates cross section enhancement
+                           # due to reduced screening of the nuclear charge for
+                           # ionised atoms.
+
+end:bremsstrahlung
+
+
+begin:boundaries
+
+  bc_x_min = simple_laser
+  bc_x_max = simple_laser
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+
+end:boundaries
+
+
+# Electrons in the beam
+begin:species
+
+  name = Electron_Beam
+  frac = 0.8
+  dump = T
+
+  # Put 10^5 electrons in the first cell in x, between y=0 and y=(1 cell width)
+  # (needs even ny), and z=0 and z=(1 cell width) (needs even nz)
+  rho = 1.0e5 * nx * ny * nz / ((x_max - x_min)*(y_max - y_min)*(z_max - z_min))
+  rho = if (x lt x_max/nx, density(Electron_Beam), 0)
+  rho = if (y gt 0, density(Electron_Beam), 0)
+  rho = if (y lt 1 * (y_max - y_min) / ny, density(Electron_Beam), 0 )
+  rho = if (z gt 0, density(Electron_Beam), 0)
+  rho = if (z lt 1 * (z_max - z_min) / nz, density(Electron_Beam), 0 )
+
+  minrho = 1
+  temp = 0
+  drift_x = 5.344e-20  # Momentum: 100 MeV/c = 5.3443e-20 kg.m/s
+
+  # This identify tag is required to mark this species as the species which
+  # undergoes bremsstrahlung radiation. It automatically sets the mass
+  # charge to that of an electron.
+  identify:electron
+
+end:species
+
+
+begin:species
+
+  # Target information
+  name = Aluminium
+  atomic_number = 13  #Must specify the atomic number for bremsstrahlung
+  mass = 49218
+  rho = 6.022e28
+
+  # name = Gold
+  # atomic_number = 79
+  # mass = 359109
+  # rho = 5.9e28
+
+  # Variables independent of atom choice
+  frac = 0.2
+  charge = 0
+  dump = T
+  immobile = T
+  temp = 0
+  minrho = 1
+
+end:species
+
+
+begin:species
+
+  # Species for bremsstrahlung photons
+  name = Photon
+  npart = 0
+  dump = T
+
+  # This identify tag is required to mark this species as the species to be
+  # occupied by bremsstrahlung photons. It automatically sets the mass and
+  # charge to 0.
+  identify:brem_photon
+
+end:species
+
+
+begin:output
+
+  # If use_offset_grid is true then the code dumps a grid which displays
+  # positions relative to the left hand edge of the window
+  use_offset_grid = F
+
+  # number of timesteps between output dumps
+  dt_snapshot = 1000.0e-15
+
+  # Number of dt_snapshot between full dumps
+  full_dump_every = 10
+  restart_dump_every = -1
+  force_final_to_be_restartable = F
+
+  # Properties at particle positions
+  particles = always
+  px = always
+  py = always
+  pz = always
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = always
+  species_id = never
+
+  # Properties on grid
+  grid = always
+  ex = never
+  ey = never
+  ez = never
+  bx = never
+  by = never
+  bz = never
+  jx = never
+  jy = never
+  jz = never
+  ekbar = always + species
+  mass_density = never + species
+  charge_density = never
+  number_density = always + species
+  temperature = never + species
+
+  # extended io
+  particle_probes = always
+
+end:output
+
+
+begin:probe
+
+  name = electron_probe
+
+  point = (5.0e-3, 0.0, 0.0)    # Point on the plane
+  normal = (1.0, 0.0, 0.0)      # Vector normal to the plane
+
+  ek_min = 0.0
+  ek_max = -1.0       # Set to -1 for no maximum ek to sample
+
+  include_species:Electron_Beam
+
+  dumpmask = always
+
+end:probe

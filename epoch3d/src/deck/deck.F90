@@ -35,7 +35,11 @@ MODULE deck
 #ifdef PHOTONS
   USE photons
 #endif
+#ifdef BREMSSTRAHLUNG
+  USE bremsstrahlung
+#endif
   USE deck_qed_block
+  USE deck_bremsstrahlung_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -99,6 +103,7 @@ CONTAINS
     CALL probe_deck_initialise
 #endif
     CALL qed_deck_initialise
+    CALL bremsstrahlung_deck_initialise
     CALL species_deck_initialise
     CALL window_deck_initialise
     CALL part_from_file_deck_initialise
@@ -128,6 +133,7 @@ CONTAINS
     CALL probe_deck_finalise
 #endif
     CALL qed_deck_finalise
+    CALL bremsstrahlung_deck_finalise
     CALL species_deck_finalise
     CALL part_from_file_deck_finalise ! Must be called after
                                       ! species_deck_finalise
@@ -173,6 +179,8 @@ CONTAINS
 #endif
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_start
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      CALL bremsstrahlung_block_start
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -222,6 +230,8 @@ CONTAINS
 #endif
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_end
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      CALL bremsstrahlung_block_end
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -305,6 +315,10 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       handle_block = qed_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      handle_block = bremsstrahlung_block_handle_element(block_element, &
+          block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'species')) THEN
       handle_block = species_block_handle_element(block_element, block_value)
       RETURN
@@ -346,6 +360,12 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_qed_variables())
 #endif
       errcode_deck = IOR(errcode_deck, qed_block_check())
+    END IF
+    IF (use_bremsstrahlung) THEN
+#ifdef BREMSSTRAHLUNG
+      errcode_deck = IOR(errcode_deck, check_bremsstrahlung_variables())
+#endif
+      errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
     END IF
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())

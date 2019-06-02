@@ -183,6 +183,14 @@ MODULE constants
   REAL(num), PARAMETER :: tau_c = 1.288088667367242662108649212042082e-21_num
 #endif
 
+  ! Constants used for bremsstrahlung with plasma screening
+#ifdef BREMSSTRAHLUNG
+  REAL(num), PARAMETER :: e_radius = 0.25_num / pi / epsilon0 / m0 * (q0 / c)**2
+  REAL(num), PARAMETER :: plasma_screen_const_1 = 1.4_num / alpha
+  REAL(num), PARAMETER :: plasma_screen_const_2 = &
+      SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar
+#endif
+
   ! define special particle IDs
   INTEGER, PARAMETER :: c_species_id_generic = 0
   INTEGER, PARAMETER :: c_species_id_photon = 1
@@ -236,6 +244,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_hc_push = 2**23
   INTEGER(i8), PARAMETER :: c_def_use_isatty = 2**24
   INTEGER(i8), PARAMETER :: c_def_use_mpi3 = 2**25
+  INTEGER(i8), PARAMETER :: c_def_bremsstrahlung = 2**26
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -553,7 +562,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_part_work_x_total = 68
   INTEGER, PARAMETER :: c_dump_part_work_y_total = 69
   INTEGER, PARAMETER :: c_dump_part_work_z_total = 70
-  INTEGER, PARAMETER :: num_vars_to_dump         = 70
+  INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 71
+  INTEGER, PARAMETER :: num_vars_to_dump         = 71
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2
