@@ -42,6 +42,9 @@
 
  * Allow subset restrictions to be time-varying functions
 
+ * Added "heat_bath" particle boundary conditions. These use the particle
+   injectors to create an improved form of thermal boundary conditions.
+
  * Add model for simulating bremsstrahlung radiation. This is disabled by
    default and can be enabled by specifying the -DBREMSSTRAHLUNG flag at
    compile time. The model is configured using a new "bremsstrahlung" block

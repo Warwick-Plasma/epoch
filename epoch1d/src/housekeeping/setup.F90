@@ -28,6 +28,7 @@ MODULE setup
   USE timer
   USE helper
   USE balance
+  USE mpi_routines
   USE sdf
 
   IMPLICIT NONE
