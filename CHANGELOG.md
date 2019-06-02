@@ -42,6 +42,23 @@
 
  * Allow subset restrictions to be time-varying functions
 
+ * Add model for simulating bremsstrahlung radiation. This is disabled by
+   default and can be enabled by specifying the -DBREMSSTRAHLUNG flag at
+   compile time. The model is configured using a new "bremsstrahlung" block
+   which takes the following parameters:
+     enable
+     start_time
+     produce_photons
+     photon_energy_min
+     photon_weight
+     photon_dynamics
+     use_plasma_screening
+     use_radiation_reaction
+     table_location
+   It also adds the "bremsstrahlung_optical_depth" output block parameter
+   and "atomic_number" and "brem_photon" species parameters. See the manual for
+   further details.
+
 
 ## v4.15.0 to v4.16.0
 
