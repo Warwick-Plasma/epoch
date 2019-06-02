@@ -1139,6 +1139,8 @@ CONTAINS
     END DO
 
 #ifdef BREMSSTRAHLUNG
+    IF (.NOT.use_bremsstrahlung) RETURN
+
     ! Have all species been assigned an atomic number?
     DO i = 1, n_species
       IF (species_list(i)%atomic_no_set) CYCLE
@@ -1379,6 +1381,8 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: value
     INTEGER, INTENT(INOUT) :: errcode
+
+    IF (.NOT.use_qed .AND. .NOT.use_bremsstrahlung) RETURN
 
     ! Just a plain old electron
     IF (str_cmp(value, 'electron')) THEN
