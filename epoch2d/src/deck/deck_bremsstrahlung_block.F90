@@ -95,6 +95,11 @@ CONTAINS
 
   SUBROUTINE bremsstrahlung_block_start
 
+#ifdef BREMSSTRAHLUNG
+    ! Enable by default if any bremsstrahlung block is defined
+    use_bremsstrahlung = .TRUE.
+#endif
+
   END SUBROUTINE bremsstrahlung_block_start
 
 
