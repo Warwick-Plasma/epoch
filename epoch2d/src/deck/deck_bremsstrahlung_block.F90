@@ -31,21 +31,20 @@ CONTAINS
   SUBROUTINE bremsstrahlung_deck_initialise
 
 #ifdef BREMSSTRAHLUNG
-    IF (deck_state == c_ds_first) THEN
-      bremsstrahlung_table_location = 'src/physics_packages/TABLES/br'
-      use_bremsstrahlung_recoil = .TRUE.
-      use_bremsstrahlung = .FALSE.
-      bremsstrahlung_photon_species = -1
+    IF (deck_state /= c_ds_first) RETURN
+    bremsstrahlung_table_location = 'src/physics_packages/TABLES/br'
+    use_bremsstrahlung_recoil = .TRUE.
+    use_bremsstrahlung = .FALSE.
+    bremsstrahlung_photon_species = -1
 #ifndef PHOTONS
-      photon_species = -1
+    photon_species = -1
 #endif
-      photon_energy_min_bremsstrahlung = EPSILON(1.0_num)
-      bremsstrahlung_start_time = 0.0_num
-      photon_weight = 1.0_num
-      produce_bremsstrahlung_photons = .FALSE.
-      bremsstrahlung_photon_dynamics = .FALSE.
-      use_plasma_screening = .FALSE.
-    END IF
+    photon_energy_min_bremsstrahlung = EPSILON(1.0_num)
+    bremsstrahlung_start_time = 0.0_num
+    photon_weight = 1.0_num
+    produce_bremsstrahlung_photons = .FALSE.
+    bremsstrahlung_photon_dynamics = .FALSE.
+    use_plasma_screening = .FALSE.
 #endif
 
   END SUBROUTINE bremsstrahlung_deck_initialise
@@ -90,7 +89,7 @@ CONTAINS
     END IF
 #endif
 
-END SUBROUTINE bremsstrahlung_deck_finalise
+  END SUBROUTINE bremsstrahlung_deck_finalise
 
 
 

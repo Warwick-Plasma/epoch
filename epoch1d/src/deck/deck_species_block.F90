@@ -627,7 +627,7 @@ CONTAINS
 
       ! Identify if the current species ionises to another species
       j = species_list(species_id)%ionise_to_species
-      DO WHILE(j>0)
+      DO WHILE(j > 0)
         species_list(j)%atomic_no = species_list(species_id)%atomic_no
         species_list(j)%atomic_no_set = .TRUE.
         j = species_list(j)%ionise_to_species
