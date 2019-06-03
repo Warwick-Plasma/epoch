@@ -1295,9 +1295,12 @@ CONTAINS
 
 
 
-  SUBROUTINE particle_bcs
+  SUBROUTINE particle_bcs(use_candidates)
 
+    LOGICAL, INTENT(IN), OPTIONAL :: use_candidates
+    LOGICAL :: use_candidates_int
     TYPE(particle), POINTER :: cur, next
+    TYPE(particle_list), POINTER :: working_list
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(i8) :: ixp, iyp, izp
@@ -1315,6 +1318,12 @@ CONTAINS
     REAL(num) :: z_min_outer, z_max_outer
     REAL(num) :: x_shift, y_shift, z_shift
 
+    IF (PRESENT(use_candidates)) THEN
+      use_candidates_int = use_candidates
+    ELSE
+      use_candidates_int = .FALSE.
+    END IF
+
     boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift
     x_max_outer = x_max + boundary_shift
@@ -1331,7 +1340,12 @@ CONTAINS
     z_shift = length_z + 2.0_num * dz * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
-      cur => species_list(ispecies)%attached_list%head
+      IF (use_candidates_int) THEN
+        working_list => species_list(ispecies)%cand_list
+      ELSE
+       working_list => species_list(ispecies)%attached_list
+      END IF
+      cur => working_list%head
 
       bc_species = species_list(ispecies)%bc_particle
 
@@ -1905,7 +1919,7 @@ CONTAINS
         IF (out_of_bounds) THEN
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
-              species_list(ispecies)%attached_list, cur)
+              working_list, cur)
           IF (track_ejected_particles) THEN
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
@@ -1915,8 +1929,14 @@ CONTAINS
         ELSE IF (ABS(xbd) + ABS(ybd) + ABS(zbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour
           CALL remove_particle_from_partlist(&
-              species_list(ispecies)%attached_list, cur)
+              working_list, cur)
           CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
+        ELSE IF (use_candidates_int) THEN
+          !If using candidate lists, put particles back
+          CALL remove_particle_from_partlist(&
+              species_list(ispecies)%cand_list, cur)
+          CALL add_particle_to_partlist(&
+              species_list(ispecies)%attached_list, cur)
         END IF
 
         ! Move to next particle

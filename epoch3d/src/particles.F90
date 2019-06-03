@@ -415,6 +415,19 @@ CONTAINS
             part_y + y_grid_min_local, part_z + z_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
+        ! Move particle to boundary candidate list
+        IF(current%part_pos(1) < x_grid_min_local - dx/2.0 .OR. &
+            current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
+            current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
+            current%part_pos(2) > y_grid_max_local + dy/2.0 .OR. &
+            current%part_pos(3) < z_grid_min_local - dz/2.0 .OR. &
+            current%part_pos(3) > z_grid_max_local + dz/2.0) THEN
+          CALL remove_particle_from_partlist(&
+              species_list(ispecies)%attached_list, current)
+          CALL add_particle_to_partlist(species_list(ispecies)%cand_list, &
+              current)
+        END IF
+
 #ifdef WORK_DONE_INTEGRATED
         ! This is the actual total work done by the fields: Results correspond
         ! with the electron's gamma factor
@@ -611,7 +624,7 @@ CONTAINS
       CALL current_bcs(species=ispecies)
     END DO
 
-    CALL particle_bcs
+    CALL particle_bcs(.TRUE.)
 
   END SUBROUTINE push_particles
 

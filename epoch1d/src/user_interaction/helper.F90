@@ -249,6 +249,8 @@ CONTAINS
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, npart_this_proc_new)
+    CALL destroy_partlist(species%cand_list)
+    CALL create_empty_partlist(species%cand_list)
 
     ! Randomly place npart_per_cell particles into each valid cell
     current => partlist%head
@@ -465,6 +467,8 @@ CONTAINS
 
     CALL destroy_partlist(partlist)
     CALL create_allocated_partlist(partlist, num_new_particles)
+    CALL destroy_partlist(species%cand_list)
+    CALL create_empty_partlist(species%cand_list)
 
     ! Randomly place npart_per_cell particles into each valid cell
     npart_left = num_new_particles
@@ -786,6 +790,8 @@ CONTAINS
       ! Just to be sure
       CALL destroy_partlist(partlist)
       CALL create_empty_partlist(partlist)
+      CALL destroy_partlist(species%cand_list)
+      CALL create_empty_partlist(species%cand_list)
 
       ! MPI read files
       part_count = load_1d_real_array(curr_loader%x_data, xbuf, &

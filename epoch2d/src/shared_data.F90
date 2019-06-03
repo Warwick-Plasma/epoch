@@ -194,6 +194,7 @@ MODULE shared_data
     REAL(num) :: weight
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
+    TYPE(particle_list) :: cand_list
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 
