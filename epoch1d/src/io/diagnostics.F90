@@ -2911,25 +2911,6 @@ CONTAINS
 
 
 
-  FUNCTION lowercase(string_in) RESULT(string_out)
-
-    CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
-    CHARACTER(LEN=*), PARAMETER :: upr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    CHARACTER(LEN=*), INTENT(IN) :: string_in
-    CHARACTER(LEN=LEN(string_in)) :: string_out
-    INTEGER :: i, idx
-
-    string_out = string_in
-
-    DO i = 1, LEN(string_out)
-      idx = INDEX(upr, string_out(i:i))
-      IF (idx /= 0) string_out(i:i) = lwr(idx:idx)
-    END DO
-
-  END FUNCTION lowercase
-
-
-
   SUBROUTINE create_timestring(time, timestring)
 
     REAL(num), INTENT(IN) :: time
@@ -3309,21 +3290,5 @@ CONTAINS
     !CALL write_input_decks(h)
 
   END SUBROUTINE write_source_info
-
-
-
-  FUNCTION trim_string(string)
-
-    CHARACTER(LEN=c_max_string_length) :: trim_string
-    CHARACTER(LEN=*) :: string
-
-    string = ADJUSTL(string)
-    IF (LEN_TRIM(string) > c_max_string_length) THEN
-      trim_string = string(1:c_max_string_length)
-    ELSE
-      trim_string = TRIM(string)
-    END IF
-
-  END FUNCTION trim_string
 
 END MODULE diagnostics
