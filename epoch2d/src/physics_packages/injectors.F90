@@ -268,12 +268,13 @@ CONTAINS
     DO ii = 1, nperp
       IF (perp_dir_index == 1) THEN
         cur_cell = x(ii)
+        parameters%pack_ix = ii
       ELSE
         cur_cell = y(ii)
+        parameters%pack_iy = ii
       END IF
 
       parameters%use_grid_position = .TRUE.
-      CALL assign_pack_value(parameters, perp_dir_index, ii)
 
       IF (injector%dt_inject(ii) > 0.0_num) THEN
         npart_ideal = dt / injector%dt_inject(ii)
@@ -438,22 +439,6 @@ CONTAINS
     IF (errcode /= c_err_none) CALL abort_code(errcode)
 
   END SUBROUTINE populate_injector_properties
-
-
-
-  SUBROUTINE assign_pack_value(parameters, dir_index, p_value)
-
-    TYPE(parameter_pack), INTENT(INOUT) :: parameters
-    INTEGER, INTENT(IN) :: dir_index
-    INTEGER, INTENT(IN) :: p_value
-
-    IF (dir_index == 1) THEN
-      parameters%pack_ix = p_value
-    ELSE IF (dir_index == 2) THEN
-      parameters%pack_iy = p_value
-    END IF
-
-  END SUBROUTINE assign_pack_value
 
 
 

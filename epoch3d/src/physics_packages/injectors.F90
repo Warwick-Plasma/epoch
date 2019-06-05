@@ -312,14 +312,19 @@ CONTAINS
       DO jj = 1, nperp(2)
         i2d = (/ii, jj/)
         DO idir = 1, c_ndims-1
-          IF (perp_dir_index(idir) == 1) cur_cell(idir) = x(i2d(idir))
-          IF (perp_dir_index(idir) == 2) cur_cell(idir) = y(i2d(idir))
-          IF (perp_dir_index(idir) == 3) cur_cell(idir) = z(i2d(idir))
+          IF (perp_dir_index(idir) == 1) THEN
+            cur_cell(idir) = x(i2d(idir))
+            parameters%pack_ix = i2d(idir)
+          ELSE IF (perp_dir_index(idir) == 2) THEN
+            cur_cell(idir) = y(i2d(idir))
+            parameters%pack_iy = i2d(idir)
+          ELSE IF (perp_dir_index(idir) == 2) THEN
+            cur_cell(idir) = z(i2d(idir))
+            parameters%pack_iz = i2d(idir)
+          END IF
         END DO
 
         parameters%use_grid_position = .TRUE.
-        CALL assign_pack_value(parameters, perp_dir_index(1), ii)
-        CALL assign_pack_value(parameters, perp_dir_index(2), jj)
 
         IF (injector%dt_inject(ii,jj) > 0.0_num) THEN
           npart_ideal = dt / injector%dt_inject(ii,jj)
@@ -492,24 +497,6 @@ CONTAINS
     IF (errcode /= c_err_none) CALL abort_code(errcode)
 
   END SUBROUTINE populate_injector_properties
-
-
-
-  SUBROUTINE assign_pack_value(parameters, dir_index, p_value)
-
-    TYPE(parameter_pack), INTENT(INOUT) :: parameters
-    INTEGER, INTENT(IN) :: dir_index
-    INTEGER, INTENT(IN) :: p_value
-
-    IF (dir_index == 1) THEN
-      parameters%pack_ix = p_value
-    ELSE IF (dir_index == 2) THEN
-      parameters%pack_iy = p_value
-    ELSE IF (dir_index == 3) THEN
-      parameters%pack_iz = p_value
-    END IF
-
-  END SUBROUTINE assign_pack_value
 
 
 
