@@ -594,7 +594,7 @@ CONTAINS
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
-    REAL(num) :: dir_min, dir_max, dir_dmin, dir_dmax, dir_d
+    REAL(num) :: dir_min, dir_max, dir_d
     ! fudge factor allows overshoot of the specified domain extent by about 5%
     REAL(num), PARAMETER :: fudge = 0.019_num
     INTEGER :: idim, n
@@ -605,10 +605,8 @@ CONTAINS
     DO idim = 1, c_ndims
       IF (idim == 1) THEN
         dir_d = dx
-        dir_min = x_grid_min - 0.5_num * dir_d
-        dir_max = x_grid_max + 0.5_num * dir_d
-        dir_dmin = x_min
-        dir_dmax = x_max
+        dir_min = x_min
+        dir_max = x_max
         n = c_subset_x_min
         IF (current_subset%use_restriction(n)) &
             global_ranges(1,idim) = current_subset%restriction(n)
@@ -617,10 +615,8 @@ CONTAINS
             global_ranges(2,idim) = current_subset%restriction(n)
       ELSE
         dir_d = dy
-        dir_min = y_grid_min - 0.5_num * dir_d
-        dir_max = y_grid_max + 0.5_num * dir_d
-        dir_dmin = y_min
-        dir_dmax = y_max
+        dir_min = y_min
+        dir_max = y_max
         IF (current_subset%use_restriction(n)) &
             global_ranges(1,idim) = current_subset%restriction(n)
         n = c_subset_y_max
@@ -640,8 +636,10 @@ CONTAINS
           + CEILING((global_ranges(2,idim) - dir_min) / dir_d - fudge) * dir_d
 
       ! Correct to domain size
-      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_dmin)
-      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_dmax)
+      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min) &
+          + 0.5_num * dir_d
+      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max) &
+          + 0.5_num * dir_d
     END DO
 
   END FUNCTION global_ranges
