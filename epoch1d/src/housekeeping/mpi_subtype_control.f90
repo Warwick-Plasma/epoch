@@ -708,7 +708,7 @@ CONTAINS
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
-    REAL(num) :: dir_min, dir_max, dir_dmin, dir_dmax, dir_d
+    REAL(num) :: dir_min, dir_max, dir_d
     ! fudge factor allows overshoot of the specified domain extent by about 5%
     REAL(num), PARAMETER :: fudge = 0.019_num
     INTEGER :: n
@@ -717,10 +717,8 @@ CONTAINS
     global_ranges(2,:) = HUGE(1.0_num)
 
     dir_d = dx
-    dir_min = x_grid_min - 0.5_num * dir_d
-    dir_max = x_grid_max + 0.5_num * dir_d
-    dir_dmin = x_min
-    dir_dmax = x_max
+    dir_min = x_min
+    dir_max = x_max
     n = c_subset_x_min
     IF (current_subset%use_restriction(n)) &
         global_ranges(1,1) = current_subset%restriction(n)
@@ -740,8 +738,8 @@ CONTAINS
         + CEILING((global_ranges(2,1) - dir_min) / dir_d - fudge) * dir_d
 
     ! Correct to domain size
-    global_ranges(1,1) = MAX(global_ranges(1,1), dir_dmin)
-    global_ranges(2,1) = MIN(global_ranges(2,1), dir_dmax)
+    global_ranges(1,1) = MAX(global_ranges(1,1), dir_min) + 0.5_num * dir_d
+    global_ranges(2,1) = MIN(global_ranges(2,1), dir_max) + 0.5_num * dir_d
 
   END FUNCTION global_ranges
 
