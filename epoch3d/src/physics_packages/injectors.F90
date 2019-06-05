@@ -200,7 +200,7 @@ CONTAINS
     REAL(num) :: bdy_pos, cell_size
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
-    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
+    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
     REAL(num) :: gamma_mass, v_inject, density, vol, p_drift, p_ratio
     REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction, dir_mult
     REAL(num) :: v_inject_dt
@@ -339,10 +339,15 @@ CONTAINS
           first_inject = .TRUE.
         END IF
 
-        CALL populate_injector_properties(injector, parameters, density_grid, &
+#ifdef PER_SPECIES_WEIGHT
+        CALL populate_injector_properties(injector, parameters, &
+            temperature=temperature, drift=drift)
+#else
+        CALL populate_injector_properties(injector, parameters, density, &
             temperature, drift)
+#endif
 
-        IF (density_grid < injector%density_min) CYCLE
+        IF (density < injector%density_min) CYCLE
 
         ! Assume agressive maximum thermal momentum, all components
         ! like hottest component
