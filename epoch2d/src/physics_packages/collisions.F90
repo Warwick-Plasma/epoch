@@ -616,7 +616,7 @@ CONTAINS
 
           mrbeb_c = hartree / ionisation_energy / 2.0_num &
               * (0.3_num * (ion_charge / q0 / n1)**2 &
-              * 0.7_num * ((ion_charge / q0 + 1.0_num) / n2)**2)
+              + 0.7_num * ((ion_charge / q0 + 1.0_num) / n2)**2)
 
           ! MRBEB cross section (cm^2)
           eiics = mrbeb_const / (bt2 + mrbeb_c * bb2) / bp &
