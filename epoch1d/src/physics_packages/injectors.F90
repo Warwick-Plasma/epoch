@@ -341,31 +341,41 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: injector
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    REAL(num), INTENT(OUT) :: density
-    REAL(num), DIMENSION(3), INTENT(OUT) :: temperature, drift
+    REAL(num), INTENT(OUT), OPTIONAL :: density
+    REAL(num), DIMENSION(3), INTENT(OUT), OPTIONAL :: temperature, drift
     INTEGER :: errcode, i
 
     errcode = 0
-    density = MAX(evaluate_with_parameters(injector%density_function, &
-        parameters, errcode), 0.0_num)
+    IF (PRESENT(density)) THEN
+      density = 0.0_num
+      IF (injector%density_function%init) THEN
+        density = MAX(evaluate_with_parameters(injector%density_function, &
+            parameters, errcode), 0.0_num)
+      END IF
+    END IF
 
     ! Stack can only be time varying if valid. Change if this isn't true
-    DO i = 1, 3
-      IF (injector%temperature_function(i)%init) THEN
-        temperature(i) = &
-            MAX(evaluate_with_parameters(injector%temperature_function(i), &
-                parameters, errcode), 0.0_num)
-      ELSE
-        temperature(i) = 0.0_num
-      END IF
-      IF (injector%drift_function(i)%init) THEN
-        drift(i) = &
-            evaluate_with_parameters(injector%drift_function(i), &
-                                     parameters, errcode)
-      ELSE
-        drift(i) = 0.0_num
-      END IF
-    END DO
+    IF (PRESENT(temperature)) THEN
+      temperature(:) = 0.0_num
+      DO i = 1, 3
+        IF (injector%temperature_function(i)%init) THEN
+          temperature(i) = &
+              MAX(evaluate_with_parameters(injector%temperature_function(i), &
+                  parameters, errcode), 0.0_num)
+        END IF
+      END DO
+    END IF
+
+    IF (PRESENT(drift)) THEN
+      drift(:) = 0.0_num
+      DO i = 1, 3
+        IF (injector%drift_function(i)%init) THEN
+          drift(i) = &
+              evaluate_with_parameters(injector%drift_function(i), &
+                                       parameters, errcode)
+        END IF
+      END DO
+    END IF
 
     IF (errcode /= c_err_none) CALL abort_code(errcode)
 
