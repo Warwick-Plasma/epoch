@@ -978,8 +978,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
     INTEGER, INTENT(IN), OPTIONAL :: direction
     REAL(num), DIMENSION(:), ALLOCATABLE :: part_count
-    ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_px, part_py, part_pz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata, weight
     INTEGER :: ispecies, ix, spec_start, spec_end
@@ -1016,28 +1014,14 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
 
-      wdata = io_list(ispecies)%weight
       weight = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifndef PER_SPECIES_WEIGHT
-        wdata = current%weight
         weight = current%weight
 #endif
-
-        ! Copy the particle properties out for speed
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-        SELECT CASE (direction)
-          CASE(c_dir_x)
-            wdata = wdata * part_px
-          CASE(c_dir_y)
-            wdata = wdata * part_py
-          CASE(c_dir_z)
-            wdata = wdata * part_pz
-        END SELECT
+        wdata = weight * current%part_p(direction)
 
 #include "particle_to_grid.inc"
 
