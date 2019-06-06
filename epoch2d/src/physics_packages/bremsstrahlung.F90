@@ -495,15 +495,23 @@ CONTAINS
 
     ALLOCATE(grid_num_density_ion(1-ng:nx+ng,1-ng:ny+ng))
 
-    ! Calculate the number density of each ion species
-    DO iz = 1, n_species
-      ! Identify if the charge is greater than 1
-      z_temp = species_list(iz)%atomic_no
+    ! Initialise to background values
+    z_temp = bremsstrahlung_background_z
+    part_ni = bremsstrahlung_background_n
 
+    ! Calculate the number density of each ion species
+    DO iz = 0, n_species
+
+      ! If iz == 0 use background atomic number
+      IF (iz > 0) z_temp = species_list(iz)%atomic_no
+
+      ! Identify if the charge is greater than 1
       IF (z_temp < 1 .OR. z_temp > 100) CYCLE
 
-      CALL calc_number_density(grid_num_density_ion, iz)
-      CALL field_bc(grid_num_density_ion, ng)
+      IF (iz > 0) THEN
+        CALL calc_number_density(grid_num_density_ion, iz)
+        CALL field_bc(grid_num_density_ion, ng)
+      END IF
 
       ! Update the optical depth for each electron species
       DO ispecies = 1, n_species
@@ -533,8 +541,12 @@ CONTAINS
             ! Get number density at electron
             part_x = current%part_pos(1) - x_grid_min_local
             part_y = current%part_pos(2) - y_grid_min_local
-            CALL grid_centred_var_at_particle(part_x, part_y, part_ni,&
-                iz, grid_num_density_ion)
+
+            ! If iz == 0 use background density
+            IF (iz > 0) THEN
+              CALL grid_centred_var_at_particle(part_x, part_y, part_ni,&
+                  iz, grid_num_density_ion)
+            END IF
 
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
