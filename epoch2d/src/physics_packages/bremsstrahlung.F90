@@ -545,14 +545,14 @@ CONTAINS
             ! If iz == 0 use background density
             IF (iz > 0) THEN
               CALL grid_centred_var_at_particle(part_x, part_y, part_ni,&
-                  iz, grid_num_density_ion)
+                  grid_num_density_ion)
             END IF
 
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
               ! Obtain extra parameters needed for plasma screening model
               CALL grid_centred_var_at_particle(part_x, part_y, &
-                  part_root_te_over_ne, iz, grid_root_temp_over_num)
+                  part_root_te_over_ne, grid_root_temp_over_num)
 
               plasma_factor = get_plasma_factor( &
                   NINT(species_list(iz)%charge/q0), z_temp, &
@@ -719,13 +719,12 @@ CONTAINS
 
   ! Calculates the value of a grid-centred variable part_var stored in the grid
   ! grid_var, averaged over the particle shape for a particle at position
-  ! (part_x, part_y) and of species current_species
+  ! (part_x, part_y)
 
   SUBROUTINE grid_centred_var_at_particle(part_x, part_y, part_var, &
-      current_species, grid_var)
+      grid_var)
 
     REAL(num), INTENT(IN) :: part_x, part_y
-    INTEGER, INTENT(IN) :: current_species
     REAL(num), INTENT(IN) :: grid_var(1-ng:,1-ng:)
     REAL(num), INTENT(OUT) :: part_var
     INTEGER :: cell_x1, cell_y1
