@@ -46,6 +46,7 @@ CONTAINS
     use_plasma_screening = .FALSE.
     bremsstrahlung_background_n = -1.0_num
     bremsstrahlung_background_z = -1.0_num
+    bremsstrahlung_background_q =  1.0_num
 #endif
 
   END SUBROUTINE bremsstrahlung_deck_initialise
@@ -183,6 +184,11 @@ CONTAINS
 
     IF (str_cmp(element, 'bremsstrahlung_background_z')) THEN
       bremsstrahlung_background_z = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bremsstrahlung_background_q')) THEN
+      bremsstrahlung_background_q = as_real_print(value, element, errcode) * q0
       RETURN
     END IF
 
