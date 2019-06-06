@@ -577,6 +577,9 @@ MODULE shared_data
   LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
   LOGICAL :: use_plasma_screening = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+  ! Values for uniform background state
+  REAL(num) :: bremsstrahlung_background_n = -1.0_num
+  REAL(num) :: bremsstrahlung_background_z = -1.0_num
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
 
