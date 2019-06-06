@@ -165,8 +165,10 @@ CONTAINS
       ! For each unique atomic number, z, let z_flags(z) = 1
       ALLOCATE(z_flags(100))
       z_flags(:) = 0
-      DO i_species = 1, n_species
-        z_temp = species_list(i_species)%atomic_no
+      z_temp = bremsstrahlung_background_z
+
+      DO i_species = 0, n_species
+        IF (i_species > 0) z_temp = species_list(i_species)%atomic_no
         IF (z_temp > 0 .AND. z_temp < 101) THEN
           z_flags(z_temp) = 1
 
