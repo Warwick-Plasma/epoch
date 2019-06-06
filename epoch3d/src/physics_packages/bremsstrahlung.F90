@@ -428,7 +428,7 @@ CONTAINS
 
   SUBROUTINE bremsstrahlung_update_optical_depth
 
-    INTEGER :: ispecies, iz, z_temp, i, j, k
+    INTEGER :: ispecies, iz, z_temp, q_temp, i, j, k
     TYPE(particle), POINTER :: current
     REAL(num), ALLOCATABLE :: grid_num_density_electron_temp(:,:,:)
     REAL(num), ALLOCATABLE :: grid_num_density_electron(:,:,:)
@@ -500,6 +500,7 @@ CONTAINS
     ! Initialise to background values
     z_temp = bremsstrahlung_background_z
     part_ni = bremsstrahlung_background_n
+    q_temp = NINT(bremsstrahlung_background_q/q0)
 
     ! Calculate the number density of each ion species
     DO iz = 0, n_species
@@ -557,8 +558,8 @@ CONTAINS
               CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
                   part_root_te_over_ne, grid_root_temp_over_num)
 
-              plasma_factor = get_plasma_factor( &
-                  NINT(species_list(iz)%charge/q0), z_temp, &
+              IF (iz > 0) q_temp = NINT(species_list(iz)%charge/q0)
+              plasma_factor = get_plasma_factor(q_temp, z_temp, &
                   part_root_te_over_ne)
             END IF
 
