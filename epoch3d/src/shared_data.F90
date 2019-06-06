@@ -624,7 +624,7 @@ MODULE shared_data
   ! Values for uniform background state
   REAL(num) :: bremsstrahlung_background_n = -1.0_num
   REAL(num) :: bremsstrahlung_background_z = -1.0_num
-  REAL(num) :: bremsstrahlung_background_q =  1.0_num
+  REAL(num) :: bremsstrahlung_background_q =  q0
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
 

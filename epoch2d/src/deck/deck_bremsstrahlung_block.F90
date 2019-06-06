@@ -46,7 +46,7 @@ CONTAINS
     use_plasma_screening = .FALSE.
     bremsstrahlung_background_n = -1.0_num
     bremsstrahlung_background_z = -1.0_num
-    bremsstrahlung_background_q =  1.0_num
+    bremsstrahlung_background_q =  q0
 #endif
 
   END SUBROUTINE bremsstrahlung_deck_initialise
