@@ -180,6 +180,11 @@ MODULE shared_data
     REAL(num) :: density_back
   END TYPE initial_condition_block
 
+  TYPE particle_candidate_element
+    TYPE(particle), POINTER :: particle
+    TYPE(particle_candidate_element), POINTER :: next
+  END TYPE particle_candidate_element
+
   ! Object representing a particle species
   TYPE particle_species
     ! Core properties
@@ -194,7 +199,7 @@ MODULE shared_data
     REAL(num) :: weight
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
-    TYPE(particle_list) :: cand_list
+    TYPE(particle_candidate_element), POINTER :: cand_head => NULL()
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 

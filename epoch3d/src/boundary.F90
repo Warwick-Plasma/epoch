@@ -1299,8 +1299,8 @@ CONTAINS
 
     LOGICAL, INTENT(IN), OPTIONAL :: use_candidates
     LOGICAL :: use_candidates_int
+    TYPE(particle_candidate_element), POINTER :: cand_el, cand_el_last
     TYPE(particle), POINTER :: cur, next
-    TYPE(particle_list), POINTER :: working_list
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(i8) :: ixp, iyp, izp
@@ -1341,11 +1341,15 @@ CONTAINS
 
     DO ispecies = 1, n_species
       IF (use_candidates_int) THEN
-        working_list => species_list(ispecies)%cand_list
+        cand_el => species_list(ispecies)%cand_head
+        IF (ASSOCIATED(cand_el)) THEN
+          cur => cand_el%particle
+        ELSE
+          NULLIFY(cur)
+        END IF
       ELSE
-       working_list => species_list(ispecies)%attached_list
+        cur => species_list(ispecies)%attached_list%head
       END IF
-      cur => working_list%head
 
       bc_species = species_list(ispecies)%bc_particle
 
@@ -1360,7 +1364,20 @@ CONTAINS
       END DO
 
       DO WHILE (ASSOCIATED(cur))
-        next => cur%next
+        IF (use_candidates_int) THEN
+          cand_el_last => cand_el
+          IF(ASSOCIATED(cand_el)) THEN
+            cand_el => cand_el%next
+            IF(ASSOCIATED(cand_el)) THEN
+              next => cand_el%particle
+            ELSE
+              NULLIFY(next)
+            END IF
+          END IF
+          IF(ASSOCIATED(cand_el_last)) DEALLOCATE(cand_el_last)
+        ELSE
+          next => cur%next
+        END IF
 
         xbd = 0
         ybd = 0
@@ -1919,7 +1936,7 @@ CONTAINS
         IF (out_of_bounds) THEN
           ! Particle has gone forever
           CALL remove_particle_from_partlist(&
-              working_list, cur)
+              species_list(ispecies)%attached_list, cur)
           IF (track_ejected_particles) THEN
             CALL add_particle_to_partlist(&
                 ejected_list(ispecies)%attached_list, cur)
@@ -1929,14 +1946,8 @@ CONTAINS
         ELSE IF (ABS(xbd) + ABS(ybd) + ABS(zbd) > 0) THEN
           ! Particle has left processor, send it to its neighbour
           CALL remove_particle_from_partlist(&
-              working_list, cur)
-          CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
-        ELSE IF (use_candidates_int) THEN
-          !If using candidate lists, put particles back
-          CALL remove_particle_from_partlist(&
-              species_list(ispecies)%cand_list, cur)
-          CALL add_particle_to_partlist(&
               species_list(ispecies)%attached_list, cur)
+          CALL add_particle_to_partlist(send(xbd, ybd, zbd), cur)
         END IF
 
         ! Move to next particle
@@ -1968,6 +1979,11 @@ CONTAINS
           END DO
         END DO
       END DO
+
+      IF(ASSOCIATED(cand_el_last)) DEALLOCATE(cand_el_last)
+      IF(ASSOCIATED(species_list(ispecies)%cand_head)) THEN
+        NULLIFY(species_list(ispecies)%cand_head)
+      END IF
 
     END DO
 

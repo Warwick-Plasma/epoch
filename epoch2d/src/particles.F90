@@ -137,6 +137,7 @@ CONTAINS
 #endif
 
     TYPE(particle), POINTER :: current, next
+    TYPE(particle_candidate_element), POINTER :: cand_last, cand_next
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -400,10 +401,16 @@ CONTAINS
             current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
             current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
             current%part_pos(2) > y_grid_max_local + dy/2.0) THEN
-          CALL remove_particle_from_partlist(&
-              species_list(ispecies)%attached_list, current)
-          CALL add_particle_to_partlist(species_list(ispecies)%cand_list, &
-              current)
+
+          ALLOCATE(cand_next)
+          NULLIFY(cand_next%next)
+          cand_next%particle => current
+          IF(.NOT. ASSOCIATED(species_list(ispecies)%cand_head)) THEN
+            species_list(ispecies)%cand_head => cand_next
+          ELSE
+            cand_last%next => cand_next
+          END IF
+          cand_last => cand_next
         END IF
 
 
