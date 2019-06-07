@@ -462,13 +462,13 @@ CONTAINS
         species_list(species_id)%ic_df_type = c_ic_df_thermal
       END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'fractional_tail_cutoff')) THEN
       species_list(species_id)%fractional_tail_cutoff = &
           as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     ! *************************************************************
     ! This section identifies a species. Generic
