@@ -85,6 +85,7 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
+      IF (species_list(ispecies)%background_species) CYCLE
       species => species_list(ispecies)
       ic => species%initial_conditions
 
