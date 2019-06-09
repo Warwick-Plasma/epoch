@@ -215,6 +215,8 @@ MODULE shared_data
 
     ! Specify if species is background species or not
     LOGICAL :: background_species = .FALSE.
+    ! Temporary testing variable for background density
+    REAL(num) :: tmp_background_n
 
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
