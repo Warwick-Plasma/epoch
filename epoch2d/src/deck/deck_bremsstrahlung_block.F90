@@ -44,9 +44,6 @@ CONTAINS
     produce_bremsstrahlung_photons = .FALSE.
     bremsstrahlung_photon_dynamics = .FALSE.
     use_plasma_screening = .FALSE.
-    bremsstrahlung_background_n = -1.0_num
-    bremsstrahlung_background_z = -1.0_num
-    bremsstrahlung_background_q =  q0
 #endif
 
   END SUBROUTINE bremsstrahlung_deck_initialise
@@ -174,21 +171,6 @@ CONTAINS
 
     IF (str_cmp(element, 'use_plasma_screening')) THEN
       use_plasma_screening = as_logical_print(value, element, errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'bremsstrahlung_background_n')) THEN
-      bremsstrahlung_background_n = as_real_print(value, element, errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'bremsstrahlung_background_z')) THEN
-      bremsstrahlung_background_z = as_real_print(value, element, errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'bremsstrahlung_background_q')) THEN
-      bremsstrahlung_background_q = as_real_print(value, element, errcode) * q0
       RETURN
     END IF
 
