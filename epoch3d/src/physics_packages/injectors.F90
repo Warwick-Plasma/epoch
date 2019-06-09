@@ -339,15 +339,12 @@ CONTAINS
           first_inject = .TRUE.
         END IF
 
-#ifdef PER_SPECIES_WEIGHT
-        CALL populate_injector_properties(injector, parameters, &
-            temperature=temperature, drift=drift)
-#else
-        CALL populate_injector_properties(injector, parameters, density, &
-            temperature, drift)
-#endif
+        CALL populate_injector_properties(injector, parameters, density=density)
 
         IF (density < injector%density_min) CYCLE
+
+        CALL populate_injector_properties(injector, parameters, &
+            temperature=temperature, drift=drift)
 
         ! Assume agressive maximum thermal momentum, all components
         ! like hottest component
@@ -436,8 +433,13 @@ CONTAINS
           parameters%pack_pos = new%part_pos
           parameters%use_grid_position = .FALSE.
 
+#ifdef PER_SPECIES_WEIGHT
+          CALL populate_injector_properties(injector, parameters, &
+              temperature=temperature, drift=drift)
+#else
           CALL populate_injector_properties(injector, parameters, density, &
               temperature, drift)
+#endif
 
           DO idir = 1, 3
             IF (idir == flux_dir_cell) THEN

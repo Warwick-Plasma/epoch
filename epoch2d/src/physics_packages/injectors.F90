@@ -288,10 +288,12 @@ CONTAINS
         first_inject = .TRUE.
       END IF
 
-      CALL populate_injector_properties(injector, parameters, density, &
-          temperature, drift)
+      CALL populate_injector_properties(injector, parameters, density=density)
 
       IF (density < injector%density_min) CYCLE
+
+      CALL populate_injector_properties(injector, parameters, &
+          temperature=temperature, drift=drift)
 
       ! Assume agressive maximum thermal momentum, all components
       ! like hottest component
