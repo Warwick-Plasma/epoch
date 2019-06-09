@@ -799,7 +799,7 @@ CONTAINS
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Deck has warnings and you have requested ' &
-              // 'deck_warning_fatal.'
+              // 'deck_warnings_fatal.'
           WRITE(io,*) 'Please fix input deck and rerun ' &
               // 'code or disable this option'
         END DO
