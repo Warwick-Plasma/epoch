@@ -165,10 +165,10 @@ CONTAINS
       ! For each unique atomic number, z, let z_flags(z) = 1
       ALLOCATE(z_flags(100))
       z_flags(:) = 0
-      z_temp = bremsstrahlung_background_z
 
-      DO i_species = 0, n_species
-        IF (i_species > 0) z_temp = species_list(i_species)%atomic_no
+      DO i_species = 1, n_species
+
+        z_temp = species_list(i_species)%atomic_no
         IF (z_temp > 0 .AND. z_temp < 101) THEN
           z_flags(z_temp) = 1
 
@@ -499,24 +499,14 @@ CONTAINS
 
     ALLOCATE(grid_num_density_ion(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
-    ! Initialise to background values
-    z_temp = bremsstrahlung_background_z
-    part_ni = bremsstrahlung_background_n
-    q_temp = NINT(bremsstrahlung_background_q/q0)
-
     ! Calculate the number density of each ion species
-    DO iz = 0, n_species
-
-      ! If iz == 0 use background atomic number
-      IF (iz > 0) z_temp = species_list(iz)%atomic_no
+    DO iz = 1, n_species
 
       ! Identify if the charge is greater than 1
       IF (z_temp < 1 .OR. z_temp > 100) CYCLE
 
-      IF (iz > 0) THEN
-        CALL calc_number_density(grid_num_density_ion, iz)
-        CALL field_bc(grid_num_density_ion, ng)
-      END IF
+      CALL calc_number_density(grid_num_density_ion, iz)
+      CALL field_bc(grid_num_density_ion, ng)
 
       ! Update the optical depth for each electron species
       DO ispecies = 1, n_species
@@ -548,11 +538,8 @@ CONTAINS
             part_y = current%part_pos(2) - y_grid_min_local
             part_z = current%part_pos(3) - z_grid_min_local
 
-            ! If iz == 0 use background density
-            IF (iz > 0) THEN
-              CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni,&
-                  grid_num_density_ion)
-            END IF
+            CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni,&
+                grid_num_density_ion)
 
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
@@ -560,7 +547,7 @@ CONTAINS
               CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
                   part_root_te_over_ne, grid_root_temp_over_num)
 
-              IF (iz > 0) q_temp = NINT(species_list(iz)%charge/q0)
+              q_temp = NINT(species_list(iz)%charge/q0)
               plasma_factor = get_plasma_factor(q_temp, z_temp, &
                   part_root_te_over_ne)
             END IF
