@@ -192,6 +192,14 @@ CONTAINS
 
     xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
+    dir_d(1) = dx
+    dir_min(1) = x_min
+    dir_max(1) = x_max
+    dir_grid_min(1) = x_grid_min
+    dir_grid_max(1) = x_grid_max
+    dir_min_local(1) = x_min_local
+    dir_max_local(1) = x_max_local
+
   END SUBROUTINE setup_grid
 
 

@@ -518,6 +518,9 @@ MODULE shared_data
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: z_grid_mins, z_grid_maxs
+  REAL(num) :: dir_d(c_ndims), dir_min(c_ndims), dir_max(c_ndims)
+  REAL(num) :: dir_grid_min(c_ndims), dir_grid_max(c_ndims)
+  REAL(num) :: dir_min_local(c_ndims), dir_max_local(c_ndims)
 
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state

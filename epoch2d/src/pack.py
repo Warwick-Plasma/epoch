@@ -413,10 +413,10 @@ else:
         sp.call(["git diff > %s" % gitdiff], shell=True)
     if os.path.getsize(gitdiff) != 0:
         # Remove TABLES directory from diff
-        f_in = open(gitdiff, 'rb')
+        f_in = open(gitdiff, 'r', encoding='utf-8')
         lines = f_in.readlines()
         f_in.close()
-        f_in = open(gitdiff, 'wb')
+        f_in = open(gitdiff, 'w', encoding='utf-8')
         ignore = False
         for l in lines:
             if l.startswith("diff"):
