@@ -128,6 +128,7 @@ CONTAINS
     IF (rank == 0) THEN
       DO ispecies = 1, n_species
         species => species_list(ispecies)
+        IF (species%background_species) CYCLE
         IF (species%count < 0) THEN
           DO iu = 1, nio_units
             io = ios_units(iu)
