@@ -48,7 +48,6 @@ def stripped(s):
         s = s.encode('ascii', 'ignore').decode()
     return s.strip()
 
-
 if got_argparse:
     argp = argparse.ArgumentParser(
         description="Pack source code for writing to SDF output")
@@ -96,7 +95,7 @@ varname = "%s_bytes" % prefix
 diffname = "%s_diff_bytes" % prefix
 module_name = "%s_source_info" % prefix
 outfile = args.outfile
-incfile = outfile.split('.')[0] + '_include.inc'
+incfile = os.path.splitext(outfile)[0] + '_include.inc'
 
 f77_output = args.f77_output
 nbytes = 8
@@ -413,28 +412,24 @@ else:
         sp.call(["git diff > %s" % gitdiff], shell=True)
     if os.path.getsize(gitdiff) != 0:
         # Remove TABLES directory from diff
-        f_in = open(gitdiff, 'r', encoding='utf-8')
-        lines = f_in.readlines()
-        f_in.close()
-        f_in = open(gitdiff, 'w', encoding='utf-8')
-        ignore = False
-        for l in lines:
-            if l.startswith("diff"):
-                if l.find("/TABLES/") != -1:
-                    ignore = True
-                else:
-                    ignore = False
-            if not ignore:
-                f_in.write(l)
-        f_in.close()
+        with codecs.open(gitdiff, 'r', encoding='utf-8') as fd:
+            lines = fd.readlines()
+        with codecs.open(gitdiff, 'w', encoding='utf-8') as fd:
+            ignore = False
+            for l in lines:
+                if l.startswith("diff"):
+                    if l.find("/TABLES/") != -1:
+                        ignore = True
+                    else:
+                        ignore = False
+                if not ignore:
+                    fd.write(l)
 
         checksum = get_bytes_checksum([gitdiff])
         zgitdiff = gitdiff + '.gz'
-        f_in = open(gitdiff, 'rb')
-        f_out = gzip.open(zgitdiff, 'wb')
-        f_out.writelines(f_in)
-        f_out.close()
-        f_in.close()
+        with open(gitdiff, 'rb') as f_in:
+            with gzip.open(zgitdiff, 'wb') as f_out:
+                f_out.writelines(f_in)
         os.remove(gitdiff)
         os.rename(zgitdiff, gitdiff)
     mimetype = 'application/x-gzip'
