@@ -621,12 +621,6 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'tmp_backgroud_n')) THEN
-      species_list(species_id)%tmp_background_n = &
-          as_real_print(value, element, errcode)
-      RETURN
-    END IF
-
     ! *************************************************************
     ! This section sets properties for bremsstrahlung emission
     ! *************************************************************

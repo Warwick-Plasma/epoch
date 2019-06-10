@@ -91,11 +91,16 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
-      IF (species_list(ispecies)%background_species) CYCLE
       species => species_list(ispecies)
       ic => species%initial_conditions
 
       CALL setup_ic_density(ispecies)
+
+      IF (species%background_species) THEN
+        ALLOCATE(species%background_density(1-ng:nx+ng, 1-ng:ny+ng))
+        species%background_density  = species_density
+        CYCLE
+      END IF
 
 #ifdef PER_SPECIES_WEIGHT
       CALL non_uniform_load_particles(species_density, species, &

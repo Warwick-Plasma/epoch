@@ -509,7 +509,7 @@ CONTAINS
 #endif
       IF (io_list(ispecies)%background_species) THEN
         data_array(1:nx) = data_array(1:nx) &
-            + io_list(ispecies)%tmp_background_n
+            + io_list(ispecies)%background_density(1:nx)
       ELSE
         current => io_list(ispecies)%attached_list%head
         wdata = io_list(ispecies)%weight
