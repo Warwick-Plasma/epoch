@@ -62,6 +62,8 @@
    and "atomic_number" and "brem_photon" species parameters. See the manual for
    further details.
 
+ * Allow total_energy_sum diagnostic to be per-species
+
 
 ## v4.15.0 to v4.16.0
 

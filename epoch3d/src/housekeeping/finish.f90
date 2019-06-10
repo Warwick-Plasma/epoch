@@ -68,6 +68,8 @@ CONTAINS
     DEALLOCATE(ex_z_min, ex_z_max, ey_z_min, ey_z_max, ez_z_min, ez_z_max)
     DEALLOCATE(bx_z_min, bx_z_max, by_z_min, by_z_max, bz_z_min, bz_z_max)
 
+    DEALLOCATE(total_particle_energy_species)
+
     CALL deallocate_probes
 
     DO i = 1, n_species

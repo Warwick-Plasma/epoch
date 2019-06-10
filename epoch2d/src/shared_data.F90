@@ -722,8 +722,9 @@ MODULE shared_data
   REAL(num) :: laser_absorbed = 0.0_num
   LOGICAL :: dump_absorption = .FALSE.
 
-  REAL(num) :: total_particle_energy = 0.0_num
   REAL(num) :: total_field_energy = 0.0_num
+  REAL(num) :: total_particle_energy = 0.0_num
+  REAL(num), ALLOCATABLE :: total_particle_energy_species(:)
 
   !----------------------------------------------------------------------------
   ! custom particle loading - written by MP Tooley
