@@ -71,6 +71,8 @@ CONTAINS
     DEALLOCATE(npart_each_rank)
     DEALLOCATE(x_grid_mins, x_grid_maxs, cell_x_min, cell_x_max)
 
+    DEALLOCATE(total_particle_energy_species)
+
     CALL deallocate_probes
 
     DO i = 1, n_species

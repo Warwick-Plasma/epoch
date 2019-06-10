@@ -565,6 +565,38 @@ CONTAINS
           END DO
         END IF
 #endif
+
+        mask = iomask(c_dump_total_energy_sum)
+        IF (IAND(mask, code) /= 0) THEN
+          CALL build_species_subset
+
+          IF (IAND(mask, c_io_species) == 0) THEN
+            CALL calc_total_energy_sum(.FALSE.)
+          ELSE
+            CALL calc_total_energy_sum(.TRUE.)
+
+            DO ispecies = 1, n_species
+              species => io_list(ispecies)
+              IF (IAND(species%dumpmask, code) == 0) CYCLE
+
+              CALL sdf_write_srl(sdf_handle, &
+                  'total_particle_energy/' // TRIM(species%name), &
+                  'Total Particle Energy/' // TRIM(species%name) // ' (J)', &
+                  total_particle_energy_species(ispecies))
+            END DO
+          END IF
+
+          IF (isubset == 1) THEN
+            IF (IAND(mask, c_io_no_sum) == 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
+                  'Total Particle Energy in Simulation (J)', &
+                  total_particle_energy)
+            END IF
+            CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
+                'Total Field Energy in Simulation (J)', total_field_energy)
+          END IF
+        END IF
+
         CALL write_particle_variable(c_dump_part_px, code, &
             'Px', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_py, code, &
@@ -858,15 +890,6 @@ CONTAINS
             'Absorption/Total Laser Energy Injected (J)', laser_injected)
         CALL sdf_write_srl(sdf_handle, 'abs_frac', &
             'Absorption/Fraction of Laser Energy Absorbed (%)', laser_absorbed)
-      END IF
-
-      IF (IAND(iomask(c_dump_total_energy_sum), code) /= 0) THEN
-        CALL calc_total_energy_sum
-
-        CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
-            'Total Particle Energy in Simulation (J)', total_particle_energy)
-        CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
-            'Total Field Energy in Simulation (J)', total_field_energy)
       END IF
 
       ! close the file
