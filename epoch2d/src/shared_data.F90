@@ -503,6 +503,9 @@ MODULE shared_data
   REAL(num) :: y_grid_min_local, y_grid_max_local, y_min_local, y_max_local
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
+  REAL(num) :: dir_d(c_ndims), dir_min(c_ndims), dir_max(c_ndims)
+  REAL(num) :: dir_grid_min(c_ndims), dir_grid_max(c_ndims)
+  REAL(num) :: dir_min_local(c_ndims), dir_max_local(c_ndims)
 
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state
@@ -724,8 +727,9 @@ MODULE shared_data
   REAL(num) :: laser_absorbed = 0.0_num
   LOGICAL :: dump_absorption = .FALSE.
 
-  REAL(num) :: total_particle_energy = 0.0_num
   REAL(num) :: total_field_energy = 0.0_num
+  REAL(num) :: total_particle_energy = 0.0_num
+  REAL(num), ALLOCATABLE :: total_particle_energy_species(:)
 
   !----------------------------------------------------------------------------
   ! custom particle loading - written by MP Tooley

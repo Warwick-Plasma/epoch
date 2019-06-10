@@ -168,7 +168,7 @@ CONTAINS
     ELSE
       global_random%box_muller_cached = cached
       global_random%cached_random_value = cached_random_value
-    ENDIF
+    END IF
 
   END FUNCTION random_box_muller
 

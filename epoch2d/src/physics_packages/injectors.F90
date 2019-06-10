@@ -178,7 +178,7 @@ CONTAINS
     REAL(num) :: bdy_pos, cell_size
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
-    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift, density_grid
+    REAL(num) :: mass, typical_mc2, p_therm, p_inject_drift
     REAL(num) :: gamma_mass, v_inject, density, vol, p_drift, p_ratio
     REAL(num) :: npart_ideal, itemp, v_inject_s, density_correction, dir_mult
     REAL(num) :: v_inject_dt
@@ -268,12 +268,13 @@ CONTAINS
     DO ii = 1, nperp
       IF (perp_dir_index == 1) THEN
         cur_cell = x(ii)
+        parameters%pack_ix = ii
       ELSE
         cur_cell = y(ii)
+        parameters%pack_iy = ii
       END IF
 
       parameters%use_grid_position = .TRUE.
-      CALL assign_pack_value(parameters, perp_dir_index, ii)
 
       IF (injector%dt_inject(ii) > 0.0_num) THEN
         npart_ideal = dt / injector%dt_inject(ii)
@@ -287,10 +288,12 @@ CONTAINS
         first_inject = .TRUE.
       END IF
 
-      CALL populate_injector_properties(injector, parameters, density_grid, &
-          temperature, drift)
+      CALL populate_injector_properties(injector, parameters, density=density)
 
-      IF (density_grid < injector%density_min) CYCLE
+      IF (density < injector%density_min) CYCLE
+
+      CALL populate_injector_properties(injector, parameters, &
+          temperature=temperature, drift=drift)
 
       ! Assume agressive maximum thermal momentum, all components
       ! like hottest component
@@ -373,8 +376,13 @@ CONTAINS
         parameters%pack_pos = new%part_pos
         parameters%use_grid_position = .FALSE.
 
+#ifdef PER_SPECIES_WEIGHT
+        CALL populate_injector_properties(injector, parameters, &
+            temperature=temperature, drift=drift)
+#else
         CALL populate_injector_properties(injector, parameters, density, &
             temperature, drift)
+#endif
 
         DO idir = 1, 3
           IF (idir == flux_dir_cell) THEN
@@ -409,51 +417,45 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: injector
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    REAL(num), INTENT(OUT) :: density
-    REAL(num), DIMENSION(3), INTENT(OUT) :: temperature, drift
+    REAL(num), INTENT(OUT), OPTIONAL :: density
+    REAL(num), DIMENSION(3), INTENT(OUT), OPTIONAL :: temperature, drift
     INTEGER :: errcode, i
 
     errcode = 0
-    density = MAX(evaluate_with_parameters(injector%density_function, &
-        parameters, errcode), 0.0_num)
+    IF (PRESENT(density)) THEN
+      density = 0.0_num
+      IF (injector%density_function%init) THEN
+        density = MAX(evaluate_with_parameters(injector%density_function, &
+            parameters, errcode), 0.0_num)
+      END IF
+    END IF
 
     ! Stack can only be time varying if valid. Change if this isn't true
-    DO i = 1, 3
-      IF (injector%temperature_function(i)%init) THEN
-        temperature(i) = &
-            MAX(evaluate_with_parameters(injector%temperature_function(i), &
-                parameters, errcode), 0.0_num)
-      ELSE
-        temperature(i) = 0.0_num
-      END IF
-      IF (injector%drift_function(i)%init) THEN
-        drift(i) = &
-            evaluate_with_parameters(injector%drift_function(i), &
-                                     parameters, errcode)
-      ELSE
-        drift(i) = 0.0_num
-      END IF
-    END DO
+    IF (PRESENT(temperature)) THEN
+      temperature(:) = 0.0_num
+      DO i = 1, 3
+        IF (injector%temperature_function(i)%init) THEN
+          temperature(i) = &
+              MAX(evaluate_with_parameters(injector%temperature_function(i), &
+                  parameters, errcode), 0.0_num)
+        END IF
+      END DO
+    END IF
+
+    IF (PRESENT(drift)) THEN
+      drift(:) = 0.0_num
+      DO i = 1, 3
+        IF (injector%drift_function(i)%init) THEN
+          drift(i) = &
+              evaluate_with_parameters(injector%drift_function(i), &
+                                       parameters, errcode)
+        END IF
+      END DO
+    END IF
 
     IF (errcode /= c_err_none) CALL abort_code(errcode)
 
   END SUBROUTINE populate_injector_properties
-
-
-
-  SUBROUTINE assign_pack_value(parameters, dir_index, p_value)
-
-    TYPE(parameter_pack), INTENT(INOUT) :: parameters
-    INTEGER, INTENT(IN) :: dir_index
-    INTEGER, INTENT(IN) :: p_value
-
-    IF (dir_index == 1) THEN
-      parameters%pack_ix = p_value
-    ELSE IF (dir_index == 2) THEN
-      parameters%pack_iy = p_value
-    END IF
-
-  END SUBROUTINE assign_pack_value
 
 
 

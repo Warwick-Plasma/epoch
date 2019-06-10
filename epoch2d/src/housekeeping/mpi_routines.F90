@@ -413,6 +413,8 @@ CONTAINS
       END IF
     END DO
 
+    ALLOCATE(total_particle_energy_species(n_species))
+
     CALL allocate_ic
 
     start_time = MPI_WTIME()

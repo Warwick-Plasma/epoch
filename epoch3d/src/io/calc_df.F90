@@ -1106,8 +1106,6 @@ CONTAINS
     INTEGER, INTENT(IN) :: current_species
     INTEGER, INTENT(IN), OPTIONAL :: direction
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: part_count
-    ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_px, part_py, part_pz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata, weight
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
@@ -1144,28 +1142,14 @@ CONTAINS
 #endif
       current => io_list(ispecies)%attached_list%head
 
-      wdata = io_list(ispecies)%weight
       weight = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
 #ifndef PER_SPECIES_WEIGHT
-        wdata = current%weight
         weight = current%weight
 #endif
-
-        ! Copy the particle properties out for speed
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-        SELECT CASE (direction)
-          CASE(c_dir_x)
-            wdata = wdata * part_px
-          CASE(c_dir_y)
-            wdata = wdata * part_py
-          CASE(c_dir_z)
-            wdata = wdata * part_pz
-        END SELECT
+        wdata = weight * current%part_p(direction)
 
 #include "particle_to_grid.inc"
 
@@ -1202,17 +1186,25 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_total_energy_sum
+  SUBROUTINE calc_total_energy_sum(per_species)
 
+    LOGICAL, INTENT(IN) :: per_species
     REAL(num) :: particle_energy, field_energy
     REAL(num) :: part_ux, part_uy, part_uz, part_u2
-    REAL(num) :: part_mc, part_w, fac, gamma_rel, gamma_rel_m1
-    REAL(num) :: sum_out(2), sum_in(2)
+    REAL(num) :: part_mc, part_w, fac, gamma_rel, gamma_rel_m1, part_energy
+    REAL(num), ALLOCATABLE :: sum_out(:), sum_in(:)
+    REAL(num), ALLOCATABLE :: species_energy(:)
     REAL(num), PARAMETER :: c2 = c**2
-    INTEGER :: ispecies, i, j, k
+    INTEGER :: ispecies, i, j, k, nsum
     TYPE(particle), POINTER :: current
 
     particle_energy = 0.0_num
+    IF (per_species) THEN
+      ALLOCATE(species_energy(n_species))
+      nsum = 1 + n_species
+    ELSE
+      nsum = 2
+    END IF
 
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
@@ -1223,6 +1215,7 @@ CONTAINS
       part_mc = c * species_list(ispecies)%mass
       part_w = species_list(ispecies)%weight
       fac = part_mc * part_w * c
+      part_energy = 0.0_num
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -1248,15 +1241,17 @@ CONTAINS
           gamma_rel = SQRT(part_u2 + 1.0_num)
           gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
 
-          particle_energy = particle_energy + gamma_rel_m1 * fac
+          part_energy = part_energy + gamma_rel_m1 * fac
 #if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         ELSE
-          particle_energy = particle_energy + current%particle_energy * part_w
+          part_energy = part_energy + current%particle_energy * part_w
 #endif
         END IF
 
         current => current%next
       END DO
+      IF (per_species) species_energy(ispecies) = part_energy
+      particle_energy = particle_energy + part_energy
     END DO
 
     ! EM field energy
@@ -1271,11 +1266,23 @@ CONTAINS
     END DO
     field_energy = 0.5_num * epsilon0 * field_energy * dx * dy * dz
 
-    sum_out(1) = particle_energy
-    sum_out(2) = field_energy
-    CALL MPI_REDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, 0, comm, errcode)
-    total_particle_energy = sum_in(1)
-    total_field_energy = sum_in(2)
+    ALLOCATE(sum_out(nsum))
+    ALLOCATE(sum_in(nsum))
+    sum_out(1) = field_energy
+    IF (per_species) THEN
+      sum_out(2:1+n_species) = species_energy(:)
+    ELSE
+      sum_out(2) = particle_energy
+    END IF
+
+    CALL MPI_REDUCE(sum_out, sum_in, nsum, mpireal, MPI_SUM, 0, comm, errcode)
+    total_field_energy = sum_in(1)
+    IF (per_species) THEN
+      total_particle_energy_species(:) = sum_in(2:1+n_species)
+      total_particle_energy = SUM(sum_in(2:1+n_species))
+    ELSE
+      total_particle_energy = sum_in(2)
+    END IF
 
   END SUBROUTINE calc_total_energy_sum
 

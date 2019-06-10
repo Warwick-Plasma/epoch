@@ -696,38 +696,42 @@ CONTAINS
 
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
     TYPE(subset), INTENT(IN), POINTER :: current_subset
-    REAL(num) :: dir_min, dir_max, dir_d
+    REAL(num) :: dd
     ! fudge factor allows overshoot of the specified domain extent by about 5%
     REAL(num), PARAMETER :: fudge = 0.019_num
-    INTEGER :: n
+    INTEGER :: idim, n1, n2
 
-    global_ranges(1,:) = -HUGE(1.0_num)
-    global_ranges(2,:) = HUGE(1.0_num)
+    DO idim = 1, c_ndims
+      global_ranges(1,idim) = dir_grid_min(idim)
+      global_ranges(2,idim) = dir_grid_max(idim)
 
-    dir_d = dx
-    dir_min = x_min
-    dir_max = x_max
-    n = c_subset_x_min
-    IF (current_subset%use_restriction(n)) &
-        global_ranges(1,1) = current_subset%restriction(n)
-    n = c_subset_x_max
-    IF (current_subset%use_restriction(n)) &
-        global_ranges(2,1) = current_subset%restriction(n)
+      dd = dir_d(idim)
 
-    IF (global_ranges(2,1) < global_ranges(1,1)) THEN
-      global_ranges = 0
-      RETURN
-    END IF
+      n1 = c_subset_x_min
+      n2 = c_subset_x_max
 
-    ! Correct to match cell edges
-    global_ranges(1,1) = dir_min &
-        + FLOOR((global_ranges(1,1) - dir_min) / dir_d + fudge) * dir_d
-    global_ranges(2,1) = dir_min &
-        + CEILING((global_ranges(2,1) - dir_min) / dir_d - fudge) * dir_d
+      IF (current_subset%use_restriction(n1)) &
+          global_ranges(1,idim) = current_subset%restriction(n1)
+      IF (current_subset%use_restriction(n2)) &
+          global_ranges(2,idim) = current_subset%restriction(n2)
 
-    ! Correct to domain size
-    global_ranges(1,1) = MAX(global_ranges(1,1), dir_min) + 0.5_num * dir_d
-    global_ranges(2,1) = MIN(global_ranges(2,1), dir_max) + 0.5_num * dir_d
+      IF (global_ranges(2,idim) < global_ranges(1,idim)) THEN
+        global_ranges = 0
+        RETURN
+      END IF
+
+      ! Correct to match cell edges
+      global_ranges(1,idim) = dir_min(idim) &
+          + FLOOR((global_ranges(1,idim) - dir_min(idim)) / dd + fudge) * dd
+      global_ranges(2,idim) = dir_min(idim) &
+          + CEILING((global_ranges(2,idim) - dir_min(idim)) / dd - fudge) * dd
+
+      ! Correct to domain size
+      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min(idim)) &
+          + 0.5_num * dd
+      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max(idim)) &
+          + 0.5_num * dd
+    END DO
 
   END FUNCTION global_ranges
 
@@ -737,12 +741,16 @@ CONTAINS
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_global_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dir_d, lower_posn
+    REAL(NUM) :: dd, lower_posn
+    INTEGER :: idim
 
-    dir_d = dx
-    lower_posn = x_grid_min
-    cell_global_ranges(1,1) = NINT((ranges(1,1) - lower_posn) / dir_d) + 1
-    cell_global_ranges(2,1) = NINT((ranges(2,1) - lower_posn) / dir_d) + 1
+    DO idim = 1, c_ndims
+      dd = dir_d(idim)
+      lower_posn = dir_grid_min(idim)
+
+      cell_global_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
+      cell_global_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
+    END DO
 
   END FUNCTION cell_global_ranges
 
@@ -756,15 +764,19 @@ CONTAINS
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dir_d, lower_posn
+    REAL(NUM) :: dd, lower_posn
+    INTEGER :: idim
 
-    ranges(1,1) = MAX(ranges(1,1), x_min_local)
-    ranges(2,1) = MIN(ranges(2,1), x_max_local)
+    DO idim = 1, c_ndims
+      ranges(1,idim) = MAX(ranges(1,idim), dir_min_local(idim))
+      ranges(2,idim) = MIN(ranges(2,idim), dir_max_local(idim))
 
-    dir_d = dx
-    lower_posn = x_min
-    cell_local_ranges(1,1) = NINT((ranges(1,1) - lower_posn) / dir_d) + 1
-    cell_local_ranges(2,1) = NINT((ranges(2,1) - lower_posn) / dir_d) + 1
+      dd = dir_d(idim)
+      lower_posn = dir_grid_min(idim)
+
+      cell_local_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
+      cell_local_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
+    END DO
 
   END FUNCTION cell_local_ranges
 
@@ -779,11 +791,14 @@ CONTAINS
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_section_ranges
     INTEGER, DIMENSION(2,c_ndims) :: ranges
-    INTEGER :: min_val
+    INTEGER :: idim, min_val
 
-    min_val = nx_global_min
-    cell_section_ranges(1,1) = (ranges(1,1) - min_val)
-    cell_section_ranges(2,1) = (ranges(2,1) - min_val)
+    DO idim = 1, c_ndims
+      min_val = n_global_min(idim)
+
+      cell_section_ranges(1,idim) = (ranges(1,idim) - min_val)
+      cell_section_ranges(2,idim) = (ranges(2,idim) - min_val)
+    END DO
 
   END FUNCTION cell_section_ranges
 
@@ -792,14 +807,17 @@ CONTAINS
   FUNCTION cell_starts(ranges, global_ranges)
 
     INTEGER, DIMENSION(c_ndims) :: cell_starts
-    INTEGER, DIMENSION(2, c_ndims) :: ranges
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
     REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
-    INTEGER :: range_global_min
+    INTEGER :: range_global_min, idim
 
-    range_global_min = NINT((global_ranges(1,1) - x_grid_min) / dx)
+    DO idim = 1, c_ndims
+      range_global_min = &
+          NINT((global_ranges(1,idim) - dir_grid_min(idim)) / dir_d(idim))
 
-    ! -1 because ranges is cell indexed and global_ranges isn't
-    cell_starts(1) = ranges(1,1) - range_global_min - 1
+      ! -1 because ranges is cell indexed and global_ranges isn't
+      cell_starts(idim) = ranges(1,idim) - range_global_min - 1
+    END DO
 
   END FUNCTION cell_starts
 
