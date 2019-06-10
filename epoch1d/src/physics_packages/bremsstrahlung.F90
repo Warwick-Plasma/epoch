@@ -497,8 +497,9 @@ CONTAINS
 
     ! Calculate the number density of each ion species
     DO iz = 1, n_species
-
       ! Identify if the charge is greater than 1
+      z_temp = species_list(iz)%atomic_no
+
       IF (z_temp < 1 .OR. z_temp > 100) CYCLE
 
       CALL calc_number_density(grid_num_density_ion, iz)
