@@ -1262,6 +1262,8 @@ CONTAINS
 #endif
       END DO
 #endif
+      factor = user_factor / factor
+
       ! If possible, use per-species properties
       m1 = mass1
       m2 = mass2
@@ -1504,6 +1506,8 @@ CONTAINS
 #endif
       END DO
 #endif
+      factor = user_factor / factor
+
       ! If possible, use per-species properties
       m1 = mass1
       m2 = mass2
