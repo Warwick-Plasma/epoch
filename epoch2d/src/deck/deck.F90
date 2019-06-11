@@ -427,7 +427,7 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     LOGICAL, SAVE :: warn_ascii = .FALSE.
     TYPE(string_type), DIMENSION(2) :: deck_values
-    CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: deck_filename
     CHARACTER(LEN=c_max_path_length) :: const_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.

@@ -18,6 +18,7 @@ MODULE bremsstrahlung
 
   USE partlist
   USE calc_df
+  USE setup
 
   IMPLICIT NONE
 
@@ -46,9 +47,10 @@ CONTAINS
         END IF
       END DO
 
-     ! Print warning if the correct species aren't present
+      ! Print warning if the correct species aren't present
       IF (.NOT. found) THEN
         IF (rank == 0) THEN
+          CALL open_status_file
           DO iu = 1, nio_units
             io = io_units(iu)
             WRITE(io,*)
@@ -57,6 +59,7 @@ CONTAINS
                 'unspecified or contain no'
             WRITE(io,*) 'particles. Bremsstrahlung routines will do nothing.'
           END DO
+          CALL close_status_file
         END IF
       END IF
     END IF

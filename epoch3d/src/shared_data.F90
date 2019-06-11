@@ -539,6 +539,7 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
+  CHARACTER(LEN=c_max_path_length) :: status_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
