@@ -776,7 +776,7 @@ CONTAINS
     np = icount * weight
     ! Factor of 2 due to intra species collisions
     ! See Section 4.1 of Nanbu
-    factor = user_factor * pcount * weight * 2.0_num
+    factor = user_factor / (pcount * weight * 2.0_num)
 #else
     ! temporarily join tail to the head of the list to make it circular
     p_list%tail%next => p_list%head
@@ -999,7 +999,7 @@ CONTAINS
     np = icount * weight
     ! Factor of 2 due to intra species collisions
     ! See Section 4.1 of Nanbu
-    factor = user_factor * pcount * weight * 2.0_num
+    factor = user_factor / (pcount * weight * 2.0_num)
 #else
     ! temporarily join tail to the head of the list to make it circular
     p_list%tail%next => p_list%head
