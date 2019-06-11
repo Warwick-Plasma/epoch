@@ -145,6 +145,7 @@ PROGRAM pic
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
   IF (use_current_correction) CALL calc_initial_current
+  CALL setup_bc_lists
   CALL particle_bcs
   CALL efield_bcs
 

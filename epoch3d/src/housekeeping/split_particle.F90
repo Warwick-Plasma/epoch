@@ -100,6 +100,7 @@ CONTAINS
       DEALLOCATE(species_list(ispecies)%secondary_list)
     END DO
 
+    CALL setup_bc_lists
     CALL particle_bcs
 
   END SUBROUTINE reattach_particles_to_mainlist

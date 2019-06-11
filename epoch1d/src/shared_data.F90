@@ -180,10 +180,10 @@ MODULE shared_data
     REAL(num) :: density_back
   END TYPE initial_condition_block
 
-  TYPE particle_candidate_element
+  TYPE particle_pointer_list
     TYPE(particle), POINTER :: particle
-    TYPE(particle_candidate_element), POINTER :: next
-  END TYPE particle_candidate_element
+    TYPE(particle_pointer_list), POINTER :: next
+  END TYPE particle_pointer_list
 
   ! Object representing a particle species
   TYPE particle_species
@@ -199,7 +199,7 @@ MODULE shared_data
     REAL(num) :: weight
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
-    TYPE(particle_candidate_element), POINTER :: cand_head => NULL()
+    TYPE(particle_pointer_list), POINTER :: boundary_particles => NULL()
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 

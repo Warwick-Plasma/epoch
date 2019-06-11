@@ -927,13 +927,53 @@ CONTAINS
   END SUBROUTINE bfield_final_bcs
 
 
+  SUBROUTINE setup_bc_lists
 
-  SUBROUTINE particle_bcs(use_candidates)
+    INTEGER(i8) :: ispecies, ipart
+    TYPE(particle), POINTER :: current
+    TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
-    LOGICAL, INTENT(IN), OPTIONAL :: use_candidates
-    LOGICAL :: use_candidates_int
-    TYPE(particle_candidate_element), POINTER :: cand_el, cand_el_last
-    TYPE(particle), POINTER :: cur, next
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+
+      NULLIFY(bnd_part_next)
+      ALLOCATE(species_list(ispecies)%boundary_particles)
+      NULLIFY(species_list(ispecies)%boundary_particles%particle)
+      NULLIFY(species_list(ispecies)%boundary_particles%next)
+      bnd_part_last => species_list(ispecies)%boundary_particles
+
+      DO ipart = 1, species_list(ispecies)%attached_list%count
+        ! Move particle to boundary candidate list
+        IF(current%part_pos(1) < x_grid_min_local - dx/2.0 .OR. &
+            current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
+            current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
+            current%part_pos(2) > y_grid_max_local + dy/2.0) THEN
+
+          ALLOCATE(bnd_part_next)
+          bnd_part_next%particle => current
+          bnd_part_last%next => bnd_part_next
+          bnd_part_last => bnd_part_next
+
+        END IF
+        current => current%next
+      END DO
+
+      ! Bndary list head contains no particle
+      bnd_part_last => species_list(ispecies)%boundary_particles
+      species_list(ispecies)%boundary_particles &
+          => species_list(ispecies)%boundary_particles%next
+      DEALLOCATE(bnd_part_last)
+      ! Final particle should have null 'next' ptr
+      IF(ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
+    END DO
+
+  END SUBROUTINE setup_bc_lists
+
+
+  SUBROUTINE particle_bcs
+
+    TYPE(particle_pointer_list), POINTER :: bnd_part, bnd_part_last
+    TYPE(particle), POINTER :: cur
     TYPE(particle_list), DIMENSION(-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd
     INTEGER(i8) :: ixp, iyp
@@ -949,12 +989,6 @@ CONTAINS
     REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
     REAL(num) :: x_shift, y_shift
 
-    IF (PRESENT(use_candidates)) THEN
-      use_candidates_int = use_candidates
-    ELSE
-      use_candidates_int = .FALSE.
-    END IF
-
     boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift
     x_max_outer = x_max + boundary_shift
@@ -966,19 +1000,9 @@ CONTAINS
     y_shift = length_y + 2.0_num * dy * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
-      IF (use_candidates_int) THEN
-        cand_el => species_list(ispecies)%cand_head
-        IF (ASSOCIATED(cand_el)) THEN
-          cur => cand_el%particle
-        ELSE
-          NULLIFY(cur)
-        END IF
-      ELSE
-        cur => species_list(ispecies)%attached_list%head
-      END IF
-
+      bnd_part => species_list(ispecies)%boundary_particles
+      NULLIFY(bnd_part_last)
       bc_species = species_list(ispecies)%bc_particle
-
       DO iy = -1, 1
         DO ix = -1, 1
           IF (ABS(ix) + ABS(iy) == 0) CYCLE
@@ -987,21 +1011,12 @@ CONTAINS
         END DO
       END DO
 
-      DO WHILE (ASSOCIATED(cur))
-        IF (use_candidates_int) THEN
-          cand_el_last => cand_el
-          IF(ASSOCIATED(cand_el)) THEN
-            cand_el => cand_el%next
-            IF(ASSOCIATED(cand_el)) THEN
-              next => cand_el%particle
-            ELSE
-              NULLIFY(next)
-            END IF
-          END IF
-          IF(ASSOCIATED(cand_el_last)) DEALLOCATE(cand_el_last)
-        ELSE
-          next => cur%next
-        END IF
+      DO WHILE (ASSOCIATED(bnd_part))
+        bnd_part_last => bnd_part
+
+        cur => bnd_part%particle
+        bnd_part => bnd_part%next
+        DEALLOCATE(bnd_part_last)
 
         xbd = 0
         ybd = 0
@@ -1338,10 +1353,7 @@ CONTAINS
           CALL add_particle_to_partlist(send(xbd, ybd), cur)
         END IF
 
-        ! Move to next particle
-        cur => next
       END DO
-
       ! swap Particles
       DO iy = -1, 1
         DO ix = -1, 1
@@ -1354,7 +1366,6 @@ CONTAINS
               recv(ixp, iyp))
         END DO
       END DO
-
       DO iy = -1, 1
         DO ix = -1, 1
           IF (ABS(ix) + ABS(iy) == 0) CYCLE
@@ -1363,9 +1374,9 @@ CONTAINS
         END DO
       END DO
 
-      IF(ASSOCIATED(cand_el_last)) DEALLOCATE(cand_el_last)
-      IF(ASSOCIATED(species_list(ispecies)%cand_head)) THEN
-        NULLIFY(species_list(ispecies)%cand_head)
+      IF(ASSOCIATED(bnd_part_last)) DEALLOCATE(bnd_part_last)
+      IF(ASSOCIATED(species_list(ispecies)%boundary_particles)) THEN
+        NULLIFY(species_list(ispecies)%boundary_particles)
       END IF
 
     END DO

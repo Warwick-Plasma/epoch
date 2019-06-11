@@ -141,7 +141,7 @@ CONTAINS
 #endif
 
     TYPE(particle), POINTER :: current, next
-    TYPE(particle_candidate_element), POINTER :: cand_last, cand_next
+    TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -172,6 +172,14 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
+
+      ! Setup list of particles which may need boundary conditions applied
+      ALLOCATE(species_list(ispecies)%boundary_particles)
+      NULLIFY(species_list(ispecies)%boundary_particles%particle)
+      NULLIFY(species_list(ispecies)%boundary_particles%next)
+      NULLIFY(bnd_part_next)
+      bnd_part_last => species_list(ispecies)%boundary_particles
+
       IF (species_list(ispecies)%immobile) CYCLE
       IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
 #ifdef BREMSSTRAHLUNG
@@ -416,7 +424,7 @@ CONTAINS
             part_y + y_grid_min_local, part_z + z_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
-        ! Move particle to boundary candidate list
+        ! Add particle to boundary candidate list
         IF(current%part_pos(1) < x_grid_min_local - dx/2.0 .OR. &
             current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
             current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
@@ -424,15 +432,11 @@ CONTAINS
             current%part_pos(3) < z_grid_min_local - dz/2.0 .OR. &
             current%part_pos(3) > z_grid_max_local + dz/2.0) THEN
 
-          ALLOCATE(cand_next)
-          NULLIFY(cand_next%next)
-          cand_next%particle => current
-          IF(.NOT. ASSOCIATED(species_list(ispecies)%cand_head)) THEN
-            species_list(ispecies)%cand_head => cand_next
-          ELSE
-            cand_last%next => cand_next
-          END IF
-          cand_last => cand_next
+          ALLOCATE(bnd_part_next)
+          bnd_part_next%particle => current
+          bnd_part_last%next => bnd_part_next
+          bnd_part_last => bnd_part_next
+
         END IF
 
 #ifdef WORK_DONE_INTEGRATED
@@ -628,10 +632,16 @@ CONTAINS
 #endif
         current => next
       END DO
+      ! Bndary list head contains no particle
+      bnd_part_last => species_list(ispecies)%boundary_particles
+      species_list(ispecies)%boundary_particles &
+          => species_list(ispecies)%boundary_particles%next
+      DEALLOCATE(bnd_part_last)
+      IF(ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
       CALL current_bcs(species=ispecies)
     END DO
 
-    CALL particle_bcs(.TRUE.)
+    CALL particle_bcs
 
   END SUBROUTINE push_particles
 
