@@ -1156,6 +1156,10 @@ CONTAINS
       e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
       e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
 
+      ! Restore values of p1, p2
+      p1 = p1 * c
+      p2 = p2 * c
+
       IF (wr > one_p_2eps) THEN
         CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
       ELSE IF (wr < one_m_2eps) THEN
@@ -1648,6 +1652,10 @@ CONTAINS
 
         e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
         e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+        ! Restore values of p1, p2
+        p1 = p1 * c
+        p2 = p2 * c
 
         IF (wr > one_p_2eps) THEN
           CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
