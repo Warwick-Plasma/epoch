@@ -453,7 +453,7 @@ CONTAINS
       ALLOCATE(grid_temperature_electron_temp(1-ng:nx+ng))
       ALLOCATE(grid_temperature_electron(1-ng:nx+ng))
       ALLOCATE(grid_root_temp_over_num(1-ng:nx+ng))
-      grid_num_density_electron = 0.0_num
+      grid_num_density_electron = c_tiny
       grid_temperature_electron = 0.0_num
 
       DO ispecies = 1, n_species
