@@ -592,7 +592,8 @@ CONTAINS
 
     cross_sec_val = find_value_from_table_1d(part_e, &
         brem_array(brem_index)%size_t, brem_array(brem_index)%e_table, &
-        brem_array(brem_index)%cross_section) * plasma_factor
+        brem_array(brem_index)%cross_section, brem_array(brem_index)%state) &
+        * plasma_factor
 
     delta_optical_depth = part_ni * cross_sec_val * part_v * dt &
         / photon_weight
@@ -667,7 +668,7 @@ CONTAINS
     photon_energy = find_value_from_table_alt(part_e, rand_temp, &
         brem_array(brem_index)%size_t, brem_array(brem_index)%size_k, &
         brem_array(brem_index)%e_table, brem_array(brem_index)%k_table, &
-        brem_array(brem_index)%cdf_table)
+        brem_array(brem_index)%cdf_table, brem_array(brem_index)%state)
 
     ! Calculate electron recoil
     IF (use_bremsstrahlung_recoil) THEN
@@ -759,40 +760,79 @@ CONTAINS
   ! interpolated value of "values" corresponding to x_in in the x array. This
   ! uses linear interpolation, unlike in photons.F90 which is logarithmic
 
-  FUNCTION find_value_from_table_1d(x_in, nx, x, values)
+  FUNCTION find_value_from_table_1d(x_in, nx, x, values, state)
 
     REAL(num) :: find_value_from_table_1d
     REAL(num), INTENT(IN) :: x_in
     INTEGER, INTENT(IN) :: nx
     REAL(num), INTENT(IN) :: x(:), values(:)
-    REAL(num) :: fx, x_value, value_interp, xdif1, xdif2, xdifm
+    TYPE(interpolation_state), INTENT(INOUT) :: state
+    REAL(num) :: fx, value_interp, xdif1, xdif2, xdifm
     INTEGER :: i1, i2, im
     LOGICAL, SAVE :: warning = .TRUE.
+    LOGICAL :: found
 
-    x_value = x_in
+    IF (ABS(state%x - x_in) < 1e-15_num) THEN
+      find_value_from_table_1d = state%val1d
+      RETURN
+    END IF
 
-    ! Use bisection to find the nearest cells i1, i2
-    i1 = 1
-    i2 = nx
-    xdif1 = x(i1) - x_value
-    xdif2 = x(i2) - x_value
-    IF (xdif1 * xdif2 < 0) THEN
-      DO
-        im = (i1 + i2) / 2
-        xdifm = x(im) - x_value
-        IF (xdif1 * xdifm < 0) THEN
-          i2 = im
+    ! Scan through x to find correct row of table
+    i1 = state%ix1
+    i2 = state%ix2
+    found = .FALSE.
+    IF (i1 /= i2) THEN
+      xdif1 = x(i1) - x_in
+      xdif2 = x(i2) - x_in
+      IF (xdif1 * xdif2 < 0) THEN
+        found = .TRUE.
+      ELSE
+        i1 = MIN(state%ix1+1,nx)
+        i2 = MIN(state%ix2+1,nx)
+        xdif1 = x(i1) - x_in
+        xdif2 = x(i2) - x_in
+        IF (xdif1 * xdif2 < 0) THEN
+          found = .TRUE.
         ELSE
-          i1 = im
-          xdif1 = xdifm
+          i1 = MAX(state%ix1-1,1)
+          i2 = MAX(state%ix2-1,1)
+          xdif1 = x(i1) - x_in
+          xdif2 = x(i2) - x_in
+          IF (xdif1 * xdif2 < 0) THEN
+            found = .TRUE.
+          END IF
         END IF
-        IF (i2 - i1 == 1) EXIT
-      END DO
+      END IF
+    END IF
 
+    IF (.NOT.found) THEN
+      ! Scan through x to find correct row of table
+      i1 = 1
+      i2 = nx
+      xdif1 = x(i1) - x_in
+      xdif2 = x(i2) - x_in
+      IF (xdif1 * xdif2 < 0) THEN
+        ! Use bisection to find the nearest cell
+        DO
+          im = (i1 + i2) / 2
+          xdifm = x(im) - x_in
+          IF (xdif1 * xdifm < 0) THEN
+            i2 = im
+          ELSE
+            i1 = im
+            xdif1 = xdifm
+          END IF
+          IF (i2 - i1 == 1) EXIT
+        END DO
+        found = .TRUE.
+      END IF
+    END IF
+
+    IF (found) THEN
       ! Interpolate in x to find fraction between the cells
-      fx = (x_value - x(i1)) / (x(i2) - x(i1))
-
-    ! Our x_in value falls outside of the x array - truncate the value
+      fx = (x_in - x(i1)) / (x(i2) - x(i1))
+      state%ix1 = i1
+      state%ix2 = i2
     ELSE
       IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
@@ -801,16 +841,21 @@ CONTAINS
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       END IF
+      ! Our x_in value falls outside of the x array - truncate the value
       IF (xdif1 >= 0) THEN
         fx = 0.0_num
       ELSE
         fx = 1.0_num
       END IF
+      state%ix1 = 1
+      state%ix2 = 1
     END IF
 
     ! Corresponding number from value array, a fraction fx between i1 and i2
     value_interp = (1.0_num - fx) * values(i1) + fx * values(i2)
     find_value_from_table_1d = value_interp
+    state%x = x_in
+    state%val1d = find_value_from_table_1d
 
   END FUNCTION find_value_from_table_1d
 
@@ -823,36 +868,81 @@ CONTAINS
   ! p_value, at a particular x value x_in, and is used in the code to obtain
   ! photon energies (y) for a given incident electron energy (x).
 
-  FUNCTION find_value_from_table_alt(x_in, p_value, nx, ny, x, y, p_table)
+  FUNCTION find_value_from_table_alt(x_in, p_value, nx, ny, x, y, p_table, &
+      state)
 
     REAL(num) :: find_value_from_table_alt
     REAL(num), INTENT(IN) :: x_in, p_value
     INTEGER, INTENT(IN) :: nx, ny
     REAL(num), INTENT(IN) :: x(:), y(:,:), p_table(:,:)
+    TYPE(interpolation_state), INTENT(INOUT) :: state
     INTEGER :: ix, index_lt, index_gt, i1, i2, im
     REAL(num) :: fx, fp, y_lt, y_gt, y_interp, xdif1, xdif2, xdifm
     LOGICAL, SAVE :: warning = .TRUE.
+    LOGICAL :: found
+
+    IF (ABS(state%x - x_in) < 1e-15_num &
+        .AND. ABS(state%y - p_value) < 1e-15_num) THEN
+      find_value_from_table_alt = state%val1d
+      RETURN
+    END IF
 
     ! Scan through x to find correct row of table
-    i1 = 1
-    i2 = nx
-    xdif1 = x(i1) - x_in
-    xdif2 = x(i2) - x_in
-    IF (xdif1 * xdif2 < 0) THEN
-      ! Use bisection to find the nearest cell
-      DO
-        im = (i1 + i2) / 2
-        xdifm = x(im) - x_in
-        IF (xdif1 * xdifm < 0) THEN
-          i2 = im
+    i1 = state%ix1
+    i2 = state%ix2
+    found = .FALSE.
+    IF (i1 /= i2) THEN
+      xdif1 = x(i1) - x_in
+      xdif2 = x(i2) - x_in
+      IF (xdif1 * xdif2 < 0) THEN
+        found = .TRUE.
+      ELSE
+        i1 = MIN(state%ix1+1,nx)
+        i2 = MIN(state%ix2+1,nx)
+        xdif1 = x(i1) - x_in
+        xdif2 = x(i2) - x_in
+        IF (xdif1 * xdif2 < 0) THEN
+          found = .TRUE.
         ELSE
-          i1 = im
-          xdif1 = xdifm
+          i1 = MAX(state%ix1-1,1)
+          i2 = MAX(state%ix2-1,1)
+          xdif1 = x(i1) - x_in
+          xdif2 = x(i2) - x_in
+          IF (xdif1 * xdif2 < 0) THEN
+            found = .TRUE.
+          END IF
         END IF
-        IF (i2 - i1 == 1) EXIT
-      END DO
+      END IF
+    END IF
+
+    IF (.NOT.found) THEN
+      ! Scan through x to find correct row of table
+      i1 = 1
+      i2 = nx
+      xdif1 = x(i1) - x_in
+      xdif2 = x(i2) - x_in
+      IF (xdif1 * xdif2 < 0) THEN
+        ! Use bisection to find the nearest cell
+        DO
+          im = (i1 + i2) / 2
+          xdifm = x(im) - x_in
+          IF (xdif1 * xdifm < 0) THEN
+            i2 = im
+          ELSE
+            i1 = im
+            xdif1 = xdifm
+          END IF
+          IF (i2 - i1 == 1) EXIT
+        END DO
+        found = .TRUE.
+      END IF
+    END IF
+
+    IF (found) THEN
       ! Interpolate in x
       fx = (x_in - x(i1)) / (x(i2) - x(i1))
+      state%ix1 = i1
+      state%ix2 = i2
     ELSE
       IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
@@ -866,6 +956,8 @@ CONTAINS
       ELSE
         fx = 1.0_num
       END IF
+      state%ix1 = 1
+      state%ix2 = 1
     END IF
 
     index_lt = i1
@@ -873,25 +965,61 @@ CONTAINS
 
     ix = index_lt
     ! Scan through table row to find p_value
-    i1 = 1
-    i2 = ny
-    xdif1 = p_table(ix,i1) - p_value
-    xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 < 0) THEN
-      ! Use bisection to find the nearest cell
-      DO
-        im = (i1 + i2) / 2
-        xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm < 0) THEN
-          i2 = im
+    i1 = state%iy1
+    i2 = state%iy2
+    found = .FALSE.
+    IF (i1 /= i2) THEN
+      xdif1 = p_table(ix,i1) - p_value
+      xdif2 = p_table(ix,i2) - p_value
+      IF (xdif1 * xdif2 < 0) THEN
+        found = .TRUE.
+      ELSE
+        i1 = MIN(state%iy1+1,ny)
+        i2 = MIN(state%iy2+1,ny)
+        xdif1 = p_table(ix,i1) - p_value
+        xdif2 = p_table(ix,i2) - p_value
+        IF (xdif1 * xdif2 < 0) THEN
+          found = .TRUE.
         ELSE
-          i1 = im
-          xdif1 = xdifm
+          i1 = MAX(state%iy1-1,1)
+          i2 = MAX(state%iy2-1,1)
+          xdif1 = p_table(ix,i1) - p_value
+          xdif2 = p_table(ix,i2) - p_value
+          IF (xdif1 * xdif2 < 0) THEN
+            found = .TRUE.
+          END IF
         END IF
-        IF (i2 - i1 == 1) EXIT
-      END DO
+      END IF
+    END IF
+
+    IF (.NOT.found) THEN
+      ! Scan through table row to find p_value
+      i1 = 1
+      i2 = ny
+      xdif1 = p_table(ix,i1) - p_value
+      xdif2 = p_table(ix,i2) - p_value
+      IF (xdif1 * xdif2 < 0) THEN
+        ! Use bisection to find the nearest cell
+        DO
+          im = (i1 + i2) / 2
+          xdifm = p_table(ix,im) - p_value
+          IF (xdif1 * xdifm < 0) THEN
+            i2 = im
+          ELSE
+            i1 = im
+            xdif1 = xdifm
+          END IF
+          IF (i2 - i1 == 1) EXIT
+        END DO
+        found = .TRUE.
+      END IF
+    END IF
+
+    IF (found) THEN
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
+      state%iy1 = i1
+      state%iy2 = i2
     ELSE
       IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
@@ -905,31 +1033,69 @@ CONTAINS
       ELSE
         fp = 1.0_num
       END IF
+      state%iy1 = 1
+      state%iy2 = 1
     END IF
 
     y_lt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
 
     ix = index_gt
     ! Scan through table row to find p_value
-    i1 = 1
-    i2 = ny
-    xdif1 = p_table(ix,i1) - p_value
-    xdif2 = p_table(ix,i2) - p_value
-    IF (xdif1 * xdif2 < 0) THEN
-      ! Use bisection to find the nearest cell
-      DO
-        im = (i1 + i2) / 2
-        xdifm = p_table(ix,im) - p_value
-        IF (xdif1 * xdifm < 0) THEN
-          i2 = im
+    i1 = state%iy1
+    i2 = state%iy2
+    found = .FALSE.
+    IF (i1 /= i2) THEN
+      xdif1 = p_table(ix,i1) - p_value
+      xdif2 = p_table(ix,i2) - p_value
+      IF (xdif1 * xdif2 < 0) THEN
+        found = .TRUE.
+      ELSE
+        i1 = MIN(state%iy1+1,ny)
+        i2 = MIN(state%iy2+1,ny)
+        xdif1 = p_table(ix,i1) - p_value
+        xdif2 = p_table(ix,i2) - p_value
+        IF (xdif1 * xdif2 < 0) THEN
+          found = .TRUE.
         ELSE
-          i1 = im
-          xdif1 = xdifm
+          i1 = MAX(state%iy1-1,1)
+          i2 = MAX(state%iy2-1,1)
+          xdif1 = p_table(ix,i1) - p_value
+          xdif2 = p_table(ix,i2) - p_value
+          IF (xdif1 * xdif2 < 0) THEN
+            found = .TRUE.
+          END IF
         END IF
-        IF (i2 - i1 == 1) EXIT
-      END DO
+      END IF
+    END IF
+
+    IF (.NOT.found) THEN
+      ! Scan through table row to find p_value
+      i1 = 1
+      i2 = ny
+      xdif1 = p_table(ix,i1) - p_value
+      xdif2 = p_table(ix,i2) - p_value
+      IF (xdif1 * xdif2 < 0) THEN
+        ! Use bisection to find the nearest cell
+        DO
+          im = (i1 + i2) / 2
+          xdifm = p_table(ix,im) - p_value
+          IF (xdif1 * xdifm < 0) THEN
+            i2 = im
+          ELSE
+            i1 = im
+            xdif1 = xdifm
+          END IF
+          IF (i2 - i1 == 1) EXIT
+        END DO
+        found = .TRUE.
+      END IF
+    END IF
+
+    IF (found) THEN
       ! Interpolate in x
       fp = (p_value - p_table(ix,i1)) / (p_table(ix,i2) - p_table(ix,i1))
+      state%iy1 = i1
+      state%iy2 = i2
     ELSE
       IF (warning .AND. rank == 0) THEN
         PRINT*,'*** WARNING ***'
@@ -943,6 +1109,8 @@ CONTAINS
       ELSE
         fp = 1.0_num
       END IF
+      state%iy1 = 1
+      state%iy2 = 1
     END IF
 
     y_gt = (1.0_num - fp) * y(ix,i1) + fp * y(ix,i2)
@@ -951,6 +1119,9 @@ CONTAINS
     y_interp = (1.0_num - fx) * y_lt + fx * y_gt
 
     find_value_from_table_alt = y_interp
+    state%x = x_in
+    state%y = p_value
+    state%val1d = find_value_from_table_alt
 
   END FUNCTION find_value_from_table_alt
 
