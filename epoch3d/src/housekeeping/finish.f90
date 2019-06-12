@@ -86,6 +86,8 @@ CONTAINS
       DEALLOCATE(species_list(i)%ext_temp_y_max, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_min, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_max, STAT=stat)
+      IF (ASSOCIATED(species_list(i)%background_density)) &
+          DEALLOCATE(species_list(i)%background_density, STAT=stat)
     END DO
 
     DEALLOCATE(species_list, STAT=stat)

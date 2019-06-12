@@ -213,6 +213,11 @@ MODULE shared_data
     LOGICAL :: atomic_no_set = .FALSE.
 #endif
 
+    ! Specify if species is background species or not
+    LOGICAL :: background_species = .FALSE.
+    ! Background density
+    REAL(num), DIMENSION(:,:), POINTER :: background_density
+
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
 
