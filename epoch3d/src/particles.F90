@@ -113,6 +113,9 @@ CONTAINS
     REAL(num) :: delta_x, delta_y, delta_z
     REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
+    REAL(num) :: bnd_x_min, bnd_x_max
+    REAL(num) :: bnd_y_min, bnd_y_max
+    REAL(num) :: bnd_z_min, bnd_z_max
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
     INTEGER(i8) :: ipart
 #ifdef WORK_DONE_INTEGRATED
@@ -169,6 +172,13 @@ CONTAINS
     idtyz = idt * idy * idz * fac
     idtxz = idt * idx * idz * fac
     idtxy = idt * idx * idy * fac
+
+    bnd_x_min = x_grid_min_local - 0.5_num * dx
+    bnd_x_max = x_grid_max_local + 0.5_num * dx
+    bnd_y_min = y_grid_min_local - 0.5_num * dy
+    bnd_y_max = y_grid_max_local + 0.5_num * dy
+    bnd_z_min = z_grid_min_local - 0.5_num * dz
+    bnd_z_max = z_grid_max_local + 0.5_num * dz
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -425,12 +435,12 @@ CONTAINS
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
         ! Add particle to boundary candidate list
-        IF(current%part_pos(1) < x_grid_min_local - dx/2.0 .OR. &
-            current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
-            current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
-            current%part_pos(2) > y_grid_max_local + dy/2.0 .OR. &
-            current%part_pos(3) < z_grid_min_local - dz/2.0 .OR. &
-            current%part_pos(3) > z_grid_max_local + dz/2.0) THEN
+        IF (current%part_pos(1) < bnd_x_min &
+            .OR. current%part_pos(1) > bnd_x_max &
+            .OR. current%part_pos(2) < bnd_y_min &
+            .OR. current%part_pos(2) > bnd_y_max &
+            .OR. current%part_pos(3) < bnd_z_min &
+            .OR. current%part_pos(3) > bnd_z_max) THEN
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next

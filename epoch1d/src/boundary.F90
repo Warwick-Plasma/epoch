@@ -583,8 +583,12 @@ CONTAINS
   SUBROUTINE setup_bc_lists
 
     INTEGER(i8) :: ispecies, ipart
+    REAL(num) :: bnd_x_min, bnd_x_max
     TYPE(particle), POINTER :: current
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
+
+    bnd_x_min = x_grid_min_local - 0.5_num * dx
+    bnd_x_max = x_grid_max_local + 0.5_num * dx
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -597,8 +601,8 @@ CONTAINS
 
       DO ipart = 1, species_list(ispecies)%attached_list%count
         ! Move particle to boundary candidate list
-        IF(current%part_pos < x_grid_min_local - dx/2.0 .OR. &
-            current%part_pos > x_grid_max_local + dx/2.0) THEN
+        IF (current%part_pos < bnd_x_min &
+            .OR. current%part_pos > bnd_x_max) THEN
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
