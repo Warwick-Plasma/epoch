@@ -165,7 +165,9 @@ CONTAINS
       ! For each unique atomic number, z, let z_flags(z) = 1
       ALLOCATE(z_flags(100))
       z_flags(:) = 0
+
       DO i_species = 1, n_species
+
         z_temp = species_list(i_species)%atomic_no
         IF (z_temp > 0 .AND. z_temp < 101) THEN
           z_flags(z_temp) = 1
@@ -428,7 +430,7 @@ CONTAINS
 
   SUBROUTINE bremsstrahlung_update_optical_depth
 
-    INTEGER :: ispecies, iz, z_temp, i
+    INTEGER :: ispecies, iz, z_temp, q_temp, i
     TYPE(particle), POINTER :: current
     REAL(num), ALLOCATABLE :: grid_num_density_electron_temp(:)
     REAL(num), ALLOCATABLE :: grid_num_density_electron(:)
@@ -530,17 +532,18 @@ CONTAINS
 
             ! Get number density at electron
             part_x = current%part_pos - x_grid_min_local
+
             CALL grid_centred_var_at_particle(part_x, part_ni,&
-                iz, grid_num_density_ion)
+                grid_num_density_ion)
 
             ! Update the optical depth for the screening option chosen
             IF (use_plasma_screening) THEN
               ! Obtain extra parameters needed for plasma screening model
               CALL grid_centred_var_at_particle(part_x, &
-                  part_root_te_over_ne, iz, grid_root_temp_over_num)
+                  part_root_te_over_ne, grid_root_temp_over_num)
 
-              plasma_factor = get_plasma_factor( &
-                  NINT(species_list(iz)%charge/q0), z_temp, &
+              q_temp = NINT(species_list(iz)%charge/q0)
+              plasma_factor = get_plasma_factor(q_temp, z_temp, &
                   part_root_te_over_ne)
             END IF
 
@@ -704,13 +707,11 @@ CONTAINS
 
   ! Calculates the value of a grid-centred variable part_var stored in the grid
   ! grid_var, averaged over the particle shape for a particle at position
-  ! part_x and of species current_species
+  ! part_x
 
-  SUBROUTINE grid_centred_var_at_particle(part_x, part_var, &
-      current_species, grid_var)
+  SUBROUTINE grid_centred_var_at_particle(part_x, part_var, grid_var)
 
     REAL(num), INTENT(IN) :: part_x
-    INTEGER, INTENT(IN) :: current_species
     REAL(num), INTENT(IN) :: grid_var(1-ng:)
     REAL(num), INTENT(OUT) :: part_var
     INTEGER :: cell_x1

@@ -454,7 +454,7 @@ CONTAINS
 #ifdef ZERO_CURRENT_PARTICLES
         END IF
 #endif
-#ifndef NO_PARTICLE_PROBES
+#if !defined(NO_PARTICLE_PROBES) && !defined(NO_IO)
         IF (probes_for_species) THEN
           ! Compare the current particle with the parameters of any probes in
           ! the system. These particles are copied into a separate part of the

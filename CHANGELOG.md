@@ -93,8 +93,8 @@
      use_radiation_reaction
      table_location
    It also adds the "bremsstrahlung_optical_depth" output block parameter
-   and "atomic_number" and "brem_photon" species parameters. See the manual for
-   further details.
+   and "atomic_number", "background_species" and "brem_photon" species
+   parameters. See the manual for further details.
 
  * Allow total_energy_sum diagnostic to be per-species
 

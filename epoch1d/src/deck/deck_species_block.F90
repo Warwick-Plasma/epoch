@@ -627,6 +627,13 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'background_species') &
+        .OR. str_cmp(element, 'background')) THEN
+      species_list(species_id)%background_species = &
+          as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     ! *************************************************************
     ! This section sets properties for bremsstrahlung emission
     ! *************************************************************

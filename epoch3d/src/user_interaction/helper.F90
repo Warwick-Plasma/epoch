@@ -102,6 +102,12 @@ CONTAINS
 
       CALL setup_ic_density(ispecies)
 
+      IF (species%background_species) THEN
+        ALLOCATE(species%background_density(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
+        species%background_density  = species_density
+        CYCLE
+      END IF
+
 #ifdef PER_SPECIES_WEIGHT
       CALL non_uniform_load_particles(species_density, species, &
           ic%density_min, ic%density_max)
@@ -141,6 +147,7 @@ CONTAINS
     IF (rank == 0) THEN
       DO ispecies = 1, n_species
         species => species_list(ispecies)
+        IF (species%background_species) CYCLE
         IF (species%count < 0) THEN
           DO iu = 1, nio_units
             io = ios_units(iu)
