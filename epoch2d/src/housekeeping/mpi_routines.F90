@@ -54,9 +54,9 @@ CONTAINS
 
     nproc_orig = nproc
 
-    IF (nx_global < ng .OR. ny_global < ng) THEN
+    IF (nx_global < ncell_min .OR. ny_global < ncell_min) THEN
       IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
+        CALL integer_as_string(ncell_min, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
         PRINT*,'There must be at least ' // TRIM(str) &
@@ -79,17 +79,18 @@ CONTAINS
       nproc = nprocx * nprocy
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
-      IF (nxsplit < ng .OR. nysplit < ng) THEN
+      IF (nxsplit < ncell_min .OR. nysplit < ncell_min) THEN
         reset = .TRUE.
         IF (rank == 0) THEN
-          IF (nxsplit < ng) THEN
+          IF (nxsplit < ncell_min) THEN
             dir = 'x'
-          ELSE IF (nysplit < ng) THEN
+          ELSE IF (nysplit < ncell_min) THEN
             dir = 'y'
           END IF
           PRINT*,'*** WARNING ***'
           PRINT'('' Requested domain split gives less than '', I1, &
-              &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
+              &  '' cells in the '', A, ''-direction. Ignoring'')', &
+              ncell_min, dir
         END IF
       END IF
     END IF
@@ -117,7 +118,7 @@ CONTAINS
           nxsplit = nx_global / ix
           nysplit = ny_global / iy
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit < ng .OR. nysplit < ng) CYCLE
+          IF (nxsplit < ncell_min .OR. nysplit < ncell_min) CYCLE
 
           area = nxsplit + nysplit
           IF (area < minarea) THEN

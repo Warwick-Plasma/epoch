@@ -48,9 +48,9 @@ CONTAINS
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
 
-    IF (nx_global < ng) THEN
+    IF (nx_global < ncell_min) THEN
       IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
+        CALL integer_as_string(ncell_min, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
         PRINT*,'There must be at least ' // TRIM(str) &
@@ -66,7 +66,7 @@ CONTAINS
     DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
-      IF (nxsplit >= ng) EXIT
+      IF (nxsplit >= ncell_min) EXIT
       nproc  = nproc - 1
       nprocx = nproc
     END DO
