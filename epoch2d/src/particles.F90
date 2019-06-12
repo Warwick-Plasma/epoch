@@ -405,18 +405,15 @@ CONTAINS
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
         ! Add particle to boundary candidate list
-        ! TODO check for CPMLs
         IF(current%part_pos(1) < x_grid_min_local - dx/2.0 .OR. &
             current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
             current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
             current%part_pos(2) > y_grid_max_local + dy/2.0) THEN
-
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
           bnd_part_last => bnd_part_next
         END IF
-
 
 #ifdef WORK_DONE_INTEGRATED
         ! This is the actual total work done by the fields: Results correspond
@@ -583,7 +580,7 @@ CONTAINS
         current => next
       END DO
 
-      ! Bndary list head contains no particle
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next

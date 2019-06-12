@@ -1316,17 +1316,15 @@ CONTAINS
             current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
             current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
             current%part_pos(2) > y_grid_max_local + dy/2.0) THEN
-
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
           bnd_part_last => bnd_part_next
-
         END IF
         current => current%next
       END DO
 
-      ! Bndary list head contains no particle
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next
@@ -1342,7 +1340,7 @@ CONTAINS
   SUBROUTINE particle_bcs
 
     TYPE(particle_pointer_list), POINTER :: bnd_part, bnd_part_last
-    TYPE(particle), POINTER :: cur, next
+    TYPE(particle), POINTER :: cur
     TYPE(particle_list), DIMENSION(-1:1,-1:1,-1:1) :: send, recv
     INTEGER :: xbd, ybd, zbd
     INTEGER(i8) :: ixp, iyp, izp

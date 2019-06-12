@@ -431,12 +431,10 @@ CONTAINS
             current%part_pos(2) > y_grid_max_local + dy/2.0 .OR. &
             current%part_pos(3) < z_grid_min_local - dz/2.0 .OR. &
             current%part_pos(3) > z_grid_max_local + dz/2.0) THEN
-
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
           bnd_part_last => bnd_part_next
-
         END IF
 
 #ifdef WORK_DONE_INTEGRATED
@@ -632,7 +630,8 @@ CONTAINS
 #endif
         current => next
       END DO
-      ! Bndary list head contains no particle
+
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next

@@ -927,6 +927,7 @@ CONTAINS
   END SUBROUTINE bfield_final_bcs
 
 
+
   SUBROUTINE setup_bc_lists
 
     INTEGER(i8) :: ispecies, ipart
@@ -948,17 +949,15 @@ CONTAINS
             current%part_pos(1) > x_grid_max_local + dx/2.0 .OR. &
             current%part_pos(2) < y_grid_min_local - dy/2.0 .OR. &
             current%part_pos(2) > y_grid_max_local + dy/2.0) THEN
-
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
           bnd_part_last => bnd_part_next
-
         END IF
         current => current%next
       END DO
 
-      ! Bndary list head contains no particle
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next
@@ -968,6 +967,7 @@ CONTAINS
     END DO
 
   END SUBROUTINE setup_bc_lists
+
 
 
   SUBROUTINE particle_bcs
@@ -1002,7 +1002,9 @@ CONTAINS
     DO ispecies = 1, n_species
       bnd_part => species_list(ispecies)%boundary_particles
       NULLIFY(bnd_part_last)
+
       bc_species = species_list(ispecies)%bc_particle
+
       DO iy = -1, 1
         DO ix = -1, 1
           IF (ABS(ix) + ABS(iy) == 0) CYCLE
@@ -1354,6 +1356,7 @@ CONTAINS
         END IF
 
       END DO
+
       ! swap Particles
       DO iy = -1, 1
         DO ix = -1, 1
@@ -1366,6 +1369,7 @@ CONTAINS
               recv(ixp, iyp))
         END DO
       END DO
+
       DO iy = -1, 1
         DO ix = -1, 1
           IF (ABS(ix) + ABS(iy) == 0) CYCLE
@@ -1378,7 +1382,6 @@ CONTAINS
       IF(ASSOCIATED(species_list(ispecies)%boundary_particles)) THEN
         NULLIFY(species_list(ispecies)%boundary_particles)
       END IF
-
     END DO
 
   END SUBROUTINE particle_bcs

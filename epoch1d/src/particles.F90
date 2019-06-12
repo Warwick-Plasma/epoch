@@ -380,7 +380,6 @@ CONTAINS
         ! Add particle to boundary candidate list
         IF(current%part_pos < x_grid_min_local - dx/2.0 .OR. &
             current%part_pos > x_grid_max_local + dx/2.0) THEN
-
           ALLOCATE(bnd_part_next)
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
@@ -525,7 +524,8 @@ CONTAINS
 #endif
         current => next
       END DO
-      ! Bndary list head contains no particle
+
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next

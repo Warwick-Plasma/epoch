@@ -603,12 +603,11 @@ CONTAINS
           bnd_part_next%particle => current
           bnd_part_last%next => bnd_part_next
           bnd_part_last => bnd_part_next
-
         END IF
         current => current%next
       END DO
 
-      ! Bndary list head contains no particle
+      ! Boundary list head contains no particle
       bnd_part_last => species_list(ispecies)%boundary_particles
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next
@@ -624,7 +623,7 @@ CONTAINS
   SUBROUTINE particle_bcs
 
     TYPE(particle_pointer_list), POINTER :: bnd_part, bnd_part_last
-    TYPE(particle), POINTER :: cur, next
+    TYPE(particle), POINTER :: cur
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd
     INTEGER(i8) :: ixp
@@ -642,7 +641,6 @@ CONTAINS
     x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
-
       bnd_part => species_list(ispecies)%boundary_particles
       NULLIFY(bnd_part_last)
 
@@ -659,6 +657,7 @@ CONTAINS
         cur => bnd_part%particle
         bnd_part => bnd_part%next
         DEALLOCATE(bnd_part_last)
+
         xbd = 0
         out_of_bounds = .FALSE.
 
