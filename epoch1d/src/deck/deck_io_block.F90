@@ -106,6 +106,8 @@ CONTAINS
         DO i = 1, n_io_blocks
           IF (io_block_list(i)%disabled) CYCLE
 
+          IF (use_offset_grid) io_block%use_offset_grid = use_offset_grid
+
           IF (io_block_list(i)%dt_average > t_end) THEN
             IF (rank == 0) THEN
               DO iu = 1, nio_units ! Print to stdout and to file
@@ -371,8 +373,7 @@ CONTAINS
       force_final_to_be_restartable = as_logical_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'use_offset_grid')) THEN
-      IF (new_style_io_block) style_error = c_err_new_style_global
-      use_offset_grid = as_logical_print(value, element, errcode)
+      io_block%use_offset_grid = as_logical_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'extended_io_file')) THEN
       IF (rank == 0) THEN
@@ -1006,6 +1007,7 @@ CONTAINS
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
     io_block%disabled = .FALSE.
+    io_block%use_offset_grid = .FALSE.
     io_block%walltime_interval = -1.0_num
     io_block%walltime_prev = 0.0_num
     io_block%walltime_start = -1.0_num
