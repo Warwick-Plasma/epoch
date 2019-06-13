@@ -7,6 +7,7 @@ Chris Brady <C.S.Brady@warwick.ac.uk>
 David Schinkel <david.schinkel@uni-jena.de>
 Heather Ratcliffe <H.Ratcliffe@warwick.ac.uk>
 Holger Schmitz <holger.schmitz@stfc.ac.uk>
+Jiří Vyskočil <jiri@vysko.cz>
 Keith Bennett <k.bennett@warwick.ac.uk>
 Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
 Phil Tooley <phil.tooley@gmail.com>
