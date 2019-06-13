@@ -619,15 +619,17 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: a, z
     REAL(num), INTENT(IN) :: part_root_te_over_ne
-    REAL(num) :: a_third, term1, term2
+    REAL(num) :: term1, term2, ra, rz, log_a_third
     REAL(num) :: get_plasma_factor
     REAL(num), PARAMETER :: one_third = 1.0_num / 3.0_num
 
-    a_third = a**one_third
-    term1 = LOG(plasma_screen_const_1 / a_third)
-    term2 = LOG(plasma_screen_const_2 * part_root_te_over_ne * a_third + c_tiny)
-    get_plasma_factor = 1.0_num &
-       + ((REAL(z, num) / REAL(a, num))**2 * term2 / term1)
+    ra = REAL(a, num)
+    rz = REAL(z, num)
+    log_a_third = one_third * LOG(ra)
+    term1 = log_plasma_screen_const_1 - log_a_third
+    term2 = log_plasma_screen_const_2 + log_a_third &
+        + LOG(part_root_te_over_ne + c_tiny)
+    get_plasma_factor = 1.0_num + ((rz / ra)**2 * term2 / term1)
     get_plasma_factor = MAX(1.0_num, get_plasma_factor)
 
   END FUNCTION get_plasma_factor
