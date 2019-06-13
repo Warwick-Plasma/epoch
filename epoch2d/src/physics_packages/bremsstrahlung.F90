@@ -625,7 +625,7 @@ CONTAINS
 
     a_third = a**one_third
     term1 = LOG(plasma_screen_const_1 / a_third)
-    term2 = LOG(plasma_screen_const_2 * part_root_te_over_ne * a_third)
+    term2 = LOG(plasma_screen_const_2 * part_root_te_over_ne * a_third + c_tiny)
     get_plasma_factor = 1.0_num &
        + ((REAL(z, num) / REAL(a, num))**2 * term2 / term1)
     get_plasma_factor = MAX(1.0_num, get_plasma_factor)
