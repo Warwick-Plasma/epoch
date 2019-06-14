@@ -856,13 +856,6 @@ CONTAINS
 
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
-      IF (ASSOCIATED(injector_current%dt_inject)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-        DEALLOCATE(injector_current%dt_inject)
-        ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng, 1-ng:nz_new+ng))
-        injector_current%dt_inject = temp_slice
-      END IF
-
       IF (ASSOCIATED(injector_current%depth)) THEN
         CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
         DEALLOCATE(injector_current%depth)
@@ -877,13 +870,6 @@ CONTAINS
 
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
-      IF (ASSOCIATED(injector_current%dt_inject)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-        DEALLOCATE(injector_current%dt_inject)
-        ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng, 1-ng:nz_new+ng))
-        injector_current%dt_inject = temp_slice
-      END IF
-
       IF (ASSOCIATED(injector_current%depth)) THEN
         CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
         DEALLOCATE(injector_current%depth)
@@ -1002,11 +988,6 @@ CONTAINS
 
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:nz_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:nz_new+ng))
@@ -1019,11 +1000,6 @@ CONTAINS
 
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:nz_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:nz_new+ng))
@@ -1140,11 +1116,6 @@ CONTAINS
 
     injector_current => injector_z_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_z, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_z, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:ny_new+ng))
@@ -1157,11 +1128,6 @@ CONTAINS
 
     injector_current => injector_z_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_z, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_z, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:ny_new+ng))
