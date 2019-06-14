@@ -476,6 +476,7 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
     TYPE(injector_block), POINTER :: injector_current
     TYPE(particle_species_migration), POINTER :: mg
+    TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
@@ -565,7 +566,8 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
-      mg => species_list(ispecies)%migrate
+      sp => species_list(ispecies)
+      mg => sp%migrate
 
       IF (mg%fluid) THEN
         CALL remap_field(mg%fluid_energy, temp)
@@ -577,6 +579,13 @@ CONTAINS
         DEALLOCATE(mg%fluid_density)
         ALLOCATE(mg%fluid_density(1-ng:nx_new+ng,1-ng:ny_new+ng))
         mg%fluid_density = temp
+      END IF
+
+      IF (sp%background_species) THEN
+        CALL remap_field(sp%background_density, temp)
+        DEALLOCATE(sp%background_density)
+        ALLOCATE(sp%background_density(1-ng:nx_new+ng,1-ng:ny_new+ng))
+        sp%background_density = temp
       END IF
 
       IF (.NOT.pre_loading) CYCLE

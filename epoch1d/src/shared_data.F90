@@ -506,6 +506,7 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
+  CHARACTER(LEN=c_max_path_length) :: status_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
@@ -566,11 +567,16 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Bremsstrahlung
   !----------------------------------------------------------------------------
+  TYPE interpolation_state
+    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val1d
+    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
+  END TYPE interpolation_state
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
     REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
     INTEGER :: size_k, size_t
+    TYPE(interpolation_state) :: state
   END TYPE brem_tables
   TYPE(brem_tables), ALLOCATABLE :: brem_array(:)
   INTEGER, ALLOCATABLE :: z_values(:)
