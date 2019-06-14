@@ -37,6 +37,7 @@ MODULE setup
   PUBLIC :: open_files, close_files, flush_stat_file
   PUBLIC :: setup_species, after_deck_last, set_dt
   PUBLIC :: read_cpu_split, pre_load_balance
+  PUBLIC :: open_status_file, close_status_file
 
   TYPE(particle), POINTER, SAVE :: iterator_list
 #ifndef NO_IO
@@ -476,6 +477,31 @@ CONTAINS
 #endif
 
   END SUBROUTINE close_files
+
+
+
+  SUBROUTINE open_status_file
+
+#ifndef NO_IO
+    IF (rank == 0) THEN
+      OPEN(unit=du, status='OLD', position='APPEND', file=status_filename, &
+           iostat=errcode)
+    END IF
+#endif
+
+  END SUBROUTINE open_status_file
+
+
+
+  SUBROUTINE close_status_file
+
+#ifndef NO_IO
+    IF (rank == 0) THEN
+      CLOSE(du)
+    END IF
+#endif
+
+  END SUBROUTINE close_status_file
 
 
 

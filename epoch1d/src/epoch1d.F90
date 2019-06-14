@@ -163,18 +163,18 @@ PROGRAM pic
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
   CALL build_persistent_subsets
-
-  IF (rank == 0) THEN
-    PRINT*
-    PRINT*, 'Equilibrium set up OK, running code'
-    PRINT*
-  END IF
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
+
+  IF (rank == 0) THEN
+    PRINT*
+    PRINT*, 'Equilibrium set up OK, running code'
+    PRINT*
+  END IF
 
   walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
