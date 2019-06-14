@@ -527,7 +527,7 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: idx
+    REAL(num) :: idx, vol
     INTEGER :: ispecies, ix, iy, iz, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
@@ -535,7 +535,8 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idx = 1.0_num / dx / dy / dz
+    vol = dx * dy * dz
+    idx = 1.0_num / vol
 
     spec_start = current_species
     spec_end = current_species
@@ -555,7 +556,7 @@ CONTAINS
 #endif
       IF (io_list(ispecies)%background_species) THEN
         data_array(1:nx, 1:ny, 1:nz) = data_array(1:nx, 1:ny, 1:nz) &
-            + io_list(ispecies)%background_density(1:nx, 1:ny, 1:nz)
+            + io_list(ispecies)%background_density(1:nx, 1:ny, 1:nz) * vol
       ELSE
         current => io_list(ispecies)%attached_list%head
         wdata = io_list(ispecies)%weight
