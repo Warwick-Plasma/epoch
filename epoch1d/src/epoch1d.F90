@@ -69,11 +69,6 @@ PROGRAM pic
 
   step = 0
   time = 0.0_num
-#ifdef COLLISIONS_TEST
-  ! used for testing
-  CALL test_collisions
-  STOP
-#endif
 
   CALL mpi_minimal_init ! mpi_routines.f90
   real_walltime_start = MPI_WTIME()
