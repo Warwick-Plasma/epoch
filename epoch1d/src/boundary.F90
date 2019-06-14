@@ -131,45 +131,55 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
 
-    CALL do_field_mpi_with_lengths(field, ng, nx)
+    CALL do_field_mpi_with_lengths(field, ng, nx, .TRUE.)
 
   END SUBROUTINE field_bc
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local)
+  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, subcycle)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
-    INTEGER :: basetype, i, n
+    LOGICAL, INTENT(IN), OPTIONAL :: subcycle
+    INTEGER :: basetype, i, n, ic
     REAL(num), ALLOCATABLE :: temp(:)
+    LOGICAL :: subcycle_comms
+
+    IF (PRESENT(subcycle)) THEN
+      subcycle_comms = subcycle
+    ELSE
+      subcycle_comms = .FALSE.
+    END IF
 
     basetype = mpireal
 
     ALLOCATE(temp(ng))
 
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
-        tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
+    DO ic = 1, nsubcycle_comms(1)
+      CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
+          tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
-      n = 1
-      DO i = nx_local+1, nx_local+ng
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
+      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+        n = 1
+        DO i = nx_local+1, nx_local+ng
+          field(i) = temp(n)
+          n = n + 1
+        END DO
+      END IF
 
-    CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
-        tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
+      CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
+          tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
-      n = 1
-      DO i = 1-ng, 0
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
+      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+        n = 1
+        DO i = 1-ng, 0
+          field(i) = temp(n)
+          n = n + 1
+        END DO
+      END IF
+    END DO
 
     DEALLOCATE(temp)
 

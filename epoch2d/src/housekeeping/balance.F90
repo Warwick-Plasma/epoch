@@ -58,8 +58,8 @@ CONTAINS
       npx = ii
       npy = nproc / npx
       IF (npx * npy /= nproc) CYCLE
-      IF (nx_global / npx < ncell_min) CYCLE
-      IF (ny_global / npy < ncell_min) CYCLE
+      IF (nx_global / npx < 1) CYCLE
+      IF (ny_global / npy < 1) CYCLE
 
       ALLOCATE(p_x_min(npx), p_x_max(npx))
       ALLOCATE(p_y_min(npy), p_y_max(npy))
@@ -2051,8 +2051,8 @@ CONTAINS
           maxs(proc) = idim
         END IF
         ! To communicate ghost cell information correctly, each domain must
-        ! contain at least ng cells.
-        nextra = old - maxs(proc) + ncell_min
+        ! contain at least one cell.
+        nextra = old - maxs(proc) + 1
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -2066,8 +2066,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ncell_min) THEN
-        maxs(proc) = old - ncell_min
+      IF (old - maxs(proc) < 1) THEN
+        maxs(proc) = old - 1
       END IF
       old = maxs(proc)
     END DO
@@ -2136,8 +2136,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ncell_min) THEN
-        maxs(proc) = old - ncell_min
+      IF (old - maxs(proc) < 1) THEN
+        maxs(proc) = old - 1
       END IF
       old = maxs(proc)
     END DO
@@ -2145,8 +2145,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < ncell_min) THEN
-        maxs(proc) = old + ncell_min
+      IF (maxs(proc) - old < 1) THEN
+        maxs(proc) = old + 1
       END IF
       old = maxs(proc)
     END DO
