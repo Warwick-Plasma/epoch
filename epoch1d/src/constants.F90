@@ -490,7 +490,9 @@ MODULE constants
   ! sng is the number of ghost cells needed by the current smoother
   INTEGER, PARAMETER :: ng = png + 2
   INTEGER, PARAMETER :: jng = MAX(ng,png)
-  INTEGER, PARAMETER :: ncell_min = png / 2 + 2
+  ! ncell_min is the number of cells needed by the domain before subcyling
+  ! of communications is required
+  INTEGER, PARAMETER :: ncell_min = (png + 1) / 2 + 1
 
   INTEGER, PARAMETER :: c_max_zeros = 9
   INTEGER, PARAMETER :: c_dump_part_grid         = 1
