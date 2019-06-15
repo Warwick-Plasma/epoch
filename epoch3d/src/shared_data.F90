@@ -700,7 +700,7 @@ MODULE shared_data
 
     REAL(num) :: t_start, t_end
     LOGICAL :: has_t_end
-    REAL(num), DIMENSION(:,:), POINTER :: depth, dt_inject
+    REAL(num), DIMENSION(:,:), POINTER :: depth
 
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block

@@ -646,7 +646,7 @@ MODULE shared_data
 
     REAL(num) :: t_start, t_end
     LOGICAL :: has_t_end
-    REAL(num) :: depth, dt_inject
+    REAL(num) :: depth
 
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block

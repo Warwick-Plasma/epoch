@@ -162,7 +162,6 @@ CONTAINS
     REAL(num), DIMENSION(3) :: temperature, drift
     INTEGER :: parts_this_time, ipart, idir, dir_index, flux_dir, flux_dir_cell
     TYPE(parameter_pack) :: parameters
-    LOGICAL :: first_inject
     REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
     REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
     REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
@@ -190,18 +189,6 @@ CONTAINS
       cell_size = dx
     ELSE
       RETURN
-    END IF
-
-    IF (injector%dt_inject > 0.0_num) THEN
-      npart_ideal = dt / injector%dt_inject
-      itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-          * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
-      injector%depth = injector%depth - itemp
-      first_inject = .FALSE.
-
-      IF (injector%depth >= 0.0_num) RETURN
-    ELSE
-      first_inject = .TRUE.
     END IF
 
     parameters%use_grid_position = .TRUE.
@@ -285,16 +272,11 @@ CONTAINS
     v_inject = ABS(v_inject_s)
     v_inject_dt = dt * v_inject_s
 
-    injector%dt_inject = cell_size &
-        / MAX(injector%npart_per_cell * v_inject * density_correction, c_tiny)
-    IF (first_inject) THEN
-      ! On the first run of the injectors it isn't possible to decrement
-      ! the optical depth until this point
-      npart_ideal = dt / injector%dt_inject
-      itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-          * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
-      injector%depth = injector%depth - itemp
-    END IF
+    npart_ideal = injector%npart_per_cell * v_inject * density_correction &
+        * dt / cell_size
+    itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
+        * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
+    injector%depth = injector%depth - itemp
 
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
     injector%depth = injector%depth + REAL(parts_this_time, num)
@@ -441,7 +423,6 @@ CONTAINS
     END DO
 
     injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
 
   END SUBROUTINE finish_single_injector_setup
 
