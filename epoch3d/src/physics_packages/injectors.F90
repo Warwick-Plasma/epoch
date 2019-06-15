@@ -119,7 +119,6 @@ CONTAINS
       next => current%next
       IF (current%density_function%init) &
           CALL deallocate_stack(current%density_function)
-      IF (ALLOCATED(current%dt_inject)) DEALLOCATE(current%dt_inject)
       IF (ALLOCATED(current%depth)) DEALLOCATE(current%depth)
       DO i = 1, 3
         IF (current%temperature_function(i)%init) &
@@ -212,7 +211,6 @@ CONTAINS
     REAL(num), DIMENSION(c_ndims-1) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
     INTEGER, DIMENSION(2) :: i2d
-    LOGICAL :: first_inject
     REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
     REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
     REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
@@ -324,19 +322,6 @@ CONTAINS
 
         parameters%use_grid_position = .TRUE.
 
-        IF (injector%dt_inject(ii,jj) > 0.0_num) THEN
-          npart_ideal = dt / injector%dt_inject(ii,jj)
-          itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-              * (1.0_num - npart_ideal / injector%npart_per_cell))) &
-              + npart_ideal
-          injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
-          first_inject = .FALSE.
-
-          IF (injector%depth(ii,jj) >= 0.0_num) CYCLE
-        ELSE
-          first_inject = .TRUE.
-        END IF
-
         CALL populate_injector_properties(injector, parameters, density=density)
 
         IF (density < injector%density_min) CYCLE
@@ -401,18 +386,11 @@ CONTAINS
         v_inject = ABS(v_inject_s)
         v_inject_dt = dt * v_inject_s
 
-        injector%dt_inject(ii,jj) = cell_size &
-            / MAX(injector%npart_per_cell * v_inject * density_correction, &
-            c_tiny)
-        IF (first_inject) THEN
-          ! On the first run of the injectors it isn't possible to decrement
-          ! the optical depth until this point
-          npart_ideal = dt / injector%dt_inject(ii,jj)
-          itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
-              * (1.0_num - npart_ideal / injector%npart_per_cell))) &
-              + npart_ideal
-          injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
-        END IF
+        npart_ideal = injector%npart_per_cell * v_inject * density_correction &
+            * dt / cell_size
+        itemp = random_box_muller(0.5_num * SQRT(npart_ideal &
+            * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
+        injector%depth(ii,jj) = injector%depth(ii,jj) - itemp
 
         parts_this_time = FLOOR(ABS(injector%depth(ii,jj) - 1.0_num))
         injector%depth(ii,jj) = injector%depth(ii,jj) &
@@ -598,22 +576,18 @@ CONTAINS
     END DO
 
     IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:ny+ng, 1-ng:nz+ng))
       ALLOCATE(injector%depth(1-ng:ny+ng, 1-ng:nz+ng))
     END IF
 
     IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:nz+ng))
       ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:nz+ng))
     END IF
 
     IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
-      ALLOCATE(injector%dt_inject(1-ng:nx+ng, 1-ng:ny+ng))
       ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:ny+ng))
     END IF
 
     injector%depth = 1.0_num
-    injector%dt_inject = -1.0_num
 
   END SUBROUTINE finish_single_injector_setup
 
