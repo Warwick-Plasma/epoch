@@ -443,6 +443,7 @@ MODULE shared_data
   INTEGER :: nx_global, ny_global
   INTEGER(i8) :: npart_global, particles_max_id
   INTEGER :: nsteps, n_species = -1
+  INTEGER :: nsubcycle_comms(c_ndims)
   LOGICAL :: smooth_currents
   INTEGER :: smooth_its = 1
   INTEGER :: smooth_comp_its = 0
