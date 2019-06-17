@@ -1453,8 +1453,8 @@ CONTAINS
         PRINT*, '*** WARNING ***'
         PRINT*, 'Number of depths on ', TRIM(direction_name), &
             ' does not match number of injectors.'
-        PRINT*, 'Injectors will be populated in order, but correct operation ', &
-            'is not guaranteed'
+        PRINT*, 'Injectors will be populated in order, but correct operation', &
+            ' is not guaranteed'
       END IF
 
      DEALLOCATE(depths)

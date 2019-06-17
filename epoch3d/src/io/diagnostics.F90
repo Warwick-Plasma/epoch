@@ -1067,7 +1067,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: direction
     TYPE(injector_block), POINTER :: first_injector, current_injector
     REAL(num), DIMENSION(:, :, :), ALLOCATABLE :: depths
-    INTEGER :: iinj, inj_count, ierr
+    INTEGER :: iinj, inj_count
     INTEGER, DIMENSION(2) :: n_els, sz, starts
     LOGICAL, INTENT(IN) :: runs_this_rank
 
