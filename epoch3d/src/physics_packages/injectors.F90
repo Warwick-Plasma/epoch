@@ -331,7 +331,7 @@ CONTAINS
           ELSE IF (perp_dir_index(idir) == 2) THEN
             cur_cell(idir) = y(i2d(idir))
             parameters%pack_iy = i2d(idir)
-          ELSE IF (perp_dir_index(idir) == 3) THEN
+          ELSE
             cur_cell(idir) = z(i2d(idir))
             parameters%pack_iz = i2d(idir)
           END IF
@@ -603,7 +603,6 @@ CONTAINS
 
     species_list(ispecies)%bc_particle(bnd) = c_bc_open
     use_injectors = .TRUE.
-    need_random_state = .TRUE.
 
     ALLOCATE(working_injector)
 

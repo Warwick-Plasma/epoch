@@ -43,6 +43,10 @@ CONTAINS
     injector%use_flux_injector = .TRUE.
     NULLIFY(injector%next)
 
+    injector%depth = 1.0_num
+
+    need_random_state = .TRUE.
+
   END SUBROUTINE init_injector
 
 
@@ -422,8 +426,6 @@ CONTAINS
       END IF
     END DO
 
-    injector%depth = 1.0_num
-
   END SUBROUTINE finish_single_injector_setup
 
 
@@ -435,7 +437,6 @@ CONTAINS
 
     species_list(ispecies)%bc_particle(bnd) = c_bc_open
     use_injectors = .TRUE.
-    need_random_state = .TRUE.
 
     ALLOCATE(working_injector)
 

@@ -1086,7 +1086,7 @@ CONTAINS
       n_els = (/nx, nz/)
       sz = (/nx_global, nz_global/)
       starts = (/nx_global_min, nz_global_min/)
-    ELSE IF (direction == c_dir_z) THEN
+    ELSE
       n_els = (/nx, ny/)
       sz = (/nx_global, ny_global/)
       starts = (/nx_global_min, ny_global_min/)
@@ -1110,7 +1110,6 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_injector_depths
-
 
 
 

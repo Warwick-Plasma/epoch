@@ -553,9 +553,9 @@ CONTAINS
     DO WHILE(ASSOCIATED(inj))
       ! Exclude ghost cells
       IF(inj%boundary == c_bd_x_min .OR. inj%boundary == c_bd_x_max) THEN
-        inj%depth(1:ny) = depths(:,iinj) !(ny_global_min:ny_global_max, iinj)
+        inj%depth(1:ny) = depths(:,iinj)
       ELSE
-        inj%depth(1:nx) = depths(:,iinj) ! (nx_global_min:nx_global_max, iinj)
+        inj%depth(1:nx) = depths(:,iinj)
       END IF
       iinj = iinj + 1
       inj => inj%next

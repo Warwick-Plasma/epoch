@@ -1025,7 +1025,8 @@ CONTAINS
     INTEGER, INTENT(IN) :: direction
     TYPE(injector_block), POINTER :: first_injector, current_injector
     REAL(num), DIMENSION(:, :), ALLOCATABLE :: depths
-    INTEGER :: iinj, inj_count, n_els, sz, starts
+    INTEGER :: iinj, inj_count
+    INTEGER :: n_els, sz, starts
     LOGICAL, INTENT(IN) :: runs_this_rank
 
     current_injector => first_injector
@@ -1044,7 +1045,6 @@ CONTAINS
       sz = nx_global
       starts = nx_global_min
     END IF
-
 
     IF (inj_count > 0) THEN
       ALLOCATE(depths(n_els, inj_count))

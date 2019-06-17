@@ -419,10 +419,11 @@ CONTAINS
             'laser_x_min_phase')
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
+
         CALL write_injector_depths(sdf_handle, injector_x_min, &
-            'injector_x_min_depths', x_min_boundary)
+            'injector_x_min_depths', c_dir_x, x_min_boundary)
         CALL write_injector_depths(sdf_handle, injector_x_max, &
-            'injector_x_max_depths', x_max_boundary)
+           'injector_x_max_depths', c_dir_x, x_max_boundary)
 
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
@@ -975,11 +976,13 @@ CONTAINS
   END SUBROUTINE write_laser_phases
 
 
+
   SUBROUTINE write_injector_depths(sdf_handle, first_injector, block_name, &
-      runs_this_rank)
+      direction, runs_this_rank)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
     CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: direction
     TYPE(injector_block), POINTER :: first_injector, current_injector
     REAL(num), DIMENSION(:), ALLOCATABLE :: depths
     INTEGER :: iinj, inj_count, ierr
@@ -1012,10 +1015,12 @@ CONTAINS
       END IF
       CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
           inj_count, depths, 0)
+
       DEALLOCATE(depths)
     END IF
 
   END SUBROUTINE write_injector_depths
+
 
 
   SUBROUTINE check_name_length(shorten, string)
