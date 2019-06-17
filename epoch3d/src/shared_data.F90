@@ -316,6 +316,7 @@ MODULE shared_data
     LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     LOGICAL :: dump_first_after_restart
     LOGICAL :: disabled
+    LOGICAL :: use_offset_grid
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
