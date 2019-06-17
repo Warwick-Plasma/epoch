@@ -55,17 +55,6 @@ CONTAINS
 
     nproc_orig = nproc
 
-    IF (nx_global < ng .OR. ny_global < ng .OR. nz_global < ng) THEN
-      IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Simulation domain is too small.'
-        PRINT*,'There must be at least ' // TRIM(str) &
-            // ' cells in each direction.'
-      END IF
-      CALL abort_code(c_err_bad_setup)
-    END IF
-
     IF (nprocx == 0) THEN
       area = nprocy * nprocz
       IF (area > 0) nprocx = nproc / area
@@ -89,19 +78,19 @@ CONTAINS
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       nzsplit = nz_global / nprocz
-      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) THEN
+      IF (nxsplit < 1 .OR. nysplit < 1 .OR. nzsplit < 1) THEN
         reset = .TRUE.
         IF (rank == 0) THEN
-          IF (nxsplit < ng) THEN
+          IF (nxsplit < 1) THEN
             dir = 'x'
-          ELSE IF (nysplit < ng) THEN
+          ELSE IF (nysplit < 1) THEN
             dir = 'y'
-          ELSE IF (nzsplit < ng) THEN
+          ELSE IF (nzsplit < 1) THEN
             dir = 'z'
           END IF
           PRINT*,'*** WARNING ***'
-          PRINT'('' Requested domain split gives less than '', I1, &
-              &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
+          PRINT'('' Requested domain split gives less than one'', &
+              &  '' cell in the '', A, ''-direction. Ignoring'')', dir
         END IF
       END IF
     END IF
@@ -130,7 +119,7 @@ CONTAINS
 
           nxsplit = nx_global / ix
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit < ng) CYCLE
+          IF (nxsplit < 1) CYCLE
 
           DO iy = 1, nprocyz
             iz = nprocyz / iy
@@ -139,7 +128,7 @@ CONTAINS
             nysplit = ny_global / iy
             nzsplit = nz_global / iz
             ! Actual domain must be bigger than the number of ghostcells
-            IF (nysplit < ng .OR. nzsplit < ng) CYCLE
+            IF (nysplit < 1 .OR. nzsplit < 1) CYCLE
 
             area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
             IF (area < minarea) THEN
@@ -195,7 +184,7 @@ CONTAINS
           nxsplit = n2_global / ix
           nysplit = n3_global / iy
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit < ng .OR. nysplit < ng) CYCLE
+          IF (nxsplit < 1 .OR. nysplit < 1) CYCLE
 
           area = nxsplit + nysplit
           IF (area < minarea) THEN
@@ -393,6 +382,7 @@ CONTAINS
     INTEGER :: nx0, nxp
     INTEGER :: ny0, nyp
     INTEGER :: nz0, nzp
+    INTEGER :: mincells(c_ndims)
 
     IF (.NOT.cpml_boundaries) cpml_thickness = 0
 
@@ -410,6 +400,8 @@ CONTAINS
     ny_global = ny_global + 2 * cpml_thickness
     nz_global = nz_global + 2 * cpml_thickness
 
+    mincells(:) = HUGE(1)
+
     IF (use_exact_restart) THEN
       old_x_max(nprocx) = nx_global
       cell_x_max = old_x_max
@@ -426,21 +418,28 @@ CONTAINS
       cell_x_min(1) = 1
       DO idim = 2, nprocx
         cell_x_min(idim) = cell_x_max(idim-1) + 1
+        mincells(1) = MIN(mincells(1), cell_x_max(idim) - cell_x_min(idim) + 1)
       END DO
 
       cell_y_min(1) = 1
       DO idim = 2, nprocy
         cell_y_min(idim) = cell_y_max(idim-1) + 1
+        mincells(2) = MIN(mincells(2), cell_y_max(idim) - cell_y_min(idim) + 1)
       END DO
 
       cell_z_min(1) = 1
       DO idim = 2, nprocz
         cell_z_min(idim) = cell_z_max(idim-1) + 1
+        mincells(3) = MIN(mincells(3), cell_z_max(idim) - cell_z_min(idim) + 1)
       END DO
     ELSE
       nx0 = nx_global / nprocx
       ny0 = ny_global / nprocy
       nz0 = nz_global / nprocz
+
+      mincells(1) = nx0
+      mincells(2) = ny0
+      mincells(3) = nz0
 
       ! If the number of gridpoints cannot be exactly subdivided then fix
       ! The first nxp processors have nx0 grid points
@@ -490,6 +489,14 @@ CONTAINS
         cell_z_max(idim) = nzp * nz0 + (idim - nzp) * (nz0 + 1)
       END DO
     END IF
+
+    DO idim = 1, c_ndims
+      IF (mincells(idim) < ncell_min) THEN
+        nsubcycle_comms(idim) = ncell_min - mincells(idim) + 1
+      ElSE
+        nsubcycle_comms(idim) = 1
+      END IF
+    END DO
 
     nx_global_min = cell_x_min(x_coords+1)
     nx_global_max = cell_x_max(x_coords+1)
