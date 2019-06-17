@@ -756,6 +756,12 @@ CONTAINS
       IF (IAND(mask, c_io_never) /= 0) dump_field_grid = .FALSE.
       IF (restart_flag) dump_field_grid = .TRUE.
 
+      use_offset_grid = .FALSE.
+      DO io = 1, n_io_blocks
+        use_offset_grid = use_offset_grid &
+           .OR. (io_block_list(io)%dump .AND. io_block_list(io)%use_offset_grid)
+      END DO
+
       IF (dump_field_grid) THEN
         IF (.NOT. use_offset_grid) THEN
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &

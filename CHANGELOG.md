@@ -64,6 +64,11 @@
 
  * Allow total_energy_sum diagnostic to be per-species
 
+ * Removed the restrictions on minimum domain size. The domain can now be as
+   small as a single cell.
+
+ * Allow use_offset_grid to be specified on a per-output block basis.
+
 
 ## v4.15.0 to v4.16.0
 
