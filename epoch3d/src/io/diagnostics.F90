@@ -431,7 +431,7 @@ CONTAINS
         CALL write_injector_depths(sdf_handle, injector_x_min, &
             'injector_x_min_depths', c_dir_x, x_min_boundary)
         CALL write_injector_depths(sdf_handle, injector_x_max, &
-           'injector_x_max_depths', c_dir_x, x_max_boundary)
+            'injector_x_max_depths', c_dir_x, x_max_boundary)
         CALL write_injector_depths(sdf_handle, injector_y_min, &
             'injector_y_min_depths', c_dir_y, y_min_boundary)
         CALL write_injector_depths(sdf_handle, injector_y_max, &
@@ -1063,13 +1063,14 @@ CONTAINS
       direction, runs_this_rank)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    TYPE(injector_block), POINTER :: first_injector
     CHARACTER(LEN=*), INTENT(IN) :: block_name
     INTEGER, INTENT(IN) :: direction
-    TYPE(injector_block), POINTER :: first_injector, current_injector
-    REAL(num), DIMENSION(:, :, :), ALLOCATABLE :: depths
-    INTEGER :: iinj, inj_count
-    INTEGER, DIMENSION(2) :: n_els, sz, starts
     LOGICAL, INTENT(IN) :: runs_this_rank
+    TYPE(injector_block), POINTER :: current_injector
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: depths
+    INTEGER :: iinj, inj_count
+    INTEGER, DIMENSION(c_ndims-1) :: n_els, sz, starts
 
     current_injector => first_injector
     inj_count = 0
@@ -1102,9 +1103,10 @@ CONTAINS
         iinj = iinj + 1
         current_injector => current_injector%next
       END DO
-      CALL sdf_write_array(sdf_handle, TRIM(block_name), TRIM(block_name),&
-           depths, (/sz(1), sz(2), inj_count/), (/starts(1), starts(2), 1/), &
-           null_proc=(.NOT. runs_this_rank))
+
+      CALL sdf_write_array(sdf_handle, TRIM(block_name), TRIM(block_name), &
+          depths, (/sz(1), sz(2), inj_count/), (/starts(1), starts(2), 1/), &
+          null_proc=(.NOT. runs_this_rank))
 
       DEALLOCATE(depths)
     END IF

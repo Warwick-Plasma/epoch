@@ -44,7 +44,6 @@ CONTAINS
     NULLIFY(injector%next)
 
     injector%depth = 1.0_num
-
     need_random_state = .TRUE.
 
   END SUBROUTINE init_injector
@@ -453,21 +452,21 @@ CONTAINS
 
     TYPE(injector_block), POINTER :: inj_init
     REAL(num), DIMENSION(:), INTENT(IN) :: depths
-    TYPE(injector_block), POINTER :: inj
     INTEGER, INTENT(OUT) :: inj_count
+    TYPE(injector_block), POINTER :: inj
     INTEGER :: iinj
 
     iinj = 1
     inj => inj_init
+
     DO WHILE(ASSOCIATED(inj))
       inj%depth = depths(iinj)
       iinj = iinj + 1
       inj => inj%next
     END DO
-    inj_count = iinj-1
+
+    inj_count = iinj - 1
 
   END SUBROUTINE setup_injector_depths
-
-
 
 END MODULE injectors
