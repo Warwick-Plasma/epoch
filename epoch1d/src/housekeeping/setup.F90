@@ -22,6 +22,7 @@ MODULE setup
   USE split_particle
   USE shunt
   USE laser
+  USE injectors
   USE window
   USE timer
   USE helper
@@ -1053,6 +1054,11 @@ CONTAINS
         CALL read_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             block_id, ndims, 'laser_x_max_phase', 'x_max')
 
+        CALL read_injector_depths(sdf_handle, injector_x_min, &
+            block_id, ndims, 'injector_x_min_depths', c_dir_x, x_min_boundary)
+        CALL read_injector_depths(sdf_handle, injector_x_max, &
+            block_id, ndims, 'injector_x_max_depths', c_dir_x, x_max_boundary)
+
       CASE(c_blocktype_constant)
         IF (str_cmp(block_id, 'dt_plasma_frequency')) THEN
           CALL sdf_read_srl(sdf_handle, dt_plasma_frequency)
@@ -1420,6 +1426,51 @@ CONTAINS
     END IF
 
   END SUBROUTINE read_laser_phases
+
+
+
+  ! Read injector depths from restart and initialise
+  ! Requires the same injectors defined from the deck
+
+  SUBROUTINE read_injector_depths(sdf_handle, injector_base_pointer, &
+      block_id_in, ndims, block_id_compare, direction, runs_this_rank)
+
+    TYPE(sdf_file_handle), INTENT(INOUT) :: sdf_handle
+    TYPE(injector_block), POINTER :: injector_base_pointer
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_in
+    INTEGER, INTENT(IN) :: ndims
+    CHARACTER(LEN=*), INTENT(IN) :: block_id_compare
+    INTEGER, INTENT(IN) :: direction
+    LOGICAL, INTENT(IN) :: runs_this_rank
+    REAL(num), DIMENSION(:), ALLOCATABLE :: depths
+    INTEGER :: inj_count
+    INTEGER, DIMENSION(4) :: dims
+
+    IF (str_cmp(block_id_in, block_id_compare)) THEN
+      CALL sdf_read_array_info(sdf_handle, dims)
+
+      ! In 1-d there is one value, 2-d there is one strip (per bnd),
+      ! in 3-d one plane etc
+
+      ALLOCATE(depths(dims(c_ndims)))
+
+      CALL sdf_read_srl(sdf_handle, depths)
+
+      CALL setup_injector_depths(injector_base_pointer, depths, inj_count)
+
+      ! Got count back so can now check and message
+      IF (ndims /= c_ndims .OR. dims(c_ndims) /= inj_count) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'Number of depths on ', TRIM(block_id_in), &
+            ' does not match number of injectors.'
+        PRINT*, 'Injectors will be populated in order, but correct operation', &
+            ' is not guaranteed'
+      END IF
+
+      DEALLOCATE(depths)
+    END IF
+
+  END SUBROUTINE read_injector_depths
 
 
 
