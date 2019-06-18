@@ -353,6 +353,8 @@ CONTAINS
           * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
       injector%depth(ii) = injector%depth(ii) - itemp
 
+      IF (injector%depth(ii) >= 0.0_num) CYCLE
+
       parts_this_time = FLOOR(ABS(injector%depth(ii) - 1.0_num))
       injector%depth(ii) = injector%depth(ii) + REAL(parts_this_time, num)
 
