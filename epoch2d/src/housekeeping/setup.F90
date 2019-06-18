@@ -1824,7 +1824,7 @@ CONTAINS
           ALLOCATE(old_y_max(nprocy))
           CALL sdf_read_srl_cpu_split(sdf_handle, old_x_max, old_y_max)
         ELSE
-          IF (rank == 0) THEN
+          IF (rank == 0 .AND. use_exact_restart_set) THEN
             PRINT*, '*** WARNING ***'
             PRINT'('' SDF restart file was generated using'', &
                 & i4,'' CPUs.'')', npx * npy

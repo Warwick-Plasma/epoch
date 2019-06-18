@@ -37,7 +37,8 @@ CONTAINS
 
     IF (deck_state /= c_ds_first) RETURN
 
-    use_exact_restart = .FALSE.
+    use_exact_restart = .TRUE.
+    use_exact_restart_set = .FALSE.
     allow_cpu_reduce = .TRUE.
     check_walltime = .FALSE.
     simplify_deck = .TRUE.
@@ -362,6 +363,7 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'use_exact_restart')) THEN
       use_exact_restart = as_logical_print(value, element, errcode)
+      use_exact_restart_set = use_exact_restart
 
     ELSE IF (str_cmp(element, 'allow_cpu_reduce')) THEN
       allow_cpu_reduce = as_logical_print(value, element, errcode)
