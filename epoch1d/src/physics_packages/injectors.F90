@@ -278,6 +278,8 @@ CONTAINS
         * (1.0_num - npart_ideal / injector%npart_per_cell))) + npart_ideal
     injector%depth = injector%depth - itemp
 
+    IF (injector%depth >= 0.0_num) RETURN
+
     parts_this_time = FLOOR(ABS(injector%depth - 1.0_num))
     injector%depth = injector%depth + REAL(parts_this_time, num)
 
