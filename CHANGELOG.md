@@ -69,6 +69,8 @@
 
  * Allow use_offset_grid to be specified on a per-output block basis.
 
+ * Enable "use_exact_restart" by default
+
 
 ## v4.15.0 to v4.16.0
 
