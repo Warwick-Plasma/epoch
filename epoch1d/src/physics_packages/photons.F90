@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -157,7 +156,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler positron species specified.'
-          WRITE(io,*) 'Specify using "identify:bw_positron".'
+          WRITE(io,*) 'Specify using "identify:breit_wheeler_positron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_positron)%name), ' instead.'
         END DO
@@ -187,7 +186,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'No Breit-Wheeler electron species specified.'
-          WRITE(io,*) 'Specify using "identify:bw_electron".'
+          WRITE(io,*) 'Specify using "identify:breit_wheeler_electron".'
           WRITE(io,*) 'Using species ', &
               TRIM(species_list(first_electron)%name), ' instead.'
         END DO

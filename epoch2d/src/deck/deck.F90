@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -35,7 +34,11 @@ MODULE deck
 #ifdef PHOTONS
   USE photons
 #endif
+#ifdef BREMSSTRAHLUNG
+  USE bremsstrahlung
+#endif
   USE deck_qed_block
+  USE deck_bremsstrahlung_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -71,6 +74,7 @@ MODULE deck
 
   TYPE(file_buffer), POINTER :: file_buffer_head
   INTEGER :: nbuffers = 0
+  LOGICAL :: has_errors
 
 CONTAINS
 
@@ -79,6 +83,8 @@ CONTAINS
   !----------------------------------------------------------------------------
 
   SUBROUTINE deck_initialise
+
+    has_errors = .FALSE.
 
     CALL boundary_deck_initialise
     CALL collision_deck_initialise
@@ -96,6 +102,7 @@ CONTAINS
     CALL probe_deck_initialise
 #endif
     CALL qed_deck_initialise
+    CALL bremsstrahlung_deck_initialise
     CALL species_deck_initialise
     CALL window_deck_initialise
     CALL part_from_file_deck_initialise
@@ -125,6 +132,7 @@ CONTAINS
     CALL probe_deck_finalise
 #endif
     CALL qed_deck_finalise
+    CALL bremsstrahlung_deck_finalise
     CALL species_deck_finalise
     CALL part_from_file_deck_finalise ! Must be called after
                                       ! species_deck_finalise
@@ -170,6 +178,8 @@ CONTAINS
 #endif
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_start
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      CALL bremsstrahlung_block_start
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -219,6 +229,8 @@ CONTAINS
 #endif
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       CALL qed_block_end
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      CALL bremsstrahlung_block_end
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -302,6 +314,10 @@ CONTAINS
     ELSE IF (str_cmp(block_name, 'qed')) THEN
       handle_block = qed_block_handle_element(block_element, block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
+      handle_block = bremsstrahlung_block_handle_element(block_element, &
+          block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'species')) THEN
       handle_block = species_block_handle_element(block_element, block_value)
       RETURN
@@ -343,6 +359,12 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_qed_variables())
 #endif
       errcode_deck = IOR(errcode_deck, qed_block_check())
+    END IF
+    IF (use_bremsstrahlung) THEN
+#ifdef BREMSSTRAHLUNG
+      errcode_deck = IOR(errcode_deck, check_bremsstrahlung_variables())
+#endif
+      errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
     END IF
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())
@@ -393,37 +415,6 @@ CONTAINS
   ! These subroutines are the in depth detail of how the parser works
   !----------------------------------------------------------------------------
 
-  FUNCTION get_free_lun()
-
-    ! This subroutine simply cycles round until it finds a free lun between
-    ! min_lun and max_lun
-    INTEGER :: get_free_lun
-    INTEGER :: lun
-    INTEGER, PARAMETER :: min_lun = 10, max_lun = 20
-    LOGICAL :: is_open
-
-    is_open = .TRUE.
-
-    lun = min_lun
-    DO
-      INQUIRE(unit=lun, opened=is_open)
-      IF (.NOT. is_open) EXIT
-      lun = lun+1
-      IF (lun > max_lun) THEN
-        IF (rank == 0) THEN
-          WRITE(*,*) '*** ERROR ***'
-          WRITE(*,*) 'Unable to open lun for input deck read'
-        END IF
-        CALL abort_code(c_err_io_error)
-      END IF
-    END DO
-
-    get_free_lun = lun
-
-  END FUNCTION get_free_lun
-
-
-
   RECURSIVE SUBROUTINE read_deck(filename, first_call, deck_state_in)
 
     CHARACTER(LEN=*), INTENT(IN) :: filename
@@ -436,7 +427,7 @@ CONTAINS
     LOGICAL, SAVE :: warn = .TRUE.
     LOGICAL, SAVE :: warn_ascii = .FALSE.
     TYPE(string_type), DIMENSION(2) :: deck_values
-    CHARACTER(LEN=c_max_path_length) :: deck_filename, status_filename
+    CHARACTER(LEN=c_max_path_length) :: deck_filename
     CHARACTER(LEN=c_max_path_length) :: const_filename
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
@@ -467,6 +458,10 @@ CONTAINS
     ! If this is the first time that this deck has been called then do some
     ! housekeeping. Put any initialisation code that is needed in here
     IF (first_call) CALL deck_initialise
+
+#ifdef DECK_DEBUG
+    IF (deck_state == c_ds_first) all_deck_errcodes_fatal = .TRUE.
+#endif
 
     ! Flag which tells the code when a # or \ character has been
     ! found and everything beyond it is to be ignored
@@ -716,6 +711,7 @@ CONTAINS
           continuation = .FALSE.
           u0 = ' '
         END IF
+        IF (errcode_deck /= c_err_none) has_errors = .TRUE.
         IF (got_eof) THEN
           CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, comm, errcode)
           CLOSE(lun)
@@ -791,10 +787,25 @@ CONTAINS
     IF (first_call .AND. rank == 0) THEN
       CLOSE(du)
       CLOSE(duc)
-    ENDIF
+    END IF
 #endif
 
     IF (terminate) CALL abort_code(c_err_generic_error)
+
+    IF (all_deck_errcodes_fatal .AND. has_errors) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Deck has warnings and you have requested ' &
+              // 'deck_warnings_fatal.'
+          WRITE(io,*) 'Please fix input deck and rerun ' &
+              // 'code or disable this option'
+        END DO
+      END IF
+      CALL abort_code(c_err_generic_error)
+    END IF
 
     CALL MPI_BARRIER(comm, errcode)
 

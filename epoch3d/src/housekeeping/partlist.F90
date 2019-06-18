@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -18,7 +17,7 @@ MODULE partlist
 
   USE shared_data
   USE particle_id_hash_mod
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
   USE random_generator
 #endif
 
@@ -44,7 +43,7 @@ CONTAINS
   SUBROUTINE set_partlist_size
 
     nvar = 3 + c_ndims
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     nvar = nvar+1
 #endif
 #ifdef DELTAF_METHOD
@@ -63,10 +62,16 @@ CONTAINS
     nvar = nvar+1
 #endif
 #ifdef PHOTONS
-    nvar = nvar+2
-#ifdef TRIDENT_PHOTONS
     nvar = nvar+1
 #endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+    nvar = nvar+1
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
+    nvar = nvar+1
+#endif
+#ifdef BREMSSTRAHLUNG
+    nvar = nvar+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
     nvar = nvar+6
@@ -414,7 +419,7 @@ CONTAINS
     cpos = cpos+c_ndims
     array(cpos:cpos+2) = a_particle%part_p
     cpos = cpos+3
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     array(cpos) = a_particle%weight
     cpos = cpos+1
 #endif
@@ -442,12 +447,19 @@ CONTAINS
 #endif
 #ifdef PHOTONS
     array(cpos) = a_particle%optical_depth
-    array(cpos+1) = a_particle%particle_energy
-    cpos = cpos+2
-#ifdef TRIDENT_PHOTONS
+    cpos = cpos+1
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+    array(cpos) = a_particle%particle_energy
+    cpos = cpos+1
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     array(cpos) = a_particle%optical_depth_tri
     cpos = cpos+1
 #endif
+#ifdef BREMSSTRAHLUNG
+    array(cpos) = a_particle%optical_depth_bremsstrahlung
+    cpos = cpos+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
     array(cpos) = a_particle%work_x
@@ -479,7 +491,7 @@ CONTAINS
     cpos = cpos+c_ndims
     a_particle%part_p = array(cpos:cpos+2)
     cpos = cpos+3
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     a_particle%weight = array(cpos)
     cpos = cpos+1
 #endif
@@ -510,12 +522,19 @@ CONTAINS
 #endif
 #ifdef PHOTONS
     a_particle%optical_depth = array(cpos)
-    a_particle%particle_energy = array(cpos+1)
-    cpos = cpos+2
-#ifdef TRIDENT_PHOTONS
+    cpos = cpos+1
+#endif
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+    a_particle%particle_energy = array(cpos)
+    cpos = cpos+1
+#endif
+#if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     a_particle%optical_depth_tri = array(cpos)
     cpos = cpos+1
 #endif
+#ifdef BREMSSTRAHLUNG
+    a_particle%optical_depth_bremsstrahlung = array(cpos)
+    cpos = cpos+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
     a_particle%work_x = array(cpos)
@@ -541,7 +560,7 @@ CONTAINS
 
     new_particle%part_p = 0.0_num
     new_particle%part_pos = 0.0_num
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     new_particle%weight = 0.0_num
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
@@ -558,13 +577,19 @@ CONTAINS
 #ifdef COLLISIONS_TEST
     new_particle%coll_count = 0
 #endif
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     ! This assigns an optical depth to newly created particle
     new_particle%particle_energy = 0.0_num
+#endif
+#ifdef PHOTONS
     new_particle%optical_depth = LOG(1.0_num / (1.0_num - random()))
 #ifdef TRIDENT_PHOTONS
     new_particle%optical_depth_tri = LOG(1.0_num / (1.0_num - random()))
 #endif
+#endif
+#ifdef BREMSSTRAHLUNG
+    new_particle%optical_depth_bremsstrahlung = &
+        LOG(1.0_num / (1.0_num - random()))
 #endif
 
   END SUBROUTINE init_particle

@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -234,7 +233,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'restrict_en')) THEN
+    IF (str_cmp(element, 'restrict_en') &
+        .OR. str_cmp(element, 'restrict_energy')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_en) = .TRUE.
@@ -242,7 +242,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'restrict_gamma_m1')) THEN
+    IF (str_cmp(element, 'restrict_gamma_m1') &
+        .OR. str_cmp(element, 'restrict_gamma_minus_one')) THEN
       CALL split_range(value, work1, work2, errcode)
       IF (errcode /= c_err_none) RETURN
       working_block%use_restrictions(c_dir_gamma_m1) = .TRUE.

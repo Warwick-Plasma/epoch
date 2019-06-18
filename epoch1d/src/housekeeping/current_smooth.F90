@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2013 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -19,7 +18,7 @@ MODULE current_smooth
 #ifdef HIGH_ORDER_SMOOTHING
   USE shape_functions
 #else
-  USE shared_data
+  USE constants
 #endif
   USE boundary
 
@@ -73,7 +72,7 @@ CONTAINS
     REAL(num) :: val, w1
 #else
     INTEGER, DIMENSION(:), ALLOCATABLE :: stride_inner
-    INTEGER :: ng_l, iit, istride, cstride
+    INTEGER :: ng_l, it, istride, cstride
     REAL(num) :: alpha, beta
 #endif
 
@@ -110,7 +109,7 @@ CONTAINS
     wk_array = 0.0_num
     wk_array(1-jng:nx+jng) = array(1-jng:nx+jng)
 
-    DO iit = 1, its + comp_its
+    DO it = 1, its + comp_its
       DO istride = 1, SIZE(stride_inner)
         CALL field_bc(wk_array, ng_l)
         cstride = stride_inner(istride)
@@ -120,7 +119,7 @@ CONTAINS
         END DO
         wk_array(1:nx) = array(1:nx)
       END DO
-      IF (iit > its) THEN
+      IF (it > its) THEN
         alpha = REAL(its, num) * 0.5_num + 1.0_num
       END IF
     END DO

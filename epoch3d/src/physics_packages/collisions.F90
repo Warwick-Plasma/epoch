@@ -1,6 +1,4 @@
-! Copyright (C) 2011-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2012      Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -31,28 +29,49 @@ MODULE collisions
   PRIVATE
   PUBLIC :: particle_collisions, setup_collisions, collisional_ionisation
   PUBLIC :: deallocate_collisions
-#ifdef COLLISIONS_TEST
-  PUBLIC :: test_collisions
-#endif
 
   ABSTRACT INTERFACE
-    SUBROUTINE scatter_proto(current, impact, mass1, mass2, charge1, charge2, &
-        weight1, weight2, idens, jdens, log_lambda, factor)
 
-      IMPORT particle, num
+    SUBROUTINE intra_collisions_proto(p_list, mass, charge, weight, &
+        dens, log_lambda, user_factor)
 
-      TYPE(particle), POINTER :: current, impact
-      REAL(num), INTENT(IN) :: mass1, mass2
-      REAL(num), INTENT(IN) :: charge1, charge2
-      REAL(num), INTENT(IN) :: weight1, weight2
-      REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-      REAL(num), INTENT(IN) :: factor
-    END SUBROUTINE scatter_proto
+      IMPORT particle_list, num
+
+      TYPE(particle_list), INTENT(INOUT) :: p_list
+      REAL(num), INTENT(IN) :: mass, charge, weight
+      REAL(num), INTENT(IN) :: user_factor
+      REAL(num), INTENT(IN) :: dens, log_lambda
+
+    END SUBROUTINE intra_collisions_proto
+
+
+
+    SUBROUTINE inter_collisions_proto(p_list1, p_list2, mass1, mass2, &
+      charge1, charge2, weight1, weight2, &
+      idens, jdens, log_lambda, user_factor )
+
+      IMPORT particle_list, num
+
+      TYPE(particle_list), INTENT(INOUT) :: p_list1
+      TYPE(particle_list), INTENT(INOUT) :: p_list2
+
+      REAL(num), INTENT(IN) :: mass1, charge1, weight1
+      REAL(num), INTENT(IN) :: mass2, charge2, weight2
+
+      REAL(num), INTENT(IN) :: idens, jdens
+      REAL(num), INTENT(IN) :: log_lambda
+      REAL(num), INTENT(IN) :: user_factor
+
+    END SUBROUTINE inter_collisions_proto
+
   END INTERFACE
 
-  PROCEDURE(scatter_proto), POINTER, SAVE :: scatter_fn => NULL()
+  PROCEDURE(intra_collisions_proto), POINTER, SAVE :: intra_coll_fn => NULL()
+  PROCEDURE(inter_collisions_proto), POINTER, SAVE :: inter_coll_fn => NULL()
 
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
+  REAL(num), PARAMETER :: one_m_2eps = 1.0_num - 2.0_num * eps
+  REAL(num), PARAMETER :: one_p_2eps = 1.0_num + 2.0_num * eps
 
   REAL(num), PARAMETER :: e_rest = m0 * c**2
   REAL(num), PARAMETER :: e_rest_ev = e_rest / ev
@@ -103,7 +122,7 @@ CONTAINS
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar, jekbar
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
@@ -117,7 +136,6 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
-    ALLOCATE(jekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -139,7 +157,6 @@ CONTAINS
       IF (.NOT.collide_species) CYCLE
 
       CALL calc_coll_number_density(idens, ispecies)
-      CALL calc_coll_ekbar(iekbar, ispecies)
 
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
@@ -166,7 +183,6 @@ CONTAINS
 
         IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
-          CALL calc_coll_ekbar(jekbar, jspecies)
         END IF
 
         m2 = species_list(jspecies)%mass
@@ -174,6 +190,7 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
+          CALL calc_coll_ekbar(iekbar, ispecies)
           CALL calc_coll_temperature_ev(itemp, ispecies)
           IF (ispecies == jspecies) THEN
             log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
@@ -191,17 +208,16 @@ CONTAINS
         DO iy = 1, ny
         DO ix = 1, nx
           IF (ispecies == jspecies) THEN
-            CALL intra_species_collisions( &
+            CALL intra_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
-                m1, q1, w1, idens(ix,iy,iz), iekbar(ix,iy,iz), &
+                m1, q1, w1, idens(ix,iy,iz), &
                 log_lambda(ix,iy,iz), user_factor)
           ELSE
-            CALL inter_species_collisions( &
+            CALL inter_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
                 species_list(jspecies)%secondary_list(ix,iy,iz), &
                 m1, m2, q1, q2, w1, w2, idens(ix,iy,iz), jdens(ix,iy,iz), &
-                iekbar(ix,iy,iz), jekbar(ix,iy,iz), log_lambda(ix,iy,iz), &
-                user_factor)
+                log_lambda(ix,iy,iz), user_factor)
           END IF
         END DO ! ix
         END DO ! iy
@@ -211,7 +227,7 @@ CONTAINS
 
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
-    DEALLOCATE(iekbar, jekbar)
+    DEALLOCATE(iekbar)
 
   END SUBROUTINE particle_collisions
 
@@ -227,7 +243,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens, e_dens
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, e_temp
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: log_lambda, e_log_lambda
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar, jekbar, e_ekbar
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar, e_ekbar
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
     LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
@@ -256,7 +272,6 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
-    ALLOCATE(jekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(e_ekbar(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
 
     CALL create_empty_partlist(ionising_e)
@@ -285,7 +300,6 @@ CONTAINS
         e_species = species_list(ispecies)%release_species
         CALL calc_coll_number_density(e_dens, e_species)
         CALL calc_coll_temperature_ev(e_temp, e_species)
-        CALL calc_coll_ekbar(e_ekbar, e_species)
         m_e = species_list(e_species)%mass
         q_e = species_list(e_species)%charge
         w_e = species_list(e_species)%weight
@@ -318,7 +332,6 @@ CONTAINS
 
         CALL calc_coll_number_density(jdens, jspecies)
         CALL calc_coll_temperature_ev(jtemp, jspecies)
-        CALL calc_coll_ekbar(jekbar, jspecies)
 
         m2 = species_list(jspecies)%mass
         q2 = species_list(jspecies)%charge
@@ -358,6 +371,7 @@ CONTAINS
             e_user_factor = coll_pairs(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
+            CALL calc_coll_ekbar(e_ekbar, e_species)
             e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, &
                 jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
@@ -371,9 +385,9 @@ CONTAINS
           DO iz = 1, nz
           DO iy = 1, ny
           DO ix = 1, nx
-            CALL intra_species_collisions( &
+            CALL intra_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
-                m1, q1, w1, idens(ix,iy,iz), iekbar(ix,iy,iz), &
+                m1, q1, w1, idens(ix,iy,iz), &
                 log_lambda(ix,iy,iz), user_factor)
           END DO ! ix
           END DO ! iy
@@ -392,21 +406,19 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
-              CALL inter_species_collisions(ejected_e, ionising_e, &
+              CALL inter_coll_fn(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix,iy,iz), jdens(ix,iy,iz), &
-                  e_ekbar(ix,iy,iz), jekbar(ix,iy,iz), e_log_lambda(ix,iy,iz), &
-                  e_user_factor)
+                  e_log_lambda(ix,iy,iz), e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q1) > c_tiny) THEN
-              CALL inter_species_collisions( &
+              CALL inter_coll_fn( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
                   m1, m2, q1, q2, w1, w2, idens(ix,iy,iz), jdens(ix,iy,iz), &
-                  iekbar(ix,iy,iz), jekbar(ix,iy,iz), log_lambda(ix,iy,iz), &
-                  user_factor)
+                  log_lambda(ix,iy,iz), user_factor)
             END IF
             ! Put ions and electrons into respective lists
             CALL append_partlist( &
@@ -431,21 +443,19 @@ CONTAINS
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
-              CALL inter_species_collisions(ejected_e, ionising_e, &
+              CALL inter_coll_fn(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix,iy,iz), e_dens(ix,iy,iz), &
-                  iekbar(ix,iy,iz), e_ekbar(ix,iy,iz), e_log_lambda(ix,iy,iz), &
-                  e_user_factor)
+                  e_log_lambda(ix,iy,iz), e_user_factor)
             END IF
             ! Scatter non-ionising impact electrons off of remaining unionised
             ! targets provided target has charge
             IF (ABS(q2) > c_tiny) THEN
-              CALL inter_species_collisions( &
+              CALL inter_coll_fn( &
                   species_list(ispecies)%secondary_list(ix,iy,iz), &
                   species_list(jspecies)%secondary_list(ix,iy,iz), &
                   m1, m2, q1, q2, w1, w2, idens(ix,iy,iz), jdens(ix,iy,iz), &
-                  iekbar(ix,iy,iz), jekbar(ix,iy,iz), log_lambda(ix,iy,iz), &
-                  user_factor)
+                  log_lambda(ix,iy,iz), user_factor)
             END IF
             ! Put electrons into respective lists
             CALL append_partlist( &
@@ -460,12 +470,11 @@ CONTAINS
           DO iz = 1, nz
           DO iy = 1, ny
           DO ix = 1, nx
-            CALL inter_species_collisions( &
+            CALL inter_coll_fn( &
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
                 species_list(jspecies)%secondary_list(ix,iy,iz), &
                 m1, m2, q1, q2, w1, w2, idens(ix,iy,iz), jdens(ix,iy,iz), &
-                iekbar(ix,iy,iz), jekbar(ix,iy,iz), log_lambda(ix,iy,iz), &
-                user_factor)
+                log_lambda(ix,iy,iz), user_factor)
           END DO ! ix
           END DO ! iy
           END DO ! iz
@@ -476,7 +485,7 @@ CONTAINS
     DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(e_dens, e_temp, e_log_lambda)
-    DEALLOCATE(iekbar, jekbar, e_ekbar)
+    DEALLOCATE(iekbar, e_ekbar)
 #endif
 
   END SUBROUTINE collisional_ionisation
@@ -733,17 +742,38 @@ CONTAINS
 
 
 
-  SUBROUTINE intra_species_collisions(p_list, mass, charge, weight, &
-      dens, ekbar, log_lambda, user_factor)
+  SUBROUTINE intra_collisions_sk(p_list, mass, charge, weight, &
+      dens, log_lambda, user_factor)
     ! Perform collisions between particles of the same species.
 
     TYPE(particle_list), INTENT(INOUT) :: p_list
     REAL(num), INTENT(IN) :: mass, charge, weight
     REAL(num), INTENT(IN) :: user_factor
+    REAL(num), INTENT(IN) :: dens, log_lambda
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor, np
-    REAL(num) :: dens, ekbar, log_lambda
-    INTEGER(i8) :: icount, k
+    INTEGER(i8) :: icount, k, pcount
+    REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
+    REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
+    REAL(num), DIMENSION(3) :: p3, p4
+    REAL(num), DIMENSION(3) :: p5, p6
+    REAL(num), DIMENSION(3) :: v3, v4
+    REAL(num), DIMENSION(3) :: vr, vcr
+    REAL(num), DIMENSION(3) :: c1, c2, c3
+    REAL(num) :: m1, m2, q1, q2 ! Masses and charges
+    REAL(num) :: e1, e2 ! Pre-collision energies
+    REAL(num) :: e3, e4
+    REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
+    REAL(num) :: tvar ! Dummy variable for temporarily storing values
+    REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
+    REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
+    REAL(num) :: vrabs, denominator
+    REAL(num) :: nu, ran1, ran2
+#ifndef PER_SPECIES_WEIGHT
+    REAL(num) :: e5, e6
+    REAL(num) :: w1, w2, wr
+#endif
 
     factor = 0.0_num
     np = 0.0_num
@@ -754,17 +784,22 @@ CONTAINS
     ! If there aren't enough particles to collide, then don't bother
     IF (icount <= 1) RETURN
 
-    ! No collisions in cold plasma so return
-    IF (ekbar <= c_tiny) RETURN
+    ! Number of collisions
+    pcount = icount / 2 + MOD(icount, 2_i8)
 
 #ifdef PER_SPECIES_WEIGHT
     np = icount * weight
-    factor = user_factor
+    ! Factor of 2 due to intra species collisions
+    ! See Section 4.1 of Nanbu
+    factor = user_factor / (pcount * weight * 2.0_num)
 #else
+    ! temporarily join tail to the head of the list to make it circular
+    p_list%tail%next => p_list%head
+
     current => p_list%head
     impact => current%next
-    DO k = 2, icount-2, 2
-      np = np + current%weight
+    DO k = 1, pcount
+      np = np + current%weight + impact%weight
       factor = factor + MIN(current%weight, impact%weight)
       current => impact%next
       impact => current%next
@@ -773,24 +808,153 @@ CONTAINS
       CALL prefetch_particle(impact)
 #endif
     END DO
-    np = np + current%weight
-    factor = factor + MIN(current%weight, impact%weight)
-
-    IF (MOD(icount, 2_i8) /= 0) THEN
-      np = np + impact%next%weight
-      factor = factor + MIN(current%weight, impact%next%weight)
-      np = np + impact%weight
-      factor = factor + MIN(impact%weight, impact%next%weight)
-    END IF
-
-    factor = user_factor * np / factor
+    factor = user_factor / factor / 2.0_num
 #endif
+    ! If possible, use per-species properties
+    m1 = mass
+    m2 = mass
+    q1 = charge
+    q2 = charge
 
     current => p_list%head
     impact => current%next
-    DO k = 2, icount-2, 2
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor)
+    DO k = 1, pcount
+#ifdef PER_PARTICLE_CHARGE_MASS
+      m1 = current%mass
+      m2 = impact%mass
+      q1 = current%charge
+      q2 = impact%charge
+#endif
+      ! Copy all of the necessary particle data into variables with easier to
+      ! read names
+      p1 = current%part_p
+      p2 = impact%part_p
+      p1_norm = p1 / mc0
+      p2_norm = p2 / mc0
+
+      ! Two stationary particles can't collide, so don't try
+      IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+          .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
+
+      ! Ditto for two particles with the same momentum
+      vc = (p1_norm - p2_norm)
+      IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
+
+      ! Pre-collision energies
+      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
+      ! Velocity of centre-of-momentum (COM) reference frame
+      vc = (p1 + p2) * cc / (e1 + e2)
+      vc_sq = DOT_PRODUCT(vc, vc)
+      vc_sq_cc = vc_sq / cc
+
+      gamma_rel2 = 1.0_num / (1.0_num - vc_sq_cc)
+      gamma_rel = SQRT(gamma_rel2)
+      gamma_rel_m1 = gamma_rel2 * vc_sq_cc / (gamma_rel + 1.0_num)
+
+      ! Lorentz momentum transform to get into COM frame
+      p1_vc = DOT_PRODUCT(p1, vc)
+      p2_vc = DOT_PRODUCT(p2, vc)
+      tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+      p3 = p1 + vc * (tvar - gamma_rel * e1 / cc)
+      tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+      p4 = p2 + vc * (tvar - gamma_rel * e2 / cc)
+
+      p3_mag = SQRT(DOT_PRODUCT(p3, p3))
+
+      ! Lorentz energy transform
+      e3 = gamma_rel * (e1 - p1_vc)
+      e4 = gamma_rel * (e2 - p2_vc)
+      ! Pre-collision velocities in COM frame
+      v3 = p3 * cc / e3
+      v4 = p4 * cc / e4
+
+      ! Relative velocity
+      tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / cc)
+      vr = (v3 - v4) / tvar
+      vrabs = SQRT(DOT_PRODUCT(vr, vr))
+
+      ! Collision frequency
+      nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, dens)
+
+      ! Calculate number of collisions in the timestep
+      ! Limit value according to Sentoku & Kemp
+      nu = MIN(nu * factor * np * dt, 0.02_num)
+
+      ! New coordinate system to simplify scattering.
+      CALL new_coords(vr, c1, c2, c3)
+
+      ! this is to ensure that 0 < ran1 < 1
+      ! ran1=0 gives NaN in logarithm
+      ! ran1=1 could give positive logarithm due to rounding errors
+      ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
+      ran2 = 2.0_num * pi * random()
+
+      ! Box Muller method for random from Gaussian distribution,
+      ! mean 0, variance of nu
+      ! Possible place for speed up by caching the second Box Muller number
+      ! and using it later
+      ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
+      delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
+      ran2 = 2.0_num * pi * random()
+
+      ! angle theta in the One Particle at Rest frame
+      sin_theta = 2.0_num * delta / (1.0_num + delta**2)
+      cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
+
+      ! Transform angles from particle j's rest frame to COM frame
+      ! Note azimuthal angle (ran2) is invariant under this transformation
+      IF (m1 > m2) THEN
+        vcr = v3
+      ELSE
+        vcr = v4
+      END IF
+      gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / cc))
+
+      denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
+          / MAX(vrabs, c_tiny))
+      IF (ABS(denominator) > SQRT(c_tiny)) THEN
+        tan_theta_cm = sin_theta / denominator
+        tan_theta_cm2 = tan_theta_cm**2
+      ELSE
+        tan_theta_cm = c_largest_number
+        tan_theta_cm2 = c_largest_number
+      END IF
+
+      sin_theta = tan_theta_cm / SQRT(1.0_num + tan_theta_cm2)
+      cos_theta = 1.0_num / SQRT(1.0_num + tan_theta_cm2)
+
+      ! Post-collision momenta in COM frame
+      p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
+          + c3 * sin_theta * SIN(ran2))
+      p4 = -p3
+
+      ! Lorentz momentum transform to get back to lab frame
+      tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
+      p5 = p3 + vc * (tvar + gamma_rel * e3 / cc)
+      tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
+      p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
+
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = impact%weight
+      wr = w1 / w2
+
+      ! Post collision energies. Only needed for weighted particle correction
+      e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+      e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+      IF (wr > one_p_2eps) THEN
+        CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+      ELSE IF (wr < one_m_2eps) THEN
+        CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+      END IF
+#endif
+      ! Update particle properties
+      current%part_p = p5
+      impact%part_p = p6
+
       current => impact%next
       impact => current%next
 #ifdef PREFETCH
@@ -799,29 +963,246 @@ CONTAINS
 #endif
     END DO
 
-    IF (MOD(icount, 2_i8) == 0) THEN
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, factor)
-    ELSE
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
+    ! restore the tail of the list
+    NULLIFY(p_list%tail%next)
+
+  END SUBROUTINE intra_collisions_sk
+
+
+
+  SUBROUTINE intra_collisions_np(p_list, mass, charge, weight, &
+      dens, log_lambda, user_factor)
+    ! Perform collisions between particles of the same species.
+
+    TYPE(particle_list), INTENT(INOUT) :: p_list
+    REAL(num), INTENT(IN) :: mass, charge, weight
+    REAL(num), INTENT(IN) :: user_factor
+    REAL(num), INTENT(IN) :: dens, log_lambda
+    TYPE(particle), POINTER :: current, impact
+    REAL(num) :: factor, np
+    INTEGER(i8) :: icount, k, pcount
+    REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
+    REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
+    REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
+    REAL(num) :: p_perp2, p_perp_inv, cell_fac
+    REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm
+    REAL(num), DIMENSION(3,3) :: mat
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
+    REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
+    REAL(num) :: m1, m2, q1, q2, dens_23
+    REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
+    REAL(num), PARAMETER :: pi_fac = &
+                                (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
+#ifndef PER_SPECIES_WEIGHT
+    REAL(num) :: w1, w2, wr, e1, e5, e2, e6
+#endif
+    factor = 0.0_num
+    np = 0.0_num
+
+    ! Intra-species collisions
+    icount = p_list%count
+
+    ! If there aren't enough particles to collide, then don't bother
+    IF (icount <= 1) RETURN
+
+    ! Number of collisions
+    pcount = icount / 2 + MOD(icount, 2_i8)
+
+#ifdef PER_SPECIES_WEIGHT
+    np = icount * weight
+    ! Factor of 2 due to intra species collisions
+    ! See Section 4.1 of Nanbu
+    factor = user_factor / (pcount * weight * 2.0_num)
+#else
+    ! temporarily join tail to the head of the list to make it circular
+    p_list%tail%next => p_list%head
+
+    current => p_list%head
+    impact => current%next
+    DO k = 1, pcount
+      np = np + current%weight + impact%weight
+      factor = factor + MIN(current%weight, impact%weight)
       current => impact%next
-      impact => current%prev%prev
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
-      current => current%prev
       impact => current%next
-      CALL scatter_fn(current, impact, mass, mass, charge, charge, &
-          weight, weight, dens, dens, log_lambda, 0.5_num*factor)
-    END IF
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
+#endif
+    END DO
+    factor = user_factor / factor / 2.0_num
+#endif
+    ! If possible, use per-species properties
+    m1 = mass
+    m2 = mass
+    q1 = charge
+    q2 = charge
 
-  END SUBROUTINE intra_species_collisions
+    current => p_list%head
+    impact => current%next
+
+    ! Per-cell constant factors
+    cell_fac = dens**2 * dt * factor * dx * dy * dz
+    s_fac = cell_fac * log_lambda / pi4_eps2_c4
+    dens_23 = dens**two_thirds
+    s_fac_prime = cell_fac * pi_fac / dens_23
+
+    DO k = 1, pcount
+#ifdef PER_PARTICLE_CHARGE_MASS
+      m1 = current%mass
+      m2 = impact%mass
+      q1 = current%charge
+      q2 = impact%charge
+#endif
+      p1 = current%part_p / c
+      p2 = impact%part_p / c
+
+      p1_norm = p1 / m0
+      p2_norm = p2 / m0
+
+      ! Two stationary particles can't collide, so don't try
+      IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+          .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
+
+      ! Ditto for two particles with the same momentum
+      vc = (p1_norm - p2_norm)
+      IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
+
+      p1_norm = p1 / m1
+      gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
+
+      p2_norm = p2 / m2
+      gm2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num) * m2
+
+      gm = gm1 + gm2
+
+      ! Pre-collision velocities
+      v1 = p1 / gm1
+      v2 = p2 / gm2
+
+      ! Velocity of centre-of-momentum (COM) reference frame
+      vc = (p1 + p2) / gm
+      vc_sq = DOT_PRODUCT(vc, vc)
+
+      gamma_rel_inv = SQRT(1.0_num - vc_sq)
+      gc = 1.0_num / gamma_rel_inv
+
+      gc_m1_vc = (gc - 1.0_num) / vc_sq
+
+      p3 = p1 + (gc_m1_vc * DOT_PRODUCT(vc, v1) - gc) * gm1 * vc
+
+      v_sq = DOT_PRODUCT(vc, v1)
+      gm3 = (1.0_num - v_sq) * gc * gm1
+      v_sq = DOT_PRODUCT(vc, v2)
+      gm4 = (1.0_num - v_sq) * gc * gm2
+
+      p_mag2 = DOT_PRODUCT(p3, p3)
+      p_mag = SQRT(p_mag2)
+
+      fac = (q1 * q2)**2 * s_fac / (gm1 * gm2)
+      s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
+
+      ! Cold plasma upper limit for s12
+      v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
+      s_prime = s_fac_prime * (m1 + m2) * v_rel / MAX(m1, m2)
+
+      s12 = MIN(s12, s_prime)
+
+      ran1 = random()
+      ran2 = random() * 2.0_num * pi
+
+      ! Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+      IF (s12 < 0.1_num) THEN
+        cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
+      ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
+        a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
+             + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
+             * s12) * s12) * s12) * s12) * s12
+        a = 1.0_num / a_inv
+        cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
+      ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
+        a = 3.0_num * EXP(-s12)
+        cosp = LOG(EXP(-a) + 2.0_num * ran1 * SINH(a)) / a
+      ELSE
+        cosp = 2.0_num * ran1 - 1.0_num
+      END IF
+
+      sinp = SIN(ACOS(cosp))
+
+      ! Calculate new momenta according to rotation by angle p
+      p_perp2 = p3(1)**2 + p3(2)**2
+      p_perp = SQRT(p_perp2)
+      p_tot = SQRT(p_perp2 + p3(3)**2)
+      p_perp_inv = 1.0_num / (p_perp + c_tiny)
+
+      mat(1,1) =  p3(1) * p3(3) * p_perp_inv
+      mat(1,2) = -p3(2) * p_tot * p_perp_inv
+      mat(1,3) =  p3(1)
+      mat(2,1) =  p3(2) * p3(3) * p_perp_inv
+      mat(2,2) =  p3(1) * p_tot * p_perp_inv
+      mat(2,3) =  p3(2)
+      mat(3,1) = -p_perp
+      mat(3,2) =  0.0_num
+      mat(3,3) =  p3(3)
+
+      sinp_cos = sinp * COS(ran2)
+      sinp_sin = sinp * SIN(ran2)
+
+      p3(1) = mat(1,1) * sinp_cos + mat(1,2) * sinp_sin + mat(1,3) * cosp
+      p3(2) = mat(2,1) * sinp_cos + mat(2,2) * sinp_sin + mat(2,3) * cosp
+      p3(3) = mat(3,1) * sinp_cos + mat(3,2) * sinp_sin + mat(3,3) * cosp
+
+      p4 = -p3
+
+      p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+      p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+
+#ifndef PER_SPECIES_WEIGHT
+      w1 = current%weight
+      w2 = impact%weight
+      wr = w1 / w2
+
+      ! Energies before and after collision.
+      ! Only required for weighted particle correction
+      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
+      e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+      e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+      ! Restore values of p1, p2
+      p1 = p1 * c
+      p2 = p2 * c
+
+      IF (wr > one_p_2eps) THEN
+        CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+      ELSE IF (wr < one_m_2eps) THEN
+        CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+      END IF
+#endif
+      ! Update particle properties
+      current%part_p = p5
+      impact%part_p = p6
+
+      current => impact%next
+      impact => current%next
+#ifdef PREFETCH
+      CALL prefetch_particle(current)
+      CALL prefetch_particle(impact)
+#endif
+    END DO
+
+    ! restore the tail of the list
+    NULLIFY(p_list%tail%next)
+
+  END SUBROUTINE intra_collisions_np
 
 
 
-  SUBROUTINE inter_species_collisions(p_list1, p_list2, mass1, mass2, &
+  SUBROUTINE inter_collisions_sk(p_list1, p_list2, mass1, mass2, &
       charge1, charge2, weight1, weight2, &
-      idens, jdens, iekbar, jekbar, log_lambda, user_factor )
+      idens, jdens, log_lambda, user_factor )
 
     TYPE(particle_list), INTENT(INOUT) :: p_list1
     TYPE(particle_list), INTENT(INOUT) :: p_list2
@@ -830,7 +1211,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: mass2, charge2, weight2
 
     REAL(num), INTENT(IN) :: idens, jdens
-    REAL(num), INTENT(IN) :: iekbar, jekbar, log_lambda
+    REAL(num), INTENT(IN) :: log_lambda
     REAL(num), INTENT(IN) :: user_factor
 
     TYPE(particle), POINTER :: current, impact
@@ -838,11 +1219,25 @@ CONTAINS
     REAL(num) :: factor, np
     INTEGER(i8) :: icount, jcount, pcount, k
 
+    REAL(num) :: m1, m2, q1, q2, w1, w2
+    REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
+    REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
+    REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
+    REAL(num), DIMENSION(3) :: p3, p4
+    REAL(num), DIMENSION(3) :: p5, p6
+    REAL(num), DIMENSION(3) :: v3, v4
+    REAL(num), DIMENSION(3) :: vr, vcr
+    REAL(num), DIMENSION(3) :: c1, c2, c3
+    REAL(num) :: e1, e2 ! Pre-collision energies
+    REAL(num) :: e3, e4, e5, e6
+    REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
+    REAL(num) :: tvar ! Dummy variable for temporarily storing values
+    REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
+    REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
+    REAL(num) :: vrabs, denominator, wr
+    REAL(num) :: nu, ran1, ran2
     factor = 0.0_num
     np = 0.0_num
-
-    ! No collisions in cold plasma so return
-    IF (iekbar <= c_tiny .AND. jekbar <= c_tiny) RETURN
 
     ! Inter-species collisions
     icount = p_list1%count
@@ -886,13 +1281,155 @@ CONTAINS
 #endif
       END DO
 #endif
+      factor = user_factor / factor
+
+      ! If possible, use per-species properties
+      m1 = mass1
+      m2 = mass2
+      q1 = charge1
+      q2 = charge2
+      w1 = weight1
+      w2 = weight2
+      wr = w1 / w2
 
       current => p_list1%head
       impact => p_list2%head
       DO k = 1, pcount
-        CALL scatter_fn(current, impact, mass1, mass2, charge1, charge2, &
-            weight1, weight2, idens, jdens, log_lambda, &
-            user_factor * np / factor)
+#ifdef PER_PARTICLE_CHARGE_MASS
+        m1 = current%mass
+        m2 = impact%mass
+        q1 = current%charge
+        q2 = impact%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        w1 = current%weight
+        w2 = impact%weight
+        wr = w1 / w2
+#endif
+        ! Copy all of the necessary particle data into variables with easier to
+        ! read names
+        p1 = current%part_p
+        p2 = impact%part_p
+        p1_norm = p1 / mc0
+        p2_norm = p2 / mc0
+
+        ! Two stationary particles can't collide, so don't try
+        IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+            .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
+
+        ! Ditto for two particles with the same momentum
+        vc = (p1_norm - p2_norm)
+        IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
+
+        ! Pre-collision energies
+        e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+        e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
+
+        ! Velocity of centre-of-momentum (COM) reference frame
+        vc = (p1 + p2) * cc / (e1 + e2)
+        vc_sq = DOT_PRODUCT(vc, vc)
+        vc_sq_cc = vc_sq / cc
+
+        gamma_rel2 = 1.0_num / (1.0_num - vc_sq_cc)
+        gamma_rel = SQRT(gamma_rel2)
+        gamma_rel_m1 = gamma_rel2 * vc_sq_cc / (gamma_rel + 1.0_num)
+
+        ! Lorentz momentum transform to get into COM frame
+        p1_vc = DOT_PRODUCT(p1, vc)
+        p2_vc = DOT_PRODUCT(p2, vc)
+        tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+        p3 = p1 + vc * (tvar - gamma_rel * e1 / cc)
+        tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
+        p4 = p2 + vc * (tvar - gamma_rel * e2 / cc)
+
+        p3_mag = SQRT(DOT_PRODUCT(p3, p3))
+
+        ! Lorentz energy transform
+        e3 = gamma_rel * (e1 - p1_vc)
+        e4 = gamma_rel * (e2 - p2_vc)
+        ! Pre-collision velocities in COM frame
+        v3 = p3 * cc / e3
+        v4 = p4 * cc / e4
+
+        ! Relative velocity
+        tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / cc)
+        vr = (v3 - v4) / tvar
+        vrabs = SQRT(DOT_PRODUCT(vr, vr))
+
+        ! Collision frequency
+        nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
+        nu = MIN(nu * factor * np * dt, 0.02_num)
+
+        ! NOTE: nu is now the number of collisions per timestep, NOT collision
+        ! frequency
+
+        ! New coordinate system to simplify scattering.
+        CALL new_coords(vr, c1, c2, c3)
+
+        ! this is to ensure that 0 < ran1 < 1
+        ! ran1=0 gives NaN in logarithm
+        ! ran1=1 could give positive logarithm due to rounding errors
+        ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
+        ran2 = 2.0_num * pi * random()
+
+        ! Box Muller method for random from Gaussian distribution,
+        ! mean 0, variance of nu
+        ! Possible place for speed up by caching the second Box Muller number
+        ! and using it later
+        ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
+        delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
+        ran2 = 2.0_num * pi * random()
+
+        ! angle theta in the One Particle at Rest frame
+        sin_theta = 2.0_num * delta / (1.0_num + delta**2)
+        cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
+
+        ! Transform angles from particle j's rest frame to COM frame
+        ! Note azimuthal angle (ran2) is invariant under this transformation
+        IF (m1 > m2) THEN
+          vcr = v3
+        ELSE
+          vcr = v4
+        END IF
+        gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / cc))
+
+        denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
+            / MAX(vrabs, c_tiny))
+        IF (ABS(denominator) > SQRT(c_tiny)) THEN
+          tan_theta_cm = sin_theta / denominator
+          tan_theta_cm2 = tan_theta_cm**2
+        ELSE
+          tan_theta_cm = c_largest_number
+          tan_theta_cm2 = c_largest_number
+        END IF
+
+        sin_theta = tan_theta_cm / SQRT(1.0_num + tan_theta_cm2)
+        cos_theta = 1.0_num / SQRT(1.0_num + tan_theta_cm2)
+
+        ! Post-collision momenta in COM frame
+        p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
+            + c3 * sin_theta * SIN(ran2))
+        p4 = -p3
+
+        ! Lorentz momentum transform to get back to lab frame
+        tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
+        p5 = p3 + vc * (tvar + gamma_rel * e3 / cc)
+        tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
+        p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
+
+        e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+        e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+        IF (wr > one_p_2eps) THEN
+          CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+        ELSE IF (wr < one_m_2eps) THEN
+          CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+        END IF
+
+        ! Update particle properties
+        current%part_p = p5
+        impact%part_p = p6
+
         current => current%next
         impact => impact%next
 #ifdef PREFETCH
@@ -906,355 +1443,259 @@ CONTAINS
       NULLIFY(p_list2%tail%next)
     END IF
 
-  END SUBROUTINE inter_species_collisions
+  END SUBROUTINE inter_collisions_sk
 
 
 
   ! Binary collision scattering operator based jointly on:
   ! Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012), and
   ! K. Nanbu and S. Yonemura, J. Comput. Phys. 145, 639 (1998)
-  SUBROUTINE scatter_np(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor)
+  SUBROUTINE inter_collisions_np(p_list1, p_list2, mass1, mass2, &
+      charge1, charge2, weight1, weight2, &
+      idens, jdens, log_lambda, user_factor )
 
+    TYPE(particle_list), INTENT(INOUT) :: p_list1
+    TYPE(particle_list), INTENT(INOUT) :: p_list2
+    REAL(num), INTENT(IN) :: mass1, charge1, weight1
+    REAL(num), INTENT(IN) :: mass2, charge2, weight2
+    REAL(num), INTENT(IN) :: idens, jdens
+    REAL(num), INTENT(IN) :: log_lambda
+    REAL(num), INTENT(IN) :: user_factor
     TYPE(particle), POINTER :: current, impact
-    REAL(num), INTENT(IN) :: mass1, mass2
-    REAL(num), INTENT(IN) :: charge1, charge2
-    REAL(num), INTENT(IN) :: weight1, weight2
-    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-    REAL(num), INTENT(IN) :: factor
-    REAL(num) :: ran1, ran2, s12, cosp, sinp
-    REAL(num) :: sinp_cos, sinp_sin
+    REAL(num) :: factor, np
+    INTEGER(i8) :: icount, jcount, pcount, k
+    REAL(num) :: m1, m2, q1, q2, w1, w2
+    REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
+    REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
-    REAL(num) :: p_perp2, p_perp_inv
+    REAL(num) :: p_perp2, p_perp_inv, cell_fac
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: m1, m2, q1, q2, w1, w2, e1, e5, e2, e6
+    REAL(num) :: e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
+    REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
+    REAL(num), PARAMETER :: pi_fac = &
+                                (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
 
-    p1 = current%part_p / c
-    p2 = impact%part_p / c
+    factor = 0.0_num
+    np = 0.0_num
 
-    p1_norm = p1 / m0
-    p2_norm = p2 / m0
+    ! Inter-species collisions
+    icount = p_list1%count
+    jcount = p_list2%count
+    pcount = MAX(icount, jcount)
 
-    ! Two stationary particles can't collide, so don't try
-    IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
-        .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) RETURN
+    IF (icount > 0 .AND. jcount > 0) THEN
+      ! temporarily join tail to the head of the lists to make them circular
+      p_list1%tail%next => p_list1%head
+      p_list2%tail%next => p_list2%head
 
-    ! Ditto for two particles with the same momentum
-    vc = (p1_norm - p2_norm)
-    IF (DOT_PRODUCT(vc, vc) < eps) RETURN
+#ifdef PER_SPECIES_WEIGHT
+      np = icount * weight1
+      factor = pcount * MIN(weight1, weight2)
+#else
+      current => p_list1%head
+      impact => p_list2%head
 
+      IF (icount >= jcount) THEN
+        DO k = 1, icount
+          np = np + current%weight
+          current => current%next
+        END DO
+      ELSE
+        DO k = 1, jcount
+          np = np + impact%weight
+          impact => impact%next
+        END DO
+      END IF
+
+      current => p_list1%head
+      impact => p_list2%head
+
+      DO k = 1, pcount
+        factor = factor + MIN(current%weight, impact%weight)
+        current => current%next
+        impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
+#endif
+      END DO
+#endif
+      factor = user_factor / factor
+
+      ! If possible, use per-species properties
+      m1 = mass1
+      m2 = mass2
+      q1 = charge1
+      q2 = charge2
+      w1 = weight1
+      w2 = weight2
+      wr = w1 / w2
+
+      current => p_list1%head
+      impact => p_list2%head
+
+      ! Per-cell constant factors
+      cell_fac = idens * jdens * dt * factor * dx * dy * dz
+      s_fac = cell_fac * log_lambda / pi4_eps2_c4
+      s_fac_prime = cell_fac * pi_fac
+
+      DO k = 1, pcount
 #ifdef PER_PARTICLE_CHARGE_MASS
-    m1 = current%mass
-    m2 = impact%mass
-    q1 = current%charge
-    q2 = impact%charge
-#else
-    m1 = mass1
-    m2 = mass2
-    q1 = charge1
-    q2 = charge2
+        m1 = current%mass
+        m2 = impact%mass
+        q1 = current%charge
+        q2 = impact%charge
 #endif
-
-    p1_norm = p1 / m1
-    gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
-
-    p2_norm = p2 / m2
-    gm2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num) * m2
-
-    gm = gm1 + gm2
-
-    ! Pre-collision velocities
-    v1 = p1 / gm1
-    v2 = p2 / gm2
-
-    ! Pre-collision energies
-    e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
-    e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
-
-    ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) / gm
-    vc_sq = DOT_PRODUCT(vc, vc)
-
-    gamma_rel_inv = SQRT(1.0_num - vc_sq)
-    gc = 1.0_num / gamma_rel_inv
-
-    gc_m1_vc = (gc - 1.0_num) / vc_sq
-
-    p3 = p1 + (gc_m1_vc * DOT_PRODUCT(vc, v1) - gc) * gm1 * vc
-
-    v_sq = DOT_PRODUCT(vc, v1)
-    gm3 = (1.0_num - v_sq) * gc * gm1
-    v_sq = DOT_PRODUCT(vc, v2)
-    gm4 = (1.0_num - v_sq) * gc * gm2
-
-    p_mag2 = DOT_PRODUCT(p3, p3)
-    p_mag = SQRT(p_mag2)
-
-    fac = (q1 * q2)**2 * jdens * log_lambda * dt * factor &
-        / (pi4_eps2_c4 * gm1 * gm2)
-    s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
-
-    ran1 = random()
-    ran2 = random() * 2.0_num * pi
-
-    ! Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
-    IF (s12 < 0.1_num) THEN
-      cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
-    ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
-      a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
-           + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
-           * s12) * s12) * s12) * s12) * s12
-      a = 1.0_num / a_inv
-      cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
-    ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
-      a = 3.0_num * EXP(-s12)
-      cosp = LOG(EXP(-a) + 2.0_num * ran1 * SINH(a)) / a
-    ELSE
-      cosp = 2.0_num * ran1 - 1.0_num
-    END IF
-
-    sinp = SIN(ACOS(cosp))
-
-    ! Calculate new momenta according to rotation by angle p
-    p_perp2 = p3(1)**2 + p3(2)**2
-    p_perp = SQRT(p_perp2)
-    p_tot = SQRT(p_perp2 + p3(3)**2)
-    p_perp_inv = 1.0_num / (p_perp + c_tiny)
-
-    mat(1,1) =  p3(1) * p3(3) * p_perp_inv
-    mat(1,2) = -p3(2) * p_tot * p_perp_inv
-    mat(1,3) =  p3(1)
-    mat(2,1) =  p3(2) * p3(3) * p_perp_inv
-    mat(2,2) =  p3(1) * p_tot * p_perp_inv
-    mat(2,3) =  p3(2)
-    mat(3,1) = -p_perp
-    mat(3,2) =  0.0_num
-    mat(3,3) =  p3(3)
-
-    sinp_cos = sinp * COS(ran2)
-    sinp_sin = sinp * SIN(ran2)
-
-    p3(1) = mat(1,1) * sinp_cos + mat(1,2) * sinp_sin + mat(1,3) * cosp
-    p3(2) = mat(2,1) * sinp_cos + mat(2,2) * sinp_sin + mat(2,3) * cosp
-    p3(3) = mat(3,1) * sinp_cos + mat(3,2) * sinp_sin + mat(3,3) * cosp
-
-    p4 = -p3
-
-    p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
-    p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
-
-    e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
-    e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
-
 #ifndef PER_SPECIES_WEIGHT
-    w1 = current%weight
-    w2 = impact%weight
-#else
-    w1 = weight1
-    w2 = weight2
+        w1 = current%weight
+        w2 = impact%weight
+        wr = w1 / w2
 #endif
 
-    IF (w1 > w2) THEN
-      CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1) THEN
-      CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
-    END IF
+        p1 = current%part_p / c
+        p2 = impact%part_p / c
 
-    ! Update particle properties
-    current%part_p = p5
-    impact%part_p = p6
+        p1_norm = p1 / m0
+        p2_norm = p2 / m0
 
-  END SUBROUTINE scatter_np
+        ! Two stationary particles can't collide, so don't try
+        IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
+            .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) CYCLE
 
+        ! Ditto for two particles with the same momentum
+        vc = (p1_norm - p2_norm)
+        IF (DOT_PRODUCT(vc, vc) < eps) CYCLE
 
+        p1_norm = p1 / m1
+        gm1 = SQRT(DOT_PRODUCT(p1_norm, p1_norm) + 1.0_num) * m1
 
+        p2_norm = p2 / m2
+        gm2 = SQRT(DOT_PRODUCT(p2_norm, p2_norm) + 1.0_num) * m2
 
-  ! Binary collision scattering operator based on that of
-  ! Y. Sentoku and A. J. Kemp. [J Comput Phys, 227, 6846 (2008)]
-  SUBROUTINE scatter_sk(current, impact, mass1, mass2, charge1, charge2, &
-      weight1, weight2, idens, jdens, log_lambda, factor)
+        gm = gm1 + gm2
 
-    ! Here the Coulomb collisions are performed by rotating the momentum
-    ! vector of one of the particles in the centre of momentum reference
-    ! frame. Then, as the collisions are assumed to be elastic, the momentum
-    ! of the second particle is simply the opposite of the first.
+        ! Pre-collision velocities
+        v1 = p1 / gm1
+        v2 = p2 / gm2
 
-    TYPE(particle), POINTER :: current, impact
-    REAL(num), INTENT(IN) :: mass1, mass2
-    REAL(num), INTENT(IN) :: charge1, charge2
-    REAL(num), INTENT(IN) :: weight1, weight2
-    REAL(num), INTENT(IN) :: idens, jdens, log_lambda
-    REAL(num), INTENT(IN) :: factor
-    REAL(num), DIMENSION(3) :: p1, p2 ! Pre-collision momenta
-    REAL(num), DIMENSION(3) :: p1_norm, p2_norm ! Normalised momenta
-    REAL(num), DIMENSION(3) :: vc ! Velocity of COM frame wrt lab frame
-    REAL(num), DIMENSION(3) :: p3, p4
-    REAL(num), DIMENSION(3) :: p5, p6
-    REAL(num), DIMENSION(3) :: v3, v4
-    REAL(num), DIMENSION(3) :: vr, vcr
-    REAL(num), DIMENSION(3) :: c1, c2, c3
-    REAL(num) :: m1, m2, q1, q2, w1, w2 ! Masses and charges
-    REAL(num) :: e1, e2 ! Pre-collision energies
-    REAL(num) :: e3, e4, e5, e6
-    REAL(num) :: gamma_rel, gamma_rel2, gamma_rel_m1, gamma_rel_r
-    REAL(num) :: tvar ! Dummy variable for temporarily storing values
-    REAL(num) :: vc_sq, vc_sq_cc, p1_vc, p2_vc, p3_mag
-    REAL(num) :: delta, sin_theta, cos_theta, tan_theta_cm, tan_theta_cm2
-    REAL(num) :: vrabs, denominator
-    REAL(num) :: nu, ran1, ran2
-    !REAL(num) :: m_red
+        ! Pre-collision energies
+        e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
+        e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
 
-    ! Copy all of the necessary particle data into variables with easier to
-    ! read names
-    p1 = current%part_p
-    p2 = impact%part_p
-    p1_norm = p1 / mc0
-    p2_norm = p2 / mc0
+        ! Velocity of centre-of-momentum (COM) reference frame
+        vc = (p1 + p2) / gm
+        vc_sq = DOT_PRODUCT(vc, vc)
 
-    ! Two stationary particles can't collide, so don't try
-    IF (DOT_PRODUCT(p1_norm, p1_norm) < eps &
-        .AND. DOT_PRODUCT(p2_norm, p2_norm) < eps) RETURN
+        gamma_rel_inv = SQRT(1.0_num - vc_sq)
+        gc = 1.0_num / gamma_rel_inv
 
-    ! Ditto for two particles with the same momentum
-    vc = (p1_norm - p2_norm)
-    IF (DOT_PRODUCT(vc, vc) < eps) RETURN
+        gc_m1_vc = (gc - 1.0_num) / vc_sq
 
-#ifdef PER_PARTICLE_CHARGE_MASS
-    m1 = current%mass
-    m2 = impact%mass
-    q1 = current%charge
-    q2 = impact%charge
-#else
-    m1 = mass1
-    m2 = mass2
-    q1 = charge1
-    q2 = charge2
+        p3 = p1 + (gc_m1_vc * DOT_PRODUCT(vc, v1) - gc) * gm1 * vc
+
+        v_sq = DOT_PRODUCT(vc, v1)
+        gm3 = (1.0_num - v_sq) * gc * gm1
+        v_sq = DOT_PRODUCT(vc, v2)
+        gm4 = (1.0_num - v_sq) * gc * gm2
+
+        p_mag2 = DOT_PRODUCT(p3, p3)
+        p_mag = SQRT(p_mag2)
+
+        fac = (q1 * q2)**2 * s_fac / (gm1 * gm2)
+        s12 = fac * gc * p_mag * c / gm * (gm3 * gm4 / p_mag2 + 1.0_num)**2
+
+        ! Cold plasma upper limit for s12
+        v_rel = gm * p_mag * c / (gm3 * gm4 * gc)
+        s_prime = s_fac_prime * (m1 + m2) * v_rel &
+            / MAX(m1 * idens**two_thirds, m2 * jdens**two_thirds)
+
+        s12 = MIN(s12, s_prime)
+
+        ran1 = random()
+        ran2 = random() * 2.0_num * pi
+
+        ! Inversion from Perez et al. PHYSICS OF PLASMAS 19, 083104 (2012)
+        IF (s12 < 0.1_num) THEN
+          cosp = 1.0_num + s12 * LOG(MAX(ran1, 5e-9_num))
+        ELSE IF (s12 >= 0.1_num .AND. s12 < 3.0_num) THEN
+          a_inv = 0.0056958_num + (0.9560202_num + (-0.508139_num &
+               + (0.47913906_num + (-0.12788975_num + 0.02389567_num &
+               * s12) * s12) * s12) * s12) * s12
+          a = 1.0_num / a_inv
+          cosp = a_inv * LOG(EXP(-a) + 2.0_num * ran1 * SINH(a))
+        ELSE IF (s12 >= 3.0_num .AND. s12 < 6.0_num) THEN
+          a = 3.0_num * EXP(-s12)
+          cosp = LOG(EXP(-a) + 2.0_num * ran1 * SINH(a)) / a
+        ELSE
+          cosp = 2.0_num * ran1 - 1.0_num
+        END IF
+
+        sinp = SIN(ACOS(cosp))
+
+        ! Calculate new momenta according to rotation by angle p
+        p_perp2 = p3(1)**2 + p3(2)**2
+        p_perp = SQRT(p_perp2)
+        p_tot = SQRT(p_perp2 + p3(3)**2)
+        p_perp_inv = 1.0_num / (p_perp + c_tiny)
+
+        mat(1,1) =  p3(1) * p3(3) * p_perp_inv
+        mat(1,2) = -p3(2) * p_tot * p_perp_inv
+        mat(1,3) =  p3(1)
+        mat(2,1) =  p3(2) * p3(3) * p_perp_inv
+        mat(2,2) =  p3(1) * p_tot * p_perp_inv
+        mat(2,3) =  p3(2)
+        mat(3,1) = -p_perp
+        mat(3,2) =  0.0_num
+        mat(3,3) =  p3(3)
+
+        sinp_cos = sinp * COS(ran2)
+        sinp_sin = sinp * SIN(ran2)
+
+        p3(1) = mat(1,1) * sinp_cos + mat(1,2) * sinp_sin + mat(1,3) * cosp
+        p3(2) = mat(2,1) * sinp_cos + mat(2,2) * sinp_sin + mat(2,3) * cosp
+        p3(3) = mat(3,1) * sinp_cos + mat(3,2) * sinp_sin + mat(3,3) * cosp
+
+        p4 = -p3
+
+        p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+        p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+
+        e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
+        e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
+
+        ! Restore values of p1, p2
+        p1 = p1 * c
+        p2 = p2 * c
+
+        IF (wr > one_p_2eps) THEN
+          CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
+        ELSE IF (wr < one_m_2eps) THEN
+          CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
+        END IF
+
+        ! Update particle properties
+        current%part_p = p5
+        impact%part_p = p6
+
+        current => current%next
+        impact => impact%next
+#ifdef PREFETCH
+        CALL prefetch_particle(current)
+        CALL prefetch_particle(impact)
 #endif
+      END DO
 
-    ! Pre-collision energies
-    e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
-    e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
-
-    ! Velocity of centre-of-momentum (COM) reference frame
-    vc = (p1 + p2) * cc / (e1 + e2)
-    vc_sq = DOT_PRODUCT(vc, vc)
-    vc_sq_cc = vc_sq / cc
-
-    gamma_rel2 = 1.0_num / (1.0_num - vc_sq_cc)
-    gamma_rel = SQRT(gamma_rel2)
-    gamma_rel_m1 = gamma_rel2 * vc_sq_cc / (gamma_rel + 1.0_num)
-
-    ! Lorentz momentum transform to get into COM frame
-    p1_vc = DOT_PRODUCT(p1, vc)
-    p2_vc = DOT_PRODUCT(p2, vc)
-    tvar = p1_vc * gamma_rel_m1 / (vc_sq + c_tiny)
-    p3 = p1 + vc * (tvar - gamma_rel * e1 / cc)
-    tvar = p2_vc * gamma_rel_m1 / (vc_sq + c_tiny)
-    p4 = p2 + vc * (tvar - gamma_rel * e2 / cc)
-
-    p3_mag = SQRT(DOT_PRODUCT(p3, p3))
-
-    ! Lorentz energy transform
-    e3 = gamma_rel * (e1 - p1_vc)
-    e4 = gamma_rel * (e2 - p2_vc)
-    ! Pre-collision velocities in COM frame
-    v3 = p3 * cc / e3
-    v4 = p4 * cc / e4
-
-    ! Relative velocity
-    tvar = 1.0_num - (DOT_PRODUCT(v3, v4) / cc)
-    vr = (v3 - v4) / tvar
-    vrabs = SQRT(DOT_PRODUCT(vr, vr))
-
-    ! Collision frequency
-    nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
-    nu = MIN(nu * factor * dt, 0.02_num)
-
-
-    ! NOTE: nu is now the number of collisions per timestep, NOT collision
-    ! frequency
-
-    ! New coordinate system to simplify scattering.
-    CALL new_coords(vr, c1, c2, c3)
-
-    ! this is to ensure that 0 < ran1 < 1
-    ! ran1=0 gives NaN in logarithm
-    ! ran1=1 could give positive logarithm due to rounding errors
-    ran1 = (1.0_num - 1.0e-10_num) * random() + 0.5e-10_num
-    ran2 = 2.0_num * pi * random()
-
-    ! Box Muller method for random from Gaussian distribution,
-    ! mean 0, variance of nu
-    ! Possible place for speed up by caching the second Box Muller number
-    ! and using it later
-    ! SQRT(-2.0_num * nu * LOG(ran1)) * COS(ran2)
-    delta = SQRT(-2.0_num * nu * LOG(ran1)) * SIN(ran2)
-    ran2 = 2.0_num * pi * random()
-
-    ! angle theta in the One Particle at Rest frame
-    sin_theta = 2.0_num * delta / (1.0_num + delta**2)
-    cos_theta = (1.0_num - delta**2) / (1.0_num + delta**2)
-
-    ! Transform angles from particle j's rest frame to COM frame
-    ! Note azimuthal angle (ran2) is invariant under this transformation
-    IF (m1 > m2) THEN
-      vcr = v3
-    ELSE
-      vcr = v4
-    END IF
-    gamma_rel_r = 1.0_num / SQRT(1.0_num - (DOT_PRODUCT(vcr, vcr) / cc))
-
-    denominator = gamma_rel_r * (cos_theta - SQRT(DOT_PRODUCT(vcr, vcr)) &
-        / MAX(vrabs, c_tiny))
-    IF (ABS(denominator) > SQRT(c_tiny)) THEN
-      tan_theta_cm = sin_theta / denominator
-      tan_theta_cm2 = tan_theta_cm**2
-    ELSE
-      tan_theta_cm = c_largest_number
-      tan_theta_cm2 = c_largest_number
+      ! restore the tail of the lists
+      NULLIFY(p_list1%tail%next)
+      NULLIFY(p_list2%tail%next)
     END IF
 
-    sin_theta = tan_theta_cm / SQRT(1.0_num + tan_theta_cm2)
-    cos_theta = 1.0_num / SQRT(1.0_num + tan_theta_cm2)
-
-    ! Post-collision momenta in COM frame
-    p3 = p3_mag * (c1 * cos_theta + c2 * sin_theta * COS(ran2) &
-        + c3 * sin_theta * SIN(ran2))
-    p4 = -p3
-
-    ! Lorentz momentum transform to get back to lab frame
-    tvar = DOT_PRODUCT(p3, vc) * gamma_rel_m1 / vc_sq
-    p5 = p3 + vc * (tvar + gamma_rel * e3 / cc)
-    tvar = DOT_PRODUCT(p4, vc) * gamma_rel_m1 / vc_sq
-    p6 = p4 + vc * (tvar + gamma_rel * e4 / cc)
-
-    e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
-    e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
-
-#ifndef PER_SPECIES_WEIGHT
-    w1 = current%weight
-    w2 = impact%weight
-#else
-    w1 = weight1
-    w2 = weight2
-#endif
-
-    IF (w1 > w2) THEN
-      CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-    ELSE IF (w2 > w1) THEN
-      CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
-    END IF
-
-    ! Update particle properties
-    current%part_p = p5
-    impact%part_p = p6
-
-  END SUBROUTINE scatter_sk
+  END SUBROUTINE inter_collisions_np
 
 
 
@@ -1463,23 +1904,22 @@ CONTAINS
 
   SUBROUTINE calc_coll_number_density(data_array, ispecies)
 
-    ! This subroutine calculates the grid-based number density of a given
-    ! particle species.
-    ! It is almost identical to the calc_number_density subroutine in calc_df,
-    ! except it uses the secondary_list rather than the attached_list.
+    ! This routine calculates an approximate number density
+    ! It assumes each particle only contributes to a single cell
+    ! Returns zero if species_type == c_species_id_photon
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: ispecies
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: gf
     REAL(num) :: idx
-    INTEGER :: ix, iy, iz
     INTEGER :: jx, jy, jz
     TYPE(particle), POINTER :: current
 #include "particle_head.inc"
 
     data_array = 0.0_num
+
+    IF (species_list(ispecies)%species_type == c_species_id_photon) RETURN
 
     idx = 1.0_num / dx / dy / dz
 
@@ -1488,7 +1928,6 @@ CONTAINS
     DO jz = 1, nz
     DO jy = 1, ny
     DO jx = 1, nx
-      IF (species_list(ispecies)%species_type == c_species_id_photon) CYCLE
       current => species_list(ispecies)%secondary_list(jx,jy,jz)%head
 
       DO WHILE (ASSOCIATED(current))
@@ -1498,15 +1937,8 @@ CONTAINS
 
 #include "particle_to_grid.inc"
 
-        DO iz = sf_min, sf_max
-        DO iy = sf_min, sf_max
-        DO ix = sf_min, sf_max
-          gf = gx(ix) * gy(iy) * gz(iz)
-          data_array(cell_x+ix, cell_y+iy, cell_z+iz) = &
-              data_array(cell_x+ix, cell_y+iy, cell_z+iz) + gf * wdata
-        END DO
-        END DO
-        END DO
+        data_array(cell_x, cell_y, cell_z) = &
+            data_array(cell_x, cell_y, cell_z) + wdata
 
         current => current%next
       END DO
@@ -1514,12 +1946,7 @@ CONTAINS
     END DO ! jy
     END DO ! jz
 
-    CALL calc_boundary(data_array)
-
     data_array = data_array * idx
-    DO ix = 1, 2*c_ndims
-      CALL field_zero_gradient(data_array, c_stagger_centre, ix)
-    END DO
 
   END SUBROUTINE calc_coll_number_density
 
@@ -1710,7 +2137,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num
@@ -1757,9 +2184,11 @@ CONTAINS
     ALLOCATE(coll_sort_array(coll_sort_array_size))
 
     IF (use_nanbu) THEN
-      scatter_fn => scatter_np
+      intra_coll_fn => intra_collisions_np
+      inter_coll_fn => inter_collisions_np
     ELSE
-      scatter_fn => scatter_sk
+      intra_coll_fn => intra_collisions_sk
+      inter_coll_fn => inter_collisions_sk
     END IF
 
   END SUBROUTINE setup_collisions
@@ -1773,651 +2202,5 @@ CONTAINS
     DEALLOCATE(coll_pairs, coll_sort_array, STAT=stat)
 
   END SUBROUTINE deallocate_collisions
-
-
-
-#ifdef COLLISIONS_TEST
-  SUBROUTINE test_collisions
-
-    CALL setup_collisions
-    CALL test_scatter
-    CALL test_inter_species
-    CALL test_intra_species
-    CALL test_shuffle
-
-  END SUBROUTINE test_collisions
-
-
-
-  SUBROUTINE test_scatter
-
-    TYPE(particle), POINTER :: part1, part2
-    REAL(num) :: p1(3), p2(3)  ! momenta of the collision partners
-    REAL(num) :: mass1, mass2     ! masses of the collision partners
-    REAL(num) :: charge1, charge2 ! charges of the collision partners
-    REAL(num) :: wt1, wt2         ! weights of the collision partners
-    REAL(num) :: density          ! particle density
-    REAL(num) :: t_factor         ! time step correction factor
-
-    REAL(num) :: en1_before, en2_before
-    REAL(num) :: en1_after, en2_after
-    REAL(num) :: en_error
-    REAL(num) :: en_sqr
-    REAL(num) :: p_error(3)
-    REAL(num) :: p_sqr
-
-    INTEGER :: i, N
-
-    CALL create_particle(part1)
-    CALL create_particle(part2)
-
-    N = 1000000
-
-    dt = 1e-8
-    density = 1e22
-    t_factor = 1.0_num
-
-    !==============================================================
-    ! electron-electron collisions (equal weighting)
-    !==============================================================
-
-    WRITE(*,*) '==================================================='
-    WRITE(*,*) '============   SCATTER TEST   ====================='
-    WRITE(*,*) '==================================================='
-    WRITE(*,*)
-    WRITE(*,*) 'Testing electron-electron collisions (equal weighting)'
-
-    mass1 = m0
-    mass2 = m0
-    charge1 = -q0
-    charge2 = -q0
-    wt1 = 1.0_num
-    wt2 = 1.0_num
-
-    en_sqr = 0.0_num
-    p_sqr = 0.0_num
-
-    en_error = 0.0_num
-    p_error = 0.0_num
-
-    DO i = 1, N
-      p1(1) = 5 * mass1 * c * random()
-      p1(2) = 5 * mass1 * c * random()
-      p1(3) = 5 * mass1 * c * random()
-      p2(1) = 5 * mass2 * c * random()
-      p2(2) = 5 * mass2 * c * random()
-      p2(3) = 5 * mass2 * c * random()
-
-      part1%part_p = p1
-      part2%part_p = p2
-      part1%weight = wt1
-      part2%weight = wt2
-
-      en1_before = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error + p1 + p2
-      p_sqr = p_sqr + SUM((p1 + p2)**2)
-      en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before + en2_before)**2
-
-      CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
-          density, density, 1.0e4_num, 1.0e4_num, 10.0_num, t_factor)
-
-      p1 = part1%part_p
-      p2 = part2%part_p
-
-      en1_after = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error - p1 - p2
-      en_error = en_error - en1_after - en2_after
-    END DO
-
-    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
-    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
-
-    !==============================================================
-    ! electron-ion collisions (equal weighting)
-    !==============================================================
-
-    WRITE(*,*) 'Testing electron-ion collisions (equal weighting)'
-
-    mass1 = m0
-    mass2 = 1836.2_num * 105.0_num * m0
-    charge1 = -q0
-    charge2 = -22.0_num * q0
-    wt1 = 1.0_num
-    wt2 = 1.0_num
-
-    en_sqr = 0.0_num
-    p_sqr = 0.0_num
-
-    en_error = 0.0_num
-    p_error = 0.0_num
-
-    DO i = 1, N
-      p1(1) = 5 * mass1 * c * random()
-      p1(2) = 5 * mass1 * c * random()
-      p1(3) = 5 * mass1 * c * random()
-      p2(1) = 5 * mass2 * c * random()
-      p2(2) = 5 * mass2 * c * random()
-      p2(3) = 5 * mass2 * c * random()
-
-      part1%part_p = p1
-      part2%part_p = p2
-      part1%weight = wt1
-      part2%weight = wt2
-
-      en1_before = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error + p1 + p2
-      p_sqr = p_sqr + SUM((p1 + p2)**2)
-      en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before + en2_before)**2
-
-      ! alternate particle1 and particle2
-      IF (MOD(i, 2) == 0) THEN
-        CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
-            density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      ELSE
-        CALL scatter(part2, part1, mass2, mass1, charge2, charge1, wt2, wt1, &
-            density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      END IF
-
-      p1 = part1%part_p
-      p2 = part2%part_p
-
-      en1_after = cc * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = cc * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error - p1 - p2
-      en_error = en_error - en1_after - en2_after
-    END DO
-
-    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
-    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
-
-    !==============================================================
-    ! electron-electron collisions (random weighting)
-    !==============================================================
-
-    WRITE(*,*) 'Testing electron-electron collisions (random weighting)'
-
-    mass1 = m0
-    mass2 = m0
-    charge1 = -q0
-    charge2 = -q0
-
-    en_sqr = 0.0_num
-    p_sqr = 0.0_num
-
-    en_error = 0.0_num
-    p_error = 0.0_num
-
-    DO i = 1, N
-      p1(1) = 5 * mass1 * c * random()
-      p1(2) = 5 * mass1 * c * random()
-      p1(3) = 5 * mass1 * c * random()
-      p2(1) = 5 * mass2 * c * random()
-      p2(2) = 5 * mass2 * c * random()
-      p2(3) = 5 * mass2 * c * random()
-      wt1 = random() + 1e-10_num
-      wt2 = random() + 1e-10_num
-
-      part1%part_p = p1
-      part2%part_p = p2
-      part1%weight = wt1
-      part2%weight = wt2
-
-
-      en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error + wt1 * p1 + wt2 * p2
-      p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
-      en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before + en2_before)**2
-
-      CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
-            density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-
-      p1 = part1%part_p
-      p2 = part2%part_p
-
-      en1_after = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error - wt1 * p1 - wt2 * p2
-      en_error = en_error - en1_after - en2_after
-    END DO
-
-    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
-    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
-
-    !==============================================================
-    ! electron-ion collisions (random weighting)
-    !==============================================================
-
-    WRITE(*,*) 'Testing electron-ion collisions (random weighting)'
-
-    mass1 = m0
-    mass2 = 1836.2_num * 105.0_num * m0
-    charge1 = -q0
-    charge2 = -22.0_num * q0
-
-    en_sqr = 0.0_num
-    p_sqr = 0.0_num
-
-    en_error = 0.0_num
-    p_error = 0.0_num
-
-    DO i = 1, N
-      p1(1) = 5 * mass1 * c * random()
-      p1(2) = 5 * mass1 * c * random()
-      p1(3) = 5 * mass1 * c * random()
-      p2(1) = 5 * mass2 * c * random()
-      p2(2) = 5 * mass2 * c * random()
-      p2(3) = 5 * mass2 * c * random()
-      wt1 = random() + 1e-10_num
-      wt2 = random() + 1e-10_num
-
-      part1%part_p = p1
-      part2%part_p = p2
-      part1%weight = wt1
-      part2%weight = wt2
-
-      en1_before = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_before = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error + wt1 * p1 + wt2 * p2
-      p_sqr = p_sqr + SUM((wt1 * p1 + wt2 * p2)**2)
-      en_error = en_error + en1_before + en2_before
-      en_sqr = en_sqr + (en1_before + en2_before)**2
-
-      ! alternate particle1 and particle2
-      IF (MOD(i, 2) == 0) THEN
-        CALL scatter(part1, part2, mass1, mass2, charge1, charge2, wt1, wt2, &
-            density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      ELSE
-        CALL scatter(part2, part1, mass2, mass1, charge2, charge1, wt2, wt1, &
-            density, density, 1.0e4_num, 1.0e4_num, 5.0_num, t_factor)
-      END IF
-
-      p1 = part1%part_p
-      p2 = part2%part_p
-
-      en1_after = cc * wt1 * SQRT(DOT_PRODUCT(p1, p1) + (mass1 * c)**2)
-      en2_after = cc * wt2 * SQRT(DOT_PRODUCT(p2, p2) + (mass2 * c)**2)
-
-      p_error = p_error - wt1 * p1 - wt2 * p2
-      en_error = en_error - en1_after - en2_after
-    END DO
-
-    WRITE(*,'(''  Errors after '',I10,'' iterations'')') N
-    WRITE(*,'(''    p: '',ES15.8)') SQRT(SUM(p_error**2) / p_sqr)
-    WRITE(*,'(''    E: '',ES15.8)') SQRT(en_error**2 / en_sqr)
-
-  END SUBROUTINE test_scatter
-
-
-
-  SUBROUTINE test_inter_species
-
-    TYPE(particle_list) :: partlist1
-    TYPE(particle_list) :: partlist2
-    TYPE(particle), POINTER :: part
-    REAL(num) :: mass1, mass2     ! masses of the collision partners
-    REAL(num) :: charge1, charge2 ! charges of the collision partners
-    REAL(num) :: plist1_length, plist2_length
-
-    INTEGER(i8) :: N, max_num, i, j
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo1, histo2
-    INTEGER :: histo1max, histo2max
-    INTEGER(i8) :: cnt1, cnt2
-    INTEGER(i8) :: a, b
-    INTEGER :: error
-
-    dt = 1.0e-8_num
-
-    N = 10000
-    max_num = 200
-
-    plist1_length = 0.0_num
-    plist2_length = 0.0_num
-
-    ALLOCATE(histo1(0:2*max_num))
-    ALLOCATE(histo2(0:2*max_num))
-
-    WRITE(*,*) '==================================================='
-    WRITE(*,*) '======   INTER SPECIES COLLISION TEST   ==========='
-    WRITE(*,*) '==================================================='
-    WRITE(*,*)
-    WRITE(*,*) 'Testing electron-electron collisions (random weighting)'
-
-    mass1 = m0
-    mass2 = m0
-    charge1 = -q0
-    charge2 = -q0
-
-    DO i = 1, N
-      ! allocate particles
-      CALL create_allocated_partlist(partlist1, INT(max_num*random(), KIND=i8))
-      CALL create_allocated_partlist(partlist2, INT(max_num*random(), KIND=i8))
-
-      ! fill particle values
-
-      part => partlist1%head
-      DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5 * mass1 * c * random()
-        part%part_p(2) = 5 * mass1 * c * random()
-        part%part_p(3) = 5 * mass1 * c * random()
-        part%coll_count = 0
-
-        part%weight = random() + 1e-10_num
-
-        part => part%next
-      END DO
-
-      part => partlist2%head
-      DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5 * mass2 * c * random()
-        part%part_p(2) = 5 * mass2 * c * random()
-        part%part_p(3) = 5 * mass2 * c * random()
-        part%coll_count = 0
-
-        part%weight = random() + 1e-10_num
-
-        part => part%next
-      END DO
-
-      ! call scattering routine
-      CALL inter_species_collisions(partlist1, partlist2, &
-          mass1, mass2, charge1, charge2, 1.0_num, 1.0_num, &
-          1.0e15_num, 1.0e15_num, 1.0e4_num, 1.0e4_num, 5.0_num, 1.0_num)
-
-      ! diagnostics
-      histo1 = 0
-      histo2 = 0
-      histo1max = 0
-      histo2max = 0
-
-!      WRITE(*,'(''  Particle List 1: '',I10)') partlist1%count
-      cnt1 = partlist1%count
-      cnt2 = partlist2%count
-      plist1_length = plist1_length + cnt1
-      plist2_length = plist2_length + cnt2
-
-      ! creating histograms
-
-      part => partlist1%head
-      DO j = 1, partlist1%count
-!        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count > histo1max) histo1max = part%coll_count
-        histo1(part%coll_count) = histo1(part%coll_count) + 1
-        part => part%next
-      END DO
-
-!      WRITE(*,'(''  Particle List 2: '',I10)') partlist2%count
-
-      part => partlist2%head
-      DO WHILE (ASSOCIATED(part))
-!        WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count > histo2max) histo2max = part%coll_count
-        histo2(part%coll_count) = histo2(part%coll_count) + 1
-        part => part%next
-      END DO
-
-! only need to output if something is wrong
-!      WRITE(*,*) '  Histogram 1'
-!      DO j = 1, histo1max
-!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo1(j)
-!      END DO
-!
-!      WRITE(*,*) '  Histogram 2'
-!      DO j = 1, histo2max
-!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo2(j)
-!      END DO
-
-      ! performing check on histograms
-
-      ! first, subtract expected values from the array
-      IF ((cnt1 > 0) .AND. (cnt2 > 0)) THEN
-        IF (cnt1 > cnt2) THEN
-          histo1(2) = histo1(2) - cnt1
-          a = cnt1 / cnt2
-          b = cnt1 - cnt2 * a
-          histo2(2*a) = histo2(2*a) - (cnt2 - b)
-          histo2(2*a+2) = histo2(2*a+2) - b
-        ELSE IF (cnt1 < cnt2) THEN
-          histo2(2) = histo2(2) - cnt2
-          a = cnt2 / cnt1
-          b = cnt2 - cnt1 * a
-          histo1(2*a) = histo1(2*a) - (cnt1 - b)
-          histo1(2*a+2) = histo1(2*a+2) - b
-        ELSE
-          histo1(2) = histo1(2) - cnt1
-          histo2(2) = histo2(2) - cnt1
-        END IF
-      END IF
-
-      ! now check that both arrays are zero
-      error = 0
-      DO j = 1, histo1max
-        IF (histo1(j) /= 0) error = error + 1
-      END DO
-      DO j = 1, histo2max
-        IF (histo2(j) /= 0) error = error + 1
-      END DO
-
-      IF (error > 0) THEN
-        WRITE(*,*) '  Error in inter species collisions'
-        WRITE(*,'(''    Iteration:   '',I10)') i
-        WRITE(*,'(''    List counts: '',I10,'', '',I10)') cnt1, cnt2
-        STOP
-      END IF
-
-      ! free particle list
-      CALL destroy_partlist(partlist1)
-      CALL destroy_partlist(partlist2)
-    END DO
-
-    WRITE(*,*) '  SUCCESS!'
-    WRITE(*,'(''    Number of iterations:   '',I10)') N
-    WRITE(*,'(''    Average list lengths:   '',F10.5,'', '',F10.5)') &
-        plist1_length / N, plist2_length / N
-
-    DEALLOCATE(histo1)
-    DEALLOCATE(histo2)
-
-  END SUBROUTINE test_inter_species
-
-
-
-  SUBROUTINE test_intra_species
-
-    TYPE(particle_list) :: partlist
-    TYPE(particle), POINTER :: part
-    REAL(num) :: mass, charge ! mass and charg of the collision partners
-
-    INTEGER(i8) :: N, max_num, i, j
-    INTEGER(i8), DIMENSION(:), ALLOCATABLE :: histo
-    INTEGER :: histo_max
-    INTEGER :: error
-    REAL(num) :: plist_length
-
-    N = 10000
-    max_num = 200
-
-    ALLOCATE(histo(0:2*max_num))
-
-    WRITE(*,*) '==================================================='
-    WRITE(*,*) '======   INTRA SPECIES COLLISION TEST   ==========='
-    WRITE(*,*) '==================================================='
-    WRITE(*,*)
-    WRITE(*,*) 'Testing collisions (random weighting)'
-
-    mass = m0
-    charge = -q0
-    plist_length = 0
-
-    DO i = 1, N
-      ! allocate particles
-      CALL create_allocated_partlist(partlist, INT(max_num*random(), KIND=i8))
-
-      ! fill particle values
-
-      part => partlist%head
-      DO WHILE (ASSOCIATED(part))
-        part%part_p(1) = 5 * mass * c * random()
-        part%part_p(2) = 5 * mass * c * random()
-        part%part_p(3) = 5 * mass * c * random()
-        part%coll_count = 0
-
-        part%weight = random() + 1e-10_num
-
-        part => part%next
-      END DO
-
-      ! call scattering routine
-      CALL intra_species_collisions(partlist, mass, charge, &
-          1.0_num, 1.0e15_num, 1.0e4_num, 5.0_num, 1.0_num)
-
-      ! diagnostics
-      histo = 0
-      histo_max = 0
-      plist_length = plist_length + partlist%count
-
-!      WRITE(*,'(''  Particle List: '',I10)') partlist%count
-
-      part => partlist%head
-      DO j = 1, partlist%count
-        ! WRITE(*,'(''    '',I4,'': '',I10)') j, part%coll_count
-        IF (part%coll_count > histo_max) histo_max = part%coll_count
-        histo(part%coll_count) = histo(part%coll_count) + 1
-        part => part%next
-      END DO
-
-! only need to output if something is wrong
-!      WRITE(*,*) '  Histogram'
-!      DO j = 1, histo_max
-!        WRITE(*,'(''    '',I4,'': '',I10)') j, histo(j)
-!      END DO
-
-      ! performing check on histograms
-
-      ! first, subtract expected value from the array
-      histo(2) = histo(2) - partlist%count
-
-      ! now check that array is zero
-      error = 0
-      DO j = 1, histo_max
-        IF (histo(j) /= 0) error = error + 1
-      END DO
-
-      IF (error > 0) THEN
-        WRITE(*,*) '  Error in intra species collisions'
-        WRITE(*,'(''    Iteration:   '',I10)') i
-        WRITE(*,'(''    List count: '',I10)') partlist%count
-        STOP
-      END IF
-
-      ! free particle list
-      CALL destroy_partlist(partlist)
-    END DO
-
-    WRITE(*,*) '  SUCCESS!'
-    WRITE(*,'(''    Number of iterations:   '',I10)') N
-    WRITE(*,'(''    Average list length:   '',F10.5)') plist_length / N
-
-    DEALLOCATE(histo)
-
-  END SUBROUTINE test_intra_species
-
-
-
-  SUBROUTINE test_shuffle
-
-    TYPE(particle_list) :: partlist
-    TYPE(particle), POINTER :: part
-    INTEGER :: N, max_num, min_num, k
-    INTEGER(i8) :: i, j, plist_length
-    INTEGER :: iterations
-    REAL(num), DIMENSION(:), ALLOCATABLE :: histo
-    INTEGER, DIMENSION(:), ALLOCATABLE :: minp, maxp
-    REAL(num), DIMENSION(:), ALLOCATABLE :: std_dev
-
-    N = 10000
-    max_num = 200
-    min_num = 1
-    iterations = 10
-
-    ALLOCATE(histo(0:max_num))
-    ALLOCATE(minp(0:max_num))
-    ALLOCATE(maxp(0:max_num))
-    ALLOCATE(std_dev(0:max_num))
-
-    WRITE(*,*) '==================================================='
-    WRITE(*,*) '============   RANDOM SHUFFLE TEST   =============='
-    WRITE(*,*) '==================================================='
-    WRITE(*,*)
-
-    DO k = 1, iterations
-      plist_length = INT((max_num - min_num) * random() + min_num, i8)
-      histo = 0.0_num
-      minp = max_num
-      maxp = 0
-      std_dev = 0.0_num
-
-      WRITE(*,'(''  List length: '',I10)') plist_length
-
-      DO i = 1, N
-        ! allocate particles
-        CALL create_allocated_partlist(partlist, plist_length)
-
-        ! fill particle values
-        !   note: we only need particle position which is stored in coll_count
-        part => partlist%head
-        DO j = 1, plist_length
-          IF (.NOT. ASSOCIATED(part)) WRITE(*,*) '    !!not associated!!'
-          part%coll_count = INT(j)
-          part => part%next
-        END DO
-
-        ! now shuffle
-        CALL shuffle_particle_list_random(partlist)
-
-        ! perform statistics
-        part => partlist%head
-        DO j = 1, plist_length
-          histo(j) = histo(j) + part%coll_count
-          IF (minp(j) > part%coll_count) minp(j) = part%coll_count
-          IF (maxp(j) < part%coll_count) maxp(j) = part%coll_count
-          std_dev(j) = std_dev(j) + part%coll_count**2
-          part => part%next
-        END DO
-
-        CALL destroy_partlist(partlist)
-      END DO
-
-      WRITE(*,'(''   Statistics ('',I10,'' runs)'')') N
-      WRITE(*,*) '    avg        std_dev       min        max'
-      DO i = 1, plist_length
-        WRITE(*,'(''    '',F10.5,''    '',F10.5,''    '',I10,''    '',I10)') &
-            histo(i) / N, SQRT(std_dev(i) / N - (histo(i) / N)**2), &
-            minp(i), maxp(i)
-      END DO
-
-    END DO
-
-    DEALLOCATE(histo)
-
-  END SUBROUTINE test_shuffle
-
-#endif
 
 END MODULE collisions

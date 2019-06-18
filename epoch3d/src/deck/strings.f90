@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -255,6 +254,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'heat_bath')) THEN
+      as_bc = c_bc_heat_bath
+      RETURN
+    END IF
+
     IF (str_cmp(TRIM(ADJUSTL(str_in)), 'cpml_laser')) THEN
       as_bc = c_bc_cpml_laser
       RETURN
@@ -339,5 +343,40 @@ CONTAINS
     WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
 
   END FUNCTION as_logical_print
+
+
+
+  FUNCTION lowercase(string_in) RESULT(string_out)
+
+    CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
+    CHARACTER(LEN=*), PARAMETER :: upr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    CHARACTER(LEN=*), INTENT(IN) :: string_in
+    CHARACTER(LEN=LEN(string_in)) :: string_out
+    INTEGER :: i, idx
+
+    string_out = string_in
+
+    DO i = 1, LEN(string_out)
+      idx = INDEX(upr, string_out(i:i))
+      IF (idx /= 0) string_out(i:i) = lwr(idx:idx)
+    END DO
+
+  END FUNCTION lowercase
+
+
+
+  FUNCTION trim_string(string)
+
+    CHARACTER(LEN=c_max_string_length) :: trim_string
+    CHARACTER(LEN=*) :: string
+
+    string = ADJUSTL(string)
+    IF (LEN_TRIM(string) > c_max_string_length) THEN
+      trim_string = string(1:c_max_string_length)
+    ELSE
+      trim_string = TRIM(string)
+    END IF
+
+  END FUNCTION trim_string
 
 END MODULE strings

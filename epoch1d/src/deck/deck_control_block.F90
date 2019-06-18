@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -39,7 +37,8 @@ CONTAINS
 
     IF (deck_state /= c_ds_first) RETURN
 
-    use_exact_restart = .FALSE.
+    use_exact_restart = .TRUE.
+    use_exact_restart_set = .FALSE.
     allow_cpu_reduce = .TRUE.
     check_walltime = .FALSE.
     simplify_deck = .TRUE.
@@ -226,7 +225,8 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'nprocz')) THEN
 
-    ELSE IF (str_cmp(element, 'npart')) THEN
+    ELSE IF (str_cmp(element, 'npart') &
+        .OR. str_cmp(element, 'nparticles')) THEN
       npart_global = as_long_integer_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'nsteps')) THEN
@@ -318,6 +318,7 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'use_exact_restart')) THEN
       use_exact_restart = as_logical_print(value, element, errcode)
+      use_exact_restart_set = use_exact_restart
 
     ELSE IF (str_cmp(element, 'allow_cpu_reduce')) THEN
       allow_cpu_reduce = as_logical_print(value, element, errcode)
@@ -417,6 +418,9 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'use_more_setup_memory')) THEN
       use_more_setup_memory = as_logical_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'deck_warnings_fatal')) THEN
+      all_deck_errcodes_fatal = as_logical_print(value, element, errcode)
 
     ELSE
       errcode = c_err_unknown_element

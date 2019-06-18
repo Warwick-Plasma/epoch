@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2014-2015 Stephan Kuschel <stephan.kuschel@gmail.com>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -424,6 +422,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_const_dir_z) THEN
+      CALL push_on_eval(REAL(c_dir_z, num))
+      RETURN
+    END IF
+
     IF (opcode == c_const_dir_px) THEN
       CALL push_on_eval(REAL(c_dir_px, num))
       RETURN
@@ -582,19 +585,19 @@ CONTAINS
       CALL push_on_eval(parameters%pack_p(1))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_py) THEN
       CALL push_on_eval(parameters%pack_p(2))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_pz) THEN
       CALL push_on_eval(parameters%pack_p(3))
       err = err_simplify
       RETURN
-    ENDIF
+    END IF
 
     IF (opcode == c_const_maxwell_solver_yee) THEN
       CALL push_on_eval(REAL(c_maxwell_solver_yee, num))

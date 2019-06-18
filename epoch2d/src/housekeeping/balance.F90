@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,7 +30,6 @@ MODULE balance
   INTEGER :: old_comm, old_coordinates(c_ndims)
   INTEGER :: old_slice_coord, new_slice_coord, slice_dir
   LOGICAL :: max_boundary
-  INTEGER :: ng_max
 
 CONTAINS
 
@@ -61,8 +58,8 @@ CONTAINS
       npx = ii
       npy = nproc / npx
       IF (npx * npy /= nproc) CYCLE
-      IF (nx_global / npx < ng) CYCLE
-      IF (ny_global / npy < ng) CYCLE
+      IF (nx_global / npx < 1) CYCLE
+      IF (ny_global / npy < 1) CYCLE
 
       ALLOCATE(p_x_min(npx), p_x_max(npx))
       ALLOCATE(p_y_min(npy), p_y_max(npy))
@@ -118,7 +115,6 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    ng_max = MAX(ng, jng, sng)
 
     full_check = over_ride
     IF (step - last_full_check < dlb_force_interval) THEN
@@ -478,6 +474,7 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
     TYPE(injector_block), POINTER :: injector_current
     TYPE(particle_species_migration), POINTER :: mg
+    TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
@@ -567,7 +564,8 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
-      mg => species_list(ispecies)%migrate
+      sp => species_list(ispecies)
+      mg => sp%migrate
 
       IF (mg%fluid) THEN
         CALL remap_field(mg%fluid_energy, temp)
@@ -579,6 +577,13 @@ CONTAINS
         DEALLOCATE(mg%fluid_density)
         ALLOCATE(mg%fluid_density(1-ng:nx_new+ng,1-ng:ny_new+ng))
         mg%fluid_density = temp
+      END IF
+
+      IF (sp%background_species) THEN
+        CALL remap_field(sp%background_density, temp)
+        DEALLOCATE(sp%background_density)
+        ALLOCATE(sp%background_density(1-ng:nx_new+ng,1-ng:ny_new+ng))
+        sp%background_density = temp
       END IF
 
       IF (.NOT.pre_loading) CYCLE
@@ -769,15 +774,12 @@ CONTAINS
 
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
-      CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
-      DEALLOCATE(injector_current%depth)
-      ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
-      injector_current%depth = temp_slice
+      IF (ASSOCIATED(injector_current%depth)) THEN
+        CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
+        DEALLOCATE(injector_current%depth)
+        ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
+        injector_current%depth = temp_slice
+      END IF
 
       injector_current => injector_current%next
     END DO
@@ -786,15 +788,12 @@ CONTAINS
 
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
-      CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
-      DEALLOCATE(injector_current%depth)
-      ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
-      injector_current%depth = temp_slice
+      IF (ASSOCIATED(injector_current%depth)) THEN
+        CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
+        DEALLOCATE(injector_current%depth)
+        ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
+        injector_current%depth = temp_slice
+      END IF
 
       injector_current => injector_current%next
     END DO
@@ -907,11 +906,6 @@ CONTAINS
 
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
@@ -924,11 +918,6 @@ CONTAINS
 
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
@@ -2047,8 +2036,8 @@ CONTAINS
           maxs(proc) = idim
         END IF
         ! To communicate ghost cell information correctly, each domain must
-        ! contain at least ng cells.
-        nextra = old - maxs(proc) + ng_max
+        ! contain at least one cell.
+        nextra = old - maxs(proc) + 1
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -2062,8 +2051,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < 1) THEN
+        maxs(proc) = old - 1
       END IF
       old = maxs(proc)
     END DO
@@ -2132,8 +2121,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < 1) THEN
+        maxs(proc) = old - 1
       END IF
       old = maxs(proc)
     END DO
@@ -2141,8 +2130,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < ng_max) THEN
-        maxs(proc) = old + ng_max
+      IF (maxs(proc) - old < 1) THEN
+        maxs(proc) = old + 1
       END IF
       old = maxs(proc)
     END DO

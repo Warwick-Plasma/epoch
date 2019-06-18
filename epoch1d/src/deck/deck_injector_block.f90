@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2017 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -36,6 +35,8 @@ MODULE deck_injector_block
 CONTAINS
 
   SUBROUTINE injector_deck_initialise
+
+    IF (deck_state /= c_ds_first) RETURN
 
     NULLIFY(injector_x_min)
     NULLIFY(injector_x_max)
@@ -77,6 +78,8 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode, i
     INTEGER :: io, iu
+    REAL(num) :: mult
+    CHARACTER(LEN=string_length) :: mult_string
 
     errcode = c_err_none
     IF (deck_state == c_ds_first) RETURN
@@ -127,15 +130,24 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'npart_per_cell')) THEN
-      working_injector%npart_per_cell = as_integer_print(value, element, &
-          errcode)
+    IF (str_cmp(element, 'npart_per_cell') &
+        .OR. str_cmp(element, 'nparticles_per_cell')) THEN
+      working_injector%npart_per_cell = as_real_print(value, element, errcode)
       RETURN
     END IF
 
     IF (str_cmp(element, 'density_min') .OR. str_cmp(element, 'minrho') &
         .OR. str_cmp(element, 'number_density_min')) THEN
       working_injector%density_min = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'density_max') .OR. str_cmp(element, 'maxrho') &
+        .OR. str_cmp(element, 'number_density_max')) THEN
+      working_injector%density_max = as_real_print(value, element, errcode)
+      IF (working_injector%density_max < 0.0_num) THEN
+        working_injector%density_max = HUGE(1.0_num)
+      END IF
       RETURN
     END IF
 
@@ -146,50 +158,93 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'temp_x')) THEN
-      i = 1
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
+    mult_string = '* ev / kb'
+    mult = ev / kb
 
-    IF (str_cmp(element, 'temp_y')) THEN
-      i = 2
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'temp_z')) THEN
-      i = 3
-      CALL initialise_stack(working_injector%temperature_function(i))
-      CALL tokenize(value, working_injector%temperature_function(i), errcode)
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'temp')) THEN
+    IF (str_cmp(element, 'temp') &
+        .OR. str_cmp(element, 'temp_k') &
+        .OR. str_cmp(element, 'temp_ev') &
+        .OR. str_cmp(element, 'temperature') &
+        .OR. str_cmp(element, 'temperature_k') &
+        .OR. str_cmp(element, 'temperature_ev')) THEN
       DO i = 1, 3
         CALL initialise_stack(working_injector%temperature_function(i))
         CALL tokenize(value, working_injector%temperature_function(i), errcode)
+        IF (str_cmp(element, 'temperature_ev') &
+            .OR. str_cmp(element, 'temp_ev')) THEN
+          CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                        errcode)
+        END IF
       END DO
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_x')) THEN
+    IF (str_cmp(element, 'temp_x') &
+        .OR. str_cmp(element, 'temp_x_k') &
+        .OR. str_cmp(element, 'temp_x_ev') &
+        .OR. str_cmp(element, 'temperature_x') &
+        .OR. str_cmp(element, 'temperature_x_k') &
+        .OR. str_cmp(element, 'temperature_x_ev')) THEN
+      i = 1
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temperature_x_ev') &
+          .OR. str_cmp(element, 'temp_x_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_y') &
+        .OR. str_cmp(element, 'temp_y_k') &
+        .OR. str_cmp(element, 'temp_y_ev') &
+        .OR. str_cmp(element, 'temperature_y') &
+        .OR. str_cmp(element, 'temperature_y_k') &
+        .OR. str_cmp(element, 'temperature_y_ev')) THEN
+      i = 2
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temperature_y_ev') &
+          .OR. str_cmp(element, 'temp_y_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'temp_z') &
+        .OR. str_cmp(element, 'temp_z_k') &
+        .OR. str_cmp(element, 'temp_z_ev') &
+        .OR. str_cmp(element, 'temperature_z') &
+        .OR. str_cmp(element, 'temperature_z_k') &
+        .OR. str_cmp(element, 'temperature_z_ev')) THEN
+      i = 3
+      CALL initialise_stack(working_injector%temperature_function(i))
+      CALL tokenize(value, working_injector%temperature_function(i), errcode)
+      IF (str_cmp(element, 'temperature_z_ev') &
+          .OR. str_cmp(element, 'temp_z_ev')) THEN
+        CALL tokenize(mult_string, working_injector%temperature_function(i), &
+                      errcode)
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'drift_x') .OR. str_cmp(element, 'drift_px')) THEN
       i = 1
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_y')) THEN
+    IF (str_cmp(element, 'drift_y') .OR. str_cmp(element, 'drift_py')) THEN
       i = 2
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'drift_z')) THEN
+    IF (str_cmp(element, 'drift_z') .OR. str_cmp(element, 'drift_pz')) THEN
       i = 3
       CALL initialise_stack(working_injector%drift_function(i))
       CALL tokenize(value, working_injector%drift_function(i), errcode)
@@ -206,37 +261,34 @@ CONTAINS
 
     INTEGER :: errcode
     TYPE(injector_block), POINTER :: current
-    INTEGER :: error, io, iu
+    INTEGER :: io, iu
+    LOGICAL :: error
 
     use_injectors = .FALSE.
-
+    error = .FALSE.
     errcode = c_err_none
-    error = 0
+
     current => injector_x_min
     DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = IOR(error, 1)
-      IF (.NOT. current%density_function%init) error = IOR(error, 2)
-      IF (error == 0) use_injectors = .TRUE.
+      IF (current%species == -1) error = .TRUE.
+      use_injectors = .TRUE.
       current => current%next
     END DO
 
     current => injector_x_max
     DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = IOR(error, 1)
-      IF (.NOT. current%density_function%init) error = IOR(error, 2)
-      IF (error == 0) use_injectors = .TRUE.
+      IF (current%species == -1) error = .TRUE.
+      use_injectors = .TRUE.
       current => current%next
     END DO
 
-    IF (error /= 0) THEN
+    IF (error) THEN
+      use_injectors = .FALSE.
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
-          IF (IAND(error, 1) /= 1) &
-              WRITE(io,*) 'Must define a species for every injector'
-          IF (IAND(error, 2) /= 0) &
-              WRITE(io,*) 'Must define a density for every injector'
+          WRITE(io,*) 'Must define a species for every injector'
         END DO
       END IF
       errcode = c_err_missing_elements

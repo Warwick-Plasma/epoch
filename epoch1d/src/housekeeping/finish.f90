@@ -1,4 +1,4 @@
-! Copyright (C) 2014-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 MODULE finish
 
-  USE shared_data
+  USE constants
   USE diagnostics
   USE setup
   USE deck
@@ -57,6 +57,8 @@ CONTAINS
     DEALLOCATE(npart_each_rank)
     DEALLOCATE(x_grid_mins, x_grid_maxs, cell_x_min, cell_x_max)
 
+    DEALLOCATE(total_particle_energy_species)
+
     CALL deallocate_probes
 
     DO i = 1, n_species
@@ -69,6 +71,8 @@ CONTAINS
       CALL destroy_partlist(species_list(i)%attached_list)
       DEALLOCATE(species_list(i)%ext_temp_x_min, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_x_max, STAT=stat)
+      IF (ASSOCIATED(species_list(i)%background_density)) &
+          DEALLOCATE(species_list(i)%background_density, STAT=stat)
     END DO
 
     DEALLOCATE(species_list, STAT=stat)
@@ -91,6 +95,12 @@ CONTAINS
         current_hash => id_registry%get_hash(subset_list(i)%name)
         DEALLOCATE(current_hash)
       END IF
+      IF (.NOT. subset_list(i)%time_varying) CYCLE
+      DO n = 1, c_subset_max
+        IF (subset_list(i)%use_restriction_function(n)) THEN
+          CALL deallocate_stack(subset_list(i)%restriction_function(n))
+        END IF
+      END DO
     END DO
     DEALLOCATE(subset_list, STAT=stat)
     CALL id_registry%reset

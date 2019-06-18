@@ -23,7 +23,7 @@ end:boundaries
 
 begin:constant
   drift_p = 2.5e-24
-  temp = 273
+  temperature = 273
   dens = 1
   ppc = 8
 end:constant
@@ -33,9 +33,9 @@ begin:injector
   boundary = x_min
   species = Beam
   number_density = dens
-  temp = temp
-  drift_x = drift_p
-  npart_per_cell = ppc
+  temperature = temperature
+  drift_px = drift_p
+  nparticles_per_cell = ppc
 end:injector
 
 
@@ -44,10 +44,10 @@ begin:species
   name = Background
   charge = -1
   mass = 1.0
-  temp = temp
-  drift_x = -drift_p / 1000
+  temperature = temperature
+  drift_px = -drift_p / 1000
   number_density = dens * 1000
-  npart = ppc * nx * ny
+  nparticles = ppc * nx * ny
 end:species
 
 
@@ -56,8 +56,8 @@ begin:species
   name = Beam
   charge = -1
   mass = 1.0
-  #temp_x = temp
-  #drift_x = drift_p
+  #temperature_x = temperature
+  #drift_px = drift_p
   #number_density = dens
   bc_x_min = simple_outflow
   bc_x_max = simple_outflow
@@ -67,7 +67,7 @@ end:species
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 0.5e-2
   dump_last = T
 
@@ -85,7 +85,7 @@ begin:output
   bz = always
   jx = always
   ppc = always + species
-  #ekbar = always
+  #average_particle_energy = always
   #mass_density = never + species
   charge_density = always
   number_density = always + species

@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -312,7 +311,7 @@ CONTAINS
         units(idim)  = 'kg.m/s'
 
       ELSE IF (direction(idim) == c_dir_en) THEN
-        labels(idim) = 'en'
+        labels(idim) = 'energy'
         units(idim)  = 'J'
 
       ELSE IF (direction(idim) == c_dir_gamma_m1) THEN
@@ -373,7 +372,7 @@ CONTAINS
         particle_data(1:c_ndims) = current%part_pos
         IF (io_list(species)%species_type == c_species_id_photon) THEN
           particle_data(c_dir_gamma_m1) = 0.0_num
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           particle_data(c_dir_px) = px
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
@@ -509,7 +508,7 @@ CONTAINS
       particle_data(1:c_ndims) = current%part_pos
       IF (io_list(species)%species_type == c_species_id_photon) THEN
         particle_data(c_dir_gamma_m1) = 0.0_num
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         particle_data(c_dir_px) = px
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz

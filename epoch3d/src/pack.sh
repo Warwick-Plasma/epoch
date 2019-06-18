@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Copyright (C) 2014-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
+# Copyright (C) 2009-2019 University of Warwick
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -301,6 +301,11 @@ else
   fi
 
   if [ $? -ne 0 ]; then
+    cp $gitdiff $gitdiff.tmp
+    filterdiff $gitdiff.tmp > $gitdiff
+    if [ $? -ne 0 ]; then
+      mv $gitdiff.tmp $gitdiff
+    fi
     get_bytes_checksum $gitdiff
     gzip -c $gitdiff > ${gitdiff}.gz
     rm $gitdiff

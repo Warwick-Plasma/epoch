@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -235,12 +234,14 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'pol_angle')) THEN
+    IF (str_cmp(element, 'pol_angle') &
+        .OR. str_cmp(element, 'polarisation_angle')) THEN
       working_laser%pol_angle = as_real_print(value, element, errcode)
       RETURN
     END IF
 
-    IF (str_cmp(element, 'pol')) THEN
+    IF (str_cmp(element, 'pol') &
+        .OR. str_cmp(element, 'polarisation')) THEN
       ! Convert from degrees to radians
       working_laser%pol_angle = &
           pi * as_real_print(value, element, errcode) / 180.0_num

@@ -13,7 +13,7 @@ begin:control
   # global number of gridpoints
   nx = 128 # in x
   ny = 128
-  npart = nx * ny * 64
+  nparticles = nx * ny * 64
 
   # maximum number of iterations
   # set to -1 to run until finished
@@ -86,10 +86,10 @@ begin:species
 
   # electrons
   name = Electron
-  frac = 0.5
+  fraction = 0.5
   dump = T
 
-  temp = 0
+  temperature = 0
   number_density = if (x gt -1e-6, nel * 1.0e6, 0)
   number_density_min = 1
 
@@ -105,7 +105,7 @@ begin:species
   # normal. If you identify multiple species as electrons then the QED routines
   # will produce the electrons from pairs in the first specified electron
   # species. If you want to specify which positron species should receive pair
-  # positrons then identify it using identify:bw_electron
+  # positrons then identify it using identify:breit_wheeler_electron
 
   identify:electron
 
@@ -116,11 +116,11 @@ begin:species
 
   # ions
   name = Ion
-  frac = 0.5
+  fraction = 0.5
   dump = T
 
   number_density = number_density(Electron)
-  temp = temp_x(Electron)
+  temperature = temperature_x(Electron)
   number_density_min = 1
 
   # You don't have to identify protons, since they're not used in the QED
@@ -134,7 +134,7 @@ end:species
 begin:species
 
   name = Photon
-  npart = 0 # npart=0 since there are no initial photons in the system
+  nparticles = 0 # nparticles=0 since there are no initial photons in the system
   dump = T
 
   # This is the key line here. It identifies that this species is a photon
@@ -148,7 +148,7 @@ end:species
 begin:species
 
   name = Positron
-  npart = 0 # npart=0 since no initial positrons in the system
+  nparticles = 0 # nparticles=0 since no initial positrons in the system
   dump = T
 
   # This identifies this species as a positron. In most senses it's still a
@@ -156,7 +156,7 @@ begin:species
   # normal. If you identify multiple species as positrons then the QED routines
   # will produce the positrons from pairs in the first specified positron
   # species. If you want to specify which positron species should receive pair
-  # positrons then identify it using identify:bw_positron
+  # positrons then identify it using identify:breit_wheeler_positron
 
   identify:positron
 
@@ -205,7 +205,7 @@ begin:output
   jx = always
   jy = always
   jz = never
-  ekbar = always + species
+  average_particle_energy = always + species
   mass_density = never + species
   charge_density = never
   number_density = always + species
@@ -237,7 +237,7 @@ begin:laser
   boundary = x_min
   intensity = intens * 1.0e4
   omega = omega  # red
-  pol = 0.0
+  polarisation = 0.0
   phase = 0.0
   t_profile = 1  # semigauss(time, amax, 0.1 * amax, t_wid)
   t_start = 0.0

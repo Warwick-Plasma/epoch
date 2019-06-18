@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -22,6 +21,7 @@ MODULE boundary
   USE mpi_subtype_control
   USE utilities
   USE particle_id_hash_mod
+  USE injectors
 
   IMPLICIT NONE
 
@@ -29,7 +29,7 @@ CONTAINS
 
   SUBROUTINE setup_boundaries
 
-    INTEGER :: i, ispecies
+    INTEGER :: i, ispecies, bc
     LOGICAL :: error
     CHARACTER(LEN=5), DIMENSION(2*c_ndims) :: &
         boundary = (/ 'x_min', 'x_max' /)
@@ -59,10 +59,15 @@ CONTAINS
     error = .FALSE.
     DO ispecies = 1, n_species
       DO i = 1, 2*c_ndims
+        bc = species_list(ispecies)%bc_particle(i)
         bc_error = 'Unrecognised "' // TRIM(boundary(i)) // '" boundary for ' &
             // 'species "' // TRIM(species_list(ispecies)%name) // '"'
-        error = error .OR. setup_particle_boundary(&
-            species_list(ispecies)%bc_particle(i), bc_error)
+        error = error .OR. setup_particle_boundary(bc, bc_error)
+
+        IF (bc == c_bc_heat_bath) THEN
+          CALL create_boundary_injector(ispecies, i)
+          species_list(ispecies)%bc_particle(i) = c_bc_open
+        END IF
       END DO
     END DO
 
@@ -105,6 +110,7 @@ CONTAINS
     IF (boundary == c_bc_periodic &
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
+        .OR. boundary == c_bc_heat_bath &
         .OR. boundary == c_bc_open) RETURN
 
     IF (rank == 0) THEN
@@ -125,45 +131,55 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
 
-    CALL do_field_mpi_with_lengths(field, ng, nx)
+    CALL do_field_mpi_with_lengths(field, ng, nx, .TRUE.)
 
   END SUBROUTINE field_bc
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local)
+  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, subcycle)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local
-    INTEGER :: basetype, i, n
+    LOGICAL, INTENT(IN), OPTIONAL :: subcycle
+    INTEGER :: basetype, i, n, ic
     REAL(num), ALLOCATABLE :: temp(:)
+    LOGICAL :: subcycle_comms
+
+    IF (PRESENT(subcycle)) THEN
+      subcycle_comms = subcycle
+    ELSE
+      subcycle_comms = .FALSE.
+    END IF
 
     basetype = mpireal
 
     ALLOCATE(temp(ng))
 
-    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
-        tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
+    DO ic = 1, nsubcycle_comms(1)
+      CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
+          tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
-      n = 1
-      DO i = nx_local+1, nx_local+ng
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
+      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+        n = 1
+        DO i = nx_local+1, nx_local+ng
+          field(i) = temp(n)
+          n = n + 1
+        END DO
+      END IF
 
-    CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
-        tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
+      CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
+          tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
 
-    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
-      n = 1
-      DO i = 1-ng, 0
-        field(i) = temp(n)
-        n = n + 1
-      END DO
-    END IF
+      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+        n = 1
+        DO i = 1-ng, 0
+          field(i) = temp(n)
+          n = n + 1
+        END DO
+      END IF
+    END DO
 
     DEALLOCATE(temp)
 
@@ -648,8 +664,9 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! y-direction
                 i = 2
@@ -710,8 +727,9 @@ CONTAINS
 
                 ! x-direction
                 i = 1
-                cur%part_p(i) = -sgn * flux_momentum_from_temperature(&
-                    species_list(ispecies)%mass, temp(i), 0.0_num)
+                cur%part_p(i) = flux_momentum_from_temperature(&
+                    species_list(ispecies)%mass, temp(i), 0.0_num, &
+                    -REAL(sgn, num))
 
                 ! y-direction
                 i = 2

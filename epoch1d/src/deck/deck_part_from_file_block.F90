@@ -1,5 +1,4 @@
-! Copyright (C) 2016      Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2016      Phil Tooley <phil.tooley@gmail.com>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -222,7 +221,7 @@ CONTAINS
       RETURN
     END IF
 
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     IF (str_cmp(element, 'w_data')) THEN
       IF (got_filename) THEN
         custom_loaders_list(current_loader_id)%w_data = TRIM(filename)
@@ -293,7 +292,7 @@ CONTAINS
         errcode = c_err_missing_elements
       END IF
 
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
       IF (str_cmp(custom_loaders_list(i)%w_data, '')) THEN
         IF (rank == 0) THEN
           CALL integer_as_string(current_block_num, id_string)
@@ -386,7 +385,7 @@ CONTAINS
       custom_loaders_list(i)%pz_data = ''
       custom_loaders_list(i)%pz_data_offset = 0
       custom_loaders_list(i)%pz_data_given = .FALSE.
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
       custom_loaders_list(i)%w_data = ''
       custom_loaders_list(i)%w_data_offset = 0
 #endif

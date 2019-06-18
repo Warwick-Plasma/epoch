@@ -41,7 +41,7 @@ begin:species
   # Truncated power law distribution in px
   dist_fn = exp(-p0/px) * (px/p0)^(alpha)
   dist_fn_px_range = (0, pmax)
-  npart = nx * ny * 150
+  nparticles = nx * ny * 150
 end:species
 
 
@@ -50,15 +50,15 @@ begin:species
   charge = -1
   mass = 1.0
   number_density = dens
-  temp = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
-  npart = nx * ny * 150
+  temperature = (v0/4)^2 * me / kb # Thermal velocity of 1/4 power law peak
+  nparticles = nx * ny * 150
 end:species
 
 
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 10.5e-3
   dump_last = F
 

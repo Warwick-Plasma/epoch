@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2011-2012 Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -183,7 +181,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
           wdata = 0.0_num
@@ -292,7 +290,7 @@ CONTAINS
 
           wdata = gamma_rel_m1 * fac
         ELSE
-#ifdef PHOTONS
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           fac = c / current%particle_energy
           part_ux = current%part_p(1) * fac
           part_uy = current%part_p(2) * fac
@@ -483,7 +481,7 @@ CONTAINS
     INTEGER, INTENT(IN), OPTIONAL :: direction
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
-    REAL(num) :: idx
+    REAL(num) :: idx, vol
     INTEGER :: ispecies, ix, spec_start, spec_end
     TYPE(particle), POINTER :: current
     LOGICAL :: spec_sum
@@ -491,7 +489,8 @@ CONTAINS
 
     data_array = 0.0_num
 
-    idx = 1.0_num / dx
+    vol = dx
+    idx = 1.0_num / vol
 
     spec_start = current_species
     spec_end = current_species
@@ -509,22 +508,27 @@ CONTAINS
 #ifndef NO_TRACER_PARTICLES
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
-      current => io_list(ispecies)%attached_list%head
-      wdata = io_list(ispecies)%weight
+      IF (io_list(ispecies)%background_species) THEN
+        data_array(1:nx) = data_array(1:nx) &
+            + io_list(ispecies)%background_density(1:nx) * vol
+      ELSE
+        current => io_list(ispecies)%attached_list%head
+        wdata = io_list(ispecies)%weight
 
-      DO WHILE (ASSOCIATED(current))
+        DO WHILE (ASSOCIATED(current))
 #ifndef PER_SPECIES_WEIGHT
-        wdata = current%weight
+          wdata = current%weight
 #endif
 
 #include "particle_to_grid.inc"
 
-        DO ix = sf_min, sf_max
-          data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
-        END DO
+          DO ix = sf_min, sf_max
+            data_array(cell_x+ix) = data_array(cell_x+ix) + gx(ix) * wdata
+          END DO
 
-        current => current%next
-      END DO
+          current => current%next
+        END DO
+      END IF
       CALL calc_boundary(data_array, ispecies)
     END DO
 
@@ -974,14 +978,12 @@ CONTAINS
 
 
 
-  SUBROUTINE calc_per_species_momentum(data_array, current_species, direction)
+  SUBROUTINE calc_average_momentum(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: data_array
     INTEGER, INTENT(IN) :: current_species
     INTEGER, INTENT(IN), OPTIONAL :: direction
     REAL(num), DIMENSION(:), ALLOCATABLE :: part_count
-    ! Properties of the current particle. Copy out of particle arrays for speed
-    REAL(num) :: part_px, part_py, part_pz
     ! The data to be weighted onto the grid
     REAL(num) :: wdata, weight
     INTEGER :: ispecies, ix, spec_start, spec_end
@@ -991,8 +993,7 @@ CONTAINS
 
     IF (.NOT. PRESENT(direction)) THEN
       IF (rank == 0) THEN
-        PRINT*, 'Error: No direction argument supplied to ', &
-            'calc_per_species_momentum'
+        PRINT*, 'Error: No direction argument supplied to calc_average_momentum'
         CALL abort_code(c_err_bad_value)
       END IF
     END IF
@@ -1018,29 +1019,15 @@ CONTAINS
       IF (spec_sum .AND. io_list(ispecies)%zero_current) CYCLE
 #endif
       current => io_list(ispecies)%attached_list%head
-      wdata = io_list(ispecies)%weight
+
       weight = io_list(ispecies)%weight
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
-
 #ifndef PER_SPECIES_WEIGHT
-        wdata = current%weight
         weight = current%weight
 #endif
-
-        ! Copy the particle properties out for speed
-        part_px = current%part_p(1)
-        part_py = current%part_p(2)
-        part_pz = current%part_p(3)
-        SELECT CASE (direction)
-          CASE(c_dir_x)
-            wdata = wdata * part_px
-          CASE(c_dir_y)
-            wdata = wdata * part_py
-          CASE(c_dir_z)
-            wdata = wdata * part_pz
-        END SELECT
+        wdata = weight * current%part_p(direction)
 
 #include "particle_to_grid.inc"
 
@@ -1058,28 +1045,36 @@ CONTAINS
     CALL calc_boundary(data_array)
     CALL calc_boundary(part_count)
 
-    data_array = data_array/MAX(part_count, c_tiny)
+    data_array = data_array / MAX(part_count, c_tiny)
     DO ix = 1, 2*c_ndims
       CALL field_zero_gradient(data_array, c_stagger_centre, ix)
     END DO
 
     DEALLOCATE(part_count)
 
-  END SUBROUTINE calc_per_species_momentum
+  END SUBROUTINE calc_average_momentum
 
 
 
-  SUBROUTINE calc_total_energy_sum
+  SUBROUTINE calc_total_energy_sum(per_species)
 
+    LOGICAL, INTENT(IN) :: per_species
     REAL(num) :: particle_energy, field_energy
     REAL(num) :: part_ux, part_uy, part_uz, part_u2
-    REAL(num) :: part_mc, part_w, fac, gamma_rel, gamma_rel_m1
-    REAL(num) :: sum_out(2), sum_in(2)
+    REAL(num) :: part_mc, part_w, fac, gamma_rel, gamma_rel_m1, part_energy
+    REAL(num), ALLOCATABLE :: sum_out(:), sum_in(:)
+    REAL(num), ALLOCATABLE :: species_energy(:)
     REAL(num), PARAMETER :: c2 = c**2
-    INTEGER :: ispecies, i
+    INTEGER :: ispecies, i, nsum
     TYPE(particle), POINTER :: current
 
     particle_energy = 0.0_num
+    IF (per_species) THEN
+      ALLOCATE(species_energy(n_species))
+      nsum = 1 + n_species
+    ELSE
+      nsum = 2
+    END IF
 
     ! Sum over all particles to calculate total kinetic energy
     DO ispecies = 1, n_species
@@ -1090,6 +1085,7 @@ CONTAINS
       part_mc = c * species_list(ispecies)%mass
       part_w = species_list(ispecies)%weight
       fac = part_mc * part_w * c
+      part_energy = 0.0_num
 
       DO WHILE (ASSOCIATED(current))
         ! Copy the particle properties out for speed
@@ -1115,15 +1111,17 @@ CONTAINS
           gamma_rel = SQRT(part_u2 + 1.0_num)
           gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
 
-          particle_energy = particle_energy + gamma_rel_m1 * fac
-#ifdef PHOTONS
+          part_energy = part_energy + gamma_rel_m1 * fac
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         ELSE
-          particle_energy = particle_energy + current%particle_energy * part_w
+          part_energy = part_energy + current%particle_energy * part_w
 #endif
         END IF
 
         current => current%next
       END DO
+      IF (per_species) species_energy(ispecies) = part_energy
+      particle_energy = particle_energy + part_energy
     END DO
 
     ! EM field energy
@@ -1134,11 +1132,23 @@ CONTAINS
     END DO
     field_energy = 0.5_num * epsilon0 * field_energy * dx
 
-    sum_out(1) = particle_energy
-    sum_out(2) = field_energy
-    CALL MPI_REDUCE(sum_out, sum_in, 2, mpireal, MPI_SUM, 0, comm, errcode)
-    total_particle_energy = sum_in(1)
-    total_field_energy = sum_in(2)
+    ALLOCATE(sum_out(nsum))
+    ALLOCATE(sum_in(nsum))
+    sum_out(1) = field_energy
+    IF (per_species) THEN
+      sum_out(2:1+n_species) = species_energy(:)
+    ELSE
+      sum_out(2) = particle_energy
+    END IF
+
+    CALL MPI_REDUCE(sum_out, sum_in, nsum, mpireal, MPI_SUM, 0, comm, errcode)
+    total_field_energy = sum_in(1)
+    IF (per_species) THEN
+      total_particle_energy_species(:) = sum_in(2:1+n_species)
+      total_particle_energy = SUM(sum_in(2:1+n_species))
+    ELSE
+      total_particle_energy = sum_in(2)
+    END IF
 
   END SUBROUTINE calc_total_energy_sum
 

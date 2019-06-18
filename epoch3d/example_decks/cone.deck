@@ -2,7 +2,7 @@ begin:control
   nx = 250
   ny = 250
   nz = 250
-  npart = nx * ny * nz * 1.123
+  nparticles = nx * ny * nz * 1.123
 
   # Final time of simulation
   t_end = 50 * femto
@@ -44,7 +44,7 @@ begin:species
   name = proton
   charge = 1.0
   mass = 1836.2
-  frac = 0.5
+  fraction = 0.5
   number_density = if((r gt ri) and (r lt ro), den_cone, 0.0)
   number_density = if((x gt xi) and (x lt xo) and (r lt ri), \
                       den_cone, number_density(proton))
@@ -56,7 +56,7 @@ begin:species
   name = electron
   charge = -1.0
   mass = 1.0
-  frac = 0.5
+  fraction = 0.5
   number_density = number_density(proton)
 end:species
 
@@ -77,13 +77,13 @@ end:output_global
 begin:output
   name = normal
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 1 * femto
 
   # Properties on grid
   grid = always
   ey = always
-  ekbar = always
+  average_particle_energy = always
   number_density = always + species
   temperature = always + species
 
@@ -95,7 +95,7 @@ end:output
 begin:output
   name = large
 
-  # Number of timesteps between output dumps
+  # Simulated time between output dumps
   dt_snapshot = 10 * femto
 
   # Properties at particle positions

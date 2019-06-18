@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -49,25 +48,14 @@ CONTAINS
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
 
-    IF (nx_global < ng) THEN
-      IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
-        PRINT*,'*** ERROR ***'
-        PRINT*,'Simulation domain is too small.'
-        PRINT*,'There must be at least ' // TRIM(str) &
-            // ' cells in each direction.'
-      END IF
-      CALL abort_code(c_err_bad_setup)
-    END IF
-
     nproc_orig = nproc
 
     IF (nprocx > 0) nproc = nprocx
 
     DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
-      ! Actual domain must be bigger than the number of ghostcells
-      IF (nxsplit >= ng) EXIT
+      ! Actual domain must be bigger than one
+      IF (nxsplit >= 1) EXIT
       nproc  = nproc - 1
       nprocx = nproc
     END DO
@@ -181,6 +169,7 @@ CONTAINS
 
     INTEGER :: ispecies, idim
     INTEGER :: nx0, nxp
+    INTEGER :: mincells(c_ndims)
 
     IF (.NOT.cpml_boundaries) cpml_thickness = 0
 
@@ -192,6 +181,8 @@ CONTAINS
 
     nx_global = nx_global + 2 * cpml_thickness
 
+    mincells(:) = HUGE(1)
+
     IF (use_exact_restart) THEN
       old_x_max(nprocx) = nx_global
       cell_x_max = old_x_max
@@ -200,9 +191,12 @@ CONTAINS
       cell_x_min(1) = 1
       DO idim = 2, nprocx
         cell_x_min(idim) = cell_x_max(idim-1) + 1
+        mincells(1) = MIN(mincells(1), cell_x_max(idim) - cell_x_min(idim) + 1)
       END DO
     ELSE
       nx0 = nx_global / nprocx
+
+      mincells(1) = nx0
 
       ! If the number of gridpoints cannot be exactly subdivided then fix
       ! The first nxp processors have nx0 grid points
@@ -222,6 +216,14 @@ CONTAINS
         cell_x_max(idim) = nxp * nx0 + (idim - nxp) * (nx0 + 1)
       END DO
     END IF
+
+    DO idim = 1, c_ndims
+      IF (mincells(idim) < ncell_min) THEN
+        nsubcycle_comms(idim) = ncell_min - mincells(idim) + 1
+      ElSE
+        nsubcycle_comms(idim) = 1
+      END IF
+    END DO
 
     nx_global_min = cell_x_min(x_coords+1)
     nx_global_max = cell_x_max(x_coords+1)
@@ -275,6 +277,8 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1:3))
       END IF
     END DO
+
+    ALLOCATE(total_particle_energy_species(n_species))
 
     CALL allocate_ic
 
