@@ -491,7 +491,7 @@ MODULE shared_data
 
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state
-  LOGICAL :: use_exact_restart
+  LOGICAL :: use_exact_restart, use_exact_restart_set
   LOGICAL :: allow_cpu_reduce
   LOGICAL :: simplify_deck
   LOGICAL :: print_deck_constants
