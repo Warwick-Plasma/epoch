@@ -1716,7 +1716,7 @@ CONTAINS
 
       ALLOCATE(depths(n_els(1), n_els(2), dims(c_ndims)))
 
-      CALL sdf_read_array(sdf_handle, depths, (/sz(1), sz(2), dims(2)/), &
+      CALL sdf_read_array(sdf_handle, depths, (/sz(1), sz(2), dims(c_ndims)/), &
           (/starts(1), starts(2), 1/), null_proc=(.NOT. runs_this_rank))
 
       CALL setup_injector_depths(injector_base_pointer, depths, inj_count)
