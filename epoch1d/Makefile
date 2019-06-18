@@ -535,9 +535,9 @@ prefetch.o: prefetch.F90 shared_data.o
 probes.o: probes.F90 partlist.o $(SDFMOD)
 random_generator.o: random_generator.f90
 redblack_module.o: redblack_module.f90 partlist.o
-setup.o: setup.F90 antennae.o balance.o constants.o fields.o helper.o laser.o \
-  mpi_routines.o mpi_subtype_control.o particle_id_hash.o shunt.o \
-  split_particle.o timer.o version_data.o welcome.o window.o $(SDFMOD)
+setup.o: setup.F90 antennae.o balance.o constants.o fields.o helper.o \
+  injectors.o laser.o mpi_routines.o mpi_subtype_control.o particle_id_hash.o \
+  shunt.o split_particle.o timer.o version_data.o welcome.o window.o $(SDFMOD)
 shape_functions.o: shape_functions.F90 constants.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o

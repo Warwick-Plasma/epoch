@@ -422,6 +422,11 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
 
+        CALL write_injector_depths(sdf_handle, injector_x_min, &
+            'injector_x_min_depths', c_dir_x, x_min_boundary)
+        CALL write_injector_depths(sdf_handle, injector_x_max, &
+            'injector_x_max_depths', c_dir_x, x_max_boundary)
+
         CALL write_antenna_phases(sdf_handle)
 
         CALL write_id_starts(sdf_handle)
@@ -975,6 +980,56 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_laser_phases
+
+
+
+  SUBROUTINE write_injector_depths(sdf_handle, first_injector, block_name, &
+      direction, runs_this_rank)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    TYPE(injector_block), POINTER :: first_injector
+    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: direction
+    LOGICAL, INTENT(IN) :: runs_this_rank
+    TYPE(injector_block), POINTER :: current_injector
+    REAL(num), DIMENSION(:), ALLOCATABLE :: depths
+    INTEGER :: iinj, inj_count, ierr
+
+    current_injector => first_injector
+    inj_count = 0
+    DO WHILE(ASSOCIATED(current_injector))
+      inj_count = inj_count + 1
+      current_injector => current_injector%next
+    END DO
+
+    IF (inj_count > 0) THEN
+      ALLOCATE(depths(inj_count))
+      iinj = 1
+      current_injector => first_injector
+
+      DO WHILE(ASSOCIATED(current_injector))
+        depths(iinj) = current_injector%depth
+        iinj = iinj + 1
+        current_injector => current_injector%next
+      END DO
+
+      IF (.NOT. runs_this_rank) depths = HUGE(0.0_num)
+
+      IF (rank == 0) THEN
+        CALL MPI_Reduce(MPI_IN_PLACE, depths, inj_count, mpireal, MPI_MIN, &
+            0, comm, ierr)
+      ELSE
+        CALL MPI_Reduce(depths, depths, inj_count, mpireal, MPI_MIN, &
+            0, comm, ierr)
+      END IF
+
+      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+          inj_count, depths, 0)
+
+      DEALLOCATE(depths)
+    END IF
+
+  END SUBROUTINE write_injector_depths
 
 
 

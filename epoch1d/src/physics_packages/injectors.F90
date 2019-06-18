@@ -43,6 +43,9 @@ CONTAINS
     injector%use_flux_injector = .TRUE.
     NULLIFY(injector%next)
 
+    injector%depth = 1.0_num
+    need_random_state = .TRUE.
+
   END SUBROUTINE init_injector
 
 
@@ -422,8 +425,6 @@ CONTAINS
       END IF
     END DO
 
-    injector%depth = 1.0_num
-
   END SUBROUTINE finish_single_injector_setup
 
 
@@ -435,7 +436,6 @@ CONTAINS
 
     species_list(ispecies)%bc_particle(bnd) = c_bc_open
     use_injectors = .TRUE.
-    need_random_state = .TRUE.
 
     ALLOCATE(working_injector)
 
@@ -445,5 +445,28 @@ CONTAINS
     CALL attach_injector(working_injector)
 
   END SUBROUTINE create_boundary_injector
+
+
+
+  SUBROUTINE setup_injector_depths(inj_init, depths, inj_count)
+
+    TYPE(injector_block), POINTER :: inj_init
+    REAL(num), DIMENSION(:), INTENT(IN) :: depths
+    INTEGER, INTENT(OUT) :: inj_count
+    TYPE(injector_block), POINTER :: inj
+    INTEGER :: iinj
+
+    iinj = 1
+    inj => inj_init
+
+    DO WHILE(ASSOCIATED(inj))
+      inj%depth = depths(iinj)
+      iinj = iinj + 1
+      inj => inj%next
+    END DO
+
+    inj_count = iinj - 1
+
+  END SUBROUTINE setup_injector_depths
 
 END MODULE injectors

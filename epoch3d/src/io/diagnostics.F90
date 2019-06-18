@@ -430,6 +430,19 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_z_max, laser_z_max, &
             'laser_z_max_phase')
 
+        CALL write_injector_depths(sdf_handle, injector_x_min, &
+            'injector_x_min_depths', c_dir_x, x_min_boundary)
+        CALL write_injector_depths(sdf_handle, injector_x_max, &
+            'injector_x_max_depths', c_dir_x, x_max_boundary)
+        CALL write_injector_depths(sdf_handle, injector_y_min, &
+            'injector_y_min_depths', c_dir_y, y_min_boundary)
+        CALL write_injector_depths(sdf_handle, injector_y_max, &
+            'injector_y_max_depths', c_dir_y, y_max_boundary)
+        CALL write_injector_depths(sdf_handle, injector_z_min, &
+            'injector_z_min_depths', c_dir_z, z_min_boundary)
+        CALL write_injector_depths(sdf_handle, injector_z_max, &
+            'injector_z_max_depths', c_dir_z, z_max_boundary)
+
         CALL write_antenna_phases(sdf_handle)
 
         CALL write_id_starts(sdf_handle)
@@ -1069,6 +1082,62 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_antenna_phases
+
+
+
+  SUBROUTINE write_injector_depths(sdf_handle, first_injector, block_name, &
+      direction, runs_this_rank)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    TYPE(injector_block), POINTER :: first_injector
+    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: direction
+    LOGICAL, INTENT(IN) :: runs_this_rank
+    TYPE(injector_block), POINTER :: current_injector
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: depths
+    INTEGER :: iinj, inj_count
+    INTEGER, DIMENSION(c_ndims-1) :: n_els, sz, starts
+
+    current_injector => first_injector
+    inj_count = 0
+    DO WHILE(ASSOCIATED(current_injector))
+      inj_count = inj_count + 1
+      current_injector => current_injector%next
+    END DO
+
+    IF (direction == c_dir_x) THEN
+      n_els = (/ny, nz/)
+      sz = (/ny_global, nz_global/)
+      starts = (/ny_global_min, nz_global_min/)
+    ELSE IF (direction == c_dir_y) THEN
+      n_els = (/nx, nz/)
+      sz = (/nx_global, nz_global/)
+      starts = (/nx_global_min, nz_global_min/)
+    ELSE
+      n_els = (/nx, ny/)
+      sz = (/nx_global, ny_global/)
+      starts = (/nx_global_min, ny_global_min/)
+    END IF
+
+    IF (inj_count > 0) THEN
+      ALLOCATE(depths(n_els(1), n_els(2), inj_count))
+      iinj = 1
+      current_injector => first_injector
+
+      DO WHILE(ASSOCIATED(current_injector))
+        depths(:,:,iinj) = current_injector%depth(1:n_els(1), 1:n_els(2))
+        iinj = iinj + 1
+        current_injector => current_injector%next
+      END DO
+
+      CALL sdf_write_array(sdf_handle, TRIM(block_name), TRIM(block_name), &
+          depths, (/sz(1), sz(2), inj_count/), (/starts(1), starts(2), 1/), &
+          null_proc=(.NOT. runs_this_rank))
+
+      DEALLOCATE(depths)
+    END IF
+
+  END SUBROUTINE write_injector_depths
 
 
 
