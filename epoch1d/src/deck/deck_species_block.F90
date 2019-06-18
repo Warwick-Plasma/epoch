@@ -1381,8 +1381,6 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: value
     INTEGER, INTENT(INOUT) :: errcode
 
-    IF (.NOT.use_qed .AND. .NOT.use_bremsstrahlung) RETURN
-
     ! Just a plain old electron
     IF (str_cmp(value, 'electron')) THEN
       species_list(species_id)%charge = -q0
@@ -1445,7 +1443,7 @@ CONTAINS
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_electron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1465,7 +1463,7 @@ CONTAINS
 #ifdef PHOTONS
       breit_wheeler_electron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1499,7 +1497,7 @@ CONTAINS
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_positron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1516,7 +1514,7 @@ CONTAINS
 #ifdef PHOTONS
       IF (photon_species == -1) photon_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1537,7 +1535,7 @@ CONTAINS
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
 #else
-      errcode = c_err_generic_warning
+      IF (use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
       RETURN
     END IF
