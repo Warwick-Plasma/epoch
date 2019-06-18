@@ -1011,10 +1011,10 @@ CONTAINS
 
       IF (rank == 0) THEN
         CALL MPI_Reduce(MPI_IN_PLACE, depths, inj_count, mpireal, MPI_MIN, &
-          0, MPI_COMM_WORLD, ierr)
+            0, comm, ierr)
       ELSE
         CALL MPI_Reduce(depths, depths, inj_count, mpireal, MPI_MIN, &
-          0, MPI_COMM_WORLD, ierr)
+            0, comm, ierr)
       END IF
 
       CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
