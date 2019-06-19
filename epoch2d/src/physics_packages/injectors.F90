@@ -315,10 +315,7 @@ CONTAINS
           flux_dir_cell = -1
         ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
           ! Net is outflow - inflow velocity is zero
-          v_inject_s = 0.0_num
-          gamma_mass = 1.0_num
-          ! Since we inject nothing, no need to correct density
-          density_correction = 1.0_num
+          CYCLE
         ELSE IF (ABS(p_drift) < p_therm * 1.0e-9_num) THEN
           v_inject_s = 2.0_num * sqrt2pi_inv * p_therm &
               + (1.0_num - 2.0_num * sqrt2 / pi) * p_drift
@@ -330,6 +327,7 @@ CONTAINS
 
           ! Fraction of the drifting Maxwellian distribution inflowing
           density_correction = 0.5_num * (1.0_num + erf_func(p_ratio))
+          IF (density_correction < c_tiny) CYCLE
 
           ! Below is actually MOMENTUM, will correct on next line
           v_inject_s = dir_mult * (p_drift &
