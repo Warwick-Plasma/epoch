@@ -1293,6 +1293,13 @@ CONTAINS
         restart_flag = .TRUE.
       END IF
 
+      IF (got_request_dump_name) THEN
+        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
+          io_block_list(io)%dump = .TRUE.
+          got_request_dump_name = .FALSE.
+        END IF
+      END IF
+
       IF (elapsed_time < walltime_start) CYCLE
       IF (elapsed_time > walltime_stop)  CYCLE
       IF (elapsed_time < io_block_list(io)%walltime_start) CYCLE
@@ -1391,15 +1398,11 @@ CONTAINS
         END IF
       END IF
 
-      IF (got_request_dump_name) THEN
-        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
-          io_block_list(io)%dump = .TRUE.
-        END IF
-      END IF
-
       io_block_list(io)%average_time_start = &
           time_first - io_block_list(io)%average_time
+    END DO
 
+    DO io = 1, n_io_blocks
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
@@ -1431,6 +1434,7 @@ CONTAINS
     END DO
 
     IF (got_request_dump_restart) THEN
+      got_request_dump_restart = .FALSE.
       restart_flag = .TRUE.
       print_arrays = .TRUE.
       dump_source_code = .TRUE.
@@ -1457,9 +1461,6 @@ CONTAINS
 
     IF (force) iomask = IOR(iomask, io_block_list(1)%dumpmask)
     iodumpmask(1,:) = iomask
-
-    got_request_dump_name = .FALSE.
-    got_request_dump_restart = .FALSE.
 
   END SUBROUTINE io_test
 
