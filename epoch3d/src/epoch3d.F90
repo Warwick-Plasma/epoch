@@ -232,6 +232,10 @@ PROGRAM pic
       CALL update_particle_count
     END IF
 
+    IF (any_antennae) THEN
+      CALL generate_antennae_currents
+    END IF
+
     step = step + 1
     time = time + dt / 2.0_num
 
@@ -240,9 +244,6 @@ PROGRAM pic
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
 
-    IF (any_antennae) THEN
-      CALL generate_antennae_currents
-    END IF
     CALL output_routines(step)
     time = time + dt / 2.0_num
 
