@@ -682,20 +682,20 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
             xbd = sgn
-            ! Particle has left the system
-            IF (x_min_boundary) THEN
-              xbd = 0
-              bc = bc_species(c_bd_x_min)
-              IF (bc == c_bc_reflect) THEN
+            bc = bc_species(c_bd_x_min)
+            IF (bc == c_bc_reflect) THEN
+              IF (x_min_boundary) THEN
+                xbd = 0
                 cur%part_pos = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc == c_bc_periodic) THEN
-                xbd = sgn
+              END IF
+            ELSE IF (bc == c_bc_periodic) THEN
+              IF (x_min_boundary) THEN
                 cur%part_pos = part_pos - sgn * x_shift
               END IF
-            END IF
-            IF (part_pos < x_min_outer .AND. bc /= c_bc_periodic) THEN
-              IF (bc == c_bc_thermal) THEN
+            ELSE IF (bc == c_bc_thermal) THEN
+              IF (part_pos < x_min_outer) THEN
+                xbd = 0
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 END DO
@@ -720,7 +720,9 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_min_outer - part_pos
 
-              ELSE
+              END IF
+            ELSE
+              IF (part_pos < x_min_outer) THEN
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
@@ -745,20 +747,20 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
             xbd = sgn
-            ! Particle has left the system
-            IF (x_max_boundary) THEN
-              xbd = 0
-              bc = bc_species(c_bd_x_max)
-              IF (bc == c_bc_reflect) THEN
+            bc = bc_species(c_bd_x_max)
+            IF (bc == c_bc_reflect) THEN
+              IF (x_max_boundary) THEN
+                xbd = 0
                 cur%part_pos = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc == c_bc_periodic) THEN
-                xbd = sgn
+              END IF
+            ELSE IF (bc == c_bc_periodic) THEN
+              IF (x_max_boundary) THEN
                 cur%part_pos = part_pos - sgn * x_shift
               END IF
-            END IF
-            IF (part_pos >= x_max_outer .AND. bc /= c_bc_periodic) THEN
-              IF (bc == c_bc_thermal) THEN
+            ELSE IF (bc == c_bc_thermal) THEN
+              IF (part_pos >= x_max_outer) THEN
+                xbd = 0
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 END DO
@@ -783,7 +785,9 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_max_outer - part_pos
 
-              ELSE
+              END IF
+            ELSE
+              IF (part_pos >= x_max_outer) THEN
                 ! Default to open boundary conditions - remove particle
                 out_of_bounds = .TRUE.
               END IF
