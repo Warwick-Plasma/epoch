@@ -143,9 +143,13 @@ PROGRAM pic
 
   IF (ic_from_restart) THEN
     IF (dt_from_restart > 0) dt = dt_from_restart
-    time = time + dt / 2.0_num
-    CALL update_eb_fields_final
-    CALL moving_window
+    IF (step == 0) THEN
+      CALL bfield_final_bcs
+    ELSE
+      time = time + dt / 2.0_num
+      CALL update_eb_fields_final
+      CALL moving_window
+    END IF
   ELSE
     dt_store = dt
     dt = dt / 2.0_num
