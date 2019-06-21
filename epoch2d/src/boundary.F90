@@ -943,10 +943,10 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
 
-      NULLIFY(bnd_part_next)
       ALLOCATE(species_list(ispecies)%boundary_particles)
       NULLIFY(species_list(ispecies)%boundary_particles%particle)
       NULLIFY(species_list(ispecies)%boundary_particles%next)
+      NULLIFY(bnd_part_next)
       bnd_part_last => species_list(ispecies)%boundary_particles
 
       DO ipart = 1, species_list(ispecies)%attached_list%count
@@ -969,7 +969,7 @@ CONTAINS
           => species_list(ispecies)%boundary_particles%next
       DEALLOCATE(bnd_part_last)
       ! Final particle should have null 'next' ptr
-      IF(ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
+      NULLIFY(bnd_part_next%next)
     END DO
 
   END SUBROUTINE setup_bc_lists
@@ -1360,7 +1360,6 @@ CONTAINS
               species_list(ispecies)%attached_list, cur)
           CALL add_particle_to_partlist(send(xbd, ybd), cur)
         END IF
-
       END DO
 
       ! swap Particles

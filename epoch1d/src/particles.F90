@@ -535,7 +535,7 @@ CONTAINS
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next
       DEALLOCATE(bnd_part_last)
-      IF(ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
+      NULLIFY(bnd_part_next%next)
       CALL current_bcs(species=ispecies)
     END DO
 
@@ -593,10 +593,9 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: delta_x
     INTEGER,INTENT(IN) :: ispecies
-    TYPE(particle), POINTER :: current
-
     REAL(num) :: current_energy, dtfac, fac
     REAL(num) :: bnd_x_min, bnd_x_max
+    TYPE(particle), POINTER :: current
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
     ! Used for particle probes (to see of probe conditions are satisfied)
@@ -610,6 +609,9 @@ CONTAINS
 
     IF (species_list(ispecies)%attached_list%count == 0) RETURN
 
+    bnd_x_min = x_grid_min_local - 0.5_num * dx
+    bnd_x_max = x_grid_max_local + 0.5_num * dx
+
     ! Setup list of particles which may need boundary conditions applied
     ALLOCATE(species_list(ispecies)%boundary_particles)
     NULLIFY(species_list(ispecies)%boundary_particles%particle)
@@ -622,9 +624,6 @@ CONTAINS
     probes_for_species = ASSOCIATED(current_probe)
 #endif
     dtfac = dt * c**2
-
-    bnd_x_min = x_grid_min_local - 0.5_num * dx
-    bnd_x_max = x_grid_max_local + 0.5_num * dx
 
     ! set current to point to head of list
     current => species_list(ispecies)%attached_list%head
@@ -696,7 +695,7 @@ CONTAINS
     species_list(ispecies)%boundary_particles &
         => species_list(ispecies)%boundary_particles%next
     DEALLOCATE(bnd_part_last)
-    IF(ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
+    NULLIFY(bnd_part_next%next)
 
   END SUBROUTINE push_photons
 #endif
