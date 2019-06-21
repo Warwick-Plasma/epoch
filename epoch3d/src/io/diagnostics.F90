@@ -52,6 +52,7 @@ MODULE diagnostics
   LOGICAL :: dump_field_grid, skipped_any_set
   LOGICAL :: got_request_dump_name = .FALSE.
   LOGICAL :: got_request_dump_restart = .FALSE.
+  LOGICAL :: from_dump_request = .FALSE.
   CHARACTER(LEN=string_length) :: request_dump_name = ''
   LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   LOGICAL, ALLOCATABLE, SAVE :: prefix_first_call(:)
@@ -998,9 +999,13 @@ CONTAINS
           CALL append_filename(dump_type, filename, n_io_blocks+2)
         END IF
         IF (iprefix > 1) dump_type = TRIM(file_prefixes(iprefix))
-        WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
-          & g20.12, '' and iteration'', i7)') dump_type, &
-          file_numbers(iprefix)-1, time, step
+        IF (from_dump_request) THEN
+          WRITE(stat_unit,'(a)') 'Writing DUMP file request'
+          from_dump_request = .FALSE.
+        END IF
+        WRITE(stat_unit, '(''Wrote '', a7, '', '', a18, '' at time'', &
+          & g12.4, '' and iteration'', i8)') dump_type, &
+          TRIM(filename), time, step
         CALL flush_stat_file()
       END IF
 
@@ -1268,6 +1273,7 @@ CONTAINS
     dump_source_code = .FALSE.
     dump_input_decks = .FALSE.
     print_arrays = .FALSE.
+    from_dump_request = .FALSE.
     iomask = c_io_none
     iodumpmask = c_io_none
 
@@ -1291,6 +1297,14 @@ CONTAINS
       IF (force) THEN
         io_block_list(io)%dump = .TRUE.
         restart_flag = .TRUE.
+      END IF
+
+      IF (got_request_dump_name) THEN
+        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
+          io_block_list(io)%dump = .TRUE.
+          from_dump_request = .TRUE.
+          got_request_dump_name = .FALSE.
+        END IF
       END IF
 
       IF (elapsed_time < walltime_start) CYCLE
@@ -1391,15 +1405,11 @@ CONTAINS
         END IF
       END IF
 
-      IF (got_request_dump_name) THEN
-        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
-          io_block_list(io)%dump = .TRUE.
-        END IF
-      END IF
-
       io_block_list(io)%average_time_start = &
           time_first - io_block_list(io)%average_time
+    END DO
 
+    DO io = 1, n_io_blocks
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
@@ -1431,6 +1441,7 @@ CONTAINS
     END DO
 
     IF (got_request_dump_restart) THEN
+      got_request_dump_restart = .FALSE.
       restart_flag = .TRUE.
       print_arrays = .TRUE.
       dump_source_code = .TRUE.
@@ -1457,9 +1468,6 @@ CONTAINS
 
     IF (force) iomask = IOR(iomask, io_block_list(1)%dumpmask)
     iodumpmask(1,:) = iomask
-
-    got_request_dump_name = .FALSE.
-    got_request_dump_restart = .FALSE.
 
   END SUBROUTINE io_test
 
@@ -3357,12 +3365,16 @@ CONTAINS
               file=TRIM(data_dir) // '/' // TRIM(request_dump_file))
           IF (ierr == 0) THEN
             READ(lu,'(A)',iostat=ierr) request_dump_name
+            CLOSE(lu, status='DELETE')
             IF (ierr == 0) THEN
               got_request_dump_name = .TRUE.
+              WRITE(stat_unit,'(a)') 'Found DUMP file output request with ' &
+                  // 'contents: ' // TRIM(request_dump_name)
             ELSE
               got_request_dump_restart = .TRUE.
+              WRITE(stat_unit,'(a)') 'Found DUMP file output request'
             END IF
-            CLOSE(lu, status='DELETE')
+            CALL flush_stat_file()
           ELSE
             got_request_dump_name = .FALSE.
             got_request_dump_restart = .FALSE.
