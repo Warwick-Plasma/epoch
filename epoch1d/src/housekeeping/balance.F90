@@ -1102,8 +1102,8 @@ CONTAINS
           maxs(proc) = idim
         END IF
         ! To communicate ghost cell information correctly, each domain must
-        ! contain at least one cell.
-        nextra = old - maxs(proc) + 1
+        ! contain at least ng cells.
+        nextra = old - maxs(proc) + ncell_min
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -1117,8 +1117,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < 1) THEN
-        maxs(proc) = old - 1
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -1187,8 +1187,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < 1) THEN
-        maxs(proc) = old - 1
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -1196,8 +1196,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < 1) THEN
-        maxs(proc) = old + 1
+      IF (maxs(proc) - old < ncell_min) THEN
+        maxs(proc) = old + ncell_min
       END IF
       old = maxs(proc)
     END DO

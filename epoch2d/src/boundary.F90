@@ -131,7 +131,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
 
-    CALL do_field_mpi_with_lengths(field, ng, nx, ny, .TRUE.)
+    CALL do_field_mpi_with_lengths(field, ng, nx, ny)
 
   END SUBROUTINE field_bc
 
@@ -203,22 +203,14 @@ CONTAINS
 
 
 
-  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local, subcycle)
+  SUBROUTINE do_field_mpi_with_lengths(field, ng, nx_local, ny_local)
 
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER, INTENT(IN) :: nx_local, ny_local
-    LOGICAL, INTENT(IN), OPTIONAL :: subcycle
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
-    INTEGER :: subarray, basetype, sz, szmax, i, j, n, ic
+    INTEGER :: subarray, basetype, sz, szmax, i, j, n
     REAL(num), ALLOCATABLE :: temp(:)
-    LOGICAL :: subcycle_comms
-
-    IF (PRESENT(subcycle)) THEN
-      subcycle_comms = subcycle
-    ELSE
-      subcycle_comms = .FALSE.
-    END IF
 
     basetype = mpireal
 
@@ -239,33 +231,31 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    DO ic = 1, nsubcycle_comms(1)
-      CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
-          tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-      IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
-        n = 1
-        DO j = 1-ng, subsizes(2)-ng
-        DO i = nx_local+1, subsizes(1)+nx_local
-          field(i,j) = temp(n)
-          n = n + 1
-        END DO
-        END DO
-      END IF
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+    END IF
 
-      CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
-          tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
 
-      IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
-        n = 1
-        DO j = 1-ng, subsizes(2)-ng
-        DO i = 1-ng, subsizes(1)-ng
-          field(i,j) = temp(n)
-          n = n + 1
-        END DO
-        END DO
-      END IF
-    END DO
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+    END IF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
@@ -276,33 +266,31 @@ CONTAINS
 
     subarray = create_2d_array_subtype(basetype, subsizes, sizes, starts)
 
-    DO ic = 1, nsubcycle_comms(2)
-      CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
-          tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,1), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-      IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
-        n = 1
-        DO j = ny_local+1, subsizes(2)+ny_local
-        DO i = 1-ng, subsizes(1)-ng
-          field(i,j) = temp(n)
-          n = n + 1
-        END DO
-        END DO
-      END IF
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+      n = 1
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+    END IF
 
-      CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
-          tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng), 1, subarray, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-      IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
-        n = 1
-        DO j = 1-ng, subsizes(2)-ng
-        DO i = 1-ng, subsizes(1)-ng
-          field(i,j) = temp(n)
-          n = n + 1
-        END DO
-        END DO
-      END IF
-    END DO
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+      n = 1
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+    END IF
 
     CALL MPI_TYPE_FREE(subarray, errcode)
 
