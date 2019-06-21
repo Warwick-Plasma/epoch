@@ -582,15 +582,25 @@ CONTAINS
   SUBROUTINE setup_bc_lists
 
     INTEGER(i8) :: ispecies, ipart
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     REAL(num) :: bnd_x_min, bnd_x_max
     TYPE(particle), POINTER :: current
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
-    bnd_x_min = x_grid_min_local - 0.5_num * dx
-    bnd_x_max = x_grid_max_local + 0.5_num * dx
-
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
+
+      bc_species = species_list(ispecies)%bc_particle
+      IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+        bnd_x_min = x_min_outer
+      ELSE
+        bnd_x_min = x_min_local
+      END IF
+      IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+        bnd_x_max = x_max_outer
+      ELSE
+        bnd_x_max = x_max_local
+      END IF
 
       ALLOCATE(species_list(ispecies)%boundary_particles)
       NULLIFY(species_list(ispecies)%boundary_particles%particle)
@@ -634,13 +644,9 @@ CONTAINS
     LOGICAL :: out_of_bounds
     INTEGER :: sgn, bc, ispecies, i, ix
     REAL(num) :: temp(3)
-    REAL(num) :: part_pos, boundary_shift
-    REAL(num) :: x_min_outer, x_max_outer
+    REAL(num) :: part_pos
     REAL(num) :: x_shift
 
-    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
-    x_min_outer = x_min - boundary_shift
-    x_max_outer = x_max + boundary_shift
     x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
@@ -997,9 +1003,6 @@ CONTAINS
             nx_global - cpml_thickness - fng + 2 - nx_global_min
       END IF
     END IF
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
   END SUBROUTINE set_cpml_helpers
 

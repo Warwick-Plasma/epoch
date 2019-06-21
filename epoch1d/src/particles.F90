@@ -105,6 +105,7 @@ CONTAINS
     REAL(num) :: delta_x, part_vy, part_vz
     REAL(num) :: bnd_x_min, bnd_x_max
     INTEGER :: ispecies, ix, dcellx, cx
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     INTEGER(i8) :: ipart
 #ifdef WORK_DONE_INTEGRATED
     REAL(num) :: tmp_x, tmp_y, tmp_z
@@ -155,9 +156,6 @@ CONTAINS
     idtf = idt * fac
     idxf = idx * fac
 
-    bnd_x_min = x_grid_min_local - 0.5_num * dx
-    bnd_x_max = x_grid_max_local + 0.5_num * dx
-
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
 
@@ -178,6 +176,18 @@ CONTAINS
         IF (photon_dynamics) CALL push_photons(ispecies)
 #endif
         CYCLE
+      END IF
+
+      bc_species = species_list(ispecies)%bc_particle
+      IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+        bnd_x_min = x_min_outer
+      ELSE
+        bnd_x_min = x_min_local
+      END IF
+      IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+        bnd_x_max = x_max_outer
+      ELSE
+        bnd_x_max = x_max_local
       END IF
 
       ! Setup list of particles which may need boundary conditions applied
@@ -593,6 +603,7 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: delta_x
     INTEGER,INTENT(IN) :: ispecies
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     REAL(num) :: current_energy, dtfac, fac
     REAL(num) :: bnd_x_min, bnd_x_max
     TYPE(particle), POINTER :: current
@@ -609,8 +620,17 @@ CONTAINS
 
     IF (species_list(ispecies)%attached_list%count == 0) RETURN
 
-    bnd_x_min = x_grid_min_local - 0.5_num * dx
-    bnd_x_max = x_grid_max_local + 0.5_num * dx
+    bc_species = species_list(ispecies)%bc_particle
+    IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+      bnd_x_min = x_min_outer
+    ELSE
+      bnd_x_min = x_min_local
+    END IF
+    IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+      bnd_x_max = x_max_outer
+    ELSE
+      bnd_x_max = x_max_local
+    END IF
 
     ! Setup list of particles which may need boundary conditions applied
     ALLOCATE(species_list(ispecies)%boundary_particles)

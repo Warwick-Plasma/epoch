@@ -506,8 +506,10 @@ MODULE shared_data
   ! the location x_min + dx*(1/2-cpml_thickness)
   REAL(num) :: length_x, dx, x_grid_min, x_grid_max, x_min, x_max
   REAL(num) :: x_grid_min_local, x_grid_max_local, x_min_local, x_max_local
+  REAL(num) :: x_min_outer, x_max_outer
   REAL(num) :: length_y, dy, y_grid_min, y_grid_max, y_min, y_max
   REAL(num) :: y_grid_min_local, y_grid_max_local, y_min_local, y_max_local
+  REAL(num) :: y_min_outer, y_max_outer
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
   REAL(num), DIMENSION(:), ALLOCATABLE :: y_grid_mins, y_grid_maxs
   REAL(num) :: dir_d(c_ndims), dir_min(c_ndims), dir_max(c_ndims)

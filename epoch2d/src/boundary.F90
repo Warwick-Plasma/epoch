@@ -930,18 +930,36 @@ CONTAINS
   SUBROUTINE setup_bc_lists
 
     INTEGER(i8) :: ispecies, ipart
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     REAL(num) :: bnd_x_min, bnd_x_max
     REAL(num) :: bnd_y_min, bnd_y_max
     TYPE(particle), POINTER :: current
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
-    bnd_x_min = x_grid_min_local - 0.5_num * dx
-    bnd_x_max = x_grid_max_local + 0.5_num * dx
-    bnd_y_min = y_grid_min_local - 0.5_num * dy
-    bnd_y_max = y_grid_max_local + 0.5_num * dy
-
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
+
+      bc_species = species_list(ispecies)%bc_particle
+      IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+        bnd_x_min = x_min_outer
+      ELSE
+        bnd_x_min = x_min_local
+      END IF
+      IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+        bnd_x_max = x_max_outer
+      ELSE
+        bnd_x_max = x_max_local
+      END IF
+      IF (bc_species(c_bd_y_min) == c_bc_thermal) THEN
+        bnd_y_min = y_min_outer
+      ELSE
+        bnd_y_min = y_min_local
+      END IF
+      IF (bc_species(c_bd_y_max) == c_bc_thermal) THEN
+        bnd_y_max = y_max_outer
+      ELSE
+        bnd_y_max = y_max_local
+      END IF
 
       ALLOCATE(species_list(ispecies)%boundary_particles)
       NULLIFY(species_list(ispecies)%boundary_particles%particle)
@@ -991,18 +1009,10 @@ CONTAINS
     REAL(num) :: cell_x_r, cell_frac_x
     REAL(num) :: cell_y_r, cell_frac_y
     REAL(num) :: cf2, temp(3)
-    REAL(num) :: part_pos, boundary_shift
-    REAL(num) :: x_min_outer, x_max_outer, y_min_outer, y_max_outer
+    REAL(num) :: part_pos
     REAL(num) :: x_shift, y_shift
 
-    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
-    x_min_outer = x_min - boundary_shift
-    x_max_outer = x_max + boundary_shift
     x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
-
-    boundary_shift = dy * REAL((1 + png + cpml_thickness) / 2, num)
-    y_min_outer = y_min - boundary_shift
-    y_max_outer = y_max + boundary_shift
     y_shift = length_y + 2.0_num * dy * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
@@ -1701,11 +1711,6 @@ CONTAINS
             ny_global - cpml_thickness - fng + 2 - ny_global_min
       END IF
     END IF
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
-    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
 
   END SUBROUTINE set_cpml_helpers
 

@@ -309,6 +309,7 @@ CONTAINS
 
     INTEGER, DIMENSION(c_ndims,2) :: domain
     INTEGER :: iproc
+    REAL(num) :: boundary_shift
 
     IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
 
@@ -357,6 +358,10 @@ CONTAINS
 
     x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+    boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    x_min_outer = x_min - boundary_shift * dx
+    x_max_outer = x_max + boundary_shift * dx
 
   END SUBROUTINE redistribute_domain
 

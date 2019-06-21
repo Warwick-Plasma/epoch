@@ -156,7 +156,7 @@ CONTAINS
   SUBROUTINE setup_grid
 
     INTEGER :: iproc, ix
-    REAL(num) :: xb_min
+    REAL(num) :: boundary_shift, xb_min
 
     length_x = x_max - x_min
     dx = length_x / REAL(nx_global-2*cpml_thickness, num)
@@ -188,6 +188,10 @@ CONTAINS
 
     x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+    boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    x_min_outer = x_min - boundary_shift * dx
+    x_max_outer = x_max + boundary_shift * dx
 
     ! Setup local grid
     x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
