@@ -111,9 +111,9 @@ CONTAINS
 
     IF (cpml_boundaries) THEN
       IF (field_order == 2) THEN
-        DO iy = 1, ny
+        DO iy = 0, ny
           cy1 = cny / cpml_kappa_ey(iy)
-          DO ix = 1, nx
+          DO ix = 0, nx
             cx1 = cnx / cpml_kappa_ex(ix)
 
             ex(ix, iy) = ex(ix, iy) &
@@ -134,11 +134,11 @@ CONTAINS
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
-        DO iy = 1, ny
+        DO iy = 0, ny
           cpml_y = cny / cpml_kappa_ey(iy)
           cy1 = c1 * cpml_y
           cy2 = c2 * cpml_y
-          DO ix = 1, nx
+          DO ix = 0, nx
             cpml_x = cnx / cpml_kappa_ex(ix)
             cx1 = c1 * cpml_x
             cx2 = c2 * cpml_x
@@ -166,12 +166,12 @@ CONTAINS
         c2 = -25.0_num / 384.0_num
         c3 = 3.0_num / 640.0_num
 
-        DO iy = 1, ny
+        DO iy = 0, ny
           cpml_y = cny / cpml_kappa_ey(iy)
           cy1 = c1 * cpml_y
           cy2 = c2 * cpml_y
           cy3 = c3 * cpml_y
-          DO ix = 1, nx
+          DO ix = 0, nx
             cpml_x = cnx / cpml_kappa_ex(ix)
             cx1 = c1 * cpml_x
             cx2 = c2 * cpml_x
@@ -207,8 +207,8 @@ CONTAINS
         cx1 = cnx
         cy1 = cny
 
-        DO iy = 1, ny
-          DO ix = 1, nx
+        DO iy = 0, ny
+          DO ix = 0, nx
             ex(ix, iy) = ex(ix, iy) &
                 + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
                 - fac * jx(ix, iy)
@@ -232,8 +232,8 @@ CONTAINS
         cy1 = c1 * cny
         cy2 = c2 * cny
 
-        DO iy = 1, ny
-          DO ix = 1, nx
+        DO iy = 0, ny
+          DO ix = 0, nx
             ex(ix, iy) = ex(ix, iy) &
                 + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
                 + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
@@ -264,8 +264,8 @@ CONTAINS
         cy2 = c2 * cny
         cy3 = c3 * cny
 
-        DO iy = 1, ny
-          DO ix = 1, nx
+        DO iy = 0, ny
+          DO ix = 0, nx
             ex(ix, iy) = ex(ix, iy) &
                 + cy1 * (bz(ix  , iy  ) - bz(ix  , iy-1)) &
                 + cy2 * (bz(ix  , iy+1) - bz(ix  , iy-2)) &
@@ -306,9 +306,9 @@ CONTAINS
     IF (cpml_boundaries) THEN
       IF (field_order == 2) THEN
         IF (maxwell_solver == c_maxwell_solver_yee) THEN
-          DO iy = 1, ny
+          DO iy = 0, ny
             cy1 = hdty / cpml_kappa_by(iy)
-            DO ix = 1, nx
+            DO ix = 0, nx
               cx1 = hdtx / cpml_kappa_bx(ix)
 
               bx(ix, iy) = bx(ix, iy) &
@@ -323,9 +323,9 @@ CONTAINS
             END DO
           END DO
         ELSE
-          DO iy = 1, ny
+          DO iy = 0, ny
             cy1 = hdty / cpml_kappa_by(iy)
-            DO ix = 1, nx
+            DO ix = 0, nx
               cx1 = hdtx / cpml_kappa_bx(ix)
 
               bx(ix, iy) = bx(ix, iy) &
@@ -356,11 +356,11 @@ CONTAINS
         c1 = 9.0_num / 8.0_num
         c2 = -1.0_num / 24.0_num
 
-        DO iy = 1, ny
+        DO iy = 0, ny
           cpml_y = hdty / cpml_kappa_by(iy)
           cy1 = c1 * cpml_y
           cy2 = c2 * cpml_y
-          DO ix = 1, nx
+          DO ix = 0, nx
             cpml_x = hdtx / cpml_kappa_bx(ix)
             cx1 = c1 * cpml_x
             cx2 = c2 * cpml_x
@@ -385,12 +385,12 @@ CONTAINS
         c2 = -25.0_num / 384.0_num
         c3 = 3.0_num / 640.0_num
 
-        DO iy = 1, ny
+        DO iy = 0, ny
           cpml_y = hdty / cpml_kappa_by(iy)
           cy1 = c1 * cpml_y
           cy2 = c2 * cpml_y
           cy3 = c3 * cpml_y
-          DO ix = 1, nx
+          DO ix = 0, nx
             cpml_x = hdtx / cpml_kappa_bx(ix)
             cx1 = c1 * cpml_x
             cx2 = c2 * cpml_x
@@ -424,8 +424,8 @@ CONTAINS
         cy1 = hdty
 
         IF (maxwell_solver == c_maxwell_solver_yee) THEN
-          DO iy = 1, ny
-            DO ix = 1, nx
+          DO iy = 0, ny
+            DO ix = 0, nx
               bx(ix, iy) = bx(ix, iy) &
                   - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  ))
 
@@ -438,8 +438,8 @@ CONTAINS
             END DO
           END DO
         ELSE
-          DO iy = 1, ny
-            DO ix = 1, nx
+          DO iy = 0, ny
+            DO ix = 0, nx
               bx(ix, iy) = bx(ix, iy) &
                   - cy1 * (alphay * (ez(ix  , iy+1) - ez(ix  , iy  ))  &
                          + betayx * (ez(ix+1, iy+1) - ez(ix+1, iy  )   &
@@ -473,8 +473,8 @@ CONTAINS
         cy1 = c1 * hdty
         cy2 = c2 * hdty
 
-        DO iy = 1, ny
-          DO ix = 1, nx
+        DO iy = 0, ny
+          DO ix = 0, nx
             bx(ix, iy) = bx(ix, iy) &
                 - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
                 - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1))
@@ -502,8 +502,8 @@ CONTAINS
         cy2 = c2 * hdty
         cy3 = c3 * hdty
 
-        DO iy = 1, ny
-          DO ix = 1, nx
+        DO iy = 0, ny
+          DO ix = 0, nx
             bx(ix, iy) = bx(ix, iy) &
                 - cy1 * (ez(ix  , iy+1) - ez(ix  , iy  )) &
                 - cy2 * (ez(ix  , iy+2) - ez(ix  , iy-1)) &
