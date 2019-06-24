@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -144,29 +143,11 @@ CONTAINS
     REAL(num), POINTER :: array(:)
     INTEGER, INTENT(INOUT) :: err
     TYPE(primitive_stack) :: output
-    INTEGER :: ndim, i
-    CHARACTER(LEN=1) :: c
+    INTEGER :: ndim
     CHARACTER(LEN=string_length) :: str_tmp
-    LOGICAL :: found
-
-    ! Scan for left parenthesis
-    found = .FALSE.
-    DO i = 1, LEN(TRIM(str_in))
-      c = str_in(i:i)
-      IF (c == '(') THEN
-        found = .TRUE.
-        EXIT
-      END IF
-      IF (c /= ' ' .AND. IACHAR(c) /= 9) EXIT
-    END DO
 
     CALL initialise_stack(output)
-    IF (found) THEN
-      CALL tokenize(str_in, output, err)
-    ELSE
-      ! If parenthesis not found, create a new string
-      str_tmp = '(' // TRIM(ADJUSTL(str_in)) // ')'
-    END IF
+    str_tmp = '(' // TRIM(ADJUSTL(str_in)) // ')'
 
     CALL tokenize(str_tmp, output, err)
     IF (err == c_err_none) THEN

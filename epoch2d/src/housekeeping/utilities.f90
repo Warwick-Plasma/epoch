@@ -1,4 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ MODULE utilities
   PRIVATE
 
   PUBLIC :: erf_func
-  PUBLIC :: abort_code, grow_array
+  PUBLIC :: abort_code, grow_array, get_free_lun
 
 CONTAINS
 
@@ -306,5 +306,34 @@ CONTAINS
    erf_func = SIGN(unity - unity / denom**16, val)
 
   END FUNCTION erf_func
+
+
+
+  FUNCTION get_free_lun()
+
+    ! This subroutine simply cycles round until it finds a free lun between
+    ! min_lun and max_lun
+    INTEGER :: get_free_lun
+    INTEGER :: lun
+    INTEGER, PARAMETER :: min_lun = 10, max_lun = 20
+    LOGICAL :: is_open
+
+    is_open = .TRUE.
+
+    lun = min_lun
+    DO
+      INQUIRE(unit=lun, opened=is_open)
+      IF (.NOT. is_open) EXIT
+      lun = lun+1
+      IF (lun > max_lun) THEN
+        WRITE(*,*) '*** ERROR ***'
+        WRITE(*,*) 'Unable to open lun for input deck read'
+        CALL abort_code(c_err_io_error)
+      END IF
+    END DO
+
+    get_free_lun = lun
+
+  END FUNCTION get_free_lun
 
 END MODULE utilities

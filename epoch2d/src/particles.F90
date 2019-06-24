@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -547,7 +545,7 @@ CONTAINS
 #ifndef NO_TRACER_PARTICLES
         END IF
 #endif
-#ifndef NO_PARTICLE_PROBES
+#if !defined(NO_PARTICLE_PROBES) && !defined(NO_IO)
         IF (probes_for_species) THEN
           ! Compare the current particle with the parameters of any probes in
           ! the system. These particles are copied into a separate part of the

@@ -1,4 +1,4 @@
-! Copyright (C) 2014-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -68,6 +68,8 @@ CONTAINS
     DEALLOCATE(ex_z_min, ex_z_max, ey_z_min, ey_z_max, ez_z_min, ez_z_max)
     DEALLOCATE(bx_z_min, bx_z_max, by_z_min, by_z_max, bz_z_min, bz_z_max)
 
+    DEALLOCATE(total_particle_energy_species)
+
     CALL deallocate_probes
 
     DO i = 1, n_species
@@ -84,6 +86,8 @@ CONTAINS
       DEALLOCATE(species_list(i)%ext_temp_y_max, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_min, STAT=stat)
       DEALLOCATE(species_list(i)%ext_temp_z_max, STAT=stat)
+      IF (ASSOCIATED(species_list(i)%background_density)) &
+          DEALLOCATE(species_list(i)%background_density, STAT=stat)
     END DO
 
     DEALLOCATE(species_list, STAT=stat)

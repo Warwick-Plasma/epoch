@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -32,6 +31,7 @@ MODULE deck_io_block
   LOGICAL, DIMENSION(num_vars_to_dump) :: io_block_done
   LOGICAL, PRIVATE :: got_name, got_dump_source_code, got_dump_input_decks
   LOGICAL, PRIVATE :: warning_printed, got_dt_average
+  LOGICAL, PRIVATE :: dumpmask_warned
   CHARACTER(LEN=c_id_length), ALLOCATABLE :: io_prefixes(:)
   TYPE(io_block_type), POINTER :: io_block
 
@@ -44,6 +44,7 @@ CONTAINS
 
     any_average = .FALSE.
     warning_printed = .FALSE.
+    dumpmask_warned = .FALSE.
 
     track_ejected_particles = .FALSE.
     dump_absorption = .FALSE.
@@ -104,6 +105,8 @@ CONTAINS
 
         DO i = 1, n_io_blocks
           IF (io_block_list(i)%disabled) CYCLE
+
+          IF (use_offset_grid) io_block%use_offset_grid = use_offset_grid
 
           IF (io_block_list(i)%dt_average > t_end) THEN
             IF (rank == 0) THEN
@@ -277,6 +280,18 @@ CONTAINS
           io_block%dump_input_decks = .TRUE.
     END IF
 
+    IF (rank == 0 .AND. new_style_io_block .AND. .NOT.dumpmask_warned) THEN
+      IF (ANY(IAND(io_block%dumpmask,c_io_restartable) == c_io_restartable) &
+          .OR. ANY(IAND(io_block%dumpmask,c_io_full) == c_io_full)) THEN
+        PRINT*, '*** WARNING ***'
+        PRINT*, 'The use of "full" and "restart" as dumpmasks in new-style ', &
+                'output blocks is '
+        PRINT*, 'deprecated and will be removed in a future version.'
+        PRINT*
+        dumpmask_warned = .TRUE.
+      END IF
+    END IF
+
     CALL set_restart_dumpmasks
 
   END SUBROUTINE io_block_end
@@ -358,8 +373,7 @@ CONTAINS
       force_final_to_be_restartable = as_logical_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'use_offset_grid')) THEN
-      IF (new_style_io_block) style_error = c_err_new_style_global
-      use_offset_grid = as_logical_print(value, element, errcode)
+      io_block%use_offset_grid = as_logical_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'extended_io_file')) THEN
       IF (rank == 0) THEN
@@ -814,6 +828,7 @@ CONTAINS
         IF (mask_element == c_dump_jx) bad = .FALSE.
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
+        IF (mask_element == c_dump_total_energy_sum) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0 .AND. IAND(mask, c_io_species) /= 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -992,6 +1007,7 @@ CONTAINS
     io_block%prefix_index = 1
     io_block%rolling_restart = .FALSE.
     io_block%disabled = .FALSE.
+    io_block%use_offset_grid = .FALSE.
     io_block%walltime_interval = -1.0_num
     io_block%walltime_prev = 0.0_num
     io_block%walltime_start = -1.0_num

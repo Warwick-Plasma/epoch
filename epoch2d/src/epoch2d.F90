@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -70,11 +68,6 @@ PROGRAM pic
 
   step = 0
   time = 0.0_num
-#ifdef COLLISIONS_TEST
-  ! used for testing
-  CALL test_collisions
-  STOP
-#endif
 
   CALL mpi_minimal_init ! mpi_routines.f90
   real_walltime_start = MPI_WTIME()
@@ -151,9 +144,13 @@ PROGRAM pic
 
   IF (ic_from_restart) THEN
     IF (dt_from_restart > 0) dt = dt_from_restart
-    time = time + dt / 2.0_num
-    CALL update_eb_fields_final
-    CALL moving_window
+    IF (step == 0) THEN
+      CALL bfield_final_bcs
+    ELSE
+      time = time + dt / 2.0_num
+      CALL update_eb_fields_final
+      CALL moving_window
+    END IF
   ELSE
     dt_store = dt
     dt = dt / 2.0_num
@@ -166,18 +163,18 @@ PROGRAM pic
   ! Setup particle migration between species
   IF (use_particle_migration) CALL initialise_migration
   CALL build_persistent_subsets
-
-  IF (rank == 0) THEN
-    PRINT*
-    PRINT*, 'Equilibrium set up OK, running code'
-    PRINT*
-  END IF
 #ifdef PHOTONS
   IF (use_qed) CALL setup_qed_module()
 #endif
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
+
+  IF (rank == 0) THEN
+    PRINT*
+    PRINT*, 'Equilibrium set up OK, running code'
+    PRINT*
+  END IF
 
   walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
@@ -186,9 +183,6 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-    IF ((step >= nsteps .AND. nsteps >= 0) &
-        .OR. (time >= t_end) .OR. halt) EXIT
-
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -240,10 +234,14 @@ PROGRAM pic
       CALL update_particle_count
     END IF
 
-    CALL check_for_stop_condition(halt, force_dump)
-    IF (halt) EXIT
     step = step + 1
     time = time + dt / 2.0_num
+
+    CALL check_for_stop_condition(halt, force_dump)
+
+    IF ((step >= nsteps .AND. nsteps >= 0) &
+        .OR. (time >= t_end) .OR. halt) EXIT
+
     CALL output_routines(step)
     time = time + dt / 2.0_num
 

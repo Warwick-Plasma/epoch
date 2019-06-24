@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2017 Alexander Blinne <A.Blinne@gsi.de>,
+# Copyright (C) 2009-2019 University of Warwick
 # Stephan Kuschel <Stephan.Kuschel@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify

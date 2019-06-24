@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -29,7 +27,6 @@ MODULE balance
   LOGICAL :: overriding
   REAL(num) :: load_av
   INTEGER :: old_comm, old_coordinates(c_ndims)
-  INTEGER :: ng_max
 
 CONTAINS
 
@@ -57,7 +54,6 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    ng_max = MAX(ng, jng, sng)
 
     full_check = over_ride
     IF (step - last_full_check < dlb_force_interval) THEN
@@ -378,6 +374,7 @@ CONTAINS
     REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4temp_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp, temp2
     TYPE(particle_species_migration), POINTER :: mg
+    TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
@@ -466,7 +463,8 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
-      mg => species_list(ispecies)%migrate
+      sp => species_list(ispecies)
+      mg => sp%migrate
 
       IF (mg%fluid) THEN
         CALL remap_field(mg%fluid_energy, temp)
@@ -478,6 +476,13 @@ CONTAINS
         DEALLOCATE(mg%fluid_density)
         ALLOCATE(mg%fluid_density(1-ng:nx_new+ng))
         mg%fluid_density = temp
+      END IF
+
+      IF (sp%background_species) THEN
+        CALL remap_field(sp%background_density, temp)
+        DEALLOCATE(sp%background_density)
+        ALLOCATE(sp%background_density(1-ng:nx_new+ng))
+        sp%background_density = temp
       END IF
 
       IF (.NOT.pre_loading) CYCLE
@@ -1098,7 +1103,7 @@ CONTAINS
         END IF
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
-        nextra = old - maxs(proc) + ng_max
+        nextra = old - maxs(proc) + ncell_min
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -1112,8 +1117,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -1182,8 +1187,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -1191,8 +1196,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < ng_max) THEN
-        maxs(proc) = old + ng_max
+      IF (maxs(proc) - old < ncell_min) THEN
+        maxs(proc) = old + ncell_min
       END IF
       old = maxs(proc)
     END DO

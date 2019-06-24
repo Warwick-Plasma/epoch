@@ -1,4 +1,4 @@
-! Copyright (C) 2009-2018 University of Warwick
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -219,6 +219,11 @@ MODULE shared_data
     LOGICAL :: atomic_no_set = .FALSE.
 #endif
 
+    ! Specify if species is background species or not
+    LOGICAL :: background_species = .FALSE.
+    ! Background density
+    REAL(num), DIMENSION(:), POINTER :: background_density
+
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
 
@@ -309,6 +314,7 @@ MODULE shared_data
     LOGICAL :: dump_source_code, dump_input_decks, rolling_restart
     LOGICAL :: dump_first_after_restart
     LOGICAL :: disabled
+    LOGICAL :: use_offset_grid
     INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
     TYPE(averaged_data_block), DIMENSION(num_vars_to_dump) :: averaged_data
   END TYPE io_block_type
@@ -484,10 +490,13 @@ MODULE shared_data
   REAL(num) :: length_x, dx, x_grid_min, x_grid_max, x_min, x_max
   REAL(num) :: x_grid_min_local, x_grid_max_local, x_min_local, x_max_local
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
+  REAL(num) :: dir_d(c_ndims), dir_min(c_ndims), dir_max(c_ndims)
+  REAL(num) :: dir_grid_min(c_ndims), dir_grid_max(c_ndims)
+  REAL(num) :: dir_min_local(c_ndims), dir_max_local(c_ndims)
 
   LOGICAL :: ic_from_restart = .FALSE.
   LOGICAL :: need_random_state
-  LOGICAL :: use_exact_restart
+  LOGICAL :: use_exact_restart, use_exact_restart_set
   LOGICAL :: allow_cpu_reduce
   LOGICAL :: simplify_deck
   LOGICAL :: print_deck_constants
@@ -497,6 +506,7 @@ MODULE shared_data
   INTEGER, DIMENSION(2*c_ndims) :: bc_field, bc_particle, bc_allspecies
   INTEGER :: restart_number, step
   CHARACTER(LEN=c_max_path_length) :: full_restart_filename, restart_filename
+  CHARACTER(LEN=c_max_path_length) :: status_filename
 
   TYPE particle_sort_element
     TYPE(particle), POINTER :: particle
@@ -557,11 +567,16 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Bremsstrahlung
   !----------------------------------------------------------------------------
+  TYPE interpolation_state
+    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val1d
+    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
+  END TYPE interpolation_state
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
     REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
     INTEGER :: size_k, size_t
+    TYPE(interpolation_state) :: state
   END TYPE brem_tables
   TYPE(brem_tables), ALLOCATABLE :: brem_array(:)
   INTEGER, ALLOCATABLE :: z_values(:)
@@ -638,7 +653,7 @@ MODULE shared_data
 
     REAL(num) :: t_start, t_end
     LOGICAL :: has_t_end
-    REAL(num) :: depth, dt_inject
+    REAL(num) :: depth
 
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
@@ -695,8 +710,9 @@ MODULE shared_data
   REAL(num) :: laser_absorbed = 0.0_num
   LOGICAL :: dump_absorption = .FALSE.
 
-  REAL(num) :: total_particle_energy = 0.0_num
   REAL(num) :: total_field_energy = 0.0_num
+  REAL(num) :: total_particle_energy = 0.0_num
+  REAL(num), ALLOCATABLE :: total_particle_energy_species(:)
 
   !----------------------------------------------------------------------------
   ! custom particle loading - written by MP Tooley
