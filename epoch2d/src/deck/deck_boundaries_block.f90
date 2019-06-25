@@ -53,6 +53,15 @@ CONTAINS
 
   SUBROUTINE boundary_block_end
 
+    IF (bc_x_min_after_move == c_bc_null) &
+        bc_x_min_after_move = bc_field(c_bd_x_min)
+    IF (bc_x_max_after_move == c_bc_null) &
+        bc_x_max_after_move = bc_field(c_bd_x_max)
+    IF (bc_y_min_after_move == c_bc_null) &
+        bc_y_min_after_move = bc_field(c_bd_y_min)
+    IF (bc_y_max_after_move == c_bc_null) &
+        bc_y_max_after_move = bc_field(c_bd_y_max)
+
   END SUBROUTINE boundary_block_end
 
 

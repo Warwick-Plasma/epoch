@@ -109,15 +109,6 @@ CONTAINS
 
   SUBROUTINE window_block_start
 
-    IF (deck_state /= c_ds_first) RETURN
-
-    bc_x_min_after_move = bc_field(c_bd_x_min)
-    bc_x_max_after_move = bc_field(c_bd_x_max)
-    bc_y_min_after_move = bc_field(c_bd_y_min)
-    bc_y_max_after_move = bc_field(c_bd_y_max)
-    bc_z_min_after_move = bc_field(c_bd_z_min)
-    bc_z_max_after_move = bc_field(c_bd_z_max)
-
   END SUBROUTINE window_block_start
 
 
