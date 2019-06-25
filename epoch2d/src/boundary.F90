@@ -939,6 +939,8 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
 
+      IF (species_list(ispecies)%attached_list%count == 0) CYCLE
+
       bc_species = species_list(ispecies)%bc_particle
       IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
         bnd_x_min = x_min_outer
@@ -987,7 +989,7 @@ CONTAINS
           => species_list(ispecies)%boundary_particles%next
       DEALLOCATE(bnd_part_last)
       ! Final particle should have null 'next' ptr
-      NULLIFY(bnd_part_next%next)
+      IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
     END DO
 
   END SUBROUTINE setup_bc_lists

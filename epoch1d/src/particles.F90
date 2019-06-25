@@ -545,7 +545,7 @@ CONTAINS
       species_list(ispecies)%boundary_particles &
           => species_list(ispecies)%boundary_particles%next
       DEALLOCATE(bnd_part_last)
-      NULLIFY(bnd_part_next%next)
+      IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
       CALL current_bcs(species=ispecies)
     END DO
 
@@ -715,7 +715,7 @@ CONTAINS
     species_list(ispecies)%boundary_particles &
         => species_list(ispecies)%boundary_particles%next
     DEALLOCATE(bnd_part_last)
-    NULLIFY(bnd_part_next%next)
+    IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
 
   END SUBROUTINE push_photons
 #endif
