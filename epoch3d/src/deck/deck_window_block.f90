@@ -43,7 +43,22 @@ CONTAINS
 
     need_random_state = .TRUE.
 
-    IF (deck_state /= c_ds_first .OR. rank /= 0) RETURN
+    IF (deck_state == c_ds_first) RETURN
+
+    IF (bc_x_min_after_move == c_bc_null) &
+        bc_x_min_after_move = bc_field(c_bd_x_min)
+    IF (bc_x_max_after_move == c_bc_null) &
+        bc_x_max_after_move = bc_field(c_bd_x_max)
+    IF (bc_y_min_after_move == c_bc_null) &
+        bc_y_min_after_move = bc_field(c_bd_y_min)
+    IF (bc_y_max_after_move == c_bc_null) &
+        bc_y_max_after_move = bc_field(c_bd_y_max)
+    IF (bc_z_min_after_move == c_bc_null) &
+        bc_z_min_after_move = bc_field(c_bd_z_min)
+    IF (bc_z_max_after_move == c_bc_null) &
+        bc_z_max_after_move = bc_field(c_bd_z_max)
+
+    IF (rank /= 0) RETURN
 
     ! Issue warnings about unsupported boundary conditions
 
