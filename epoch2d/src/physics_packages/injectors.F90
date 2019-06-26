@@ -200,6 +200,7 @@ CONTAINS
     INTEGER :: perp_dir_index, nperp
     REAL(num) :: perp_cell_size, cur_cell
     TYPE(parameter_pack) :: parameters
+    LOGICAL :: created_plist
     REAL(num), PARAMETER :: sqrt2 = SQRT(2.0_num)
     REAL(num), PARAMETER :: sqrt2_inv = 1.0_num / sqrt2
     REAL(num), PARAMETER :: sqrt2pi_inv = 1.0_num / SQRT(2.0_num * pi)
@@ -271,7 +272,7 @@ CONTAINS
     weight_fac = vol / injector%npart_per_cell
 #endif
 
-    CALL create_empty_partlist(plist)
+    created_plist = .FALSE.
 
     DO ii = 1, nperp
       IF (perp_dir_index == 1) THEN
@@ -314,7 +315,7 @@ CONTAINS
           ! non-flux Maxwellian
           flux_dir_cell = -1
         ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
-          ! Net is outflow - inflow velocity is zero
+          ! Net is outflow - inflow velocity is zero. No particles injected
           CYCLE
         ELSE IF (ABS(p_drift) < p_therm * 1.0e-9_num) THEN
           v_inject_s = 2.0_num * sqrt2pi_inv * p_therm &
@@ -357,6 +358,13 @@ CONTAINS
       parts_this_time = FLOOR(ABS(injector%depth(ii) - 1.0_num))
       injector%depth(ii) = injector%depth(ii) + REAL(parts_this_time, num)
 
+      IF (parts_this_time < 1) CYCLE
+
+      IF (.NOT.created_plist) THEN
+        CALL create_empty_partlist(plist)
+        created_plist = .TRUE.
+      END IF
+
       DO ipart = 1, parts_this_time
         CALL create_particle(new)
 
@@ -397,7 +405,9 @@ CONTAINS
       END DO
     END DO
 
-    CALL append_partlist(species_list(injector%species)%attached_list, plist)
+    IF (created_plist) THEN
+      CALL append_partlist(species_list(injector%species)%attached_list, plist)
+    END IF
 
   END SUBROUTINE run_single_injector
 
