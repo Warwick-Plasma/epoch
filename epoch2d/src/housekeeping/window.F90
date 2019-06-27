@@ -62,8 +62,8 @@ CONTAINS
   SUBROUTINE shift_window(window_shift_cells)
 
     INTEGER, INTENT(IN) :: window_shift_cells
-    INTEGER :: iwindow, ix, iproc
-    REAL(num) :: boundary_shift, xb_min
+    INTEGER :: iwindow, ix
+    REAL(num) :: xb_min
 
     ! Shift the window round one cell at a time.
     ! Inefficient, but it works
@@ -83,23 +83,7 @@ CONTAINS
       x_grid_max = x_global(nx_global)
       x_max = xb_global(nx_global+1) - dx * cpml_thickness
 
-      DO iproc = 0, nprocx-1
-        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      END DO
-
-      x_grid_min_local = x_grid_mins(x_coords)
-      x_grid_max_local = x_grid_maxs(x_coords)
-
-      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-
-      boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
-      x_min_outer = x_min - boundary_shift * dx
-      x_max_outer = x_max + boundary_shift * dx
-
-      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+      CALL setup_grid_x
 
       CALL remove_particles
 
