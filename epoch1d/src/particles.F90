@@ -179,12 +179,16 @@ CONTAINS
       END IF
 
       bc_species = species_list(ispecies)%bc_particle
-      IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+      IF (bc_species(c_bd_x_min) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
         bnd_x_min = x_min_outer
       ELSE
         bnd_x_min = x_min_local
       END IF
-      IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+      IF (bc_species(c_bd_x_max) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
         bnd_x_max = x_max_outer
       ELSE
         bnd_x_max = x_max_local
@@ -621,12 +625,16 @@ CONTAINS
     IF (species_list(ispecies)%attached_list%count == 0) RETURN
 
     bc_species = species_list(ispecies)%bc_particle
-    IF (bc_species(c_bd_x_min) == c_bc_thermal) THEN
+    IF (bc_species(c_bd_x_min) == c_bc_thermal &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
       bnd_x_min = x_min_outer
     ELSE
       bnd_x_min = x_min_local
     END IF
-    IF (bc_species(c_bd_x_max) == c_bc_thermal) THEN
+    IF (bc_species(c_bd_x_max) == c_bc_thermal &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
       bnd_x_max = x_max_outer
     ELSE
       bnd_x_max = x_max_local
