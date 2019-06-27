@@ -1,4 +1,4 @@
-! Copyright (C) 2011-2012 Keith Bennett <K.Bennett@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -168,7 +168,7 @@ CONTAINS
     ELSE
       global_random%box_muller_cached = cached
       global_random%cached_random_value = cached_random_value
-    ENDIF
+    END IF
 
   END FUNCTION random_box_muller
 

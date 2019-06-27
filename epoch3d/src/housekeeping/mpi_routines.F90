@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -56,9 +55,10 @@ CONTAINS
 
     nproc_orig = nproc
 
-    IF (nx_global < ng .OR. ny_global < ng .OR. nz_global < ng) THEN
+    IF (nx_global < ncell_min &
+        .OR. ny_global < ncell_min .OR. nz_global < ncell_min) THEN
       IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
+        CALL integer_as_string(ncell_min, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
         PRINT*,'There must be at least ' // TRIM(str) &
@@ -90,19 +90,21 @@ CONTAINS
       nxsplit = nx_global / nprocx
       nysplit = ny_global / nprocy
       nzsplit = nz_global / nprocz
-      IF (nxsplit < ng .OR. nysplit < ng .OR. nzsplit < ng) THEN
+      IF (nxsplit < ncell_min &
+          .OR. nysplit < ncell_min .OR. nzsplit < ncell_min) THEN
         reset = .TRUE.
         IF (rank == 0) THEN
-          IF (nxsplit < ng) THEN
+          IF (nxsplit < ncell_min) THEN
             dir = 'x'
-          ELSE IF (nysplit < ng) THEN
+          ELSE IF (nysplit < ncell_min) THEN
             dir = 'y'
-          ELSE IF (nzsplit < ng) THEN
+          ELSE IF (nzsplit < ncell_min) THEN
             dir = 'z'
           END IF
           PRINT*,'*** WARNING ***'
           PRINT'('' Requested domain split gives less than '', I1, &
-              &  '' cells in the '', A, ''-direction. Ignoring'')', ng, dir
+              &  '' cells in the '', A, ''-direction. Ignoring'')', &
+              ncell_min, dir
         END IF
       END IF
     END IF
@@ -131,7 +133,7 @@ CONTAINS
 
           nxsplit = nx_global / ix
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit < ng) CYCLE
+          IF (nxsplit < ncell_min) CYCLE
 
           DO iy = 1, nprocyz
             iz = nprocyz / iy
@@ -140,7 +142,7 @@ CONTAINS
             nysplit = ny_global / iy
             nzsplit = nz_global / iz
             ! Actual domain must be bigger than the number of ghostcells
-            IF (nysplit < ng .OR. nzsplit < ng) CYCLE
+            IF (nysplit < ncell_min .OR. nzsplit < ncell_min) CYCLE
 
             area = nxsplit * nysplit + nysplit * nzsplit + nzsplit * nxsplit
             IF (area < minarea) THEN
@@ -196,7 +198,7 @@ CONTAINS
           nxsplit = n2_global / ix
           nysplit = n3_global / iy
           ! Actual domain must be bigger than the number of ghostcells
-          IF (nxsplit < ng .OR. nysplit < ng) CYCLE
+          IF (nxsplit < ncell_min .OR. nysplit < ncell_min) CYCLE
 
           area = nxsplit + nysplit
           IF (area < minarea) THEN
@@ -580,6 +582,8 @@ CONTAINS
             1-ng:ny+ng,1:3))
       END IF
     END DO
+
+    ALLOCATE(total_particle_energy_species(n_species))
 
     CALL allocate_ic
 

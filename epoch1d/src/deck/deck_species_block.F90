@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2016 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2012 Chris Brady <C.S.Brady@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -461,13 +459,13 @@ CONTAINS
         species_list(species_id)%ic_df_type = c_ic_df_thermal
       END IF
       RETURN
-    ENDIF
+    END IF
 
     IF (str_cmp(element, 'fractional_tail_cutoff')) THEN
       species_list(species_id)%fractional_tail_cutoff = &
           as_real_print(value, element, errcode)
       RETURN
-    ENDIF
+    END IF
 
     ! *************************************************************
     ! This section identifies a species. Generic
@@ -613,6 +611,13 @@ CONTAINS
     END IF
 
     IF (str_cmp(element, 'bc_z_max')) THEN
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'background_species') &
+        .OR. str_cmp(element, 'background')) THEN
+      species_list(species_id)%background_species = &
+          as_logical_print(value, element, errcode)
       RETURN
     END IF
 
@@ -1376,8 +1381,6 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: value
     INTEGER, INTENT(INOUT) :: errcode
 
-    IF (.NOT.use_qed .AND. .NOT.use_bremsstrahlung) RETURN
-
     ! Just a plain old electron
     IF (str_cmp(value, 'electron')) THEN
       species_list(species_id)%charge = -q0
@@ -1440,7 +1443,7 @@ CONTAINS
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_electron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1460,7 +1463,7 @@ CONTAINS
 #ifdef PHOTONS
       breit_wheeler_electron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1494,7 +1497,7 @@ CONTAINS
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
       trident_positron_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1511,7 +1514,7 @@ CONTAINS
 #ifdef PHOTONS
       IF (photon_species == -1) photon_species = species_id
 #else
-      errcode = c_err_generic_warning
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
 #ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
@@ -1532,7 +1535,7 @@ CONTAINS
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
 #else
-      errcode = c_err_generic_warning
+      IF (use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
       RETURN
     END IF

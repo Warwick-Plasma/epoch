@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (C) 2016 Stephan Kuschel <Stephan.Kuschel@gmail.com>
+# Copyright (C) 2009-2019 University of Warwick
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,13 +71,13 @@ class test_laser(SimTest):
         self.totaleyassert('0000.sdf', 0.0)
 
     def test_Eey0001(self):
-        self.totaleyassert('0001.sdf', 1.3863746041123297e+23)
+        self.totaleyassert('0001.sdf', 1.38636e+23)
 
     def test_Eey0003(self):
-        self.totaleyassert('0003.sdf', 1.4061852974870318e+23)
+        self.totaleyassert('0003.sdf', 1.40618e+23)
 
     def test_Eey0007(self):
-        self.totaleyassert('0007.sdf', 1.23187164795e17)
+        self.totaleyassert('0007.sdf', 6.90067e+17)
 
 
 if __name__ == '__main__':

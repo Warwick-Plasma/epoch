@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2011-2012 Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -54,6 +52,7 @@ MODULE diagnostics
   LOGICAL :: dump_field_grid, skipped_any_set
   LOGICAL :: got_request_dump_name = .FALSE.
   LOGICAL :: got_request_dump_restart = .FALSE.
+  LOGICAL :: from_dump_request = .FALSE.
   CHARACTER(LEN=string_length) :: request_dump_name = ''
   LOGICAL, ALLOCATABLE :: dump_point_grid(:)
   LOGICAL, ALLOCATABLE, SAVE :: prefix_first_call(:)
@@ -422,6 +421,11 @@ CONTAINS
         CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
             'laser_x_max_phase')
 
+        CALL write_injector_depths(sdf_handle, injector_x_min, &
+            'injector_x_min_depths', c_dir_x, x_min_boundary)
+        CALL write_injector_depths(sdf_handle, injector_x_max, &
+            'injector_x_max_depths', c_dir_x, x_max_boundary)
+
         DO io = 1, n_io_blocks
           CALL sdf_write_srl(sdf_handle, &
               'time_prev/'//TRIM(io_block_list(io)%name), &
@@ -561,6 +565,38 @@ CONTAINS
           END DO
         END IF
 #endif
+
+        mask = iomask(c_dump_total_energy_sum)
+        IF (IAND(mask, code) /= 0) THEN
+          CALL build_species_subset
+
+          IF (IAND(mask, c_io_species) == 0) THEN
+            CALL calc_total_energy_sum(.FALSE.)
+          ELSE
+            CALL calc_total_energy_sum(.TRUE.)
+
+            DO ispecies = 1, n_species
+              species => io_list(ispecies)
+              IF (IAND(species%dumpmask, code) == 0) CYCLE
+
+              CALL sdf_write_srl(sdf_handle, &
+                  'total_particle_energy/' // TRIM(species%name), &
+                  'Total Particle Energy/' // TRIM(species%name) // ' (J)', &
+                  total_particle_energy_species(ispecies))
+            END DO
+          END IF
+
+          IF (isubset == 1) THEN
+            IF (IAND(mask, c_io_no_sum) == 0) THEN
+              CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
+                  'Total Particle Energy in Simulation (J)', &
+                  total_particle_energy)
+            END IF
+            CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
+                'Total Field Energy in Simulation (J)', total_field_energy)
+          END IF
+        END IF
+
         CALL write_particle_variable(c_dump_part_px, code, &
             'Px', 'kg.m/s', it_output_real)
         CALL write_particle_variable(c_dump_part_py, code, &
@@ -726,6 +762,12 @@ CONTAINS
       IF (IAND(mask, c_io_never) /= 0) dump_field_grid = .FALSE.
       IF (restart_flag) dump_field_grid = .TRUE.
 
+      use_offset_grid = .FALSE.
+      DO io = 1, n_io_blocks
+        use_offset_grid = use_offset_grid &
+           .OR. (io_block_list(io)%dump .AND. io_block_list(io)%use_offset_grid)
+      END DO
+
       IF (dump_field_grid) THEN
         IF (.NOT. use_offset_grid) THEN
           CALL sdf_write_srl_plain_mesh(sdf_handle, 'grid', 'Grid/Grid', &
@@ -856,15 +898,6 @@ CONTAINS
             'Absorption/Fraction of Laser Energy Absorbed (%)', laser_absorbed)
       END IF
 
-      IF (IAND(iomask(c_dump_total_energy_sum), code) /= 0) THEN
-        CALL calc_total_energy_sum
-
-        CALL sdf_write_srl(sdf_handle, 'total_particle_energy', &
-            'Total Particle Energy in Simulation (J)', total_particle_energy)
-        CALL sdf_write_srl(sdf_handle, 'total_field_energy', &
-            'Total Field Energy in Simulation (J)', total_field_energy)
-      END IF
-
       ! close the file
       CALL sdf_close(sdf_handle)
 
@@ -884,9 +917,13 @@ CONTAINS
           CALL append_filename(dump_type, filename, n_io_blocks+2)
         END IF
         IF (iprefix > 1) dump_type = TRIM(file_prefixes(iprefix))
-        WRITE(stat_unit, '(''Wrote '', a7, '' dump number'', i5, '' at time'', &
-          & g20.12, '' and iteration'', i7)') dump_type, &
-          file_numbers(iprefix)-1, time, step
+        IF (from_dump_request) THEN
+          WRITE(stat_unit,'(a)') 'Writing DUMP file request'
+          from_dump_request = .FALSE.
+        END IF
+        WRITE(stat_unit, '(''Wrote '', a7, '', '', a18, '' at time'', &
+          & g12.4, '' and iteration'', i8)') dump_type, &
+          TRIM(filename), time, step
         CALL flush_stat_file()
       END IF
 
@@ -942,6 +979,56 @@ CONTAINS
     END IF
 
   END SUBROUTINE write_laser_phases
+
+
+
+  SUBROUTINE write_injector_depths(sdf_handle, first_injector, block_name, &
+      direction, runs_this_rank)
+
+    TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
+    TYPE(injector_block), POINTER :: first_injector
+    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: direction
+    LOGICAL, INTENT(IN) :: runs_this_rank
+    TYPE(injector_block), POINTER :: current_injector
+    REAL(num), DIMENSION(:), ALLOCATABLE :: depths
+    INTEGER :: iinj, inj_count, ierr
+
+    current_injector => first_injector
+    inj_count = 0
+    DO WHILE(ASSOCIATED(current_injector))
+      inj_count = inj_count + 1
+      current_injector => current_injector%next
+    END DO
+
+    IF (inj_count > 0) THEN
+      ALLOCATE(depths(inj_count))
+      iinj = 1
+      current_injector => first_injector
+
+      DO WHILE(ASSOCIATED(current_injector))
+        depths(iinj) = current_injector%depth
+        iinj = iinj + 1
+        current_injector => current_injector%next
+      END DO
+
+      IF (.NOT. runs_this_rank) depths = HUGE(0.0_num)
+
+      IF (rank == 0) THEN
+        CALL MPI_Reduce(MPI_IN_PLACE, depths, inj_count, mpireal, MPI_MIN, &
+            0, comm, ierr)
+      ELSE
+        CALL MPI_Reduce(depths, depths, inj_count, mpireal, MPI_MIN, &
+            0, comm, ierr)
+      END IF
+
+      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+          inj_count, depths, 0)
+
+      DEALLOCATE(depths)
+    END IF
+
+  END SUBROUTINE write_injector_depths
 
 
 
@@ -1098,6 +1185,7 @@ CONTAINS
     dump_source_code = .FALSE.
     dump_input_decks = .FALSE.
     print_arrays = .FALSE.
+    from_dump_request = .FALSE.
     iomask = c_io_none
     iodumpmask = c_io_none
 
@@ -1121,6 +1209,14 @@ CONTAINS
       IF (force) THEN
         io_block_list(io)%dump = .TRUE.
         restart_flag = .TRUE.
+      END IF
+
+      IF (got_request_dump_name) THEN
+        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
+          io_block_list(io)%dump = .TRUE.
+          from_dump_request = .TRUE.
+          got_request_dump_name = .FALSE.
+        END IF
       END IF
 
       IF (elapsed_time < walltime_start) CYCLE
@@ -1221,15 +1317,11 @@ CONTAINS
         END IF
       END IF
 
-      IF (got_request_dump_name) THEN
-        IF (str_cmp(request_dump_name, io_block_list(io)%name)) THEN
-          io_block_list(io)%dump = .TRUE.
-        END IF
-      END IF
-
       io_block_list(io)%average_time_start = &
           time_first - io_block_list(io)%average_time
+    END DO
 
+    DO io = 1, n_io_blocks
       IF (io_block_list(io)%dump) THEN
         print_arrays = .TRUE.
         IF (io_block_list(io)%restart) restart_flag = .TRUE.
@@ -1261,6 +1353,7 @@ CONTAINS
     END DO
 
     IF (got_request_dump_restart) THEN
+      got_request_dump_restart = .FALSE.
       restart_flag = .TRUE.
       print_arrays = .TRUE.
       dump_source_code = .TRUE.
@@ -1287,9 +1380,6 @@ CONTAINS
 
     IF (force) iomask = IOR(iomask, io_block_list(1)%dumpmask)
     iodumpmask(1,:) = iomask
-
-    got_request_dump_name = .FALSE.
-    got_request_dump_restart = .FALSE.
 
   END SUBROUTINE io_test
 
@@ -2913,25 +3003,6 @@ CONTAINS
 
 
 
-  FUNCTION lowercase(string_in) RESULT(string_out)
-
-    CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
-    CHARACTER(LEN=*), PARAMETER :: upr = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    CHARACTER(LEN=*), INTENT(IN) :: string_in
-    CHARACTER(LEN=LEN(string_in)) :: string_out
-    INTEGER :: i, idx
-
-    string_out = string_in
-
-    DO i = 1, LEN(string_out)
-      idx = INDEX(upr, string_out(i:i))
-      IF (idx /= 0) string_out(i:i) = lwr(idx:idx)
-    END DO
-
-  END FUNCTION lowercase
-
-
-
   SUBROUTINE create_timestring(time, timestring)
 
     REAL(num), INTENT(IN) :: time
@@ -3114,12 +3185,16 @@ CONTAINS
               file=TRIM(data_dir) // '/' // TRIM(request_dump_file))
           IF (ierr == 0) THEN
             READ(lu,'(A)',iostat=ierr) request_dump_name
+            CLOSE(lu, status='DELETE')
             IF (ierr == 0) THEN
               got_request_dump_name = .TRUE.
+              WRITE(stat_unit,'(a)') 'Found DUMP file output request with ' &
+                  // 'contents: ' // TRIM(request_dump_name)
             ELSE
               got_request_dump_restart = .TRUE.
+              WRITE(stat_unit,'(a)') 'Found DUMP file output request'
             END IF
-            CLOSE(lu, status='DELETE')
+            CALL flush_stat_file()
           ELSE
             got_request_dump_name = .FALSE.
             got_request_dump_restart = .FALSE.
@@ -3311,21 +3386,5 @@ CONTAINS
     !CALL write_input_decks(h)
 
   END SUBROUTINE write_source_info
-
-
-
-  FUNCTION trim_string(string)
-
-    CHARACTER(LEN=c_max_string_length) :: trim_string
-    CHARACTER(LEN=*) :: string
-
-    string = ADJUSTL(string)
-    IF (LEN_TRIM(string) > c_max_string_length) THEN
-      trim_string = string(1:c_max_string_length)
-    ELSE
-      trim_string = TRIM(string)
-    END IF
-
-  END FUNCTION trim_string
 
 END MODULE diagnostics

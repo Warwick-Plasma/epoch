@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -63,7 +62,7 @@ CONTAINS
   SUBROUTINE shift_window(window_shift_cells)
 
     INTEGER, INTENT(IN) :: window_shift_cells
-    INTEGER :: iwindow, ix, iproc
+    INTEGER :: iwindow, ix
     REAL(num) :: xb_min
 
     ! Shift the window round one cell at a time.
@@ -84,19 +83,7 @@ CONTAINS
       x_grid_max = x_global(nx_global)
       x_max = xb_global(nx_global+1) - dx * cpml_thickness
 
-      DO iproc = 0, nprocx-1
-        x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-        x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-      END DO
-
-      x_grid_min_local = x_grid_mins(x_coords)
-      x_grid_max_local = x_grid_maxs(x_coords)
-
-      x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-      x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-
-      x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-      xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+      CALL setup_grid_x
 
       CALL remove_particles
 

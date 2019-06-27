@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -205,7 +204,7 @@ CONTAINS
             // ' iteratations per particle on average.'
         WRITE(io,*) 'Possibly try smaller momentum range'
       END DO
-    ENDIF
+    END IF
 
   END SUBROUTINE setup_particle_dist_fn
 
@@ -245,7 +244,7 @@ CONTAINS
     IF (dof == 0) THEN
       momentum_from_temperature_relativistic = 0.0_num
       RETURN
-    ENDIF
+    END IF
 
     temp = SUM(temperature)
     temp_max = MAXVAL(temperature)
@@ -502,7 +501,7 @@ CONTAINS
       IF (err /= c_err_none .AND. rank == 0) THEN
         PRINT*, 'Unable to evaluate distribution function'
         CALL abort_code(c_err_bad_setup)
-      ENDIF
+      END IF
 
       it = it + 1
 
@@ -516,7 +515,7 @@ CONTAINS
 
       rand = random()
       IF (rand < gamma_drift_fac * (gamma_after / gamma_before)) EXIT
-    ENDDO
+    END DO
 
     IF (PRESENT(it_r)) it_r = it
 

@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -91,6 +90,12 @@ CONTAINS
 
       CALL setup_ic_density(ispecies)
 
+      IF (species%background_species) THEN
+        ALLOCATE(species%background_density(1-ng:nx+ng))
+        species%background_density  = species_density
+        CYCLE
+      END IF
+
 #ifdef PER_SPECIES_WEIGHT
       CALL non_uniform_load_particles(species_density, species, &
           ic%density_min, ic%density_max)
@@ -123,6 +128,7 @@ CONTAINS
     IF (rank == 0) THEN
       DO ispecies = 1, n_species
         species => species_list(ispecies)
+        IF (species%background_species) CYCLE
         IF (species%count < 0) THEN
           DO iu = 1, nio_units
             io = ios_units(iu)

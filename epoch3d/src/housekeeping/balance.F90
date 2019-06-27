@@ -1,6 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2012      Martin Ramsay <M.G.Ramsay@warwick.ac.uk>
-! Copyright (C) 2009      Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -33,7 +31,6 @@ MODULE balance
   INTEGER :: old_comm, old_coordinates(c_ndims)
   INTEGER :: old_slice_coord, new_slice_coord, slice_dir
   LOGICAL :: max_boundary
-  INTEGER :: ng_max
 
 CONTAINS
 
@@ -68,9 +65,9 @@ CONTAINS
         npy = jj
         npz = npyz / npy
         IF (npx * npy * npz /= nproc) CYCLE
-        IF (nx_global / npx < ng) CYCLE
-        IF (ny_global / npy < ng) CYCLE
-        IF (nz_global / npz < ng) CYCLE
+        IF (nx_global / npx < ncell_min) CYCLE
+        IF (ny_global / npy < ncell_min) CYCLE
+        IF (nz_global / npz < ncell_min) CYCLE
 
         ALLOCATE(p_x_min(npx), p_x_max(npx))
         ALLOCATE(p_y_min(npy), p_y_max(npy))
@@ -133,7 +130,6 @@ CONTAINS
 
     ! On one processor do nothing to save time
     IF (nproc == 1) RETURN
-    ng_max = MAX(ng, jng, sng)
 
     full_check = over_ride
     IF (step - last_full_check < dlb_force_interval) THEN
@@ -415,7 +411,6 @@ CONTAINS
   SUBROUTINE redistribute_domain
 
     INTEGER, DIMENSION(c_ndims,2) :: domain
-    INTEGER :: iproc
 
     IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
 
@@ -467,47 +462,12 @@ CONTAINS
     ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
-    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
-    z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
-
     DEALLOCATE(xb, yb, zb)
     ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
-    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
-    zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
 
-    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    END DO
-    ! Same for y
-    DO iproc = 0, nprocy - 1
-      y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
-      y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
-    END DO
-    ! Same for z
-    DO iproc = 0, nprocz - 1
-      z_grid_mins(iproc) = z_global(cell_z_min(iproc+1))
-      z_grid_maxs(iproc) = z_global(cell_z_max(iproc+1))
-    END DO
-
-    ! Set the lengths of the current domain so that the particle balancer
-    ! works properly
-    x_grid_min_local = x_grid_mins(x_coords)
-    x_grid_max_local = x_grid_maxs(x_coords)
-    y_grid_min_local = y_grid_mins(y_coords)
-    y_grid_max_local = y_grid_maxs(y_coords)
-    z_grid_min_local = z_grid_mins(z_coords)
-    z_grid_max_local = z_grid_maxs(z_coords)
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
-    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
-    z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
-    z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
+    CALL setup_grid_x
+    CALL setup_grid_y
+    CALL setup_grid_z
 
   END SUBROUTINE redistribute_domain
 
@@ -528,6 +488,7 @@ CONTAINS
     TYPE(laser_block), POINTER :: current
     TYPE(injector_block), POINTER :: injector_current
     TYPE(particle_species_migration), POINTER :: mg
+    TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
 
@@ -621,7 +582,8 @@ CONTAINS
     END IF
 
     DO ispecies = 1, n_species
-      mg => species_list(ispecies)%migrate
+      sp => species_list(ispecies)
+      mg => sp%migrate
 
       IF (mg%fluid) THEN
         CALL remap_field(mg%fluid_energy, temp)
@@ -633,6 +595,14 @@ CONTAINS
         DEALLOCATE(mg%fluid_density)
         ALLOCATE(mg%fluid_density(1-ng:nx_new+ng,1-ng:ny_new+ng,1-ng:nz_new+ng))
         mg%fluid_density = temp
+      END IF
+
+      IF (sp%background_species) THEN
+        CALL remap_field(sp%background_density, temp)
+        DEALLOCATE(sp%background_density)
+        ALLOCATE(&
+            sp%background_density(1-ng:nx_new+ng,1-ng:ny_new+ng,1-ng:nz_new+ng))
+        sp%background_density = temp
       END IF
 
       IF (.NOT.pre_loading) CYCLE
@@ -848,13 +818,6 @@ CONTAINS
 
     injector_current => injector_x_min
     DO WHILE(ASSOCIATED(injector_current))
-      IF (ASSOCIATED(injector_current%dt_inject)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-        DEALLOCATE(injector_current%dt_inject)
-        ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng, 1-ng:nz_new+ng))
-        injector_current%dt_inject = temp_slice
-      END IF
-
       IF (ASSOCIATED(injector_current%depth)) THEN
         CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
         DEALLOCATE(injector_current%depth)
@@ -869,13 +832,6 @@ CONTAINS
 
     injector_current => injector_x_max
     DO WHILE(ASSOCIATED(injector_current))
-      IF (ASSOCIATED(injector_current%dt_inject)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%dt_inject, temp_slice)
-        DEALLOCATE(injector_current%dt_inject)
-        ALLOCATE(injector_current%dt_inject(1-ng:ny_new+ng, 1-ng:nz_new+ng))
-        injector_current%dt_inject = temp_slice
-      END IF
-
       IF (ASSOCIATED(injector_current%depth)) THEN
         CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
         DEALLOCATE(injector_current%depth)
@@ -994,11 +950,6 @@ CONTAINS
 
     injector_current => injector_y_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:nz_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:nz_new+ng))
@@ -1011,11 +962,6 @@ CONTAINS
 
     injector_current => injector_y_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:nz_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:nz_new+ng))
@@ -1132,11 +1078,6 @@ CONTAINS
 
     injector_current => injector_z_min
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_z, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_z, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:ny_new+ng))
@@ -1149,11 +1090,6 @@ CONTAINS
 
     injector_current => injector_z_max
     DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_z, injector_current%dt_inject, temp_slice)
-      DEALLOCATE(injector_current%dt_inject)
-      ALLOCATE(injector_current%dt_inject(1-ng:nx_new+ng, 1-ng:ny_new+ng))
-      injector_current%dt_inject = temp_slice
-
       CALL remap_field_slice(c_dir_z, injector_current%depth, temp_slice)
       DEALLOCATE(injector_current%depth)
       ALLOCATE(injector_current%depth(1-ng:nx_new+ng, 1-ng:ny_new+ng))
@@ -2623,7 +2559,7 @@ CONTAINS
         END IF
         ! To communicate ghost cell information correctly, each domain must
         ! contain at least ng cells.
-        nextra = old - maxs(proc) + ng_max
+        nextra = old - maxs(proc) + ncell_min
         IF (nextra > 0) THEN
           maxs(proc) = maxs(proc) + nextra
         END IF
@@ -2637,8 +2573,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -2707,8 +2643,8 @@ CONTAINS
     ! Backwards
     old = sz
     DO proc = nproc-1, 1, -1
-      IF (old - maxs(proc) < ng_max) THEN
-        maxs(proc) = old - ng_max
+      IF (old - maxs(proc) < ncell_min) THEN
+        maxs(proc) = old - ncell_min
       END IF
       old = maxs(proc)
     END DO
@@ -2716,8 +2652,8 @@ CONTAINS
     ! Forwards (unnecessary?)
     old = 0
     DO proc = 1, nproc-1
-      IF (maxs(proc) - old < ng_max) THEN
-        maxs(proc) = old + ng_max
+      IF (maxs(proc) - old < ncell_min) THEN
+        maxs(proc) = old + ncell_min
       END IF
       old = maxs(proc)
     END DO

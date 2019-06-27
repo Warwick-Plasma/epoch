@@ -1,5 +1,4 @@
-! Copyright (C) 2010-2015 Keith Bennett <K.Bennett@warwick.ac.uk>
-! Copyright (C) 2009-2010 Chris Brady <C.S.Brady@warwick.ac.uk>
+! Copyright (C) 2009-2019 University of Warwick
 !
 ! This program is free software: you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -49,9 +48,9 @@ CONTAINS
     INTEGER :: ranges(3,1), nproc_orig, oldgroup, newgroup
     CHARACTER(LEN=11) :: str
 
-    IF (nx_global < ng) THEN
+    IF (nx_global < ncell_min) THEN
       IF (rank == 0) THEN
-        CALL integer_as_string(ng, str)
+        CALL integer_as_string(ncell_min, str)
         PRINT*,'*** ERROR ***'
         PRINT*,'Simulation domain is too small.'
         PRINT*,'There must be at least ' // TRIM(str) &
@@ -67,7 +66,7 @@ CONTAINS
     DO WHILE (nproc > 1)
       nxsplit = nx_global / nproc
       ! Actual domain must be bigger than the number of ghostcells
-      IF (nxsplit >= ng) EXIT
+      IF (nxsplit >= ncell_min) EXIT
       nproc  = nproc - 1
       nprocx = nproc
     END DO
@@ -275,6 +274,8 @@ CONTAINS
         ALLOCATE(species_list(ispecies)%ext_temp_x_max(1:3))
       END IF
     END DO
+
+    ALLOCATE(total_particle_energy_species(n_species))
 
     CALL allocate_ic
 
