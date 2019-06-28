@@ -233,27 +233,27 @@ CONTAINS
     CALL populate_pack_from_laser(laser, parameters)
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
-        DO j = 1,nz
+        DO j = 0,nz
           parameters%pack_iz = j
-          DO i = 1,ny
+          DO i = 0,ny
             parameters%pack_iy = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
           END DO
         END DO
       CASE(c_bd_y_min, c_bd_y_max)
-        DO j = 1,nz
+        DO j = 0,nz
           parameters%pack_iz = j
-          DO i = 1,nx
+          DO i = 0,nx
             parameters%pack_ix = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
           END DO
         END DO
       CASE(c_bd_z_min, c_bd_z_max)
-        DO j = 1,ny
+        DO j = 0,ny
           parameters%pack_iy = j
-          DO i = 1,nx
+          DO i = 0,nx
             parameters%pack_ix = i
             laser%phase(i,j) = &
                 evaluate_with_parameters(laser%phase_function, parameters, err)
@@ -275,9 +275,9 @@ CONTAINS
     CALL populate_pack_from_laser(laser, parameters)
     SELECT CASE(laser%boundary)
       CASE(c_bd_x_min, c_bd_x_max)
-        DO j = 1,nz
+        DO j = 0,nz
           parameters%pack_iz = j
-          DO i = 1,ny
+          DO i = 0,ny
             parameters%pack_iy = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
@@ -285,9 +285,9 @@ CONTAINS
           END DO
         END DO
       CASE(c_bd_y_min, c_bd_y_max)
-        DO j = 1,nz
+        DO j = 0,nz
           parameters%pack_iz = j
-          DO i = 1,nx
+          DO i = 0,nx
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
@@ -295,9 +295,9 @@ CONTAINS
           END DO
         END DO
       CASE(c_bd_z_min, c_bd_z_max)
-        DO j = 1,ny
+        DO j = 0,ny
           parameters%pack_iy = j
-          DO i = 1,nx
+          DO i = 0,nx
             parameters%pack_ix = i
             laser%profile(i,j) = &
                 evaluate_with_parameters(laser%profile_function, parameters, &
@@ -526,12 +526,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(ny,nz))
-    ALLOCATE(source2(ny,nz))
+    ALLOCATE(source1(0:ny,0:nz))
+    ALLOCATE(source2(0:ny,0:nz))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    bx(laserpos-1, 1:ny, 1:nz) = bx_x_min(1:ny, 1:nz)
+    bx(laserpos-1, 0:ny, 0:nz) = bx_x_min(0:ny, 0:nz)
 
     IF (add_laser(n)) THEN
       current => laser_x_min
@@ -541,8 +541,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,nz
-          DO i = 1,ny
+          DO j = 0,nz
+          DO i = 0,ny
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -554,19 +554,19 @@ CONTAINS
       END DO
     END IF
 
-    bz(laserpos-1, 1:ny, 1:nz) = sum * ( 4.0_num * source1 &
-        + 2.0_num * (ey_x_min(1:ny, 1:nz) + c * bz_x_min(1:ny, 1:nz)) &
-        - 2.0_num * ey(laserpos, 1:ny, 1:nz) &
-        - lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
-        + dt_eps * jy(laserpos, 1:ny, 1:nz) &
-        + diff * bz(laserpos, 1:ny, 1:nz))
+    bz(laserpos-1, 0:ny, 0:nz) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ey_x_min(0:ny, 0:nz) + c * bz_x_min(0:ny, 0:nz)) &
+        - 2.0_num * ey(laserpos, 0:ny, 0:nz) &
+        - lz * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, 0:ny, -1:nz-1)) &
+        + dt_eps * jy(laserpos, 0:ny, 0:nz) &
+        + diff * bz(laserpos, 0:ny, 0:nz))
 
-    by(laserpos-1, 1:ny, 1:nz) = sum * (-4.0_num * source2 &
-        - 2.0_num * (ez_x_min(1:ny, 1:nz) - c * by_x_min(1:ny, 1:nz)) &
-        + 2.0_num * ez(laserpos, 1:ny, 1:nz) &
-        - ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
-        - dt_eps * jz(laserpos, 1:ny, 1:nz) &
-        + diff * by(laserpos, 1:ny, 1:nz))
+    by(laserpos-1, 0:ny, 0:nz) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ez_x_min(0:ny, 0:nz) - c * by_x_min(0:ny, 0:nz)) &
+        + 2.0_num * ez(laserpos, 0:ny, 0:nz) &
+        - ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
+        - dt_eps * jz(laserpos, 0:ny, 0:nz) &
+        + diff * by(laserpos, 0:ny, 0:nz))
 
     DEALLOCATE(source1, source2)
 
@@ -604,12 +604,12 @@ CONTAINS
     diff = lx - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(ny,nz))
-    ALLOCATE(source2(ny,nz))
+    ALLOCATE(source1(0:ny,0:nz))
+    ALLOCATE(source2(0:ny,0:nz))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    bx(laserpos+1, 1:ny, 1:nz) = bx_x_max(1:ny, 1:nz)
+    bx(laserpos+1, 0:ny, 0:nz) = bx_x_max(0:ny, 0:nz)
 
     IF (add_laser(n)) THEN
       current => laser_x_max
@@ -619,8 +619,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,nz
-          DO i = 1,ny
+          DO j = 0,nz
+          DO i = 0,ny
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -632,19 +632,19 @@ CONTAINS
       END DO
     END IF
 
-    bz(laserpos, 1:ny, 1:nz) = sum * (-4.0_num * source1 &
-        - 2.0_num * (ey_x_max(1:ny, 1:nz) - c * bz_x_max(1:ny, 1:nz)) &
-        + 2.0_num * ey(laserpos, 1:ny, 1:nz) &
-        + lz * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 1:ny, 0:nz-1)) &
-        - dt_eps * jy(laserpos, 1:ny, 1:nz) &
-        + diff * bz(laserpos-1, 1:ny, 1:nz))
+    bz(laserpos, 0:ny, 0:nz) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ey_x_max(0:ny, 0:nz) - c * bz_x_max(0:ny, 0:nz)) &
+        + 2.0_num * ey(laserpos, 0:ny, 0:nz) &
+        + lz * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, 0:ny, -1:nz-1)) &
+        - dt_eps * jy(laserpos, 0:ny, 0:nz) &
+        + diff * bz(laserpos-1, 0:ny, 0:nz))
 
-    by(laserpos, 1:ny, 1:nz) = sum * ( 4.0_num * source2 &
-        + 2.0_num * (ez_x_max(1:ny, 1:nz) + c * by_x_max(1:ny, 1:nz)) &
-        - 2.0_num * ez(laserpos, 1:ny, 1:nz) &
-        + ly * (bx(laserpos, 1:ny, 1:nz) - bx(laserpos, 0:ny-1, 1:nz)) &
-        + dt_eps * jz(laserpos, 1:ny, 1:nz) &
-        + diff * by(laserpos-1, 1:ny, 1:nz))
+    by(laserpos, 0:ny, 0:nz) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ez_x_max(0:ny, 0:nz) + c * by_x_max(0:ny, 0:nz)) &
+        - 2.0_num * ez(laserpos, 0:ny, 0:nz) &
+        + ly * (bx(laserpos, 0:ny, 0:nz) - bx(laserpos, -1:ny-1, 0:nz)) &
+        + dt_eps * jz(laserpos, 0:ny, 0:nz) &
+        + diff * by(laserpos-1, 0:ny, 0:nz))
 
     DEALLOCATE(source1, source2)
 
@@ -682,12 +682,12 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(nx,nz))
-    ALLOCATE(source2(nx,nz))
+    ALLOCATE(source1(0:nx,0:nz))
+    ALLOCATE(source2(0:nx,0:nz))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    by(1:nx, laserpos-1, 1:nz) = by_y_min(1:nx, 1:nz)
+    by(0:nx, laserpos-1, 0:nz) = by_y_min(0:nx, 0:nz)
 
     IF (add_laser(n)) THEN
       current => laser_y_min
@@ -697,8 +697,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,nz
-          DO i = 1,nx
+          DO j = 0,nz
+          DO i = 0,nx
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -710,19 +710,19 @@ CONTAINS
       END DO
     END IF
 
-    bx(1:nx, laserpos-1, 1:nz) = sum * ( 4.0_num * source1 &
-        + 2.0_num * (ez_y_min(1:nx, 1:nz) + c * bx_y_min(1:nx, 1:nz)) &
-        - 2.0_num * ez(1:nx, laserpos, 1:nz) &
-        - lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
-        + dt_eps * jz(1:nx, laserpos, 1:nz) &
-        + diff * bx(1:nx, laserpos, 1:nz))
+    bx(0:nx, laserpos-1, 0:nz) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ez_y_min(0:nx, 0:nz) + c * bx_y_min(0:nx, 0:nz)) &
+        - 2.0_num * ez(0:nx, laserpos, 0:nz) &
+        - lx * (by(0:nx, laserpos, 0:nz) - by(-1:nx-1, laserpos, 0:nz)) &
+        + dt_eps * jz(0:nx, laserpos, 0:nz) &
+        + diff * bx(0:nx, laserpos, 0:nz))
 
-    bz(1:nx, laserpos-1, 1:nz) = sum * (-4.0_num * source2 &
-        - 2.0_num * (ex_y_min(1:nx, 1:nz) - c * bz_y_min(1:nx, 1:nz)) &
-        + 2.0_num * ex(1:nx, laserpos, 1:nz) &
-        - lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
-        - dt_eps * jx(1:nx, laserpos, 1:nz) &
-        + diff * bz(1:nx, laserpos, 1:nz))
+    bz(0:nx, laserpos-1, 0:nz) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ex_y_min(0:nx, 0:nz) - c * bz_y_min(0:nx, 0:nz)) &
+        + 2.0_num * ex(0:nx, laserpos, 0:nz) &
+        - lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
+        - dt_eps * jx(0:nx, laserpos, 0:nz) &
+        + diff * bz(0:nx, laserpos, 0:nz))
 
     DEALLOCATE(source1, source2)
 
@@ -760,12 +760,12 @@ CONTAINS
     diff = ly - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(nx,nz))
-    ALLOCATE(source2(nx,nz))
+    ALLOCATE(source1(0:nx,0:nz))
+    ALLOCATE(source2(0:nx,0:nz))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    by(1:nx, laserpos+1, 1:nz) = by_y_max(1:nx, 1:nz)
+    by(0:nx, laserpos+1, 0:nz) = by_y_max(0:nx, 0:nz)
 
     IF (add_laser(n)) THEN
       current => laser_y_max
@@ -775,8 +775,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,nz
-          DO i = 1,nx
+          DO j = 0,nz
+          DO i = 0,nx
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -788,19 +788,19 @@ CONTAINS
       END DO
     END IF
 
-    bx(1:nx, laserpos, 1:nz) = sum * (-4.0_num * source1 &
-        - 2.0_num * (ez_y_max(1:nx, 1:nz) - c * bx_y_max(1:nx, 1:nz)) &
-        + 2.0_num * ez(1:nx, laserpos, 1:nz) &
-        + lx * (by(1:nx, laserpos, 1:nz) - by(0:nx-1, laserpos, 1:nz)) &
-        - dt_eps * jz(1:nx, laserpos, 1:nz) &
-        + diff * bx(1:nx, laserpos-1, 1:nz))
+    bx(0:nx, laserpos, 0:nz) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ez_y_max(0:nx, 0:nz) - c * bx_y_max(0:nx, 0:nz)) &
+        + 2.0_num * ez(0:nx, laserpos, 0:nz) &
+        + lx * (by(0:nx, laserpos, 0:nz) - by(-1:nx-1, laserpos, 0:nz)) &
+        - dt_eps * jz(0:nx, laserpos, 0:nz) &
+        + diff * bx(0:nx, laserpos-1, 0:nz))
 
-    bz(1:nx, laserpos, 1:nz) = sum * ( 4.0_num * source2 &
-        + 2.0_num * (ex_y_max(1:nx, 1:nz) + c * bz_y_max(1:nx, 1:nz)) &
-        - 2.0_num * ex(1:nx, laserpos, 1:nz) &
-        + lz * (by(1:nx, laserpos, 1:nz) - by(1:nx, laserpos, 0:nz-1)) &
-        + dt_eps * jx(1:nx, laserpos, 1:nz) &
-        + diff * bz(1:nx, laserpos-1, 1:nz))
+    bz(0:nx, laserpos, 0:nz) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ex_y_max(0:nx, 0:nz) + c * bz_y_max(0:nx, 0:nz)) &
+        - 2.0_num * ex(0:nx, laserpos, 0:nz) &
+        + lz * (by(0:nx, laserpos, 0:nz) - by(0:nx, laserpos, -1:nz-1)) &
+        + dt_eps * jx(0:nx, laserpos, 0:nz) &
+        + diff * bz(0:nx, laserpos-1, 0:nz))
 
     DEALLOCATE(source1, source2)
 
@@ -838,12 +838,12 @@ CONTAINS
     diff = lz - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(nx,ny))
-    ALLOCATE(source2(nx,ny))
+    ALLOCATE(source1(0:nx,0:ny))
+    ALLOCATE(source2(0:nx,0:ny))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    bz(1:nx, 1:ny, laserpos-1) = bz_z_min(1:nx, 1:ny)
+    bz(0:nx, 0:ny, laserpos-1) = bz_z_min(0:nx, 0:ny)
 
     IF (add_laser(n)) THEN
       current => laser_z_min
@@ -853,8 +853,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,ny
-          DO i = 1,nx
+          DO j = 0,ny
+          DO i = 0,nx
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -866,19 +866,19 @@ CONTAINS
       END DO
     END IF
 
-    by(1:nx, 1:ny, laserpos-1) = sum * ( 4.0_num * source1 &
-        + 2.0_num * (ex_z_min(1:nx, 1:ny) + c * by_z_min(1:nx, 1:ny)) &
-        - 2.0_num * ex(1:nx, 1:ny, laserpos) &
-        - ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
-        + dt_eps * jx(1:nx, 1:ny, laserpos) &
-        + diff * by(1:nx, 1:ny, laserpos))
+    by(0:nx, 0:ny, laserpos-1) = sum * ( 4.0_num * source1 &
+        + 2.0_num * (ex_z_min(0:nx, 0:ny) + c * by_z_min(0:nx, 0:ny)) &
+        - 2.0_num * ex(0:nx, 0:ny, laserpos) &
+        - ly * (bz(0:nx, 0:ny, laserpos) - bz(0:nx, -1:ny-1, laserpos)) &
+        + dt_eps * jx(0:nx, 0:ny, laserpos) &
+        + diff * by(0:nx, 0:ny, laserpos))
 
-    bx(1:nx, 1:ny, laserpos-1) = sum * (-4.0_num * source2 &
-        - 2.0_num * (ey_z_min(1:nx, 1:ny) - c * bx_z_min(1:nx, 1:ny)) &
-        + 2.0_num * ey(1:nx, 1:ny, laserpos) &
-        - lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
-        - dt_eps * jy(1:nx, 1:ny, laserpos) &
-        + diff * bx(1:nx, 1:ny, laserpos))
+    bx(0:nx, 0:ny, laserpos-1) = sum * (-4.0_num * source2 &
+        - 2.0_num * (ey_z_min(0:nx, 0:ny) - c * bx_z_min(0:nx, 0:ny)) &
+        + 2.0_num * ey(0:nx, 0:ny, laserpos) &
+        - lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
+        - dt_eps * jy(0:nx, 0:ny, laserpos) &
+        + diff * bx(0:nx, 0:ny, laserpos))
 
     DEALLOCATE(source1, source2)
 
@@ -916,12 +916,12 @@ CONTAINS
     diff = lz - c
     dt_eps = dt / epsilon0
 
-    ALLOCATE(source1(nx,ny))
-    ALLOCATE(source2(nx,ny))
+    ALLOCATE(source1(0:nx,0:ny))
+    ALLOCATE(source2(0:nx,0:ny))
     source1 = 0.0_num
     source2 = 0.0_num
 
-    bz(1:nx, 1:ny, laserpos+1) = bz_z_max(1:nx, 1:ny)
+    bz(0:nx, 0:ny, laserpos+1) = bz_z_max(0:nx, 0:ny)
 
     IF (add_laser(n)) THEN
       current => laser_z_max
@@ -931,8 +931,8 @@ CONTAINS
           IF (current%use_phase_function) CALL laser_update_phase(current)
           IF (current%use_profile_function) CALL laser_update_profile(current)
           t_env = laser_time_profile(current) * current%amp
-          DO j = 1,ny
-          DO i = 1,nx
+          DO j = 0,ny
+          DO i = 0,nx
             base = t_env * current%profile(i,j) &
               * SIN(current%current_integral_phase + current%phase(i,j))
             source1(i,j) = source1(i,j) + base * COS(current%pol_angle)
@@ -944,19 +944,19 @@ CONTAINS
       END DO
     END IF
 
-    by(1:nx, 1:ny, laserpos) = sum * (-4.0_num * source1 &
-        - 2.0_num * (ex_z_max(1:nx, 1:ny) - c * by_z_max(1:nx, 1:ny)) &
-        + 2.0_num * ex(1:nx, 1:ny, laserpos) &
-        + ly * (bz(1:nx, 1:ny, laserpos) - bz(1:nx, 0:ny-1, laserpos)) &
-        - dt_eps * jx(1:nx, 1:ny, laserpos) &
-        + diff * by(1:nx, 1:ny, laserpos-1))
+    by(0:nx, 0:ny, laserpos) = sum * (-4.0_num * source1 &
+        - 2.0_num * (ex_z_max(0:nx, 0:ny) - c * by_z_max(0:nx, 0:ny)) &
+        + 2.0_num * ex(0:nx, 0:ny, laserpos) &
+        + ly * (bz(0:nx, 0:ny, laserpos) - bz(0:nx, -1:ny-1, laserpos)) &
+        - dt_eps * jx(0:nx, 0:ny, laserpos) &
+        + diff * by(0:nx, 0:ny, laserpos-1))
 
-    bx(1:nx, 1:ny, laserpos) = sum * ( 4.0_num * source2 &
-        + 2.0_num * (ey_z_max(1:nx, 1:ny) + c * bx_z_max(1:nx, 1:ny)) &
-        - 2.0_num * ey(1:nx, 1:ny, laserpos) &
-        + lx * (bz(1:nx, 1:ny, laserpos) - bz(0:nx-1, 1:ny, laserpos)) &
-        + dt_eps * jy(1:nx, 1:ny, laserpos) &
-        + diff * bx(1:nx, 1:ny, laserpos-1))
+    bx(0:nx, 0:ny, laserpos) = sum * ( 4.0_num * source2 &
+        + 2.0_num * (ey_z_max(0:nx, 0:ny) + c * bx_z_max(0:nx, 0:ny)) &
+        - 2.0_num * ey(0:nx, 0:ny, laserpos) &
+        + lx * (bz(0:nx, 0:ny, laserpos) - bz(-1:nx-1, 0:ny, laserpos)) &
+        + dt_eps * jy(0:nx, 0:ny, laserpos) &
+        + diff * bx(0:nx, 0:ny, laserpos-1))
 
     DEALLOCATE(source1, source2)
 
