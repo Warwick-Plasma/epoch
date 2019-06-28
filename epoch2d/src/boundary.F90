@@ -407,7 +407,7 @@ CONTAINS
 
     IF (boundary == c_bd_x_min .AND. x_min_boundary) THEN
       IF (stagger(c_dir_x,stagger_type)) THEN
-        DO i = 1, ng
+        DO i = 1, ng-1
           field(i-ng,:) = field(ng-i,:)
         END DO
       ELSE
@@ -418,7 +418,7 @@ CONTAINS
     ELSE IF (boundary == c_bd_x_max .AND. x_max_boundary) THEN
       nn = nx
       IF (stagger(c_dir_x,stagger_type)) THEN
-        DO i = 1, ng
+        DO i = 1, ng-1
           field(nn+i,:) = field(nn-i,:)
         END DO
       ELSE
@@ -429,7 +429,7 @@ CONTAINS
 
     ELSE IF (boundary == c_bd_y_min .AND. y_min_boundary) THEN
       IF (stagger(c_dir_y,stagger_type)) THEN
-        DO i = 1, ng
+        DO i = 1, ng-1
           field(:,i-ng) = field(:,ng-i)
         END DO
       ELSE
@@ -440,7 +440,7 @@ CONTAINS
     ELSE IF (boundary == c_bd_y_max .AND. y_max_boundary) THEN
       nn = ny
       IF (stagger(c_dir_y,stagger_type)) THEN
-        DO i = 1, ng
+        DO i = 1, ng-1
           field(:,nn+i) = field(:,nn-i)
         END DO
       ELSE
@@ -801,15 +801,17 @@ CONTAINS
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
       IF (bc_field(i) == c_bc_conduct) THEN
-        CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
-        CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
+        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
+        CALL field_zero_gradient(ey, c_stagger_ey, i)
+        CALL field_zero_gradient(ez, c_stagger_ez, i)
       END IF
     END DO
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
       IF (bc_field(i) == c_bc_conduct) THEN
-        CALL field_clamp_zero(ex, ng, c_stagger_ex, i)
-        CALL field_clamp_zero(ez, ng, c_stagger_ez, i)
+        CALL field_zero_gradient(ex, c_stagger_ex, i)
+        CALL field_clamp_zero(ey, ng, c_stagger_ey, i)
+        CALL field_zero_gradient(ez, c_stagger_ez, i)
       END IF
     END DO
 
@@ -852,17 +854,17 @@ CONTAINS
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
       IF (bc_field(i) == c_bc_conduct) THEN
-        CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
-        CALL field_zero_gradient(by, c_stagger_by, i)
-        CALL field_zero_gradient(bz, c_stagger_bz, i)
+        CALL field_zero_gradient(bx, c_stagger_bx, i)
+        CALL field_clamp_zero(by, ng, c_stagger_by, i)
+        CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
       END IF
     END DO
 
     DO i = c_bd_y_min, c_bd_y_max, c_bd_y_max - c_bd_y_min
       IF (bc_field(i) == c_bc_conduct) THEN
-        CALL field_clamp_zero(by, ng, c_stagger_by, i)
-        CALL field_zero_gradient(bx, c_stagger_bx, i)
-        CALL field_zero_gradient(bz, c_stagger_bz, i)
+        CALL field_clamp_zero(bx, ng, c_stagger_bx, i)
+        CALL field_zero_gradient(by, c_stagger_by, i)
+        CALL field_clamp_zero(bz, ng, c_stagger_bz, i)
       END IF
     END DO
 
