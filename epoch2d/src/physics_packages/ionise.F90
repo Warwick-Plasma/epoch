@@ -376,6 +376,7 @@ CONTAINS
       END IF
     END IF
 
+    CALL setup_bc_lists
     CALL particle_bcs
 
   END SUBROUTINE ionise_particles
