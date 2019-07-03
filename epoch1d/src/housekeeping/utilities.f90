@@ -16,6 +16,7 @@
 MODULE utilities
 
   USE constants
+  USE shared_data
 
   IMPLICIT NONE
 
@@ -28,6 +29,7 @@ MODULE utilities
 
   PUBLIC :: erf_func
   PUBLIC :: abort_code, grow_array, get_free_lun
+  PUBLIC :: setup_grid_x
 
 CONTAINS
 
@@ -335,5 +337,41 @@ CONTAINS
     get_free_lun = lun
 
   END FUNCTION get_free_lun
+
+
+
+  SUBROUTINE setup_grid_x
+
+    INTEGER :: iproc
+    REAL(num) :: boundary_shift
+
+    ! Setup local grid
+    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
+    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
+
+    DO iproc = 0, nprocx-1
+      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
+      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
+    END DO
+
+    x_grid_min_local = x_grid_mins(x_coords)
+    x_grid_max_local = x_grid_maxs(x_coords)
+
+    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
+    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+
+    boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    x_min_outer = x_min - boundary_shift * dx
+    x_max_outer = x_max + boundary_shift * dx
+
+    dir_d(1) = dx
+    dir_min(1) = x_min
+    dir_max(1) = x_max
+    dir_grid_min(1) = x_grid_min
+    dir_grid_max(1) = x_grid_max
+    dir_min_local(1) = x_min_local
+    dir_max_local(1) = x_max_local
+
+  END SUBROUTINE setup_grid_x
 
 END MODULE utilities

@@ -345,6 +345,7 @@ CONTAINS
       END DO
     END IF
 
+    CALL setup_bc_lists
     CALL particle_bcs
 
   END SUBROUTINE non_uniform_load_particles
@@ -675,6 +676,7 @@ CONTAINS
       END DO
     END IF
 
+    CALL setup_bc_lists
     CALL particle_bcs
 
   END SUBROUTINE load_particles

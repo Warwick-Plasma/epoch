@@ -411,7 +411,6 @@ CONTAINS
   SUBROUTINE redistribute_domain
 
     INTEGER, DIMENSION(c_ndims,2) :: domain
-    INTEGER :: iproc
 
     IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
 
@@ -463,47 +462,12 @@ CONTAINS
     ! Do X, Y, Z arrays separately because we already have global copies
     DEALLOCATE(x, y, z)
     ALLOCATE(x(1-ng:nx+ng), y(1-ng:ny+ng), z(1-ng:nz+ng))
-    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-    y(1-ng:ny+ng) = y_global(ny_global_min-ng:ny_global_max+ng)
-    z(1-ng:nz+ng) = z_global(nz_global_min-ng:nz_global_max+ng)
-
     DEALLOCATE(xb, yb, zb)
     ALLOCATE(xb(1-ng:nx+ng), yb(1-ng:ny+ng), zb(1-ng:nz+ng))
-    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
-    yb(1-ng:ny+ng) = yb_global(ny_global_min-ng:ny_global_max+ng)
-    zb(1-ng:nz+ng) = zb_global(nz_global_min-ng:nz_global_max+ng)
 
-    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    END DO
-    ! Same for y
-    DO iproc = 0, nprocy - 1
-      y_grid_mins(iproc) = y_global(cell_y_min(iproc+1))
-      y_grid_maxs(iproc) = y_global(cell_y_max(iproc+1))
-    END DO
-    ! Same for z
-    DO iproc = 0, nprocz - 1
-      z_grid_mins(iproc) = z_global(cell_z_min(iproc+1))
-      z_grid_maxs(iproc) = z_global(cell_z_max(iproc+1))
-    END DO
-
-    ! Set the lengths of the current domain so that the particle balancer
-    ! works properly
-    x_grid_min_local = x_grid_mins(x_coords)
-    x_grid_max_local = x_grid_maxs(x_coords)
-    y_grid_min_local = y_grid_mins(y_coords)
-    y_grid_max_local = y_grid_maxs(y_coords)
-    z_grid_min_local = z_grid_mins(z_coords)
-    z_grid_max_local = z_grid_maxs(z_coords)
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
-    y_min_local = y_grid_min_local + (cpml_y_min_offset - 0.5_num) * dy
-    y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
-    z_min_local = z_grid_min_local + (cpml_z_min_offset - 0.5_num) * dz
-    z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
+    CALL setup_grid_x
+    CALL setup_grid_y
+    CALL setup_grid_z
 
   END SUBROUTINE redistribute_domain
 

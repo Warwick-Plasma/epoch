@@ -308,7 +308,6 @@ CONTAINS
   SUBROUTINE redistribute_domain
 
     INTEGER, DIMENSION(c_ndims,2) :: domain
-    INTEGER :: iproc
 
     IF (.NOT.ALLOCATED(new_cell_x_min)) RETURN
 
@@ -338,25 +337,10 @@ CONTAINS
     ! Do X array separately because we already have global copies
     DEALLOCATE(x)
     ALLOCATE(x(1-ng:nx+ng))
-    x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
-
     DEALLOCATE(xb)
     ALLOCATE(xb(1-ng:nx+ng))
-    xb(1-ng:nx+ng) = xb_global(nx_global_min-ng:nx_global_max+ng)
 
-    ! Recalculate x_grid_mins/maxs so that rebalancing works next time
-    DO iproc = 0, nprocx - 1
-      x_grid_mins(iproc) = x_global(cell_x_min(iproc+1))
-      x_grid_maxs(iproc) = x_global(cell_x_max(iproc+1))
-    END DO
-
-    ! Set the lengths of the current domain so that the particle balancer
-    ! works properly
-    x_grid_min_local = x_grid_mins(x_coords)
-    x_grid_max_local = x_grid_maxs(x_coords)
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    CALL setup_grid_x
 
   END SUBROUTINE redistribute_domain
 
