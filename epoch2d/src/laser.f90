@@ -464,7 +464,7 @@ CONTAINS
     by(laserpos-1, 0:ny) = sum * (-4.0_num * source2 &
         - 2.0_num * (ez_x_min(0:ny) - c * by_x_min(0:ny)) &
         + 2.0_num * ez(laserpos, 0:ny) &
-        - ly * (bx(laserpos, 1:ny+1) - bx(laserpos, 0:ny)) &
+        - ly * (bx(laserpos, 0:ny) - bx(laserpos, -1:ny-1)) &
         - dt_eps * jz(laserpos, 0:ny) &
         + diff * by(laserpos, 0:ny))
 
