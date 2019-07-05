@@ -107,6 +107,9 @@ MODULE constants
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
 
+  INTEGER, PARAMETER :: c_true_value  = 123454321
+  INTEGER, PARAMETER :: c_false_value = -123454321
+
   ! IO codes
   INTEGER, PARAMETER :: c_io_none = 0
   INTEGER, PARAMETER :: c_io_always = 2**0
@@ -344,6 +347,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_const_pico = 14
   INTEGER, PARAMETER :: c_const_femto = 15
   INTEGER, PARAMETER :: c_const_atto = 16
+  INTEGER, PARAMETER :: c_const_true = 17
+  INTEGER, PARAMETER :: c_const_false = 18
 
   ! Constants refering to grid properties
   INTEGER, PARAMETER :: c_const_xb = 22
