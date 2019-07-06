@@ -736,11 +736,16 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_min_outer - part_pos
 
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
               END IF
             ELSE
               IF (part_pos < x_min_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF
@@ -804,11 +809,16 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_max_outer - part_pos
 
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
               END IF
             ELSE
               IF (part_pos >= x_max_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF

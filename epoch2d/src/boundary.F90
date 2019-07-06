@@ -1126,11 +1126,16 @@ CONTAINS
 
                 cur%part_pos(1) = 2.0_num * x_min_outer - part_pos
 
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
               END IF
             ELSE
               IF (part_pos < x_min_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF
@@ -1209,11 +1214,16 @@ CONTAINS
 
                 cur%part_pos(1) = 2.0_num * x_max_outer - part_pos
 
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
               END IF
             ELSE
               IF (part_pos >= x_max_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF
@@ -1293,11 +1303,16 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_min_outer - part_pos
 
+              ELSE IF (y_min_boundary) THEN
+                ybd = 0
               END IF
             ELSE
               IF (part_pos < y_min_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                ybd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (y_min_boundary) THEN
+                ybd = 0
               END IF
             END IF
           END IF
@@ -1376,11 +1391,16 @@ CONTAINS
 
                 cur%part_pos(2) = 2.0_num * y_max_outer - part_pos
 
+              ELSE IF (y_max_boundary) THEN
+                ybd = 0
               END IF
             ELSE
               IF (part_pos >= y_max_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                ybd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (y_max_boundary) THEN
+                ybd = 0
               END IF
             END IF
           END IF
