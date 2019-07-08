@@ -180,28 +180,6 @@ CONTAINS
 
 
 
-  FUNCTION as_logical(str_in, err)
-
-    CHARACTER(*), INTENT(IN) :: str_in
-    INTEGER, INTENT(INOUT) :: err
-    LOGICAL :: as_logical
-
-    as_logical = .FALSE.
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'T')) THEN
-      as_logical = .TRUE.
-      RETURN
-    END IF
-    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'F')) THEN
-      as_logical = .FALSE.
-      RETURN
-    END IF
-
-    err = IOR(err, c_err_bad_value)
-
-  END FUNCTION as_logical
-
-
-
   FUNCTION as_bc(str_in, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
@@ -323,22 +301,6 @@ CONTAINS
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
   END FUNCTION as_boundary_print
-
-
-
-  FUNCTION as_logical_print(str_in, element, err) RESULT(res)
-
-    CHARACTER(*), INTENT(IN) :: str_in, element
-    INTEGER, INTENT(INOUT) :: err
-    LOGICAL :: res
-
-    res = as_logical(str_in, err)
-
-    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
-
-    WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
-
-  END FUNCTION as_logical_print
 
 
 

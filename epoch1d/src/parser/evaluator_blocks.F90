@@ -362,6 +362,16 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_const_true) THEN
+      CALL push_on_eval(REAL(c_true_value, num))
+      RETURN
+    END IF
+
+    IF (opcode == c_const_false) THEN
+      CALL push_on_eval(REAL(c_false_value, num))
+      RETURN
+    END IF
+
     IF (opcode == c_const_io_never) THEN
       CALL push_on_eval(REAL(c_io_never, num))
       RETURN

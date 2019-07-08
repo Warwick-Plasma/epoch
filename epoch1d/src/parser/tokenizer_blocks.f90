@@ -132,6 +132,14 @@ CONTAINS
     ELSE IF (str_cmp(name, 'qe')) THEN
       as_constant = c_const_qe
 
+    ELSE IF (str_cmp(lowercase(name), 't') &
+        .OR. str_cmp(lowercase(name), 'true')) THEN
+      as_constant = c_const_true
+
+    ELSE IF (str_cmp(lowercase(name), 'f') &
+        .OR. str_cmp(lowercase(name), 'false')) THEN
+      as_constant = c_const_false
+
     ELSE IF (str_cmp(name, 'c')) THEN
       as_constant = c_const_c
 
