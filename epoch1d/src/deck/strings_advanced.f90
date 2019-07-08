@@ -216,6 +216,61 @@ CONTAINS
 
 
 
+  FUNCTION as_logical(str_in, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, INTENT(INOUT) :: err
+    CHARACTER(LEN=64) :: str
+    LOGICAL :: as_logical
+    REAL(num) :: val
+    TYPE(primitive_stack) :: output
+
+    as_logical = .FALSE.
+    str = lowercase(TRIM(ADJUSTL(str_in)))
+    IF (str_cmp(str, 't') .OR. str_cmp(str, 'true')) THEN
+      as_logical = .TRUE.
+      RETURN
+    END IF
+    IF (str_cmp(str, 'f') .OR. str_cmp(str, 'false')) THEN
+      as_logical = .FALSE.
+      RETURN
+    END IF
+
+    CALL initialise_stack(output)
+    CALL tokenize(str_in, output, err)
+    val = evaluate(output, err)
+    CALL deallocate_stack(output)
+
+    IF (INT(val) == c_true_value) THEN
+      as_logical = .TRUE.
+      RETURN
+    ELSE IF (INT(val) == c_false_value) THEN
+      as_logical = .FALSE.
+      RETURN
+    END IF
+
+    err = IOR(err, c_err_bad_value)
+
+  END FUNCTION as_logical
+
+
+
+  FUNCTION as_logical_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    LOGICAL :: res
+
+    res = as_logical(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
+
+    WRITE(du,'(A,L1)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_logical_print
+
+
+
   SUBROUTINE as_list(str_in, array, n_elements, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
