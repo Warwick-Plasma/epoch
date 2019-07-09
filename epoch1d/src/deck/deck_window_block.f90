@@ -36,7 +36,8 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, io, iu, bc(2)
+    INTEGER :: i, io, iu, iwarn, ierr, bc(2)
+    INTEGER :: warn_buf(2), warn_sum(2)
     LOGICAL :: warn
 
     IF (.NOT.move_window) RETURN
@@ -49,6 +50,22 @@ CONTAINS
         bc_x_min_after_move = bc_field(c_bd_x_min)
     IF (bc_x_max_after_move == c_bc_null) &
         bc_x_max_after_move = bc_field(c_bd_x_max)
+
+    iwarn = 0
+    CALL check_injector_boundary(x_min_boundary, injector_x_min, iwarn)
+    CALL check_injector_boundary(x_max_boundary, injector_x_max, iwarn)
+
+    warn_buf(:) = 0
+    IF (iwarn > 0) warn_buf(iwarn) = 1
+    CALL MPI_REDUCE(warn_buf, warn_sum, 2, MPI_INTEGER, MPI_SUM, 0, comm, ierr)
+
+    IF (warn_sum(2) > 0) THEN
+      iwarn = 2
+    ELSE IF (warn_sum(1) > 0) THEN
+      iwarn = 1
+    ELSE
+      iwarn = 0
+    END IF
 
     IF (rank /= 0) RETURN
 
@@ -93,21 +110,29 @@ CONTAINS
       END DO
     END IF
 
-    warn = .FALSE.
-    CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
-    CALL check_injector_boundary(x_max_boundary, injector_x_max, warn)
-
-    IF (warn) THEN
+    IF (iwarn == 1) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** WARNING ***'
         WRITE(io,*) 'You have specified injectors in conjunction with the ', &
                     'moving window.'
-        WRITE(io,*) 'These are not fully compatible with moving windows and ', &
-                    'are likely to give'
-        WRITE(io,*) 'incorrect results.'
+        WRITE(io,*) 'The t_end time of the injectors exceeds the ', &
+                    'window_stop_time. The injectors'
+        WRITE(io,*) 'will be disabled once the moving window starts.'
         WRITE(io,*)
       END DO
+    ELSE IF (iwarn == 2) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
+                    'moving window.'
+        WRITE(io,*) 'These can only be used if they are explicitly ', &
+                    'disabled before the window'
+        WRITE(io,*) 'start time.'
+        WRITE(io,*)
+      END DO
+      CALL abort_code(c_err_bad_value)
     END IF
 
   END SUBROUTINE window_deck_finalise
@@ -194,23 +219,37 @@ CONTAINS
 
 
 
-  SUBROUTINE check_injector_boundary(bc, injector, warn)
+  SUBROUTINE check_injector_boundary(bc, injector, iwarn)
 
     LOGICAL, INTENT(IN) :: bc
     TYPE(injector_block), POINTER :: injector
-    LOGICAL, INTENT(INOUT) :: warn
+    INTEGER, INTENT(INOUT) :: iwarn
     TYPE(injector_block), POINTER :: current
+    LOGICAL :: got_t_end
+    REAL(num) :: t_end
 
-    IF (.NOT.bc .OR. warn) RETURN
+    IF (.NOT.bc .OR. iwarn == 2) RETURN
 
-    current => injector_x_min
+    IF (.NOT.ASSOCIATED(injector)) RETURN
+
+    t_end = HUGE(1.0_num)
+    got_t_end = .FALSE.
+    current => injector
     DO WHILE(ASSOCIATED(current))
       IF (current%has_t_end) THEN
-        warn = .TRUE.
-        RETURN
+        got_t_end = .TRUE.
+        IF (current%t_end < t_end) t_end = current%t_end
       END IF
       current => current%next
     END DO
+
+    IF (got_t_end) THEN
+      IF (t_end > window_start_time) THEN
+        iwarn = 1
+      END IF
+    ELSE
+      iwarn = 2
+    END IF
 
   END SUBROUTINE check_injector_boundary
 
