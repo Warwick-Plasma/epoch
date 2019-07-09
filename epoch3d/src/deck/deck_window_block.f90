@@ -36,7 +36,7 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, bc(2)
+    INTEGER :: i, io, iu, bc(2)
     LOGICAL :: warn
 
     IF (.NOT.move_window) RETURN
@@ -75,10 +75,17 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'an X boundary after the moving window ', &
-          'begins. These boundary conditions are ', 'not compatible with ', &
-          'moving windows and are unlikely to give correct results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for an X boundary'
+        WRITE(io,*) 'after the moving window begins. These boundary ', &
+                    'conditions are not compatible'
+        WRITE(io,*) 'with moving windows and are unlikely to give correct ', &
+                    'results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     warn = .FALSE.
@@ -91,17 +98,29 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'the Y or Z boundaries. These boundary ', &
-          'conditions are not fully compatible ', 'with moving windows and ', &
-          'might give incorrect results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for the Y or'
+        WRITE(io,*) 'Z boundaries. These boundary conditions are not fully ', &
+                    'compatible with moving'
+        WRITE(io,*) 'windows and might give incorrect results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     IF (n_custom_loaders > 0) THEN
-      PRINT*, 'WARNING: you have specified particle loading from file in ', &
-          'conjunction with ', 'moving windows. The file contents will be ', &
-          'ignored for new particles entering ', 'the domain once the ', &
-          'window begins to move.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified particle loading from file in ', &
+                    'conjunction with moving'
+        WRITE(io,*) 'windows. The file contents will be ignored for new ', &
+                    'particles entering the'
+        WRITE(io,*) 'domain once the window begins to move.'
+        WRITE(io,*)
+      END DO
     END IF
 
     warn = .FALSE.
@@ -113,9 +132,16 @@ CONTAINS
     CALL check_injector_boundary(z_max_boundary, injector_z_max, warn)
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
-          'the moving window. ', 'These are not fully compatible with ', &
-          'moving windows and are likely to give ', 'incorrect results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
+                    'moving window.'
+        WRITE(io,*) 'These are not fully compatible with moving windows and ', &
+                    'are likely to give'
+        WRITE(io,*) 'incorrect results.'
+        WRITE(io,*)
+      END DO
     END IF
 
   END SUBROUTINE window_deck_finalise
