@@ -1618,6 +1618,7 @@ CONTAINS
 
     CALL set_thermal_bcs_all
     CALL setup_persistent_subsets
+    CALL setup_background_species
 
     IF (rank == 0) PRINT*, 'Load from restart dump OK'
 
