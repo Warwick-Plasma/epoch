@@ -29,6 +29,7 @@ MODULE setup
   USE balance
   USE mpi_routines
   USE sdf
+  USE boundary
 
   IMPLICIT NONE
 
@@ -148,6 +149,7 @@ CONTAINS
 
     CALL setup_grid
     CALL set_initial_values
+    CALL setup_domain_dependent_boundaries
 
   END SUBROUTINE after_control
 
