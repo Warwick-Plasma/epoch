@@ -66,6 +66,26 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_background_species
+
+    INTEGER :: ispecies
+    TYPE(particle_species), POINTER :: species
+
+    DO ispecies = 1, n_species
+      species => species_list(ispecies)
+
+      IF (.NOT.species%background_species) CYCLE
+
+      CALL setup_ic_density(ispecies)
+
+      ALLOCATE(species%background_density(1-ng:nx+ng))
+      species%background_density  = species_density
+    END DO
+
+  END SUBROUTINE setup_background_species
+
+
+
   SUBROUTINE auto_load
 
     INTEGER :: ispecies, n
