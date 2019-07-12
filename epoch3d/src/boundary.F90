@@ -76,10 +76,11 @@ CONTAINS
 
 
   SUBROUTINE setup_domain_dependent_boundaries
-  !Any boundary condition setup that needs the domain to have already been
-  !Created should be added here
 
-  INTEGER :: ispecies, i, bc
+    ! Any boundary condition setup that needs the domain to have already been
+    ! created should be added here
+
+    INTEGER :: ispecies, i, bc
 
     DO ispecies = 1, n_species
       DO i = 1, 2*c_ndims
