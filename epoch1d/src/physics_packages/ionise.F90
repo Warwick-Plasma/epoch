@@ -388,7 +388,7 @@ CONTAINS
     ! Ionise a species at a time
     DO i = 1, n_species
       ! Skip particle if it cannot be ionised
-      IF ( .NOT. species_list(i)%ionise) CYCLE
+      IF (.NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
 #ifdef PER_SPECIES_WEIGHT
@@ -649,7 +649,7 @@ CONTAINS
     ! Ionise a species at a time
     DO i = 1, n_species
       ! Skip particle if it cannot be ionised
-      IF ( .NOT. species_list(i)%ionise) CYCLE
+      IF (.NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
 #ifdef PER_SPECIES_WEIGHT
@@ -896,7 +896,7 @@ CONTAINS
     ! Ionise a species at a time
     DO i = 1, n_species
       ! Skip particle if it cannot be ionised
-      IF ( .NOT. species_list(i)%ionise) CYCLE
+      IF (.NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
 #ifdef PER_SPECIES_WEIGHT
@@ -1133,7 +1133,7 @@ CONTAINS
     ! Ionise a species at a time
     DO i = 1, n_species
       ! Skip particle if it cannot be ionised
-      IF ( .NOT. species_list(i)%ionise) CYCLE
+      IF (.NOT. species_list(i)%ionise) CYCLE
       ! Start with first particle in the list
       current => species_list(i)%attached_list%head
 #ifdef PER_SPECIES_WEIGHT

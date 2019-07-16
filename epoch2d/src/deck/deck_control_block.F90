@@ -432,7 +432,7 @@ CONTAINS
       smooth_its = as_integer_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'smooth_compensation')) THEN
-      IF(as_logical_print(value, element, errcode)) smooth_comp_its = 1
+      IF (as_logical_print(value, element, errcode)) smooth_comp_its = 1
 
     ELSE IF (str_cmp(element, 'smooth_strides')) THEN
       IF (str_cmp(value, 'auto')) THEN
