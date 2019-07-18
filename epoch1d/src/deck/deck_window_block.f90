@@ -36,8 +36,7 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, io, iu, iwarn, ierr, bc(2)
-    INTEGER :: warn_buf(2), warn_sum(2)
+    INTEGER :: i, io, iu, iwarn, bc(2)
     LOGICAL :: warn
 
     IF (.NOT.move_window) RETURN
@@ -51,21 +50,7 @@ CONTAINS
     IF (bc_x_max_after_move == c_bc_null) &
         bc_x_max_after_move = bc_field(c_bd_x_max)
 
-    iwarn = 0
-    CALL check_injector_boundary(x_min_boundary, injector_x_min, iwarn)
-    CALL check_injector_boundary(x_max_boundary, injector_x_max, iwarn)
-
-    warn_buf(:) = 0
-    IF (iwarn > 0) warn_buf(iwarn) = 1
-    CALL MPI_REDUCE(warn_buf, warn_sum, 2, MPI_INTEGER, MPI_SUM, 0, comm, ierr)
-
-    IF (warn_sum(2) > 0) THEN
-      iwarn = 2
-    ELSE IF (warn_sum(1) > 0) THEN
-      iwarn = 1
-    ELSE
-      iwarn = 0
-    END IF
+    CALL check_injector_boundaries(iwarn)
 
     IF (rank /= 0) RETURN
 
@@ -216,6 +201,31 @@ CONTAINS
     errcode = c_err_none
 
   END FUNCTION window_block_check
+
+
+
+  SUBROUTINE check_injector_boundaries(iwarn)
+
+    INTEGER, INTENT(OUT) :: iwarn
+    INTEGER :: ierr, warn_buf(2), warn_sum(2)
+
+    iwarn = 0
+    CALL check_injector_boundary(x_min_boundary, injector_x_min, iwarn)
+    CALL check_injector_boundary(x_max_boundary, injector_x_max, iwarn)
+
+    warn_buf(:) = 0
+    IF (iwarn > 0) warn_buf(iwarn) = 1
+    CALL MPI_REDUCE(warn_buf, warn_sum, 2, MPI_INTEGER, MPI_SUM, 0, comm, ierr)
+
+    IF (warn_sum(2) > 0) THEN
+      iwarn = 2
+    ELSE IF (warn_sum(1) > 0) THEN
+      iwarn = 1
+    ELSE
+      iwarn = 0
+    END IF
+
+  END SUBROUTINE check_injector_boundaries
 
 
 
