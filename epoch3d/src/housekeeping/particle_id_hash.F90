@@ -302,7 +302,7 @@ CONTAINS
 
     bucket = this%hash(del_id)
     holds = this%buckets(bucket)%delete(del_id)
-    IF(holds) this%count = this%count - 1
+    IF (holds) this%count = this%count - 1
 
   END FUNCTION pid_hash_delete
 

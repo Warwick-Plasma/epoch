@@ -1504,7 +1504,7 @@ CONTAINS
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
     IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
         restart_flag = .TRUE.
-    IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+    IF (last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
     IF (force) THEN
       restart_flag = .TRUE.
       print_arrays = .TRUE.
