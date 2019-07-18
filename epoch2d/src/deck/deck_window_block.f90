@@ -36,7 +36,7 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, bc(2)
+    INTEGER :: i, io, iu, iwarn, bc(2)
     LOGICAL :: warn
 
     IF (.NOT.move_window) RETURN
@@ -53,6 +53,8 @@ CONTAINS
         bc_y_min_after_move = bc_field(c_bd_y_min)
     IF (bc_y_max_after_move == c_bc_null) &
         bc_y_max_after_move = bc_field(c_bd_y_max)
+
+    CALL check_injector_boundaries(iwarn)
 
     IF (rank /= 0) RETURN
 
@@ -71,12 +73,17 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for'
-      PRINT*, 'an X boundary after the moving window begins. These ', &
-          'boundary conditions are'
-      PRINT*, 'not compatible with moving windows and are unlikely to give ', &
-          'correct results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for an X boundary'
+        WRITE(io,*) 'after the moving window begins. These boundary ', &
+                    'conditions are not compatible'
+        WRITE(io,*) 'with moving windows and are unlikely to give correct ', &
+                    'results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     warn = .FALSE.
@@ -89,29 +96,54 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for'
-      PRINT*, 'the Y boundaries. These boundary conditions are not ', &
-          'fully compatible'
-      PRINT*, 'with moving windows and might give incorrect results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for the'
+        WRITE(io,*) 'Y boundaries. These boundary conditions are not fully ', &
+                    'compatible with moving'
+        WRITE(io,*) 'windows and might give incorrect results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     IF (n_custom_loaders > 0) THEN
-      PRINT*, 'WARNING: you have specified particle loading from file in ', &
-          'conjunction with'
-      PRINT*, 'moving windows. The file contents will be ignored for new ', &
-          'particles entering'
-      PRINT*, 'the domain once the window begins to move.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified particle loading from file in ', &
+                    'conjunction with moving'
+        WRITE(io,*) 'windows. The file contents will be ignored for new ', &
+                    'particles entering the'
+        WRITE(io,*) 'domain once the window begins to move.'
+        WRITE(io,*)
+      END DO
     END IF
 
-    CALL check_injector_boundaries(warn)
-
-    IF (warn) THEN
-      PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
-          'the moving window.'
-      PRINT*, 'These are not fully compatible with moving windows and are ', &
-          'likely to give'
-      PRINT*, 'incorrect results.'
+    IF (iwarn == 1) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
+                    'moving window.'
+        WRITE(io,*) 'The t_end time of the injectors exceeds the ', &
+                    'window_stop_time. The injectors'
+        WRITE(io,*) 'will be disabled once the moving window starts.'
+        WRITE(io,*)
+      END DO
+    ELSE IF (iwarn == 2) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
+                    'moving window.'
+        WRITE(io,*) 'These can only be used if they are explicitly ', &
+                    'disabled before the window'
+        WRITE(io,*) 'start time.'
+        WRITE(io,*)
+      END DO
+      CALL abort_code(c_err_bad_value)
     END IF
 
   END SUBROUTINE window_deck_finalise
@@ -210,22 +242,48 @@ CONTAINS
 
 
 
-  SUBROUTINE check_injector_boundaries(warn)
+  SUBROUTINE check_injector_boundaries(iwarn)
 
-    LOGICAL, INTENT(OUT) :: warn
+    INTEGER, INTENT(OUT) :: iwarn
+    INTEGER :: ierr, warn_buf(2), warn_sum(2)
     TYPE(injector_block), POINTER :: current
+    LOGICAL :: got_t_end
+    REAL(num) :: t_end
 
-    warn = .FALSE.
-    current => injector_list
-    DO WHILE(ASSOCIATED(current))
-      IF (is_boundary(current%boundary)) THEN
-        IF (current%has_t_end) THEN
-          warn = .TRUE.
-          RETURN
+    IF (ASSOCIATED(injector_list)) THEN
+      t_end = HUGE(1.0_num)
+      got_t_end = .FALSE.
+      current => injector_list
+      DO WHILE(ASSOCIATED(current))
+        IF (is_boundary(current%boundary) .AND. current%has_t_end) THEN
+          got_t_end = .TRUE.
+          IF (current%t_end < t_end) t_end = current%t_end
         END IF
+        current => current%next
+      END DO
+
+      IF (got_t_end) THEN
+        IF (t_end > window_start_time) THEN
+          iwarn = 1
+        END IF
+      ELSE
+        iwarn = 2
       END IF
-      current => current%next
-    END DO
+    ELSE
+      iwarn = 0
+    END IF
+
+    warn_buf(:) = 0
+    IF (iwarn > 0) warn_buf(iwarn) = 1
+    CALL MPI_REDUCE(warn_buf, warn_sum, 2, MPI_INTEGER, MPI_SUM, 0, comm, ierr)
+
+    IF (warn_sum(2) > 0) THEN
+      iwarn = 2
+    ELSE IF (warn_sum(1) > 0) THEN
+      iwarn = 1
+    ELSE
+      iwarn = 0
+    END IF
 
   END SUBROUTINE check_injector_boundaries
 
