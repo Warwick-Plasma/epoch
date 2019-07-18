@@ -1365,7 +1365,7 @@ CONTAINS
         .AND. restart_dump_every > -1) restart_flag = .TRUE.
     IF (first_call(iprefix) .AND. force_first_to_be_restartable) &
         restart_flag = .TRUE.
-    IF ( last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
+    IF (last_call .AND. force_final_to_be_restartable) restart_flag = .TRUE.
     IF (force) THEN
       restart_flag = .TRUE.
       print_arrays = .TRUE.
@@ -1783,7 +1783,7 @@ CONTAINS
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
         i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
-        IF ( i1 < i0) THEN
+        IF (i1 < i0) THEN
           i0 = 1
           i1 = i0
         END IF

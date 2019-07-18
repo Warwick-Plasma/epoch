@@ -866,8 +866,8 @@ CONTAINS
         CALL destroy_partlist(recv(ix))
       END DO
 
-      IF(ASSOCIATED(bnd_part_last)) DEALLOCATE(bnd_part_last)
-      IF(ASSOCIATED(species_list(ispecies)%boundary_particles)) THEN
+      IF (ASSOCIATED(bnd_part_last)) DEALLOCATE(bnd_part_last)
+      IF (ASSOCIATED(species_list(ispecies)%boundary_particles)) THEN
         NULLIFY(species_list(ispecies)%boundary_particles)
       END IF
     END DO
