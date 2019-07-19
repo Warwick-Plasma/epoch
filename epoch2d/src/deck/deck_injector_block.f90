@@ -38,10 +38,8 @@ CONTAINS
 
     IF (deck_state /= c_ds_first) RETURN
 
-    NULLIFY(injector_x_min)
-    NULLIFY(injector_x_max)
-    NULLIFY(injector_y_min)
-    NULLIFY(injector_y_max)
+    NULLIFY(injector_list)
+    injector_boundary(:) = .FALSE.
 
   END SUBROUTINE injector_deck_initialise
 
@@ -270,28 +268,7 @@ CONTAINS
     error = .FALSE.
     errcode = c_err_none
 
-    current => injector_x_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = .TRUE.
-      use_injectors = .TRUE.
-      current => current%next
-    END DO
-
-    current => injector_x_max
-    DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = .TRUE.
-      use_injectors = .TRUE.
-      current => current%next
-    END DO
-
-    current => injector_y_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%species == -1) error = .TRUE.
-      use_injectors = .TRUE.
-      current => current%next
-    END DO
-
-    current => injector_y_max
+    current => injector_list
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = .TRUE.
       use_injectors = .TRUE.

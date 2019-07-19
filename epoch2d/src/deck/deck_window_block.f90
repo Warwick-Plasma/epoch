@@ -246,12 +246,32 @@ CONTAINS
 
     INTEGER, INTENT(OUT) :: iwarn
     INTEGER :: ierr, warn_buf(2), warn_sum(2)
+    TYPE(injector_block), POINTER :: current
+    LOGICAL :: got_t_end
+    REAL(num) :: t_end
 
-    iwarn = 0
-    CALL check_injector_boundary(x_min_boundary, injector_x_min, iwarn)
-    CALL check_injector_boundary(x_max_boundary, injector_x_max, iwarn)
-    CALL check_injector_boundary(y_min_boundary, injector_y_min, iwarn)
-    CALL check_injector_boundary(y_max_boundary, injector_y_max, iwarn)
+    IF (ASSOCIATED(injector_list)) THEN
+      t_end = HUGE(1.0_num)
+      got_t_end = .FALSE.
+      current => injector_list
+      DO WHILE(ASSOCIATED(current))
+        IF (is_boundary(current%boundary) .AND. current%has_t_end) THEN
+          got_t_end = .TRUE.
+          IF (current%t_end < t_end) t_end = current%t_end
+        END IF
+        current => current%next
+      END DO
+
+      IF (got_t_end) THEN
+        IF (t_end > window_start_time) THEN
+          iwarn = 1
+        END IF
+      ELSE
+        iwarn = 2
+      END IF
+    ELSE
+      iwarn = 0
+    END IF
 
     warn_buf(:) = 0
     IF (iwarn > 0) warn_buf(iwarn) = 1
@@ -266,41 +286,5 @@ CONTAINS
     END IF
 
   END SUBROUTINE check_injector_boundaries
-
-
-
-  SUBROUTINE check_injector_boundary(bc, injector, iwarn)
-
-    LOGICAL, INTENT(IN) :: bc
-    TYPE(injector_block), POINTER :: injector
-    INTEGER, INTENT(INOUT) :: iwarn
-    TYPE(injector_block), POINTER :: current
-    LOGICAL :: got_t_end
-    REAL(num) :: t_end
-
-    IF (.NOT.bc .OR. iwarn == 2) RETURN
-
-    IF (.NOT.ASSOCIATED(injector)) RETURN
-
-    t_end = HUGE(1.0_num)
-    got_t_end = .FALSE.
-    current => injector
-    DO WHILE(ASSOCIATED(current))
-      IF (current%has_t_end) THEN
-        got_t_end = .TRUE.
-        IF (current%t_end < t_end) t_end = current%t_end
-      END IF
-      current => current%next
-    END DO
-
-    IF (got_t_end) THEN
-      IF (t_end > window_start_time) THEN
-        iwarn = 1
-      END IF
-    ELSE
-      iwarn = 2
-    END IF
-
-  END SUBROUTINE check_injector_boundary
 
 END MODULE deck_window_block

@@ -639,6 +639,7 @@ MODULE shared_data
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
   LOGICAL :: y_min_boundary, y_max_boundary
+  LOGICAL :: is_boundary(2*c_ndims)
   LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
@@ -687,8 +688,8 @@ MODULE shared_data
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
 
-  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
-  TYPE(injector_block), POINTER :: injector_y_min, injector_y_max
+  TYPE(injector_block), POINTER :: injector_list
+  LOGICAL :: injector_boundary(2*c_ndims)
 
   !----------------------------------------------------------------------------
   ! laser boundaries
@@ -714,10 +715,8 @@ MODULE shared_data
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
 
-  TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
-  TYPE(laser_block), POINTER :: laser_y_min, laser_y_max
-  INTEGER :: n_laser_x_min = 0, n_laser_x_max = 0
-  INTEGER :: n_laser_y_min = 0, n_laser_y_max = 0
+  TYPE(laser_block), POINTER :: lasers
+  INTEGER, DIMENSION(2*c_ndims) :: n_lasers
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid

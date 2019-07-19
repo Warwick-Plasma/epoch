@@ -52,15 +52,14 @@ CONTAINS
 
 
 
-  SUBROUTINE setup_laser_phases(laser_init, phases)
+  SUBROUTINE setup_laser_phases(phases)
 
-    TYPE(laser_block), POINTER :: laser_init
     REAL(num), DIMENSION(:), INTENT(IN) :: phases
     TYPE(laser_block), POINTER :: laser
     INTEGER :: ilas
 
     ilas = 1
-    laser => laser_init
+    laser => lasers
     DO WHILE(ASSOCIATED(laser))
       laser%current_integral_phase = phases(ilas)
       ilas = ilas + 1
@@ -95,28 +94,7 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: current, next
 
-    current => laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      next => current%next
-      CALL deallocate_laser(current)
-      current => next
-    END DO
-
-    current => laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      next => current%next
-      CALL deallocate_laser(current)
-      current => next
-    END DO
-
-    current => laser_y_min
-    DO WHILE(ASSOCIATED(current))
-      next => current%next
-      CALL deallocate_laser(current)
-      current => next
-    END DO
-
-    current => laser_y_max
+    current => lasers
     DO WHILE(ASSOCIATED(current))
       next => current%next
       CALL deallocate_laser(current)
@@ -130,23 +108,22 @@ CONTAINS
   ! Subroutine to attach a created laser object to the correct boundary
   SUBROUTINE attach_laser(laser)
 
-    INTEGER :: boundary
     TYPE(laser_block), POINTER :: laser
+    TYPE(laser_block), POINTER :: current
+    INTEGER :: boundary
 
     boundary = laser%boundary
 
-    IF (boundary == c_bd_x_min) THEN
-      n_laser_x_min = n_laser_x_min + 1
-      CALL attach_laser_to_list(laser_x_min, laser)
-    ELSE IF (boundary == c_bd_x_max) THEN
-      n_laser_x_max = n_laser_x_max + 1
-      CALL attach_laser_to_list(laser_x_max, laser)
-    ELSE IF (boundary == c_bd_y_min) THEN
-      n_laser_y_min = n_laser_y_min + 1
-      CALL attach_laser_to_list(laser_y_min, laser)
-    ELSE IF (boundary == c_bd_y_max) THEN
-      n_laser_y_max = n_laser_y_max + 1
-      CALL attach_laser_to_list(laser_y_max, laser)
+    n_lasers(boundary) = n_lasers(boundary) + 1
+
+    IF (ASSOCIATED(lasers)) THEN
+      current => lasers
+      DO WHILE(ASSOCIATED(current%next))
+        current => current%next
+      END DO
+      current%next => laser
+    ELSE
+      lasers => laser
     END IF
 
   END SUBROUTINE attach_laser
@@ -277,43 +254,7 @@ CONTAINS
 
     TYPE(laser_block), POINTER :: current
 
-    current => laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) THEN
-        CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase &
-            + current%omega * dt
-      ELSE
-        current%current_integral_phase = current%omega * time
-      END IF
-      current => current%next
-    END DO
-
-    current => laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) THEN
-        CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase &
-            + current%omega * dt
-      ELSE
-        current%current_integral_phase = current%omega * time
-      END IF
-      current => current%next
-    END DO
-
-    current => laser_y_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%use_omega_function) THEN
-        CALL laser_update_omega(current)
-        current%current_integral_phase = current%current_integral_phase &
-            + current%omega * dt
-      ELSE
-        current%current_integral_phase = current%omega * time
-      END IF
-      current => current%next
-    END DO
-
-    current => laser_y_max
+    current => lasers
     DO WHILE(ASSOCIATED(current))
       IF (current%use_omega_function) THEN
         CALL laser_update_omega(current)
@@ -326,27 +267,6 @@ CONTAINS
     END DO
 
   END SUBROUTINE update_laser_omegas
-
-
-
-  ! Actually does the attaching of the laser to the correct list
-  SUBROUTINE attach_laser_to_list(list, laser)
-
-    TYPE(laser_block), POINTER :: list
-    TYPE(laser_block), POINTER :: laser
-    TYPE(laser_block), POINTER :: current
-
-    IF (ASSOCIATED(list)) THEN
-      current => list
-      DO WHILE(ASSOCIATED(current%next))
-        current => current%next
-      END DO
-      current%next => laser
-    ELSE
-      list => laser
-    END IF
-
-  END SUBROUTINE attach_laser_to_list
 
 
 
@@ -372,28 +292,7 @@ CONTAINS
 
     dt_laser = HUGE(1.0_num)
 
-    current => laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      dt_local = 2.0_num * pi / current%omega
-      dt_laser = MIN(dt_laser, dt_local)
-      current => current%next
-    END DO
-
-    current => laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      dt_local = 2.0_num * pi / current%omega
-      dt_laser = MIN(dt_laser, dt_local)
-      current => current%next
-    END DO
-
-    current => laser_y_min
-    DO WHILE(ASSOCIATED(current))
-      dt_local = 2.0_num * pi / current%omega
-      dt_laser = MIN(dt_laser, dt_local)
-      current => current%next
-    END DO
-
-    current => laser_y_max
+    current => lasers
     DO WHILE(ASSOCIATED(current))
       dt_local = 2.0_num * pi / current%omega
       dt_laser = MIN(dt_laser, dt_local)
@@ -437,19 +336,21 @@ CONTAINS
     bx(laserpos-1, 0:ny) = bx_x_min(0:ny)
 
     IF (add_laser(n)) THEN
-      current => laser_x_min
+      current => lasers
       DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time >= current%t_start .AND. time <= current%t_end) THEN
-          IF (current%use_phase_function) CALL laser_update_phase(current)
-          IF (current%use_profile_function) CALL laser_update_profile(current)
-          t_env = laser_time_profile(current) * current%amp
-          DO i = 0,ny
-            base = t_env * current%profile(i) &
-              * SIN(current%current_integral_phase + current%phase(i))
-            source1(i) = source1(i) + base * COS(current%pol_angle)
-            source2(i) = source2(i) + base * SIN(current%pol_angle)
-          END DO
+        IF (current%boundary == c_bd_x_min) THEN
+          ! evaluate the temporal evolution of the laser
+          IF (time >= current%t_start .AND. time <= current%t_end) THEN
+            IF (current%use_phase_function) CALL laser_update_phase(current)
+            IF (current%use_profile_function) CALL laser_update_profile(current)
+            t_env = laser_time_profile(current) * current%amp
+            DO i = 0,ny
+              base = t_env * current%profile(i) &
+                * SIN(current%current_integral_phase + current%phase(i))
+              source1(i) = source1(i) + base * COS(current%pol_angle)
+              source2(i) = source2(i) + base * SIN(current%pol_angle)
+            END DO
+          END IF
         END IF
         current => current%next
       END DO
@@ -472,7 +373,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_min, lasers=laser_x_min)
+        CALL calc_absorption(c_bd_x_min, lasers=lasers)
       ELSE
         CALL calc_absorption(c_bd_x_min)
       END IF
@@ -511,19 +412,21 @@ CONTAINS
     bx(laserpos+1, 0:ny) = bx_x_max(0:ny)
 
     IF (add_laser(n)) THEN
-      current => laser_x_max
+      current => lasers
       DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time >= current%t_start .AND. time <= current%t_end) THEN
-          IF (current%use_phase_function) CALL laser_update_phase(current)
-          IF (current%use_profile_function) CALL laser_update_profile(current)
-          t_env = laser_time_profile(current) * current%amp
-          DO i = 0,ny
-            base = t_env * current%profile(i) &
-              * SIN(current%current_integral_phase + current%phase(i))
-            source1(i) = source1(i) + base * COS(current%pol_angle)
-            source2(i) = source2(i) + base * SIN(current%pol_angle)
-          END DO
+        IF (current%boundary == c_bd_x_max) THEN
+          ! evaluate the temporal evolution of the laser
+          IF (time >= current%t_start .AND. time <= current%t_end) THEN
+            IF (current%use_phase_function) CALL laser_update_phase(current)
+            IF (current%use_profile_function) CALL laser_update_profile(current)
+            t_env = laser_time_profile(current) * current%amp
+            DO i = 0,ny
+              base = t_env * current%profile(i) &
+                * SIN(current%current_integral_phase + current%phase(i))
+              source1(i) = source1(i) + base * COS(current%pol_angle)
+              source2(i) = source2(i) + base * SIN(current%pol_angle)
+            END DO
+          END IF
         END IF
         current => current%next
       END DO
@@ -546,7 +449,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_x_max, lasers=laser_x_max)
+        CALL calc_absorption(c_bd_x_max, lasers=lasers)
       ELSE
         CALL calc_absorption(c_bd_x_max)
       END IF
@@ -585,19 +488,21 @@ CONTAINS
     by(0:nx, laserpos-1) = by_y_min(0:nx)
 
     IF (add_laser(n)) THEN
-      current => laser_y_min
+      current => lasers
       DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time >= current%t_start .AND. time <= current%t_end) THEN
-          IF (current%use_phase_function) CALL laser_update_phase(current)
-          IF (current%use_profile_function) CALL laser_update_profile(current)
-          t_env = laser_time_profile(current) * current%amp
-          DO i = 0,nx
-            base = t_env * current%profile(i) &
-              * SIN(current%current_integral_phase + current%phase(i))
-            source1(i) = source1(i) + base * COS(current%pol_angle)
-            source2(i) = source2(i) + base * SIN(current%pol_angle)
-          END DO
+        IF (current%boundary == c_bd_y_min) THEN
+          ! evaluate the temporal evolution of the laser
+          IF (time >= current%t_start .AND. time <= current%t_end) THEN
+            IF (current%use_phase_function) CALL laser_update_phase(current)
+            IF (current%use_profile_function) CALL laser_update_profile(current)
+            t_env = laser_time_profile(current) * current%amp
+            DO i = 0,nx
+              base = t_env * current%profile(i) &
+                * SIN(current%current_integral_phase + current%phase(i))
+              source1(i) = source1(i) + base * COS(current%pol_angle)
+              source2(i) = source2(i) + base * SIN(current%pol_angle)
+            END DO
+          END IF
         END IF
         current => current%next
       END DO
@@ -620,7 +525,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_min, lasers=laser_y_min)
+        CALL calc_absorption(c_bd_y_min, lasers=lasers)
       ELSE
         CALL calc_absorption(c_bd_y_min)
       END IF
@@ -659,19 +564,21 @@ CONTAINS
     by(0:nx, laserpos+1) = by_y_max(0:nx)
 
     IF (add_laser(n)) THEN
-      current => laser_y_max
+      current => lasers
       DO WHILE(ASSOCIATED(current))
-        ! evaluate the temporal evolution of the laser
-        IF (time >= current%t_start .AND. time <= current%t_end) THEN
-          IF (current%use_phase_function) CALL laser_update_phase(current)
-          IF (current%use_profile_function) CALL laser_update_profile(current)
-          t_env = laser_time_profile(current) * current%amp
-          DO i = 0,nx
-            base = t_env * current%profile(i) &
-              * SIN(current%current_integral_phase + current%phase(i))
-            source1(i) = source1(i) + base * COS(current%pol_angle)
-            source2(i) = source2(i) + base * SIN(current%pol_angle)
-          END DO
+        IF (current%boundary == c_bd_y_max) THEN
+          ! evaluate the temporal evolution of the laser
+          IF (time >= current%t_start .AND. time <= current%t_end) THEN
+            IF (current%use_phase_function) CALL laser_update_phase(current)
+            IF (current%use_profile_function) CALL laser_update_profile(current)
+            t_env = laser_time_profile(current) * current%amp
+            DO i = 0,nx
+              base = t_env * current%profile(i) &
+                * SIN(current%current_integral_phase + current%phase(i))
+              source1(i) = source1(i) + base * COS(current%pol_angle)
+              source2(i) = source2(i) + base * SIN(current%pol_angle)
+            END DO
+          END IF
         END IF
         current => current%next
       END DO
@@ -694,7 +601,7 @@ CONTAINS
 
     IF (dump_absorption) THEN
       IF (add_laser(n)) THEN
-        CALL calc_absorption(c_bd_y_max, lasers=laser_y_max)
+        CALL calc_absorption(c_bd_y_max, lasers=lasers)
       ELSE
         CALL calc_absorption(c_bd_y_max)
       END IF
@@ -772,13 +679,15 @@ CONTAINS
     IF (PRESENT(lasers)) THEN
       current => lasers
       DO WHILE(ASSOCIATED(current))
-        laser_inject_sum = 0.0_num
-        DO icell = 1, mm
-          laser_inject_sum = laser_inject_sum + current%profile(icell)**2
-        END DO
-        t_env = laser_time_profile(current)
-        lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
-        laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
+        IF (current%boundary == bd) THEN
+          laser_inject_sum = 0.0_num
+          DO icell = 1, mm
+            laser_inject_sum = laser_inject_sum + current%profile(icell)**2
+          END DO
+          t_env = laser_time_profile(current)
+          lfactor = 0.5_num * epsilon0 * c * factor * (t_env * current%amp)**2
+          laser_inject_local = laser_inject_local + lfactor * laser_inject_sum
+        END IF
         current => current%next
       END DO
     END IF
