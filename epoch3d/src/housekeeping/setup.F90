@@ -1324,6 +1324,7 @@ CONTAINS
 
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
+              use_offset_grid = .TRUE.
               full_x_min = extents(1)
             ELSE
               ! Offset grid is offset only in x
