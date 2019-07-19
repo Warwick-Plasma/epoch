@@ -82,7 +82,6 @@ CONTAINS
     cpml_x_min_offset = 0
     cpml_x_max_offset = 0
 
-    window_shift = 0.0_num
     npart_global = -1
     smooth_currents = .FALSE.
     use_balance = .FALSE.
@@ -1848,7 +1847,6 @@ CONTAINS
     DO ix = 1 - ng, nx_global + ng
       xb_offset_global(ix) = xb_offset_global(ix) - window_offset
     END DO
-    window_shift = window_offset
 
   END SUBROUTINE
 
