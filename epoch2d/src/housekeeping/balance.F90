@@ -445,8 +445,8 @@ CONTAINS
     REAL(r4), DIMENSION(:,:,:), ALLOCATABLE :: r4temp_sum
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp, temp2
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp_slice
-    TYPE(laser_block), POINTER :: current
-    TYPE(injector_block), POINTER :: injector_current
+    TYPE(laser_block), POINTER :: laser, laser_next
+    TYPE(injector_block), POINTER :: injector, injector_next
     TYPE(particle_species_migration), POINTER :: mg
     TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
@@ -710,66 +710,49 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:ny_new+ng))
 
-    max_boundary = .FALSE.
+    laser_next => lasers
+    DO WHILE(ASSOCIATED(laser_next))
+      laser => laser_next
+      laser_next => laser%next
 
-    current => laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
-      DEALLOCATE(current%profile)
-      ALLOCATE(current%profile(1-ng:ny_new+ng))
-      current%profile = temp_slice
-
-      CALL remap_field_slice(c_dir_x, current%phase, temp_slice)
-      DEALLOCATE(current%phase)
-      ALLOCATE(current%phase(1-ng:ny_new+ng))
-      current%phase = temp_slice
-
-      current => current%next
-    END DO
-
-    max_boundary = .TRUE.
-
-    current => laser_x_max
-    DO WHILE(ASSOCIATED(current))
-      CALL remap_field_slice(c_dir_x, current%profile, temp_slice)
-      DEALLOCATE(current%profile)
-      ALLOCATE(current%profile(1-ng:ny_new+ng))
-      current%profile = temp_slice
-
-      CALL remap_field_slice(c_dir_x, current%phase, temp_slice)
-      DEALLOCATE(current%phase)
-      ALLOCATE(current%phase(1-ng:ny_new+ng))
-      current%phase = temp_slice
-
-      current => current%next
-    END DO
-
-    max_boundary = .FALSE.
-
-    injector_current => injector_x_min
-    DO WHILE(ASSOCIATED(injector_current))
-      IF (ALLOCATED(injector_current%depth)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
-        DEALLOCATE(injector_current%depth)
-        ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
-        injector_current%depth = temp_slice
+      IF (laser%boundary == c_bd_x_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (laser%boundary == c_bd_x_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
       END IF
 
-      injector_current => injector_current%next
+      CALL remap_field_slice(c_dir_x, laser%profile, temp_slice)
+      DEALLOCATE(laser%profile)
+      ALLOCATE(laser%profile(1-ng:ny_new+ng))
+      laser%profile = temp_slice
+
+      CALL remap_field_slice(c_dir_x, laser%phase, temp_slice)
+      DEALLOCATE(laser%phase)
+      ALLOCATE(laser%phase(1-ng:ny_new+ng))
+      laser%phase = temp_slice
     END DO
 
-    max_boundary = .TRUE.
+    injector_next => injector_list
+    DO WHILE(ASSOCIATED(injector_next))
+      injector => injector_next
+      injector_next => injector%next
 
-    injector_current => injector_x_max
-    DO WHILE(ASSOCIATED(injector_current))
-      IF (ALLOCATED(injector_current%depth)) THEN
-        CALL remap_field_slice(c_dir_x, injector_current%depth, temp_slice)
-        DEALLOCATE(injector_current%depth)
-        ALLOCATE(injector_current%depth(1-ng:ny_new+ng))
-        injector_current%depth = temp_slice
+      IF (injector%boundary == c_bd_x_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (injector%boundary == c_bd_x_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
       END IF
 
-      injector_current => injector_current%next
+      IF (ALLOCATED(injector%depth)) THEN
+        CALL remap_field_slice(c_dir_x, injector%depth, temp_slice)
+        DEALLOCATE(injector%depth)
+        ALLOCATE(injector%depth(1-ng:ny_new+ng))
+        injector%depth = temp_slice
+      END IF
     END DO
 
     max_boundary = .FALSE.
@@ -842,62 +825,49 @@ CONTAINS
 
     ALLOCATE(temp_slice(1-ng:nx_new+ng))
 
-    max_boundary = .FALSE.
+    laser_next => lasers
+    DO WHILE(ASSOCIATED(laser_next))
+      laser => laser_next
+      laser_next => laser%next
 
-    current => laser_y_min
-    DO WHILE(ASSOCIATED(current))
-      CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
-      DEALLOCATE(current%profile)
-      ALLOCATE(current%profile(1-ng:nx_new+ng))
-      current%profile = temp_slice
+      IF (laser%boundary == c_bd_y_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (laser%boundary == c_bd_y_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
+      END IF
 
-      CALL remap_field_slice(c_dir_y, current%phase, temp_slice)
-      DEALLOCATE(current%phase)
-      ALLOCATE(current%phase(1-ng:nx_new+ng))
-      current%phase = temp_slice
+      CALL remap_field_slice(c_dir_y, laser%profile, temp_slice)
+      DEALLOCATE(laser%profile)
+      ALLOCATE(laser%profile(1-ng:nx_new+ng))
+      laser%profile = temp_slice
 
-      current => current%next
+      CALL remap_field_slice(c_dir_y, laser%phase, temp_slice)
+      DEALLOCATE(laser%phase)
+      ALLOCATE(laser%phase(1-ng:nx_new+ng))
+      laser%phase = temp_slice
     END DO
 
-    max_boundary = .TRUE.
+    injector_next => injector_list
+    DO WHILE(ASSOCIATED(injector_next))
+      injector => injector_next
+      injector_next => injector%next
 
-    current => laser_y_max
-    DO WHILE(ASSOCIATED(current))
-      CALL remap_field_slice(c_dir_y, current%profile, temp_slice)
-      DEALLOCATE(current%profile)
-      ALLOCATE(current%profile(1-ng:nx_new+ng))
-      current%profile = temp_slice
+      IF (injector%boundary == c_bd_y_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (injector%boundary == c_bd_y_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
+      END IF
 
-      CALL remap_field_slice(c_dir_y, current%phase, temp_slice)
-      DEALLOCATE(current%phase)
-      ALLOCATE(current%phase(1-ng:nx_new+ng))
-      current%phase = temp_slice
-
-      current => current%next
-    END DO
-
-    max_boundary = .FALSE.
-
-    injector_current => injector_y_min
-    DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
-      DEALLOCATE(injector_current%depth)
-      ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
-      injector_current%depth = temp_slice
-
-      injector_current => injector_current%next
-    END DO
-
-    max_boundary = .TRUE.
-
-    injector_current => injector_y_max
-    DO WHILE(ASSOCIATED(injector_current))
-      CALL remap_field_slice(c_dir_y, injector_current%depth, temp_slice)
-      DEALLOCATE(injector_current%depth)
-      ALLOCATE(injector_current%depth(1-ng:nx_new+ng))
-      injector_current%depth = temp_slice
-
-      injector_current => injector_current%next
+      IF (ALLOCATED(injector%depth)) THEN
+        CALL remap_field_slice(c_dir_y, injector%depth, temp_slice)
+        DEALLOCATE(injector%depth)
+        ALLOCATE(injector%depth(1-ng:nx_new+ng))
+        injector%depth = temp_slice
+      END IF
     END DO
 
     max_boundary = .FALSE.

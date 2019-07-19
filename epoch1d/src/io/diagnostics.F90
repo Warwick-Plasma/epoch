@@ -418,15 +418,10 @@ CONTAINS
         CALL sdf_write_srl(sdf_handle, 'x_grid_min', &
             'Minimum grid position', x_grid_min)
 
-        CALL write_laser_phases(sdf_handle, n_laser_x_min, laser_x_min, &
-            'laser_x_min_phase')
-        CALL write_laser_phases(sdf_handle, n_laser_x_max, laser_x_max, &
-            'laser_x_max_phase')
-
-        CALL write_injector_depths(sdf_handle, injector_x_min, &
-            'injector_x_min_depths', c_dir_x, x_min_boundary)
-        CALL write_injector_depths(sdf_handle, injector_x_max, &
-            'injector_x_max_depths', c_dir_x, x_max_boundary)
+        DO i = 1, 2 * c_ndims
+          CALL write_laser_phases(sdf_handle, i)
+          CALL write_injector_depths(sdf_handle, i)
+        END DO
 
         CALL write_antenna_phases(sdf_handle)
 
@@ -957,82 +952,84 @@ CONTAINS
 
 
 
-  SUBROUTINE write_laser_phases(sdf_handle, laser_count, laser_base_pointer, &
-      block_name)
+  SUBROUTINE write_laser_phases(sdf_handle, boundary)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
-    INTEGER, INTENT(IN) :: laser_count
-    TYPE(laser_block), POINTER :: laser_base_pointer
-    CHARACTER(LEN=*), INTENT(IN) :: block_name
+    INTEGER, INTENT(IN) :: boundary
     REAL(num), DIMENSION(:), ALLOCATABLE :: laser_phases
     INTEGER :: ilas
     TYPE(laser_block), POINTER :: current_laser
+    CHARACTER(LEN=17) :: block_name
+    CHARACTER(LEN=5), DIMENSION(6) :: direction_name = &
+        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
 
-    IF (laser_count > 0) THEN
-      ALLOCATE(laser_phases(laser_count))
-      ilas = 1
-      current_laser => laser_base_pointer
+    IF (n_lasers(boundary) < 1) RETURN
 
-      DO WHILE(ASSOCIATED(current_laser))
+    block_name = 'laser_' // direction_name(boundary) // '_phase'
+
+    ALLOCATE(laser_phases(n_lasers(boundary)))
+    ilas = 1
+    current_laser => lasers
+
+    DO WHILE(ASSOCIATED(current_laser))
+      IF (current_laser%boundary == boundary) THEN
         laser_phases(ilas) = current_laser%current_integral_phase
         ilas = ilas + 1
-        current_laser => current_laser%next
-      END DO
+      END IF
+      current_laser => current_laser%next
+    END DO
 
-      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
-          laser_count, laser_phases, 0)
-      DEALLOCATE(laser_phases)
-    END IF
+    CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
+        n_lasers(boundary), laser_phases, 0)
+    DEALLOCATE(laser_phases)
 
   END SUBROUTINE write_laser_phases
 
 
 
-  SUBROUTINE write_injector_depths(sdf_handle, first_injector, block_name, &
-      direction, runs_this_rank)
+  SUBROUTINE write_injector_depths(sdf_handle, boundary)
 
     TYPE(sdf_file_handle), INTENT(IN) :: sdf_handle
-    TYPE(injector_block), POINTER :: first_injector
-    CHARACTER(LEN=*), INTENT(IN) :: block_name
-    INTEGER, INTENT(IN) :: direction
-    LOGICAL, INTENT(IN) :: runs_this_rank
-    TYPE(injector_block), POINTER :: current_injector
+    INTEGER, INTENT(IN) :: boundary
+    TYPE(injector_block), POINTER :: injector
     REAL(num), DIMENSION(:), ALLOCATABLE :: depths
-    INTEGER :: iinj, inj_count, ierr
+    INTEGER :: inj
+    CHARACTER(LEN=21) :: block_name
+    CHARACTER(LEN=5), DIMENSION(6) :: direction_name = &
+        (/'x_min', 'x_max', 'y_min', 'y_max', 'z_min', 'z_max'/)
 
-    current_injector => first_injector
-    inj_count = 0
-    DO WHILE(ASSOCIATED(current_injector))
-      inj_count = inj_count + 1
-      current_injector => current_injector%next
+    inj = 0
+    injector => injector_list
+
+    DO WHILE(ASSOCIATED(injector))
+      IF (injector%boundary == boundary) THEN
+        inj = inj + 1
+      END IF
+      injector => injector%next
     END DO
 
-    IF (inj_count > 0) THEN
-      ALLOCATE(depths(inj_count))
-      iinj = 1
-      current_injector => first_injector
+    IF (inj == 0) RETURN
 
-      DO WHILE(ASSOCIATED(current_injector))
-        depths(iinj) = current_injector%depth
-        iinj = iinj + 1
-        current_injector => current_injector%next
-      END DO
+    block_name = 'injector_' // direction_name(boundary) // '_depths'
 
-      IF (.NOT. runs_this_rank) depths = HUGE(0.0_num)
+    ALLOCATE(depths(inj))
 
-      IF (rank == 0) THEN
-        CALL MPI_Reduce(MPI_IN_PLACE, depths, inj_count, mpireal, MPI_MIN, &
-            0, comm, ierr)
-      ELSE
-        CALL MPI_Reduce(depths, depths, inj_count, mpireal, MPI_MIN, &
-            0, comm, ierr)
+    inj = 0
+    injector => injector_list
+
+    DO WHILE(ASSOCIATED(injector))
+      IF (injector%boundary == boundary) THEN
+        inj = inj + 1
+        depths(inj) = injector%depth
       END IF
+      injector => injector%next
+    END DO
 
-      CALL sdf_write_srl(sdf_handle, TRIM(block_name), TRIM(block_name), &
-          inj_count, depths, 0)
+    CALL sdf_write_array(sdf_handle, TRIM(block_name), TRIM(block_name), &
+        depths, (/inj/), (/1/), &
+        null_proc=(.NOT. is_boundary(boundary)))
 
-      DEALLOCATE(depths)
-    END IF
+    DEALLOCATE(depths)
 
   END SUBROUTINE write_injector_depths
 

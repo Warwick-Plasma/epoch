@@ -35,8 +35,7 @@ CONTAINS
 
   SUBROUTINE laser_deck_initialise
 
-    n_laser_x_min = 0
-    n_laser_x_max = 0
+    n_lasers(:) = 0
 
   END SUBROUTINE laser_deck_initialise
 
@@ -264,14 +263,7 @@ CONTAINS
     errcode = c_err_none
 
     error = 0
-    current => laser_x_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%omega < 0.0_num) error = IOR(error, 1)
-      IF (current%amp < 0.0_num) error = IOR(error, 2)
-      current => current%next
-    END DO
-
-    current => laser_x_max
+    current => lasers
     DO WHILE(ASSOCIATED(current))
       IF (current%omega < 0.0_num) error = IOR(error, 1)
       IF (current%amp < 0.0_num) error = IOR(error, 2)
