@@ -107,6 +107,7 @@ CONTAINS
     laser_inject_local = 0.0_num
     laser_absorb_local = 0.0_num
     old_elapsed_time = 0.0_num
+    window_offset = 0.0_num
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
