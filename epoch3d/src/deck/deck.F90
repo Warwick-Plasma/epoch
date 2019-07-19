@@ -813,7 +813,7 @@ CONTAINS
 
 
 
-  SUBROUTINE handle_deck_element(element, value, errcode_deck)
+  RECURSIVE SUBROUTINE handle_deck_element(element, value, errcode_deck)
 
     CHARACTER(*), INTENT(IN) :: element
     CHARACTER(*), INTENT(IN) :: value
