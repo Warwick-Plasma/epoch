@@ -90,7 +90,6 @@ CONTAINS
     cpml_z_min_offset = 0
     cpml_z_max_offset = 0
 
-    window_shift = 0.0_num
     npart_global = -1
     smooth_currents = .FALSE.
     use_balance = .FALSE.
@@ -112,6 +111,7 @@ CONTAINS
     laser_inject_local = 0.0_num
     laser_absorb_local = 0.0_num
     old_elapsed_time = 0.0_num
+    window_offset = 0.0_num
 
     NULLIFY(laser_x_min)
     NULLIFY(laser_x_max)
@@ -969,7 +969,7 @@ CONTAINS
     TYPE(particle_species), POINTER :: species
     INTEGER, POINTER :: species_subtypes(:)
     INTEGER, POINTER :: species_subtypes_i4(:), species_subtypes_i8(:)
-    REAL(num) :: window_offset, offset_x_min, full_x_min, offset_x_max
+    REAL(num) :: offset_x_min, full_x_min, offset_x_max
 
     got_full = .FALSE.
     npart_global = 0
@@ -1325,6 +1325,7 @@ CONTAINS
 
             IF (str_cmp(block_id, 'grid_full')) THEN
               got_full = .TRUE.
+              use_offset_grid = .TRUE.
               full_x_min = extents(1)
             ELSE
               ! Offset grid is offset only in x
@@ -1609,13 +1610,13 @@ CONTAINS
 
     IF (use_offset_grid) THEN
       window_offset = full_x_min - offset_x_min
-      CALL shift_particles_to_window(window_offset)
+      CALL shift_particles_to_window
     END IF
 
     CALL setup_grid
 
     IF (use_offset_grid) THEN
-      CALL create_moved_window(offset_x_min, window_offset)
+      CALL create_moved_window(offset_x_min)
     END IF
 
     CALL set_thermal_bcs_all
@@ -2086,9 +2087,8 @@ CONTAINS
 
 
 
-  SUBROUTINE shift_particles_to_window(window_offset)
+  SUBROUTINE shift_particles_to_window
 
-    REAL(num), INTENT(IN) :: window_offset
     TYPE(particle), POINTER :: current
     TYPE(particle_list), POINTER :: partlist
     TYPE(particle_species), POINTER :: species
@@ -2110,15 +2110,14 @@ CONTAINS
 
 
 
-  SUBROUTINE create_moved_window(x_min, window_offset)
+  SUBROUTINE create_moved_window(x_min)
 
-    REAL(num), INTENT(IN) :: x_min, window_offset
+    REAL(num), INTENT(IN) :: x_min
     INTEGER :: ix
 
     DO ix = 1 - ng, nx_global + ng
       xb_offset_global(ix) = xb_offset_global(ix) - window_offset
     END DO
-    window_shift(1) = window_offset
 
   END SUBROUTINE
 

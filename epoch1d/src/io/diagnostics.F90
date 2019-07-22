@@ -2682,7 +2682,7 @@ CONTAINS
   SUBROUTINE write_particle_grid(code)
 
     INTEGER, INTENT(IN) :: code
-    INTEGER :: ispecies, id, mask
+    INTEGER :: ispecies, id, mask, io
     LOGICAL :: convert, dump_grid, restart_id
 
     id = c_dump_part_grid
@@ -2691,6 +2691,12 @@ CONTAINS
     ! This is a restart dump and a restart variable
     restart_id = IAND(IAND(code, mask), c_io_restartable) /= 0
     convert = IAND(mask, c_io_dump_single) /= 0 .AND. .NOT.restart_id
+
+    use_offset_grid = .FALSE.
+    DO io = 1, n_io_blocks
+      use_offset_grid = use_offset_grid &
+         .OR. (io_block_list(io)%dump .AND. io_block_list(io)%use_offset_grid)
+    END DO
 
     IF (restart_id .OR. (IAND(mask, c_io_never) == 0 &
         .AND. (IAND(mask, code) /= 0 .OR. ANY(dump_point_grid)))) THEN
