@@ -39,16 +39,23 @@ CONTAINS
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
+    REAL(num) :: window_shift
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
+    END IF
+
+    IF (use_offset_grid .AND. direction == c_dir_x) THEN
+      window_shift = window_offset
+    ELSE
+      window_shift = 0.0_num
     END IF
 
     part_count = 0
     DO WHILE (ASSOCIATED(current_list) .AND. (part_count < npoint_it))
       DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
         part_count = part_count + 1
-        array(part_count) = cur%part_pos(direction) - window_shift(direction)
+        array(part_count) = cur%part_pos(direction) - window_shift
         cur => cur%next
       END DO
       ! If the current partlist is exhausted, switch to the next one

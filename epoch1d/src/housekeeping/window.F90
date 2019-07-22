@@ -312,9 +312,7 @@ CONTAINS
       ! Allow for posibility of having jumped two cells at once
       IF (window_shift_cells > 0) THEN
         window_shift_real = REAL(window_shift_cells, num)
-        IF (use_offset_grid) THEN
-          window_shift = window_shift + window_shift_real * dx
-        END IF
+        window_offset = window_offset + window_shift_real * dx
         CALL shift_window(window_shift_cells)
         CALL setup_bc_lists
         CALL particle_bcs
