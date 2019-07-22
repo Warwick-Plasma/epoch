@@ -39,9 +39,16 @@ CONTAINS
     TYPE(particle), POINTER, SAVE :: cur
     TYPE(particle_list), POINTER, SAVE :: current_list
     INTEGER :: part_count
+    REAL(num) :: window_shift
 
     IF (start)  THEN
       CALL start_particle_list(current_species, current_list, cur)
+    END IF
+
+    IF (use_offset_grid .AND. direction == c_dir_x) THEN
+      window_shift = window_offset
+    ELSE
+      window_shift = 0.0_num
     END IF
 
     part_count = 0
