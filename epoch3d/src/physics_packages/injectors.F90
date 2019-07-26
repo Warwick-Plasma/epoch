@@ -370,6 +370,8 @@ CONTAINS
           ELSE IF (p_drift < -flow_limit_val * p_therm) THEN
             ! Net is outflow - inflow velocity is zero
             CYCLE
+          ELSE IF (ABS(p_therm) < c_tiny) THEN
+            CYCLE
           ELSE IF (ABS(p_drift) < p_therm * 1.0e-9_num) THEN
             v_inject_s = 2.0_num * sqrt2pi_inv * p_therm &
                 + (1.0_num - 2.0_num * sqrt2 / pi) * p_drift
