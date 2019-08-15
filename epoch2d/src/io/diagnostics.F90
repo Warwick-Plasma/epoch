@@ -1211,7 +1211,7 @@ CONTAINS
     LOGICAL, INTENT(OUT) :: print_arrays
     LOGICAL, INTENT(IN) :: force
     LOGICAL, DIMENSION(:), INTENT(INOUT) :: first_call
-    INTEGER :: id, io, is, nstep_next = 0, av_block, errcode
+    INTEGER :: id, io, is, nstep_next = 0, av_block
     REAL(num) :: t0, t1, time_first
     LOGICAL :: last_call, dump, done_time_sync
 
