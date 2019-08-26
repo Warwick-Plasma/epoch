@@ -86,6 +86,9 @@ CONTAINS
           END IF
         END IF
       END IF
+
+      n_coll_steps = MAX(n_coll_steps, 1)
+
     END IF
 
   END SUBROUTINE collision_deck_finalise
