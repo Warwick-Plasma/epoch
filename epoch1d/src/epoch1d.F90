@@ -215,7 +215,7 @@ PROGRAM pic
         CALL reorder_particles_to_grid
 
         ! call collision operator
-        IF (use_collisions) THEN
+        IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
           IF (use_collisional_ionisation) THEN
             CALL collisional_ionisation
           ELSE
