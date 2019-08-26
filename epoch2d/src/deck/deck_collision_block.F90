@@ -158,6 +158,10 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'n_coll_steps')) THEN
+      n_coll_steps = as_integer_print(value, element, errcode)
+    END IF
+
     errcode = c_err_unknown_element
 
   END FUNCTION collision_block_handle_element
