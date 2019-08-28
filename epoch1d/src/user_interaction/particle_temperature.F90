@@ -328,7 +328,8 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs), INTENT(INOUT) :: p
     REAL(num), INTENT(IN) :: mass_c
     REAL(num), DIMENSION(c_ndirs), INTENT(IN) :: drift
-    REAL(num), INTENT(OUT) :: gamma_before, gamma_after, gamma_drift
+    REAL(num), INTENT(OUT) :: gamma_before, gamma_after
+    REAL(num), INTENT(IN) :: gamma_drift
     REAL(num), DIMENSION(c_ndirs) :: p_mc, beta
     REAL(num), DIMENSION(c_ndirs+1) :: p4_in
     REAL(num), DIMENSION(c_ndirs,c_ndirs+1) :: boost_tensor
