@@ -905,7 +905,7 @@ CONTAINS
 
     IF (ABS(state%x - x_in) < 1e-15_num &
         .AND. ABS(state%y - p_value) < 1e-15_num) THEN
-      find_value_from_table_alt = state%val3d
+      find_value_from_table_alt = state%val2d
       RETURN
     END IF
 
@@ -1143,7 +1143,7 @@ CONTAINS
     find_value_from_table_alt = y_interp
     state%x = x_in
     state%y = p_value
-    state%val3d = find_value_from_table_alt
+    state%val2d = find_value_from_table_alt
 
   END FUNCTION find_value_from_table_alt
 
