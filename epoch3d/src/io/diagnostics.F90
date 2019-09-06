@@ -1354,7 +1354,7 @@ CONTAINS
         IF (walltime_start > 0.0_num .OR. walltime_stop < HUGE(walltime_stop) &
             .OR. io_block_list(io)%walltime_start > 0.0_num &
             .OR. io_block_list(io)%walltime_stop < HUGE(walltime_stop) &
-            .OR. ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+            .OR. ALLOCATED(io_block_list(io)%dump_at_walltimes)) THEN
           done_time_sync = .TRUE.
           CALL MPI_BCAST(elapsed_time, 1, mpireal, 0, comm, errcode)
         END IF
