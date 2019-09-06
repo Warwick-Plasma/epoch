@@ -1216,7 +1216,7 @@ CONTAINS
     LOGICAL, DIMENSION(:), INTENT(INOUT) :: first_call
     INTEGER :: id, io, is, nstep_next = 0, av_block
     REAL(num) :: t0, t1, time_first
-    LOGICAL :: last_call, dump
+    LOGICAL :: last_call, dump, done_time_sync
 
     IF (.NOT.ALLOCATED(iodumpmask)) &
         ALLOCATE(iodumpmask(n_subsets+1,num_vars_to_dump))
@@ -1234,6 +1234,8 @@ CONTAINS
     ELSE
       last_call = .FALSE.
     END IF
+
+    done_time_sync = .FALSE.
 
     DO io = 1, n_io_blocks
       io_block_list(io)%dump = .FALSE.
@@ -1256,6 +1258,16 @@ CONTAINS
           io_block_list(io)%dump = .TRUE.
           from_dump_request = .TRUE.
           got_request_dump_name = .FALSE.
+        END IF
+      END IF
+
+      IF (.NOT. done_time_sync) THEN
+        IF (walltime_start > 0.0_num .OR. walltime_stop < HUGE(walltime_stop) &
+            .OR. io_block_list(io)%walltime_start > 0.0_num &
+            .OR. io_block_list(io)%walltime_stop < HUGE(walltime_stop) &
+            .OR. ASSOCIATED(io_block_list(io)%dump_at_walltimes)) THEN
+          done_time_sync = .TRUE.
+          CALL MPI_BCAST(elapsed_time, 1, mpireal, 0, comm, errcode)
         END IF
       END IF
 

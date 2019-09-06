@@ -615,7 +615,7 @@ MODULE shared_data
   ! Bremsstrahlung
   !----------------------------------------------------------------------------
   TYPE interpolation_state
-    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val3d
+    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val2d
     INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
   END TYPE interpolation_state
   ! Table declarations
