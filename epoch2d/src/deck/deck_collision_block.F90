@@ -163,6 +163,7 @@ CONTAINS
 
     IF (str_cmp(element, 'n_coll_steps')) THEN
       n_coll_steps = as_integer_print(value, element, errcode)
+      RETURN
     END IF
 
     errcode = c_err_unknown_element
