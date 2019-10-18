@@ -252,12 +252,14 @@ CONTAINS
     temp_norm2 = temperature(2) / temp
     temp_norm3 = temperature(3) / temp
     temp_fac1 = 1.0_num / MAX(temp_norm1, c_tiny)
-    temp_fac2 = 1.0_num / MAX(temp_norm1, c_tiny)
-    temp_fac3 = 1.0_num / MAX(temp_norm1, c_tiny)
+    temp_fac2 = 1.0_num / MAX(temp_norm2, c_tiny)
+    temp_fac3 = 1.0_num / MAX(temp_norm3, c_tiny)
     mass_c = mass * c
 
     p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
         + param2 * temp**2 * LOG(cutoff)**2) / mass
+
+    temp = temp / REAL(dof, num)
 
     p_max_x = p_max * SQRT(temp_norm1)
     p_max_y = p_max * SQRT(temp_norm2)
