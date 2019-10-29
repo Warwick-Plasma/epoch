@@ -250,6 +250,8 @@ CONTAINS
     LOGICAL :: got_t_end
     REAL(num) :: t_end
 
+    iwarn = 0
+
     IF (ASSOCIATED(injector_list)) THEN
       t_end = HUGE(1.0_num)
       got_t_end = .FALSE.
@@ -269,8 +271,6 @@ CONTAINS
       ELSE
         iwarn = 2
       END IF
-    ELSE
-      iwarn = 0
     END IF
 
     warn_buf(:) = 0
