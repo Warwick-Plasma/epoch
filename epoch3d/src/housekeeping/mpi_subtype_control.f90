@@ -98,13 +98,13 @@ CONTAINS
     starts = 0
     n0 = 1
 
-    ranges = cell_global_ranges(global_ranges(sub))
+    ranges = cell_global_ranges(sub)
     n_global = ranges(2,:) - ranges(1,:)
 
-    ranges = cell_local_ranges(global_ranges(sub))
+    ranges = cell_local_ranges(sub)
     n_local = ranges(2,:) - ranges(1,:)
 
-    starts = cell_starts(ranges, global_ranges(sub))
+    starts = cell_starts(sub)
 
     ! These calculations rely on the original domain size, so will be wrong
     ! for skipped sets as yet
@@ -649,10 +649,10 @@ CONTAINS
   ! Clips range of current subset to domain size and cell edge
   !----------------------------------------------------------------------------
 
-  FUNCTION global_ranges(current_subset)
+  SUBROUTINE get_global_ranges(current_subset, global_ranges)
 
-    REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
-    TYPE(subset), INTENT(IN), POINTER :: current_subset
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims), INTENT(OUT) :: global_ranges
     REAL(num) :: dd
     ! fudge factor allows overshoot of the specified domain extent by about 5%
     REAL(num), PARAMETER :: fudge = 0.019_num
@@ -698,16 +698,19 @@ CONTAINS
           + 0.5_num * dd
     END DO
 
-  END FUNCTION global_ranges
+  END SUBROUTINE get_global_ranges
 
 
 
-  FUNCTION cell_global_ranges(ranges)
+  FUNCTION cell_global_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_global_ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dd, lower_posn
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims) :: ranges
+    REAL(num) :: dd, lower_posn
     INTEGER :: idim
+
+    CALL get_global_ranges(current_subset, ranges)
 
     DO idim = 1, c_ndims
       dd = dir_d(idim)
@@ -725,19 +728,22 @@ CONTAINS
   ! Location of current processors section of global array
   !----------------------------------------------------------------------------
 
-  FUNCTION cell_local_ranges(ranges)
+  FUNCTION cell_local_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dd, lower_posn
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims) :: ranges
+    REAL(num) :: dd, lower_posn
     INTEGER :: idim
 
-    DO idim = 1, c_ndims
-      ranges(1,idim) = MAX(ranges(1,idim), dir_min_local(idim))
-      ranges(2,idim) = MIN(ranges(2,idim), dir_max_local(idim))
+    CALL get_global_ranges(current_subset, ranges)
 
+    DO idim = 1, c_ndims
       dd = dir_d(idim)
       lower_posn = dir_grid_min(idim)
+
+      ranges(1,idim) = MAX(ranges(1,idim), dir_min_local(idim))
+      ranges(2,idim) = MIN(ranges(2,idim), dir_max_local(idim))
 
       cell_local_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
       cell_local_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
@@ -752,11 +758,14 @@ CONTAINS
   ! to use
   !----------------------------------------------------------------------------
 
-  FUNCTION cell_section_ranges(ranges)
+  FUNCTION cell_section_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_section_ranges
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: idim, min_val
+
+    ranges = cell_local_ranges(current_subset)
 
     DO idim = 1, c_ndims
       min_val = n_global_min(idim)
@@ -769,12 +778,16 @@ CONTAINS
 
 
 
-  FUNCTION cell_starts(ranges, global_ranges)
+  FUNCTION cell_starts(current_subset)
 
     INTEGER, DIMENSION(c_ndims) :: cell_starts
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
     INTEGER, DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
+    REAL(num), DIMENSION(2,c_ndims) :: global_ranges
     INTEGER :: range_global_min, idim
+
+    CALL get_global_ranges(current_subset, global_ranges)
+    ranges = cell_local_ranges(current_subset)
 
     DO idim = 1, c_ndims
       range_global_min = &

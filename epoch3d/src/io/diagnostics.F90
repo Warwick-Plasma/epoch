@@ -811,7 +811,7 @@ CONTAINS
 
           CALL check_name_length('subset', &
               'Grid/' // TRIM(sub%name))
-          ranges = cell_global_ranges(global_ranges(sub))
+          ranges = cell_global_ranges(sub)
 
           IF (.NOT. use_offset_grid) THEN
             CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
@@ -1849,7 +1849,7 @@ CONTAINS
       IF (.NOT. sub%skip) THEN
         ! Output every subset. Trust user not to do parts twice
         ! Calculate the subsection dimensions and ranges
-        ranges = cell_global_ranges(global_ranges(sub))
+        ranges = cell_global_ranges(sub)
         DO i = 1, c_ndims
           IF (ranges(2,i) <= ranges(1,i)) THEN
             skipped_any_set = .TRUE.
@@ -1857,10 +1857,8 @@ CONTAINS
           END IF
         END DO
 
-        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
-            ranges(2,3) - ranges(1,3) /)
-        ranges = cell_local_ranges(global_ranges(sub))
-        ran_sec = cell_section_ranges(ranges) + 1
+        new_dims = ranges(2,:) - ranges(1,:)
+        ran_sec = cell_section_ranges(sub) + 1
 
         IF (convert) THEN
           rsubtype  = sub%subtype_r4
@@ -2092,17 +2090,15 @@ CONTAINS
       CALL build_species_subset
       ! Calculate the subsection dimensions and ranges
       IF (dump_part) THEN
-        ranges = cell_global_ranges(global_ranges(sub))
+        ranges = cell_global_ranges(sub)
         DO i = 1, c_ndims
           IF (ranges(2,i) <= ranges(1,i)) THEN
             skipped_any_set = .TRUE.
             RETURN
           END IF
         END DO
-        new_dims = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2), &
-            ranges(2,3) - ranges(1,3) /)
-        ranges = cell_local_ranges(global_ranges(sub))
-        ran_no_ng = cell_section_ranges(ranges) + ng + 1
+        new_dims = ranges(2,:) - ranges(1,:)
+        ran_no_ng = cell_section_ranges(sub) + ng + 1
       END IF
     END IF
 
