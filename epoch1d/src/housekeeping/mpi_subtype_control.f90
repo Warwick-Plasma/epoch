@@ -677,10 +677,8 @@ CONTAINS
           + CEILING((global_ranges(2,idim) - dir_min(idim)) / dd - fudge) * dd
 
       ! Correct to domain size
-      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min(idim)) &
-          + 0.5_num * dd
-      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max(idim)) &
-          + 0.5_num * dd
+      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min(idim))
+      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max(idim))
     END DO
 
   END SUBROUTINE get_global_ranges
@@ -699,7 +697,7 @@ CONTAINS
 
     DO idim = 1, c_ndims
       dd = dir_d(idim)
-      lower_posn = dir_grid_min(idim)
+      lower_posn = dir_min(idim)
 
       cell_global_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
       cell_global_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
@@ -725,7 +723,7 @@ CONTAINS
 
     DO idim = 1, c_ndims
       dd = dir_d(idim)
-      lower_posn = dir_grid_min(idim)
+      lower_posn = dir_min(idim)
 
       ranges(1,idim) = MAX(ranges(1,idim), dir_min_local(idim))
       ranges(2,idim) = MIN(ranges(2,idim), dir_max_local(idim))
@@ -776,7 +774,7 @@ CONTAINS
 
     DO idim = 1, c_ndims
       range_global_min = &
-          NINT((global_ranges(1,idim) - dir_grid_min(idim)) / dir_d(idim))
+          NINT((global_ranges(1,idim) - dir_min(idim)) / dir_d(idim))
 
       ! -1 because ranges is cell indexed and global_ranges isn't
       cell_starts(idim) = ranges(1,idim) - range_global_min - 1
