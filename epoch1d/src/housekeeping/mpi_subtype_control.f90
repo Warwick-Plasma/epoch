@@ -100,16 +100,16 @@ CONTAINS
 
     ranges = cell_global_ranges(global_ranges(sub))
     sn_global = (/ ranges(2,1) - ranges(1,1) /)
+
     ranges = cell_local_ranges(global_ranges(sub))
+    sn_local =  (/ ranges(2,1) - ranges(1,1) /)
 
     ! These calculations rely on the original domain size, so will be wrong
     ! for skipped sets as yet
     proc_outside_range = .FALSE.
     IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
-    sn_local =  (/ ranges(2,1) - ranges(1,1) /)
-    starts = cell_starts(ranges, global_ranges(sub))
 
-    ranges = cell_section_ranges(ranges)
+    starts = cell_starts(ranges, global_ranges(sub))
 
     IF (sub%skip) THEN
       DO j = 1, c_ndims
@@ -124,120 +124,68 @@ CONTAINS
         sub%n_start(j) = n0 + npdm * rd - n_min
         starts(j) = npdm
       END DO
-
-      ! Just exit if the subset hasn't changed extents since last time
-      IF (equal(sub%n_global, sn_global)) THEN
-        IF (equal(sub%n_local, sn_local)) THEN
-          IF (equal(sub%starts, starts)) THEN
-            RETURN
-          END IF
-        END IF
-      END IF
-
-      sub%n_global(:) = sn_global(:)
-      sub%n_local(:) = sn_local(:)
-      sub%starts(:) = starts(:)
-
-      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
-        CALL MPI_TYPE_FREE(sub%subtype, errcode)
-        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-      END IF
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype_r4 = mpitype
-
-      starts = 0
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray_r4 = mpitype
-    ELSE
-      ! Just exit if the subset hasn't changed extents since last time
-      IF (equal(sub%n_global, sn_global)) THEN
-        IF (equal(sub%n_local, sn_local)) THEN
-          IF (equal(sub%starts, starts)) THEN
-            RETURN
-          END IF
-        END IF
-      END IF
-
-      sub%n_global(:) = sn_global(:)
-      sub%n_local(:) = sn_local(:)
-      sub%starts(:) = starts(:)
-
-      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
-        CALL MPI_TYPE_FREE(sub%subtype, errcode)
-        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-      END IF
-
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype = mpitype
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype_r4 = mpitype
-
-      starts = 0
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray_r4 = mpitype
     END IF
+
+    ! Just exit if the subset hasn't changed extents since last time
+    IF (equal(sub%n_global, sn_global)) THEN
+      IF (equal(sub%n_local, sn_local)) THEN
+        IF (equal(sub%starts, starts)) THEN
+          RETURN
+        END IF
+      END IF
+    END IF
+
+    sub%n_global(:) = sn_global(:)
+    sub%n_local(:) = sn_local(:)
+    sub%starts(:) = starts(:)
+
+    IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
+      CALL MPI_TYPE_FREE(sub%subtype, errcode)
+      CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+    END IF
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subtype = mpitype
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subtype_r4 = mpitype
+
+    starts = 0
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subarray = mpitype
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subarray_r4 = mpitype
 
   END SUBROUTINE create_subset_subtypes
 
