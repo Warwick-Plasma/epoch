@@ -275,10 +275,11 @@ CONTAINS
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
         END IF
-        IF (skipped_any_set) &
-            WRITE(*, *) 'One or more subset ranges were empty: their ', &
-                'fields were not output.'
-        skipped_any_set = .FALSE.
+        IF (skipped_any_set) THEN
+          WRITE(*,*) 'One or more subset ranges were empty: ', &
+                'their fields were not output.'
+          skipped_any_set = .FALSE.
+        END IF
       END IF
     END IF
 
@@ -1709,7 +1710,6 @@ CONTAINS
     TYPE(subset), POINTER :: sub
     INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_sec
     INTEGER, DIMENSION(c_ndims) :: new_dims
-    LOGICAL :: skip_this_set
 
     mask = iomask(id)
 
@@ -1763,16 +1763,13 @@ CONTAINS
         ! Output every subset. Trust user not to do parts twice
         ! Calculate the subsection dimensions and ranges
         ranges = cell_global_ranges(global_ranges(sub))
-        skip_this_set = .FALSE.
         DO i = 1, c_ndims
           IF (ranges(2,i) <= ranges(1,i)) THEN
-            skip_this_set = .TRUE.
             skipped_any_set = .TRUE.
+            CYCLE
           END IF
         END DO
-        IF (skip_this_set) THEN
-          CYCLE
-        END IF
+
         new_dims = (/ ranges(2,1) - ranges(1,1) /)
         ranges = cell_local_ranges(global_ranges(sub))
         ran_sec = cell_section_ranges(ranges) + 1
