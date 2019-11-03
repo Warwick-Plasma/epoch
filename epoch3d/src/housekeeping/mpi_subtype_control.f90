@@ -168,12 +168,14 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
     sub%subtype_r4 = mpitype
 
-    starts = 0
+    n_global = [nx + 2 * ng, ny + 2 * ng, nz + 2 * ng]
+    starts = array_starts(sub)
+
     mpitype = MPI_DATATYPE_NULL
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_local, n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
           starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
@@ -183,7 +185,7 @@ CONTAINS
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_local, n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
           starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
@@ -796,6 +798,31 @@ CONTAINS
     END DO
 
   END FUNCTION cell_starts
+
+
+
+  FUNCTION array_starts(current_subset)
+
+    INTEGER, DIMENSION(c_ndims) :: array_starts
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
+    INTEGER :: idim
+    INTEGER, PARAMETER :: &
+        nr(3) = [c_subset_x_min, c_subset_y_min, c_subset_z_min]
+
+    array_starts = ng
+    IF (.NOT.current_subset%space_restrictions) RETURN
+
+    ranges = cell_global_ranges(current_subset)
+
+    DO idim = 1, c_ndims
+      IF (current_subset%use_restriction(nr(idim))) THEN
+        array_starts(idim) = ranges(1,idim) - n_global_min(idim) + ng
+        array_starts(idim) = MAX(array_starts(idim), ng)
+      END IF
+    END DO
+
+  END FUNCTION array_starts
 
 
 

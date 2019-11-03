@@ -1745,7 +1745,6 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: reduced
     INTEGER :: io, mask, dumped
     INTEGER :: i, ii, rnx, j, jj, rny
-    INTEGER :: i0, i1, j0, j1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, dump_skipped, restart_id, normal_id, unaveraged_id
@@ -1754,8 +1753,6 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_sec
-    INTEGER, DIMENSION(c_ndims) :: new_dims
 
     mask = iomask(id)
 
@@ -1807,17 +1804,13 @@ CONTAINS
 
       IF (.NOT. sub%skip) THEN
         ! Output every subset. Trust user not to do parts twice
-        ! Calculate the subsection dimensions and ranges
-        ranges = cell_global_ranges(sub)
+        ! Skip empty subsets
         DO i = 1, c_ndims
-          IF (ranges(2,i) <= ranges(1,i)) THEN
+          IF (sub%n_global(i) <= 0) THEN
             skipped_any_set = .TRUE.
             CYCLE
           END IF
         END DO
-
-        new_dims = ranges(2,:) - ranges(1,:)
-        ran_sec = cell_section_ranges(sub) + 1
 
         IF (convert) THEN
           rsubtype  = sub%subtype_r4
@@ -1833,21 +1826,9 @@ CONTAINS
         temp_block_id = TRIM(block_id)// '/c_' // TRIM(sub%name)
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
-        i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
-        j0 = ran_sec(1,2); j1 = ran_sec(2,2) - 1
-        IF (i1 < i0) THEN
-          i0 = 1
-          i1 = i0
-        END IF
-        IF (j1 < j0) THEN
-          j0 = 1
-          j1 = j0
-        END IF
-
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), new_dims, stagger, &
-            TRIM(temp_grid_id), array(i0:i1,j0:j1), &
-            rsubtype, rsubarray, convert)
+            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+            TRIM(temp_grid_id), array, rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
 
       ELSE
@@ -1962,7 +1943,6 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, io, mask, idir, ndirs, iav
     INTEGER :: i, ii, rnx, j, jj, rny
-    INTEGER :: i0, i1, j0, j1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
@@ -1971,8 +1951,6 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_no_ng
-    INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
@@ -2037,17 +2015,14 @@ CONTAINS
 
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
-      ! Calculate the subsection dimensions and ranges
+      ! Skip empty subsets
       IF (dump_part) THEN
-        ranges = cell_global_ranges(sub)
         DO i = 1, c_ndims
-          IF (ranges(2,i) <= ranges(1,i)) THEN
+          IF (sub%n_global(i) <= 0) THEN
             skipped_any_set = .TRUE.
             RETURN
           END IF
         END DO
-        new_dims = ranges(2,:) - ranges(1,:)
-        ran_no_ng = cell_section_ranges(sub) + ng + 1
       END IF
     END IF
 
@@ -2119,20 +2094,9 @@ CONTAINS
         ELSE IF (dump_part) THEN
           temp_grid_id = 'grid/' // TRIM(sub%name)
 
-          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-          j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
-          IF (i1 < i0) THEN
-            i0 = 1
-            i1 = i0
-          END IF
-          IF (j1 < j0) THEN
-            j0 = 1
-            j1 = j0
-          END IF
-
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-              array(i0:i1,j0:j1), rsubtype, rsubarray, convert)
+              TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+              temp_grid_id, array, rsubtype, rsubarray, convert)
           sub%dump_field_grid = .TRUE.
         ELSE
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
@@ -2247,20 +2211,9 @@ CONTAINS
             ! First subset is main dump so there wont be any restrictions
             temp_grid_id = 'grid/' // TRIM(sub%name)
 
-            i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-            j0 = ran_no_ng(1,2); j1 = ran_no_ng(2,2) - 1
-            IF (i1 < i0) THEN
-              i0 = 1
-              i1 = i0
-            END IF
-            IF (j1 < j0) THEN
-              j0 = 1
-              j1 = j0
-            END IF
-
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-                array(i0:i1,j0:j1), rsubtype, rsubarray, convert)
+                TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+                temp_grid_id, array, rsubtype, rsubarray, convert)
             sub%dump_field_grid = .TRUE.
           ELSE
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
