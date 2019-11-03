@@ -87,29 +87,31 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: subset_index
     INTEGER :: j, rd, n_min, n_max, mpitype, npd, npdm, n0
-    INTEGER, DIMENSION(c_ndims) :: n_global, sn_local, sn_global, starts
+    INTEGER, DIMENSION(c_ndims) :: nt_global, n_local, n_global, starts
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     LOGICAL :: proc_outside_range
     TYPE(subset), POINTER :: sub
 
     sub => subset_list(subset_index)
 
-    n_global = (/nx_global/)
+    nt_global = [nx_global]
     starts = 0
     n0 = 1
 
     ranges = cell_global_ranges(global_ranges(sub))
-    sn_global = (/ ranges(2,1) - ranges(1,1) /)
+    n_global = ranges(2,:) - ranges(1,:)
 
     ranges = cell_local_ranges(global_ranges(sub))
-    sn_local =  (/ ranges(2,1) - ranges(1,1) /)
+    n_local = ranges(2,:) - ranges(1,:)
+
+    starts = cell_starts(ranges, global_ranges(sub))
 
     ! These calculations rely on the original domain size, so will be wrong
     ! for skipped sets as yet
     proc_outside_range = .FALSE.
-    IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
-
-    starts = cell_starts(ranges, global_ranges(sub))
+    DO j = 1, c_ndims
+      IF (n_local(j) <= c_tiny) proc_outside_range = .TRUE.
+    END DO
 
     IF (sub%skip) THEN
       DO j = 1, c_ndims
@@ -119,24 +121,24 @@ CONTAINS
         npd = (n_max - n0) / rd + 1
         npdm = (n_min - 1 - n0) / rd + 1
         IF (n_min < 2) npdm = 0
-        sn_global(j) = (n_global(j) - n0) / rd + 1
-        sn_local(j) = npd - npdm
+        n_global(j) = (nt_global(j) - n0) / rd + 1
+        n_local(j) = npd - npdm
         sub%n_start(j) = n0 + npdm * rd - n_min
         starts(j) = npdm
       END DO
     END IF
 
     ! Just exit if the subset hasn't changed extents since last time
-    IF (equal(sub%n_global, sn_global)) THEN
-      IF (equal(sub%n_local, sn_local)) THEN
+    IF (equal(sub%n_global, n_global)) THEN
+      IF (equal(sub%n_local, n_local)) THEN
         IF (equal(sub%starts, starts)) THEN
           RETURN
         END IF
       END IF
     END IF
 
-    sub%n_global(:) = sn_global(:)
-    sub%n_local(:) = sn_local(:)
+    sub%n_global(:) = n_global(:)
+    sub%n_local(:) = n_local(:)
     sub%starts(:) = starts(:)
 
     IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
@@ -150,7 +152,7 @@ CONTAINS
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
           starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
@@ -160,7 +162,7 @@ CONTAINS
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
           starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
@@ -171,7 +173,7 @@ CONTAINS
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_local, n_local, &
           starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
@@ -181,7 +183,7 @@ CONTAINS
     IF (proc_outside_range) THEN
       CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
     ELSE
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_local, n_local, &
           starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
     END IF
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
