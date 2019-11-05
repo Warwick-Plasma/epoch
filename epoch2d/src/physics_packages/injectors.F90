@@ -153,6 +153,8 @@ CONTAINS
 
     direction = injector%boundary
 
+    IF (.NOT. is_boundary(direction)) RETURN
+
     IF (direction == c_bd_x_min) THEN
       bdy_pos = x_min
       parameters%pack_ix = 0
