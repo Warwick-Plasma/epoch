@@ -237,7 +237,7 @@ CONTAINS
     REAL(num), DIMENSION(c_ndirs) :: momentum, mmc
     REAL(num) :: mod_momentum, mass_c, pfac, drift_2
     REAL(num) :: momentum1_2, momentum2_2, momentum3_2
-    REAL(num) :: temp, temp_max, p_max_x, p_max_y, p_max_z, p_max
+    REAL(num) :: temp, p_max_x, p_max_y, p_max_z, p_max
     REAL(num) :: temp_norm1, temp_norm2, temp_norm3
     REAL(num) :: temp_fac1, temp_fac2, temp_fac3
     INTEGER :: dof
@@ -254,8 +254,7 @@ CONTAINS
       RETURN
     END IF
 
-    temp = SUM(temperature)
-    temp_max = MAXVAL(temperature)
+    temp = SUM(temperature) / REAL(dof, num)
     temp_norm1 = temperature(1) / temp
     temp_norm2 = temperature(2) / temp
     temp_norm3 = temperature(3) / temp
@@ -266,8 +265,6 @@ CONTAINS
 
     p_max = SQRT(param1 * mass * temp * LOG(cutoff) &
         + param2 * temp**2 * LOG(cutoff)**2) / mass
-
-    temp = temp / REAL(dof, num)
 
     p_max_x = p_max * SQRT(temp_norm1)
     p_max_y = p_max * SQRT(temp_norm2)
