@@ -153,10 +153,7 @@ CONTAINS
 
     direction = injector%boundary
 
-    IF (direction == c_bd_x_min .AND. .NOT. x_min_boundary) RETURN
-    IF (direction == c_bd_x_max .AND. .NOT. x_max_boundary) RETURN
-    IF (direction == c_bd_y_min .AND. .NOT. y_min_boundary) RETURN
-    IF (direction == c_bd_y_max .AND. .NOT. y_max_boundary) RETURN
+    IF (.NOT. is_boundary(direction)) RETURN
 
     IF (direction == c_bd_x_min) THEN
       bdy_pos = x_min
