@@ -1110,6 +1110,9 @@ CONTAINS
         cosp = 2.0_num * ran1 - 1.0_num
       END IF
 
+      ! Branches 2 and 3 can result in rounding errors
+      cosp = MAX(MIN(cosp, 1.0_num), -1.0_num)
+
       sinp = SIN(ACOS(cosp))
 
       ! Calculate new momenta according to rotation by angle p
@@ -1602,6 +1605,9 @@ CONTAINS
         ELSE
           cosp = 2.0_num * ran1 - 1.0_num
         END IF
+
+        ! Branches 2 and 3 can result in rounding errors
+        cosp = MAX(MIN(cosp, 1.0_num), -1.0_num)
 
         sinp = SIN(ACOS(cosp))
 
