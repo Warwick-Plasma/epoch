@@ -544,7 +544,7 @@ strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 terminal_controls.o: terminal_controls.F90
 timer.o: timer.f90 constants.o
 tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
-utilities.o: utilities.f90 constants.o
+utilities.o: utilities.f90 constants.o shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
