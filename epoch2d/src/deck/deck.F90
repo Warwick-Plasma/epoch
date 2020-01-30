@@ -443,7 +443,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: len_string
     LOGICAL :: terminate = .FALSE.
     LOGICAL :: exists
-    INTEGER :: errcode_deck, i, io, iu, rank_check
+    INTEGER :: errcode_deck, i, j, io, iu, rank_check
     CHARACTER(LEN=buffer_size), DIMENSION(:), ALLOCATABLE :: tmp_buffer
     TYPE(file_buffer), POINTER :: fbuf
     LOGICAL :: already_parsed, got_eor, got_eof
@@ -461,6 +461,23 @@ CONTAINS
 
     ! Make the whole filename by adding the data_dir to the filename
     deck_filename = TRIM(ADJUSTL(data_dir)) // '/' // TRIM(ADJUSTL(filename))
+
+    ! Strip duplicated path separators
+    u1 = ' '
+    j = 1
+    slen = LEN_TRIM(deck_filename)
+    DO i = 1, slen
+      IF (u1 == '/') THEN
+        IF (deck_filename(i:i) == '/') CYCLE
+      END IF
+      u1 = deck_filename(i:i)
+      deck_filename(j:j) = u1
+      j = j + 1
+    END DO
+
+    DO i = j, slen
+      deck_filename(i:i) = ' '
+    END DO
 
     ! deck_state tells the code whether it's parsing the normal input deck
     ! Or the initial conditions. You can add more states if you want.
@@ -1102,15 +1119,53 @@ CONTAINS
     TYPE(sdf_file_handle) :: handle
     TYPE(file_buffer), POINTER :: fbuf
     CHARACTER(LEN=1) :: buffer(1)
-    INTEGER :: i
+    CHARACTER(LEN=*), PARAMETER :: prefix1 = 'input_deck/'
+    CHARACTER(LEN=*), PARAMETER :: prefix2 = 'EPOCH input deck: '
+    INTEGER :: i, j, l1, l2, len1, len2, flen
+    INTEGER :: sdf_string_length
 
     IF (rank == 0) THEN
+      sdf_string_length = sdf_get_string_length(handle)
+      len1 = LEN_TRIM(prefix1)
+      len2 = LEN_TRIM(prefix2)
+
       fbuf => file_buffer_head
       DO i = 1,nbuffers
         fbuf => fbuf%next
 
-        CALL sdf_write_datablock(handle, 'input_deck/' // TRIM(fbuf%filename), &
-            'EPOCH input deck: ' // TRIM(fbuf%filename), &
+        ! Use relative pathname if string is too long
+        flen = LEN_TRIM(fbuf%filename)
+        l1 = 1; l2 = 1
+
+        IF (flen + len1 >= c_id_length) THEN
+          ! For the ID field, only keep the filename
+          DO j = flen, 1, -1
+            IF (fbuf%filename(j:j) == '/') THEN
+              l1 = j + 1
+              EXIT
+            END IF
+          END DO
+
+          IF (flen + len2 >= sdf_string_length) THEN
+            ! For the name field, only keep the parent directory
+            l2 = l1
+            DO j = l1-2, 1, -1
+              IF (fbuf%filename(j:j) == '/') THEN
+                l2 = j + 1
+                EXIT
+              END IF
+            END DO
+
+            ! If it's still too long then discard the directory name
+            IF (flen + len2 - l2 + 1 >= sdf_string_length) THEN
+              l2 = l1
+            END IF
+          END IF
+        END IF
+
+        CALL sdf_write_datablock(handle, &
+            'input_deck/' // TRIM(fbuf%filename(l1:)), &
+            'EPOCH input deck: ' // TRIM(fbuf%filename(l2:)), &
             fbuf%buffer(1:fbuf%idx-1), fbuf%buffer(fbuf%idx)(1:fbuf%pos-1), &
             'text/plain', 'md5', fbuf%md5sum)
       END DO
@@ -1118,7 +1173,7 @@ CONTAINS
       ! These calls are required since sdf_write_datablock() is a collective
       ! operation
       DO i = 1,nbuffers
-        CALL sdf_write_datablock(handle, 'input_deck/', 'EPOCH input deck: ', &
+        CALL sdf_write_datablock(handle, '', '', &
             buffer, buffer(1), 'text/plain', 'md5', '')
       END DO
     END IF
