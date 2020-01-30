@@ -132,7 +132,7 @@ CONTAINS
         WRITE(io,*) 'You have specified injectors in conjunction with the ', &
                     'moving window.'
         WRITE(io,*) 'The t_end time of the injectors exceeds the ', &
-                    'window_stop_time. The injectors'
+                    'window_start_time. The injectors'
         WRITE(io,*) 'will be disabled once the moving window starts.'
         WRITE(io,*)
       END DO
