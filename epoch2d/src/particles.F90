@@ -136,8 +136,6 @@ CONTAINS
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
 
-      IF (species_list(ispecies)%attached_list%count == 0) CYCLE
-
       IF (species_list(ispecies)%immobile) CYCLE
       IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
 #ifdef BREMSSTRAHLUNG
