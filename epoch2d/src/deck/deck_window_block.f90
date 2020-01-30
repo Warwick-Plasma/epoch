@@ -257,7 +257,7 @@ CONTAINS
       got_t_end = .FALSE.
       current => injector_list
       DO WHILE(ASSOCIATED(current))
-        IF (is_boundary(current%boundary) .AND. current%has_t_end) THEN
+        IF (current%has_t_end) THEN
           got_t_end = .TRUE.
           IF (current%t_end < t_end) t_end = current%t_end
         END IF
