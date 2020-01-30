@@ -277,10 +277,11 @@ CONTAINS
           WRITE(*, '(''Time'', g20.12, '' and iteration'', i12, '' after'', &
               & a)') time, step, timestring
         END IF
-        IF (skipped_any_set) &
-            WRITE(*, *) 'One or more subset ranges were empty: their ', &
-                'fields were not output.'
-        skipped_any_set = .FALSE.
+        IF (skipped_any_set) THEN
+          WRITE(*,*) 'One or more subset ranges were empty: ', &
+                'their fields were not output.'
+          skipped_any_set = .FALSE.
+        END IF
       END IF
     END IF
 
@@ -794,7 +795,7 @@ CONTAINS
 
           CALL check_name_length('subset', &
               'Grid/' // TRIM(sub%name))
-          ranges = cell_global_ranges(global_ranges(sub))
+          ranges = cell_global_ranges(sub)
 
           IF (.NOT. use_offset_grid) THEN
             CALL sdf_write_srl_plain_mesh(sdf_handle, TRIM(temp_block_id), &
@@ -1749,7 +1750,6 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: reduced
     INTEGER :: io, mask, dumped
     INTEGER :: i, ii, rnx
-    INTEGER :: i0, i1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     INTEGER, DIMENSION(c_ndims) :: dims
     LOGICAL :: convert, dump_skipped, restart_id, normal_id, unaveraged_id
@@ -1758,9 +1758,6 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_sec
-    INTEGER, DIMENSION(c_ndims) :: new_dims
-    LOGICAL :: skip_this_set
 
     mask = iomask(id)
 
@@ -1812,21 +1809,13 @@ CONTAINS
 
       IF (.NOT. sub%skip) THEN
         ! Output every subset. Trust user not to do parts twice
-        ! Calculate the subsection dimensions and ranges
-        ranges = cell_global_ranges(global_ranges(sub))
-        skip_this_set = .FALSE.
+        ! Skip empty subsets
         DO i = 1, c_ndims
-          IF (ranges(2,i) <= ranges(1,i)) THEN
-            skip_this_set = .TRUE.
+          IF (sub%n_global(i) <= 0) THEN
             skipped_any_set = .TRUE.
+            CYCLE
           END IF
         END DO
-        IF (skip_this_set) THEN
-          CYCLE
-        END IF
-        new_dims = (/ ranges(2,1) - ranges(1,1) /)
-        ranges = cell_local_ranges(global_ranges(sub))
-        ran_sec = cell_section_ranges(ranges) + 1
 
         IF (convert) THEN
           rsubtype  = sub%subtype_r4
@@ -1842,16 +1831,9 @@ CONTAINS
         temp_block_id = TRIM(block_id)// '/c_' // TRIM(sub%name)
         temp_name = TRIM(name) // '/Core_' // TRIM(sub%name)
 
-        i0 = ran_sec(1,1); i1 = ran_sec(2,1) - 1
-        IF (i1 < i0) THEN
-          i0 = 1
-          i1 = i0
-        END IF
-
         CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-            TRIM(temp_name), TRIM(units), new_dims, stagger, &
-            TRIM(temp_grid_id), array(i0:i1), &
-            rsubtype, rsubarray, convert)
+            TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+            TRIM(temp_grid_id), array, rsubtype, rsubarray, convert)
         sub%dump_field_grid = .TRUE.
 
       ELSE
@@ -1961,7 +1943,6 @@ CONTAINS
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER :: ispecies, io, mask, idir, ndirs, iav
     INTEGER :: i, ii, rnx
-    INTEGER :: i0, i1
     INTEGER :: subtype, subarray, rsubtype, rsubarray
     CHARACTER(LEN=c_id_length) :: temp_block_id, temp_grid_id
     CHARACTER(LEN=c_max_string_length) :: temp_name
@@ -1970,8 +1951,6 @@ CONTAINS
     TYPE(averaged_data_block), POINTER :: avg
     TYPE(io_block_type), POINTER :: iob
     TYPE(subset), POINTER :: sub
-    INTEGER, DIMENSION(2,c_ndims) :: ranges, ran_no_ng
-    INTEGER, DIMENSION(c_ndims) :: new_dims
 
     INTERFACE
       SUBROUTINE func(data_array, current_species, direction)
@@ -2036,18 +2015,14 @@ CONTAINS
 
     IF (dump_sum .OR. dump_species) THEN
       CALL build_species_subset
-      ! Calculate the subsection dimensions and ranges
+      ! Skip empty subsets
       IF (dump_part) THEN
-        ranges = cell_global_ranges(global_ranges(sub))
         DO i = 1, c_ndims
-          IF (ranges(2,i) <= ranges(1,i)) THEN
+          IF (sub%n_global(i) <= 0) THEN
             skipped_any_set = .TRUE.
             RETURN
           END IF
         END DO
-        new_dims = (/ ranges(2,1) - ranges(1,1) /)
-        ranges = cell_local_ranges(global_ranges(sub))
-        ran_no_ng = cell_section_ranges(ranges) + ng + 1
       END IF
     END IF
 
@@ -2114,15 +2089,9 @@ CONTAINS
         ELSE IF (dump_part) THEN
           temp_grid_id = 'grid/' // TRIM(sub%name)
 
-          i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-          IF (i1 < i0) THEN
-            i0 = 1
-            i1 = i0
-          END IF
-
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-              TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-              array(i0:i1), rsubtype, rsubarray, convert)
+              TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+              temp_grid_id, array, rsubtype, rsubarray, convert)
           sub%dump_field_grid = .TRUE.
         ELSE
           CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
@@ -2232,15 +2201,9 @@ CONTAINS
             ! First subset is main dump so there wont be any restrictions
             temp_grid_id = 'grid/' // TRIM(sub%name)
 
-            i0 = ran_no_ng(1,1); i1 = ran_no_ng(2,1) - 1
-            IF (i1 < i0) THEN
-              i0 = 1
-              i1 = i0
-            END IF
-
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &
-                TRIM(temp_name), TRIM(units), new_dims, stagger, temp_grid_id, &
-                array(i0:i1), rsubtype, rsubarray, convert)
+                TRIM(temp_name), TRIM(units), sub%n_global, stagger, &
+                temp_grid_id, array, rsubtype, rsubarray, convert)
             sub%dump_field_grid = .TRUE.
           ELSE
             CALL sdf_write_plain_variable(sdf_handle, TRIM(temp_block_id), &

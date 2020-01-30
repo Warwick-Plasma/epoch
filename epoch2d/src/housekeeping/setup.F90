@@ -2123,6 +2123,7 @@ CONTAINS
       CALL setup_communicator
       CALL pre_balance_workload(old_comm, old_coords)
       CALL MPI_COMM_FREE(old_comm, ierr)
+      CALL setup_grid
     ELSE
       CALL pre_balance_workload
     END IF
