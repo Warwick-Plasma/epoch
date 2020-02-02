@@ -36,8 +36,8 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, io, iu, iwarn, bc(2)
-    LOGICAL :: warn
+    INTEGER :: i, io, iu, bc(2)
+    LOGICAL :: warn, warn_window, warn_no_t_end
 
     IF (.NOT.move_window) RETURN
 
@@ -58,7 +58,7 @@ CONTAINS
     IF (bc_z_max_after_move == c_bc_null) &
         bc_z_max_after_move = bc_field(c_bd_z_max)
 
-    CALL check_injector_boundaries(iwarn)
+    CALL check_injector_boundaries(warn_window, warn_no_t_end)
 
     IF (rank /= 0) RETURN
 
@@ -125,7 +125,7 @@ CONTAINS
       END DO
     END IF
 
-    IF (iwarn == 1) THEN
+    IF (warn_window) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** WARNING ***'
@@ -136,7 +136,7 @@ CONTAINS
         WRITE(io,*) 'will be disabled once the moving window starts.'
         WRITE(io,*)
       END DO
-    ELSE IF (iwarn == 2) THEN
+    ELSE IF (warn_no_t_end) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** ERROR ***'
@@ -258,15 +258,16 @@ CONTAINS
 
 
 
-  SUBROUTINE check_injector_boundaries(iwarn)
+  SUBROUTINE check_injector_boundaries(warn_window, warn_no_t_end)
 
-    INTEGER, INTENT(OUT) :: iwarn
-    INTEGER :: ierr, warn_buf(2), warn_sum(2)
+    LOGICAL, INTENT(OUT) :: warn_window, warn_no_t_end
+    LOGICAL, DIMENSION(2) :: warn_loc, warn_glob
+    INTEGER :: ierr
     TYPE(injector_block), POINTER :: current
     LOGICAL :: got_t_end
     REAL(num) :: t_end
 
-    iwarn = 0
+    warn_loc = .FALSE.
 
     IF (ASSOCIATED(injector_list)) THEN
       t_end = HUGE(1.0_num)
@@ -276,30 +277,23 @@ CONTAINS
         IF (current%has_t_end) THEN
           got_t_end = .TRUE.
           IF (current%t_end < t_end) t_end = current%t_end
+        ELSE
+          warn_loc(2) = .TRUE.
         END IF
         current => current%next
       END DO
 
       IF (got_t_end) THEN
         IF (t_end > window_start_time) THEN
-          iwarn = 1
+          warn_loc(1) = .TRUE.
         END IF
-      ELSE
-        iwarn = 2
       END IF
     END IF
 
-    warn_buf(:) = 0
-    IF (iwarn > 0) warn_buf(iwarn) = 1
-    CALL MPI_REDUCE(warn_buf, warn_sum, 2, MPI_INTEGER, MPI_SUM, 0, comm, ierr)
+    CALL MPI_REDUCE(warn_loc, warn_glob, 2, MPI_LOGICAL, MPI_LOR, 0, comm, ierr)
 
-    IF (warn_sum(2) > 0) THEN
-      iwarn = 2
-    ELSE IF (warn_sum(1) > 0) THEN
-      iwarn = 1
-    ELSE
-      iwarn = 0
-    END IF
+    warn_window = warn_glob(1)
+    warn_no_t_end = warn_glob(2)
 
   END SUBROUTINE check_injector_boundaries
 
