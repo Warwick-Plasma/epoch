@@ -95,29 +95,27 @@ CONTAINS
       END DO
     END IF
 
-    IF (warn_window) THEN
+    IF (warn_window .OR. warn_no_t_end) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) '*** WARNING ***'
         WRITE(io,*) 'You have specified injectors in conjunction with the ', &
                     'moving window.'
-        WRITE(io,*) 'The t_end time of the injectors exceeds the ', &
-                    'window_start_time. The injectors'
-        WRITE(io,*) 'will be disabled once the moving window starts.'
-        WRITE(io,*)
+        IF (warn_window) THEN
+          WRITE(io,*) 'The t_end time of one or more injectors exceeds the ', &
+                      'window_start_time.'
+          WRITE(io,*) 'These injectors will continue to run once the moving ', &
+                      'window starts, but '
+          WRITE(io,*) 'care should be taken when interpreting these results.'
+          WRITE(io,*)
+        END IF
+        IF (warn_no_t_end) THEN
+          WRITE(io,*) 'One or more injectors has no explicit end time.'
+          WRITE(io,*) 'These injectors will be disabled once the moving ', &
+                      'window starts.'
+          WRITE(io,*)
+        END IF
       END DO
-    ELSE IF (warn_no_t_end) THEN
-      DO iu = 1, nio_units ! Print to stdout and to file
-        io = io_units(iu)
-        WRITE(io,*) '*** ERROR ***'
-        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
-                    'moving window.'
-        WRITE(io,*) 'These can only be used if they are explicitly ', &
-                    'disabled before the window'
-        WRITE(io,*) 'start time.'
-        WRITE(io,*)
-      END DO
-      CALL abort_code(c_err_bad_value)
     END IF
 
   END SUBROUTINE window_deck_finalise
