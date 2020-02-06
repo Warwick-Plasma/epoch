@@ -1,0 +1,65 @@
+begin:constant
+
+  dl = 7.4e-10
+
+end:constant
+
+begin:control
+
+  x_min = 0.0
+  x_max = 100*dl
+  nx = 5
+  t_end = 20e-12
+  stdout_frequency = 1000
+  print_eta_string = T
+  smooth_currents = T
+
+end:control
+
+begin:boundaries
+
+  bc_x_max = periodic
+  bc_x_min = periodic
+
+end:boundaries
+
+begin:species
+
+  name = protons
+  charge = 1
+  mass = 1836
+  temp_ev = 50
+  npart_per_cell = 5000
+  density = 1e22/cc
+
+end:species
+
+begin:species
+
+  name = electrons
+  charge = -1
+  mass = 1
+  temp_ev = 100
+  npart_per_cell = 5000
+  density = 1e22/cc
+
+end:species
+
+begin:collisions
+
+  use_collisions = T
+  coulomb_log = 5
+  collide = all
+  use_nanbu = T
+
+end:collisions
+
+begin:output
+
+  nstep_snapshot = 1000
+  grid = always
+  temperature = always + species
+  number_density = always + species
+  ekbar = always + species
+
+end:output
