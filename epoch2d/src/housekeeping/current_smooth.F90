@@ -30,9 +30,10 @@ CONTAINS
 
     CALL current_bcs
 
-    CALL field_bc(jx, jng)
-    CALL field_bc(jy, jng)
-    CALL field_bc(jz, jng)
+    !CALL field_bc(jx, jng)
+    !CALL field_bc(jy, jng)
+    !CALL field_bc(jz, jng)
+    CALL all_comp_field_bc(jx, jy, jz, jng, nx, ny)
 
     IF (smooth_currents) CALL smooth_current
 
