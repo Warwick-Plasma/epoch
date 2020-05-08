@@ -314,7 +314,62 @@ CONTAINS
 
   END SUBROUTINE do_field_mpi_with_lengths
 
+  SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, &
+                                   ng, nx_local, ny_local)
 
+    INTEGER, INTENT(IN) :: ng, nx_local, ny_local
+    REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    !INTEGER :: sendrequest1, recvrequest1
+    INTEGER :: i, j, n, xlength
+    INTEGER, DIMENSION(MPI_STATUS_SIZE) :: status
+    REAL(num), DIMENSION(:), ALLOCATABLE :: x_temp, tempx
+
+
+    xlength = 3 * ng * (ny_local + 2 * ng) + 4
+
+    ALLOCATE(x_temp(xlength))
+    ALLOCATE(tempx(xlength))
+
+    n = 0
+
+    DO j = 1-ng, ny_local + ng
+    DO i = 1, ng
+      x_temp(i + n + (j - 1 + ng) * 3 * ng)     = fieldx(i,j)
+      x_temp(i + n + 1 + (j - 1 + ng) * 3 * ng) = fieldy(i,j)
+      x_temp(i + n + 2 + (j - 1 + ng) * 3 * ng) = fieldz(i,j)
+      n = n + 2
+    END DO
+      n = 0
+    END DO
+
+    CALL MPI_SENDRECV(x_temp, xlength, MPI_REAL, proc_x_min, &
+        tag, tempx, xlength, MPI_REAL, proc_x_max, tag, comm, status, errcode)
+
+    !CALL MPI_ISEND(tempx, xlength, MPI_REAL, proc_x_min, tag, comm, &
+    !    sendrequest1, errcode)
+    !CALL MPI_IRECV(x_temp, xlength, MPI_REAL, proc_x_max, tag, comm, &
+    !    recvrequest1, errcode)
+
+    !CALL MPI_WAIT(sendrequest1, status, errcode)
+    !CALL MPI_WAIT(recvrequest1, status, errcode)
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+      n = 0
+      DO j = 1-ng, ny_local + ng
+      DO i = nx_local + 1, nx_local + ng
+        fieldx(i, j) = tempx(i - nx_local + n + (j - 1 + ng) * 3 * ng)
+        fieldy(i, j) = tempx(i - nx_local + n + 1 + (j - 1 + ng) * 3 * ng)
+        fieldz(i, j) = tempx(i - nx_local + n + 2 + (j - 1 + ng) * 3 * ng)
+        n = n + 2
+      END DO
+        n = 0
+      END DO
+    END IF
+
+    DEALLOCATE(tempx)
+    DEALLOCATE(x_temp)
+
+  END SUBROUTINE moving_window_field_bc
 
   SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local)
 
