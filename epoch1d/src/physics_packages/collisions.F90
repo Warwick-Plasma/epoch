@@ -190,12 +190,11 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
+          CALL calc_coll_temperature_ev(jtemp, jspecies)
           IF (ispecies == jspecies) THEN
-            CALL calc_coll_temperature_ev(itemp, ispecies)
-            log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
+            log_lambda = calc_coulomb_log(iekbar, jtemp, idens, idens, &
                 q1, q1, m1)
           ELSE
-            CALL calc_coll_temperature_ev(jtemp, jspecies)
             log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
                 q1, q2, m1)
           END IF
