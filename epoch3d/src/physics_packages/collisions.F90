@@ -121,14 +121,13 @@ CONTAINS
     INTEGER(i8) :: ix, iy, iz
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: idens, jdens
-    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: itemp, jtemp, log_lambda
+    REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: jtemp, log_lambda
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
     ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
-    ALLOCATE(itemp(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(jtemp(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(log_lambda(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
     ALLOCATE(meanx(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
@@ -227,7 +226,7 @@ CONTAINS
       END DO ! jspecies
     END DO ! ispecies
 
-    DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
+    DEALLOCATE(idens, jdens, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(iekbar)
 
