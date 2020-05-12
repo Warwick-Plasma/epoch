@@ -158,6 +158,10 @@ CONTAINS
 
       CALL calc_coll_number_density(idens, ispecies)
 
+      IF (coulomb_log_auto) THEN
+        CALL calc_coll_ekbar(iekbar, ispecies)
+      END IF
+
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
@@ -188,9 +192,8 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
-          CALL calc_coll_ekbar(iekbar, ispecies)
-          CALL calc_coll_temperature_ev(itemp, ispecies)
           IF (ispecies == jspecies) THEN
+            CALL calc_coll_temperature_ev(itemp, ispecies)
             log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
                 q1, q1, m1)
           ELSE
