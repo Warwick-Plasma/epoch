@@ -2489,6 +2489,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra, i, i0, i1, iter, old_maxs, new_maxs
+    INTEGER :: ii
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
     INTEGER(i8) :: load_local, load_max, load_min, load_var_best
 
@@ -2545,7 +2546,8 @@ CONTAINS
         IF (i == 1) THEN
           old = 0
         ELSE
-          old = maxs(i-1)
+          ii = i - 1
+          old = maxs(ii)
         END IF
         new_maxs = old_maxs
         IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
