@@ -1902,9 +1902,8 @@ CONTAINS
     ! The data to be weighted onto the grid
     REAL(num) :: wdata
     REAL(num) :: idx
-    INTEGER :: jx, jy
+    INTEGER :: jx, jy, cell_x, cell_y
     TYPE(particle), POINTER :: current
-#include "particle_head.inc"
 
     data_array = 0.0_num
 
@@ -1922,8 +1921,9 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
         wdata = current%weight
 #endif
+        cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
+        cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
 
-#include "particle_to_grid.inc"
         data_array(cell_x, cell_y) = &
             data_array(cell_x, cell_y) + wdata
 
