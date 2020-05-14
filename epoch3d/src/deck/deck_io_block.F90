@@ -368,7 +368,8 @@ CONTAINS
       IF (new_style_io_block) style_error = c_err_new_style_global
       force_first_to_be_restartable = as_logical_print(value, element, errcode)
 
-    ELSE IF (str_cmp(element, 'force_final_to_be_restartable')) THEN
+    ELSE IF (str_cmp(element, 'force_final_to_be_restartable') &
+        .OR. str_cmp(element, 'force_last_to_be_restartable')) THEN
       IF (new_style_io_block) style_error = c_err_new_style_global
       force_final_to_be_restartable = as_logical_print(value, element, errcode)
 
