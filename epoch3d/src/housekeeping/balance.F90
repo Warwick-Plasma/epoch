@@ -514,21 +514,21 @@ CONTAINS
     IF (overriding) THEN
       ALLOCATE(temp2(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
 
-      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jx(0:nx+1, 0:ny+1, 0:nz+1)
+      temp2 = jx
       CALL remap_field(temp2, temp)
       DEALLOCATE(jx)
       ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
       jx(0:nx_new+1, 0:ny_new+1, 0:nz_new+1) = &
           temp(0:nx_new+1, 0:ny_new+1, 0:nz_new+1)
 
-      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jy(0:nx+1, 0:ny+1, 0:nz+1)
+      temp2 = jy
       CALL remap_field(temp2, temp)
       DEALLOCATE(jy)
       ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
       jy(0:nx_new+1, 0:ny_new+1, 0:nz_new+1) = &
           temp(0:nx_new+1, 0:ny_new+1, 0:nz_new+1)
 
-      temp2(0:nx+1, 0:ny+1, 0:nz+1) = jz(0:nx+1, 0:ny+1, 0:nz+1)
+      temp2 = jz
       CALL remap_field(temp2, temp)
       DEALLOCATE(jz)
       ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng, 1-jng:nz_new+jng))
