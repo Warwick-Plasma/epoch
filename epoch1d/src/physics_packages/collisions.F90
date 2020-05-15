@@ -121,14 +121,13 @@ CONTAINS
     INTEGER(i8) :: ix
     TYPE(particle_list), POINTER :: p_list1
     REAL(num), DIMENSION(:), ALLOCATABLE :: idens, jdens
-    REAL(num), DIMENSION(:), ALLOCATABLE :: itemp, jtemp, log_lambda
+    REAL(num), DIMENSION(:), ALLOCATABLE :: jtemp, log_lambda
     REAL(num), DIMENSION(:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
 
     ALLOCATE(idens(1-ng:nx+ng))
     ALLOCATE(jdens(1-ng:nx+ng))
-    ALLOCATE(itemp(1-ng:nx+ng))
     ALLOCATE(jtemp(1-ng:nx+ng))
     ALLOCATE(log_lambda(1-ng:nx+ng))
     ALLOCATE(meanx(1-ng:nx+ng))
@@ -158,6 +157,10 @@ CONTAINS
 
       CALL calc_coll_number_density(idens, ispecies)
 
+      IF (coulomb_log_auto) THEN
+        CALL calc_coll_ekbar(iekbar, ispecies)
+      END IF
+
       m1 = species_list(ispecies)%mass
       q1 = species_list(ispecies)%charge
       w1 = species_list(ispecies)%weight
@@ -186,13 +189,11 @@ CONTAINS
         w2 = species_list(jspecies)%weight
 
         IF (coulomb_log_auto) THEN
-          CALL calc_coll_ekbar(iekbar, ispecies)
-          CALL calc_coll_temperature_ev(itemp, ispecies)
+          CALL calc_coll_temperature_ev(jtemp, jspecies)
           IF (ispecies == jspecies) THEN
-            log_lambda = calc_coulomb_log(iekbar, itemp, idens, idens, &
+            log_lambda = calc_coulomb_log(iekbar, jtemp, idens, idens, &
                 q1, q1, m1)
           ELSE
-            CALL calc_coll_temperature_ev(jtemp, jspecies)
             log_lambda = calc_coulomb_log(iekbar, jtemp, idens, jdens, &
                 q1, q2, m1)
           END IF
@@ -217,7 +218,7 @@ CONTAINS
       END DO ! jspecies
     END DO ! ispecies
 
-    DEALLOCATE(idens, jdens, itemp, jtemp, log_lambda)
+    DEALLOCATE(idens, jdens, jtemp, log_lambda)
     DEALLOCATE(meanx, meany, meanz, part_count)
     DEALLOCATE(iekbar)
 
