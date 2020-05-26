@@ -373,168 +373,210 @@ CONTAINS
 
   SUBROUTINE all_comp_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
         ny_local)
-    INTEGER, INTENT(IN) :: ng, nx_local, ny_local
-    REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
-    REAL(num), DIMENSION(:), ALLOCATABLE :: left_x_temp, right_x_temp
-    REAL(num), DIMENSION(:), ALLOCATABLE :: temp_left_x, temp_right_x
-    REAL(num), DIMENSION(:), ALLOCATABLE :: bottom_temp_y, top_temp_y
-    REAL(num), DIMENSION(:), ALLOCATABLE :: temp_top_y, temp_bottom_y
-    INTEGER :: i, j, k, n, xlength, ylength
-    INTEGER, DIMENSION(MPI_STATUS_SIZE) :: status
 
-    xlength = 3 * ng * (ny_local + 2 * ng) + 4
-    ylength = 3 * (nx_local + 2 * ng) * ng + 4
 
-    ALLOCATE(left_x_temp(xlength))
-    ALLOCATE(right_x_temp(xlength))
-    ALLOCATE(temp_left_x(xlength))
-    ALLOCATE(temp_right_x(xlength))
+    !            |     field_top      |           
+    !____________|____________________|____________
+    !            |                    |
+    ! field_left |                    | field_right
+    !____________|____________________|____________
+    !            |                    |
+    !            |     field_bottom   |   
 
-   
-    ALLOCATE(bottom_temp_y(ylength))
-    ALLOCATE(top_temp_y(ylength))
-    ALLOCATE(temp_top_y(ylength))
-    ALLOCATE(temp_bottom_y(ylength))
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    INTEGER, INTENT(IN) :: nx_local, ny_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes
+    INTEGER :: basetype, sz, szmax, i, j, k, n
+    REAL(num), ALLOCATABLE :: field_left(:), field_right(:)
+    REAL(num), ALLOCATABLE :: field_top(:), field_bottom(:)
+    REAL(num), ALLOCATABLE :: temp(:)
 
-    n = 0
+    basetype = mpireal
 
-    DO j = 1-ng, ny_local + ng
-    DO i = 1, ng
-      left_x_temp(i + n + (j - 1 + ng) * 3 * ng)        = fieldx(i,j)
-      left_x_temp(i + n + 1 + (j - 1 + ng) * 3 * ng)    = fieldy(i,j)
-      left_x_temp(i + n + 2 + (j - 1 + ng) * 3 * ng)    = fieldz(i,j)
-      n = n + 2
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    starts = 1
+
+    szmax = 3 * sizes(1) * ng
+    sz = 3 * sizes(2) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+
+    sz = 3 * subsizes(1) * subsizes(2)
+
+  
+    ALLOCATE(field_left(szmax))
+    n = 1
+    DO k = 1, 3
+    DO j = 1-ng, subsizes(2)-ng
+    DO i = 1,ng
+      select case(k)
+      case(1)
+      field_left(n) = fieldx(i,j)
+      case(2)
+      field_left(n) = fieldy(i,j)
+      case(3)
+      field_left(n) = fieldz(i,j)
+      end select
+      n = n + 1
     END DO
-      n = 0
+    END DO
     END DO
 
-    n = 0
-
-    DO j = 1-ng, ny_local + ng
-    DO i = 1, ng
-      k = nx_local - ng + i
-      right_x_temp(i + n + (j - 1 + ng) * 3 * ng)       = fieldx(k,j)
-      right_x_temp(i + n + 1 + (j - 1 + ng) * 3 * ng)   = fieldy(k,j)
-      right_x_temp(i + n + 2 + (j - 1 + ng) * 3 * ng)   = fieldz(k,j)
-      n = n + 2
+    ALLOCATE(field_right(szmax))
+    n = 1
+    DO k = 1, 3
+    DO j = 1-ng, subsizes(2)-ng
+    DO i = nx_local-ng+1, nx_local
+      select case(k)
+      case(1)
+      field_right(n) = fieldx(i,j)
+      case(2)
+      field_right(n) = fieldy(i,j)
+      case(3)
+      field_right(n) = fieldz(i,j)
+      end select
+      n = n + 1
     END DO
-      n = 0
+    END DO
     END DO
 
-    CALL MPI_SENDRECV(left_x_temp, xlength, MPI_REAL, proc_x_min, &
-        tag, temp_right_x, xlength, MPI_REAL, proc_x_max, tag, comm, status, &
-        errcode )
-    CALL MPI_SENDRECV(right_x_temp, xlength, MPI_REAL, proc_x_max, &
-        tag, temp_left_x, xlength, MPI_REAL, proc_x_min, tag, comm, status, &
-        errcode) 
+    CALL MPI_SENDRECV(field_left, sz, basetype, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
-    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
-       n = 0
-       DO j = 1-ng, ny_local + ng
-       DO i = nx_local + 1, nx_local + ng
-         fieldx(i, j) = temp_right_x(i - nx_local + n + (j - 1 + ng) * 3 * ng)
-         fieldy(i, j) = temp_right_x(i - nx_local + & 
-                                     n + 1 + (j - 1 + ng) * 3 * ng)
-         fieldz(i, j) = temp_right_x(i - nx_local + & 
-                                     n + 2 + (j - 1 + ng) * 3 * ng)
-         n = n + 2
-       END DO
-         n = 0
-       END DO
-     END IF
-
-   IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
-      n = 0
-      DO j = 1-ng, ny_local + ng
-      DO i = 1-ng, 0
-        fieldx(i, j) = temp_left_x(i + ng + n + (j - 1 + ng) * 3 * ng)
-        fieldy(i, j) = temp_left_x(i + ng + n + 1 + (j - 1 + ng) * 3 * ng)
-        fieldz(i, j) = temp_left_x(i + ng + n + 2 + (j - 1 + ng) * 3 * ng)
-        n = n + 2
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
+      n = 1
+      DO k = 1, 3
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        select case(k)
+        case(1)
+        fieldx(i,j) = temp(n)
+        case(2)
+        fieldy(i,j) = temp(n)
+        case(3)
+        fieldz(i,j) = temp(n)
+        end select
+        n = n + 1
       END DO
-        n = 0
+      END DO
       END DO
     END IF
-    
-    n = 0
-    DO j = 1, ng
-    DO i = 1-ng, nx_local + ng
-      bottom_temp_y(i + n + (j - 1) * 3 * (nx_local + 2 * ng)) &
-                    = fieldx(i,j)
-      bottom_temp_y(i + n + 1 + (j - 1) * 3 * (nx_local + 2 * ng)) &
-                    = fieldy(i,j)
-      bottom_temp_y(i + n + 2 + (j - 1) * 3 * (nx_local + 2 * ng)) &
-                    = fieldy(i,j)
-      n = n + 2
+
+    CALL MPI_SENDRECV(field_right, sz, basetype, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min)==c_bc_periodic) THEN
+      n = 1
+      DO k = 1, 3
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        select case(k)
+        case(1)
+        fieldx(i,j) = temp(n)
+        case(2)
+        fieldy(i,j) = temp(n)
+        case(3)
+        fieldz(i,j) = temp(n)
+        end select
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+    sz = 3 * subsizes(1) * subsizes(2)
+
+    ALLOCATE(field_top(szmax))
+    n = 1
+    DO k = 1, 3
+    DO j = ny_local-subsizes(2)+1, ny_local
+    DO i = 1-ng, subsizes(1)-ng
+      select case(k)
+      case(1)
+      field_top(n) = fieldx(i,j)
+      case(2)
+      field_top(n) = fieldy(i,j)
+      case(3)
+      field_top(n) = fieldz(i,j)
+      end select
+      n = n + 1
     END DO
-      n = 0
+    END DO
     END DO
 
-    n = 0
-    DO j = 1, ng
-    DO i = 1-ng, nx_local + ng
-        k = ny_local - ng + j
-        top_temp_y(i + n + (j - 1 + ng) * 3 * (nx_local + 2 * ng)) &
-                   = fieldx(i,k)
-        top_temp_y(i + n + 1 + (j - 1 + ng) * 3 * (nx_local + 2 * ng)) &
-                   = fieldy(i,k)
-        top_temp_y(i + n + 2 + (j - 1 + ng) * 3 * (nx_local + 2 * ng)) &
-                   = fieldy(i,k)
-        n = n + 2
+    ALLOCATE(field_bottom(szmax))
+    n = 1
+    DO k = 1, 3
+    DO j = 1, subsizes(2)
+    DO i = 1-ng, subsizes(1)-ng
+      select case(k)
+      case(1)
+      field_bottom(n) = fieldx(i,j)
+      case(2)
+      field_bottom(n) = fieldy(i,j)
+      case(3)
+      field_bottom(n) = fieldz(i,j)
+      end select
+      n = n + 1
     END DO
-        n = 0
     END DO
 
-    CALL MPI_SENDRECV(bottom_temp_y, ylength, MPI_REAL, proc_y_min, &
-        tag, temp_top_y, ylength, MPI_REAL, proc_y_max, tag, comm, status, &
-        errcode )
+    CALL MPI_SENDRECV(field_bottom, sz, basetype, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
 
-    CALL MPI_SENDRECV(top_temp_y, ylength, MPI_REAL, proc_y_max, &
-        tag, temp_bottom_y, ylength, MPI_REAL, proc_y_min, tag, comm, status, &
-        errcode )
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max)==c_bc_periodic) THEN
+      n = 1
+      DO k = 1, 3
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        select case(k)
+        case(1)
+        fieldx(i,j) = temp(n)
+        case(2)
+        fieldy(i,j) = temp(n)
+        case(3)
+        fieldz(i,j) = temp(n)
+        end select
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
 
-    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
-       n = 0
-       DO j = ny_local+1, ny_local + ng
-       DO i = 1-ng, nx_local + ng
-         fieldx(i,j) = &
-         temp_top_y(i + ng + n + (j - ny_local -1) * 3 * (nx_local + 2 * ng))
-         fieldy(i,j) = &
-         temp_top_y(i + ng + n + 1 + (j - ny_local -1) * 3 * (nx_local + 2 * ng))
-         fieldz(i,j) = &
-         temp_top_y(i + ng + n + 2 + (j - ny_local -1) * 3 * (nx_local + 2 * ng))
-         n = n + 2
-       END DO
-         n = 0
-       END DO 
-     END IF  
+    CALL MPI_SENDRECV(field_top, sz, basetype, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
 
-     IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
-        n = 0
-        DO j = 1-ng, 0
-        DO i = 1-ng, nx_local + ng
-          fieldx(i,j) = &
-          temp_bottom_y(i + ng + n + (j - 1 + ng) * 3 * (nx_local + 2 * ng))
-          fieldy(i,j) = &
-          temp_bottom_y(i + ng + n + 1 + (j - 1 + ng) * 3 * (nx_local + 2 * ng))
-          fieldz(i,j) = &
-          temp_bottom_y(i + ng + n + 2 + (j - 1 + ng) * 3 * (nx_local + 2 * ng))
-          n = n + 2
-        END DO
-          n = 0
-        END DO
-      END IF
-     
-    DEALLOCATE(left_x_temp)
-    DEALLOCATE(right_x_temp)
-    DEALLOCATE(temp_left_x)
-    DEALLOCATE(temp_right_x)
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min)==c_bc_periodic) THEN
+      n = 1
+      DO k = 1, 3
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        select case(k)
+        case(1)               
+        fieldx(i,j) = temp(n)
+        case(2)
+        fieldy(i,j) = temp(n)
+        case(3)
+        fieldz(i,j) = temp(n)
+        end select
+        n = n + 1
+      END DO
+      END DO
+    END IF
 
-   
-    DEALLOCATE(bottom_temp_y)
-    DEALLOCATE(top_temp_y)
-    DEALLOCATE(temp_top_y)
-    DEALLOCATE(temp_bottom_y)
+    DEALLOCATE(field_left)
+    DEALLOCATE(field_right)
+    DEALLOCATE(field_top)
+    DEALLOCATE(field_bottom)
+    DEALLOCATE(temp)
 
   END SUBROUTINE all_comp_field_bc
 
