@@ -65,21 +65,14 @@ CONTAINS
     INTEGER :: iwindow, ix
     REAL(num) :: xb_min
 
-    ! Shift the window round one cell at a time.
-    ! Inefficient, but it works
-    !DO iwindow = 1, window_shift_cells
-    CALL insert_particles
+    ! Shift the window round # of window shift cells at a time.
+    CALL insert_particles(window_shift_cells)
 
-    ! Shift the box around
-     ! x_grid_min = x_global(1) + dx
-     ! xb_min = xb_global(1) + dx
-     ! x_min = xb_min + dx * cpml_thickness
+    x_grid_min = x_global(1) + window_shift_cells * dx
+    xb_min = xb_global(1) + window_shift_cells * dx
+    x_min = xb_min + window_shift_cells * dx * cpml_thickness
 
-    x_grid_min = x_global(1) + ng * dx
-    xb_min = xb_global(1) + ng * dx
-    x_min = xb_min + ng * dx * cpml_thickness
-
-      ! Setup global grid
+    ! Setup global grid
     DO ix = 1-ng, nx_global + ng
       x_global(ix) = x_grid_min + (ix - 1) * dx
       xb_global(ix) = xb_min + (ix - 1) * dx
@@ -92,111 +85,63 @@ CONTAINS
     CALL remove_particles
 
     ! Shift fields around
-    !CALL shift_fields
-    CALL moving_window_shift_fields
-    !END DO
+    CALL shift_fields(window_shift_cells)
 
   END SUBROUTINE shift_window
 
-  SUBROUTINE moving_window_shift_fields
 
-    INTEGER :: j, xlength, jxlength
-    !REAL(num), DIMENSION(:), ALLOCATABLE :: tempex, tempbx, tempjx
-
-    xlength = 3 * ng * (ny + 2 * ng)
-    jxlength = 3 * jng * (ny + 2 * jng)
-
-    !ALLOCATE(tempex(xlength))
-    !ALLOCATE(tempbx(xlength))
-    !ALLOCATE(tempjx(jxlength))
-
-    CALL moving_window_shift_field(ex, ey, ez, ng)
-    CALL moving_window_field_bc(ex, ey, ez, ng, nx, ny)
-    CALL moving_window_shift_field(bx, by, bz, ng)
-    CALL moving_window_field_bc(bx, by, bz, ng, nx, ny)
-    CALL moving_window_shift_field(jx, jy, jz, jng)
-    CALL moving_window_field_bc(jx, jy, jz, jng, nx, ny)
-
-    IF (cpml_boundaries) THEN
-      CALL shift_field(cpml_psi_eyx, ng)
-      CALL shift_field(cpml_psi_ezx, ng)
-      CALL shift_field(cpml_psi_byx, ng)
-      CALL shift_field(cpml_psi_bzx, ng)
-
-      CALL shift_field(cpml_psi_exy, ng)
-      CALL shift_field(cpml_psi_ezy, ng)
-      CALL shift_field(cpml_psi_bxy, ng)
-      CALL shift_field(cpml_psi_bzy, ng)
-    END IF
-
-    IF (x_max_boundary) THEN
-      DO j = 1-ng, ny+ng
-      ! Fix incoming field cell.
-        ex(nx,j)   = ex_x_max(j)
-        ex(nx+1,j) = ex_x_max(j)
-        ey(nx+1,j) = ey_x_max(j)
-        ez(nx+1,j) = ez_x_max(j)
-        ex(nx-1,j) = 0.5_num * (ex(nx-2,j) + ex(nx,j))
-        ey(nx,j)   = 0.5_num * (ey(nx-1,j) + ey(nx+1,j))
-        ez(nx,j)   = 0.5_num * (ez(nx-1,j) + ez(nx+1,j))
-        bx(nx+1,j) = bx_x_max(j)
-        by(nx,j)   = by_x_max(j)
-        bz(nx,j)   = bz_x_max(j)
-        bx(nx,j)   = 0.5_num * (bx(nx-1,j) + bx(nx+1,j))
-        by(nx-1,j) = 0.5_num * (by(nx-2,j) + by(nx,j))
-        bz(nx-1,j) = 0.5_num * (bz(nx-2,j) + bz(nx,j))
-      END DO
-
-    IF (cpml_boundaries) THEN
-      DO j = 1-ng, ny+ng
-        cpml_psi_eyx(nx:nx+1,j) = cpml_psi_eyx(nx,j)
-        cpml_psi_ezx(nx:nx+1,j) = cpml_psi_ezx(nx,j)
-        cpml_psi_byx(nx:nx+1,j) = cpml_psi_byx(nx,j)
-        cpml_psi_bzx(nx:nx+1,j) = cpml_psi_bzx(nx,j)
-
-        cpml_psi_exy(nx:nx+1,j) = cpml_psi_exy(nx,j)
-        cpml_psi_ezy(nx:nx+1,j) = cpml_psi_ezy(nx,j)
-        cpml_psi_bxy(nx:nx+1,j) = cpml_psi_bxy(nx,j)
-        cpml_psi_bzy(nx:nx+1,j) = cpml_psi_bzy(nx,j)
-      END DO
-
-    END IF
-    END IF
-
-    !DEALLOCATE(tempex)
-    !DEALLOCATE(tempbx)
-    !DEALLOCATE(tempjx)
-
-  END SUBROUTINE moving_window_shift_fields
-
-
-
-  SUBROUTINE shift_fields
+  SUBROUTINE shift_fields(window_shift_cells)
 
     INTEGER :: j
+    INTEGER, INTENT(IN) :: window_shift_cells
 
-    CALL shift_field(ex, ng)
-    CALL shift_field(ey, ng)
-    CALL shift_field(ez, ng)
+    CALL shift_field(ex, ng, window_shift_cells)
+    CALL shift_field(ey, ng, window_shift_cells)
+    CALL shift_field(ez, ng, window_shift_cells)
 
-    CALL shift_field(bx, ng)
-    CALL shift_field(by, ng)
-    CALL shift_field(bz, ng)
+    CALL moving_window_field_bc(ex, ey, ez, ng, nx, ny)
 
-    CALL shift_field(jx, jng)
-    CALL shift_field(jy, jng)
-    CALL shift_field(jz, jng)
+    CALL shift_field(bx, ng, window_shift_cells)
+    CALL shift_field(by, ng, window_shift_cells)
+    CALL shift_field(bz, ng, window_shift_cells)
+
+    CALL moving_window_field_bc(bx, by, bz, ng ,nx, ny)
+
+    CALL shift_field(jx, jng, window_shift_cells)
+    CALL shift_field(jy, jng, window_shift_cells)
+    CALL shift_field(jz, jng, window_shift_cells)
+
+    CALL moving_window_field_bc(jx, jy, jz, ng, nx, ny)
 
     IF (cpml_boundaries) THEN
-      CALL shift_field(cpml_psi_eyx, ng)
-      CALL shift_field(cpml_psi_ezx, ng)
-      CALL shift_field(cpml_psi_byx, ng)
-      CALL shift_field(cpml_psi_bzx, ng)
+      CALL shift_field(cpml_psi_eyx, ng, &
+              window_shift_cells)
+      CALL shift_field(cpml_psi_ezx, ng, &
+              window_shift_cells)
+      CALL shift_field(cpml_psi_byx, ng, &
+              window_shift_cells)
+      
+      CALL moving_window_field_bc(cpml_psi_eyx, &
+              cpml_psi_ezx, cpml_psi_byx, &
+              ng, nx, ny)
+      
+      CALL shift_field(cpml_psi_bzx, ng, &
+              window_shift_cells) 
+      
+      CALL field_bc(cpml_psi_bzx, ng)
 
-      CALL shift_field(cpml_psi_exy, ng)
-      CALL shift_field(cpml_psi_ezy, ng)
-      CALL shift_field(cpml_psi_bxy, ng)
+      CALL shift_field(cpml_psi_exy, ng, &
+              window_shift_cells)
+      CALL shift_field(cpml_psi_ezy, ng, &
+              window_shift_cells)
+      CALL shift_field(cpml_psi_bxy, ng, &
+              window_shift_cells)
+      CALL moving_window_field_bc(cpml_psi_exy, &
+              cpml_psi_ezy, cpml_psi_ezy, &
+              ng, nx, ny)
+      
       CALL shift_field(cpml_psi_bzy, ng)
+      CALL field_bc(cpml_psi_bzy, ng)
     END IF
 
     IF (x_max_boundary) THEN
@@ -235,52 +180,106 @@ CONTAINS
   END SUBROUTINE shift_fields
 
 
-  SUBROUTINE shift_field(field, ng)
+  SUBROUTINE shift_field(field, ng, window_shift_cells)
 
-    INTEGER, INTENT(IN) :: ng
+    INTEGER, INTENT(IN) :: ng, window_shift_cells
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, j
 
-    ! Shift field to the left by one cell
-    ! Begin changes by U. Sinha
-    ! Shift field to the left by ng cells
+    ! Shift field to the left by window_shift_cells
     DO j = 1-ng, ny+ng
-    !DO i = 1-ng, nx+ng-1
-    DO i = 1-ng, nx
-      !field(i,j) = field(i+1,j)
-      field(i,j) = field(i+ng, j)
+    DO i = 1-ng, nx+ng-window_shift_cells
+      field(i,j) = field(i+window_shift_cells, j)
     END DO
     END DO
-    ! End changes by U. Sinha
-    CALL field_bc(field, ng)
+    !CALL field_bc(field, ng)
 
   END SUBROUTINE shift_field
 
-  SUBROUTINE moving_window_shift_field(fieldx, fieldy, fieldz, ng)
 
-    INTEGER :: i, j
+  SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
+        ny_local)
+
+
     INTEGER, INTENT(IN) :: ng
-    REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    INTEGER, INTENT(IN) :: nx_local, ny_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes
+    INTEGER :: basetype, sz, szmax, i, j, k, n
+    REAL(num), ALLOCATABLE :: field_left(:)
+    REAL(num), ALLOCATABLE :: temp(:)
 
-    DO j = 1- ng, ny + ng
-      DO i = 1 - ng, nx
-        fieldx(i, j) = fieldx(i + ng, j)
-        fieldy(i, j) = fieldy(i + ng, j)
-        fieldz(i, j) = fieldz(i + ng, j)
-      END DO
+    basetype = mpireal
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    starts = 1
+
+    szmax = 3 * sizes(1) * ng
+    sz = 3 * sizes(2) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+
+    sz = 3 * subsizes(1) * subsizes(2)
+
+  
+    ALLOCATE(field_left(szmax))
+    n = 1
+    DO k = 1, 3
+    DO j = 1-ng, subsizes(2)-ng
+    DO i = 1,ng
+      select case(k)
+      case(1)
+      field_left(n) = fieldx(i,j)
+      case(2)
+      field_left(n) = fieldy(i,j)
+      case(3)
+      field_left(n) = fieldz(i,j)
+      end select
+      n = n + 1
+    END DO
+    END DO
     END DO
 
-  END SUBROUTINE moving_window_shift_field
+    CALL MPI_SENDRECV(field_left, sz, basetype, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
+      n = 1
+      DO k = 1, 3
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        select case(k)
+        case(1)
+        fieldx(i,j) = temp(n)
+        case(2)
+        fieldy(i,j) = temp(n)
+        case(3)
+        fieldz(i,j) = temp(n)
+        end select
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    DEALLOCATE(field_left)
+    DEALLOCATE(temp)
+
+  END SUBROUTINE moving_window_field_bc
 
 
-
-
-  SUBROUTINE insert_particles
+  SUBROUTINE insert_particles(window_shift_cells)
 
     TYPE(particle), POINTER :: current
     TYPE(particle_list) :: append_list
     INTEGER :: ispecies, i, iy, isuby, errcode
     INTEGER(i8) :: ipart, npart_per_cell, n_frac
+    INTEGER, INTENT(IN) :: window_shift_cells
     REAL(num) :: cell_frac_y, cy2
     REAL(num), DIMENSION(-1:1) :: gy
     REAL(num), DIMENSION(c_ndirs) :: temp_local, drift_local
@@ -346,12 +345,10 @@ CONTAINS
 
         wdata = dx * dy / (npart_per_cell + n_frac)
 
-        DO ipart = 1, ng * (npart_per_cell + n_frac)
+        DO ipart = 1, window_shift_cells * (npart_per_cell + n_frac)
           CALL create_particle(current)
           cell_frac_y = 0.5_num - random()
-          !current%part_pos(1) = x0 + random() * dx
-          !current%part_pos(2) = y(iy) - cell_frac_y * dy
-          current%part_pos(1) = x0 + random() * ng * dx
+          current%part_pos(1) = x0 + random() * window_shift_cells * dx
           current%part_pos(2) = y(iy) - cell_frac_y * dy
 
           ! Always use the triangle particle weighting for simplicity
@@ -473,10 +470,9 @@ CONTAINS
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once
-      IF (window_shift_cells == ng) THEN
+      IF (window_shift_cells > 0) THEN
         window_shift_real = REAL(window_shift_cells, num)
-        !window_offset = window_offset + window_shift_real * dx
-        window_offset = window_offset + window_shift_real * ng * dx
+        window_offset = window_offset + window_shift_real * dx
         CALL shift_window(window_shift_cells)
         CALL setup_bc_lists
         CALL particle_bcs
