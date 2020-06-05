@@ -140,7 +140,8 @@ CONTAINS
               cpml_psi_ezy, cpml_psi_ezy, &
               ng, nx, ny)
       
-      CALL shift_field(cpml_psi_bzy, ng)
+      CALL shift_field(cpml_psi_bzy, ng, &
+              window_shift_cells)
       CALL field_bc(cpml_psi_bzy, ng)
     END IF
 
@@ -213,7 +214,6 @@ CONTAINS
 
     sizes(1) = nx_local + 2 * ng
     sizes(2) = ny_local + 2 * ng
-    starts = 1
 
     szmax = 3 * sizes(1) * ng
     sz = 3 * sizes(2) * ng
