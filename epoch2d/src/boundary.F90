@@ -339,7 +339,6 @@ CONTAINS
 
     sizes(1) = nx_local + 2 * ng
     sizes(2) = ny_local + 2 * ng
-    starts = 1
 
     szmax = 3 * sizes(1) * ng
     sz = 3 * sizes(2) * ng
@@ -471,6 +470,7 @@ CONTAINS
       n = n + 1
     END DO
     END DO
+    END DO
 
     CALL MPI_SENDRECV(field_bottom, sz, basetype, proc_y_min, &
         tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
@@ -511,6 +511,7 @@ CONTAINS
         fieldz(i,j) = temp(n)
         end select
         n = n + 1
+      END DO
       END DO
       END DO
     END IF
