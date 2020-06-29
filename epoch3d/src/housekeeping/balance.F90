@@ -620,7 +620,7 @@ CONTAINS
         ic%density = temp
       END IF
 
-      IF (ASSOCIATED(ic%drift)) THEN
+      IF (ASSOCIATED(ic%temp)) THEN
         IF (.NOT. ALLOCATED(temp_sum)) &
             ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,1-ng:nz_new+ng,3))
 
@@ -633,7 +633,7 @@ CONTAINS
         ic%temp = temp_sum
       END IF
 
-      IF (ASSOCIATED(ic%temp)) THEN
+      IF (ASSOCIATED(ic%drift)) THEN
         IF (.NOT. ALLOCATED(temp_sum)) &
             ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,1-ng:nz_new+ng,3))
         CALL remap_field(ic%drift(:,:,:,1), temp_sum(:,:,:,1))
