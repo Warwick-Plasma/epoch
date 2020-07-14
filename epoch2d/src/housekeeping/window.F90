@@ -99,19 +99,19 @@ CONTAINS
     CALL shift_field(ey, ng, window_shift_cells)
     CALL shift_field(ez, ng, window_shift_cells)
 
-    CALL all_comp_field_bc(ex, ey, ez, ng, nx, ny)
+    CALL moving_window_field_bc(ex, ey, ez, ng, nx, ny)
 
     CALL shift_field(bx, ng, window_shift_cells)
     CALL shift_field(by, ng, window_shift_cells)
     CALL shift_field(bz, ng, window_shift_cells)
 
-    CALL all_comp_field_bc(bx, by, bz, ng ,nx, ny)
+    CALL moving_window_field_bc(bx, by, bz, ng ,nx, ny)
 
     CALL shift_field(jx, jng, window_shift_cells)
     CALL shift_field(jy, jng, window_shift_cells)
     CALL shift_field(jz, jng, window_shift_cells)
 
-    CALL all_comp_field_bc(jx, jy, jz, ng, nx, ny)
+    CALL moving_window_field_bc(jx, jy, jz, ng, nx, ny)
 
     IF (cpml_boundaries) THEN
       CALL shift_field(cpml_psi_eyx, ng, &
