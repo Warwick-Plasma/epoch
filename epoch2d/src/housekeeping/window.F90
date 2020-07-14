@@ -99,19 +99,19 @@ CONTAINS
     CALL shift_field(ey, ng, window_shift_cells)
     CALL shift_field(ez, ng, window_shift_cells)
 
-    CALL moving_window_field_bc(ex, ey, ez, ng, nx, ny)
+    CALL all_comp_field_bc(ex, ey, ez, ng, nx, ny)
 
     CALL shift_field(bx, ng, window_shift_cells)
     CALL shift_field(by, ng, window_shift_cells)
     CALL shift_field(bz, ng, window_shift_cells)
 
-    CALL moving_window_field_bc(bx, by, bz, ng ,nx, ny)
+    CALL all_comp_field_bc(bx, by, bz, ng ,nx, ny)
 
     CALL shift_field(jx, jng, window_shift_cells)
     CALL shift_field(jy, jng, window_shift_cells)
     CALL shift_field(jz, jng, window_shift_cells)
 
-    CALL moving_window_field_bc(jx, jy, jz, ng, nx, ny)
+    CALL all_comp_field_bc(jx, jy, jz, ng, nx, ny)
 
     IF (cpml_boundaries) THEN
       CALL shift_field(cpml_psi_eyx, ng, &
@@ -470,7 +470,7 @@ CONTAINS
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
       ! Allow for posibility of having jumped two cells at once
-      IF (window_shift_cells > ng - 1) THEN
+      IF (window_shift_cells > 0) THEN
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
         CALL shift_window(window_shift_cells)
