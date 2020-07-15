@@ -66,11 +66,12 @@ CONTAINS
     REAL(num) :: xb_min
 
     ! Shift the window round # of window shift cells at a time.
+    DO iwindow = 1, window_shift_cells
     CALL insert_particles(window_shift_cells)
 
-    x_grid_min = x_global(1) + window_shift_cells * dx
-    xb_min = xb_global(1) + window_shift_cells * dx
-    x_min = xb_min + window_shift_cells * dx * cpml_thickness
+    x_grid_min = x_global(1) +  dx
+    xb_min = xb_global(1) + dx
+    x_min = xb_min +  dx * cpml_thickness
 
     ! Setup global grid
     DO ix = 1-ng, nx_global + ng
@@ -79,6 +80,7 @@ CONTAINS
     END DO
     x_grid_max = x_global(nx_global)
     x_max = xb_global(nx_global+1) - dx * cpml_thickness
+    END DO
 
     CALL setup_grid_x
 
@@ -347,10 +349,10 @@ CONTAINS
 
         wdata = dx * dy / (npart_per_cell + n_frac)
 
-        DO ipart = 1, window_shift_cells * (npart_per_cell + n_frac)
+        DO ipart = 1, npart_per_cell + n_frac
           CALL create_particle(current)
           cell_frac_y = 0.5_num - random()
-          current%part_pos(1) = x0 + random() * window_shift_cells * dx
+          current%part_pos(1) = x0 + random() * dx
           current%part_pos(2) = y(iy) - cell_frac_y * dy
 
           ! Always use the triangle particle weighting for simplicity
