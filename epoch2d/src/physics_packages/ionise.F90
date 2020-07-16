@@ -42,7 +42,6 @@ MODULE ionise
   REAL(num), DIMENSION(:), ALLOCATABLE :: k_photons_energy
   REAL(num), DIMENSION(:), ALLOCATABLE :: k_photons_exponent
   REAL(num), DIMENSION(:), ALLOCATABLE :: adk_multiphoton_cap
-  REAL(num) :: omega
 
 CONTAINS
 
@@ -54,6 +53,7 @@ CONTAINS
     INTEGER :: i, io, iu, bessel_error, err_laser
     LOGICAL :: laser_set
     TYPE(laser_block), POINTER :: current_laser
+    REAL(num) :: omega
     REAL(num), PARAMETER :: c_atomic = c * atomic_time / a0
 
     IF (use_multiphoton) THEN
