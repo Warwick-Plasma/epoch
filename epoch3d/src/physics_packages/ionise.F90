@@ -54,6 +54,7 @@ CONTAINS
     INTEGER :: i, io, iu, bessel_error, err_laser
     LOGICAL :: laser_set
     TYPE(laser_block), POINTER :: current_laser
+    REAL(num), PARAMETER :: c_atomic = c * atomic_time / a0
 
     IF (use_multiphoton) THEN
       err_laser = 0
@@ -249,7 +250,7 @@ CONTAINS
 
           ! If K! is too large then the multiphoton ionisation rate is zero
           IF (multi_constant(i) < SQRT(HUGE(0.0_num))) THEN
-            multi_constant(i) = c * (atomic_time / a0) * multi_constant(i)**2 &
+            multi_constant(i) = c_atomic * multi_constant(i)**2 &
                 * REAL(species_list(i)%n**5,num) &
                 * (omega * atomic_time)**((10.0_num &
                 * k_photons_exponent(i) - 1.0_num) / 3.0_num) &
@@ -262,7 +263,7 @@ CONTAINS
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
           IF (ABS(multi_constant(i)) > c_tiny) THEN
-            multi_constant(i) = 4.8_num * (1.3_num * c * (atomic_time / a0) &
+            multi_constant(i) = 4.8_num * (1.3_num * c_atomic &
                 / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
                 / multi_constant(i)
           END IF
