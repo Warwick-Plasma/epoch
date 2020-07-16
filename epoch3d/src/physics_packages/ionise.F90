@@ -53,7 +53,7 @@ CONTAINS
     INTEGER :: i, io, iu, bessel_error, err_laser
     LOGICAL :: laser_set
     TYPE(laser_block), POINTER :: current_laser
-    REAL(num) :: omega
+    REAL(num) :: omega, omega_atomic
     REAL(num), PARAMETER :: c_atomic = c * atomic_time / a0
 
     IF (use_multiphoton) THEN
@@ -190,6 +190,9 @@ CONTAINS
           CALL abort_code(c_err_bad_setup)
         CASE DEFAULT
       END SELECT
+
+      ! Store omega in atomic units
+      omega_atomic = omega * atomic_time
     END IF
 
     ALLOCATE(released_mass_fraction(n_species), &
@@ -245,14 +248,14 @@ CONTAINS
           ! Number of photons required for ionisation in multiphoton
           k_photons_exponent(i) = &
               REAL(FLOOR((species_list(i)%ionisation_energy / hartree) &
-              / (omega * atomic_time)) + 1, num)
+              / omega_atomic) + 1, num)
           multi_constant(i) = factorial(k_photons_exponent(i))
 
           ! If K! is too large then the multiphoton ionisation rate is zero
           IF (multi_constant(i) < SQRT(HUGE(0.0_num))) THEN
             multi_constant(i) = c_atomic * multi_constant(i)**2 &
                 * REAL(species_list(i)%n**5,num) &
-                * (omega * atomic_time)**((10.0_num &
+                * omega_atomic**((10.0_num &
                 * k_photons_exponent(i) - 1.0_num) / 3.0_num) &
                 * SQRT(k_photons_exponent(i)) &
                 * (2.0_num * k_photons_exponent(i) + 1.0_num)
@@ -264,7 +267,7 @@ CONTAINS
           ! floating underflow
           IF (ABS(multi_constant(i)) > c_tiny) THEN
             multi_constant(i) = 4.8_num * (1.3_num * c_atomic &
-                / (8.0_num * pi * omega * atomic_time))**k_photons_exponent(i) &
+                / (8.0_num * pi * omega_atomic))**k_photons_exponent(i) &
                 / multi_constant(i)
           END IF
           ! Energy in K photons
@@ -296,7 +299,7 @@ CONTAINS
           ! case we ensure a monotonic increasing ionisation rate by forcing the
           ! transition to occur at the smallest usable E instead.
           keldysh(i) = MAX(adk_scaling(i) / (0.99472065388909858_num &
-              * c_largest_exp), omega * atomic_time * SQRT(2.0_num &
+              * c_largest_exp), omega_atomic * SQRT(2.0_num &
               * species_list(i)%ionisation_energy / hartree) / 0.5)
 
           ! Threshold ADK ionisation rate at transition to multiphoton regime
