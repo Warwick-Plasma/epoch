@@ -232,7 +232,7 @@ CONTAINS
           ! Constant in multiphoton equations, calculated like this to trap any
           ! floating underflow
           IF (ABS(multi_constant(i)) > c_tiny) THEN
-            multi_constant(i) = 4.8_num * (1.3_num * c_atomic &
+            multi_constant(i) = 4.8_num * (1.69_num * c_atomic &
                 / (8.0_num * pi * omega_atomic))**k_photons_exponent(i) &
                 / multi_constant(i)
           END IF
