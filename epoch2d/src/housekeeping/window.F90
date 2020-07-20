@@ -203,14 +203,14 @@ CONTAINS
   SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
         ny_local)
 
-
     INTEGER, INTENT(IN) :: ng
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
     INTEGER, INTENT(IN) :: nx_local, ny_local
     INTEGER, DIMENSION(c_ndims) :: sizes, subsizes
     INTEGER :: basetype, sz, szmax, i, j, k, n
-    REAL(num), ALLOCATABLE :: field_left(:)
+    REAL(num), ALLOCATABLE :: field(:)
     REAL(num), ALLOCATABLE :: temp(:)
+    INTEGER :: xmin, xmax, ymin, ymax, offset0, offset1, offset2
 
     basetype = mpireal
 
@@ -222,54 +222,48 @@ CONTAINS
     IF (sz > szmax) szmax = sz
 
     ALLOCATE(temp(szmax))
+    ALLOCATE(field(szmax))
 
     subsizes(1) = ng
     subsizes(2) = sizes(2)
 
     sz = 3 * subsizes(1) * subsizes(2)
 
-  
-    ALLOCATE(field_left(szmax))
-    n = 1
-    DO k = 1, 3
-    DO j = 1-ng, subsizes(2)-ng
-    DO i = 1,ng
-      select case(k)
-      case(1)
-      field_left(n) = fieldx(i,j)
-      case(2)
-      field_left(n) = fieldy(i,j)
-      case(3)
-      field_left(n) = fieldz(i,j)
-      end select
-      n = n + 1
-    END DO
-    END DO
-    END DO
+    offset0 = 0
+    offset1 = subsizes(1) * subsizes(2)
+    offset2 = 2 * offset1
 
-    CALL MPI_SENDRECV(field_left, sz, basetype, proc_x_min, &
+    xmin = 1
+    xmax = ng
+    ymin = 1-ng
+    ymax = subsizes(2)-ng
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, offset0)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, offset1)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, offset2)
+
+    CALL MPI_SENDRECV(field, sz, basetype, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
 
+    xmin = nx_local + 1
+    xmax = subsizes(1) + nx_local
+
     IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
-      n = 1
-      DO k = 1, 3
-      DO j = 1-ng, subsizes(2)-ng
-      DO i = nx_local+1, subsizes(1)+nx_local
-        select case(k)
-        case(1)
-        fieldx(i,j) = temp(n)
-        case(2)
-        fieldy(i,j) = temp(n)
-        case(3)
-        fieldz(i,j) = temp(n)
-        end select
-        n = n + 1
-      END DO
-      END DO
-      END DO
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, offset0)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, offset1)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+          xmin, xmax, ymin, ymax, offset2)
+
     END IF
 
-    DEALLOCATE(field_left)
+
+    DEALLOCATE(field)
     DEALLOCATE(temp)
 
   END SUBROUTINE moving_window_field_bc
