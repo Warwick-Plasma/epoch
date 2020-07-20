@@ -482,7 +482,7 @@ CONTAINS
         DO i = 1, nchunks
           CALL shift_window(ng)
         END DO
-        IF(remainder > 0) THEN
+        IF(nremainder > 0) THEN
           CALL shift_window(nremainder)
         END IF
         CALL setup_bc_lists
