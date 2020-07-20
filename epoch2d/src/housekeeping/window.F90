@@ -447,8 +447,9 @@ CONTAINS
   SUBROUTINE moving_window
 
 #ifndef PER_SPECIES_WEIGHT
-    REAL(num) :: window_shift_real
+    REAL(num) :: window_shift_real, window_shift_steps
     INTEGER :: window_shift_cells, errcode = 0
+    INTEGER :: i, nchunks, nremainder
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -477,7 +478,15 @@ CONTAINS
       IF (window_shift_cells > ng - 1) THEN
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
-        CALL shift_window(window_shift_cells)
+        window_shift_steps = window_shift_cells / ng
+        nchunks = FLOOR(window_shift_steps)
+        nremainder = MOD(window_shift_cells, ng)
+        DO i = 1, nchunks
+          CALL shift_window(ng)
+        END DO
+        IF(remainder > 0) THEN
+          CALL shift_window(nremainder)
+        END IF
         CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real
