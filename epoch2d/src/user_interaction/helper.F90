@@ -663,9 +663,6 @@ CONTAINS
     TYPE(particle), POINTER :: current, next
     INTEGER(i8) :: ipart
     INTEGER, DIMENSION(:,:), ALLOCATABLE :: npart_in_cell
-#ifdef PARTICLE_SHAPE_TOPHAT
-    REAL(num), DIMENSION(:,:), ALLOCATABLE :: rpart_in_cell
-#endif
     REAL(num) :: wdata, x0, x1, y0, y1
     TYPE(particle_list), POINTER :: partlist
     INTEGER :: ix, iy, i, j, isubx, isuby
@@ -739,6 +736,12 @@ CONTAINS
       END DO ! isuby
 
       current%weight = wdata
+#ifdef PARTICLE_SHAPE_TOPHAT
+      ! For a TOPHAT shape function, (cell_x, cell_y) may not be the cell
+      ! containing the particle position
+      IF (gx(1) > gx(0)) cell_x = cell_x + 1
+      IF (gy(1) > gy(0)) cell_y = cell_y + 1
+#endif
       npart_in_cell(cell_x,cell_y) = npart_in_cell(cell_x,cell_y) + 1
 
       current => current%next
@@ -749,30 +752,13 @@ CONTAINS
 
     wdata = dx * dy
 
-#ifdef PARTICLE_SHAPE_TOPHAT
-    ! For the TOPHAT shape function, particles can be located on a
-    ! neighbouring process
-    ALLOCATE(rpart_in_cell(1-ng:nx+ng,1-ng:ny+ng))
-
-    rpart_in_cell = npart_in_cell
-    CALL processor_summation_bcs(rpart_in_cell, ng)
-    npart_in_cell = INT(rpart_in_cell)
-
-    DEALLOCATE(rpart_in_cell)
-#endif
-
     partlist => species%attached_list
     ! Second loop renormalises particle weights
     current => partlist%head
     ipart = 0
     DO WHILE(ipart < partlist%count)
-#ifdef PARTICLE_SHAPE_TOPHAT
-      cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx) + 1
-      cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy) + 1
-#else
       cell_x = FLOOR((current%part_pos(1) - x_grid_min_local) / dx + 1.5_num)
       cell_y = FLOOR((current%part_pos(2) - y_grid_min_local) / dy + 1.5_num)
-#endif
 
       current%weight = current%weight * wdata / npart_in_cell(cell_x,cell_y)
 
