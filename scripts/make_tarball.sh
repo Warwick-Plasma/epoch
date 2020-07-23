@@ -55,13 +55,13 @@ if [ "$cstring"x != "$fullstring"x ]; then
 fi
 
 (cd SDF/VisIt
-/bin/sh gen_commit_string.sh)
+/bin/sh gen_commit_string.sh .)
 (cd SDF/FORTRAN
-/bin/sh src/gen_commit_string.sh)
+/bin/sh src/gen_commit_string.sh src)
 (cd SDF/C/src
-/bin/sh gen_commit_string.sh)
+/bin/sh gen_commit_string.sh .)
 (cd SDF/utilities
-/bin/sh gen_commit_string.sh)
+/bin/sh gen_commit_string.sh .)
 (cd epoch1d
 /bin/sh src/gen_commit_string.sh)
 cp epoch1d/src/COMMIT epoch2d/src/
