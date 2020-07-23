@@ -473,19 +473,19 @@ CONTAINS
     IF (overriding) THEN
       ALLOCATE(temp2(1-ng:nx+ng, 1-ng:ny+ng))
 
-      temp2(0:nx+1, 0:ny+1) = jx(0:nx+1, 0:ny+1)
+      temp2 = jx
       CALL remap_field(temp2, temp)
       DEALLOCATE(jx)
       ALLOCATE(jx(1-jng:nx_new+jng, 1-jng:ny_new+jng))
       jx(0:nx_new+1, 0:ny_new+1) = temp(0:nx_new+1, 0:ny_new+1)
 
-      temp2(0:nx+1, 0:ny+1) = jy(0:nx+1, 0:ny+1)
+      temp2 = jy
       CALL remap_field(temp2, temp)
       DEALLOCATE(jy)
       ALLOCATE(jy(1-jng:nx_new+jng, 1-jng:ny_new+jng))
       jy(0:nx_new+1, 0:ny_new+1) = temp(0:nx_new+1, 0:ny_new+1)
 
-      temp2(0:nx+1, 0:ny+1) = jz(0:nx+1, 0:ny+1)
+      temp2 = jz
       CALL remap_field(temp2, temp)
       DEALLOCATE(jz)
       ALLOCATE(jz(1-jng:nx_new+jng, 1-jng:ny_new+jng))
@@ -588,7 +588,7 @@ CONTAINS
         ic%temp = temp_sum
       END IF
 
-      IF (ASSOCIATED(ic%temp)) THEN
+      IF (ASSOCIATED(ic%drift)) THEN
         IF (.NOT. ALLOCATED(temp_sum)) &
             ALLOCATE(temp_sum(1-ng:nx_new+ng,1-ng:ny_new+ng,3))
         CALL remap_field(ic%drift(:,:,1), temp_sum(:,:,1))
@@ -1984,6 +1984,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nproc
     INTEGER, DIMENSION(:), INTENT(OUT) :: mins, maxs
     INTEGER :: sz, idim, proc, old, nextra, i, i0, i1, iter, old_maxs, new_maxs
+    INTEGER :: ii
     INTEGER(i8) :: total, total_old, load_per_proc_ideal
     INTEGER(i8) :: load_local, load_max, load_min, load_var_best
 
@@ -2040,7 +2041,8 @@ CONTAINS
         IF (i == 1) THEN
           old = 0
         ELSE
-          old = maxs(i-1)
+          ii = i - 1
+          old = maxs(ii)
         END IF
         new_maxs = old_maxs
         IF (old_maxs - old - 1 >= ng) new_maxs = old_maxs - 1
