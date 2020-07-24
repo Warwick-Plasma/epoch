@@ -470,10 +470,10 @@ CONTAINS
       IF (window_shift_cells > ng - 1) THEN
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
-        window_shift_steps = window_shift_cells / ng
-        nchunks = FLOOR(window_shift_steps)
+!        window_shift_steps = window_shift_cells / ng
+!        nchunks = FLOOR(window_shift_steps)
         nremainder = MOD(window_shift_cells, ng)
-        DO i = 1, nchunks
+        DO i = ng, window_shift_cells, ng
           CALL shift_window(ng)
         END DO
         IF(nremainder > 0) THEN
