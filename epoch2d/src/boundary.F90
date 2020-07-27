@@ -333,7 +333,7 @@ CONTAINS
     INTEGER :: basetype, sz, szmax, i, j, k, n
     REAL(num), ALLOCATABLE :: field(:)
     REAL(num), ALLOCATABLE :: temp(:)
-    INTEGER :: xmin, xmax, ymin, ymax, offset0, offset1, offset2
+    INTEGER :: xmin, xmax, ymin, ymax, offset
 
     basetype = mpireal
 
@@ -352,9 +352,11 @@ CONTAINS
 
     sz = 3 * subsizes(1) * subsizes(2)
 
-    offset0 = 0
-    offset1 = subsizes(1) * subsizes(2)
-    offset2 = 2 * offset1
+!    offset0 = 0
+!    offset1 = subsizes(1) * subsizes(2)
+!    offset2 = 2 * offset1
+
+    offset = subsizes(1) * subsizes(2)
 
     xmin = 1
     xmax = ng
@@ -362,11 +364,11 @@ CONTAINS
     ymax = subsizes(2)-ng
 
     CALL load_field_boundaries_to_buffer(fieldx, field, &
-        xmin, xmax, ymin, ymax, offset0)
+        xmin, xmax, ymin, ymax, 0*offset)
     CALL load_field_boundaries_to_buffer(fieldy, field, &
-        xmin, xmax, ymin, ymax, offset1)
+        xmin, xmax, ymin, ymax, offset)
     CALL load_field_boundaries_to_buffer(fieldz, field, &
-        xmin, xmax, ymin, ymax, offset2)
+        xmin, xmax, ymin, ymax, 2*offset)
 
     CALL MPI_SENDRECV(field, sz, basetype, proc_x_min, &
         tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
@@ -377,11 +379,11 @@ CONTAINS
     IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
 
       CALL unload_field_boundaries_from_buffer(fieldx, temp, &
-          xmin, xmax, ymin, ymax, offset0)
+          xmin, xmax, ymin, ymax, 0*offset)
       CALL unload_field_boundaries_from_buffer(fieldy, temp, &
-          xmin, xmax, ymin, ymax, offset1)
+          xmin, xmax, ymin, ymax, offset)
       CALL unload_field_boundaries_from_buffer(fieldz, temp, &
-          xmin, xmax, ymin, ymax, offset2)
+          xmin, xmax, ymin, ymax, 2*offset)
 
     END IF
 
@@ -389,11 +391,11 @@ CONTAINS
     xmax = nx_local
 
     CALL load_field_boundaries_to_buffer(fieldx, field, &
-        xmin, xmax, ymin, ymax, offset0)
+        xmin, xmax, ymin, ymax, 0*offset)
     CALL load_field_boundaries_to_buffer(fieldy, field, &
-        xmin, xmax, ymin, ymax, offset1)
+        xmin, xmax, ymin, ymax, offset)
     CALL load_field_boundaries_to_buffer(fieldz, field, &
-        xmin, xmax, ymin, ymax, offset2)
+        xmin, xmax, ymin, ymax, 2*offset)
 
     CALL MPI_SENDRECV(field, sz, basetype, proc_x_max, &
         tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
@@ -404,11 +406,11 @@ CONTAINS
     IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min)==c_bc_periodic) THEN
 
       CALL unload_field_boundaries_from_buffer(fieldx, temp, &
-          xmin, xmax, ymin, ymax, offset0)
+          xmin, xmax, ymin, ymax, 0*offset)
       CALL unload_field_boundaries_from_buffer(fieldy, temp, &
-          xmin, xmax, ymin, ymax, offset1)
+          xmin, xmax, ymin, ymax, offset)
       CALL unload_field_boundaries_from_buffer(fieldz, temp, &
-        xmin, xmax, ymin, ymax, offset2)
+        xmin, xmax, ymin, ymax, 2*offset)
 
     END IF
 
@@ -416,9 +418,11 @@ CONTAINS
     subsizes(2) = ng
     sz = 3 * subsizes(1) * subsizes(2)
 
-    offset0 = 0
-    offset1 = subsizes(1) * subsizes(2)
-    offset2 = 2 * offset1
+!    offset0 = 0
+!    offset1 = subsizes(1) * subsizes(2)
+!    offset2 = 2 * offset1
+
+    offset = subsizes(1) * subsizes(2)   
 
     xmin = 1 - ng
     xmax = subsizes(1) - ng 
@@ -426,11 +430,11 @@ CONTAINS
     ymax = ny_local
 
     CALL load_field_boundaries_to_buffer(fieldx, field, &
-        xmin, xmax, ymin, ymax, offset0)
+        xmin, xmax, ymin, ymax, 0*offset)
     CALL load_field_boundaries_to_buffer(fieldy, field, &
-        xmin, xmax, ymin, ymax, offset1)
+        xmin, xmax, ymin, ymax, offset)
     CALL load_field_boundaries_to_buffer(fieldz, field, &
-        xmin, xmax, ymin, ymax, offset2)
+        xmin, xmax, ymin, ymax, 2*offset)
     
     CALL MPI_SENDRECV(field, sz, basetype, proc_y_max, &
         tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
@@ -441,11 +445,11 @@ CONTAINS
     IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min)==c_bc_periodic) THEN
 
       CALL unload_field_boundaries_from_buffer(fieldx, temp, &
-          xmin, xmax, ymin, ymax, offset0)
+          xmin, xmax, ymin, ymax, 0*offset)
       CALL unload_field_boundaries_from_buffer(fieldy, temp, &
-          xmin, xmax, ymin, ymax, offset1)
+          xmin, xmax, ymin, ymax, offset)
       CALL unload_field_boundaries_from_buffer(fieldz, temp, &
-          xmin, xmax, ymin, ymax, offset2)
+          xmin, xmax, ymin, ymax, 2*offset)
 
     END IF
 
@@ -453,11 +457,11 @@ CONTAINS
     ymax = subsizes(2)
 
     CALL load_field_boundaries_to_buffer(fieldx, field, &
-        xmin, xmax, ymin, ymax, offset0)
+        xmin, xmax, ymin, ymax, 0*offset)
     CALL load_field_boundaries_to_buffer(fieldy, field, &
-        xmin, xmax, ymin, ymax, offset1)
+        xmin, xmax, ymin, ymax, offset)
     CALL load_field_boundaries_to_buffer(fieldz, field, &
-        xmin, xmax, ymin, ymax, offset2)
+        xmin, xmax, ymin, ymax, 2*offset)
 
     ymin = ny_local + 1
     ymax = subsizes(2) + ny_local
@@ -468,11 +472,11 @@ CONTAINS
     IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max)==c_bc_periodic) THEN
 
       CALL unload_field_boundaries_from_buffer(fieldx, temp, &
-          xmin, xmax, ymin, ymax, offset0)
+          xmin, xmax, ymin, ymax, 0*offset)
       CALL unload_field_boundaries_from_buffer(fieldy, temp, &
-          xmin, xmax, ymin, ymax, offset1)
+          xmin, xmax, ymin, ymax, offset)
       CALL unload_field_boundaries_from_buffer(fieldz, temp, &
-          xmin, xmax, ymin, ymax, offset2)
+          xmin, xmax, ymin, ymax, 2*offset)
 
     END IF
 
