@@ -282,6 +282,9 @@ MODULE shared_data
   INTEGER :: full_dump_every, restart_dump_every
   LOGICAL :: force_first_to_be_restartable
   LOGICAL :: force_final_to_be_restartable
+  LOGICAL :: use_restart_dependency_file = .FALSE.
+  CHARACTER(LEN=*), PARAMETER :: restart_dependency_file = 'restart.dep'
+  CHARACTER(LEN=*), PARAMETER :: restart_terminate_string = 'TERMINATE'
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros_control, n_zeros = 4
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask

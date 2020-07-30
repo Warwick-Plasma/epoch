@@ -216,12 +216,12 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: array
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: code, i, io, ispecies, iprefix, mask, rn, dir, dumped, nval, n
-    INTEGER :: errcode
+    INTEGER :: errcode, lun
     INTEGER :: random_state(4)
     INTEGER, ALLOCATABLE :: random_states_per_proc(:)
     INTEGER, DIMENSION(c_ndims) :: dims
     INTEGER, SAVE :: nstep_prev = -1
-    LOGICAL :: convert, force, any_written, restart_id, print_arrays
+    LOGICAL :: convert, force, any_written, restart_id, print_arrays, exists
     LOGICAL, SAVE :: first_call = .TRUE.
     TYPE(particle_species), POINTER :: species
     TYPE(subset), POINTER :: sub
@@ -930,6 +930,25 @@ CONTAINS
       CALL sdf_close(sdf_handle)
 
       IF (rank == 0) THEN
+        IF (restart_flag .AND. use_restart_dependency_file) THEN
+          lun = get_free_lun()
+          INQUIRE(FILE=TRIM(data_dir) // '/' //restart_dependency_file, &
+              exist = exists)
+          IF (.NOT. exists) THEN
+            OPEN(UNIT=lun, FILE=TRIM(data_dir) // '/' &
+                // restart_dependency_file, FORM="FORMATTED", STATUS="NEW")
+          ELSE
+            OPEN(UNIT=lun, FILE=TRIM(data_dir) // '/' &
+                // restart_dependency_file, FORM="FORMATTED", STATUS="OLD", &
+                POSITION="APPEND")
+          END IF
+          WRITE(lun,'(A)') TRIM(filename)
+          IF ((step >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end)) THEN
+            WRITE(lun,'(A)') restart_terminate_string
+          END IF
+          CLOSE(lun)
+        END IF
+
         DO io = 1, n_io_blocks
           IF (io_block_list(io)%dump) THEN
             dump_type = TRIM(io_block_list(io)%name)

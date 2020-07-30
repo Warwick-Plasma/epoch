@@ -103,6 +103,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_io_error = 2**15
   INTEGER, PARAMETER :: c_err_bad_setup = 2**16
   INTEGER, PARAMETER :: c_err_window = 2**17
+  INTEGER, PARAMETER :: c_err_ended_restart = 2**18
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
