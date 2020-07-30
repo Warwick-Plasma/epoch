@@ -273,7 +273,7 @@ SCOREP_USER_REGION_BEGIN( main_loop, "main_loop", reg_type )
 
     CALL update_eb_fields_final
 
-    CALL moving_window
+    CALL moving_window(step + 1, force_dump)
 
 #ifdef SCOREP_USER_ENABLE
 SCOREP_USER_REGION_END(main_loop)
