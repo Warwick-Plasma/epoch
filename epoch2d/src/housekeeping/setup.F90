@@ -23,7 +23,6 @@ MODULE setup
   USE shunt
   USE laser
   USE injectors
-  USE window
   USE timer
   USE helper
   USE balance
