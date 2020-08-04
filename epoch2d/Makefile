@@ -50,7 +50,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g -stand f03
+  FFLAGS = -O3 -g #-stand f03
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -69,7 +69,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -g -std=f2003
+  FFLAGS = -O3 -g #-std=f2003
 
   GNUVER := $(shell gfortran -dumpversion | head -1 \
       | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
@@ -321,7 +321,7 @@ SRCFILES = antennae.f90 balance.F90 boundary.F90 bremsstrahlung.F90 \
   redblack_module.f90 setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 \
   simple_io.F90 split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
   terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
-  version_data.F90 welcome.F90 window.F90
+  version_data.F90 welcome.F90 window.F90 window_sub.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -554,3 +554,4 @@ utilities.o: utilities.f90 constants.o shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
 window.o: window.F90 boundary.o evaluate.o partlist.o
+window_sub.o: window_sub.F90 window.o diagnostics.o
