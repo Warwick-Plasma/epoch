@@ -50,7 +50,7 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g #-stand f03
+  FFLAGS = -O3 -g -stand f03
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
@@ -69,7 +69,7 @@ endif
 # gfortran
 # ========
 ifeq ($(strip $(COMPILER)),gfortran)
-  FFLAGS = -O3 -g #-std=f2003
+  FFLAGS = -O3 -g -std=f2003
 
   GNUVER := $(shell gfortran -dumpversion | head -1 \
       | sed 's/[^0-9\.]*\([0-9\.]\+\).*/\1/')
@@ -321,7 +321,7 @@ SRCFILES = antennae.f90 balance.F90 boundary.F90 bremsstrahlung.F90 \
   redblack_module.f90 setup.F90 shape_functions.F90 shared_data.F90 shunt.F90 \
   simple_io.F90 split_particle.F90 stack.f90 strings.f90 strings_advanced.f90 \
   terminal_controls.F90 timer.f90 tokenizer_blocks.f90 utilities.f90 \
-  version_data.F90 welcome.F90 window.F90 window_sub.F90
+  version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
 OBJFILES := $(OBJFILES:.F90=.o)
@@ -496,7 +496,7 @@ deck_window_block.o: deck_window_block.f90 strings_advanced.o
 deltaf_loader.o: deltaf_loader.F90 shared_data.o
 diagnostics.o: diagnostics.F90 antennae.o calc_df.o constants.o deck.o \
   deck_io_block.o dist_fn.o evaluate.o iterators.o particle_id_hash.o probes.o \
-  setup.o strings.o timer.o version_data.o window.o $(SDFMOD) $(ENCODED_SOURCE)
+  setup.o strings.o timer.o version_data.o $(SDFMOD) $(ENCODED_SOURCE)
 dist_fn.o: dist_fn.F90 mpi_subtype_control.o particles.o $(SDFMOD)
 epoch2d.o: epoch2d.F90 antennae.o balance.o bremsstrahlung.o calc_df.o \
   collisions.o current_smooth.o deck.o diagnostics.o fields.o finish.o \
@@ -538,7 +538,7 @@ redblack_module.o: redblack_module.f90 partlist.o
 setup.o: setup.F90 antennae.o balance.o boundary.o constants.o fields.o \
   helper.o injectors.o laser.o mpi_routines.o mpi_subtype_control.o \
   particle_id_hash.o shunt.o split_particle.o timer.o version_data.o welcome.o \
-  window.o $(SDFMOD)
+  $(SDFMOD)
 shape_functions.o: shape_functions.F90 constants.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
@@ -553,5 +553,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 constants.o shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
-window.o: window.F90 boundary.o evaluate.o partlist.o
-window_sub.o: window_sub.F90 window.o diagnostics.o
+window.o: window.F90 boundary.o diagnostics.o evaluate.o partlist.o

@@ -27,7 +27,6 @@ MODULE diagnostics
   USE setup
   USE deck_io_block
   USE strings
-  USE window
   USE timer
   USE antennae
   USE particle_id_hash_mod
