@@ -163,7 +163,7 @@ PROGRAM pic
     ELSE
       time = time + dt / 2.0_num
       CALL update_eb_fields_final
-      CALL moving_window
+      CALL moving_window(step + 1, force_dump)
     END IF
   ELSE
     dt_store = dt
