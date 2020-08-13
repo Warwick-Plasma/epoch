@@ -124,13 +124,18 @@ write_data_bytes () {
   fi
 
   nlines=$(cat $hexdump | wc -l)
-  nfull_segments=$(((nlines-1)/ncont))
-  nfull_segments=$((nfull_segments*ncont))
-  nlast_segment=$((nlines-nfull_segments))
-  nlast=$(tail -n 1 $hexdump | tr 'z' '\n' | wc -l)
-  nlast=$((nlast-1))
-  nelements=$((nl*(nlines-1)+nlast))
-  padding=$((nelements*nbytes-filesize))
+  if [ $nlines -eq 0 ]; then
+     nelements=0
+     padding=0
+  else
+    nfull_segments=$(((nlines-1)/ncont))
+    nfull_segments=$((nfull_segments*ncont))
+    nlast_segment=$((nlines-nfull_segments))
+    nlast=$(tail -n 1 $hexdump | tr 'z' '\n' | wc -l)
+    nlast=$((nlast-1))
+    nelements=$((nl*(nlines-1)+nlast))
+    padding=$((nelements*nbytes-filesize))
+  fi
 
   rm -f $filename
 
