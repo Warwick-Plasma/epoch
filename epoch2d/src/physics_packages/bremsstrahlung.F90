@@ -657,8 +657,10 @@ CONTAINS
     INTEGER, INTENT(IN) :: iphoton, z
     INTEGER :: brem_index
     REAL(num) :: dir_x, dir_y, dir_z, mag_p
-    REAL(num) :: rand_temp, photon_energy, part_e
+    REAL(num) :: rand_temp, photon_energy, photon_p, part_e
+    REAL(num) :: scatter_theta, scatter_phi
     TYPE(particle), POINTER :: new_photon
+    LOGICAL :: add_photon
 
     ! Obtain electron direction (magnitude must be > 0 to prevent 1/0 issues)
     part_e = electron%particle_energy
@@ -676,39 +678,100 @@ CONTAINS
         brem_array(brem_index)%e_table, brem_array(brem_index)%k_table, &
         brem_array(brem_index)%cdf_table, brem_array(brem_index)%state)
 
-    ! Calculate electron recoil
+    ! Is this photon to be added into the simulation?
+    add_photon = (photon_energy > photon_energy_min_bremsstrahlung &
+        .AND. produce_bremsstrahlung_photons)
+
+    ! Ensure photon_energy is a number we can handle at our precision
+    IF (photon_energy < c_tiny) photon_energy = c_tiny
+
+    ! Temporarily store photon momentum in the "new_photon" particle
+    CALL create_particle(new_photon)
+    photon_p = photon_energy / c
+    new_photon%part_p(1) = dir_x * photon_p
+    new_photon%part_p(2) = dir_y * photon_p
+    new_photon%part_p(3) = dir_z * photon_p
+
+    ! Rotate photon according to bremsstrahlung emission angular distribution
+    ! Only consider trajectory changes from e- with high enough energy to be
+    ! added into the simulation
+    IF (use_brem_scatter .AND. add_photon) THEN
+      scatter_theta = calc_scatter_theta(part_e)
+      scatter_phi = 2.0_num*pi*random()
+      CALL rotate_p(new_photon, COS(scatter_theta), scatter_phi, photon_p)
+    END IF
+
+    ! Calculate electron recoil (subtract weighted photon momentum)
     IF (use_bremsstrahlung_recoil) THEN
-      mag_p = mag_p - photon_weight * photon_energy / c
-      electron%part_p(1) = dir_x * mag_p
-      electron%part_p(2) = dir_y * mag_p
-      electron%part_p(3) = dir_z * mag_p
-      electron%particle_energy = electron%particle_energy - photon_energy
+      electron%part_p = electron%part_p - photon_weight*new_photon%part_p
+      electron%particle_energy = electron%particle_energy &
+          - (photon_weight*photon_energy)
     END IF
 
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on.
-    IF (photon_energy > photon_energy_min_bremsstrahlung &
-        .AND. produce_bremsstrahlung_photons) THEN
-      ! Ensure photon_energy is a number we can handle at our precision
-      IF (photon_energy < c_tiny) photon_energy = c_tiny
-
-      ! Create new photon at the electron position, in the electron direction
-      CALL create_particle(new_photon)
+    IF (add_photon) THEN
+      ! Create new photon at the electron position,
       new_photon%part_pos = electron%part_pos
-      new_photon%part_p(1) = dir_x * photon_energy / c
-      new_photon%part_p(2) = dir_y * photon_energy / c
-      new_photon%part_p(3) = dir_z * photon_energy / c
+
 #ifdef PHOTONS
       new_photon%optical_depth = reset_optical_depth()
 #endif
       new_photon%particle_energy = photon_energy
       new_photon%weight = electron%weight * photon_weight
 
+      ! Add photon to its species
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
+    ELSE
+      ! We are not adding the photon to the simulation
+      CALL destroy_particle(new_photon)
     END IF
 
   END SUBROUTINE generate_photon
+
+
+
+  ! Calculates the angular scatter of photons using the Tsai method outlined in
+  ! the Geant4 physics reference manual, section 10.2.1. This model is accurate
+  ! for electron energies over 500 keV (as discussed in the "Comparisons
+  ! between Tsai, 2BS and 2BN generators" section)
+
+  FUNCTION calc_scatter_theta(part_E)
+
+    REAL(num), INTENT(IN) :: part_E
+    REAL(num) :: calc_scatter_theta
+    REAL(num) :: gamma_theta_max, gamma_theta, gamma
+    REAL(num) :: a1 = 0.625_num
+    REAL(num) :: a2 = 1.875_num
+    REAL(num) :: border = 0.25_num
+    REAL(num) :: r1, r2, r3
+
+    gamma = part_E/(mc2)
+    gamma_theta_max = pi*gamma
+
+    ! Perform the Tsai algorithm
+    DO
+      ! We require three random numbers per sample attempt
+      r1 = random()
+      r2 = random()
+      r3 = random()
+
+      ! Random sampling returns a u value, which is equivalent to the product of
+      ! the particle gamma factor and the deflection theta
+      IF (r1 < border) THEN
+        gamma_theta = -LOG(r2*r3)/a1
+      ELSE
+        gamma_theta = -LOG(r2*r3)/a2
+      END IF
+
+      ! We require a theta value less than pi
+      IF (gamma_theta <= gamma_theta_max) EXIT
+    END DO
+
+    calc_scatter_theta = gamma_theta/gamma
+
+  END FUNCTION calc_scatter_theta
 
 
 

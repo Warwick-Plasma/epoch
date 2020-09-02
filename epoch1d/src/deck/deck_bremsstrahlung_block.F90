@@ -174,6 +174,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_brem_scatter')) THEN
+      use_brem_scatter = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 #endif
 
