@@ -17,6 +17,7 @@ MODULE bremsstrahlung
 #ifdef BREMSSTRAHLUNG
 
   USE partlist
+  USE particles
   USE calc_df
   USE setup
 
@@ -730,9 +731,9 @@ CONTAINS
 
 
   ! Calculates the angular scatter of photons using the Tsai method outlined in
-  ! the Geant4 physics reference manual, section 10.2.1. This model is accurate
-  ! for electron energies over 500 keV (as discussed in the "Comparisons
-  ! between Tsai, 2BS and 2BN generators" section)
+  ! the Geant4 physics reference manual (release 10.6, section 10.2.1). This
+  ! model is accurate for electron energies over 500 keV (as discussed in the
+  ! "Comparisons between Tsai, 2BS and 2BN generators" section)
 
   FUNCTION calc_scatter_theta(part_E)
 
@@ -744,7 +745,7 @@ CONTAINS
     REAL(num) :: border = 0.25_num
     REAL(num) :: r1, r2, r3
 
-    gamma = part_E/(mc2)
+    gamma = part_E/(m0c2)
     gamma_theta_max = pi*gamma
 
     ! Perform the Tsai algorithm
@@ -771,7 +772,7 @@ CONTAINS
   END FUNCTION calc_scatter_theta
 
 
-  
+
   ! Calculates the value of a grid-centred variable part_var stored in the grid
   ! grid_var, averaged over the particle shape for a particle at position
   ! part_x
