@@ -467,7 +467,45 @@ CONTAINS
 
   END SUBROUTINE do_field_mpi_with_lengths
 
+  SUBROUTINE load_field_boundaries_to_buffer(field, buffer, &
+                     xmin, xmax, ymin, ymax, zmin, zmax, offset)
 
+    INTEGER, INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax, offset
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: buffer
+    INTEGER :: i,j,k,n
+
+    n = 1
+    DO k = zmin, zmax
+    DO j = ymin, ymax
+    DO i = xmin, xmax
+      buffer(n+offset) = field(i,j,k)
+      n = n+1
+    END DO
+    END DO
+    END DO
+
+  END SUBROUTINE load_field_boundaries_to_buffer
+
+  SUBROUTINE unload_field_boundaries_from_buffer(field, buffer, &
+                       xmin, xmax, ymin, ymax, zmin, zmax, offset)
+
+    INTEGER, INTENT(IN) :: xmin, xmax, ymin, ymax, zmin, zmax, offset
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: buffer
+    INTEGER :: i,j,k,n
+
+    n = 1
+    DO k = zmin, zmax
+    DO j = ymin, ymax 
+    DO i = xmin, xmax
+      field(i,j,k) = buffer(n+offset) 
+      n = n+1
+    END DO
+    END DO
+    END DO  
+
+  END SUBROUTINE unload_field_boundaries_from_buffer
 
   SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local, &
       nz_local)
