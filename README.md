@@ -1,10 +1,18 @@
 ## EPOCH development
 
-This version of EPOCH is being developed under the project PiCKeX- Particle Kinetic codes for Exascale plasma simulation which is a part of Work Package 8 (WP8) of PRACE-6IP. The main production version of EPOCH code is maintained by the University of Warwick. The repository has been cloned on the Jülich Supercomputing Centre (JSC) GitLab server. This development version has the full functionality of the main EPOCH branch, but includes verified refactoring measures.
+**This is not the official repository for the EPOCH code.**
+
+This version of EPOCH is being developed within the project PiCKeX-
+Particle Kinetic codes for Exascale plasma simulation, which is a
+part of Work Package 8 (WP8) of PRACE-6IP. This repository has been
+cloned to the Jülich Supercomputing Centre (JSC) GitLab server to
+perform and publish this work. The main production version of EPOCH is
+maintained by the University of Warwick. The development version found
+here might not have the full functionality of the production version of
+EPOCH, but includes a performance improved, refactored branch that will
+be merged with the official version by the end of the project.
 
 Current developments include improving the efficiency of the moving window book-keeping, reducing the number MPI calls for the field boundary conditions and the particle boundary conditions.
-
-NB: This is not the official repository for the EPOCH code.
 
 # *** PLEASE READ THIS NOTE ***
 
