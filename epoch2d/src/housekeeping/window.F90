@@ -437,16 +437,13 @@ CONTAINS
 
 
 
-  SUBROUTINE moving_window(future_step, force_dump)
+  SUBROUTINE moving_window
      USE diagnostics
 
-     integer, intent(in) :: future_step
-     logical, intent(in) :: force_dump
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real, window_shift_steps
     INTEGER :: window_shift_cells, errcode = 0
     INTEGER :: i, nchunks, nremainder
-    logical :: print_arrays(1:SIZE(file_prefixes))
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -471,24 +468,15 @@ CONTAINS
       IF (window_v_x <= 0.0_num) RETURN
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
-      ! CHECK FOR IO TAKING PLACE IN NEXT STEP...
-      print_arrays = .false.
-      DO i = 1, SIZE(file_prefixes)
-        CALL io_test(i, future_step, print_arrays(i), force_dump, prefix_first_call)
-      END DO
 
       ! Allow for posibility of having jumped two cells at once
-      IF ( (window_shift_cells > ng - 1) .OR. ANY(print_arrays) ) THEN
+      IF  (window_shift_cells > ng - 1)  THEN
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
         nremainder = MOD(window_shift_cells, ng)
         DO i = ng, window_shift_cells, ng  ! CHECK IF THIS LOOP IS CALLED IF window_shift_cells < ng
           CALL shift_window(ng)
         END DO
-        IF (ANY(print_arrays)) then
-          CALL shift_window(nremainder)
-          nremainder = 0
-        END IF
         CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real &
