@@ -86,7 +86,7 @@ CONTAINS
 
       CALL setup_grid_x
 
-      CALL remove_particles
+      !CALL remove_particles
 
       ! Shift fields around
       CALL shift_fields(window_shift_cells)
