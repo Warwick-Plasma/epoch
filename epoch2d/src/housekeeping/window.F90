@@ -435,14 +435,14 @@ CONTAINS
 
 
 
-  SUBROUTINE moving_window(step, force_write)
+  SUBROUTINE moving_window(future_step, force_write)
      USE diagnostics
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real, window_shift_steps
     INTEGER :: window_shift_cells, errcode = 0
     INTEGER :: i, nchunks, nremainder
-    INTEGER, INTENT(INOUT) :: step
+    INTEGER, INTENT(IN) :: future_step
     LOGICAL, INTENT(IN), OPTIONAL :: force_write
     INTEGER, SAVE :: nstep_prev = -1
     INTEGER, SAVE :: last_step = -1
@@ -473,40 +473,68 @@ CONTAINS
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
 
-     ! Check if an I/O is performed
-     writeout = .FALSE.
-     force = .FALSE.
-     IF (PRESENT(force_write)) force = force_write
+      ! Check if an I/O is performed
+      writeout = .FALSE.
+      force = .FALSE.
+      IF (PRESENT(force_write)) force = force_write
 
-     WRITE(*,'("Checkpoint 1")')
+      IF (rank == 0) THEN
+        WRITE(*,'("Initial mw check")')
+      END IF
 
-     IF (step == nstep_prev .AND. .NOT.force) THEN
-     writeout = .FALSE.
-     ELSE
-     DO iprefix = 1,SIZE(file_prefixes)
-       WRITE(*,'("Checkpoint 2")')
-       CALL io_test(iprefix, step, print_arrays, force, prefix_first_call)
-       IF (.NOT.print_arrays) CYCLE
-       writeout = .TRUE.
-       WRITE(*,'("Checkpoint 3")')
-     END DO
-     END IF
+      IF (future_step == nstep_prev .AND. .NOT.force) THEN
+        writeout = .FALSE.
+      ELSE
+      DO iprefix = 1,SIZE(file_prefixes)
+      IF (rank == 0) THEN
+        WRITE(*,'("Checking I/O")')
+      END IF
+      CALL io_test(iprefix, future_step, print_arrays, force, prefix_first_call)
+      IF (.NOT.print_arrays) CYCLE
+        writeout = .TRUE.
+      END DO
+      END IF
+
+      IF(writeout) THEN
+        IF (rank == 0) THEN
+          WRITE(*,'("Alignment required")')
+        END IF
+      END IF
+
+      nstep_prev = future_step
+
+!      IF (window_shift_cells > 0 .AND. window_shift_cells < ng .AND. writeout) THEN
+!
+!        window_shift_real = REAL(window_shift_cells, num)
+!        window_offset = window_offset + window_shift_real * dx
+!        nremainder = MOD(window_shift_cells, ng)
+!        CALL shift_window(nremainder)
+!        nremainder = 0
+!        CALL setup_bc_lists
+!        CALL particle_bcs
+!        window_shift_fraction = window_shift_fraction - window_shift_real &
+!                                + REAL(nremainder, num)
+!        IF (rank == 0) THEN
+!          WRITE(*,'("Performing alignment")')
+!        END IF
+!      END IF
+
 
       ! Allow for posibility of having jumped two cells at once
       IF  (window_shift_cells > ng - 1)  THEN
+
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
         nremainder = MOD(window_shift_cells, ng)
         DO i = ng, window_shift_cells, ng  ! CHECK IF THIS LOOP IS CALLED IF window_shift_cells < ng
           CALL shift_window(ng)
+          IF (rank == 0) THEN
+            WRITE(*, '("Chunk shift of window")')
+          END IF
         END DO
-        WRITE(*,'("Checkpoint 4")')
-        IF (writeout) THEN
-          WRITE(*,'("Checkpoint 5")')
-          CALL shift_window(nremainder)
-          nremainder = 0
+        IF (rank == 0 .AND. writeout) THEN
+          WRITE(*,'("Auto aligned output")')
         END IF
-  
         CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real &
