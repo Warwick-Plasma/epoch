@@ -268,13 +268,13 @@ SCOREP_USER_REGION_BEGIN( main_loop, "main_loop", reg_type )
     IF ((step >= nsteps .AND. nsteps >= 0) &
         .OR. (time >= t_end) .OR. halt) EXIT
 
-    !CALL output_routines(step)
+    CALL output_routines(step)
     time = time + dt / 2.0_num
 
     CALL update_eb_fields_final
 
     CALL moving_window(step)
-    CALL output_routines(step)
+    !CALL output_routines(step)
 
 #ifdef SCOREP_USER_ENABLE
 SCOREP_USER_REGION_END(main_loop)
