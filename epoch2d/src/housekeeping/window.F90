@@ -566,7 +566,7 @@ CONTAINS
       IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
           time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
       IF (io_block_list(io)%nstep_snapshot >= 0) THEN
-        nstep_next = io_block_list(io)%buffer_nstep_prev + 1 &
+        nstep_next = io_block_list(io)%buffer_nstep_prev  &
             + io_block_list(io)%nstep_snapshot
         time1 = time + dt * (nstep_next - step)
       END IF
@@ -577,7 +577,7 @@ CONTAINS
         IF (rank == 0) THEN
                 print *, "time = ", time, "and time0 = ", time0
         END IF 
-        IF (io_block_list(io)%dt_snapshot > 0 .AND. time >= time0) THEN
+        IF (io_block_list(io)%dt_snapshot > 0 .AND. (time + dt) >= time0) THEN
           ! Store the most recent output time that qualifies
           DO
             time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
@@ -605,7 +605,7 @@ CONTAINS
         ! Next I/O dump based on nstep_snapshot
         time_first = time1
         IF (io_block_list(io)%nstep_snapshot > 0 &
-            .AND. (step) >= nstep_next) THEN
+            .AND. (step + 1) >= nstep_next) THEN
           ! Store the most recent output step that qualifies
           DO
             nstep_next = io_block_list(io)%buffer_nstep_prev &
