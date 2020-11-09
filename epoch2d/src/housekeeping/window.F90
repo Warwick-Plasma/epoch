@@ -433,25 +433,77 @@ CONTAINS
   END SUBROUTINE remove_particles
 #endif
 
+  SUBROUTINE mw_io_test(step, dump)
+    USE diagnostics
+    USE deck_io_block
+
+    INTEGER, INTENT(IN) :: step
+    LOGICAL, INTENT(OUT) :: dump
+    INTEGER :: io, is, nstep_next = 0
+    REAL(num) :: time0, time1, time_first
+
+    dump = .FALSE.
+    DO io = 1, n_io_blocks
+
+      time0 = io_block_list(io)%walltime_interval
+
+      ! Work out the time that the next dump will occur based on the
+      ! current timestep
+      time0 = HUGE(1.0_num)
+      time1 = HUGE(1.0_num)
+      IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
+          time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+      IF (io_block_list(io)%nstep_snapshot >= 0) THEN
+          nstep_next = io_block_list(io)%buffer_nstep_prev  &
+            + io_block_list(io)%nstep_snapshot
+          time1 = time + dt * (nstep_next - step)
+      END IF
+
+      IF (time0 < time1) THEN
+        ! Next I/O dump based on dt_snapshot
+        time_first = time0
+        IF (io_block_list(io)%dt_snapshot > 0 .AND. (time + dt) >= time0) THEN
+          ! Store the most recent output time that qualifies
+          DO
+            time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+            IF (time0 > time) EXIT
+            io_block_list(io)%buffer_time_prev = time0
+          END DO
+          dump = .TRUE.
+        END IF
+      ELSE
+        ! Next I/O dump based on nstep_snapshot
+        time_first = time1
+        IF (io_block_list(io)%nstep_snapshot > 0 &
+            .AND. (step + 1) >= nstep_next) THEN
+          ! Store the most recent output step that qualifies
+          DO
+            nstep_next = io_block_list(io)%buffer_nstep_prev &
+                + io_block_list(io)%nstep_snapshot
+            IF (nstep_next > step) EXIT
+            io_block_list(io)%buffer_nstep_prev = nstep_next
+          END DO
+          dump = .TRUE.
+        END IF
+      END IF
+
+    END DO
+
+  END SUBROUTINE mw_io_test
 
 
-  SUBROUTINE moving_window(step, force_write)
+  SUBROUTINE moving_window(step)
      USE diagnostics
      USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real, window_shift_steps
     INTEGER :: window_shift_cells, errcode = 0
-    INTEGER :: i, nchunks, nremainder
+    INTEGER :: i,  nremainder
     INTEGER, INTENT(IN) :: step
-    INTEGER :: future_step
-    LOGICAL, INTENT(IN), OPTIONAL :: force_write
-    INTEGER, SAVE :: nstep_prev = -1
-    INTEGER, SAVE :: last_step = -1
-    LOGICAL :: force, writeout, print_arrays, dump
-    INTEGER :: iprefix
-    INTEGER :: io, is, nstep_next = 0
-    REAL(num) :: time0, time1, time_first
+    LOGICAL :: dump
+!    INTEGER :: io, is, nstep_next = 0
+!    REAL(num) :: time0, time1, time_first
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -477,205 +529,23 @@ CONTAINS
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
 
-      ! Check if an I/O is performed
-      writeout = .FALSE.
-      force = .FALSE.
-      future_step = step + 1
-      IF (PRESENT(force_write)) force = force_write
-
-      IF (rank == 0) THEN
-        WRITE(*,'("Initial mw check")')
-      END IF
-
-      ! Work out the time that the next dump will occur based on the
-      ! current timestep
-!      DO io = 1, n_io_blocks
-!
-!        time0 = HUGE(1.0_num)
-!        time1 = HUGE(1.0_num)
-!        IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
-!            time0 = io_block_list(io)%time_prev + io_block_list(io)%dt_snapshot
-!        IF (io_block_list(io)%nstep_snapshot >= 0) THEN
-!          nstep_next = io_block_list(io)%nstep_prev &
-!              + io_block_list(io)%nstep_snapshot
-!          time1 = time + dt * (nstep_next - (step + 1))
-!        END IF
-!
-!        IF (time0 < time1) THEN
-!        ! Next I/O dump based on dt_snapshot
-!          time_first = time0
-!          IF (io_block_list(io)%dt_snapshot > 0 .AND. time >= time0) THEN
-!            ! Store the most recent output time that qualifies
-!            writeout = .TRUE.
-!          END IF
-!        ELSE
-!        ! Next I/O dump based on nstep_snapshot
-!          time_first = time1
-!          IF (io_block_list(io)%nstep_snapshot > 0 &
-!              .AND. (step + 1 ) >= nstep_next) THEN
-!          ! Store the most recent output step that qualifies
-!            writeout = .TRUE.
-!          END IF
-!        END IF
-!
-!      END DO
-
-    DO io = 1, n_io_blocks
-      io_block_list(io)%dump = .FALSE.
+      CALL mw_io_test(step, dump)
 
 
-      time0 = io_block_list(io)%walltime_interval
-      IF (time0 > 0.0_num) THEN
-        IF (elapsed_time - io_block_list(io)%walltime_prev >= time0) THEN
-          io_block_list(io)%dump = .TRUE.
-          io_block_list(io)%walltime_prev = elapsed_time
-        END IF
-      END IF
-
-      IF (ALLOCATED(io_block_list(io)%dump_at_nsteps)) THEN
-        DO is = 1, SIZE(io_block_list(io)%dump_at_nsteps)
-          IF ((step + 1)>= io_block_list(io)%dump_at_nsteps(is)) THEN
-            io_block_list(io)%dump = .TRUE.
-            io_block_list(io)%dump_at_nsteps(is) = HUGE(1)
-          END IF
-        END DO
-      END IF
-
-      IF (ALLOCATED(io_block_list(io)%dump_at_times)) THEN
-        DO is = 1, SIZE(io_block_list(io)%dump_at_times)
-          IF (time >= io_block_list(io)%dump_at_times(is)) THEN
-            io_block_list(io)%dump = .TRUE.
-            io_block_list(io)%dump_at_times(is) = HUGE(1.0_num)
-          END IF
-        END DO
-      END IF
-
-      IF (ALLOCATED(io_block_list(io)%dump_at_walltimes)) THEN
-        DO is = 1, SIZE(io_block_list(io)%dump_at_walltimes)
-          IF (elapsed_time >= io_block_list(io)%dump_at_walltimes(is)) THEN
-            io_block_list(io)%dump = .TRUE.
-            io_block_list(io)%dump_at_walltimes(is) = HUGE(1.0_num)
-          END IF
-        END DO
-      END IF
-
-      ! Work out the time that the next dump will occur based on the
-      ! current timestep
-      time0 = HUGE(1.0_num)
-      time1 = HUGE(1.0_num)
-      IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
-          time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
-      IF (io_block_list(io)%nstep_snapshot >= 0) THEN
-        nstep_next = io_block_list(io)%buffer_nstep_prev  &
-            + io_block_list(io)%nstep_snapshot
-        time1 = time + dt * (nstep_next - step)
-      END IF
-
-      IF (time0 < time1) THEN
-        ! Next I/O dump based on dt_snapshot
-        time_first = time0
-        IF (rank == 0) THEN
-                print *, "time = ", time, "and time0 = ", time0
-        END IF 
-        IF (io_block_list(io)%dt_snapshot > 0 .AND. (time + dt) >= time0) THEN
-          ! Store the most recent output time that qualifies
-          DO
-            time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
-            IF (time0 > time) EXIT
-            io_block_list(io)%buffer_time_prev = time0
-          END DO
-          IF (rank == 0) THEN
-                  print *, "dt_snapshot condition for aligned output true"
-          END IF
-          dump = .TRUE.
-          IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
-          IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
-          IF (dump .AND. (step) < io_block_list(io)%nstep_start) dump = .FALSE.
-          IF (dump .AND. (step) > io_block_list(io)%nstep_stop)  dump = .FALSE.
-          IF (dump .AND. time < time_start)  dump = .FALSE.
-          IF (dump .AND. time > time_stop)   dump = .FALSE.
-          IF (dump .AND. (step) < nstep_start) dump = .FALSE.
-          IF (dump .AND. (step) > nstep_stop)  dump = .FALSE.
-          IF (dump) writeout = .TRUE.
-!          IF (rank == 0) THEN
-!                  print *, "dt_snapshot condition for aligned output true"
-!          END IF
-        END IF
-      ELSE
-        ! Next I/O dump based on nstep_snapshot
-        time_first = time1
-        IF (io_block_list(io)%nstep_snapshot > 0 &
-            .AND. (step + 1) >= nstep_next) THEN
-          ! Store the most recent output step that qualifies
-          DO
-            nstep_next = io_block_list(io)%buffer_nstep_prev &
-                + io_block_list(io)%nstep_snapshot
-            IF (nstep_next > step) EXIT
-            io_block_list(io)%buffer_nstep_prev = nstep_next
-          END DO
-          dump = .TRUE.
-          IF (dump .AND. time < io_block_list(io)%time_start)  dump = .FALSE.
-          IF (dump .AND. time > io_block_list(io)%time_stop)   dump = .FALSE.
-          IF (dump .AND. (step) < io_block_list(io)%nstep_start) dump = .FALSE.
-          IF (dump .AND. (step) > io_block_list(io)%nstep_stop)  dump = .FALSE.
-          IF (dump .AND. time < time_start)  dump = .FALSE.
-          IF (dump .AND. time > time_stop)   dump = .FALSE.
-          IF (dump .AND. (step) < nstep_start) dump = .FALSE.
-          IF (dump .AND. (step) > nstep_stop)  dump = .FALSE.
-          IF (dump) writeout = .TRUE.
-          IF (rank == 0) THEN
-                  print *, "nstep_snapshot condition for aligned output true"
-          END IF
-        END IF
-      END IF
-
-    END DO
-
-
-
-
-!      DO io = 1, n_io_blocks
-!        IF(io_block_list(io)%dump) THEN
-!                writeout = .TRUE.
-!        END IF
-!      END DO
-
-
-!      IF (future_step == nstep_prev .AND. .NOT.force) THEN
-!        writeout = .FALSE.
-!      ELSE
-!      DO iprefix = 1,SIZE(file_prefixes)
-!      IF (rank == 0) THEN
-!        WRITE(*,'("Checking I/O")')
-!      END IF
-!      CALL io_test(iprefix, future_step, print_arrays, force, prefix_first_call)
-!      IF (.NOT.print_arrays) CYCLE
-!        writeout = .TRUE.
-!      END DO
-!      END IF
-
-      IF(writeout) THEN
-        IF (rank == 0) THEN
-          WRITE(*,'("Alignment required")')
-        END IF
-      END IF
-
-!      nstep_prev = future_step
-
-      IF (window_shift_cells > 0 .AND. window_shift_cells < ng .AND. writeout) THEN
+      IF (window_shift_cells > 0 .AND. window_shift_cells < ng .AND. dump) THEN
 
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
         nremainder = MOD(window_shift_cells, ng)
+!        IF(rank == 0) THEN
+!                print *, "Performing alignment"
+!        END IF
         CALL shift_window(nremainder)
         nremainder = 0
         CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real &
                                 + REAL(nremainder, num)
-        IF (rank == 0) THEN
-          WRITE(*,'("Performing alignment")')
-        END IF
       END IF
 
 
@@ -687,13 +557,10 @@ CONTAINS
         nremainder = MOD(window_shift_cells, ng)
         DO i = ng, window_shift_cells, ng  ! CHECK IF THIS LOOP IS CALLED IF window_shift_cells < ng
           CALL shift_window(ng)
-          IF (rank == 0) THEN
-            WRITE(*, '("Chunk shift of window")')
-          END IF
         END DO
-        IF (rank == 0 .AND. writeout) THEN
-          WRITE(*,'("Auto aligned output")')
-        END IF
+!        IF(rank == 0 .AND. dump) THEN
+!                print *, "Auto-aligned output"
+!        END IF
         CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real &
