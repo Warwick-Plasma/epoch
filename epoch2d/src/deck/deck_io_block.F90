@@ -993,6 +993,7 @@ CONTAINS
     io_block%name = ''
     io_block%dt_snapshot = -1.0_num
     io_block%time_prev = 0.0_num
+    io_block%buffer_time_prev = 0.0_num
     io_block%time_first = 0.0_num
     io_block%dt_average = -1.0_num
     io_block%dt_min_average = -1.0_num
@@ -1000,6 +1001,7 @@ CONTAINS
     io_block%average_time_start = -1.0_num
     io_block%nstep_snapshot = -1
     io_block%nstep_prev = 0
+    io_block%buffer_nstep_prev = 0
     io_block%nstep_first = 0
     io_block%nstep_average = -1
     io_block%restart = .FALSE.
