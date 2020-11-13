@@ -22,7 +22,7 @@ MODULE window
   IMPLICIT NONE
 
   REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
-!  REAL(num), SAVE :: window_shift_fraction
+  REAL(num), SAVE :: window_shift_fraction
 
 CONTAINS
 
