@@ -22,7 +22,7 @@ MODULE window
   IMPLICIT NONE
 
   REAL(num), ALLOCATABLE :: density(:,:), temperature(:,:,:), drift(:,:,:)
-  REAL(num), SAVE :: window_shift_fraction
+!  REAL(num), SAVE :: window_shift_fraction
 
 CONTAINS
 
@@ -486,14 +486,77 @@ CONTAINS
   END SUBROUTINE remove_particles
 #endif
 
+  SUBROUTINE mw_io_test(step, dump)
+!    USE diagnostics
+    USE deck_io_block
+
+    INTEGER, INTENT(IN) :: step
+    LOGICAL, INTENT(OUT) :: dump
+    INTEGER :: io, is, nstep_next = 0
+    REAL(num) :: time0, time1, time_first
+
+    dump = .FALSE.
+    DO io = 1, n_io_blocks
+
+      time0 = io_block_list(io)%walltime_interval
+
+      ! Work out the time that the next dump will occur based on the
+      ! current timestep
+      time0 = HUGE(1.0_num)
+      time1 = HUGE(1.0_num)
+      IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
+          time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+      IF (io_block_list(io)%nstep_snapshot >= 0) THEN
+          nstep_next = io_block_list(io)%buffer_nstep_prev  &
+            + io_block_list(io)%nstep_snapshot
+          time1 = time + dt * (nstep_next - step)
+      END IF
+
+      IF (time0 < time1) THEN
+        ! Next I/O dump based on dt_snapshot
+        time_first = time0
+        IF (io_block_list(io)%dt_snapshot > 0 .AND. (time + dt) >= time0) THEN
+          ! Store the most recent output time that qualifies
+          DO
+            time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+            IF (time0 > time) EXIT
+            io_block_list(io)%buffer_time_prev = time0
+          END DO
+          dump = .TRUE.
+        END IF
+      ELSE
+        ! Next I/O dump based on nstep_snapshot
+        time_first = time1
+        IF (io_block_list(io)%nstep_snapshot > 0 &
+            .AND. (step + 1) >= nstep_next) THEN
+          ! Store the most recent output step that qualifies
+          DO
+            nstep_next = io_block_list(io)%buffer_nstep_prev &
+                + io_block_list(io)%nstep_snapshot
+            IF (nstep_next > step) EXIT
+            io_block_list(io)%buffer_nstep_prev = nstep_next
+          END DO
+          dump = .TRUE.
+        END IF
+      END IF
+
+    END DO
+
+  END SUBROUTINE mw_io_test
 
 
-  SUBROUTINE moving_window
+
+
+  SUBROUTINE moving_window(step)
+!    USE diagnostics
+    USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells, errcode = 0
     INTEGER :: i, nremainder
+    INTEGER, INTENT(IN) :: step
+    LOGICAL :: dump
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -520,6 +583,26 @@ CONTAINS
       IF (window_v_x <= 0.0_num) RETURN
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
+
+      CALL mw_io_test(step, dump)
+
+
+      IF (window_shift_cells > 0 .AND. window_shift_cells < ng .AND. dump) THEN
+
+        window_shift_real = REAL(window_shift_cells, num)
+        window_offset = window_offset + window_shift_real * dx
+        nremainder = MOD(window_shift_cells, ng)
+!        IF(rank == 0) THEN
+!                print *, "Performing alignment"
+!        END IF
+        CALL shift_window(nremainder)
+        nremainder = 0
+        CALL setup_bc_lists
+        CALL particle_bcs
+        window_shift_fraction = window_shift_fraction - window_shift_real &
+                                + REAL(nremainder, num)
+      END IF
+
       ! Allow for posibility of having jumped two cells at once
       IF (window_shift_cells > ng - 1) THEN
         window_shift_real = REAL(window_shift_cells, num)
