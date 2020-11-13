@@ -22,6 +22,7 @@ MODULE window
   IMPLICIT NONE
 
   REAL(num), ALLOCATABLE :: density(:), temperature(:,:), drift(:,:)
+  REAL(num), SAVE :: window_shift_fraction
 
 CONTAINS
 
@@ -436,7 +437,7 @@ CONTAINS
 #endif
 
   SUBROUTINE mw_io_test(step, dump)
-    USE diagnostics
+!    USE diagnostics
     USE deck_io_block
 
     INTEGER, INTENT(IN) :: step
@@ -495,7 +496,7 @@ CONTAINS
 
 
   SUBROUTINE moving_window(step)
-     USE diagnostics
+!     USE diagnostics
      USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT

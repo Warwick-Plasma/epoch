@@ -594,7 +594,7 @@ MODULE shared_data
   INTEGER :: bc_z_min_after_move = c_bc_null
   INTEGER :: bc_z_max_after_move = c_bc_null
   REAL(num) :: window_offset
-  REAL(num) :: window_shift_fraction
+!  REAL(num) :: window_shift_fraction
 
 #ifdef PHOTONS
   !----------------------------------------------------------------------------
