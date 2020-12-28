@@ -756,9 +756,9 @@ CONTAINS
     frac_p = 1.0_num / p
 
     ! Precalculate repeated terms
-    pcos_theta = p * cos_theta
     sin_theta = SQRT(1.0_num - cos_theta**2)
-    psin_theta = p*sin_theta
+    pcos_theta = p * cos_theta
+    psin_theta = p * sin_theta
     uz = part%part_p(3) * frac_p
 
     IF (ABS(1.0_num - uz) < 1.0e-10_num) THEN
@@ -770,10 +770,10 @@ CONTAINS
       ! Precalculate repeated terms
       ux = part%part_p(1) * frac_p
       uy = part%part_p(2) * frac_p
-      pfrac_uz = p/SQRT(1.0_num - uz**2)
+      pfrac_uz = p / SQRT(1.0_num - uz**2)
       cos_phi = COS(phi)
-      term_1 = sin_theta*cos_phi*uz*pfrac_uz + pcos_theta
-      term_2 = sin_theta*SIN(phi)*pfrac_uz
+      term_1 = sin_theta * cos_phi * uz * pfrac_uz + pcos_theta
+      term_2 = sin_theta * SIN(phi) * pfrac_uz
 
       part%part_p(1) = ux * term_1 - uy * term_2
       part%part_p(2) = uy * term_1 + ux * term_2

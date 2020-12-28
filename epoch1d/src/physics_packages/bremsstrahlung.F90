@@ -695,15 +695,15 @@ CONTAINS
     ! added into the simulation
     IF (use_brem_scatter .AND. add_photon) THEN
       scatter_theta = calc_scatter_theta(part_e)
-      scatter_phi = 2.0_num*pi*random()
+      scatter_phi = 2.0_num * pi * random()
       CALL rotate_p(new_photon, COS(scatter_theta), scatter_phi, photon_p)
     END IF
 
     ! Calculate electron recoil (subtract weighted photon momentum)
     IF (use_bremsstrahlung_recoil) THEN
-      electron%part_p = electron%part_p - photon_weight*new_photon%part_p
+      electron%part_p = electron%part_p - photon_weight * new_photon%part_p
       electron%particle_energy = electron%particle_energy &
-          - (photon_weight*photon_energy)
+          - photon_weight * photon_energy
     END IF
 
     ! This will only create photons that have energies above a user specified
@@ -739,14 +739,14 @@ CONTAINS
 
     REAL(num), INTENT(IN) :: part_E
     REAL(num) :: calc_scatter_theta
-    REAL(num) :: gamma_theta_max, gamma_theta, gamma
+    REAL(num) :: gamma_theta_max, gamma_theta, gamma_rel
     REAL(num) :: a1 = 0.625_num
     REAL(num) :: a2 = 1.875_num
     REAL(num) :: border = 0.25_num
     REAL(num) :: r1, r2, r3
 
-    gamma = part_E/(m0c2)
-    gamma_theta_max = pi*gamma
+    gamma_rel = part_E / m0c2
+    gamma_theta_max = pi * gamma_rel
 
     ! Perform the Tsai algorithm
     DO
@@ -758,16 +758,16 @@ CONTAINS
       ! Random sampling returns a u value, which is equivalent to the product of
       ! the particle gamma factor and the deflection theta
       IF (r1 < border) THEN
-        gamma_theta = -LOG(r2*r3)/a1
+        gamma_theta = -LOG(r2 * r3) / a1
       ELSE
-        gamma_theta = -LOG(r2*r3)/a2
+        gamma_theta = -LOG(r2 * r3) / a2
       END IF
 
       ! We require a theta value less than pi
       IF (gamma_theta <= gamma_theta_max) EXIT
     END DO
 
-    calc_scatter_theta = gamma_theta/gamma
+    calc_scatter_theta = gamma_theta / gamma_rel
 
   END FUNCTION calc_scatter_theta
 
