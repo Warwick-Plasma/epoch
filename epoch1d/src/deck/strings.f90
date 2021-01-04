@@ -323,13 +323,18 @@ CONTAINS
 
     CHARACTER(LEN=c_max_string_length) :: trim_string
     CHARACTER(LEN=*) :: string
+    CHARACTER(LEN=:), ALLOCATABLE :: string_copy
 
-    string = ADJUSTL(string)
-    IF (LEN_TRIM(string) > c_max_string_length) THEN
-      trim_string = string(1:c_max_string_length)
+    ALLOCATE(CHARACTER(LEN=LEN(string)) :: string_copy)
+
+    string_copy = ADJUSTL(string)
+    IF (LEN_TRIM(string_copy) > c_max_string_length) THEN
+      trim_string = string_copy(1:c_max_string_length)
     ELSE
-      trim_string = TRIM(string)
+      trim_string = TRIM(string_copy)
     END IF
+
+    DEALLOCATE(string_copy)
 
   END FUNCTION trim_string
 
