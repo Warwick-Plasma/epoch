@@ -794,7 +794,9 @@ CONTAINS
 
       IF (str_cmp(element, 'mass_density')) THEN
         mult = 1.0_num / species_list(species_id)%mass
-        mult_string = '/ species_list(species_id)%mass'
+        WRITE(mult_string, '(''*'', e23.15e3)') mult
+        i = INDEX(mult_string, 'E')
+        mult_string(i:i) = 'e'
       END IF
 
       ic => species_list(species_id)%initial_conditions
