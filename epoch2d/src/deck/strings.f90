@@ -323,12 +323,13 @@ CONTAINS
 
 
 
-  FUNCTION trim_string(string)
+  FUNCTION trim_string(string_in)
 
     CHARACTER(LEN=c_max_string_length) :: trim_string
-    CHARACTER(LEN=*) :: string
+    CHARACTER(LEN=*) :: string_in
+    CHARACTER(LEN=LEN_TRIM(string_in))
 
-    string = ADJUSTL(string)
+    string = ADJUSTL(string_in)
     IF (LEN_TRIM(string) > c_max_string_length) THEN
       trim_string = string(1:c_max_string_length)
     ELSE
