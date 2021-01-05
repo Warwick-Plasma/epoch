@@ -327,7 +327,7 @@ CONTAINS
 
     CHARACTER(LEN=c_max_string_length) :: trim_string
     CHARACTER(LEN=*) :: string_in
-    CHARACTER(LEN=LEN_TRIM(string_in))
+    CHARACTER(LEN=LEN_TRIM(string_in)) :: string
 
     string = ADJUSTL(string_in)
     IF (LEN_TRIM(string) > c_max_string_length) THEN
