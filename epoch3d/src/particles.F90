@@ -193,44 +193,50 @@ CONTAINS
       END IF
 
       bc_species = species_list(ispecies)%bc_particle
-      IF (bc_species(c_bd_x_min) == c_bc_thermal &
+      IF ((bc_species(c_bd_x_min) == c_bc_thermal &
           .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) &
+          x_min_boundary) THEN
         bnd_x_min = x_min_outer
       ELSE
         bnd_x_min = x_min_local
       END IF
-      IF (bc_species(c_bd_x_max) == c_bc_thermal &
+      IF ((bc_species(c_bd_x_max) == c_bc_thermal &
           .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) &
+          .AND. x_max_boundary) THEN
         bnd_x_max = x_max_outer
       ELSE
         bnd_x_max = x_max_local
       END IF
-      IF (bc_species(c_bd_y_min) == c_bc_thermal &
+      IF ((bc_species(c_bd_y_min) == c_bc_thermal &
           .OR. bc_field(c_bd_y_min) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) &
+          .AND. y_min_boundary) THEN
         bnd_y_min = y_min_outer
       ELSE
         bnd_y_min = y_min_local
       END IF
-      IF (bc_species(c_bd_y_max) == c_bc_thermal &
+      IF ((bc_species(c_bd_y_max) == c_bc_thermal &
           .OR. bc_field(c_bd_y_max) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) &
+          .AND. y_max_boundary) THEN
         bnd_y_max = y_max_outer
       ELSE
         bnd_y_max = y_max_local
       END IF
-      IF (bc_species(c_bd_z_min) == c_bc_thermal &
+      IF ((bc_species(c_bd_z_min) == c_bc_thermal &
           .OR. bc_field(c_bd_z_min) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) &
+          .AND. z_min_boundary) THEN
         bnd_z_min = z_min_outer
       ELSE
         bnd_z_min = z_min_local
       END IF
-      IF (bc_species(c_bd_z_max) == c_bc_thermal &
+      IF ((bc_species(c_bd_z_max) == c_bc_thermal &
           .OR. bc_field(c_bd_z_max) == c_bc_cpml_laser &
-          .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+          .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) &
+          .AND. z_max_boundary) THEN
         bnd_z_max = z_max_outer
       ELSE
         bnd_z_max = z_max_local
