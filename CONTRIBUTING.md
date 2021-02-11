@@ -11,7 +11,7 @@ of answers between minor versions, and strict backwards compatibility.
 
 EPOCH development and maintenance
 is ongoing, so please search for open issues at
-https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
+https://github.com/Warwick-Plasma/epoch/issues
 and consider creating an issue
 with the enhancement tag before starting anything to avoid
 duplication of effort. The development team is quite busy, so please allow
@@ -44,7 +44,7 @@ terms as the rest of the code (GPL v3).
 For developer access to the main EPOCH repositories, please contact
 <cfsa.gitlab+admin@gmail.com>.
 For small fixes patches can be offered via the issue tracker which can
-be found at https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/issues
+be found at https://github.com/Warwick-Plasma/epoch/issues
 
 
 # Coding Style
@@ -75,9 +75,7 @@ in the main code. Conditional compilation (#ifdef) should be used
 Where possible, all control should be via the input deck. Backwards
 compatibility must be preserved.
 
-Documentation will be required, either in Latex format or a page on our
-Mediawiki site currently at
-https://cfsa-pmw.warwick.ac.uk/mediawiki/index.php/EPOCH:Landing_Page.
+Documentation will be required in Latex format.
 This should cover any changes to the input deck blocks or keys, any general
 limitations of the code or methods and if possible links to any methods
 papers or description.

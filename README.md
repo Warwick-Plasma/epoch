@@ -1,11 +1,11 @@
 # *** PLEASE READ THIS NOTE ***
 
-If you are obtaining this code from the gitlab server *DO NOT* use the
+If you are obtaining this code from the github server *DO NOT* use the
 "Download zip" buttons. They will only download the EPOCH code and not the SDF
 subdirectory.
 
 The latest version of the code can be found
-[here](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/wikis/Downloads)
+[here](https://github.com/Warwick-Plasma/epoch/releases)
 
 For similar reasons, if cloning the repository using git you *MUST* add the
 "--recursive" flag.
@@ -13,21 +13,19 @@ For similar reasons, if cloning the repository using git you *MUST* add the
 ## DOWNLOADING AND BUILDING THE CODE
 
 The easiest method of downloading the code is to grab a copy of the latest
-release package, located in the "Downloads" wiki page on the GitLab site.
-To get there, click the "Wiki" link on the left-hand side of the EPOCH/epoch
-project page and then follow the "Downloads" link. You can also get there by
-following
-[this link](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch/wikis/Downloads).
+release package, located in the "Releases" section of the GitHub site.
+You can get there by following
+[this link](https://github.com/Warwick-Plasma/epoch/releases)
 
 All EPOCH development is carried out using the [git](https://git-scm.com)
 revision control system. The master repository is hosted on a web-based
 collaborative development site
-[here](https://cfsa-pmw.warwick.ac.uk/EPOCH/epoch).
+[here](https://github.com/Warwick-Plasma/epoch)
 Further details on this are provided below.
 
 ## Compiling the code
 
-The "Downloads" section of the GitLab site contains files in the form
+The "Releases" section of the GitHub site contains files in the form
 "epoch-4.4.5.tar.gz". These are tarred and gzipped packages of the code
 which can be unpacked with the command `tar xzf epoch-4.4.5.tar.gz`.
 This will create a directory called "epoch-4.4.5".
@@ -157,7 +155,7 @@ To perform an initial checkout of the code using git, you should issue the
 following command:
 
 ```
-  git clone --recursive git@cfsa-pmw.warwick.ac.uk:EPOCH/epoch.git
+  git clone --recursive https://github.com/Warwick-Plasma/epoch.git
 ```
 
 The "--recursive" flag ensures that not only the "epoch"
