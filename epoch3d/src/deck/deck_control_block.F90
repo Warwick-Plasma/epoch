@@ -64,6 +64,7 @@ CONTAINS
     n_zeros_control = -1
     dlb_maximum_interval = 500
     dlb_force_interval = 2000
+    dlb_threshold = -1.0_num
     nx_global = -1
     ny_global = -1
     nz_global = -1

@@ -981,9 +981,6 @@ CONTAINS
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     REAL(num), PARAMETER :: pi_fac = &
                                 (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
-#ifndef PER_SPECIES_WEIGHT
-    REAL(num) :: w1, w2, wr, e1, e5, e2, e6
-#endif
     factor = 0.0_num
 
     ! Intra-species collisions
@@ -1144,29 +1141,6 @@ CONTAINS
       p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
       p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
 
-#ifndef PER_SPECIES_WEIGHT
-      w1 = current%weight
-      w2 = impact%weight
-      wr = w1 / w2
-
-      ! Energies before and after collision.
-      ! Only required for weighted particle correction
-      e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
-      e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
-
-      e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
-      e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
-
-      ! Restore values of p1, p2
-      p1 = p1 * c
-      p2 = p2 * c
-
-      IF (wr > one_p_2eps) THEN
-        CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-      ELSE IF (wr < one_m_2eps) THEN
-        CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
-      END IF
-#endif
       ! Update particle properties
       current%part_p = p5
       impact%part_p = p6
@@ -1450,7 +1424,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor
     INTEGER(i8) :: icount, jcount, pcount, k
-    REAL(num) :: m1, m2, q1, q2, w1, w2
+    REAL(num) :: m1, m2, q1, q2
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
     REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
@@ -1460,7 +1434,6 @@ CONTAINS
     REAL(num), DIMENSION(3,3) :: mat
     REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
-    REAL(num) :: e1, e5, e2, e6
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
     REAL(num), PARAMETER :: pi_fac = &
@@ -1504,9 +1477,6 @@ CONTAINS
       m2 = mass2
       q1 = charge1
       q2 = charge2
-      w1 = weight1
-      w2 = weight2
-      wr = w1 / w2
 
       current => p_list1%head
       impact => p_list2%head
@@ -1522,11 +1492,6 @@ CONTAINS
         m2 = impact%mass
         q1 = current%charge
         q2 = impact%charge
-#endif
-#ifndef PER_SPECIES_WEIGHT
-        w1 = current%weight
-        w2 = impact%weight
-        wr = w1 / w2
 #endif
 
         p1 = current%part_p / c
@@ -1554,10 +1519,6 @@ CONTAINS
         ! Pre-collision velocities
         v1 = p1 / gm1
         v2 = p2 / gm2
-
-        ! Pre-collision energies
-        e1 = c * SQRT(DOT_PRODUCT(p1, p1) + (m1 * c)**2)
-        e2 = c * SQRT(DOT_PRODUCT(p2, p2) + (m2 * c)**2)
 
         ! Velocity of centre-of-momentum (COM) reference frame
         vc = (p1 + p2) / gm
@@ -1639,19 +1600,6 @@ CONTAINS
 
         p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
         p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
-
-        e5 = c * SQRT(DOT_PRODUCT(p5, p5) + (m1 * c)**2)
-        e6 = c * SQRT(DOT_PRODUCT(p6, p6) + (m2 * c)**2)
-
-        ! Restore values of p1, p2
-        p1 = p1 * c
-        p2 = p2 * c
-
-        IF (wr > one_p_2eps) THEN
-          CALL weighted_particles_correction(w2 / w1, p1, p5, e1, e5, m1)
-        ELSE IF (wr < one_m_2eps) THEN
-          CALL weighted_particles_correction(w1 / w2, p2, p6, e2, e6, m2)
-        END IF
 
         ! Update particle properties
         current%part_p = p5
