@@ -536,7 +536,7 @@ CONTAINS
     red_ion = e_rest_ev * ionisation_energy_inv
     red_ion_inv = 1.0_num / red_ion
     ! Area must be multiplied by 1e-4 to convert from cm^2 to m^2
-    prob_factor = -e_dens * np / factor * dt * 1e-4_num
+    prob_factor = -e_dens * np / factor * dt * n_coll_steps * 1e-4_num
 
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
@@ -866,7 +866,7 @@ CONTAINS
 
       ! Calculate number of collisions in the timestep
       ! Limit value according to Sentoku & Kemp
-      nu = MIN(nu * factor * np * dt, 0.02_num)
+      nu = MIN(nu * factor * np * dt * n_coll_steps, 0.02_num)
 
       ! New coordinate system to simplify scattering.
       CALL new_coords(vr, c1, c2, c3)
@@ -1023,7 +1023,7 @@ CONTAINS
     impact => current%next
 
     ! Per-cell constant factors
-    cell_fac = dens**2 * dt * factor * dx * dy
+    cell_fac = dens**2 * dt * n_coll_steps * factor * dx * dy
     s_fac = cell_fac * log_lambda / pi4_eps2_c4
     dens_23 = dens**two_thirds
     s_fac_prime = cell_fac * pi_fac / dens_23
@@ -1318,7 +1318,7 @@ CONTAINS
 
         ! Collision frequency
         nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
-        nu = MIN(nu * factor * np * dt, 0.02_num)
+        nu = MIN(nu * factor * np * dt * n_coll_steps, 0.02_num)
 
         ! NOTE: nu is now the number of collisions per timestep, NOT collision
         ! frequency
@@ -1482,7 +1482,7 @@ CONTAINS
       impact => p_list2%head
 
       ! Per-cell constant factors
-      cell_fac = idens * jdens * dt * factor * dx * dy
+      cell_fac = idens * jdens * dt * n_coll_steps * factor * dx * dy
       s_fac = cell_fac * log_lambda / pi4_eps2_c4
       s_fac_prime = cell_fac * pi_fac
 

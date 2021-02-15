@@ -86,6 +86,9 @@ CONTAINS
           END IF
         END IF
       END IF
+
+      n_coll_steps = MAX(n_coll_steps, 1)
+
     END IF
 
   END SUBROUTINE collision_deck_finalise
@@ -155,6 +158,11 @@ CONTAINS
         use_collisional_ionisation = .FALSE.
 #endif
       END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'n_coll_steps')) THEN
+      n_coll_steps = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
