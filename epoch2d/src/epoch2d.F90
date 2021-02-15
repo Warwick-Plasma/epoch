@@ -215,10 +215,12 @@ PROGRAM pic
       IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
-        CALL reorder_particles_to_grid
+        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+          CALL reorder_particles_to_grid
+        END IF
 
         ! call collision operator
-        IF (use_collisions) THEN
+        IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
           IF (use_collisional_ionisation) THEN
             CALL collisional_ionisation
           ELSE
@@ -229,7 +231,9 @@ PROGRAM pic
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
-        CALL reattach_particles_to_mainlist
+        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+          CALL reattach_particles_to_mainlist
+        END IF
       END IF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
