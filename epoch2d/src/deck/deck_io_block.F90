@@ -61,7 +61,7 @@ CONTAINS
   SUBROUTINE io_deck_finalise
 
     INTEGER :: i, io, iu, n_zeros_estimate, n_dumps
-    REAL(num) :: dumps
+    REAL(num) :: dumps, dx
 #ifndef NO_IO
     CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
@@ -137,6 +137,13 @@ CONTAINS
 
           IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
             dumps = MAX(dumps, t_end / io_block_list(i)%dt_snapshot)
+          END IF
+
+          ! This might fail if Debye length not resolved
+          IF (io_block_list(i)%nstep_snapshot > 0) THEN
+            dx = (x_max - x_min) / nx_global
+            dx = MIN(dx, (y_max - y_min) / ny_global)
+            dumps = MAX(dumps, t_end * c / dx / io_block_list(i)%nstep_snapshot)
           END IF
         END DO
 

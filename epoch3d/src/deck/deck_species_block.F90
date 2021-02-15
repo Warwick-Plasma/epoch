@@ -75,6 +75,7 @@ CONTAINS
       ALLOCATE(dumpmask_array(4))
       ALLOCATE(bc_particle_array(2*c_ndims,4))
       release_species = ''
+      release_species_list = ''
     END IF
 
   END SUBROUTINE species_deck_initialise
