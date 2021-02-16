@@ -10,7 +10,7 @@ test_ubuntu_gfortran:
     - web
     - hook
   except:
-    - master
+    - main
     - wip/*
     - tag
   script:
@@ -27,7 +27,7 @@ test_ubuntu_intel:
     - web
     - hook
   except:
-    - master
+    - main
     - wip/*
     - tag
   script:
@@ -43,7 +43,7 @@ test_ubuntu_pgi:
     - web
     - hook
   except:
-    - master
+    - main
     - wip/*
     - tag
   script:
@@ -60,7 +60,7 @@ test_osx:
     - web
     - hook
   except:
-    - master
+    - main
     - wip/*
     - tag
   script:

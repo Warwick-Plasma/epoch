@@ -300,7 +300,7 @@ cat >> $outfile <<EOF
 EOF
 else
   if [ $pack_git_diff_from_origin -ne 0 ]; then
-    git diff --exit-code origin/master > $gitdiff
+    git diff --exit-code origin/main > $gitdiff
   else
     git diff --exit-code > $gitdiff
   fi
