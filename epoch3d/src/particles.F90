@@ -196,7 +196,7 @@ CONTAINS
       IF ((bc_species(c_bd_x_min) == c_bc_thermal &
           .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
           .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) &
-          x_min_boundary) THEN
+          .AND. x_min_boundary) THEN
         bnd_x_min = x_min_outer
       ELSE
         bnd_x_min = x_min_local
