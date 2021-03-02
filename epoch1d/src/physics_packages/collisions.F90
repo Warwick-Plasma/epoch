@@ -1420,7 +1420,7 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
