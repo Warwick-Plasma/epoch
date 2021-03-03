@@ -29,13 +29,17 @@ echo "MODE=$MODE"
 echo "DEFINE=$DEFINE"
 echo "MPIPROCS=$MPIPROCS"
 $COMPILER --version
+PYTHONCMD=$(which python3)
+if [ "$PYTHONCMD"x = x ]; then
+  PYTHONCMD=$(which python)
+fi
 
 echo '---- Python ----'
-python -V
+$PYTHONCMD -V
 echo -n 'numpy version: '
-python -c 'import numpy; print(numpy.__version__)'
+$PYTHONCMD -c 'import numpy; print(numpy.__version__)'
 echo -n 'matplotlib version: '
-python -c 'import matplotlib; print(matplotlib.__version__)'
+$PYTHONCMD -c 'import matplotlib; print(matplotlib.__version__)'
 echo -n 'sdf version: '
-python -c 'import sdf; print(sdf.__version__)'
+$PYTHONCMD -c 'import sdf; print(sdf.__version__)'
 
