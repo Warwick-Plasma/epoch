@@ -106,6 +106,7 @@ ifeq ($(strip $(COMPILER)),gfortran)
         GNUGE48 := $(shell expr $(GNUVER) \>= 408)
         ifeq "$(GNUGE48)" "1"
           FFLAGS += -Wno-target-lifetime -fno-realloc-lhs
+          FFLAGS += -Wno-maybe-uninitialized
         endif
       endif
     endif
