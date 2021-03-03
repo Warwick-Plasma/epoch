@@ -42,14 +42,22 @@ while [ -L "$target" ]; do
 done
 cd ..
 
+PYTHONCMD=$(which python3)
+if [ "$PYTHONCMD"x = x ]; then
+  PYTHONCMD=$(which python)
+  FLG=""
+else
+  FLG="-3"
+fi
+
 # Build SDF/C and install python sdf reader
 (cd SDF/C; make)
-SDF/utilities/build
+SDF/utilities/build $FLG
 
 # show system info
 scripts/system_info.sh
 
 # run the actual tests
-scripts/run-tests.py 1d $@
-scripts/run-tests.py 2d $@
-scripts/run-tests.py 3d $@
+$PYTHONCMD scripts/run-tests.py 1d $@
+$PYTHONCMD scripts/run-tests.py 2d $@
+$PYTHONCMD scripts/run-tests.py 3d $@
