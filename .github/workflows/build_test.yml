@@ -59,7 +59,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git config user.email "test@example.com" &&
              git config user.name "test" &&
-             git checkout $GITHUB_HEAD_REF &&
+             git checkout -b $GITHUB_HEAD_REF $GITHUB_SHA &&
              git checkout -b $GITHUB_RUN_ID origin/$GITHUB_BASE_REF &&
              git merge $GITHUB_HEAD_REF
 
