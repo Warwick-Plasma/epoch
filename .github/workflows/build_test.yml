@@ -60,8 +60,8 @@ jobs:
         run: git config user.email "test@example.com" &&
              git config user.name "test" &&
              git checkout -b $GITHUB_HEAD_REF $GITHUB_SHA &&
-             git checkout -b $GITHUB_RUN_ID origin/$GITHUB_BASE_REF &&
-             git merge $GITHUB_HEAD_REF
+             git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF &&
+             git merge --no-ff $GITHUB_HEAD_REF
 
       - name: Cleanup
         run: cd epoch1d && make cleanall &&
