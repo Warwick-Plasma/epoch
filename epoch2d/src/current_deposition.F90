@@ -734,6 +734,39 @@ SUBROUTINE triangle_current_deposition()
 
 END SUBROUTINE triangle_current_deposition
 
+  FUNCTION f0(ispecies, mass, px, py, pz)
+
+    INTEGER, INTENT(IN) :: ispecies
+    REAL(num), INTENT(IN) :: mass
+    REAL(num), INTENT(IN) :: px, py, pz
+    REAL(num) :: f0
+    REAL(num) :: Tx, Ty, Tz, driftx, drifty, driftz, density
+    REAL(num) :: f0_exponent, norm, two_kb_mass, two_pi_kb_mass3
+    TYPE(particle_species), POINTER :: species
+
+    species => species_list(ispecies)
+
+    IF (ABS(species%initial_conditions%density_back) > c_tiny) THEN
+       two_kb_mass = 2.0_num * kb * mass
+       two_pi_kb_mass3 = (pi * two_kb_mass)**3
+
+       Tx = species%initial_conditions%temp_back(1)
+       Ty = species%initial_conditions%temp_back(2)
+       Tz = species%initial_conditions%temp_back(3)
+       driftx  = species%initial_conditions%drift_back(1)
+       drifty  = species%initial_conditions%drift_back(2)
+       driftz  = species%initial_conditions%drift_back(3)
+       density = species%initial_conditions%density_back
+       f0_exponent = ((px - driftx)**2 / Tx &
+                    + (py - drifty)**2 / Ty &
+                    + (pz - driftz)**2 / Tz) / two_kb_mass
+       norm = density / SQRT(two_pi_kb_mass3 * Tx * Ty * Tz)
+       f0 = norm * EXP(-f0_exponent)
+    ELSE
+       f0 = 0.0_num
+    END IF
+
+  END FUNCTION f0
 
 
 
