@@ -1,272 +1,738 @@
+SUBROUTINE particle_sorting()
 
+  dx_bin  = 5 * dx ! Number of cells in bin along x
+  dy_bin  = 5 * dy ! Number of cells in bin along y
+  
+  idx_bin = 1./dx_bin ! Inverse of dx_bin
+  idy_bin = 1./dy_bin ! Inverse of dy_bin
 
-  SUBROUTINE get_particle(part_data, n, part)
-    TYPE(particle_data), POINTER, INTENT(IN) :: part_data
-    INTEGER(i8), INTENT(IN) :: n
-    TYPE(particle), INTENT(INOUT) :: part
+  nx_bin  = ceiling((x_grid_max_local - x_grid_min_local) * idx_bin) ! Number of bins along x
+  ny_bin  = ceiling((y_grid_max_local - y_grid_min_local) * idy_bin) ! Number of bins along y
 
-    IF (n >= 1 .AND. n <= part_data%count) THEN
-      part%pos = part_data%pos(n)
-      part%mom = part_data%mom(n)
-      part%mass = part_data%mass(n)
-      part%weight = part_data%weight(n)
-      part%charge = part_data%charge(n)
-    ENDIF
+  n_bins  = nx_bin * ny_bin ! Total number of bins
 
-  END SUBROUTINE get_particle
+  ! Calculate particle positions in terms of the bin co-ordinates
 
-  SUBROUTINE particle_sort
+  DO ipart = 1, species_list(ispecies)%attached_list%count
+    next => current%next
+    part_x = (current%part_pos(1) - x_grid_min_local) * idx_bin
+    part_y = (current%part_pos(2) - y_grid_min_local) * idy_bin
+    
+    ix = floor(part_x) ! x-coordinate of the particle bin
+    iy = floor(part_y) ! y-coordinate of the particle bin
 
-    ! This routine sorts the particles such that
-    ! the memory access to the particle list
-    ! is contigious
+    tile_id(ipart) = iy * nx_bin + ix + 1 ! 1-D coordinate of the bins
 
-  END SUBROUTINE particle sort
+    num(tile_id(ipart)) = num(tile_id(ipart)) + 1 ! Number of particles in each bin
 
+    current => next
 
-  SUBROUTINE current_deposition_VB_triangle
+  END DO ! End do-loop for particle position in terms of bin co-ordinates
 
-#ifdef INTEL_VECTORISATION
-!dir$ attributes align:64 :: gx
-!dir$ attributes align:64 :: gy
-!dir$ attributes align:64 :: gz  
-#endif
+  k = 0
 
-#ifdef INTEL_VECTORISATION
-!dir$ attributes align:64 :: hx
-!dir$ attributes align:64 :: hy
-!dir$ attributes align:64 :: hz
-#endif
+  ! Determine the stride of particle indices in bins  
 
-#ifdef IBM_VECTORISATION
-!IBM* ALIGN(64, gx, gy, gz)
-#endif
+  DO i = 1, n_bins
+    g_indx(i) = k ! Starting particle index for a particular bin
+    k = k + num(i)
+  END DO ! End do-loop for the stride of particle indices in bins
 
-#ifdef IBM_VECTORISATION
-!IBM* ALIGN(64, hx, hy, hz)
-#endif
+  ! Particle sorting in 1-D bins 
 
-! Similarly all other arrays need to be aligned
-
-    DO ispec = 1, n_species
-      species => species_list(ispec)
-      
-      IF (species%immobile) CYCLE
-
-      part_data => species%part_data
-      npart = part_data%count
-
-      CALL particle_sort ! I guess this routine should be called in the Boris pusher 
-                         ! such that both gx and hx are in sync
-
-      DO np = 1, npart, LVEC
-
-      !$OMP SIMD
-      DO n  = 1, MIN(LVEC, npart - np + 1)
-
-       CALL get_particle(part_data, n, part)
+  DO ipart = 1, species_list(ispecies)%attached_list%count
+    next => current%next
+    k = tile_id(ipart)
+    g_índx(k) = g_indx(k) + 1 ! Rearranged particle index with respect to the bins
 
 #ifndef PER_SPECIES_WEIGHT
-       part_weight(n) = part(n)%weight
-       fcx(n) = idty * part_weight(n)
-       fcy(n) = idtx * part_weight(n)
-       fcz(n) = idxy * part_weight(n)
+    w(g_indx(k))         = current%weight
+    fcx(g_indx(k))       = idty  * w(g_indx(k))
+    fcy(g_indx(k))       = idtx  * w(g_indx(k))
+    fcz(g_indx(k))       = idtxy * w(g_indx(k))
 #endif
+
 #ifndef NO_PARTICLE_PROBES
-       init_part_x(n) = part(n)%part_pos(1)
-       init_part_y(n) = part(n)%part_pos(2)
+    init_x(g_indx(k))    = current%part_pos(1)
+    init_y(g_indx(k))    = current%part_pos(2)
 #endif
+
 #ifdef PER_PARTICLE_CHARGE_MASS
-       part_q(n)   = part(n)%charge
-       part_m(n)   = part(n)%mass
-       part_mc(n)  = c * part(n)%mass
-       ipart_mc(n) = 1.0_num / part_mc(n)
-       cmratio(n)  = part_q(n) * dtfac * ipart_mc(n)
-       ccmratio(n) = c * cmratio(n)
+    q(g_indx(k))         = current%charge
+    m(g_indx(k))         = current%mass
+    mc(g_indx(k))        = c * current%mass
+    i_mc(g_indx(k))      = 1.0_num / mc
+    cmratio(g_indx(k))   = q(g_indx(k)) * dtfac * i_mc(g_indx(k))
+    ccmratio(g_indx(k))  = c * cmratio(g_indx(k))
 #ifndef NO_PARTICLE_PROBES
-       part_mc2 = c * part_mc
+    mc2(g_indx(k))       = c * mc(g_indx(k))
 #endif
 #endif
 
-      !Copy the particle properties out for speed
-      part_x(n)  = part(n)%part_pos(1) - x_grid_min_local
-      part_y(n)  = part(n)%part_pos(2) - y_grid_min_local
-      part_ux(n) = part(n)%part_p(1) * ipart_mc(n)
-      part_uy(n) = part(n)%part_p(2) * ipart_mc(n)
-      part_uz(n) = part(n)%part_p(3) * ipart_mc(n)
+    ! Copy the particle properties out for sorting
+    x(g_indx(k))         = current%part_pos(1) - x_grid_min_local
+    y(g_indx(k))         = current%part_pos(2) - y_grid_min_local
+    px(g_indx(k))        = current%part_p(1) * ipart_mc
+    py(g_indx(k))        = current%part_p(2) * ipart_mc
+    pz(g_indx(k))        = current%part_p(3) * ipart_mc
+    pvol(g_indx(k))      = current%pvol
+    gamma_rel(g_indx(k)) = SQRT(px(g_indx(k))**2 + py(g_indx(k))**2 + pz(g_indx(k))**2 + 1.0_num)
+    root(g_indx(k))      = dtco2 / gamma_rel(g_indx(k))
+    current => next
+  END DO ! End do-loop for particle sorting
 
-     !Now advance to t+1.5dt to calculate current
-     !For efficient vectorization, I would prefer
-     !part_x(n)  = part(n)%part_pos(1) - x_grid_min_local + delta_x
-     !part_y(n)  = part(n)%part_pos(2) - x_grid_min_local + delta_x
-     !This eliminates the dependency on previous step
-      part_x(n)  = part_x(n) + delta_x(n)
-      part_y(n)  = part_y(n) + delta_y(n)
+END SUBROUTINE particle_sorting
 
-     !Delta-f calculation: subtract background from calculated current
+SUBROUTINE particle_pusher()
+
+  DO i = 1, species_list(ispecies)%attached_list%count, LVEC
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+      jj = i + j - 1
+      x(jj) = x(jj) + px(jj) * root(jj)
+      y(jj) = y(jj) + py(jj) * root(jj) 
+
+#ifdef WORK_DONE_INTEGRATED
+      ! This is the actual total work done by the fields: Results correspond
+      ! with the electron's gamma factor
+
+      root(jj) = cmratio(jj) / gamma_rel(jj)
+
+      tmp_x(j) = px(jj) * root(jj)
+      tmp_y(j) = py(jj) * root(jj)
+      tmp_z(j) = pz(jj) * root(jj)
+#endif
+
+    END DO ! End do-loop for j
+
+  ! Calculate fields at particle positions
+  ! Grid cell position as a fraction
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      cell_x_r(j) = x(jj) * idx
+      cell_y_r(j) = y(jj) * idy
+
+    END DO ! End do-loop for grid cell position as fraction
+
+  ! Round cell position to nearest cell
+  
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      cell_x1(jj) = FLOOR(cell_x_r(j) + 0.5_num)
+      cell_y1(jj) = FLOOR(cell_y_r(j) + 0.5_num)
+
+      cell_x2(j) = FLOOR(cell_x_r(j))
+      cell_y2(j) = FLOOR(cell_y_r(j))
+
+    END DO ! End do-loop for nearest cell position
+ 
+  ! Calculate fraction of cell between nearest cell boundary and particle
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+  
+      jj = i + j - 1
+      cell_frac_x(j) = REAL(cell_x1(jj), num) - cell_x_r(j)
+      cell_frac_y(j) = REAL(cell_y1(jj), num) - cell_y_r(j)
+    
+    END DO ! End do-loop for grid cell position fraction 
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      cfx2(j) = cell_frac_x(j)**2
+      cfy2(j) = cell_frac_y(j)**2
+
+    END DO
+      
+    DO j = 1, 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+      jj = i + j - 1
+      cell_x1(jj) = cell_x1(jj) + 1
+      cell_y1(jj) = cell_y1(jj) + 1
+
+  ! Particle weight factors as described in Page 25 of the PSC manual
+  ! These weight grid properties onto particles
+  ! Also used to weight particle properties onto grid, used later to calculate J
+  ! NOTE: These weights require an additional multiplication factor
+
+  ! This weighing is for triangle shaped particles
+      
+      gxx(-1,j) = 0.25_num + cfx2(j) + cell_frac_x(j)
+      gxx( 0,j) = 1.5_num - 2.0_num * cfx2(j)
+      gxx( 1,j) = 0.25_num + cfx2(j) - cell_frac_x(j)
+
+      gyy(-1,j) = 0.25_num - cfy2(j) + cell_frac_y(j)
+      gyy( 0,j) = 1.5_num - 2.0_num * cfy2(j)
+      gyy( 1,j) = 0.25_num + cfy2(j) - cell_frac_y(j) 
+
+  ! Now redo shifted by half a cell due to grid stagger
+  ! Use shifted version for ex in X, ey in Y, ez in Z
+  ! And in Y&Z for bx, X&Z for by, X&Y for bz
+
+    END DO ! End do-loop with gxx
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+  
+      cell_frac_x(j) = REAL(cell_x2(j), num) - cell_x_r(j) + 0.5_num
+      cell_frac_y(j) = REAL(cell_y2(j), num) - cell_y_r(j) + 0.5_num
+
+      cell_x2(j) = cell_x2(j) + 1
+      cell_y2(j) = cell_y2(j) + 1
+
+    END DO ! End do-loop for re-doing cell_frac_(x,y)
+
+    dcellx = 0
+    dcelly = 0
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      cfx2(j) = cell_frac_x(j)**2
+      cfy2(j) = cell_frac_y(j)**2
+
+    END DO
+
+  ! Calculating hxx
+  ! NOTE: These weights require an additional multiplication factor
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      hxx(dcellx(j)-1,j) = 0.25_num - cfx2(j) + cell_frac_x(j)
+      hxx(dcellx(j)  ,j) = 1.5_num - 2.0_num * cfx2(j)
+      hxx(dcellx(j)+1,j) = 0.25_num + cfx2(j) - cell_frac_x(j)
+
+      hyy(dcelly(j)-1,j) = 0.25_num + cfy2(j) + cell_frac_y(j)
+      hyy(dcelly(j)  ,j) = 1.5_num - 2.0_num * cfy2(j)
+      hyy(dcelly(j)+1,j) = 0.25_num + cfy2(j) - cell_frac_y(j)
+
+    END DO ! End do-loop for hxx
+
+  ! These are the electric and magnetic fields interpolated to the
+  ! particle position. They have been checked and are correct.
+  ! Actually checking this is messy
+
+  ! Calculate e-fields at particle position for triangle particles
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+  
+      ex_part(j) = &
+               gyy(-1,j) * (hxx(-1,j) * ex(cell_x2(j)-1,cell_y1(j)-1) &
+             +              hxx( 0,j) * ex(cell_x2(j)  ,cell_y1(j)-1) &
+             +              hxx( 1,j) * ex(cell_x2(j)+1,cell_y1(j)-1)) &
+             + gyy( 0,j) * (hxx(-1,j) * ex(cell_x2(j)-1,cell_y1(j)  ) &
+             +              hxx( 0,j) * ex(cell_x2(j)  ,cell_y1(j)  ) &
+             +              hxx( 1,j) * ex(cell_x2(j)+1,cell_y1(j)  )) &
+             + gyy( 1,j) * (hxx(-1,j) * ex(cell_x2(j)-1,cell_y1(j)+1) &
+             +              hxx( 0,j) * ex(cell_x2(j)  ,cell_y1(j)+1) &
+             +              hxx( 1,j) * ex(cell_x2(j)+1,cell_y1(j)+1))
+
+      ey_part(j) = &
+               hyy(-1,j) * (gxx(-1,j) * ey(cell_x1(j)-1,cell_y2(j)-1) &
+             +              gxx( 0,j) * ey(cell_x1(j)  ,cell_y2(j)-1) &
+             +              gxx( 1,j) * ey(cell_x1(j)+1,cell_y2(j)-1)) &
+             + hyy( 0,j) * (gxx(-1,j) * ey(cell_x1(j)-1,cell_y2(j)  ) &
+             +              gxx( 0,j) * ey(cell_x1(j)  ,cell_y2(j)  ) &
+             +              gxx( 1,j) * ey(cell_x1(j)+1,cell_y2(j)  )) &
+             + hyy( 1,j) * (gxx(-1,j) * ey(cell_x1(j)-1,cell_y2(j)+1) &
+             +              gxx( 0,j) * ey(cell_x1(j)  ,cell_y2(j)+1) &
+             +              gxx( 1,j) * ey(cell_x1(j)+1,cell_y2(j)+1))
+
+      ez_part(j) = &
+               gyy(-1,j) * (gxx(-1,j) * ez(cell_x1(j)-1,cell_y1(j)-1) &
+             +              gxx( 0,j) * ez(cell_x1(j)  ,cell_y1(j)-1) &
+             +              gxx( 1,j) * ez(cell_x1(j)+1,cell_y1(j)-1)) &
+             + gyy( 0,j) * (gxx(-1,j) * ez(cell_x1(j)-1,cell_y1(j)  ) &
+             +              gxx( 0,j) * ez(cell_x1(j)  ,cell_y1(j)  ) &
+             +              gxx( 1,j) * ez(cell_x1(j)+1,cell_y1(j)  )) &
+             + gyy( 1,j) * (gxx(-1,j) * ez(cell_x1(j)-1,cell_y1(j)+1) &
+             +              gxx( 0,j) * ez(cell_x1(j)  ,cell_y1(j)+1) &
+             +              gxx( 1,j) * ez(cell_x1(j)+1,cell_y1(j)+1))
+
+    END DO ! End do-loop for e-fields at particle position
+
+  ! Calculate b-fields at particle position for triangle particles
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+  
+      bx_part(j) = &
+               hyy(-1,j) * (gxx(-1,j) * bx(cell_x1(j)-1,cell_y2(j)-1) &
+             +              gxx( 0,j) * bx(cell_x1(j)  ,cell_y2(j)-1) &
+             +              gxx( 1,j) * bx(cell_x1(j)+1,cell_y2(j)-1)) &
+             + hyy( 0,j) * (gxx(-1,j) * bx(cell_x1(j)-1,cell_y2(j)  ) &
+             +              gxx( 0,j) * bx(cell_x1(j)  ,cell_y2(j)  ) &
+             +              gxx( 1,j) * bx(cell_x1(j)+1,cell_y2(j)  )) &
+             + hyy( 1,j) * (gxx(-1,j) * bx(cell_x1(j)-1,cell_y2(j)+1) &
+             +              gxx( 0,j) * bx(cell_x1(j)  ,cell_y2(j)+1) &
+             +              gxx( 1,j) * bx(cell_x1(j)+1,cell_y2(j)+1))
+
+      by_part(j) = &
+               gyy(-1,j) * (hxx(-1,j) * by(cell_x2(j)-1,cell_y1(j)-1) &
+             +              hxx( 0,j) * by(cell_x2(j)  ,cell_y1(j)-1) &
+             +              hxx( 1,j) * by(cell_x2(j)+1,cell_y1(j)-1)) &
+             + gyy( 0,j) * (hxx(-1,j) * by(cell_x2(j)-1,cell_y1(j)  ) &
+             +              hxx( 0,j) * by(cell_x2(j)  ,cell_y1(j)  ) &
+             +              hxx( 1,j) * by(cell_x2(j)+1,cell_y1(j)  )) &
+             + gyy( 1,j) * (hxx(-1,j) * by(cell_x2(j)-1,cell_y1(j)+1) &
+             +              hxx( 0,j) * by(cell_x2(j)  ,cell_y1(j)+1) &
+             +              hxx( 1,j) * by(cell_x2(j)+1,cell_y1(j)+1))
+
+      bz_part(j) = &
+               hyy(-1,j) * (hxx(-1,j) * bz(cell_x2(j)-1,cell_y2(j)-1) &
+             +              hxx( 0,j) * bz(cell_x2(j)  ,cell_y2(j)-1) &
+             +              hxx( 1,j) * bz(cell_x2(j)+1,cell_y2(j)-1)) &
+             + gyy( 0,j) * (hxx(-1,j) * bz(cell_x2(j)-1,cell_y2(j)  ) &
+             +              hxx( 0,j) * bz(cell_x2(j)  ,cell_y2(j)  ) &
+             +              hxx( 1,j) * bz(cell_x2(j)+1,cell_y2(j)  )) &
+             + gyy( 1,j) * (hxx(-1,j) * bz(cell_x2(j)-1,cell_y2(j)+1) &
+             +              hxx( 0,j) * bz(cell_x2(j)  ,cell_y2(j)+1) &
+             +              hxx( 1,j) * bz(cell_x2(j)+1,cell_y2(j)+1))
+
+    END DO ! End do-loop for b-fields at particle position
+
+
+  ! Update particle momenta using weighted fields
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j -1
+
+      uxm(j) = px(jj) + cmratio(jj) * ex_part(j)
+      uym(j) = py(jj) + cmratio(jj) * ey_part(j)
+      uzm(j) = pz(jj) + cmratio(jj) * ez_part(j)
+
+    END DO
+
+#ifdef HC_PUSH
+
+  ! Half timestep, then use Higuera-Cary push
+  ! See https://aip.scitation.org/doi/10.1063/1.4979989
+      
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+      
+      jj = i + j - 1
+      gamma_rel(jj) = uxm(j)**2 + uym(j)**2 + uzm(j)**2 + 1.0_num
+      alpha(j)      = 0.5_num * q(jj) * dt / m(jj)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      beta_x(j) = alpha(j) * bx_part(j)
+      beta_y(j) = alpha(j) * by_part(j)
+      beta_z(j) = alpha(j) * bz_part(j)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      beta2(j)      = beta_x(j)**2 + beta_y(j)**2 + beta_z(j)**2
+      beta_dot_u(j) = beta_x(j) * uxm(j) + beta_y(j) * uym(j) + beta_z(j) * uzm(j)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j -1
+      gamma_rel(jj) = SQRT(0.5_num &
+                     * (gamma_rel(jj) - beta2(j) &
+                     +  SQRT((gamma_rel(jj) - beta2(j))**2 &
+	             + 4.0_num * (beta2(j) + beta_dot_u(j)**2))))  
+
+    END DO
+
+#else
+
+  ! Half timestep, then use Boris1970 rotation, see Birdsall and Langdon
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      gamma_rel(jj) = SQRT(uxm(j)**2 + uym(j)**2 + uzm(j)**2)
+
+    END DO
+
+#endif
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+    
+      jj = i + j - 1
+      root(jj) = ccmratio(jj) / gamma_rel(jj)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      taux(j) = bx_part(j) * root(jj)
+      tauy(j) = by_part(j) * root(jj)
+      tauz(j) = bz_part(j) * root(jj)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      taux2(j) = taux(j)**2
+      tauy2(j) = taux(j)**2
+      tauz2(j) = tauz(j)**2
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      tau(j) = 1.0_num / (1.0_num + taux2(j) + tauy2(j) + tauz2(j))
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      uxp(j) = ((1.0_num + taux2(j) - tauy2(j) - tauz2(j)) * uxm(j) &
+             + 2.0_num * ((taux(j) * tauy(j) + tauz(j)) * uym(j) &
+             + (taux(j) * tauz(j) - tauy(j)) * uzm(j))) * tau(j) 
+      uyp(j) = ((1.0_num - taux2(j) + tauy2(j) - tauz2(j)) * uym(j) &
+             + 2.0_num * ((tauy(j) * tauz(j) + taux(j)) * uzm(j) &
+             + (tauy(j) * taux(j) - tauz(j)) * uxm(j))) * tau(j)
+      uzp(j) = ((1.0_num - taux2(j) - tauy2(j) + tauz2(j)) * uzm(j) &
+             + 2.0_num * ((tauz(j) * taux(j) + tauy(j)) * uxm(j) &
+             + (tauz(j) * tauy(j) - taux(j)) * uym(j))) * tau(j)
+
+    END DO
+
+  ! Rotation over, go to full timestep
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      px(jj) = uxp(j) + cmratio(jj) * ex_part(j)
+      py(jj) = uyp(j) + cmratio(jj) * ey_part(j)
+      pz(jj) = uzp(j) + cmratio(jj) * ez_part(j)
+
+    END DO
+
+  ! Calculate particle velocity from particle momentum
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      gamma_rel(jj) = SQRT(px(jj)**2 + py(jj)**2 + pz(jj)**2 + 1.0_num)
+      igamma(jj)    = 1.0_num / SQRT(px(jj)**2 + py(jj)**2 + pz(jj)**2 + 1.0_num)
+      root(jj)      = dtco2 / SQRT(px(jj)**2 + py(jj)**2 + pz(jj)**2 + 1.0_num)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      delta_x(jj) = px(jj) * root(jj)
+      delta_y(jj) = py(jj) * root(jj)
+      vz(jj)      = pz(jj) * c * igamma(jj) 
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+      x(jj) = x(jj) + delta_x(j)
+      y(jj) = y(jj) + delta_y(j)
+
+    END DO
+
+  ! Particle has now finished move to end of timestep, so copy back
+  ! into particle array
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+ 
+      jj = i + j - 1
+      next => current
+      current%part_pos = (/ x(jj) + x_grid_min_local, &
+          y(jj) + y_grid_min_local /)
+      current%part_p   = mc(jj) * (/ px(jj), py(jj), pz(jj) /)
+
+  ! Add particle to boundary candidate list
+      IF (current%part_pos(1) < bnd_x_min &
+          .OR. current%part_pos(1) > bnd_x_max &
+          .OR. current%part_pos(2) < bnd_y_min &
+          .OR. current%part_pos(2) > bnd_y_max ) THEN
+        ALLOCATE(bnd_part_next)
+        bnd_part_next%particle => current
+        bnd_part_last%next => bnd_part_next
+        bnd_part_last => bnd_part_next
+      END IF
+
+#ifdef WORK_DONE_INTEGRATED
+  ! This is the actual total work done by the fields: Results correspond
+  ! with the electron's gamma factor
+
+      root(jj) = cmratio(jj) / gamma_rel(jj)
+
+      work_x = ex_part(j) * (tmp_x(j) + px(jj) * root(jj))
+      work_y = ex_part(j) * (tmp_y(j) + py(jj) * root(jj))
+      work_z = ex_part(j) * (tmp_z(j) + pz(jj) * root(jj))
+
+      current%work_x = work_x
+      current%work_y = work_y
+      current%work_z = work_z
+     
+      current%work_x_total = current%work_x_total + work_x
+      current%work_y_total = current%work_y_total + work_y
+      current%work_z_total = current%work_z_total + work_z
+#endif
+
+#ifndef NO_PARTICLE_PROBES
+      final_x(jj) = current%part_pos(1)
+      final_y(jj) = current%part_pos(2)
+#endif
+
+      current => next
+
+    END DO  
+      
+
+  END DO ! End do-loop for i
+
+END SUBROUTINE particle_pusher
+
+SUBROUTINE triangle_current_deposition()
+
+  DO i = 1, species_list(ispecies)%attached_list%count, LVEC
+    
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jj = i + j - 1
+
+  ! Advance to t + 1.5dt to calculate current. This is detailed in
+  ! the PSC manual between page 37 and 41. The version coded up looks
+  ! completely different to that in the manual, but this is equivalent.
+  ! Use t + 1.5dt so that can update J to t + dt at 2nd order
+
+      x(jj) = x(jj) + delta_x(jj)
+      y(jj) = y(jj) + delta_y(jj)
+
+  ! Delta-f calculation: subtract background from
+  ! calculated current.
+
 #ifdef DELTAF_METHOD
-      weight_back(n) = part(n)%pvol * f0(ispecies, part_mc(n) / c, &
-                       part(n)%part_p)
-      fcx(n) = idty * (part_weight(n) - weight_back(n))
-      fcy(n) = idtx * (part_weight(n) - weight_back(n))
-      fcz(n) = idxy * (part_weight(n) - weight_back(n))
+    weight_back(j) = pvol(jj) * f0(ispecies, mc(jj) / c, px(jj), py(jj), pz(jj))
+    fcx(j) = idty * (weight(jj) - weight_back(j))
+    fcy(j) = idtx * (weight(jj) - weight_back(j))
+    fcz(j) = idxy * (weight(jj) - weight_back(j))
 #endif
 
-      cell_x_r(n) = part_x(n) * idx
-      cell_y_r(n) = part_y(n) * idy
+    END DO
 
-      cell_x3(n)  = FLOOR(cell_x_r(n) + 0.5_num)
-      cell_y3(n)  = FLOOR(cell_y_r(n) + 0.5_num)
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+      
+      jj = i + j - 1
+      cell_x_r(j) = x(jj) * idx
+      cell_y_r(j) = y(jj) * idy
 
-      cell_frac_x(n) = REAL(cell_x3(n), num) - cell_x_r(n)
-      cell_frac_y(n) = REAL(cell_y3(n), num) - cell_y_r(n)
+    END DO
 
-      fjx(n) = fcx(n) * part_q(n)
-      fjy(n) = fcy(n) * part_q(n)
-      fjz(n) = fcz(n) * part_q(n) * part_vz(n)
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
-      hx = 0.0_num
-      hy = 0.0_num
+      cell_x3(j) = FLOOR(cell_x_r(j) + 0.5_num)
+      cell_y3(j) = FLOOR(cell_y_r(j) + 0.5_num)
 
-      dcellx(n) = cell_x3(n) - cell_x1(n)
-      dcelly(n) = cell_y3(n) - cell_y1(n)
+    END DO
 
-      xmin(n) = sf_min + (dcellx(n) - 1) / 2
-      ymin(n) = sf_max + (dcelly(n) - 1) / 2
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
+      cell_frac_x(j) = REAL(cell_x3(j), num) - cell_x_r(j)
+      cell_frac_y(j) = REAL(cell_y3(j), num) - cell_y_r(j)
 
-      hx(xmin(n))     = 0.25_num + cell_frac_x(n)**2 + cell_frac_x(n)
-      hx(xmin(n) + 1) = 1.5_num - 2.0_num * cell_frac_x(n)**2
-      hx(xmin(n) + 2) = 0.25_num + cell_frac_x(n)**2 - cell_frac_x(n)
+      cell_x3(j) = cell_x3(j) + 1
+      cell_y3(j) = cell_y3(j) + 1
 
-      hy(ymin(n))     = 0.25_num + cell_frac_y(n)**2 + cell_frac_y(n)
-      hy(ymin(n) + 1) = 1.5_num - 2.0_num * cell_frac_y(n)**2
-      hy(ymin(n) + 2) = 0.25_num + cell_frac_y(n)**2 - cell_frac_y(n)
+    END DO
 
-      yfac10(n) = gy(ymin(n)) + 0.5_num * hy(ymin(n))
-      yfac11(n) = gy(ymin(n) + 1) + 0.5_num * hy(ymin(n) + 1)
-      yfac12(n) = gy(ymin(n) + 1) + 0.5_num * hy(ymin(n) + 2)
+    hxx = 0.0_num
+    hyy = 0.0_num
 
-      yfac20(n) = third * hy(ymin(n)) + 0.5 * gy(ymin(n))
-      yfac21(n) = third * hy(ymin(n) + 1) + 0.5 * gy(ymin(n) + 1)
-      yfac22(n) = third * hy(ymin(n) + 2) + 0.5 * gy(ymin(n) + 2)
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
-      xfac10(n) = gx(xmin(n)) + 0.5_num * hx(xmin(n))
-      xfac11(n) = gx(xmin(n) + 1) + 0.5_num * hx(xmin(n) + 1)
-      xfac12(n) = gx(xmin(n) + 2) + 0.5_num * hx(xmin(n) + 2)
+      dcellx(j) = cell_x3(j) - cell_x1(j)
+      dcelly(j) = cell_y3(j) - cell_y1(j)
 
-      wx(n,1) = hx(xmin(n)) * yfac10(n)
-      wx(n,2) = hx(xmin(n) + 1) * yfac10(n)
-      wx(n,3) = hx(xmin(n) + 2) * yfac10(n)
-      wx(n,4) = hx(xmin(n)) * yfac11(n)
-      wx(n,5) = hx(xmin(n) + 1) * yfac11(n)
-      wx(n,6) = hx(xmin(n) + 2) * yfac11(n)
-      wx(n,7) = hx(xmin(n)) * yfac12(n)
-      wx(n,8) = hx(xmin(n) + 1) * yfac12(n)
-      wx(n,9) = hx(xmin(n) + 2) * yfac12(n)
+    END DO
 
-      wy(n,1) = hy(ymin(n)) * xfac10(n)
-      wy(n,2) = hy(ymin(n)) * xfac11(n)
-      wy(n,3) = hy(ymin(n)) * xfac12(n)
-      wy(n,4) = hy(ymin(n) + 1) * xfac10(n)
-      wy(n,5) = hy(ymin(n) + 1) * xfac11(n)
-      wy(n,6) = hy(ymin(n) + 1) * xfac12(n)
-      wy(n,7) = hy(ymin(n) + 2) * xfac10(n)
-      wy(n,8) = hy(ymin(n) + 2) * xfac11(n)
-      wy(n,9) = hy(ymin(n) + 2) * xfac12(n)
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
-      wz(n,1) = gx(xmin(n)) * yfac10(n) + hx(xmin(n)) * yfac20(n)
-      wz(n,2) = gx(xmin(n) + 1) * yfac10(n) + hx(xmin(n) + 1) * yfac20(n)
-      wz(n,3) = gx(xmin(n) + 2) * yfac10(n) + hx(xmin(n) + 2) * yfac20(n)
-      wz(n,4) = gx(xmin(n)) * yfac11(n) + hx(xmin(n)) * yfac21(n)
-      wz(n,5) = gx(xmin(n) + 1) * yfac11(n) + hx(xmin(n) + 1) * yfac21(n)
-      wz(n,6) = gx(xmin(n) + 2) * yfac11(n) + hx(xmin(n) + 2) * yfac21(n)
-      wz(n,7) = gx(xmin(n)) * yfac12(n) + hx(xmin(n)) * yfac22(n)
-      wz(n,8) = gx(xmin(n) + 1) * yfac12(n) + hx(xmin(n) + 1) * yfac22(n)
-      wz(n,9) = gx(xmin(n) + 2) * yfac12(n) + hx(xmin(n) + 2) * yfac22(n)
+      cfx2(j) = cell_frac_x(j)**2
+      cfy2(j) = cell_frac_y(j)**2
 
-      cx(n)   = cell_x1(n) + xmin(n)
-      cy(n)   = cell_y1(n) + ymin(n)
-      cell(n) = cx(n) + (cy(n) - 1) * nx
+    END DO
 
-      jxh(n,1) = -fjx(n) * wx(n,1)
-      jxh(n,2) = -fjx(n) * (wx(n,1) + wx(n,2))
-      jxh(n,3) = -fjx(n) * (wx(n,1) + wx(n,2) + wx(n,3))
-      jxh(n,4) = -fjx(n) * wx(n,4)
-      jxh(n,5) = -fjx(n) * (wx(n,4) + wx(n,5))
-      jxh(n,6) = -fjx(n) * (wx(n,4) + wx(n,5) + wx(n,6))
-      jxh(n,7) = -fjx(n) * wx(n,7)
-      jxh(n,8) = -fjx(n) * (wx(n,7) + wx(n,8))
-      jxh(n,9) = -fjx(n) * (wx(n,7) + wx(n,8) + wx(n,9))
+  ! Calculating hxx
+  ! NOTE: These weights require an additional multiplication factor
 
-      jyh(n,1) = -fjy(n) * wy(n,1)
-      jyh(n,2) = -fjy(n) * wy(n,2)
-      jyh(n,3) = -fjy(n) * wy(n,3)
-      jyh(n,4) = -fjy(n) * (wy(n,1) + wy(n,4))
-      jyh(n,5) = -fjy(n) * (wy(n,2) + wy(n,5))
-      jyh(n,6) = -fjy(n) * (wy(n,3) + wy(n,6))
-      jyh(n,7) = -fjy(n) * (wy(n,1) + wy(n,4) + wy(n,7))
-      jyh(n,8) = -fjy(n) * (wy(n,2) + wy(n,5) + wy(n,8))
-      jyh(n,9) = -fjy(n) * (wy(n,3) + wy(n,6) + wy(n,9))
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
-      jzh(n,1) = fjz(n) * wz(n,1)
-      jzh(n,2) = fjz(n) * wz(n,2)
-      jzh(n,3) = fjz(n) * wz(n,3)
-      jzh(n,4) = fjz(n) * wz(n,4)
-      jzh(n,5) = fjz(n) * wz(n,5)
-      jzh(n,6) = fjz(n) * wz(n,6)
-      jzh(n,7) = fjz(n) * wz(n,7)
-      jzh(n,8) = fjz(n) * wz(n,8)
-      jzh(n,9) = fjz(n) * wz(n,9)
+      hxx(dcellx(j)-1,j) = 0.25_num - cfx2(j) + cell_frac_x(j)
+      hxx(dcellx(j)  ,j) = 1.5_num - 2.0_num * cfx2(j)
+      hxx(dcellx(j)+1,j) = 0.25_num + cfx2(j) - cell_frac_x(j)
 
-    END DO !END LOOP  n = 1, MIN(LVEC, npart - np + 1)
+      hyy(dcelly(j)-1,j) = 0.25_num + cfy2(j) + cell_frac_y(j)
+      hyy(dcelly(j)  ,j) = 1.5_num - 2.0_num * cfy2(j)
+      hyy(dcelly(j)+1,j) = 0.25_num + cfy2(j) - cell_frac_y(j)
 
-    !$OMP END SIMD
+    END DO ! End do-loop for hxx
 
-    !$OMP SIMD
+  ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of 
+  ! the current update much simpler
 
-    DO n = 1, MIN(LVEC, npart - np + 1)
+    hxx = hxx - gxx
+    hyy = hxx - gyy
 
-        jx(cx(n),cy(n))          = jx(cx(n),cy(n)) + jxh(n,1)
-        jx(cx(n) + 1,cy(n))      = jx(cx(n) + 1,cy(n)) + jxh(n,2)
-        jx(cx(n) + 2,cy(n))      = jx(cx(n) + 2,cy(n)) + jxh(n,3)
-        jx(cx(n), cy(n) + 1)     = jx(cx(n),cy(n) + 1) + jxh(n,4)
-        jx(cx(n) + 1, cy(n) + 1) = jx(cx(n) + 1,cy(n) + 1) + jxh(n,5)
-        jx(cx(n) + 2, cy(n) + 1) = jx(cx(n) + 2,cy(n) + 1) + jxh(n,6)
-        jx(cx(n), cy(n) + 2)     = jx(cx(n),cy(n) + 2) + jxh(n,7)
-        jx(cx(n) + 1, cy(n) + 2) = jx(cx(n),cy(n) + 2) + jxh(n,8)
-        jx(cx(n) + 2, cy(n) + 2) = jx(cx(n) + 2,cy(n) + 2) + jxh(n,9)
+  ! Remember that due to CFL condition particle can never cross more
+  ! than one gridcell in one timestep
 
-        jy(cx(n),cy(n))          = jy(cx(n),cy(n)) + jyh(n,1)
-        jy(cx(n) + 1,cy(n))      = jy(cx(n) + 1,cy(n)) + jyh(n,2)
-        jy(cx(n) + 2,cy(n))      = jy(cx(n) + 2,cy(n)) + jyh(n,3)
-        jy(cx(n), cy(n) + 1)     = jy(cx(n),cy(n) + 1) + jyh(n,4)
-        jy(cx(n) + 1, cy(n) + 1) = jy(cx(n) + 1,cy(n) + 1) + jyh(n,5)
-        jy(cx(n) + 2, cy(n) + 1) = jy(cx(n) + 2,cy(n) + 1) + jyh(n,6)
-        jy(cx(n), cy(n) + 2)     = jy(cx(n),cy(n) + 2) + jyh(n,7)
-        jy(cx(n) + 1, cy(n) + 2) = jy(cx(n),cy(n) + 2) + jyh(n,8)
-        jy(cx(n) + 2, cy(n) + 2) = jy(cx(n) + 2,cy(n) + 2) + jyh(n,9)
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
-        jz(cx(n),cy(n))          = jz(cx(n),cy(n)) + jzh(n,1)
-        jz(cx(n) + 1,cy(n))      = jz(cx(n) + 1,cy(n)) + jzh(n,2)
-        jz(cx(n) + 2,cy(n))      = jz(cx(n) + 2,cy(n)) + jzh(n,3)
-        jz(cx(n), cy(n) + 1)     = jz(cx(n),cy(n) + 1) + jzh(n,4)
-        jz(cx(n) + 1, cy(n) + 1) = jz(cx(n) + 1,cy(n) + 1) + jzh(n,5)
-        jz(cx(n) + 2, cy(n) + 1) = jz(cx(n) + 2,cy(n) + 1) + jzh(n,6)
-        jz(cx(n), cy(n) + 2)     = jz(cx(n),cy(n) + 2) + jzh(n,7)
-        jz(cx(n) + 1, cy(n) + 2) = jz(cx(n),cy(n) + 2) + jzh(n,8)
-        jz(cx(n) + 2, cy(n) + 2) = jz(cx(n) + 2,cy(n) + 2) + jzh(n,9)
+      jj = i + j - 1
+      xmin(j) = sf_min + (dcellx(j) - 1) / 2
+      ymin(j) = sf_min + (dcelly(j) - 1) / 2
 
-    END DO !END LOOP n = 1, MIN(LVEC, npart - np + 1)
-    !$OMP END SIMD
-         
-    END DO !END LOOP  n = 1, npart
-    END DO !END LOOP ispec = 1, nspecies
+      fjx(jj) = fcx(jj) * q(jj)
+      fjy(jj) = fcy(jj) * q(jj)
+      fjz(jj) = fcz(jj) * q(jj) * vz(jj)
 
-  END current_deposition_VB_triangle
+    END DO
 
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
 
+      yfac10(j) = gyy(ymin(j),j) + 0.5_num * hyy(ymin(j),j)
+      yfac11(j) = gyy(ymin(j) + 1,j) + 0.5_num * hyy(ymin(j) + 1,j)
+      yfac12(j) = gyy(ymin(j) + 2,j) + 0.5_num * hyy(ymin(j) + 2,j)
 
+      yfac20(j) = third * hyy(ymin(j),j) + 0.5_num * gyy(ymin(j),j)
+      yfac21(j) = third * hyy(ymin(j) + 1,j) + 0.5_num * gyy(ymin(j) + 1,j)
+      yfac22(j) = third * hyy(ymin(j) + 2,j) + 0.5_num * gyy(ymin(j) + 2,j)
+
+      xfac10(j) = gxx(xmin(j),j) + 0.5_num * hxx(ymin(j),j)
+      xfac11(j) = gxx(xmin(j) + 1,j) + 0.5_num * hxx(ymin(j) + 1,j)
+      xfac12(j) = gxx(xmin(j) + 2,j) + 0.5_num * hxx(ymin(j) + 2,j)
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+  
+      jj = i + j - 1
+
+      wx(1,j) = hxx(xmin(j),j) * yfac10(j)
+      wx(2,j) = hxx(xmin(j) + 1,j) * yfac10(j)
+      wx(3,j) = hxx(xmin(j) + 2,j) * yfac10(j)
+      wx(4,j) = hxx(xmin(j),j) * yfac11(j)
+      wx(5,j) = hxx(xmin(j) + 1,j) * yfac11(j)
+      wx(6,j) = hxx(xmin(j) + 2,j) * yfac11(j)
+      wx(7,j) = hxx(xmin(j),j) * yfac12(j)
+      wx(8,j) = hxx(xmin(j) + 1,j) * yfac12(j)
+      wx(9,j) = hxx(xmin(j) + 2,j) * yfac12(j)
+
+      wy(1,j) = hyy(ymin(j),j) * xfac10(j)
+      wy(2,j) = hyy(ymin(j),j) * xfac11(j)
+      wy(3,j) = hyy(ymin(j),j) * xfac12(j)
+      wy(4,j) = hyy(ymin(j) + 1,j) * xfac10(j)
+      wy(5,j) = hyy(ymin(j) + 1,j) * xfac11(j)
+      wy(6,j) = hyy(ymin(j) + 1,j) * xfac12(j)
+      wy(7,j) = hyy(ymin(j) + 2,j) * xfac10(j)
+      wy(8,j) = hyy(ymin(j) + 2,j) * xfac11(j)
+      wy(9,j) = hyy(ymin(n) + 2,j) * xfac12(j)
+
+      wz(1,j) = gxx(xmin(j)) * yfac10(j) + hxx(xmin(j),j) * yfac20(j)
+      wz(2,j) = gxx(xmin(j) + 1,j) * yfac10(j) + hxx(xmin(j) + 1,j) * yfac20(j)
+      wz(3,j) = gxx(xmin(j) + 2,j) * yfac10(j) + hxx(xmin(j) + 2,j) * yfac20(j)
+      wz(4,j) = gxx(xmin(j),j) * yfac11(j) + hxx(xmin(j),j) * yfac21(j)
+      wz(5,j) = gxx(xmin(j) + 1,j) * yfac11(j) + hxx(xmin(j) + 1,j) * yfac21(j)
+      wz(6,j) = gxx(xmin(j) + 2,j) * yfac11(j) + hxx(xmin(j) + 2,j) * yfac21(j)
+      wz(7,j) = gxx(xmin(j),j) * yfac12(j) + hxx(xmin(j),j) * yfac22(j)
+      wz(8,j) = gxx(xmin(j) + 1,j) * yfac12(j) + hxx(xmin(j) + 1,j) * yfac22(j)
+      wz(9,j) = gxx(xmin(j) + 2,j) * yfac12(j) + hxx(xmin(j) + 2,j) * yfac22(j)
+
+      cx(j) = cell_x1(jj) + xmin(j)
+      cy(j) = cell_y1(jj) + ymin(j)
+      
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      ic(j) = cx(j) + (cy(j) - 1) * nx
+
+    END DO
+
+    DO j = 1, MIN(LVEC, species_list(ispecies)%attached_list%count - i + 1)
+
+      jxh(1,ic(j)) = jxh(1,ic(j)) - fjx(j) * wx(1,j)
+      jxh(2,ic(j)) = jxh(2,ic(j)) - fjx(j) * (wx(1,j) + wx(2,j))
+      jxh(3,ic(j)) = jxh(3,ic(j)) - fjx(j) * (wx(1,j) + wx(2,j) + wx(3,j))
+      jxh(4,ic(j)) = jxh(4,ic(j)) - fjx(j) * wx(4,j)
+      jxh(5,ic(j)) = jxh(5,ic(j)) - fjx(j) * (wx(4,j) + wx(5,j))
+      jxh(6,ic(j)) = jxh(6,ic(j)) - fjx(j) * (wx(4,j) + wx(5,j) + wx(6,j))
+      jxh(7,ic(j)) = jxh(7,ic(j)) - fjx(j) * wx(7,j)
+      jxh(8,ic(j)) = jxh(8,ic(j)) - fjx(j) * (wx(7,j) + wx(8,j))
+      jxh(9,ic(j)) = jxh(9,ic(j)) - fjx(j) * (wx(7,j) + wx(8,j) + wx(9,j))
+
+      jyh(1,ic(j)) = jyh(1,ic(j)) - fjy(j) * wy(1,j)
+      jyh(2,ic(j)) = jyh(2,ic(j)) - fjy(j) * wy(2,j)
+      jyh(3,ic(j)) = jyh(3,ic(j)) - fjy(j) * wy(3,j)
+      jyh(4,ic(j)) = jyh(4,ic(j)) - fjy(j) * (wy(1,j) + wy(4,j))
+      jyh(5,ic(j)) = jyh(5,ic(j)) - fjy(j) * (wy(2,j) + wy(5,j))
+      jyh(6,ic(j)) = jyh(6,ic(j)) - fjy(j) * (wy(3,j) + wy(6,j))
+      jyh(7,ic(j)) = jyh(7,ic(j)) - fjy(j) * (wy(1,j) + wy(4,j) + wy(7,j))
+      jyh(8,ic(j)) = jyh(8,ic(j)) - fjy(j) * (wy(2,j) + wy(5,j) + wy(8,j))
+      jyh(9,ic(j)) = jyh(9,ic(j)) - fjy(j) * (wy(3,j) + wy(6,j) + wy(9,j))
+
+      jzh(1,ic(j)) = jzh(1,ic(j)) + fjz(j) * wz(1,j)
+      jzh(2,ic(j)) = jzh(2,ic(j)) + fjz(j) * wz(2,j)
+      jzh(3,ic(j)) = jzh(3,ic(j)) + fjz(j) * wz(3,j)
+      jzh(4,ic(j)) = jzh(4,ic(j)) + fjz(j) * wz(4,j)
+      jzh(5,ic(j)) = jzh(5,ic(j)) + fjz(j) * wz(5,j)
+      jzh(6,ic(j)) = jzh(6,ic(j)) + fjz(j) * wz(6,j)
+      jzh(7,ic(j)) = jzh(7,ic(j)) + fjz(j) * wz(7,j)
+      jzh(8,ic(j)) = jzh(8,ic(j)) + fjz(j) * wz(8,j)
+      jzh(9,ic(j)) = jzh(9,ic(j)) + fjz(j) * wz(9,j)
+
+    END DO
+
+  END DO ! End do-loop for index i
+
+  ! Deposit current on the cells
+
+  DO j = 1, ny
+    DO i = 1, nx
+      iic = (j - 1) * nx + i
+      
+      jx(i,j)         = jx(i,j) + jxh(1,iic)
+      jx(i + 1,j)     = jx(i + 1,j) + jxh(2,iic)
+      jx(i + 2,j)     = jx(i + 2,j) + jxh(3,iic)
+      jx(i,j + 1)     = jx(i, j + 1) + jxh(4,iic)
+      jx(i + 1,j + 1) = jx(i + 1, j + 1) + jxh(5,iic)
+      jx(i + 2,j + 1) = jx(i + 2, j + 1) + jxh(6,iic)
+      jx(i,j + 2)     = jx(i,j + 2) + jxh(7,iic)
+      jx(i + 1,j + 2) = jx(i + 1,j + 2) + jxh(8,iic)
+      jx(i + 2,j + 2) = jx(i + 2,j + 2) + jxh(9,iic)
+
+      jy(i,j)         = jy(i,j) + jyh(1,iic)
+      jy(i + 1,j)     = jy(i + 1,j) + jyh(2,iic)
+      jy(i + 2,j)     = jy(i + 2,j) + jyh(3,iic)
+      jy(i,j + 1)     = jy(i, j + 1) + jyh(4,iic)
+      jy(i + 1,j + 1) = jy(i + 1, j + 1) + jyh(5,iic)
+      jy(i + 2,j + 1) = jy(i + 2, j + 1) + jyh(6,iic)
+      jy(i,j + 2)     = jy(i,j + 2) + jyh(7,iic)
+      jy(i + 1,j + 2) = jy(i + 1,j + 2) + jyh(8,iic)
+      jy(i + 2,j + 2) = jy(i + 2,j + 2) + jyh(9,iic)
+
+      jz(i,j)         = jz(i,j) + jzh(1,iic)
+      jz(i + 1,j)     = jz(i + 1,j) + jzh(2,iic)
+      jz(i + 2,j)     = jz(i + 2,j) + jzh(3,iic)
+      jz(i,j + 1)     = jz(i, j + 1) + jzh(4,iic)
+      jz(i + 1,j + 1) = jz(i + 1, j + 1) + jzh(5,iic)
+      jz(i + 2,j + 1) = jz(i + 2, j + 1) + jzh(6,iic)
+      jz(i,j + 2)     = jz(i,j + 2) + jzh(7,iic)
+      jz(i + 1,j + 2) = jz(i + 1,j + 2) + jzh(8,iic)
+      jz(i + 2,j + 2) = jz(i + 2,j + 2) + jzh(9,iic)
+
+    END DO
+  END DO
+
+END SUBROUTINE triangle_current_deposition
 
 
 
