@@ -43,7 +43,7 @@ SUBROUTINE particle_sorting()
   DO ipart = 1, species_list(ispecies)%attached_list%count
     next => current%next
     k = tile_id(ipart)
-    g_índx(k) = g_indx(k) + 1 ! Rearranged particle index with respect to the bins
+    g_indx(k) = g_indx(k) + 1 ! Rearranged particle index with respect to the bins
 
 #ifndef PER_SPECIES_WEIGHT
     w(g_indx(k))         = current%weight
