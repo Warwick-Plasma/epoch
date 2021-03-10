@@ -477,12 +477,9 @@ CONTAINS
 !            END DO
 !          END DO
 
-    jxi = 0.0
-    jyi = 0.0
-    jzi = 0.0
 
-    DO k = -2,2
-      DO i = -2,2
+    DO k = ymin,ymax
+      DO i = xmin,xmax
         wwx(i,k)=hx(i)*(gy(k)+0.5*hy(k))
         wwy(i,k)=hy(k)*(gx(i)+0.5*hx(i))
         wwz(i,k)=gx(i)*gy(k) &
@@ -492,8 +489,8 @@ CONTAINS
       END DO
     END DO
 
-    DO k = -2,2
-      DO i = -2,2
+    DO k = ymin,ymax
+      DO i = xmin,xmax
         jxi(i,k) = jxi(i-1,k) - fjx * wwx(i,k)
         jyi(i,k) = jyi(i,k-1) - fjy * wwy(i,k)
         jzi(i,k) = fjz * wwz(i,k)
@@ -501,8 +498,8 @@ CONTAINS
     END DO
 
     
-    DO k = -2,2
-      DO i = -2,2 
+    DO k = ymin,ymax
+      DO i = xmin,xmax 
         jx(cell_x1+i,cell_y1+k)=jx(cell_x1+i,cell_y1+k) &
                                        + jxi(i,k)
         jy(cell_x1+i,cell_y1+k)=jy(cell_x1+i,cell_y1+k) &
