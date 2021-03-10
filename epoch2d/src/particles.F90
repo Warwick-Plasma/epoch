@@ -76,7 +76,12 @@ CONTAINS
 
     ! Used by J update
     INTEGER :: xmin, xmax, ymin, ymax
+    INTEGER :: i, k
     REAL(num) :: wx, wy, wz
+    REAL(num), DIMENSION(-2:2,-2:2) :: wwx, wwy, wwz
+    REAL(num), DIMENSION(-3:2,-2:2) :: jxi
+    REAL(num), DIMENSION(-2:2,-3:2) :: jyi
+    REAL(num), DIMENSION(-2:2,-2:2) :: jzi
 
     ! Temporary variables
     REAL(num) :: idty, idtx, idxy
@@ -444,33 +449,65 @@ CONTAINS
           fjy = fcy * part_q
           fjz = fcz * part_q * part_vz
 
-          jyh = 0.0_num
-          DO iy = ymin, ymax
-            cy = cell_y1 + iy
-            yfac1 =         gy(iy) + 0.5_num * hy(iy)
-            yfac2 = third * hy(iy) + 0.5_num * gy(iy)
+!          jyh = 0.0_num
+!          DO iy = ymin, ymax
+!            cy = cell_y1 + iy
+!            yfac1 =         gy(iy) + 0.5_num * hy(iy)
+!            yfac2 = third * hy(iy) + 0.5_num * gy(iy)
+!
+!            hy_iy = hy(iy)
+!
+!            jxh = 0.0_num
+!            DO ix = xmin, xmax
+!              cx = cell_x1 + ix
+!              xfac1 = gx(ix) + 0.5_num * hx(ix)
+!
+!              wx = hx(ix) * yfac1
+!              wy = hy_iy  * xfac1
+!              wz = gx(ix) * yfac1 + hx(ix) * yfac2
+!
+!              ! This is the bit that actually solves d(rho)/dt = -div(J)
+!              jxh = jxh - fjx * wx
+!              jyh(ix) = jyh(ix) - fjy * wy
+!              jzh = fjz * wz
+!
+!              jx(cx, cy) = jx(cx, cy) + jxh
+!              jy(cx, cy) = jy(cx, cy) + jyh(ix)
+!              jz(cx, cy) = jz(cx, cy) + jzh
+!            END DO
+!          END DO
 
-            hy_iy = hy(iy)
+    DO k = -2,2
+      DO i = -2,2
+        wwx(i,k)=hx(i)*(gy(k)+0.5*hy(k))
+        wwy(i,k)=hy(k)*(gx(i)+0.5*hx(i))
+        wwz(i,k)=gx(i)*gy(k) &
+            +0.5*hx(i)*gy(k) &
+            +0.5*gx(i)*hy(k) &
+            +third*hx(i)*hy(k)
+      END DO
+    END DO
 
-            jxh = 0.0_num
-            DO ix = xmin, xmax
-              cx = cell_x1 + ix
-              xfac1 = gx(ix) + 0.5_num * hx(ix)
+    DO k = -2,2
+      DO i = -2,2
+        jxi(i,k) = jxi(i-1,k) - fjx * wwx(i,k)
+        jyi(i,k) = jyi(i,k-1) - fjy * wwy(i,k)
+        jzi(i,k) = fjz * wwz(i,k)
+      END DO
+    END DO
 
-              wx = hx(ix) * yfac1
-              wy = hy_iy  * xfac1
-              wz = gx(ix) * yfac1 + hx(ix) * yfac2
+    
+    DO k = -2,2
+      DO i = -2,2 
+        jx(cell_x1+i,cell_y1+k)=jxi(cell_x1+i,cell_y1+k) &
+                                       + jxi(i,k)
+        jy(cell_x1+i,cell_y1+k)=jyi(cell_x1+i,cell_y1+k) &
+                                       + jyi(i,k)
+        jz(cell_x1+i,cell_y1+k)=jzi(cell_x1+i,cell_y1+k) &
+                                       + jzi(i,k)
+      END DO
+    END DO          
 
-              ! This is the bit that actually solves d(rho)/dt = -div(J)
-              jxh = jxh - fjx * wx
-              jyh(ix) = jyh(ix) - fjy * wy
-              jzh = fjz * wz
-
-              jx(cx, cy) = jx(cx, cy) + jxh
-              jy(cx, cy) = jy(cx, cy) + jyh(ix)
-              jz(cx, cy) = jz(cx, cy) + jzh
-            END DO
-          END DO
 #ifdef ZERO_CURRENT_PARTICLES
         END IF
 #endif
