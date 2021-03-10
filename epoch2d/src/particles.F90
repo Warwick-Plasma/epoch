@@ -479,6 +479,10 @@ CONTAINS
 !            END DO
 !          END DO
 
+    jxi = 0.0
+    jyi = 0.0
+    jzi = 0.0
+
     DO k = -2,2
       DO i = -2,2
         wwx(i,k)=hx(i)*(gy(k)+0.5*hy(k))
@@ -501,11 +505,11 @@ CONTAINS
     
     DO k = -2,2
       DO i = -2,2 
-        jx(cell_x1+i,cell_y1+k)=jxi(cell_x1+i,cell_y1+k) &
+        jx(cell_x1+i,cell_y1+k)=jx(cell_x1+i,cell_y1+k) &
                                        + jxi(i,k)
-        jy(cell_x1+i,cell_y1+k)=jyi(cell_x1+i,cell_y1+k) &
+        jy(cell_x1+i,cell_y1+k)=jy(cell_x1+i,cell_y1+k) &
                                        + jyi(i,k)
-        jz(cell_x1+i,cell_y1+k)=jzi(cell_x1+i,cell_y1+k) &
+        jz(cell_x1+i,cell_y1+k)=jz(cell_x1+i,cell_y1+k) &
                                        + jzi(i,k)
       END DO
     END DO          
