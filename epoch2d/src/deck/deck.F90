@@ -555,6 +555,7 @@ CONTAINS
       deck_values(2)%value = ''
       slen = 1
       line = 1
+      deck_line_number = '0'
       column = 0
 
       ! Use non-advancing IO to pop characters off the deck file one at a time
@@ -575,6 +576,7 @@ CONTAINS
           got_eof = .TRUE.
           column = 0
           line = line + 1
+          CALL integer_as_string(line - 1, deck_line_number)
         ELSE
           got_eor = .FALSE.
           column = column + 1
@@ -684,6 +686,7 @@ CONTAINS
           END IF
           continuation = .FALSE.
           line = line + 1
+          CALL integer_as_string(line - 1, deck_line_number)
           column = 0
         END IF
 
@@ -695,6 +698,7 @@ CONTAINS
               io = io_units(iu)
               WRITE(io,*)
               WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               IF (flip > 1) THEN
                 WRITE(io,*) 'Whilst reading ',TRIM(deck_values(1)%value) &
                     // ' = ' // TRIM(deck_values(2)%value(1:pos-1))
@@ -864,6 +868,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
             WRITE(io,*) 'The block "' // TRIM(value) &
                 // '" cannot be set because'
             WRITE(io,*) 'the code has not been compiled with the correct ' &
@@ -878,6 +883,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
             WRITE(io,*) 'The block "' // TRIM(value) &
                 // '" cannot be set because'
             WRITE(io,*) 'the code has not been compiled with the correct ' &
@@ -892,6 +898,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
             WRITE(io,*) 'Unknown block "' // TRIM(value) &
                 // '" in input deck, ignoring', deck_state
           END DO
@@ -920,6 +927,7 @@ CONTAINS
         WRITE(du,*)
         IF (err_count /= 0) THEN
           WRITE(du,*) '*** WARNING ***'
+          WRITE(du,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(du,*) 'Block "' // TRIM(ADJUSTL(value)) // '" contains errors'
           WRITE(du,*)
         END IF
@@ -936,6 +944,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" is invalid and cannot be parsed.'
           WRITE(io,*) 'Code will terminate'
@@ -964,6 +973,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Unrecognised element "' // TRIM(element) &
               // '" in input deck.'
           WRITE(io,*) 'Code will continue to run, but behaviour is undefined'
@@ -977,6 +987,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "' // TRIM(element) &
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using first value in deck'
@@ -990,6 +1001,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "' // TRIM(element) &
               // '" is set multiple times in this deck.'
           WRITE(io,*) 'Code will continue using last value in deck'
@@ -1003,6 +1015,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" is'
           WRITE(io,*) 'invalid or could not be parsed. Code will terminate.'
@@ -1017,6 +1030,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" is'
           WRITE(io,*) 'invalid or could not be parsed. Code will use', &
@@ -1032,6 +1046,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Value "' // TRIM(value) // '" in element "' &
               // TRIM(element) // '" cannot be'
           WRITE(io,*) 'set because a prerequisite element "' &
@@ -1048,6 +1063,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'The element "' // TRIM(element) // '" of block "' &
               // TRIM(current_block_name) // '" cannot be set'
           WRITE(io,*) 'because the code has not been compiled with the ' &
@@ -1065,6 +1081,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) TRIM(extended_error_string)
           WRITE(io,*)
         END DO
@@ -1076,6 +1093,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) TRIM(extended_error_string)
           WRITE(io,*)
         END DO
@@ -1088,6 +1106,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'You have managed to find an impossible situation in ' &
               // 'this code.'
           WRITE(io,*) 'Good for you. Just because of that, the code will ' &

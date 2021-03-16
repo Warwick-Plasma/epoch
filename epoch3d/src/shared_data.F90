@@ -67,6 +67,8 @@ MODULE shared_data
   INTEGER :: n_deck_constants = 0
   TYPE(deck_constant), DIMENSION(:), ALLOCATABLE :: deck_constant_list
 
+  CHARACTER(LEN=string_length) :: deck_line_number = '0'
+
   !----------------------------------------------------------------------------
   ! string handling
   !----------------------------------------------------------------------------

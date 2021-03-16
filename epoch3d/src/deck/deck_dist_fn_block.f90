@@ -167,6 +167,7 @@ CONTAINS
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
             WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
             WRITE(io,*) 'Distribution functions can only be 1D, 2D or 3D'
           END DO
         END IF
@@ -293,6 +294,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Unable to apply dist_fn to non existant species ', &
                   ispecies
             END DO
