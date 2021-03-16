@@ -92,6 +92,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "direction" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "boundary" instead.'
         END DO
@@ -109,6 +110,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Cannot set laser properties before boundary is set'
         END DO
         CALL abort_code(c_err_required_element_not_set)
@@ -142,6 +144,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "freq" in the block "laser" is deprecated.'
           WRITE(io,*) 'Please use the element name "omega" instead.'
         END DO
