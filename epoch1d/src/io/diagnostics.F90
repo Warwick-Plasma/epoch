@@ -1936,7 +1936,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: id, code
     CHARACTER(LEN=*), INTENT(IN) :: block_id, name, units
     INTEGER, INTENT(IN) :: stagger
-    REAL(num), DIMENSION(:), INTENT(OUT) :: array
+    REAL(num), DIMENSION(1-ng:), INTENT(OUT) :: array
     INTEGER, DIMENSION(:), INTENT(IN), OPTIONAL :: fluxdir
     CHARACTER(LEN=*), DIMENSION(:), INTENT(IN), OPTIONAL :: dir_tags
     REAL(num), DIMENSION(:), ALLOCATABLE :: reduced

@@ -331,6 +331,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Cannot have multiple "rolling_restart" blocks.'
             END DO
           END IF
@@ -389,6 +390,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'The "extended_io_file" option is no longer supported.'
           WRITE(io,*) 'Please use the "import" directive instead'
         END DO
@@ -435,6 +437,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Output block "' // TRIM(value) &
                   // '" already defined.'
             END DO
@@ -754,6 +757,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" not ', 'allowed in an unnamed output block.'
           WRITE(io,*) 'It has been ignored.'
@@ -766,6 +770,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" not ', 'allowed in a named output block.'
           WRITE(io,*) 'It has been ignored.'
@@ -778,6 +783,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Element "' // TRIM(ADJUSTL(element)) &
               // '" should be moved to ', 'an "output_global" block.'
           WRITE(io,*) 'Its value will be applied to all output blocks.'
@@ -867,6 +873,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Attempting to set per species property for "' &
                   // TRIM(element) // '" which'
               WRITE(io,*) 'does not support this property. Ignoring.'
@@ -915,6 +922,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Attempting to set average property for "' &
                   // TRIM(element) // '" which'
               WRITE(io,*) 'does not support this property. Ignoring.'
@@ -933,6 +941,7 @@ CONTAINS
               DO iu = 1, nio_units ! Print to stdout and to file
                 io = io_units(iu)
                 WRITE(io,*) '*** WARNING ***'
+                WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
                 WRITE(io,*) 'Error occurred whilst assigning the averaging ', &
                     'dumpmask of the variable'
                 WRITE(io,*) '"' // TRIM(element) &

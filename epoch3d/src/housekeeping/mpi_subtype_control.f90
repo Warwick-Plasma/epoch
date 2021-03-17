@@ -168,8 +168,15 @@ CONTAINS
     CALL MPI_TYPE_COMMIT(mpitype, errcode)
     sub%subtype_r4 = mpitype
 
-    n_global = [nx + 2 * ng, ny + 2 * ng, nz + 2 * ng]
-    starts = array_starts(sub)
+    IF (sub%skip) THEN
+      ! Skipped varables are created in a temporary array that contains no
+      ! ghost cells
+      n_global = n_local
+      starts = 0
+    ELSE
+      n_global = [nx + 2 * ng, ny + 2 * ng, nz + 2 * ng]
+      starts = array_starts(sub)
+    END IF
 
     mpitype = MPI_DATATYPE_NULL
     IF (proc_outside_range) THEN

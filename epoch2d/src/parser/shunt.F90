@@ -343,7 +343,11 @@ CONTAINS
     INTEGER, INTENT(IN) :: offset
 
     IF (stack%stack_point-offset <= 0) THEN
-      PRINT *, 'Unable to snoop stack', stack%stack_point
+      PRINT*, '*** ERROR ***'
+      PRINT*, 'Input deck line number ', TRIM(deck_line_number)
+      PRINT*, 'Failed to parse expression'
+      PRINT*, 'Check the grammar for unbalanced brackets, etc.'
+      PRINT*, 'Stack point ', stack%stack_point
       STOP
     END IF
 
@@ -492,6 +496,7 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Missing function arguments in expression ', TRIM(current)
         END DO
         CALL abort_code(c_err_bad_value)
@@ -528,7 +533,8 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
+          WRITE(io,*) 'Unable to parse block with text "', TRIM(current), '"'
         END DO
         CALL check_deprecated(current)
         CALL abort_code(c_err_bad_value)
@@ -666,7 +672,8 @@ CONTAINS
         io = io_units(iu)
         WRITE(io,*)
         WRITE(io,*) '*** ERROR ***'
-        WRITE(io,*) 'Unable to parse block with text ', TRIM(current)
+        WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
+        WRITE(io,*) 'Unable to parse block with text "', TRIM(current), '"'
       END DO
       CALL abort_code(c_err_bad_value)
       err = c_err_bad_value
