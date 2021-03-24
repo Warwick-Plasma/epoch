@@ -50,11 +50,11 @@ endif
 # Intel
 # =====
 ifeq ($(strip $(COMPILER)),intel)
-  FFLAGS = -O3 -g -stand f03
+  FFLAGS = -O3 -g -stand f03 -qopenmp
   ifeq ($(strip $(CONS)),1)
     FLTCONS = -pc64 -fltconsistency
   endif
-  #FFLAGS = -O3 -heap-arrays 64 -ipo -xHost # Optimised (B)
+  #FFLAGS = -O3 -heap-arrays 64  -qopt-report-phase=vec -qopt-report=5 -qopenmp # Optimised (B)
   #FFLAGS = -O3 -heap-arrays 64 -ipo -xAVX  # Optimised (W)
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -fpe0 -nothreads -traceback -fltconsistency \
