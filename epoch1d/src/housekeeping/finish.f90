@@ -26,6 +26,7 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
+  USE hybrid
 
   IMPLICIT NONE
 
@@ -59,6 +60,7 @@ CONTAINS
 
     DEALLOCATE(total_particle_energy_species)
 
+    IF (use_hybrid) CALL deallocate_hybrid
     CALL deallocate_probes
 
     DO i = 1, n_species

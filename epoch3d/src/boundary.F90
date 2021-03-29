@@ -127,7 +127,8 @@ CONTAINS
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
         .OR. boundary == c_bc_heat_bath &
-        .OR. boundary == c_bc_open) RETURN
+        .OR. boundary == c_bc_open &
+        .OR. boundary == c_bc_tnsa) RETURN
 
     IF (rank == 0) THEN
       WRITE(*,*)
@@ -620,6 +621,157 @@ CONTAINS
 
 
 
+  SUBROUTINE do_field_mpi_with_lengths_int(field, ng, nx_local, ny_local, &
+      nz_local)
+
+    INTEGER, INTENT(IN) :: ng
+    INTEGER, DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, basetype, sz, szmax, i, j, k, n
+    INTEGER, ALLOCATABLE :: temp(:)
+
+    basetype = MPI_INTEGER
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    sizes(3) = nz_local + 2 * ng
+    starts = 1
+
+    szmax = sizes(1) * sizes(2) * ng
+    sz = sizes(1) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+    sz = sizes(2) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = sizes(2)
+    subsizes(3) = ng
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
+        tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
+
+    IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = nz_local+1, subsizes(3)+nz_local
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
+        tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
+
+    IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    DEALLOCATE(temp)
+
+  END SUBROUTINE do_field_mpi_with_lengths_int
+
+
+
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
@@ -819,6 +971,12 @@ CONTAINS
           array(i,:,:) = array(i,:,:) - array(-i,:,:)
           array(-i,:,:) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(0,:,:) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng-1
           array(i,:,:) = array(i,:,:) + array(1-i,:,:)
@@ -836,6 +994,12 @@ CONTAINS
           array(nn-i,:,:) = array(nn-i,:,:) - array(nn+i,:,:)
           array(nn+i,:,:) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(nn,:,:) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng
           array(nn+1-i,:,:) = array(nn+1-i,:,:) + array(nn+i,:,:)
@@ -855,6 +1019,12 @@ CONTAINS
           array(:,i,:) = array(:,i,:) - array(:,-i,:)
           array(:,-i,:) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(:,0,:) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng-1
           array(:,i,:) = array(:,i,:) + array(:,1-i,:)
@@ -872,6 +1042,12 @@ CONTAINS
           array(:,nn-i,:) = array(:,nn-i,:) - array(:,nn+i,:)
           array(:,nn+i,:) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(:,nn,:) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng
           array(:,nn+1-i,:) = array(:,nn+1-i,:) + array(:,nn+i,:)
@@ -891,6 +1067,12 @@ CONTAINS
           array(:,:,i) = array(:,:,i) - array(:,:,-i)
           array(:,:,-i) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(:,:,0) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng-1
           array(:,:,i) = array(:,:,i) + array(:,:,1-i)
@@ -908,6 +1090,12 @@ CONTAINS
           array(:,:,nn-i) = array(:,:,nn-i) - array(:,:,nn+i)
           array(:,:,nn+i) = 0.0_num
         END DO
+#ifdef HYBRID
+        ! Reflecting surfaces have zero net current
+        ! This fix prevents non-physical heating, but leads to non-physical
+        ! coldness on boundaries with injected particles
+        IF (use_hybrid) array(:,:,nn) = 0.0_num
+#endif
       ELSE
         DO i = 1, ng
           array(:,:,nn+1-i) = array(:,:,nn+1-i) + array(:,:,nn+i)
@@ -1393,9 +1581,15 @@ CONTAINS
             IF (x_min_boundary) THEN
               xbd = 0
               bc = bc_species(c_bd_x_min)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(1) = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
                 cur%part_pos(1) = part_pos - sgn * x_shift
@@ -1484,9 +1678,15 @@ CONTAINS
             IF (x_max_boundary) THEN
               xbd = 0
               bc = bc_species(c_bd_x_max)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(1) = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 xbd = sgn
                 cur%part_pos(1) = part_pos - sgn * x_shift
@@ -1576,9 +1776,15 @@ CONTAINS
             IF (y_min_boundary) THEN
               ybd = 0
               bc = bc_species(c_bd_y_min)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(2) = 2.0_num * y_min - part_pos
                 cur%part_p(2) = -cur%part_p(2)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
                 cur%part_pos(2) = part_pos - sgn * y_shift
@@ -1667,9 +1873,15 @@ CONTAINS
             IF (y_max_boundary) THEN
               ybd = 0
               bc = bc_species(c_bd_y_max)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(2) = 2.0_num * y_max - part_pos
                 cur%part_p(2) = -cur%part_p(2)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 ybd = sgn
                 cur%part_pos(2) = part_pos - sgn * y_shift
@@ -1759,9 +1971,15 @@ CONTAINS
             IF (z_min_boundary) THEN
               zbd = 0
               bc = bc_species(c_bd_z_min)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(3) = 2.0_num * z_min - part_pos
                 cur%part_p(3) = -cur%part_p(3)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 zbd = sgn
                 cur%part_pos(3) = part_pos - sgn * z_shift
@@ -1850,9 +2068,15 @@ CONTAINS
             IF (z_max_boundary) THEN
               zbd = 0
               bc = bc_species(c_bd_z_max)
-              IF (bc == c_bc_reflect) THEN
+              IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
                 cur%part_pos(3) = 2.0_num * z_max - part_pos
                 cur%part_p(3) = -cur%part_p(3)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               ELSE IF (bc == c_bc_periodic) THEN
                 zbd = sgn
                 cur%part_pos(3) = part_pos - sgn * z_shift
@@ -2813,5 +3037,74 @@ CONTAINS
     END IF
 
   END SUBROUTINE cpml_advance_b_currents
+
+
+
+  SUBROUTINE tnsa_part_escape(cur, out_of_bounds, ispecies)
+
+    ! In a laser-solid interaction, electrons can escape the solid when the
+    ! sheath field is not strong enough to contain them. We cannot model the
+    ! sheath field when running in hybrid mode, so we approximate its effect by
+    ! removing particles over a user-defined cut-off energy
+
+    TYPE(particle), POINTER :: cur
+    LOGICAL :: out_of_bounds
+    INTEGER :: ispecies
+    REAL(num) :: part_p2, part_m, part_mc2
+
+    ! Particle KE
+    part_p2 = cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+    part_m = cur%mass
+#else
+    part_m = species_list(ispecies)%mass
+#endif
+    part_mc2 = part_m * c**2
+
+    ! Is particle energy over escape threshold?
+    IF (part_p2*c**2 + part_mc2**2 > (tnsa_escape_KE + part_mc2)**2) THEN
+      out_of_bounds = .TRUE.
+    END IF
+
+  END SUBROUTINE tnsa_part_escape
+
+
+
+  SUBROUTINE tnsa_part_reflect(cur)
+
+    ! In a laser-solid interaction, electrons can lose energy while refluxing in
+    ! the sheath field. We cannot model the sheath field when running in hybrid
+    ! mode, so we approximate its effect by reducing the momentum of particles
+    ! as they reflux, which can be characterised in regular PIC
+    !
+    ! Characterisation reduces by a set amount of momentum in each reflux event
+    ! Also applies a random scatter
+
+    TYPE(particle), POINTER :: cur
+    INTEGER :: boundary
+    REAL(num) :: p_mag, p_dir(3)
+    REAL(num) :: theta, phi
+
+    ! Create momentum-loss 3 vector
+    p_mag = SQRT(SUM(cur%part_p**2))
+    p_dir = cur%part_p / p_mag
+
+    ! Don't take away more momentum than is present
+    IF (tnsa_p_loss >= p_mag) THEN
+      cur%part_p = 0.0_num * cur%part_p
+      RETURN
+    END IF
+
+    ! Apply momentum loss
+    cur%part_p = cur%part_p - (tnsa_p_loss * p_dir)
+
+    ! Apply scatter
+    IF (tnsa_scatter_angle > 0.0_num) THEN
+      theta = (random() - 0.5_num) * tnsa_scatter_angle
+      phi = 2.0_num * pi * random()
+      CALL rotate_p(cur, COS(theta), phi, p_mag - tnsa_p_loss)
+    END IF
+
+  END SUBROUTINE tnsa_part_reflect
 
 END MODULE boundary

@@ -1401,6 +1401,30 @@ CONTAINS
           CALL sdf_read_plain_variable(sdf_handle, cpml_psi_byz, &
               subtype_field, subarray_field)
 
+#ifdef HYBRID
+        ELSE IF (str_cmp(block_id, 'Jx_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jbx, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Jy_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jby, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Jz_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jbz, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Electron temperature')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, hy_Te, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Ion temperature')) THEN
+          IF (.NOT. ALLOCATED(hy_Ti)) ALLOCATE(hy_Ti(1-ng:nx+ng, 1-ng:ny+ng, &
+              1-ng:nz+ng))
+          CALL sdf_read_plain_variable(sdf_handle, hy_Ti, subtype_field, &
+              subarray_field)
+#endif
+
         END IF
 
       CASE(c_blocktype_point_variable)
@@ -1493,7 +1517,7 @@ CONTAINS
 #endif
 
         ELSE IF (block_id(1:11) == 'qed energy/') THEN
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
               species_subtypes(ispecies), it_qed_energy)
 #else
@@ -1529,6 +1553,19 @@ CONTAINS
             PRINT*, '*** ERROR ***'
             PRINT*, 'Cannot load dump file with bremsstrahlung optical depths.'
             PRINT*, 'Please recompile with the -DBREMSSTRAHLUNG option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+        ELSE IF (block_id(1:16) == 'delta ray depth/') THEN
+#ifdef HYBRID
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_delta)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with delta-ray optical depths.'
+            PRINT*, 'Please recompile with the -DHYBRID option.'
           END IF
           CALL abort_code(c_err_pp_options_missing)
           STOP
@@ -1987,7 +2024,7 @@ CONTAINS
 
 
 
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
   FUNCTION it_qed_energy(array, npart_this_it, start, param)
 
     REAL(num) :: it_qed_energy
@@ -2027,6 +2064,28 @@ CONTAINS
     it_optical_depth_bremsstrahlung = 0
 
   END FUNCTION it_optical_depth_bremsstrahlung
+#endif
+
+
+
+#ifdef HYBRID
+  FUNCTION it_optical_depth_delta(array, npart_this_it, start, param)
+
+    REAL(num) :: it_optical_depth_delta
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_delta = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_optical_depth_delta = 0
+
+  END FUNCTION it_optical_depth_delta
 #endif
 
 

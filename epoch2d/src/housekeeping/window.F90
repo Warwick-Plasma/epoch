@@ -213,8 +213,6 @@ CONTAINS
     DO ispecies = 1, n_species
       species => species_list(ispecies)
 
-      IF (species%background_species) CYCLE
-
       CALL create_empty_partlist(append_list)
       npart_per_cell = FLOOR(species%npart_per_cell, KIND=i8)
       npart_frac = species%npart_per_cell - npart_per_cell

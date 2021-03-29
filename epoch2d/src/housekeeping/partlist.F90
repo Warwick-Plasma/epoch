@@ -17,7 +17,7 @@ MODULE partlist
 
   USE shared_data
   USE particle_id_hash_mod
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
   USE random_generator
 #endif
 
@@ -64,13 +64,19 @@ CONTAINS
 #ifdef PHOTONS
     nvar = nvar+1
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     nvar = nvar+1
 #endif
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
     nvar = nvar+1
 #endif
 #ifdef BREMSSTRAHLUNG
+    nvar = nvar+1
+#endif
+#ifdef HYBRID
+    nvar = nvar+1
+#endif
+#ifdef PROBE_TIME
     nvar = nvar+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
@@ -449,7 +455,7 @@ CONTAINS
     array(cpos) = a_particle%optical_depth
     cpos = cpos+1
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     array(cpos) = a_particle%particle_energy
     cpos = cpos+1
 #endif
@@ -459,6 +465,14 @@ CONTAINS
 #endif
 #ifdef BREMSSTRAHLUNG
     array(cpos) = a_particle%optical_depth_bremsstrahlung
+    cpos = cpos+1
+#endif
+#ifdef HYBRID
+    array(cpos) = a_particle%optical_depth_delta
+    cpos = cpos+1
+#endif
+#ifdef PROBE_TIME
+    array(cpos) = a_particle%probe_time
     cpos = cpos+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
@@ -524,7 +538,7 @@ CONTAINS
     a_particle%optical_depth = array(cpos)
     cpos = cpos+1
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     a_particle%particle_energy = array(cpos)
     cpos = cpos+1
 #endif
@@ -534,6 +548,14 @@ CONTAINS
 #endif
 #ifdef BREMSSTRAHLUNG
     a_particle%optical_depth_bremsstrahlung = array(cpos)
+    cpos = cpos+1
+#endif
+#ifdef HYBRID
+    a_particle%optical_depth_delta = array(cpos)
+    cpos = cpos+1
+#endif
+#ifdef PROBE_TIME
+    a_particle%probe_time = array(cpos)
     cpos = cpos+1
 #endif
 #ifdef WORK_DONE_INTEGRATED
@@ -577,7 +599,7 @@ CONTAINS
 #ifdef COLLISIONS_TEST
     new_particle%coll_count = 0
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     ! This assigns an optical depth to newly created particle
     new_particle%particle_energy = 0.0_num
 #endif
@@ -590,6 +612,12 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     new_particle%optical_depth_bremsstrahlung = &
         LOG(1.0_num / (1.0_num - random()))
+#endif
+#ifdef HYBRID
+    new_particle%optical_depth_delta = LOG(1.0_num / (1.0_num - random()))
+#endif
+#ifdef PROBE_TIME
+    new_particle%probe_time = 0.0_num
 #endif
 
   END SUBROUTINE init_particle
@@ -979,5 +1007,59 @@ CONTAINS
     update = use_particle_count_update
 
   END SUBROUTINE update_particle_count
+
+
+
+  SUBROUTINE rotate_p(part, cos_theta, phi, part_p)
+
+    ! Let the polar axis be defined as the initial momentum direction of the
+    ! particle, part. This subroutine rotates that momentum direction by theta
+    ! in the polar direction (we read in cos(theta)), and phi in the azimuthal
+    ! direction, without changing the magnitude.
+    !
+    ! If we have already calculated the magnitude of the particle's momentum,
+    ! this can also be fed into the subroutine to speed up the calculation
+
+    TYPE(particle), POINTER :: part
+    REAL(num), INTENT(IN) :: cos_theta, phi
+    REAL(num), OPTIONAL :: part_p
+    REAL(num) :: p, frac_p, pcos_theta, sin_theta, psin_theta
+    REAL(num) :: ux, uy, uz, pfrac_uz, cos_phi, term_1, term_2
+
+    ! Extract particle momentum
+    IF (PRESENT(part_p)) THEN
+      p = part_p
+    ELSE
+      p = SQRT(part%part_p(1)**2 + part%part_p(2)**2 + part%part_p(3)**2)
+    END IF
+    frac_p = 1.0_num / p
+
+    ! Precalculate repeated terms
+    pcos_theta = p * cos_theta
+    sin_theta = SQRT(1.0_num - cos_theta**2)
+    psin_theta = p*sin_theta
+    uz = part%part_p(3) * frac_p
+
+    IF (ABS(1.0_num - uz) < 1.0e-5_num) THEN
+      ! Special case if the polar direction points along z
+      part%part_p(1) = psin_theta * COS(phi)
+      part%part_p(2) = psin_theta * SIN(phi)
+      part%part_p(3) = pcos_theta * SIGN(1.0_num, uz)
+    ELSE
+      ! Precalculate repeated terms
+      ux = part%part_p(1) * frac_p
+      uy = part%part_p(2) * frac_p
+      pfrac_uz = p/SQRT(1.0_num - uz**2)
+      cos_phi = COS(phi)
+      term_1 = sin_theta*cos_phi*uz*pfrac_uz + pcos_theta
+      term_2 = sin_theta*SIN(phi)*pfrac_uz
+
+      part%part_p(1) = ux * term_1 - uy * term_2
+      part%part_p(2) = uy * term_1 + ux * term_2
+      part%part_p(3) = uz * pcos_theta &
+          + cos_phi * sin_theta * (uz**2 - 1.0_num) * pfrac_uz
+    END IF
+
+  END SUBROUTINE rotate_p
 
 END MODULE partlist

@@ -124,18 +124,13 @@ write_data_bytes () {
   fi
 
   nlines=$(cat $hexdump | wc -l)
-  if [ $nlines -eq 0 ]; then
-     nelements=0
-     padding=0
-  else
-    nfull_segments=$(((nlines-1)/ncont))
-    nfull_segments=$((nfull_segments*ncont))
-    nlast_segment=$((nlines-nfull_segments))
-    nlast=$(tail -n 1 $hexdump | tr 'z' '\n' | wc -l)
-    nlast=$((nlast-1))
-    nelements=$((nl*(nlines-1)+nlast))
-    padding=$((nelements*nbytes-filesize))
-  fi
+  nfull_segments=$(((nlines-1)/ncont))
+  nfull_segments=$((nfull_segments*ncont))
+  nlast_segment=$((nlines-nfull_segments))
+  nlast=$(tail -n 1 $hexdump | tr 'z' '\n' | wc -l)
+  nlast=$((nlast-1))
+  nelements=$((nl*(nlines-1)+nlast))
+  padding=$((nelements*nbytes-filesize))
 
   rm -f $filename
 
@@ -300,7 +295,7 @@ cat >> $outfile <<EOF
 EOF
 else
   if [ $pack_git_diff_from_origin -ne 0 ]; then
-    git diff --exit-code origin/main > $gitdiff
+    git diff --exit-code origin/master > $gitdiff
   else
     git diff --exit-code > $gitdiff
   fi

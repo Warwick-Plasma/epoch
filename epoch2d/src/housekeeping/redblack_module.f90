@@ -25,6 +25,9 @@ MODULE redblack_module
   REAL(r4), DIMENSION(:), POINTER :: field_in1dr4, field_out1dr4
   REAL(r4), DIMENSION(:,:), POINTER :: field_in2dr4, field_out2dr4
   REAL(r4), DIMENSION(:,:,:), POINTER :: field_in3dr4, field_out3dr4
+  INTEGER, DIMENSION(:), POINTER :: field_in1dint, field_out1dint
+  INTEGER, DIMENSION(:,:), POINTER :: field_in2dint, field_out2dint
+  INTEGER, DIMENSION(:,:,:), POINTER :: field_in3dint, field_out3dint
   INTEGER, DIMENSION(:), POINTER :: sendtypes, recvtypes
   TYPE(particle_list), DIMENSION(:), POINTER :: pointers_send, pointers_recv
   INTEGER(i8), DIMENSION(:), POINTER :: sendcounts, recvcounts
@@ -37,7 +40,10 @@ MODULE redblack_module
         redblack3d, &
         redblack1d_r4, &
         redblack2d_r4, &
-        redblack3d_r4
+        redblack3d_r4, &
+        redblack1d_int, &
+        redblack2d_int, &
+        redblack3d_int
   END INTERFACE redblack
 
 CONTAINS
@@ -230,6 +236,87 @@ CONTAINS
 
 
 
+  SUBROUTINE do_send1dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (sendtypes(iproc) /= 0) THEN
+      CALL MPI_SEND(field_in1dint, 1, sendtypes(iproc), iproc, tag, comm, ierr)
+    END IF
+
+  END SUBROUTINE do_send1dint
+
+
+
+  SUBROUTINE do_recv1dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (recvtypes(iproc) /= 0) THEN
+      CALL MPI_RECV(field_out1dint, 1, recvtypes(iproc), iproc, tag, comm, &
+          MPI_STATUS_IGNORE, ierr)
+    END IF
+
+  END SUBROUTINE do_recv1dint
+
+
+
+  SUBROUTINE do_send2dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (sendtypes(iproc) /= 0) THEN
+      CALL MPI_SEND(field_in2dint, 1, sendtypes(iproc), iproc, tag, comm, ierr)
+    END IF
+
+  END SUBROUTINE do_send2dint
+
+
+
+  SUBROUTINE do_recv2dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (recvtypes(iproc) /= 0) THEN
+      CALL MPI_RECV(field_out2dint, 1, recvtypes(iproc), iproc, tag, comm, &
+          MPI_STATUS_IGNORE, ierr)
+    END IF
+
+  END SUBROUTINE do_recv2dint
+
+
+
+  SUBROUTINE do_send3dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (sendtypes(iproc) /= 0) THEN
+      CALL MPI_SEND(field_in3dint, 1, sendtypes(iproc), iproc, tag, comm, ierr)
+    END IF
+
+  END SUBROUTINE do_send3dint
+
+
+
+  SUBROUTINE do_recv3dint(iproc)
+
+    INTEGER, INTENT(IN) :: iproc
+    INTEGER :: ierr
+
+    IF (recvtypes(iproc) /= 0) THEN
+      CALL MPI_RECV(field_out3dint, 1, recvtypes(iproc), iproc, tag, comm, &
+          MPI_STATUS_IGNORE, ierr)
+    END IF
+
+  END SUBROUTINE do_recv3dint
+
+
+
   SUBROUTINE redblackpart(psend, precv, sendcounts_in, recvcounts_in)
 
     TYPE(particle_list), DIMENSION(0:), TARGET :: psend, precv
@@ -341,6 +428,54 @@ CONTAINS
 
 
 
+  SUBROUTINE redblack1d_int(field_in, field_out, sendtypes_in, recvtypes_in)
+
+    INTEGER, DIMENSION(1-ng:), TARGET, INTENT(IN) :: field_in
+    INTEGER, DIMENSION(1-ng:), TARGET, INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
+
+    sendtypes => sendtypes_in
+    recvtypes => recvtypes_in
+    field_in1dint => field_in
+    field_out1dint => field_out
+    CALL redblack_main(do_send1dint, do_recv1dint)
+
+  END SUBROUTINE redblack1d_int
+
+
+
+  SUBROUTINE redblack2d_int(field_in, field_out, sendtypes_in, recvtypes_in)
+
+    INTEGER, DIMENSION(1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    INTEGER, DIMENSION(1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
+
+    sendtypes => sendtypes_in
+    recvtypes => recvtypes_in
+    field_in2dint => field_in
+    field_out2dint => field_out
+    CALL redblack_main(do_send2dint, do_recv2dint)
+
+  END SUBROUTINE redblack2d_int
+
+
+
+  SUBROUTINE redblack3d_int(field_in, field_out, sendtypes_in, recvtypes_in)
+
+    INTEGER, DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(IN) :: field_in
+    INTEGER, DIMENSION(1-ng:,1-ng:,1-ng:), TARGET, INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(0:), TARGET, INTENT(INOUT) :: sendtypes_in, recvtypes_in
+
+    sendtypes => sendtypes_in
+    recvtypes => recvtypes_in
+    field_in3dint => field_in
+    field_out3dint => field_out
+    CALL redblack_main(do_send3dint, do_recv3dint)
+
+  END SUBROUTINE redblack3d_int
+
+
+  
   SUBROUTINE redblack_main(do_send, do_recv)
 
     INTERFACE

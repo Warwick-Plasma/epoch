@@ -75,7 +75,6 @@ CONTAINS
       ALLOCATE(dumpmask_array(4))
       ALLOCATE(bc_particle_array(2*c_ndims,4))
       release_species = ''
-      release_species_list = ''
     END IF
 
   END SUBROUTINE species_deck_initialise
@@ -788,9 +787,7 @@ CONTAINS
 
       IF (str_cmp(element, 'mass_density')) THEN
         mult = 1.0_num / species_list(species_id)%mass
-        WRITE(mult_string, '(''*'', e23.15e3)') mult
-        i = INDEX(mult_string, 'E')
-        mult_string(i:i) = 'e'
+        mult_string = '/ species_list(species_id)%mass'
       END IF
 
       ic => species_list(species_id)%initial_conditions
@@ -1545,6 +1542,59 @@ CONTAINS
       species_list(species_id)%atomic_no_set = .TRUE.
 #else
       IF (use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    ! Bethe Heitler pairs
+    IF (str_cmp(value, 'bh_electron') &
+        .OR. str_cmp(value, 'bethe_heitler_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%electron = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_electron_species = species_id
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(value, 'bh_positron') &
+        .OR. str_cmp(value, 'bethe_heitler_positron')) THEN
+      species_list(species_id)%charge = q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_positron
+      species_charge_set(species_id) = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_positron_species = species_id
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+
+    ! Delta-ray electron
+    IF (str_cmp(value, 'delta_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#endif
+#ifdef HYBRID
+      IF (delta_electron_species == -1) delta_electron_species = species_id
+#else
+      IF (use_hybrid) errcode = c_err_generic_warning
 #endif
       RETURN
     END IF

@@ -91,7 +91,7 @@ MODULE shared_data
   TYPE particle
     REAL(num), DIMENSION(3) :: part_p
     REAL(num) :: part_pos
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     REAL(num) :: weight
 #endif
 #ifdef DELTAF_METHOD
@@ -125,7 +125,7 @@ MODULE shared_data
 #ifdef PHOTONS
     REAL(num) :: optical_depth
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     REAL(num) :: particle_energy
 #endif
 #if defined(PHOTONS) && defined(TRIDENT_PHOTONS)
@@ -133,6 +133,12 @@ MODULE shared_data
 #endif
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
+#endif
+#ifdef HYBRID
+    REAL(num) :: optical_depth_delta
+#endif
+#if !defined(NO_PARTICLE_PROBES) && defined(PROBE_TIME)
+    REAL(num) :: probe_time
 #endif
   END TYPE particle
 
@@ -568,7 +574,7 @@ MODULE shared_data
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
-    REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
+    REAL(num), ALLOCATABLE :: cross_section(:), cross_section_pos(:), e_table(:)
     INTEGER :: size_k, size_t
     TYPE(interpolation_state) :: state
   END TYPE brem_tables
@@ -577,11 +583,13 @@ MODULE shared_data
   INTEGER, ALLOCATABLE :: z_to_index(:)
   INTEGER :: size_brem_array
 
-  ! Bremsstrahlung photon species flag
+  ! Bremsstrahlung species flags
   INTEGER :: bremsstrahlung_photon_species = -1
 #ifndef PHOTONS
   INTEGER :: photon_species = -1
 #endif
+  INTEGER :: bethe_heitler_electron_species = -1
+  INTEGER :: bethe_heitler_positron_species = -1
 
   ! Deck variables
   REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
@@ -591,9 +599,120 @@ MODULE shared_data
   LOGICAL :: produce_bremsstrahlung_photons = .FALSE.
   LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
   LOGICAL :: use_plasma_screening = .FALSE.
+  LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+  LOGICAL :: use_bethe_heitler = .FALSE.
+  LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
+
+  !----------------------------------------------------------------------------
+  ! Hybrid mode - Written by S. J. Morris
+  ! Based on J. R. Davies, et al, 1997. Phys. Rev. E, 56(6), p.7193.
+  !----------------------------------------------------------------------------
+
+  ! Arrays to approximate the effects of refluxing energy loss, loosely based
+  ! off observations from:
+  ! D. Rusby, et al, 2019. High Power Laser Sci. Eng., 7, E45
+  REAL(num) :: tnsa_escape_KE, tnsa_p_loss, tnsa_scatter_angle
+
+#ifdef HYBRID
+  TYPE solid
+
+    ! Input variables
+    REAL(num) :: Iex = -1.0_num
+    REAL(num) :: rad_len = -1.0_num
+    REAL(num) :: mass_no = -1.0_num
+    INTEGER :: Z = -1
+    INTEGER :: res_model = 1
+    REAL(num), ALLOCATABLE :: ion_density(:), el_density(:)
+
+    ! Derived variables
+    REAL(num) :: theta_fac, ln_s, Z_prime
+    REAL(num) :: Iex_term, dEdx_C
+    REAL(num) :: urb_sig, urb_high, urb_el(22), urb_pos(22)
+    REAL(num), ALLOCATABLE :: heat_capacity(:)
+
+  END TYPE solid
+
+  TYPE(solid), ALLOCATABLE :: solid_array(:)
+
+  ! Variables used by deck_solid_block to create the solid array
+  INTEGER :: solid_count = 0
+  LOGICAL :: made_solid_array = .FALSE.
+  INTEGER :: solid_index = 1
+
+  ! Global background arrays
+  REAL(num), ALLOCATABLE, DIMENSION(:) ::  hy_sum_ne, resistivity, hy_Te
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: jbx, jby, jbz
+  INTEGER, ALLOCATABLE, DIMENSION(:) :: resistivity_model
+
+  ! Fit variables for the reduced Lee-More model (initial values for Al)
+  REAL(num) :: rlm_1 = 7.0_num
+  REAL(num) :: rlm_2 = 3.5_num
+
+  ! Delta electron species flag
+  INTEGER :: delta_electron_species = -1
+
+  ! Variables for ionisation routines
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_charge, ion_reduced_density
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: hy_Ti, ion_Z_avg, ion_ni
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_cou_log, ion_A
+  LOGICAL :: use_hy_ionisation = .FALSE., use_hy_cou_log = .FALSE.
+
+  ! Additional arrays for Urban elastic scatter routines
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: urb_d1, urb_d2, urb_d3, urb_d4
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: urb_iZ23, urb_theta1, urb_theta2
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: urb_Zeff, urb_rad_len
+
+  ! Deck variables
+  LOGICAL :: use_hybrid_fields = .FALSE., use_hybrid_collisions = .FALSE.
+  LOGICAL :: use_hybrid_scatter = .FALSE., produce_delta_rays = .FALSE.
+  LOGICAL :: use_ion_temp = .FALSE., run_hy_ionisation = .FALSE.
+  LOGICAL :: use_ohmic = .FALSE.
+  REAL(num) :: min_delta_energy = 0.0_num
+  REAL(num) :: min_hybrid_energy = 0.0_num
+#endif
+  LOGICAL :: use_hybrid = .FALSE.
+
+  !----------------------------------------------------------------------------
+  ! Hybrid laser boundaries - Written by S. J. Morris
+  ! Electron injector based on laser parameters for hybrid mode (PIC works too)
+  !----------------------------------------------------------------------------
+
+  TYPE hy_laser_block
+
+    ! Similar syntax to the laser_block type, but without a phase function
+    INTEGER :: boundary
+    INTEGER :: ppc
+
+    LOGICAL :: use_time_function, use_omega_function
+    TYPE(primitive_stack) :: time_function, omega_function
+
+    REAL(num) :: intensity, omega, t_start, t_end, efficiency
+    INTEGER :: omega_func_type, species
+    LOGICAL :: has_t_end
+
+    INTEGER :: mean, e_dist, ang_dist
+
+    ! User specified energy/weight values
+    REAL(num) :: user_mean_KE, user_weight
+    REAL(num) :: las_weight_KE
+    LOGICAL :: ignore_las
+
+    ! Angular distribution variables
+    REAL(num) :: user_theta_max, cos_n_power, top_hat_L, sheng_angle, mean_mult
+    REAL(num) :: theta_mean, phi_mean
+    LOGICAL :: use_moore_max
+    LOGICAL :: use_sheng_dir
+
+    TYPE(hy_laser_block), POINTER :: next
+
+  END TYPE hy_laser_block
+
+  TYPE(hy_laser_block), POINTER :: hy_laser_x_min, hy_laser_x_max
+  INTEGER :: n_hy_laser_x_min = 0, n_hy_laser_x_max = 0
+  LOGICAL, DIMENSION(2*c_ndims) :: add_hy_laser = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data
@@ -631,6 +750,23 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Particle injectors
   !----------------------------------------------------------------------------
+  TYPE injector_files
+    ! Momentum Data
+    CHARACTER(LEN=string_length) :: px_data
+    CHARACTER(LEN=string_length) :: py_data
+    CHARACTER(LEN=string_length) :: pz_data
+    ! Temporal injection data
+    CHARACTER(LEN=string_length) :: t_data
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    CHARACTER(LEN=string_length) :: w_data
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    CHARACTER(LEN=string_length) :: id_data
+#endif
+  END TYPE injector_files
+
   TYPE injector_block
 
     INTEGER :: boundary
@@ -649,10 +785,33 @@ MODULE shared_data
     LOGICAL :: has_t_end
     REAL(num) :: depth
 
+    ! Additional parameters for file injection
+    LOGICAL :: inject_from_file
+    LOGICAL :: file_finished
+    INTEGER :: custom_id
+    REAL(num) :: next_time
+    ! Momentum Data
+    LOGICAL :: px_data_given
+    LOGICAL :: py_data_given
+    LOGICAL :: pz_data_given
+    ! Temporal injection data
+    LOGICAL :: t_data_given
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    LOGICAL :: w_data_given
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    LOGICAL :: id_data_given
+#endif
+
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
 
   TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_files) :: injector_filenames
+
+  INTEGER :: custom_injector_count
 
   !----------------------------------------------------------------------------
   ! laser boundaries
@@ -732,7 +891,7 @@ MODULE shared_data
     LOGICAL :: px_data_given
     LOGICAL :: py_data_given
     LOGICAL :: pz_data_given
-#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS)
+#if !defined(PER_SPECIES_WEIGHT) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
     ! Weight data
     CHARACTER(LEN=string_length) :: w_data
     INTEGER(KIND=MPI_OFFSET_KIND) :: w_data_offset

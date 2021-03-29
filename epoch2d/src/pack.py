@@ -407,7 +407,7 @@ if not pack_git_diff:
     print_integer_array(0)
 else:
     if pack_git_diff_from_origin:
-        sp.call(["git diff origin/main > %s" % gitdiff], shell=True)
+        sp.call(["git diff origin/master > %s" % gitdiff], shell=True)
     else:
         sp.call(["git diff > %s" % gitdiff], shell=True)
     if os.path.getsize(gitdiff) != 0:
