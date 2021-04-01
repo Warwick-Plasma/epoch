@@ -87,30 +87,31 @@ CONTAINS
 
     INTEGER, INTENT(IN) :: subset_index
     INTEGER :: j, rd, n_min, n_max, mpitype, npd, npdm, n0
-    INTEGER, DIMENSION(c_ndims) :: n_global, sn_local, sn_global, starts
+    INTEGER, DIMENSION(c_ndims) :: nt_global, n_local, n_global, starts
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     LOGICAL :: proc_outside_range
     TYPE(subset), POINTER :: sub
 
     sub => subset_list(subset_index)
 
-    n_global = (/nx_global, ny_global/)
+    nt_global = [nx_global, ny_global]
     starts = 0
     n0 = 1
 
-    ranges = cell_global_ranges(global_ranges(sub))
-    sn_global = (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
-    ranges = cell_local_ranges(global_ranges(sub))
+    ranges = cell_global_ranges(sub)
+    n_global = ranges(2,:) - ranges(1,:)
+
+    ranges = cell_local_ranges(sub)
+    n_local = ranges(2,:) - ranges(1,:)
+
+    starts = cell_starts(sub)
 
     ! These calculations rely on the original domain size, so will be wrong
     ! for skipped sets as yet
     proc_outside_range = .FALSE.
-    IF (ranges(2,1) - ranges(1,1) <= c_tiny) proc_outside_range = .TRUE.
-    IF (ranges(2,2) - ranges(1,2) <= c_tiny) proc_outside_range = .TRUE.
-    sn_local =  (/ ranges(2,1) - ranges(1,1), ranges(2,2) - ranges(1,2) /)
-    starts = cell_starts(ranges, global_ranges(sub))
-
-    ranges = cell_section_ranges(ranges)
+    DO j = 1, c_ndims
+      IF (n_local(j) <= c_tiny) proc_outside_range = .TRUE.
+    END DO
 
     IF (sub%skip) THEN
       DO j = 1, c_ndims
@@ -120,126 +121,75 @@ CONTAINS
         npd = (n_max - n0) / rd + 1
         npdm = (n_min - 1 - n0) / rd + 1
         IF (n_min < 2) npdm = 0
-        sn_global(j) = (n_global(j) - n0) / rd + 1
-        sn_local(j) = npd - npdm
+        n_global(j) = (nt_global(j) - n0) / rd + 1
+        n_local(j) = npd - npdm
         sub%n_start(j) = n0 + npdm * rd - n_min
         starts(j) = npdm
       END DO
-
-      ! Just exit if the subset hasn't changed extents since last time
-      IF (equal(sub%n_global, sn_global)) THEN
-        IF (equal(sub%n_local, sn_local)) THEN
-          IF (equal(sub%starts, starts)) THEN
-            RETURN
-          END IF
-        END IF
-      END IF
-
-      sub%n_global(:) = sn_global(:)
-      sub%n_local(:) = sn_local(:)
-      sub%starts(:) = starts(:)
-
-      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
-        CALL MPI_TYPE_FREE(sub%subtype, errcode)
-        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-      END IF
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype_r4 = mpitype
-
-      starts = 0
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray_r4 = mpitype
-    ELSE
-      ! Just exit if the subset hasn't changed extents since last time
-      IF (equal(sub%n_global, sn_global)) THEN
-        IF (equal(sub%n_local, sn_local)) THEN
-          IF (equal(sub%starts, starts)) THEN
-            RETURN
-          END IF
-        END IF
-      END IF
-
-      sub%n_global(:) = sn_global(:)
-      sub%n_local(:) = sn_local(:)
-      sub%starts(:) = starts(:)
-
-      IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
-        CALL MPI_TYPE_FREE(sub%subtype, errcode)
-        CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray, errcode)
-        CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
-      END IF
-
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_global, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subtype_r4 = mpitype
-
-      starts = 0
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray = mpitype
-
-      mpitype = MPI_DATATYPE_NULL
-      IF (proc_outside_range) THEN
-        CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
-      ELSE
-        CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, sub%n_local, sub%n_local, &
-            starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
-      END IF
-      CALL MPI_TYPE_COMMIT(mpitype, errcode)
-
-      sub%subarray_r4 = mpitype
     END IF
+
+    ! Just exit if the subset hasn't changed extents since last time
+    IF (equal(sub%n_global, n_global)) THEN
+      IF (equal(sub%n_local, n_local)) THEN
+        IF (equal(sub%starts, starts)) THEN
+          RETURN
+        END IF
+      END IF
+    END IF
+
+    sub%n_global(:) = n_global(:)
+    sub%n_local(:) = n_local(:)
+    sub%starts(:) = starts(:)
+
+    IF (sub%subtype /= MPI_DATATYPE_NULL) THEN
+      CALL MPI_TYPE_FREE(sub%subtype, errcode)
+      CALL MPI_TYPE_FREE(sub%subtype_r4, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray, errcode)
+      CALL MPI_TYPE_FREE(sub%subarray_r4, errcode)
+    END IF
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subtype = mpitype
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subtype_r4 = mpitype
+
+    n_global = [nx + 2 * ng, ny + 2 * ng]
+    starts = array_starts(sub)
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, mpireal, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
+          starts, MPI_ORDER_FORTRAN, mpireal, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subarray = mpitype
+
+    mpitype = MPI_DATATYPE_NULL
+    IF (proc_outside_range) THEN
+      CALL MPI_TYPE_CONTIGUOUS(0, MPI_REAL4, mpitype, errcode)
+    ELSE
+      CALL MPI_TYPE_CREATE_SUBARRAY(c_ndims, n_global, n_local, &
+          starts, MPI_ORDER_FORTRAN, MPI_REAL4, mpitype, errcode)
+    END IF
+    CALL MPI_TYPE_COMMIT(mpitype, errcode)
+    sub%subarray_r4 = mpitype
 
   END SUBROUTINE create_subset_subtypes
 
@@ -697,10 +647,10 @@ CONTAINS
   ! Clips range of current subset to domain size and cell edge
   !----------------------------------------------------------------------------
 
-  FUNCTION global_ranges(current_subset)
+  SUBROUTINE get_global_ranges(current_subset, global_ranges)
 
-    REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
-    TYPE(subset), INTENT(IN), POINTER :: current_subset
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims), INTENT(OUT) :: global_ranges
     REAL(num) :: dd
     ! fudge factor allows overshoot of the specified domain extent by about 5%
     REAL(num), PARAMETER :: fudge = 0.019_num
@@ -737,26 +687,27 @@ CONTAINS
           + CEILING((global_ranges(2,idim) - dir_min(idim)) / dd - fudge) * dd
 
       ! Correct to domain size
-      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min(idim)) &
-          + 0.5_num * dd
-      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max(idim)) &
-          + 0.5_num * dd
+      global_ranges(1,idim) = MAX(global_ranges(1,idim), dir_min(idim))
+      global_ranges(2,idim) = MIN(global_ranges(2,idim), dir_max(idim))
     END DO
 
-  END FUNCTION global_ranges
+  END SUBROUTINE get_global_ranges
 
 
 
-  FUNCTION cell_global_ranges(ranges)
+  FUNCTION cell_global_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_global_ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dd, lower_posn
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims) :: ranges
+    REAL(num) :: dd, lower_posn
     INTEGER :: idim
+
+    CALL get_global_ranges(current_subset, ranges)
 
     DO idim = 1, c_ndims
       dd = dir_d(idim)
-      lower_posn = dir_grid_min(idim)
+      lower_posn = dir_min(idim)
 
       cell_global_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
       cell_global_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
@@ -770,19 +721,22 @@ CONTAINS
   ! Location of current processors section of global array
   !----------------------------------------------------------------------------
 
-  FUNCTION cell_local_ranges(ranges)
+  FUNCTION cell_local_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_local_ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM) :: dd, lower_posn
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    REAL(num), DIMENSION(2,c_ndims) :: ranges
+    REAL(num) :: dd, lower_posn
     INTEGER :: idim
 
+    CALL get_global_ranges(current_subset, ranges)
+
     DO idim = 1, c_ndims
+      dd = dir_d(idim)
+      lower_posn = dir_min(idim)
+
       ranges(1,idim) = MAX(ranges(1,idim), dir_min_local(idim))
       ranges(2,idim) = MIN(ranges(2,idim), dir_max_local(idim))
-
-      dd = dir_d(idim)
-      lower_posn = dir_grid_min(idim)
 
       cell_local_ranges(1,idim) = NINT((ranges(1,idim) - lower_posn) / dd) + 1
       cell_local_ranges(2,idim) = NINT((ranges(2,idim) - lower_posn) / dd) + 1
@@ -797,11 +751,14 @@ CONTAINS
   ! to use
   !----------------------------------------------------------------------------
 
-  FUNCTION cell_section_ranges(ranges)
+  FUNCTION cell_section_ranges(current_subset)
 
     INTEGER, DIMENSION(2,c_ndims) :: cell_section_ranges
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
     INTEGER, DIMENSION(2,c_ndims) :: ranges
     INTEGER :: idim, min_val
+
+    ranges = cell_local_ranges(current_subset)
 
     DO idim = 1, c_ndims
       min_val = n_global_min(idim)
@@ -814,22 +771,51 @@ CONTAINS
 
 
 
-  FUNCTION cell_starts(ranges, global_ranges)
+  FUNCTION cell_starts(current_subset)
 
     INTEGER, DIMENSION(c_ndims) :: cell_starts
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
     INTEGER, DIMENSION(2,c_ndims) :: ranges
-    REAL(NUM), DIMENSION(2,c_ndims) :: global_ranges
+    REAL(num), DIMENSION(2,c_ndims) :: global_ranges
     INTEGER :: range_global_min, idim
+
+    CALL get_global_ranges(current_subset, global_ranges)
+    ranges = cell_local_ranges(current_subset)
 
     DO idim = 1, c_ndims
       range_global_min = &
-          NINT((global_ranges(1,idim) - dir_grid_min(idim)) / dir_d(idim))
+          NINT((global_ranges(1,idim) - dir_min(idim)) / dir_d(idim))
 
       ! -1 because ranges is cell indexed and global_ranges isn't
       cell_starts(idim) = ranges(1,idim) - range_global_min - 1
     END DO
 
   END FUNCTION cell_starts
+
+
+
+  FUNCTION array_starts(current_subset)
+
+    INTEGER, DIMENSION(c_ndims) :: array_starts
+    TYPE(subset), POINTER, INTENT(IN) :: current_subset
+    INTEGER, DIMENSION(2,c_ndims) :: ranges
+    INTEGER :: idim
+    INTEGER, PARAMETER :: &
+        nr(3) = [c_subset_x_min, c_subset_y_min, c_subset_z_min]
+
+    array_starts = ng
+    IF (.NOT.current_subset%space_restrictions) RETURN
+
+    ranges = cell_global_ranges(current_subset)
+
+    DO idim = 1, c_ndims
+      IF (current_subset%use_restriction(nr(idim))) THEN
+        array_starts(idim) = ranges(1,idim) - n_global_min(idim) + ng
+        array_starts(idim) = MAX(array_starts(idim), ng)
+      END IF
+    END DO
+
+  END FUNCTION array_starts
 
 
 

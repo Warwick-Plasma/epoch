@@ -39,7 +39,6 @@ CONTAINS
       ! full check appears in check_bremsstrahlung_variables
       found = .FALSE.
       DO ispecies = 1, n_species
-        IF (species_list(ispecies)%count <= 0) CYCLE
         IF (species_list(ispecies)%species_type == c_species_id_electron &
             .OR. ispecies == bremsstrahlung_photon_species ) THEN
           found = .TRUE.
@@ -55,8 +54,7 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Electron and photon species are either ', &
-                'unspecified or contain no'
+            WRITE(io,*) 'Electron and/or photon species are unspecified.'
             WRITE(io,*) 'particles. Bremsstrahlung routines will do nothing.'
           END DO
           CALL close_status_file

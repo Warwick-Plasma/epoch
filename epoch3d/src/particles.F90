@@ -111,7 +111,11 @@ CONTAINS
     REAL(num) :: delta_x, delta_y, delta_z
     REAL(num) :: xfac1, xfac2, yfac1, yfac2, zfac1, zfac2
     REAL(num) :: gz_iz, hz_iz, hygz, hyhz, hzyfac1, hzyfac2, yzfac
+    REAL(num) :: bnd_x_min, bnd_x_max
+    REAL(num) :: bnd_y_min, bnd_y_max
+    REAL(num) :: bnd_z_min, bnd_z_max
     INTEGER :: ispecies, ix, iy, iz, dcellx, dcelly, dcellz, cx, cy, cz
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     INTEGER(i8) :: ipart
 #ifdef WORK_DONE_INTEGRATED
     REAL(num) :: tmp_x, tmp_y, tmp_z
@@ -139,6 +143,7 @@ CONTAINS
 #endif
 
     TYPE(particle), POINTER :: current, next
+    TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
 #ifdef PREFETCH
     CALL prefetch_particle(species_list(1)%attached_list%head)
@@ -169,6 +174,7 @@ CONTAINS
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
+
       IF (species_list(ispecies)%immobile) CYCLE
       IF (species_list(ispecies)%species_type == c_species_id_photon) THEN
 #ifdef BREMSSTRAHLUNG
@@ -185,6 +191,58 @@ CONTAINS
 #endif
         CYCLE
       END IF
+
+      bc_species = species_list(ispecies)%bc_particle
+      IF (bc_species(c_bd_x_min) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
+        bnd_x_min = x_min_outer
+      ELSE
+        bnd_x_min = x_min_local
+      END IF
+      IF (bc_species(c_bd_x_max) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
+        bnd_x_max = x_max_outer
+      ELSE
+        bnd_x_max = x_max_local
+      END IF
+      IF (bc_species(c_bd_y_min) == c_bc_thermal &
+          .OR. bc_field(c_bd_y_min) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
+        bnd_y_min = y_min_outer
+      ELSE
+        bnd_y_min = y_min_local
+      END IF
+      IF (bc_species(c_bd_y_max) == c_bc_thermal &
+          .OR. bc_field(c_bd_y_max) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
+        bnd_y_max = y_max_outer
+      ELSE
+        bnd_y_max = y_max_local
+      END IF
+      IF (bc_species(c_bd_z_min) == c_bc_thermal &
+          .OR. bc_field(c_bd_z_min) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+        bnd_z_min = z_min_outer
+      ELSE
+        bnd_z_min = z_min_local
+      END IF
+      IF (bc_species(c_bd_z_max) == c_bc_thermal &
+          .OR. bc_field(c_bd_z_max) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+        bnd_z_max = z_max_outer
+      ELSE
+        bnd_z_max = z_max_local
+      END IF
+
+      ! Setup list of particles which may need boundary conditions applied
+      ALLOCATE(species_list(ispecies)%boundary_particles)
+      NULLIFY(species_list(ispecies)%boundary_particles%particle)
+      NULLIFY(species_list(ispecies)%boundary_particles%next)
+      NULLIFY(bnd_part_next)
+      bnd_part_last => species_list(ispecies)%boundary_particles
+
 #ifndef NO_PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
@@ -413,6 +471,19 @@ CONTAINS
             part_y + y_grid_min_local, part_z + z_grid_min_local /)
         current%part_p   = part_mc * (/ part_ux, part_uy, part_uz /)
 
+        ! Add particle to boundary candidate list
+        IF (current%part_pos(1) < bnd_x_min &
+            .OR. current%part_pos(1) > bnd_x_max &
+            .OR. current%part_pos(2) < bnd_y_min &
+            .OR. current%part_pos(2) > bnd_y_max &
+            .OR. current%part_pos(3) < bnd_z_min &
+            .OR. current%part_pos(3) > bnd_z_max) THEN
+          ALLOCATE(bnd_part_next)
+          bnd_part_next%particle => current
+          bnd_part_last%next => bnd_part_next
+          bnd_part_last => bnd_part_next
+        END IF
+
 #ifdef WORK_DONE_INTEGRATED
         ! This is the actual total work done by the fields: Results correspond
         ! with the electron's gamma factor
@@ -606,6 +677,13 @@ CONTAINS
 #endif
         current => next
       END DO
+
+      ! Boundary list head contains no particle
+      bnd_part_last => species_list(ispecies)%boundary_particles
+      species_list(ispecies)%boundary_particles &
+          => species_list(ispecies)%boundary_particles%next
+      DEALLOCATE(bnd_part_last)
+      IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
       CALL current_bcs(species=ispecies)
     END DO
 
@@ -663,9 +741,13 @@ CONTAINS
     ! Properties of the current particle. Copy out of particle arrays for speed
     REAL(num) :: delta_x, delta_y, delta_z
     INTEGER,INTENT(IN) :: ispecies
-    TYPE(particle), POINTER :: current
-
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
     REAL(num) :: current_energy, dtfac, fac
+    REAL(num) :: bnd_x_min, bnd_x_max
+    REAL(num) :: bnd_y_min, bnd_y_max
+    REAL(num) :: bnd_z_min, bnd_z_max
+    TYPE(particle), POINTER :: current
+    TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
 
     ! Used for particle probes (to see of probe conditions are satisfied)
 #ifndef NO_PARTICLE_PROBES
@@ -677,6 +759,59 @@ CONTAINS
     REAL(num) :: d_init, d_final
     LOGICAL :: probes_for_species
 #endif
+
+    IF (species_list(ispecies)%attached_list%count == 0) RETURN
+
+    bc_species = species_list(ispecies)%bc_particle
+    IF (bc_species(c_bd_x_min) == c_bc_thermal &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) THEN
+      bnd_x_min = x_min_outer
+    ELSE
+      bnd_x_min = x_min_local
+    END IF
+    IF (bc_species(c_bd_x_max) == c_bc_thermal &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) THEN
+      bnd_x_max = x_max_outer
+    ELSE
+      bnd_x_max = x_max_local
+    END IF
+    IF (bc_species(c_bd_y_min) == c_bc_thermal &
+        .OR. bc_field(c_bd_y_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_min) == c_bc_cpml_outflow) THEN
+      bnd_y_min = y_min_outer
+    ELSE
+      bnd_y_min = y_min_local
+    END IF
+    IF (bc_species(c_bd_y_max) == c_bc_thermal &
+        .OR. bc_field(c_bd_y_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_y_max) == c_bc_cpml_outflow) THEN
+      bnd_y_max = y_max_outer
+    ELSE
+      bnd_y_max = y_max_local
+    END IF
+    IF (bc_species(c_bd_z_min) == c_bc_thermal &
+        .OR. bc_field(c_bd_z_min) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_min) == c_bc_cpml_outflow) THEN
+      bnd_z_min = z_min_outer
+    ELSE
+      bnd_z_min = z_min_local
+    END IF
+    IF (bc_species(c_bd_z_max) == c_bc_thermal &
+        .OR. bc_field(c_bd_z_max) == c_bc_cpml_laser &
+        .OR. bc_field(c_bd_z_max) == c_bc_cpml_outflow) THEN
+      bnd_z_max = z_max_outer
+    ELSE
+      bnd_z_max = z_max_local
+    END IF
+
+    ! Setup list of particles which may need boundary conditions applied
+    ALLOCATE(species_list(ispecies)%boundary_particles)
+    NULLIFY(species_list(ispecies)%boundary_particles%particle)
+    NULLIFY(species_list(ispecies)%boundary_particles%next)
+    NULLIFY(bnd_part_next)
+    bnd_part_last => species_list(ispecies)%boundary_particles
 
 #ifndef NO_PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
@@ -707,6 +842,19 @@ CONTAINS
       final_part_y = current%part_pos(2)
       final_part_z = current%part_pos(3)
 #endif
+
+      ! Add particle to boundary candidate list
+      IF (current%part_pos(1) < bnd_x_min &
+          .OR. current%part_pos(1) > bnd_x_max &
+          .OR. current%part_pos(2) < bnd_y_min &
+          .OR. current%part_pos(2) > bnd_y_max &
+          .OR. current%part_pos(3) < bnd_z_min &
+          .OR. current%part_pos(3) > bnd_z_max) THEN
+        ALLOCATE(bnd_part_next)
+        bnd_part_next%particle => current
+        bnd_part_last%next => bnd_part_next
+        bnd_part_last => bnd_part_next
+      END IF
 
 #ifndef NO_PARTICLE_PROBES
       IF (probes_for_species) THEN
@@ -745,6 +893,13 @@ CONTAINS
 
       current => current%next
     END DO
+
+    ! Boundary list head contains no particle
+    bnd_part_last => species_list(ispecies)%boundary_particles
+    species_list(ispecies)%boundary_particles &
+        => species_list(ispecies)%boundary_particles%next
+    DEALLOCATE(bnd_part_last)
+    IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
 
   END SUBROUTINE push_photons
 #endif

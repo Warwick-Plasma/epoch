@@ -316,6 +316,7 @@ CONTAINS
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
         CALL shift_window(window_shift_cells)
+        CALL setup_bc_lists
         CALL particle_bcs
         window_shift_fraction = window_shift_fraction - window_shift_real
       END IF

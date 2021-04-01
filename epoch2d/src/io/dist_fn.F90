@@ -162,6 +162,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: var_name
     CHARACTER(LEN=8), DIMENSION(c_df_maxdirs) :: labels, units
     REAL(num), DIMENSION(c_df_maxdirs) :: particle_data
+    REAL(num) :: tmpvar
     LOGICAL :: proc_outside_range
 
     proc_outside_range = .FALSE.
@@ -570,7 +571,10 @@ CONTAINS
       cell = 1
       DO idim = 1, curdims
         current_data = particle_data(direction(idim))
-        cell(idim) = FLOOR((current_data - ranges(1,idim)) / dgrid(idim)) + 1
+        tmpvar = (current_data - ranges(1,idim)) / dgrid(idim)
+        IF (ABS(tmpvar) > REAL(HUGE(1),num)) &
+            CYCLE out2
+        cell(idim) = FLOOR(tmpvar) + 1
         IF (cell(idim) < 1 .OR. cell(idim) > resolution(idim)) &
             CYCLE out2
       END DO

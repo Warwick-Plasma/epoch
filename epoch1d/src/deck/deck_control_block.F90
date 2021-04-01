@@ -181,9 +181,12 @@ CONTAINS
     CHARACTER(LEN=string_length) :: str_tmp
     CHARACTER(LEN=1) :: c
     INTEGER :: errcode
-    INTEGER :: field_order, ierr, io, iu, i
+    INTEGER :: field_order, ierr, io, iu, i, pre, lun, nl_loc
     LOGICAL :: isnum
     INTEGER, DIMENSION(:), POINTER :: stride_temp
+    INTEGER :: sz
+    LOGICAL :: exists
+    CHARACTER(LEN=:), ALLOCATABLE :: dname, str
 
     errcode = c_err_none
 
@@ -255,6 +258,74 @@ CONTAINS
         END DO
       END IF
       CALL abort_code(c_err_bad_value)
+
+    ELSE IF (str_cmp(element, 'use_restart_dependency_file')) THEN
+      use_restart_dependency_file = as_logical_print(value, element, errcode)
+      IF (errcode /= c_err_none .OR. .NOT. use_restart_dependency_file) RETURN
+      IF (rank == 0) THEN
+        INQUIRE(FILE=TRIM(data_dir) // '/' // TRIM(restart_dependency_file), &
+           exist = exists, size = sz)
+        IF (.NOT. exists .OR. sz <= 0) THEN
+          CALL MPI_BCAST(0, 1, MPI_INTEGER, 0, comm, ierr)
+          RETURN
+        END IF
+        lun=get_free_lun()
+        OPEN(UNIT=lun,FILE=TRIM(data_dir) // '/' &
+            // TRIM(restart_dependency_file), ACCESS='STREAM', STATUS='OLD')
+        ALLOCATE(CHARACTER(LEN=sz)::str)
+        READ(lun) str
+        CLOSE(lun)
+        nl_loc = sz
+        DO WHILE(nl_loc > 0)
+          pre = INDEX(str(:nl_loc-1), NEW_LINE('A'), BACK = .TRUE.)
+          IF (pre < 1) pre = 0
+          IF (pre == nl_loc) CYCLE
+          ALLOCATE(dname, SOURCE = str(pre+1:nl_loc-1))
+          IF (dname == restart_terminate_string) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** INFO ***'
+              WRITE(io,*) 'Code has reached true end point so will not restart'
+            END DO
+            CALL abort_code(c_err_ended_restart)
+          END IF
+          INQUIRE(FILE = TRIM(data_dir) // '/' // dname, exist = exists)
+          IF (exists) EXIT
+          DEALLOCATE(dname)
+          nl_loc = pre
+        END DO
+        IF (.NOT. ALLOCATED(dname)) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Restart dependency file does not specify any valid'
+            WRITE(io,*) 'files for restart. This is a fatal error and EPOCH'
+            WRITE(io,*) 'will close'
+          END DO
+          CALL MPI_BCAST(-1, 1, MPI_INTEGER, 0, comm, ierr)
+          errcode = c_err_bad_value + c_err_terminate
+          RETURN
+        END IF
+        CALL MPI_BCAST(LEN(dname), 1, MPI_INTEGER, 0, comm, ierr)
+        CALL MPI_BCAST(dname, LEN(dname), MPI_CHARACTER, 0, comm, &
+            ierr)
+        restart_filename = dname
+        DEALLOCATE(dname, str)
+        ic_from_restart = .TRUE.
+      ELSE
+        CALL MPI_BCAST(sz, 1, MPI_INTEGER, 0, comm, ierr)
+        IF (sz == 0) RETURN
+        IF (sz < 0) THEN
+          errcode = c_err_bad_value + c_err_terminate
+          RETURN
+        END IF
+        ALLOCATE(CHARACTER(LEN=sz)::dname)
+        CALL MPI_BCAST(dname, LEN(dname), MPI_CHARACTER, 0, comm, &
+            ierr)
+        restart_filename = dname
+        DEALLOCATE(dname)
+        ic_from_restart = .TRUE.
+      END IF
 
     ELSE IF (str_cmp(element, 'restart_snapshot')) THEN
       isnum = .TRUE.
@@ -404,7 +475,7 @@ CONTAINS
       smooth_its = as_integer_print(value, element, errcode)
 
     ELSE IF (str_cmp(element, 'smooth_compensation')) THEN
-      IF(as_logical_print(value, element, errcode)) smooth_comp_its = 1
+      IF (as_logical_print(value, element, errcode)) smooth_comp_its = 1
 
     ELSE IF (str_cmp(element, 'smooth_strides')) THEN
       IF (str_cmp(value, 'auto')) THEN

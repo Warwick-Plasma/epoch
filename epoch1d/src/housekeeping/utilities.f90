@@ -361,6 +361,8 @@ CONTAINS
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
     boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    x_min_outer = x_min - boundary_shift * dx
+    x_max_outer = x_max + boundary_shift * dx
 
     dir_d(1) = dx
     dir_min(1) = x_min

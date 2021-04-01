@@ -361,6 +361,8 @@ CONTAINS
     x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
     boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    x_min_outer = x_min - boundary_shift * dx
+    x_max_outer = x_max + boundary_shift * dx
 
     dir_d(1) = dx
     dir_min(1) = x_min
@@ -395,6 +397,8 @@ CONTAINS
     y_max_local = y_grid_max_local - (cpml_y_max_offset - 0.5_num) * dy
 
     boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    y_min_outer = y_min - boundary_shift * dy
+    y_max_outer = y_max + boundary_shift * dy
 
     dir_d(2) = dy
     dir_min(2) = y_min
@@ -429,6 +433,8 @@ CONTAINS
     z_max_local = z_grid_max_local - (cpml_z_max_offset - 0.5_num) * dz
 
     boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
+    z_min_outer = z_min - boundary_shift * dz
+    z_max_outer = z_max + boundary_shift * dz
 
     dir_d(3) = dz
     dir_min(3) = z_min
