@@ -1,0 +1,9 @@
+Welcome to the benchmark folder!
+
+To verify the code works for yourself, I have provided the hybrid EPOCH input decks for all the benchmarks I mention in the documentation (and a few more).
+
+You can run these input decks and do your own post-processing, but if you have MATLAB you can also run my post-processing scripts! The run_test.sh shell script in each benchmarking directory will run the hybrid-EPOCH job, and in most cases re-create the figures in the directory (some need additional post processing).
+
+Before doing this, make sure EPOCH is compiled with bremsstrahlung, hybrid, probe-time and particle ID compilation flags (this should make all the benchmarks work). 
+
+You will also need to set the location of the EPOCH directory in quick1d.sh, quick2d.sh and quick3d.sh.

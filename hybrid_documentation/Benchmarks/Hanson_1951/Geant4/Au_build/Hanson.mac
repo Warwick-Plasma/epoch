@@ -1,0 +1,29 @@
+# Macro file for example B1
+# 
+# Can be run in batch, without graphic
+# or interactively: Idle> /control/execute run1.mac
+#
+# Change the default number of workers (in multi-threading mode) 
+#/run/numberOfWorkers 4
+#
+# Initialize kernel
+/run/initialize
+#
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/vis/disable
+#
+###########################################################
+# 5000 electron (0.5 MeV) to the direction (0.,0.,1.)   #
+###########################################################
+#
+/gun/particle e-
+/gun/energy 15.7 MeV    #This is kinetic energy
+/gun/direction 1 0 0
+/gun/position 0 0 0
+#
+/run/beamOn 500000

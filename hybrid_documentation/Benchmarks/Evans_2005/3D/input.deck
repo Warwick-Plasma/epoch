@@ -1,0 +1,203 @@
+begin:constant
+
+  cell_size = 0.5e-6
+  cell_size_x = 0.1e-6
+  t_fwhm = 800.0e-15
+  y_fwhm = 10.0e-6
+  total_macro = 1.5e6
+  dt_mult_val = 0.8
+
+  t_fw01m = t_fwhm * 1.8226
+  w_t = t_fwhm/(2*sqrt(loge(2)))
+  w_y = y_fwhm/(2*sqrt(loge(2)))
+
+  ni_C = 3.9e28
+  ni_H = 7.7e28
+  ni_Al = 6.022e28
+
+end:constant
+
+
+begin:control
+
+  nx = 32.2e-6/cell_size_x 
+  ny = 20.0e-6/cell_size
+  nz = 20.0e-6/cell_size
+
+  x_min = 0.0e-6
+  x_max = 32.2e-6
+  y_min = -10.0e-6
+  y_max = 10.0e-6
+  z_min = -10.0e-6
+  z_max = 10.0e-6
+
+  t_end = t_fw01m + (x_max-x_min)/(3.0e8)
+  dt_multiplier = dt_mult_val
+  stdout_frequency = 30
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = T              # EM field evolution
+  use_collisions = T          # Collisional energy loss
+  use_scatter = T             # Elastic scatter
+  use_ohmic_heating = T       # Ohmic heating
+  use_thomas_fermi = T        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = T      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature       
+  min_delta_KE = 50.0*kev     # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 1.0*ev      # Remove particles below this energy
+  elastic_model = Davies      # Urban # Davies         
+
+end:hybrid
+
+
+begin:bremsstrahlung
+ 
+  use_bremsstrahlung = T
+  start_time = 0
+  produce_photons = F    
+  photon_dynamics = F   
+  use_plasma_screening = T
+  use_brem_scatter = T
+           
+end:bremsstrahlung
+
+
+begin:constant
+
+  las_cell_y = y_fwhm / cell_size
+  las_cell_z = y_fwhm / cell_size
+  las_t_steps = t_fw01m / (cell_size_x/(3.0e8)/dt_mult_val)
+  las_ppc = total_macro / las_cell_y / las_cell_z / las_t_steps  # macrocount per cell per dt
+  las_ppc_safe = if(las_ppc lt 1, 1, las_ppc)
+
+end:constant
+
+
+begin:hy_laser
+
+  boundary = x_min
+  ppc = las_ppc_safe   # Add the largest of total_macro over full sim, or 1 ppc
+  profile = gauss(y,0,w_y)*gauss(z,0,w_y)
+  profile_min = 0.5
+
+  t_profile = gauss(time, 0.5*t_fw01m, w_t)
+  t_start = 0.0
+  t_end = t_fw01m
+
+  intensity = 3.1e20 * 1.0e4
+  lambda = 1.0e-6
+  efficiency = 0.04 
+
+  mean_energy = a0             # wilks # a0
+  energy_dist = exp_weight     # tophat # exp # mono # exp_weight
+  angular_dist = uniform       # beam # uniform # cos
+
+  theta_max = 20.0/180.0*pi
+  mean_mult = 10.0
+  use_moore_max = T
+
+  species = Electron
+
+end:hy_laser
+
+
+begin:species
+
+  name = Electron
+  dump = T 
+  frac = 1 
+  identify:electron
+
+end:species
+
+
+begin:boundaries
+
+  bc_x_min = reflect
+  bc_x_max = reflect
+  bc_y_min = simple_outflow
+  bc_y_max = simple_outflow
+  bc_z_min = simple_outflow
+  bc_z_max = simple_outflow
+
+end:boundaries
+
+
+begin:solid 
+
+  ni = if ((x lt 28.0e-6) or (x gt 28.2e-6), ni_C, 0)
+  atomic_no = 6
+  mass_no = 12                       
+  I_ex = 56.5 * ev                    
+  res_model = plastic
+
+end:solid
+
+
+begin:solid 
+
+  ni = if ((x lt 28.0e-6) or (x gt 28.2e-6), ni_H, 0)
+  atomic_no = 1
+  mass_no = 1                       
+  I_ex = 56.5 * ev                    
+  res_model = plastic
+
+end:solid
+
+
+begin:solid 
+
+  ni = if ((x gt 28.0e-6) and (x lt 28.2e-6), ni_Al, 0)
+  atomic_no = 13
+  mass_no = 27                       
+  I_ex = 166.0 * ev                    
+  res_model = rlm
+
+end:solid
+
+
+begin:output
+
+  # number of timesteps between output dumps
+  dt_snapshot = 50.0e-15
+
+  # Properties at particle positions
+  particles = never
+  px = never
+  py = never
+  pz = never
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = never
+  id = never
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = always
+  ekbar = never + species
+  mass_density = never + species
+  charge_density = never
+  number_density = never + species
+  temperature = never + species
+
+  hy_Te = always 
+  hy_resistivity = always 
+
+end:output

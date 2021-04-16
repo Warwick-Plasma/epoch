@@ -1,0 +1,94 @@
+$Id:$
+-------------------------------------------------------------------
+
+     =========================================================
+     Geant4 - an Object-Oriented Toolkit for Simulation in HEP
+     =========================================================
+
+                    Example B1 History file
+                    -----------------------
+This file should be used by the G4 example coordinator to briefly
+summarize all major modifications introduced in the code and keep
+track of all tags.
+
+     ----------------------------------------------------------
+     * Reverse chronological order (last date on top), please *
+     ----------------------------------------------------------
+     
+26/09/16 I. Hrivnacova (exampleB1-V10-02-01)
+- Updated for renaming G4Parameter in G4Accumulable
+
+20/09/16 J. Allison (exampleB1-V10-02-00)
+- vis.mac: Added this to make "Envelope" transparent blue:
+  # "Envelope" is transparent blue to represent water
+  /vis/geometry/set/colour Envelope 0 0 0 1 .3
+
+02/11/15 I. Hrivnacova (exampleB1-V10-01-03)
+- B1Run class replaced with a code based on G4Parameter
+
+04/05/15 I. Hrivnacova (exampleB1-V10-01-02)
+- Coding guidelines: removed empty lines
+     
+23/04/15 mma (exampleB1-V10-01-01)
+- RunAction : come back to previous formula
+     
+21/04/15 mma (exampleB1-V10-01-00)
+- RunAction : correct calculation of rmsEdep
+  
+29/11/14 I. Hrivnacova
+- Use G4endl instead of \n in G4cout;
+  this makes each new line in the output on threads preceded with
+  G4WTN >
+
+06/11/14 I. Hrivnacova
+- Removed G4UI_USE/G4VIS_USE tests and init.mac macro (not needed)
+- Moved G4UIExecutive at the beginning of main() in all examples
+- Perform run initialization in macros instead of main()
+
+28/10/13 I. Hrivnacova (exampleB1-V09-06-06)
+- Removed SetNumberOfThreads(4) from main (use Geant4 default)
+     
+26/10/13 mma (exampleB1-V09-06-05)
+- Use /run/printProgress. Cleanup in EventAction
+
+08/10/13 I. Hrivnacova (exampleB1-V09-06-04)
+- Removed B1EventInformation for keeping maximum simplicity
+- Improved documentation (added paragraph on Run::Merge())
+- Code clean-up
+     
+09/06/13 I. Hrivnacova (exampleB1-V09-06-03)
+- clarify local names in user actions
+     
+05/06/13 mma (exampleB1-V09-06-02)
+- add section about ACTION INITALIZATION to README and .README
+- update section DETECTOR RESPONSE
+
+05/05/13 I. Hrivnacova  (exampleB1-V09-06-01)
+- Migration for MT (by Makoto):
+  Added B1ActionInitialization, B1EventInformation and B1Run classes
+  and updated actions classes accordingly.
+  README files still need to be updated.
+
+15/01/13 I. Hrivnacova  (exampleB1-V09-06-00)
+- Tag for a test only (g4svn update with svn 1.7.x)
+
+13/11/12 I. Hrivnacova  (exampleB1-V09-05-03)
+- Use QBBC physics list instead of QGSP_BIC_EMY, which becomes
+  obsolete
+
+02/11/12 J. Allison  (exampleB1-V09-05-01 and 02)
+- README: Improved.
+
+02/11/12 J. Allison  (exampleB1-V09-05-00)
+- vis.mac: Improved view and added text, scale, logo etc. to scene.
+
+14/11/11 I. Hrivnacova
+- The first tagged version of the new B1 example
+  (tagged in basic) 
+
+31/10/11 I. Hrivnacova
+- change volume names
+- scoring in 1 volume only, with new scheme     
+     
+05/09/11 M. Maire, P. Gueye
+- Created.

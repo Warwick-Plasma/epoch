@@ -1,0 +1,52 @@
+This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: hybrid_documentation.aux
+The style file: unsrt.bst
+Database file #1: hybrid_documentation_bib.bib.bib
+Warning--empty title in bremPIC:Vyskocil
+Warning--empty title in bremPIC:Wu
+Warning--empty title in bremPIC:Wan
+Warning--there's a number but no volume in theory:ionisation:continuous
+Warning--empty institution in code:geant4:Urban
+You've used 38 entries,
+            1791 wiz_defined-function locations,
+            715 strings with 11315 characters,
+and the built_in function-call counts, 9100 in all, are:
+= -- 709
+> -- 600
+< -- 2
++ -- 215
+- -- 177
+* -- 764
+:= -- 1576
+add.period$ -- 112
+call.type$ -- 38
+change.case$ -- 37
+chr.to.int$ -- 0
+cite$ -- 43
+duplicate$ -- 342
+empty$ -- 790
+format.name$ -- 177
+if$ -- 1908
+int.to.chr$ -- 0
+int.to.str$ -- 38
+missing$ -- 37
+newline$ -- 190
+num.names$ -- 38
+pop$ -- 63
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 126
+stack$ -- 0
+substring$ -- 533
+swap$ -- 45
+text.length$ -- 2
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 5
+while$ -- 79
+width$ -- 40
+write$ -- 413
+(There were 5 warnings)

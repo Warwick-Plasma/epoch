@@ -1,0 +1,9 @@
+This folder contains the results of Geant4 simulations. The physics library in these simulations was modified to allow only bremsstrahlung to occur (no elastic scatter or ionisation loss for electrons, no photoelectric attenuation for photons).
+
+We shot a beam of 100,000 electrons through a 5 mm gold target. The momentum 3-vector of each electron was recorded as they passed the 5 mm point, but a small number of electrons escaped the simulation window before reaching x=5mm (extreme scatter) and were not recorded. The momenta of bremsstrahlung photons were recorded at the end of their first step, and were then removed from the simulation.
+
+The Geant4 Physics Reference manual describes a Modified Tsai method (release 10.6, section 10.2.1), which generates photon directions based on sampling of the differential cross section. Despite appearing in the Geant4 documentation, the Tsai approach is not the default sampling method. The default model is an undocumented classical approach based on a Lorentz boost of the  dipole emission distribution described in Jackson's Classical Electrodynamics, and implemented in Geant4 by Valdimir Grichine.
+
+We have electron/photon end momenta from simulations using both models, and as the Tsai method has more documentation, this is the model implemented in EPOCH. 
+
+

@@ -1,0 +1,94 @@
+/run/verbose 2
+/run/initialize /control/execute vis.ma/tracking/storeTrajectory 2
+/run/initialize 
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/gun/particle e-
+/gun/energy 100.0 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/run/initialize 
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/gun/particle e-
+/gun/energy 15.7 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/run/initialize 
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/gun/particle e-
+/gun/energy 15.7 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/scene/notifyHandlers scene-0
+/vis/modeling/trajectories/drawByCharge-0/default/setStepPtsSize 2
+/vis/scene/notifyHandlers scene-0
+/vis/scene/endOfEventAction accumulate
+/vis/geometry/set/visibility World 0 false
+/vis/scene/notifyHandlers
+/vis/geometry/set/colour Detector 0 1 1 1 .2
+/vis/scene/notifyHandlers
+/vis/viewer/set/style surface
+/vis/viewer/set/hiddenMarker true
+/vis/geometry/set/colour Target 0 1 1 1 .5
+/vis/scene/notifyHandlers
+/vis/viewer/set/targetPoint 0 0 0 mm
+/vis/viewer/set/viewpointThetaPhi 120 150
+/vis/viewer/set/autoRefresh true
+/vis/viewer/refresh
+/vis/verbose warnings
+/control/execute single_e.mac
+/run/initialize
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/vis/disable
+/gun/particle e-
+/gun/energy 100.0 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/run/beamOn 1
+/control/execute Hanson.mac
+/run/initialize
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/vis/disable
+/gun/particle e-
+/gun/energy 15.7 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/run/beamOn 5000
+/control/execute Hanson.mac
+/run/initialize
+/control/verbose 0
+/run/verbose 0
+/event/verbose 0
+/tracking/verbose 0
+/process/verbose 0
+/particle/verbose 0
+/vis/disable
+/gun/particle e-
+/gun/energy 15.7 MeV
+/gun/direction 1 0 0
+/gun/position 0 0 0
+/run/beamOn 500000

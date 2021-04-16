@@ -1,0 +1,62 @@
+begin:control
+
+  nx = 20
+  npart = 0
+  t_end = 0.5*1.0e-12
+  x_min = -5.0e-6
+  x_max = 5.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 10
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = F          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  min_delta_KE = 200.0*kev    # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 200.0*kev   # Remove particles below this energy
+  elastic_model = Davies      # Urban # Davies
+
+  use_ion_temp = T                       # Update ion temperature
+  electron_temperature = 100 / 8.617e-5  # Electron temperature: 100 eV
+  ion_temperature = 50 /8.617e-5         # Ion temperature: 50 eV          
+
+end:hybrid
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+
+end:boundaries
+
+
+begin:solid 
+
+  ni = 6.027e28                        # Ion number density
+  atomic_no = 13                       # Atomic number of solid species
+  mass_no = 27                         # Mass number of solid species
+  I_ex = 166 * ev                      # Mean excitation energy
+  res_model = rlm                       # Determines resistivity behaviour
+
+end:solid
+
+
+begin:output
+
+  dt_snapshot = t_end/10
+  force_final_to_be_restartable = T
+
+  hy_Te = always
+  hy_Ti = always
+  
+end:output
+

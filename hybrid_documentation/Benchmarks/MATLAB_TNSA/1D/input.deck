@@ -1,0 +1,117 @@
+begin:control
+
+  nx = 20
+  npart = 0
+  t_end = 50.0e-15
+  x_min = -5.0e-6
+  x_max = 5.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 10
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = F          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = T            # Update ion temperature
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature
+  ion_temperature = 300       # Initial ion temperature          
+  min_delta_KE = 200.0*kev    # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 200.0*kev   # Remove particles below this energy
+  elastic_model = Davies      # Urban # Davies         
+
+end:hybrid
+
+
+begin:boundaries
+
+  bc_x_min = tnsa
+  bc_x_max = tnsa
+
+  tnsa_escape_KE = 10e6 * ev
+  tnsa_p_loss = 5.341e-22      # 1 MeV/c
+  tnsa_scatter_deg = 20     
+
+end:boundaries
+
+
+begin:hy_laser
+
+  # This bunch should escape
+
+  boundary = x_min                                            # Injection boundary
+  ppc = 1                                                     # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx / 3.0e8, 1.0, 0.0)  # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = mono_weight                                   # Mono-energetic & user-weight
+  angular_dist = beam                                         # One direction only
+  mean_KE = 100.0e6 * ev                                      # Mean KE value
+  mono_weight = 1.0                                           # Weight value
+  species = Electron_esc                                      # Injection species
+
+end:hy_laser
+
+
+begin:hy_laser
+
+  # This bunch should reflect losing 1 MeV/c momentum
+
+  boundary = x_min                                            # Injection boundary
+  ppc = 10000                                                  # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx / 3.0e8, 1.0, 0.0)  # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = mono_weight                                   # Mono-energetic & user-weight
+  angular_dist = beam                                         # One direction only
+  mean_KE = 5e6 * ev                                          # Mean KE value
+  mono_weight = 1.0                                           # Weight value
+  species = Electron_ref                                      # Injection species
+
+end:hy_laser
+
+
+begin:solid 
+
+  ni = 6.027e28                        # Ion number density
+  atomic_no = 13                       # Atomic number of solid species
+  mass_no = 27                         # Mass number of solid species
+  I_ex = 166 * ev                      # Mean excitation energy
+  res_model = rlm                      # Determines resistivity behaviour
+
+end:solid
+
+
+begin:species
+
+  name = Electron_esc
+  dump = T
+  frac = 0
+  identify:electron
+
+end:species
+
+
+begin:species
+
+  name = Electron_ref
+  dump = T
+  frac = 0
+  identify:electron
+
+end:species
+
+
+begin:output
+
+  dt_snapshot = t_end/20
+  px = always
+  py = always
+  pz = always
+  
+end:output

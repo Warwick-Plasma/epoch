@@ -1,0 +1,193 @@
+ EPOCH2D v4.17.12   v4.17.12-0-gdfcdaa4-dirty 1601910910.739           
+
+Deck state:  1
+
+ Beginning "control" block
+
+ 	Element nx=256 handled OK
+ 	Element ny=8 handled OK
+ 	Element npart=0 handled OK
+ 	Element t_end=2.0e-12 handled OK
+ 	Element x_min=0.0e-6 handled OK
+ 	Element x_max=150.0e-6 handled OK
+ 	Element y_min=-1.0e-6 handled OK
+ 	Element y_max=1.0e-6 handled OK
+ 	Element dt_multiplier=0.8 handled OK
+ 	Element stdout_frequency=30 handled OK
+
+ Ending "control" block
+
+ Beginning "hybrid" block
+
+ 	Element use_hybrid=T handled OK
+ 	Element use_fields=F handled OK
+ 	Element use_collisions=T handled OK
+ 	Element use_scatter=T handled OK
+ 	Element use_ohmic_heating=F handled OK
+ 	Element use_thomas_fermi=F handled OK
+ 	Element use_ion_temp=F handled OK
+ 	Element produce_delta_rays=T handled OK
+ 	Element electron_temperature=300 handled OK
+ 	Element min_delta_KE=100.0*kev handled OK
+ 	Element min_hybrid_KE=1.0*ev handled OK
+ 	Element elastic_model=Urban handled OK
+
+ Ending "hybrid" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=simple_outflow handled OK
+ 	Element bc_x_max=simple_outflow handled OK
+ 	Element bc_y_min=periodic handled OK
+ 	Element bc_y_max=periodic handled OK
+
+ Ending "boundaries" block
+
+ Beginning "hy_laser" block
+
+ 	Element boundary=x_min handled OK
+ 	Element ppc=500 handled OK
+ 	Element profile=1.0 handled OK
+ 	Element t_profile=if(time lt 0.2*(x_max-x_min)/nx/3.0e8, 1.0, 0) handled OK
+ 	Element mean_energy=e_val handled OK
+ 	Element energy_dist=mono_weight handled OK
+ 	Element angular_dist=beam handled OK
+ 	Element mean_KE=500.0 * kev handled OK
+ 	Element mono_weight=1.0 handled OK
+ 	Element species=Electron handled OK
+
+ Ending "hy_laser" block
+
+ Beginning "species" block
+
+ 	Element name=Electron handled OK
+ 	Element dump=T handled OK
+ 	Element frac=1 handled OK
+ 	Element identify=electron handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Delta_rays handled OK
+ 	Element frac=0 handled OK
+ 	Element dump=F handled OK
+ 	Element rho=0 handled OK
+ 	Element identify=delta_electron handled OK
+
+ Ending "species" block
+
+ Beginning "solid" block
+
+ 	Element ni=5.5e28 handled OK
+ 	Element atomic_no=73 handled OK
+ 	Element rad_len=0.004094 handled OK
+ 	Element I_ex=718 * ev handled OK
+ 	Element res_model=rlm handled OK
+
+ Ending "solid" block
+
+ Beginning "output" block
+
+ 	Element dt_snapshot=t_end handled OK
+ 	Element grid=always handled OK
+ 	Element hy_Te=always handled OK
+
+ Ending "output" block
+
+Deck state:  2
+
+ Beginning "control" block
+
+ 	Element nx=256 handled OK
+ 	Element ny=8 handled OK
+ 	Element npart=0 handled OK
+ 	Element t_end=2.0e-12 handled OK
+ 	Element x_min=0.0e-6 handled OK
+ 	Element x_max=150.0e-6 handled OK
+ 	Element y_min=-1.0e-6 handled OK
+ 	Element y_max=1.0e-6 handled OK
+ 	Element dt_multiplier=0.8 handled OK
+ 	Element stdout_frequency=30 handled OK
+
+ Ending "control" block
+
+ Beginning "hybrid" block
+
+ 	Element use_hybrid=T handled OK
+ 	Element use_fields=F handled OK
+ 	Element use_collisions=T handled OK
+ 	Element use_scatter=T handled OK
+ 	Element use_ohmic_heating=F handled OK
+ 	Element use_thomas_fermi=F handled OK
+ 	Element use_ion_temp=F handled OK
+ 	Element produce_delta_rays=T handled OK
+ 	Element electron_temperature=300 handled OK
+ 	Element min_delta_KE=100.0*kev handled OK
+ 	Element min_hybrid_KE=1.0*ev handled OK
+ 	Element elastic_model=Urban handled OK
+
+ Ending "hybrid" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=simple_outflow handled OK
+ 	Element bc_x_max=simple_outflow handled OK
+ 	Element bc_y_min=periodic handled OK
+ 	Element bc_y_max=periodic handled OK
+
+ Ending "boundaries" block
+
+ Beginning "hy_laser" block
+
+ 	Element boundary=x_min handled OK
+ 	Element ppc=500 handled OK
+ 	Element profile=1.0 handled OK
+ 	Element t_profile=if(time lt 0.2*(x_max-x_min)/nx/3.0e8, 1.0, 0) handled OK
+ 	Element mean_energy=e_val handled OK
+ 	Element energy_dist=mono_weight handled OK
+ 	Element angular_dist=beam handled OK
+ 	Element mean_KE=500.0 * kev handled OK
+ 	Element mono_weight=1.0 handled OK
+ 	Element species=Electron handled OK
+
+ Ending "hy_laser" block
+
+ Beginning "species" block
+
+ 	Element name=Electron handled OK
+ 	Element dump=T handled OK
+ 	Element frac=1 handled OK
+ 	Element identify=electron handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Delta_rays handled OK
+ 	Element frac=0 handled OK
+ 	Element dump=F handled OK
+ 	Element rho=0 handled OK
+ 	Element identify=delta_electron handled OK
+
+ Ending "species" block
+
+ Beginning "solid" block
+
+ 	Element ni=5.5e28 handled OK
+ 	Element atomic_no=73 handled OK
+ 	Element rad_len=0.004094 handled OK
+ 	Element I_ex=718 * ev handled OK
+ 	Element res_model=rlm handled OK
+
+ Ending "solid" block
+
+ Beginning "output" block
+
+ 	Element dt_snapshot=t_end handled OK
+ 	Element grid=always handled OK
+ 	Element hy_Te=always handled OK
+
+ Ending "output" block
+
+ Initial conditions complete and valid.
