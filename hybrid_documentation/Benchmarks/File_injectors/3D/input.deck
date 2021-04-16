@@ -1,0 +1,153 @@
+begin:control
+
+  nx = 20
+  ny = 8
+  nz = 8
+  npart = 0
+  t_end = 50.0e-15
+  x_min = -5.0e-6
+  x_max = 5.0e-6
+  y_min = -5.0e-6
+  y_max = 5.0e-6
+  z_min = -5.0e-6
+  z_max = 5.0e-6
+  dt_multiplier = 0.25
+  stdout_frequency = 10
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = F          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature         
+  min_delta_KE = 200.0*kev    # If delta energy is below this, dump KE to cell
+  elastic_model = Davies      # Urban # Davies         
+
+end:hybrid
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+  bc_y_min = simple_outflow
+  bc_y_max = simple_outflow
+  bc_z_min = simple_outflow
+  bc_z_max = simple_outflow
+
+end:boundaries
+
+
+begin:injector
+
+  boundary = x_min
+  species = El_1
+  
+  inject_from_file = T   # If F, the code will attempt to inject particles 
+                         # following a Maxwellian distribution based on     
+                         # parameters which should be included in this block
+  
+  y_data = "../injectors/y.in1"
+  z_data = "../injectors/z.in1"
+  px_data = "../injectors/px.in1"
+  w_data = "../injectors/w.in1"
+  t_data = "../injectors/t.in1"
+  id_data = "../injectors/id.in1"
+
+end:injector
+
+
+begin:injector
+
+  boundary = y_min
+  species = El_2
+  
+  inject_from_file = T   # If F, the code will attempt to inject particles 
+                         # following a Maxwellian distribution based on     
+                         # parameters which should be included in this block
+  
+  x_data = "../injectors/x.in2"
+  z_data = "../injectors/z.in2"
+  py_data = "../injectors/py.in2"
+  w_data = "../injectors/w.in2"
+  t_data = "../injectors/t.in2"
+  id_data = "../injectors/id.in2"
+
+end:injector
+
+
+begin:solid 
+
+  ni = 6.027e28                        # Ion number density
+  atomic_no = 13                       # Atomic number of solid species
+  mass_no = 27                         # Mass number of solid species
+  I_ex = 166 * ev                      # Mean excitation energy
+  res_model = rlm                      # Determines resistivity behaviour
+
+end:solid
+
+
+begin:species
+
+  name = El_1
+  dump = T
+  frac = 0
+  identify:electron
+
+end:species
+
+
+begin:species
+
+  name = El_2
+  dump = T
+  frac = 0
+  identify:electron
+
+end:species
+
+
+begin:output
+
+  dt_snapshot = t_end/20
+  px = always
+  py = always
+  pz = always
+  
+  particle_probes = always
+
+end:output
+
+
+begin:probe
+
+  name = x_probe
+  point = (0.0, 0.0, 0.0)    
+  normal = (1.0, 0.0, 0.0)
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species:El_1
+  dumpmask = always
+
+end:probe
+
+
+begin:probe
+
+  name = y_probe
+  point = (0.0, 0.0, 0.0)    
+  normal = (0.0, 1.0, 0.0)
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species:El_2
+  dumpmask = always
+
+end:probe

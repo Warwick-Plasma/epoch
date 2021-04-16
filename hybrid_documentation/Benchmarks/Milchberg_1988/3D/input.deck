@@ -1,0 +1,77 @@
+begin:constant
+
+  ni_Al = 6.022e28
+
+end:constant
+
+
+begin:control
+
+  nx = 100 
+  ny = 10
+  nz = 10
+
+  x_min = 0.1
+  x_max = 300.0 * 11604.51
+  y_min = -1.0e-6
+  y_max = 1.0e-6
+  z_min = -1.0e-6
+  z_max = 1.0e-6
+
+  t_end = 1.0e-15
+  dt_multiplier = 0.8
+  stdout_frequency = 30
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = F          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  electron_temperature = x    # Initial background temperature (0.1 to 200 eV) 
+
+  rlm_1 = 1         
+  rlm_2 = 1 
+
+end:hybrid
+
+
+begin:boundaries
+
+  bc_x_min = reflect
+  bc_x_max = reflect
+  bc_y_min = simple_outflow
+  bc_y_max = simple_outflow
+  bc_z_min = simple_outflow
+  bc_z_max = simple_outflow
+
+
+end:boundaries
+
+
+begin:solid 
+
+  ni = ni_Al
+  atomic_no = 13
+  mass_no = 27                       
+  I_ex = 166.0 * ev                    
+  res_model = rlm
+
+end:solid
+
+
+begin:output
+
+  dt_snapshot = t_end
+  grid = always
+  hy_Te = always
+  hy_resistivity = always  
+
+end:output

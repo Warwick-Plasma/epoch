@@ -26,6 +26,7 @@ MODULE finish
   USE ionise
   USE injectors
   USE probes
+  USE hybrid
 
   IMPLICIT NONE
 
@@ -48,7 +49,7 @@ CONTAINS
 
   SUBROUTINE deallocate_memory
 
-    INTEGER :: i, n, stat
+    INTEGER :: i, n, stat, i_sol
     CLASS(particle_id_hash), POINTER :: current_hash
 
     DEALLOCATE(x, xb, x_global, xb_global, xb_offset_global)
@@ -66,6 +67,7 @@ CONTAINS
 
     DEALLOCATE(total_particle_energy_species)
 
+    IF (use_hybrid) CALL deallocate_hybrid
     CALL deallocate_probes
 
     DO i = 1, n_species

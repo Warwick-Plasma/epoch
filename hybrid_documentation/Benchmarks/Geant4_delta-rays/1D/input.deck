@@ -1,0 +1,94 @@
+begin:control
+
+  nx = 128
+  ny = 8
+  nz = 8
+  npart = 0
+  t_end = 400.0e-15
+  x_min = 0.0e-6
+  x_max = 101.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 10
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = T          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = T      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature        
+  min_delta_KE = 50.0*kev     # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 1.0*ev      # Remove particles below this energy       
+
+end:hybrid
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = 100000                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx / 3.0e8, 1.0, 0.0)  # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = mono_weight                                   # Mono-energetic & user-weight
+  angular_dist = beam                                         # One direction only
+  mean_KE = 50.0e3 * kev                                      # Mean KE value
+  mono_weight = 1.0                                           # Weight value
+  species = Electron                                          # Injection species
+
+end:hy_laser
+
+
+begin:species
+
+  name = Electron
+  dump = T 
+  frac = 1 
+  identify:electron
+
+end:species
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+
+end:boundaries
+
+
+begin:solid 
+
+  ni = 6.027e28                        # Ion number density
+  atomic_no = 13                       # Atomic number of solid species
+  I_ex = 166 * ev                      # Mean excitation energy
+  res_model = rlm                      # Determines resistivity behaviour
+
+end:solid
+
+
+begin:output
+
+  dt_snapshot = t_end
+  particle_probes = always
+
+end:output
+
+
+begin:probe
+
+  name = electron_probe
+  point = (100.0e-6)    
+  normal = (1.0)
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species:Electron
+  dumpmask = always
+
+end:probe

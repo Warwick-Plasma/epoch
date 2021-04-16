@@ -535,6 +535,29 @@ CONTAINS
             'CPML/By_z', 'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
       END IF
 
+#ifdef HYBRID
+      IF (use_hybrid) THEN
+        CALL write_field(c_dump_hy_el_temp, code, 'Electron temperature', &
+            'Hybrid/Electron_temperature', 'K', c_stagger_cell_centre, hy_Te)
+        CALL write_field(c_dump_hy_ion_charge, code, 'Ion charge', &
+            'Hybrid/Ionisation_state', '', c_stagger_cell_centre, ion_charge)
+        CALL write_field(c_dump_hy_ion_num_dens, code, 'Ion number density', &
+            'Hybrid/Ion_number_density', '1/m^3', c_stagger_cell_centre, ion_ni)
+        CALL write_field(c_dump_hy_resistivity, code, 'Resistivity', &
+            'Hybrid/Resistivity', 'Ohm.m', c_stagger_cell_centre, resistivity)
+        CALL write_field(c_dump_jbx, code, 'jbx', &
+            'Hybrid/Jx_background', 'A/m^2', c_stagger_jx, jbx)
+        CALL write_field(c_dump_jby, code, 'jby', &
+            'Hybrid/Jy_background', 'A/m^2', c_stagger_jy, jby)
+        CALL write_field(c_dump_jbz, code, 'jbz', &
+            'Hybrid/Jz_background', 'A/m^2', c_stagger_jz, jbz)
+        ! hy_Ti is a restart variable, but only if it has been allocated
+        IF (ALLOCATED(hy_Ti)) &
+            CALL write_field(c_dump_hy_ion_temp, code, 'Ion temperature', &
+            'Hybrid/Ion_temperature', 'K', c_stagger_cell_centre, hy_Ti)
+      END IF
+#endif
+
       IF (n_subsets > 0) THEN
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
@@ -671,7 +694,7 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
             'Optical depth', '', it_output_real)
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
         CALL write_particle_variable(c_dump_part_qed_energy, code, &
             'QED energy', 'J', it_output_real)
 #endif
@@ -682,6 +705,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
         CALL write_particle_variable(c_dump_part_opdepth_brem, code, &
             'Bremsstrahlung Depth', '', it_output_real)
+#endif
+#ifdef HYBRID
+        CALL write_particle_variable(c_dump_part_opdepth_delt, code, &
+            'Delta Ray Depth', '', it_output_real)
 #endif
 #ifdef WORK_DONE_INTEGRATED
         CALL write_particle_variable(c_dump_part_work_x, code, &
@@ -1638,6 +1665,33 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+#ifdef HYBRID
+      CASE(c_dump_hy_el_temp)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(hy_Te * dt, r4)
+      CASE(c_dump_hy_ion_temp)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(hy_Ti * dt, r4)
+      CASE(c_dump_hy_ion_num_dens)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(ion_ni * dt, r4)
+      CASE(c_dump_hy_ion_charge)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(ion_charge * dt, r4)
+      CASE(c_dump_hy_resistivity)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(resistivity * dt, r4)
+      CASE(c_dump_jbx)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jbx * dt, r4)
+      CASE(c_dump_jby)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jby * dt, r4)
+      CASE(c_dump_jbz)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jbz * dt, r4)
+
+#endif
       END SELECT
     ELSE
       SELECT CASE(ioutput)
@@ -1771,6 +1825,26 @@ CONTAINS
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
+#ifdef HYBRID
+      CASE(c_dump_hy_el_temp)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + hy_Te * dt
+      CASE(c_dump_hy_ion_temp)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + hy_Ti * dt
+      CASE(c_dump_hy_ion_num_dens)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + ion_ni * dt
+      CASE(c_dump_hy_ion_charge)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + ion_charge * dt
+      CASE(c_dump_hy_resistivity)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + resistivity * dt
+      CASE(c_dump_jbx)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jbx * dt
+      CASE(c_dump_jby)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jby * dt
+      CASE(c_dump_jbz)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jbz * dt
+#endif
       END SELECT
     END IF
 
@@ -3568,7 +3642,12 @@ CONTAINS
     TYPE(sdf_file_handle) :: h
 
     CALL sdf_write_source_info(h)
-    CALL epoch_write_source_info(h)
+    IF (rank == 0) THEN
+      PRINT*, 'To decouple my code from GIT, I have commented out the'
+      PRINT*, 'epoch_wrote_source_info call in write_source_info, ', &
+          'diagnostics.F90'
+    END IF
+    !CALL epoch_write_source_info(h)
     !CALL write_input_decks(h)
 
   END SUBROUTINE write_source_info

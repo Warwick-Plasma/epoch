@@ -108,6 +108,9 @@ CONTAINS
 #ifdef NO_PARTICLE_PROBES
     found = .TRUE.
 #endif
+#ifdef PROBE_TIME
+    found = .TRUE.
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     found = .TRUE.
 #endif
@@ -118,6 +121,9 @@ CONTAINS
     found = .TRUE.
 #endif
 #ifdef PARTICLE_ID
+    found = .TRUE.
+#endif
+#ifdef HYBRID
     found = .TRUE.
 #endif
 #ifdef PHOTONS
@@ -200,6 +206,10 @@ CONTAINS
 #else
     defines = IOR(defines, c_def_particle_probes)
 #endif
+#ifdef PROBE_TIME
+    defines = IOR(defines, c_def_probe_time)
+    WRITE(*,*) 'Probes output the time particles pass them -DPROBE_TIME'
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     defines = IOR(defines, c_def_per_particle_chargemass)
     WRITE(*,*) 'Per particle charge and mass -DPER_PARTICLE_CHARGE_MASS'
@@ -216,6 +226,10 @@ CONTAINS
 #ifdef PARTICLE_ID
     defines = IOR(defines, c_def_particle_id)
     WRITE(*,*) 'Particle ID tracking (8-bytes) -DPARTICLE_ID'
+#endif
+#ifdef HYBRID
+    defines = IOR(defines, c_def_hybrid)
+    WRITE(*,*) 'Option to run with an electron-transport PIC loop -DHYBRID'
 #endif
 #ifdef PHOTONS
     defines = IOR(defines, c_def_photons)

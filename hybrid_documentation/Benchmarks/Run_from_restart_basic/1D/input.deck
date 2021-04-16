@@ -1,0 +1,100 @@
+begin:control
+
+  nx = 100
+  npart = 0
+  t_end = 50.0e-15
+  x_min = 0.0e-6
+  x_max = 10.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 30
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = F          # Collisional energy loss
+  use_scatter = T             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature
+  ion_temperature = 300       # Initial ion temperature          
+  min_delta_KE = 200.0*kev    # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 200.0*kev   # Remove particles below this energy
+  elastic_model = Davies      # Urban # Davies         
+
+end:hybrid
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = 10000                                                 # Parts per cell per timestep
+  profile = if(y*y lt 1.0e-6*1.0e-6, 1, 0)                    # Only near centre (arbitrary)
+  t_profile = if(time lt (x_max-x_min)/nx / 3.0e8, 1.0, 0.0)  # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = mono_weight                                   # Mono-energetic & user-weight
+  angular_dist = beam                                         # One direction only
+  mean_KE = 15.7e3 * kev                                      # Mean KE value
+  mono_weight = 1.0                                           # Weight value
+  species = Electron                                          # Injection species
+
+end:hy_laser
+
+
+begin:species
+
+  name = Electron
+  dump = T 
+  frac = 1 
+  identify:electron
+
+end:species
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+
+end:boundaries
+
+
+begin:solid 
+
+  ni = 5.90e28                         # Ion number density
+  atomic_no = 79                       # Atomic number of solid species
+  rad_len = 0.003344                   # Radiation length
+  I_ex = 790 * ev                      # Mean excitation energy
+  res_model = Milchberg                # Determines resistivity behaviour
+
+end:solid
+
+
+begin:output
+
+  dt_snapshot = 50.0e-15
+  particles = always
+  px = always
+  py = always
+  pz = always
+  particle_probes = always
+
+end:output
+
+
+begin:probe
+
+  name = electron_probe
+  point = 9.67e-6    
+  normal = 1.0
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species:Electron
+  dumpmask = always
+
+end:probe

@@ -61,7 +61,7 @@ CONTAINS
   SUBROUTINE io_deck_finalise
 
     INTEGER :: i, io, iu, n_zeros_estimate, n_dumps
-    REAL(num) :: dumps, dx
+    REAL(num) :: dumps
 #ifndef NO_IO
     CHARACTER(LEN=c_max_path_length) :: list_filename
 #endif
@@ -137,13 +137,6 @@ CONTAINS
 
           IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
             dumps = MAX(dumps, t_end / io_block_list(i)%dt_snapshot)
-          END IF
-
-          ! This might fail if Debye length not resolved
-          IF (io_block_list(i)%nstep_snapshot > 0) THEN
-            dx = (x_max - x_min) / nx_global
-            dx = MIN(dx, (y_max - y_min) / ny_global)
-            dumps = MAX(dumps, t_end * c / dx / io_block_list(i)%nstep_snapshot)
           END IF
         END DO
 
@@ -574,7 +567,7 @@ CONTAINS
       elementselected = c_dump_part_opdepth
 #endif
 
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     ELSE IF (str_cmp(element, 'qed_energy')) THEN
       elementselected = c_dump_part_qed_energy
 #endif
@@ -587,6 +580,11 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
       elementselected = c_dump_part_opdepth_brem
+#endif
+
+#ifdef HYBRID
+    ELSE IF (str_cmp(element, 'delta_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_delt
 #endif
 
 #ifdef WORK_DONE_INTEGRATED
@@ -730,6 +728,30 @@ CONTAINS
 
     ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
       elementselected = c_dump_total_energy_sum
+
+    ELSE IF (str_cmp(element, 'hy_te') .OR. str_cmp(element, 'hy_Te')) THEN
+      elementselected = c_dump_hy_el_temp
+
+    ELSE IF (str_cmp(element, 'hy_ti') .OR. str_cmp(element, 'hy_Ti')) THEN
+      elementselected = c_dump_hy_ion_temp
+
+    ELSE IF (str_cmp(element, 'hy_ni')) THEN
+      elementselected = c_dump_hy_ion_num_dens
+
+    ELSE IF (str_cmp(element, 'hy_ion_charge')) THEN
+      elementselected = c_dump_hy_ion_charge
+
+    ELSE IF (str_cmp(element, 'hy_resistivity')) THEN
+      elementselected = c_dump_hy_resistivity
+
+    ELSE IF (str_cmp(element, 'jbx') .OR. str_cmp(element, 'hy_jbx')) THEN
+      elementselected = c_dump_jbx
+
+    ELSE IF (str_cmp(element, 'jby') .OR. str_cmp(element, 'hy_jby')) THEN
+      elementselected = c_dump_jby
+
+    ELSE IF (str_cmp(element, 'jbz') .OR. str_cmp(element, 'hy_jbz')) THEN
+      elementselected = c_dump_jbz
 
     ELSE
       got_element = .FALSE.
@@ -898,6 +920,18 @@ CONTAINS
         IF (mask_element == c_dump_temperature_y) bad = .FALSE.
         IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_ekflux) bad = .FALSE.
+#ifdef HYBRID
+        IF (use_hybrid) THEN
+          IF (mask_element == c_dump_hy_el_temp) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_temp) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_charge) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_num_dens) bad = .FALSE.
+          IF (mask_element == c_dump_hy_resistivity) bad = .FALSE.
+          IF (mask_element == c_dump_jbx) bad = .FALSE.
+          IF (mask_element == c_dump_jby) bad = .FALSE.
+          IF (mask_element == c_dump_jbz) bad = .FALSE.
+        END IF
+#endif
         IF (bad) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -1082,7 +1116,7 @@ CONTAINS
     io_block%dumpmask(c_dump_part_opdepth) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     io_block%dumpmask(c_dump_part_qed_energy) = &
         IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
 #endif
@@ -1093,6 +1127,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     io_block%dumpmask(c_dump_part_opdepth_brem) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
+#endif
+#ifdef HYBRID
+    io_block%dumpmask(c_dump_part_opdepth_delt) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_delt), c_io_restartable)
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     io_block%dumpmask(c_dump_part_id) = &
@@ -1139,6 +1177,17 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_cpml_psi_bxy), c_io_restartable)
     io_block%dumpmask(c_dump_cpml_psi_bzy) = &
         IOR(io_block%dumpmask(c_dump_cpml_psi_bzy), c_io_restartable)
+
+    ! This variable will only be dumped if the code is running in hybrid mode
+    ! Ion temperature will only be dumped if it is allocated (see hybrid.F90)
+    io_block%dumpmask(c_dump_hy_el_temp) = &
+        IOR(io_block%dumpmask(c_dump_hy_el_temp), c_io_restartable)
+    io_block%dumpmask(c_dump_jbx) = &
+        IOR(io_block%dumpmask(c_dump_jbx), c_io_restartable)
+    io_block%dumpmask(c_dump_jby) = &
+        IOR(io_block%dumpmask(c_dump_jby), c_io_restartable)
+    io_block%dumpmask(c_dump_jbz) = &
+        IOR(io_block%dumpmask(c_dump_jbz), c_io_restartable)
 
   END SUBROUTINE set_restart_dumpmasks
 

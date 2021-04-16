@@ -1,0 +1,222 @@
+\begin{thebibliography}{10}
+
+\bibitem{intro:wakefield}
+D~Woodbury, L~Feder, V~Shumakova, C~Gollner, R~Schwartz, B~Miao, F~Salehi,
+  A~Korolov, A~Pug{\v{z}}lys, A~Baltu{\v{s}}ka, et~al.
+\newblock Laser wakefield acceleration with mid-ir laser pulses.
+\newblock {\em Optics letters}, 43(5):1131--1134, 2018.
+
+\bibitem{intro:electron_beam}
+CP~Ridgers, TG~Blackburn, D~Del~Sorbo, LE~Bradley, C~Slade-Lowther, CD~Baird,
+  SPD Mangles, P~McKenna, M~Marklund, CD~Murphy, et~al.
+\newblock Signatures of quantum effects on radiation reaction in
+  laser--electron-beam collisions.
+\newblock {\em Journal of Plasma Physics}, 83(5), 2017.
+
+\bibitem{bremPIC:Vyskocil}
+J~Vysko{\v{c}}il, O~Klimo, and S~Weber.
+\newblock {\em Plasma Phys. Contr. F.}, 60(5):054013, 2018.
+
+\bibitem{bremPIC:Wu}
+D~Wu, XT~He, W~Yu, and S~Fritzsche.
+\newblock {\em High Power Laser Sci.}, 6, 2018.
+
+\bibitem{bremPIC:Wan}
+F~Wan, Chong Lv, M~Jia, H~Sang, and B~Xie.
+\newblock {\em Eur. Phys. J. D.}, 71(9):236, 2017.
+
+\bibitem{intro:returnCur:Hammer}
+DA~Hammer and N~Rostoker.
+\newblock Propagation of high current relativistic electron beams.
+\newblock {\em The Physics of Fluids}, 13(7):1831--1850, 1970.
+
+\bibitem{theory:injector:moore}
+CI~Moore, A~Ting, SJ~McNaught, J~Qiu, HR~Burris, and P~Sprangle.
+\newblock A laser-accelerator injector based on laser ionization and
+  ponderomotive acceleration of electrons.
+\newblock {\em Physical review letters}, 82(8):1688, 1999.
+
+\bibitem{theory:injector:sheng}
+Z-M Sheng, Yasuhiko Sentoku, Kunioki Mima, Jie Zhang, Wei Yu, and Juergen
+  Meyer-ter Vehn.
+\newblock Angular distributions of fast electrons, ions, and bremsstrahlung
+  x/$\gamma$-rays in intense laser interaction with solid targets.
+\newblock {\em Physical review letters}, 85(25):5340, 2000.
+
+\bibitem{hybrid:Davies:1997}
+JR~Davies, AR~Bell, MG~Haines, and SM~Guerin.
+\newblock Short-pulse high-intensity laser-generated fast electron transport
+  into thick solid targets.
+\newblock {\em Physical Review E}, 56(6):7193, 1997.
+
+\bibitem{hybrid:Davies:2002}
+JR~Davies.
+\newblock How wrong is collisional monte carlo modeling of fast electron
+  transport in high-intensity laser-solid interactions?
+\newblock {\em Physical Review E}, 65(2):026407, 2002.
+
+\bibitem{eta:LeeMore}
+Yim~T Lee and RM~More.
+\newblock An electron conductivity model for dense plasmas.
+\newblock {\em The Physics of fluids}, 27(5):1273--1286, 1984.
+
+\bibitem{eta:More}
+RM~More.
+\newblock Pressure ionization, resonances, and the continuity of bound and free
+  states.
+\newblock In {\em Advances in atomic and molecular physics}, volume~21, pages
+  305--356. Elsevier, 1985.
+
+\bibitem{theory:ionisation:continuous}
+MJ~Berger, M~Inokuti, HH~Anderson, H~Bichsel, JA~Dennis, D~Powers, SM~Seltzer,
+  and JE~Turner.
+\newblock Report 37.
+\newblock {\em Journal of the International Commission on Radiation Units and
+  Measurements}, (2):NP--NP, 1984.
+
+\bibitem{code:geant4:2003}
+Sea Agostinelli, John Allison, K~al Amako, John Apostolakis, H~Araujo, P~Arce,
+  M~Asai, D~Axen, S~Banerjee, G~2 Barrand, et~al.
+\newblock Geant4—a simulation toolkit.
+\newblock {\em Nuclear instruments and methods in physics research section A:
+  Accelerators, Spectrometers, Detectors and Associated Equipment},
+  506(3):250--303, 2003.
+
+\bibitem{code:geant4:2006}
+John Allison, Katsuya Amako, JEA Apostolakis, HAAH Araujo, P~Arce Dubois, MAAM
+  Asai, GABG Barrand, RACR Capra, SACS Chauvie, RACR Chytracek, et~al.
+\newblock Geant4 developments and applications.
+\newblock {\em IEEE Transactions on nuclear science}, 53(1):270--278, 2006.
+
+\bibitem{code:geant4:2016}
+J~Allison, Katsuya Amako, John Apostolakis, Pedro Arce, M~Asai, T~Aso, E~Bagli,
+  A~Bagulya, S~Banerjee, G~Barrand, et~al.
+\newblock Recent developments in geant4.
+\newblock {\em Nuclear Instruments and Methods in Physics Research Section A:
+  Accelerators, Spectrometers, Detectors and Associated Equipment},
+  835:186--225, 2016.
+
+\bibitem{code:geant4:physRefMan}
+GEANT Collaboration et~al.
+\newblock Physics reference manual.
+\newblock {\em Version: geant4}, 10(9), 2016.
+
+\bibitem{theory:ionisation:continuousFull}
+Harry Messel and David~F Crawford.
+\newblock {\em Electron--Photon Shower Distribution Function: Tables for Lead,
+  Copper and Air Absorbers}.
+\newblock Elsevier, 2013.
+
+\bibitem{code:geant4:Urban}
+L{\'a}szl{\'o} Urb{\'a}n.
+\newblock A model for multiple scattering in geant4.
+\newblock Technical report, 2006.
+
+\bibitem{code:geant4:Lewis}
+HW~Lewis.
+\newblock Multiple scattering in an infinite medium.
+\newblock {\em Physical review}, 78(5):526, 1950.
+
+\bibitem{code:geant4:urban:meanFreePath}
+D~Liljequist, M~Ismail, F~Salvat, R~Mayol, and JD~Martinez.
+\newblock Transport mean free path tabulated for the multiple elastic
+  scattering of electrons and positrons at energies≤ 20 mev.
+\newblock {\em Journal of applied physics}, 68(7):3061--3065, 1990.
+
+\bibitem{code:geant4:urban:meanFreePathHigh}
+Ricardo Mayol and Francesc Salvat.
+\newblock Total and transport cross sections for elastic scattering of
+  electrons by atoms.
+\newblock {\em Atomic Data and Nuclear Data Tables}, 65(1):55--154, 1997.
+
+\bibitem{code:geant4:urban:dFit}
+D~Attwood, P~Bell, S~Bull, T~McMahon, J~Wilson, R~Fernow, P~Gruber, A~Jamdagni,
+  K~Long, E~McKigney, et~al.
+\newblock The scattering of muons in low-z materials.
+\newblock {\em Nuclear Instruments and Methods in Physics Research Section B:
+  Beam Interactions with Materials and Atoms}, 251(1):41--55, 2006.
+
+\bibitem{theory:heatCap:Bell}
+AR~Bell.
+\newblock New equations of state for medusa.
+\newblock Technical report, Science Research Council, 1980.
+
+\bibitem{theory:thermalEquil:Spitzer}
+Lyman Spitzer.
+\newblock {\em Physics of fully ionized gases}.
+\newblock Courier Corporation, 2 edition, 1962.
+
+\bibitem{TNSA:rusby}
+DR~Rusby, CD~Armstrong, GG~Scott, M~King, P~McKenna, and D~Neely.
+\newblock Effect of rear surface fields on hot, refluxing and escaping electron
+  populations via numerical simulations.
+\newblock {\em High Power Laser Science and Engineering}, 7, 2019.
+
+\bibitem{theory:Wilks}
+SC~Wilks, WL~Kruer, M~Tabak, and AB~Langdon.
+\newblock Absorption of ultra-intense laser pulses.
+\newblock {\em Physical review letters}, 69(9):1383, 1992.
+
+\bibitem{eta:Al:Milchberg}
+HM~Milchberg, RR~Freeman, SC~Davey, and RM~More.
+\newblock Resistivity of a simple metal from room temperature to 10 6 k.
+\newblock {\em Physical review letters}, 61(20):2364, 1988.
+
+\bibitem{eta:Davies}
+J.~R. Davies, A.~R. Bell, and M.~Tatarakis.
+\newblock Magnetic focusing and trapping of high-intensity laser-generated fast
+  electrons at the rear of solid targets.
+\newblock {\em Phys. Rev. E}, 59:6032--6036, May 1999.
+
+\bibitem{eta:saturation:Gunnarsson}
+O~Gunnarsson, M~Calandra, and JE~Han.
+\newblock Colloquium: Saturation of electrical resistivity.
+\newblock {\em Reviews of Modern Physics}, 75(4):1085, 2003.
+
+\bibitem{eta:Spitzer:Spitzer}
+Lyman Spitzer~Jr and Richard H{\"a}rm.
+\newblock Transport phenomena in a completely ionized gas.
+\newblock {\em Physical Review}, 89(5):977, 1953.
+
+\bibitem{eta:Spitzer:Braginskii}
+SI~Braginskii.
+\newblock Transport processes in a plasma.
+\newblock {\em Reviews of plasma physics}, 1, 1965.
+
+\bibitem{eta:Spitzer:Kuritsyn}
+A~Kuritsyn, M~Yamada, S~Gerhardt, Hantao Ji, R~Kulsrud, and Y~Ren.
+\newblock Measurements of the parallel and transverse spitzer resistivities
+  during collisional magnetic reconnection.
+\newblock {\em Physics of plasmas}, 13(5):055703, 2006.
+
+\bibitem{benchmark:Hanson}
+AO~Hanson, LH~Lanzl, EM~Lyman, and MB~Scott.
+\newblock Measurement of multiple scattering of 15.7-mev electrons.
+\newblock {\em Phys. Rev.}, 84(4):634, 1951.
+
+\bibitem{benchmark:Lockwood}
+Grant~J Lockwood, Laurence~E Ruggles, Glenn~H Miller, and JA~Halbleib.
+\newblock Calorimetric measurement of electron energy deposition in extended
+  media. theory vs experiment.
+\newblock Technical report, Sandia Labs., Albuquerque, NM (USA), 1980.
+
+\bibitem{benchmark:Nist}
+MJ~Berger, JS~Coursey, and MA~Zucker.
+\newblock Estar, pstar and astar: Computer programs for calculating
+  stopping-power and range tables for electrons, protons and $\alpha$-particles
+  (version 1.2. 2).
+\newblock {\em NIST, Gaithersburg}, 2000.
+
+\bibitem{benchmark:Rester}
+DH~Rester, WE~Dance, and JH~Derrickson.
+\newblock Thick target bremsstrahlung produced by electron bombardment of
+  targets of be, sn, and au in the energy range 0.2--2.8 mev.
+\newblock {\em J. Appl. Phys.}, 41(6):2682--2692, 1970.
+
+\bibitem{benchmark:Evans}
+RG~Evans, EL~Clark, RT~Eagleton, AM~Dunne, RD~Edwards, WJ~Garbett, TJ~Goldsack,
+  S~James, CC~Smith, BR~Thomas, et~al.
+\newblock Rapid heating of solid density material by a petawatt laser.
+\newblock {\em App. Phys. Lett.}, 86(19):191505, 2005.
+
+\end{thebibliography}

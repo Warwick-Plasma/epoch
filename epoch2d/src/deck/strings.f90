@@ -265,6 +265,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'tnsa')) THEN
+      as_bc = c_bc_tnsa
+      RETURN
+    END IF
+
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_bc
@@ -365,18 +370,13 @@ CONTAINS
 
     CHARACTER(LEN=c_max_string_length) :: trim_string
     CHARACTER(LEN=*) :: string
-    CHARACTER(LEN=:), ALLOCATABLE :: string_copy
 
-    ALLOCATE(CHARACTER(LEN=LEN(string)) :: string_copy)
-
-    string_copy = ADJUSTL(string)
-    IF (LEN_TRIM(string_copy) > c_max_string_length) THEN
-      trim_string = string_copy(1:c_max_string_length)
+    string = ADJUSTL(string)
+    IF (LEN_TRIM(string) > c_max_string_length) THEN
+      trim_string = string(1:c_max_string_length)
     ELSE
-      trim_string = TRIM(string_copy)
+      trim_string = TRIM(string)
     END IF
-
-    DEALLOCATE(string_copy)
 
   END FUNCTION trim_string
 

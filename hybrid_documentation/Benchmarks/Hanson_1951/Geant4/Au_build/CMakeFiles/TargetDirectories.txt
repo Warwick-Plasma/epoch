@@ -1,0 +1,8 @@
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/install.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/list_install_components.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/rebuild_cache.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/edit_cache.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/exampleB1.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/B1.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/install/strip.dir
+/home/sjm630/bethe-bloch-G4/Au_build/CMakeFiles/install/local.dir

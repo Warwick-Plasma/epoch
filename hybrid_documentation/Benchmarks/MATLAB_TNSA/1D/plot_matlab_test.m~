@@ -1,0 +1,75 @@
+% plot_matlab_test.m
+% Performs post processing on EPOCH data to inspect the energy/particle
+% loss after two bunches hit a tnsa boundary.
+%
+% We should find that half the electrons have escaped, and the remaining
+% electrons have half their original energy
+
+%% Add plotting scripts to path
+
+% If MATLAB does not recognise GetDataSDF as a function, add plot epoch to
+% the path
+if (exist('GetDataSDF') ~=2)
+    current_dir = pwd;
+    cd('../../../plot_epoch');
+    begin_plotting;
+    cd(current_dir);
+end
+
+% Physical constants
+qe = 1.60217662e-19;
+me = 9.10938356e-31;
+eps0 = 8.85418782e-12;
+h_planck = 6.62607004e-34;
+hbar = h_planck/(2.0*pi);
+c = 299792458;
+amu = 1.66054e-27;
+kb = 1.38064852e-23;
+
+%% Get field values
+
+% Pull out initial EPOCH data
+data = GetDataSDF('0001.sdf');
+px0_esc = data.Particles.Px.Electron_esc.data;
+px0_ref = data.Particles.Px.Electron_ref.data;
+
+% Pull out data after one reflux
+data = GetDataSDF('0020.sdf');
+
+KE_bef = (px0_esc(1)/qe*c - me*c^2/qe);
+if ~exist('data.Particles.Px.Electron_esc.data', 'var')
+    fprintf(['\nParticles of initial kinetic energy %g eV have all' ...
+        ' escaped\n'], KE_bef);
+end
+
+KE_bef = px0_ref(1)/qe*c - me*c^2/qe;
+if ~exist('data.Particles.Px.Electron_esc.data', 'var')
+    fprintf(['Particles of initial kinetic energy %g eV end with' ...
+        ' energy %g eV, a %g reduction\n\n'], ...
+        (px0_ref(1)/qe*c - me*c^2/qe),px0_ref(1)/qe*c - me*c^2/qe);
+end
+
+
+%% Create plot
+
+% MATLAB prototype
+fig1 = figure;
+plot(matlab_time*1.0e12,matlab_Te*kb/qe,'LineWidth',2);
+hold on
+plot(matlab_time*1.0e12,matlab_Ti*kb/qe,'LineWidth',2);
+xlabel('Time [ps]');
+ylabel('Temperature [eV]');
+grid on;
+ax = gca;
+ax.FontSize = 16;
+
+% Epoch data
+plot(epoch_time*1.0e12,epoch_Te*kb/qe,'--','LineWidth',6);
+plot(epoch_time*1.0e12,epoch_Ti*kb/qe,'--','LineWidth',6);
+legend('MATLAB Te', 'MATLAB Ti', 'EPOCH Te', 'EPOCH Ti', ...
+    'Location', 'SouthEast');
+
+ %% Save figures
+
+saveas(fig1, 'Temperatur_evolution');
+saveas(fig1, 'Temperature_evolution', 'png');

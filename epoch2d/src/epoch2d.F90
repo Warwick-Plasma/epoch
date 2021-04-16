@@ -55,12 +55,14 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+  USE hybrid
 
   IMPLICIT NONE
 
   INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
   LOGICAL :: force_dump = .FALSE.
+  LOGICAL :: skip_loop
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
@@ -109,6 +111,10 @@ PROGRAM pic
   CALL read_deck(deck_file, .TRUE., c_ds_last)
   CALL after_deck_last
 
+#ifdef HYBRID
+  IF (use_hybrid) CALL initialise_hybrid
+#endif
+
   ! restart flag is set
   IF (ic_from_restart) THEN
     CALL restart_data(step)
@@ -129,6 +135,10 @@ PROGRAM pic
   CALL deallocate_ic
   CALL update_particle_count
 
+#ifdef HYBRID
+  IF (use_hybrid_fields) CALL setup_hybrid_fields
+#endif
+
   npart_global = 0
   DO ispecies = 1, n_species
     npart_global = npart_global + species_list(ispecies)%count
@@ -147,8 +157,14 @@ PROGRAM pic
       CALL bfield_final_bcs
     ELSE
       time = time + dt / 2.0_num
-      CALL update_eb_fields_final
-      CALL moving_window
+      IF (use_hybrid) THEN
+#ifdef HYBRID
+        IF (use_hybrid_fields) CALL run_hybrid_fields
+#endif
+      ELSE
+        CALL update_eb_fields_final
+        CALL moving_window
+      END IF
     END IF
   ELSE
     dt_store = dt
@@ -181,72 +197,86 @@ PROGRAM pic
 
   IF (timer_collect) CALL timer_start(c_timer_step)
 
-  DO
-    IF ((step >= nsteps .AND. nsteps >= 0) &
-        .OR. (time >= t_end) .OR. halt) EXIT
+  skip_loop = (step >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end) &
+      .OR. halt
 
-    IF (timer_collect) THEN
-      CALL timer_stop(c_timer_step)
-      CALL timer_reset
-      timer_first(c_timer_step) = timer_walltime
-    END IF
+  IF (use_hybrid .AND. .NOT. skip_loop) THEN
+    ! Pass control to hybrid.F90 if running in hybrid mode
+    CALL run_hybrid_PIC(push, halt, force_dump)
+  ELSE IF (.NOT. skip_loop) THEN
+    ! Normal PIC loop
+    DO
+      ! This check must be here, else a force_from_restart_dump will do an extra
+      ! half-timestep and field push
+      IF ((step >= nsteps .AND. nsteps >= 0) &
+          .OR. (time >= t_end) .OR. halt) EXIT
 
-    push = (time >= particle_push_start_time)
+      IF (timer_collect) THEN
+        CALL timer_stop(c_timer_step)
+        CALL timer_reset
+        timer_first(c_timer_step) = timer_walltime
+      END IF
+
+      push = (time >= particle_push_start_time)
 #ifdef PHOTONS
-    IF (push .AND. use_qed .AND. time > qed_start_time) THEN
-      CALL qed_update_optical_depth()
-    END IF
+      IF (push .AND. use_qed .AND. time > qed_start_time) THEN
+        CALL qed_update_optical_depth()
+      END IF
 #endif
 
 #ifdef BREMSSTRAHLUNG
-    IF (push .AND. use_bremsstrahlung &
-        .AND. time > bremsstrahlung_start_time) THEN
-      CALL bremsstrahlung_update_optical_depth()
-    END IF
+      IF (push .AND. use_bremsstrahlung &
+          .AND. time > bremsstrahlung_start_time) THEN
+        CALL bremsstrahlung_update_optical_depth()
+      END IF
 #endif
 
-    CALL update_eb_fields_half
-    IF (push) THEN
-      CALL run_injectors
-      ! .FALSE. this time to use load balancing threshold
-      IF (use_balance) CALL balance_workload(.FALSE.)
-      CALL push_particles
-      IF (use_particle_lists) THEN
-        ! After this line, the particles can be accessed on a cell by cell basis
-        ! Using the particle_species%secondary_list property
-        CALL reorder_particles_to_grid
+      CALL update_eb_fields_half
+      IF (push) THEN
+        CALL run_injectors
+        ! .FALSE. this time to use load balancing threshold
+        IF (use_balance) CALL balance_workload(.FALSE.)
+        CALL push_particles
+        IF (use_particle_lists) THEN
+          ! After this line, particles can be accessed on a cell by cell basis
+          ! Using the particle_species%secondary_list property
+          CALL reorder_particles_to_grid
 
-        ! call collision operator
-        IF (use_collisions) THEN
-          IF (use_collisional_ionisation) THEN
-            CALL collisional_ionisation
-          ELSE
-            CALL particle_collisions
+          ! call collision operator
+          IF (use_collisions) THEN
+            IF (use_collisional_ionisation) THEN
+              CALL collisional_ionisation
+            ELSE
+              CALL particle_collisions
+            END IF
           END IF
+
+          ! Early beta version of particle splitting operator
+          IF (use_split) CALL split_particles
+
+          CALL reattach_particles_to_mainlist
         END IF
-
-        ! Early beta version of particle splitting operator
-        IF (use_split) CALL split_particles
-
-        CALL reattach_particles_to_mainlist
+        IF (use_particle_migration) CALL migrate_particles(step)
+        IF (use_field_ionisation) CALL ionise_particles
+        CALL current_finish
+        CALL update_particle_count
       END IF
-      IF (use_particle_migration) CALL migrate_particles(step)
-      IF (use_field_ionisation) CALL ionise_particles
-      CALL current_finish
-      CALL update_particle_count
-    END IF
 
-    CALL check_for_stop_condition(halt, force_dump)
-    IF (halt) EXIT
-    step = step + 1
-    time = time + dt / 2.0_num
-    CALL output_routines(step)
-    time = time + dt / 2.0_num
+      CALL check_for_stop_condition(halt, force_dump)
+      IF (halt) EXIT
+      step = step + 1
+      time = time + dt / 2.0_num
+      CALL output_routines(step)
+      ! Check we have not passed the end condition
+      IF ((step >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end) &
+          .OR. halt) EXIT
 
-    CALL update_eb_fields_final
+      time = time + dt / 2.0_num
+      CALL update_eb_fields_final
+      CALL moving_window
 
-    CALL moving_window
-  END DO
+    END DO
+  END IF
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_started
 

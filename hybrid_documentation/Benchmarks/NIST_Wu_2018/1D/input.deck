@@ -1,0 +1,182 @@
+begin:constant
+
+  macro_num = 50000
+  hy_ppc = macro_num/5
+
+end:constant
+
+
+begin:control
+
+  nx = 512
+  npart = 0
+  nsteps = -1
+  t_end = 100.0e-15
+  x_min = 0
+  x_max = 35.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 30
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = F              # EM field evolution
+  use_collisions = T          # Collisional energy loss
+  use_scatter = F             # Elastic scatter
+  use_ohmic_heating = F       # Ohmic heating
+  use_thomas_fermi = F        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = F      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature        
+  min_delta_KE = 50.0*kev     # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 10.0*kev    # Remove particles below this energy       
+
+end:hybrid
+
+
+begin:bremsstrahlung
+ 
+  use_bremsstrahlung = T
+  start_time = 0
+  produce_photons = F        
+  photon_dynamics = F
+  photon_weight = 0.005   
+  use_plasma_screening = F
+  use_brem_scatter = F
+           
+end:bremsstrahlung
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow       # No periodic or reflect
+  bc_x_max = simple_outflow       # All trajectories are straight for dx calc
+
+end:boundaries
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = hy_ppc                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx/3.0e8, 1.0, 0)      # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = top_hat                                       # Uniform dist about mean KE
+  top_hat_L = 0.99                                            # 0.01*mean < E < 1.99 * mean  
+  angular_dist = beam                                         # One direction only
+  species = Electron                                          # Injection species
+  intensity = 1.0e21                                          ## The top hat distribution
+  lambda = 1.0e-6                                             ## needs laser parameters for
+  efficiency = 1.0                                            ## assigning weight values
+  mean_KE = 50 * kev                                          # Mean KE value
+
+end:hy_laser
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = hy_ppc                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx/3.0e8, 1.0, 0)      # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = top_hat                                       # Uniform dist about mean KE
+  top_hat_L = 0.99                                            # 0.01*mean < E < 1.99 * mean  
+  angular_dist = beam                                         # One direction only
+  species = Electron                                          # Injection species
+  intensity = 1.0e21                                          ## The top hat distribution
+  lambda = 1.0e-6                                             ## needs laser parameters for
+  efficiency = 1.0                                            ## assigning weight values
+  mean_KE = 500 * kev                                         # Mean KE value
+
+end:hy_laser
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = hy_ppc                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx/3.0e8, 1.0, 0)      # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = top_hat                                       # Uniform dist about mean KE
+  top_hat_L = 0.99                                            # 0.01*mean < E < 1.99 * mean  
+  angular_dist = beam                                         # One direction only
+  species = Electron                                          # Injection species
+  intensity = 1.0e21                                          ## The top hat distribution
+  lambda = 1.0e-6                                             ## needs laser parameters for
+  efficiency = 1.0                                            ## assigning weight values
+  mean_KE = 5 * mev                                           # Mean KE value
+
+end:hy_laser
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = hy_ppc                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx/3.0e8, 1.0, 0)      # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = top_hat                                       # Uniform dist about mean KE
+  top_hat_L = 0.99                                            # 0.01*mean < E < 1.99 * mean  
+  angular_dist = beam                                         # One direction only
+  species = Electron                                          # Injection species
+  intensity = 1.0e21                                          ## The top hat distribution
+  lambda = 1.0e-6                                             ## needs laser parameters for
+  efficiency = 1.0                                            ## assigning weight values
+  mean_KE = 50 * mev                                          # Mean KE value
+
+end:hy_laser
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = hy_ppc                                                # Parts per cell per timestep
+  t_profile = if(time lt (x_max-x_min)/nx/3.0e8, 1.0, 0)      # First step only
+  mean_energy = e_val                                         # Use user-defined mean energy
+  energy_dist = top_hat                                       # Uniform dist about mean KE
+  top_hat_L = 0.99                                            # 0.01*mean < E < 1.99 * mean  
+  angular_dist = beam                                         # One direction only
+  species = Electron                                          # Injection species
+  intensity = 1.0e21                                          ## The top hat distribution
+  lambda = 1.0e-6                                             ## needs laser parameters for
+  efficiency = 1.0                                            ## assigning weight values
+  mean_KE = 500 * mev                                         # Mean KE value
+
+end:hy_laser
+
+
+begin:species
+
+  name = Electron
+  frac = 1.0
+  dump = T
+  identify:electron
+
+end:species
+
+
+begin:solid
+
+  ni = 6.026e28                        # Ion number density
+  atomic_no = 13                       # Atomic number of solid species
+  rad_len = 0.08897                    # Radiation length
+  I_ex = 166 * ev                      # Mean excitation energy
+  res_model = rlm                      # Determines resistivity behaviour
+
+end:solid
+
+
+begin:output
+
+  dt_snapshot = t_end/100
+  particles = always
+  px = always
+  py = always
+  pz = always
+  particle_weight = always
+  id = always
+
+end:output

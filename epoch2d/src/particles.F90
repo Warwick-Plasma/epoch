@@ -544,6 +544,15 @@ CONTAINS
                   ! with this probe
                   ALLOCATE(particle_copy)
                   particle_copy = current
+#ifdef PROBE_TIME
+                  ! Interpolate to find the time the particle passes the probe
+                  ! Note: time variable corresponds to (time at x_init)+0.5*dt
+                  particle_copy%probe_time = time + dt * &
+                      (SUM(current_probe%normal*(current_probe%point - &
+                      (/init_part_x,init_part_y/))) &
+                      /SUM(current_probe%normal * (/final_part_x-init_part_x, &
+                      final_part_y-init_part_y/)) - 0.5_num)
+#endif
                   CALL add_particle_to_partlist(&
                       current_probe%sampled_particles, particle_copy)
                   NULLIFY(particle_copy)
@@ -677,6 +686,15 @@ CONTAINS
                 ! with this probe
                 ALLOCATE(particle_copy)
                 particle_copy = current
+#ifdef PROBE_TIME
+                ! Interpolate to find the time the particle passes the probe
+                ! Note: time variable corresponds to (time at x_init)+0.5*dt
+                particle_copy%probe_time = time + dt * &
+                    (SUM(current_probe%normal*(current_probe%point - &
+                    (/init_part_x,init_part_y/))) &
+                    / SUM(current_probe%normal * (/final_part_x-init_part_x, &
+                    final_part_y-init_part_y/)) - 0.5_num)
+#endif
                 CALL add_particle_to_partlist(&
                     current_probe%sampled_particles, particle_copy)
                 NULLIFY(particle_copy)
