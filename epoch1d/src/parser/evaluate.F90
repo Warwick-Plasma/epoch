@@ -350,7 +350,13 @@ CONTAINS
 
     CALL basic_evaluate(input_stack, parameters, err)
 
-    IF (eval_stack_stack_point /= n_elements) err = IOR(err, c_err_bad_value)
+    IF (eval_stack_stack_point /= n_elements) THEN
+      PRINT*, '*** ERROR ***'
+      PRINT*, 'Input deck line number ', TRIM(deck_line_number)
+      PRINT*, 'Incorrect number of arguments.'
+      err = IOR(err, c_err_bad_value)
+      CALL abort_code(err)
+    END IF
 
     ! Pop off the final answers
     DO i = MIN(eval_stack_stack_point,n_elements),1,-1
