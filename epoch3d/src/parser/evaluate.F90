@@ -100,11 +100,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE basic_evaluate_standard
@@ -144,11 +140,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE basic_evaluate
@@ -455,11 +447,7 @@ CONTAINS
         err = c_err_bad_value
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE evaluate_as_list
@@ -596,5 +584,28 @@ CONTAINS
     err = c_err_unknown_element
 
   END SUBROUTINE do_evaluate
+
+
+
+  SUBROUTINE abort_block(block, sp, err)
+
+    TYPE(stack_element), INTENT(IN) :: block
+    INTEGER, INTENT(IN) :: sp, err
+    INTEGER :: i
+
+    PRINT*, '*** ERROR ***'
+    PRINT*, 'Unable to parse block'
+    PRINT*, 'Input deck line number ', TRIM(deck_line_number)
+    PRINT*, 'Error code:'
+    DO i = 0, c_err_max
+      IF (IAND(err, 2**i) /= 0) PRINT*, '    ', TRIM(c_err_char(i))
+    END DO
+    PRINT*, 'Block type: ', TRIM(c_pt_char(block%ptype))
+    PRINT*, 'Block value: ', block%value
+    PRINT*, 'Stack point: ', sp
+    CALL abort_code(err)
+    STOP
+
+  END SUBROUTINE abort_block
 
 END MODULE evaluator
