@@ -70,16 +70,17 @@ CONTAINS
 
 
 
-  SUBROUTINE basic_evaluate_standard(input_stack, parameters, err)
+  SUBROUTINE basic_evaluate_standard(input_stack, parameters, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
     CALL eval_reset()
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -111,18 +112,19 @@ CONTAINS
 
 
 #else
-  SUBROUTINE basic_evaluate(input_stack, parameters, err)
+  SUBROUTINE basic_evaluate(input_stack, parameters, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
     IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
 
     CALL eval_reset()
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -174,11 +176,11 @@ CONTAINS
 
 
 
-  SUBROUTINE simplify_stack(input_stack, err)
+  SUBROUTINE simplify_stack(input_stack, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: output_stack
     TYPE(parameter_pack) :: parameters
@@ -204,6 +206,7 @@ CONTAINS
 
     sl_size = 0
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -424,19 +427,20 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_as_list(input_stack, array, n_elements, err)
+  SUBROUTINE evaluate_as_list(input_stack, array, n_elements, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(OUT) :: n_elements
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err
     TYPE(stack_element) :: iblock
     TYPE(parameter_pack) :: parameters
 
     array(1) = 0
     n_elements = 1
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
 
