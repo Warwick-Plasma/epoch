@@ -40,7 +40,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: array(:)
 
     IF (input_stack%should_simplify) THEN
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
 
       n_elements = eval_stack_stack_point
       ALLOCATE(array(1:n_elements))
@@ -52,7 +52,7 @@ CONTAINS
 
       CALL simplify_stack(input_stack, err)
 
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
 
       ! Check the final answers
       DO i = 1, n_elements
@@ -63,18 +63,17 @@ CONTAINS
 
       DEALLOCATE(array)
     ELSE
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
     END IF
 
   END SUBROUTINE basic_evaluate
 
 
 
-  SUBROUTINE basic_evaluate_standard(input_stack, parameters, error)
+  SUBROUTINE basic_evaluate_standard(input_stack, parameters)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    INTEGER, INTENT(INOUT) :: error
     INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
@@ -116,7 +115,7 @@ CONTAINS
     INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
-    IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
+    IF (input_stack%should_simplify) CALL simplify_stack(input_stack, error)
 
     CALL eval_reset()
 
@@ -425,12 +424,11 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_as_list(input_stack, array, n_elements, error)
+  SUBROUTINE evaluate_as_list(input_stack, array, n_elements)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(OUT) :: n_elements
-    INTEGER, INTENT(INOUT) :: error
     INTEGER :: i, err
     TYPE(stack_element) :: iblock
     TYPE(parameter_pack) :: parameters
