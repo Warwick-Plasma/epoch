@@ -40,7 +40,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: array(:)
 
     IF (input_stack%should_simplify) THEN
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
 
       n_elements = eval_stack_stack_point
       ALLOCATE(array(1:n_elements))
@@ -52,7 +52,7 @@ CONTAINS
 
       CALL simplify_stack(input_stack, err)
 
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
 
       ! Check the final answers
       DO i = 1, n_elements
@@ -63,23 +63,23 @@ CONTAINS
 
       DEALLOCATE(array)
     ELSE
-      CALL basic_evaluate_standard(input_stack, parameters, err)
+      CALL basic_evaluate_standard(input_stack, parameters)
     END IF
 
   END SUBROUTINE basic_evaluate
 
 
 
-  SUBROUTINE basic_evaluate_standard(input_stack, parameters, err)
+  SUBROUTINE basic_evaluate_standard(input_stack, parameters)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
     CALL eval_reset()
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -99,11 +99,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE basic_evaluate_standard
@@ -111,18 +107,19 @@ CONTAINS
 
 
 #else
-  SUBROUTINE basic_evaluate(input_stack, parameters, err)
+  SUBROUTINE basic_evaluate(input_stack, parameters, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     TYPE(parameter_pack), INTENT(IN) :: parameters
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
 
-    IF (input_stack%should_simplify) CALL simplify_stack(input_stack, err)
+    IF (input_stack%should_simplify) CALL simplify_stack(input_stack, error)
 
     CALL eval_reset()
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -142,11 +139,7 @@ CONTAINS
         END IF
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE basic_evaluate
@@ -174,11 +167,11 @@ CONTAINS
 
 
 
-  SUBROUTINE simplify_stack(input_stack, err)
+  SUBROUTINE simplify_stack(input_stack, error)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i, ispec
+    INTEGER, INTENT(INOUT) :: error
+    INTEGER :: i, err, ispec
     TYPE(stack_element) :: iblock
     TYPE(primitive_stack) :: output_stack
     TYPE(parameter_pack) :: parameters
@@ -204,6 +197,7 @@ CONTAINS
 
     sl_size = 0
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
       IF (iblock%ptype == c_pt_variable) THEN
@@ -355,7 +349,13 @@ CONTAINS
 
     CALL basic_evaluate(input_stack, parameters, err)
 
-    IF (eval_stack_stack_point /= n_elements) err = IOR(err, c_err_bad_value)
+    IF (eval_stack_stack_point /= n_elements) THEN
+      PRINT*, '*** ERROR ***'
+      PRINT*, 'Input deck line number ', TRIM(deck_line_number)
+      PRINT*, 'Incorrect number of arguments.'
+      err = IOR(err, c_err_bad_value)
+      CALL abort_code(err)
+    END IF
 
     ! Pop off the final answers
     DO i = MIN(eval_stack_stack_point,n_elements),1,-1
@@ -424,19 +424,19 @@ CONTAINS
 
 
 
-  SUBROUTINE evaluate_as_list(input_stack, array, n_elements, err)
+  SUBROUTINE evaluate_as_list(input_stack, array, n_elements)
 
     TYPE(primitive_stack), INTENT(INOUT) :: input_stack
     INTEGER, DIMENSION(:), INTENT(OUT) :: array
     INTEGER, INTENT(OUT) :: n_elements
-    INTEGER, INTENT(INOUT) :: err
-    INTEGER :: i
+    INTEGER :: i, err
     TYPE(stack_element) :: iblock
     TYPE(parameter_pack) :: parameters
 
     array(1) = 0
     n_elements = 1
 
+    err = c_err_none
     DO i = 1, input_stack%stack_point
       iblock = input_stack%entries(i)
 
@@ -451,11 +451,7 @@ CONTAINS
         err = c_err_bad_value
       END IF
 
-      IF (err /= c_err_none) THEN
-        PRINT *, 'BAD block', err, iblock%ptype, i, iblock%value
-        CALL abort_code(err)
-        STOP
-      END IF
+      IF (err /= c_err_none) CALL abort_block(iblock, i, err)
     END DO
 
   END SUBROUTINE evaluate_as_list
@@ -580,5 +576,28 @@ CONTAINS
     err = c_err_unknown_element
 
   END SUBROUTINE do_evaluate
+
+
+
+  SUBROUTINE abort_block(block, sp, err)
+
+    TYPE(stack_element), INTENT(IN) :: block
+    INTEGER, INTENT(IN) :: sp, err
+    INTEGER :: i
+
+    PRINT*, '*** ERROR ***'
+    PRINT*, 'Unable to parse block'
+    PRINT*, 'Input deck line number ', TRIM(deck_line_number)
+    PRINT*, 'Error code:'
+    DO i = 0, c_err_max
+      IF (IAND(err, 2**i) /= 0) PRINT*, '    ', TRIM(c_err_char(i))
+    END DO
+    PRINT*, 'Block type: ', TRIM(c_pt_char(block%ptype))
+    PRINT*, 'Block value: ', block%value
+    PRINT*, 'Stack point: ', sp
+    CALL abort_code(err)
+    STOP
+
+  END SUBROUTINE abort_block
 
 END MODULE evaluator
