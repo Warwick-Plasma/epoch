@@ -103,6 +103,27 @@ MODULE constants
   INTEGER, PARAMETER :: c_err_io_error = 2**15
   INTEGER, PARAMETER :: c_err_bad_setup = 2**16
   INTEGER, PARAMETER :: c_err_window = 2**17
+  INTEGER, PARAMETER :: c_err_max = 17
+
+  CHARACTER(LEN=*), PARAMETER :: c_err_char(0:c_err_max) = (/ &
+      'unknown_block           ', &
+      'unknown_element         ', &
+      'preset_element          ', &
+      'preset_element_use_later', &
+      'bad_value               ', &
+      'missing_elements        ', &
+      'terminate               ', &
+      'required_element_not_set', &
+      'pp_options_missing      ', &
+      'bad_array_length        ', &
+      'other                   ', &
+      'warn_bad_value          ', &
+      'generic_warning         ', &
+      'generic_error           ', &
+      'pp_options_wrong        ', &
+      'io_error                ', &
+      'bad_setup               ', &
+      'window                  '/)
 
   INTEGER, PARAMETER :: c_ds_first = 1
   INTEGER, PARAMETER :: c_ds_last = 2
@@ -293,8 +314,22 @@ MODULE constants
   INTEGER, PARAMETER :: c_pt_species = 9
   INTEGER, PARAMETER :: c_pt_subset = 10
   INTEGER, PARAMETER :: c_pt_default_constant = 11
+  INTEGER, PARAMETER :: c_pt_max = 11
   INTEGER, PARAMETER :: c_pt_bad = 1024
   INTEGER, PARAMETER :: c_pt_null = 1025
+
+  CHARACTER(LEN=*), PARAMETER :: c_pt_char(c_pt_max) = (/ &
+      'variable        ', &
+      'constant        ', &
+      'operator        ', &
+      'function        ', &
+      'parenthesis     ', &
+      'separator       ', &
+      'character       ', &
+      'deck_constant   ', &
+      'species         ', &
+      'subset          ', &
+      'default_constant'/)
 
   ! Opcode constants
   INTEGER, PARAMETER :: c_opcode_plus = 1
