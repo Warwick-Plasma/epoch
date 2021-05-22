@@ -92,23 +92,19 @@ CONTAINS
         END IF
 
         IF (sub%persistent) THEN
-          IF (sub%persist_start_time <= time &
-              .AND. sub%persist_start_step <= step) THEN
-            current_hash => id_registry%get_hash(sub%name)
-            IF (ASSOCIATED(current_hash)) THEN
-              CALL current_hash%init(1000)
-              got_persistent_subset = .TRUE.
-            ELSE
-              DO iu = 1, nio_units ! Print to stdout and to file
-                io = io_units(iu)
-                WRITE(io,*)
-                WRITE(io,*) '*** ERROR ***'
-                WRITE(io,*) 'Can only have 64 persistent subsets'
-              END DO
-              CALL abort_code(c_err_bad_value)
-            END IF
+          current_hash => id_registry%get_hash(sub%name)
+          IF (ASSOCIATED(current_hash)) THEN
+            CALL current_hash%init(1000)
+            got_persistent_subset = .TRUE.
+            any_persistent_subset = .TRUE.
           ELSE
-            sub%persistent = .FALSE.
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*)
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Can only have 64 persistent subsets'
+            END DO
+            CALL abort_code(c_err_bad_value)
           END IF
         END IF
       END DO
