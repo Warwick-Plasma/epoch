@@ -332,6 +332,8 @@ CONTAINS
         .OR. str_cmp(element, 'persist_after_time')) THEN
       sub%persistent = .TRUE.
       sub%persist_start_time = as_real_print(value, element, errcode)
+      IF (sub%persist_start_step < 0) &
+          sub%persist_start_step = HUGE(1)
       RETURN
     END IF
 
@@ -339,6 +341,8 @@ CONTAINS
         .OR. str_cmp(element, 'persist_after_step')) THEN
       sub%persistent = .TRUE.
       sub%persist_start_step = as_integer_print(value, element, errcode)
+      IF (sub%persist_start_time < 0.0_num) &
+          sub%persist_start_time = HUGE(1.0_num)
       RETURN
     END IF
 
