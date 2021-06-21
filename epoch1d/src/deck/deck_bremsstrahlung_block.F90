@@ -174,7 +174,8 @@ CONTAINS
       RETURN
     END IF
 
-    IF (str_cmp(element, 'use_brem_scatter')) THEN
+    IF (str_cmp(element, 'use_brem_scatter') &
+        .OR. str_cmp(element, 'use_bremsstrahlung_scatter')) THEN
       use_brem_scatter = as_logical_print(value, element, errcode)
       RETURN
     END IF
