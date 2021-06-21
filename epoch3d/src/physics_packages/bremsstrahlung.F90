@@ -652,8 +652,13 @@ CONTAINS
 
 
 
-  ! Generates a photon moving in same direction as the electron, calculating
-  ! electron recoil if appropriate
+  ! Generates a photon at the same position as the electron "electron". Emission
+  ! was triggered due to electron interaction with a nucleus of atomic number z,
+  ! and the photon is written to the species with ID iphoton if appropriate.
+  ! Photon energy is sampled from bremsstrahlung tables, and momentum is either
+  ! parallel to the electron momentum (without brem_scatter), or scattered by
+  ! angles drawn from the bremsstrahlung differential cross section (with
+  ! brem_scatter). Electron recoil is applied if requested.
 
   SUBROUTINE generate_photon(electron, z, iphoton)
 
