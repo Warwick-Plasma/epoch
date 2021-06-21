@@ -693,7 +693,8 @@ CONTAINS
     ! Rotate photon according to bremsstrahlung emission angular distribution
     ! Only consider trajectory changes from e- with high enough energy to be
     ! added into the simulation
-    IF (use_brem_scatter .AND. add_photon) THEN
+    IF (photon_energy > photon_energy_min_bremsstrahlung &
+        .AND. use_brem_scatter) THEN
       scatter_theta = calc_scatter_theta(part_e)
       scatter_phi = 2.0_num * pi * random()
       CALL rotate_p(new_photon, COS(scatter_theta), scatter_phi, photon_p)
