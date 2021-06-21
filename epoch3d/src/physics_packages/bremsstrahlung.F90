@@ -752,9 +752,9 @@ CONTAINS
     REAL(num), INTENT(IN) :: part_E
     REAL(num) :: calc_scatter_theta
     REAL(num) :: gamma_theta_max, gamma_theta, gamma_rel
-    REAL(num) :: a1 = 0.625_num
-    REAL(num) :: a2 = 1.875_num
-    REAL(num) :: border = 0.25_num
+    REAL(num), PARAMETER :: a1 = 0.625_num
+    REAL(num), PARAMETER :: a2 = 1.875_num
+    REAL(num), PARAMETER :: border = 0.25_num
     REAL(num) :: r1, r2, r3
 
     gamma_rel = part_E / m0c2
