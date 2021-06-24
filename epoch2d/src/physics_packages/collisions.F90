@@ -1424,7 +1424,7 @@ CONTAINS
     TYPE(particle), POINTER :: current, impact
     REAL(num) :: factor
     INTEGER(i8) :: icount, jcount, pcount, k
-    REAL(num) :: m1, m2, q1, q2
+    REAL(num) :: m1, m2, q1, q2, w1, w2
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
     REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
@@ -1457,9 +1457,6 @@ CONTAINS
       current => p_list1%head
       impact => p_list2%head
 
-      current => p_list1%head
-      impact => p_list2%head
-
       DO k = 1, pcount
         factor = factor + MIN(current%weight, impact%weight)
         current => current%next
@@ -1477,6 +1474,8 @@ CONTAINS
       m2 = mass2
       q1 = charge1
       q2 = charge2
+      w1 = weight1
+      w2 = weight2
 
       current => p_list1%head
       impact => p_list2%head
@@ -1492,6 +1491,10 @@ CONTAINS
         m2 = impact%mass
         q1 = current%charge
         q2 = impact%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        w1 = current%weight
+        w2 = impact%weight
 #endif
 
         p1 = current%part_p / c
@@ -1598,12 +1601,16 @@ CONTAINS
 
         p4 = -p3
 
-        p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
-        p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
-
-        ! Update particle properties
-        current%part_p = p5
-        impact%part_p = p6
+        ran1 = random()
+        IF (ran1 < w2 / w1) THEN
+          p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+          current%part_p = p5
+        END IF
+        IF (ran1 < w1 / w2) THEN
+          p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+          ! Update particle properties
+          impact%part_p = p6
+        END IF
 
         current => current%next
         impact => impact%next
