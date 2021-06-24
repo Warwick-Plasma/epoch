@@ -147,7 +147,7 @@ endif
 # ARCHER (also works for HECToR)
 # ========
 ifeq ($(strip $(COMPILER)),archer)
-  FFLAGS = -O3
+  FFLAGS = -O3 -hipa2
   ifeq ($(strip $(MODE)),debug)
     FFLAGS = -O0 -g -ea -ec -eC -eD -eI -en -hfp_trap -Ktrap=fp -m0 -M1438,7413
   endif
