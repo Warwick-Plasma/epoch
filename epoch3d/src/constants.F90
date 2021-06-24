@@ -194,6 +194,8 @@ MODULE constants
       atomic_electric_field = 5.142206538736485312185213306837419e11_num
   ! m0 * c
   REAL(num), PARAMETER :: mc0 = 2.73092429345209278e-22_num
+  ! m0 * c**2
+  REAL(num), PARAMETER :: m0c2 = mc0 * c
 
   ! Constants used in pair production
 #ifdef PHOTONS

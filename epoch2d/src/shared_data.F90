@@ -632,6 +632,7 @@ MODULE shared_data
   LOGICAL :: produce_bremsstrahlung_photons = .FALSE.
   LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
   LOGICAL :: use_plasma_screening = .FALSE.
+  LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
