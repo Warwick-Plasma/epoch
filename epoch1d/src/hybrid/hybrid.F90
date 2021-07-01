@@ -48,11 +48,11 @@ CONTAINS
 
 #ifdef HYBRID
 
-  SUBROUTINE run_hybrid_PIC(push, halt, force_dump)
+  SUBROUTINE run_hybrid_pic(push, halt, force_dump)
 
     LOGICAL :: push, halt, force_dump
 
-  END SUBROUTINE run_hybrid_PIC
+  END SUBROUTINE run_hybrid_pic
 
 
 
@@ -65,11 +65,11 @@ CONTAINS
 #else
   ! If hybrid precompiler option is off, let the routines called by other
   ! modules do nothing
-  SUBROUTINE run_hybrid_PIC(push, halt, force_dump)
+  SUBROUTINE run_hybrid_pic(push, halt, force_dump)
 
     LOGICAL :: push, halt, force_dump
 
-  END SUBROUTINE run_hybrid_PIC
+  END SUBROUTINE run_hybrid_pic
 
 
 

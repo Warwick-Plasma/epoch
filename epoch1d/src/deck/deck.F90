@@ -39,6 +39,7 @@ MODULE deck
 #endif
   USE deck_qed_block
   USE deck_bremsstrahlung_block
+  USE deck_hybrid_block
   ! Initial Condition Blocks
   USE deck_laser_block
   USE deck_fields_block
@@ -103,6 +104,7 @@ CONTAINS
 #endif
     CALL qed_deck_initialise
     CALL bremsstrahlung_deck_initialise
+    CALL hybrid_deck_initialise
     CALL species_deck_initialise
     CALL window_deck_initialise
     CALL part_from_file_deck_initialise
@@ -133,6 +135,7 @@ CONTAINS
 #endif
     CALL qed_deck_finalise
     CALL bremsstrahlung_deck_finalise
+    CALL hybrid_deck_finalise
     CALL species_deck_finalise
     CALL part_from_file_deck_finalise ! Must be called after
                                       ! species_deck_finalise
@@ -180,6 +183,8 @@ CONTAINS
       CALL qed_block_start
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_start
+    ELSE IF (str_cmp(block_name, 'hybrid')) THEN
+      CALL hybrid_block_start
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_start
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -231,6 +236,8 @@ CONTAINS
       CALL qed_block_end
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_end
+    ELSE IF (str_cmp(block_name, 'hybrid')) THEN
+      CALL hybrid_block_end
     ELSE IF (str_cmp(block_name, 'species')) THEN
       CALL species_block_end
     ELSE IF (str_cmp(block_name, 'window')) THEN
@@ -318,6 +325,9 @@ CONTAINS
       handle_block = bremsstrahlung_block_handle_element(block_element, &
           block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'hybrid')) THEN
+      handle_block = hybrid_block_handle_element(block_element, block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'species')) THEN
       handle_block = species_block_handle_element(block_element, block_value)
       RETURN
@@ -365,6 +375,9 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_bremsstrahlung_variables())
 #endif
       errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
+    END IF
+    IF (use_hybrid) THEN
+      errcode_deck = IOR(errcode_deck, hybrid_block_check())
     END IF
     errcode_deck = IOR(errcode_deck, constant_block_check())
     errcode_deck = IOR(errcode_deck, control_block_check())
