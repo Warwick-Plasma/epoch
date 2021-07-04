@@ -611,6 +611,26 @@ MODULE shared_data
   ! Based on J. R. Davies, et al, 1997. Phys. Rev. E, 56(6), p.7193.
   !----------------------------------------------------------------------------
 
+#ifdef HYBRID
+  TYPE solid
+
+    ! Input variables
+    REAL(num) :: iex = -1.0_num
+    REAL(num) :: mass_no = -1.0_num
+    INTEGER :: z = -1
+    INTEGER :: res_model = 1
+    REAL(num), ALLOCATABLE :: ion_density(:), el_density(:)
+
+  END TYPE solid
+
+  TYPE(solid), ALLOCATABLE :: solid_array(:)
+
+  ! Variables used by deck_solid_block to create the solid array
+  INTEGER :: solid_count = 0
+  LOGICAL :: made_solid_array = .FALSE.
+  INTEGER :: solid_index = 1
+#endif
+
   LOGICAL :: use_hybrid = .FALSE.
 
   !----------------------------------------------------------------------------

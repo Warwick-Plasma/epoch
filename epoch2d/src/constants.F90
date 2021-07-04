@@ -217,6 +217,15 @@ MODULE constants
       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
 #endif
 
+  ! Constants used for hybrid routines
+#ifdef HYBRID
+  ! These allow for spatially varying resistivity models
+  INTEGER, PARAMETER :: c_resist_vacuum = 1
+  INTEGER, PARAMETER :: c_resist_milchberg = 2
+  INTEGER, PARAMETER :: c_resist_plastic = 3
+  INTEGER, PARAMETER :: c_resist_rlm = 4
+#endif
+
   ! define special particle IDs
   INTEGER, PARAMETER :: c_species_id_generic = 0
   INTEGER, PARAMETER :: c_species_id_photon = 1

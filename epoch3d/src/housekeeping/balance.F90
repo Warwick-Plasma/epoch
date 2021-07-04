@@ -491,6 +491,9 @@ CONTAINS
     TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
     INTEGER :: i, ispecies, io, id, nspec_local, mask
+#ifdef HYBRID
+    INTEGER :: isolid
+#endif
 
     nx_new = new_domain(1,2) - new_domain(1,1) + 1
     ny_new = new_domain(2,2) - new_domain(2,1) + 1
@@ -574,6 +577,26 @@ CONTAINS
     DEALLOCATE(bz)
     ALLOCATE(bz(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
     bz = temp
+
+#ifdef HYBRID
+    ! Remap arrays for hybrid mode onto the new processor layout
+    IF (use_hybrid) THEN
+
+      DO isolid = 1, solid_count
+        CALL remap_field(solid_array(isolid)%ion_density, temp)
+        DEALLOCATE(solid_array(isolid)%ion_density)
+        ALLOCATE(solid_array(isolid)%ion_density(1-ng:nx_new+ng, &
+            1-ng:ny_new+ng, 1-ng:nz_new+ng))
+        solid_array(isolid)%ion_density = temp
+
+        CALL remap_field(solid_array(isolid)%el_density, temp)
+        DEALLOCATE(solid_array(isolid)%el_density)
+        ALLOCATE(solid_array(isolid)%el_density(1-ng:nx_new+ng, &
+            1-ng:ny_new+ng, 1-ng:nz_new+ng))
+        solid_array(isolid)%el_density = temp
+      END DO
+    END IF
+#endif
 
     IF (pre_loading) THEN
       IF (ALLOCATED(global_species_density)) DEALLOCATE(global_species_density)
