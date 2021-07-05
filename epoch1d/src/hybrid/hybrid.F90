@@ -54,6 +54,79 @@ CONTAINS
 
     LOGICAL :: push, halt, force_dump
 
+    ! A copy of the EPOCH PIC loop, modified to run in the hybrid scheme
+    DO
+      ! Timing information.
+      ! Functions/subroutines found in housekeeping/timer.f90
+      IF (timer_collect) THEN
+        CALL timer_stop(c_timer_step)
+        CALL timer_reset
+        timer_first(c_timer_step) = timer_walltime
+      END IF
+
+      ! Radiation scripts
+#ifdef PHOTONS
+      ! Non-linear Compton scatter/synchrotron radiation calculation (photons
+      ! can be generated)
+      IF (use_qed .AND. time > qed_start_time .AND. push) THEN
+        CALL qed_update_optical_depth()
+      END IF
+#endif
+
+      ! Evaluate fields a half timestep ahead of the particles
+      IF (use_hybrid_fields) CALL run_hybrid_fields
+
+      ! Logical flag set to true when particles can start to move
+      push = (time >= particle_push_start_time)
+
+      ! The following scripts will only be executed if particles can move
+      IF (push) THEN
+
+        ! Inject particles into the simulation
+        CALL run_injectors
+
+        ! .FALSE. this time to use load balancing threshold
+        IF (use_balance) CALL balance_workload(.FALSE.)
+
+        ! Move particles, leapfrogging over E and B
+        CALL push_particles
+
+        ! Pass current to neighbouring ranks (housekeeping/current_smooth.F90),
+        ! and write new currents to neighbouring ghost cells
+        CALL current_finish
+        CALL field_bc(jx, ng)
+        CALL field_bc(jy, ng)
+        CALL field_bc(jz, ng)
+
+        ! Now that temperature has been fully updated, re-evaluate resistivity
+        IF (use_hy_ionisation) CALL update_ionisation
+        IF (use_hy_cou_log) CALL update_coulomb_logarithm
+        CALL update_resistivity
+
+        ! Migrate particle species if they pass the migration criteria
+        IF (use_particle_migration) CALL migrate_particles(step)
+
+        ! See housekeeping/partlist.F90
+        CALL update_particle_count
+
+      END IF
+
+      CALL check_for_stop_condition(halt, force_dump)
+      IF (halt) EXIT
+      step = step + 1
+      time = time + dt / 2.0_num
+      CALL output_routines(step)
+      ! Check we have not passed the end condition
+      IF ((step >= nsteps .AND. nsteps >= 0) .OR. (time >= t_end) &
+          .OR. halt) EXIT
+      time = time + dt / 2.0_num
+
+      ! Iterate B and E, such that they are evaluated at the same time as the
+      ! particles (note: main PIC loop also does this after the output dump)
+      IF (use_hybrid_fields) CALL run_hybrid_fields
+
+    END DO
+
   END SUBROUTINE run_hybrid_pic
 
 
