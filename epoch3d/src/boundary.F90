@@ -620,6 +620,157 @@ CONTAINS
 
 
 
+  SUBROUTINE do_field_mpi_with_lengths_int(field, ng, nx_local, ny_local, &
+      nz_local)
+
+    INTEGER, INTENT(IN) :: ng
+    INTEGER, DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes, starts
+    INTEGER :: subarray, basetype, sz, szmax, i, j, k, n
+    INTEGER, ALLOCATABLE :: temp(:)
+
+    basetype = MPI_INTEGER
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    sizes(3) = nz_local + 2 * ng
+    starts = 1
+
+    szmax = sizes(1) * sizes(2) * ng
+    sz = sizes(1) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+    sz = sizes(2) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1,1-ng,1-ng), 1, subarray, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = nx_local+1, subsizes(1)+nx_local
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(nx_local+1-ng,1-ng,1-ng), 1, subarray, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+    subsizes(3) = sizes(3)
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1,1-ng), 1, subarray, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = ny_local+1, subsizes(2)+ny_local
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,ny_local+1-ng,1-ng), 1, subarray, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = sizes(2)
+    subsizes(3) = ng
+
+    sz = subsizes(1) * subsizes(2) * subsizes(3)
+
+    subarray = create_3d_array_subtype(basetype, subsizes, sizes, starts)
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,1), 1, subarray, proc_z_min, &
+        tag, temp, sz, basetype, proc_z_max, tag, comm, status, errcode)
+
+    IF (.NOT. z_max_boundary .OR. bc_field(c_bd_z_max) == c_bc_periodic) THEN
+      n = 1
+      DO k = nz_local+1, subsizes(3)+nz_local
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(1-ng,1-ng,nz_local+1-ng), 1, subarray, proc_z_max, &
+        tag, temp, sz, basetype, proc_z_min, tag, comm, status, errcode)
+
+    IF (.NOT. z_min_boundary .OR. bc_field(c_bd_z_min) == c_bc_periodic) THEN
+      n = 1
+      DO k = 1-ng, subsizes(3)-ng
+      DO j = 1-ng, subsizes(2)-ng
+      DO i = 1-ng, subsizes(1)-ng
+        field(i,j,k) = temp(n)
+        n = n + 1
+      END DO
+      END DO
+      END DO
+    END IF
+
+    CALL MPI_TYPE_FREE(subarray, errcode)
+
+    DEALLOCATE(temp)
+
+  END SUBROUTINE do_field_mpi_with_lengths_int
+
+
+
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
 
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field

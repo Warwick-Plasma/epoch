@@ -734,6 +734,21 @@ CONTAINS
     ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
       elementselected = c_dump_total_energy_sum
 
+    ELSE IF (str_cmp(element, 'hy_te') .OR. str_cmp(element, 'hy_Te')) THEN
+      elementselected = c_dump_hy_el_temp
+
+    ELSE IF (str_cmp(element, 'hy_ti') .OR. str_cmp(element, 'hy_Ti')) THEN
+      elementselected = c_dump_hy_ion_temp
+
+    ELSE IF (str_cmp(element, 'hy_ni')) THEN
+      elementselected = c_dump_hy_ion_num_dens
+
+    ELSE IF (str_cmp(element, 'hy_ion_charge')) THEN
+      elementselected = c_dump_hy_ion_charge
+
+    ELSE IF (str_cmp(element, 'hy_resistivity')) THEN
+      elementselected = c_dump_hy_resistivity
+
     ELSE
       got_element = .FALSE.
 
@@ -905,6 +920,15 @@ CONTAINS
         IF (mask_element == c_dump_temperature_y) bad = .FALSE.
         IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_ekflux) bad = .FALSE.
+#ifdef HYBRID
+        IF (use_hybrid) THEN
+          IF (mask_element == c_dump_hy_el_temp) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_temp) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_charge) bad = .FALSE.
+          IF (mask_element == c_dump_hy_ion_num_dens) bad = .FALSE.
+          IF (mask_element == c_dump_hy_resistivity) bad = .FALSE.
+        END IF
+#endif
         IF (bad) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file

@@ -121,7 +121,7 @@ CONTAINS
     IF (str_cmp(element, 'atomic_no') &
         .OR. str_cmp(element, 'background_Z') &
         .OR. str_cmp(element, 'hybrid_Z')) THEN
-      solid_array(solid_index)%Z = as_integer_print(value, element, errcode)
+      solid_array(solid_index)%z = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
@@ -134,7 +134,7 @@ CONTAINS
     IF (str_cmp(element, 'I') &
         .OR. str_cmp(element, 'I_ex') &
         .OR. str_cmp(element, 'excitation_energy')) THEN
-      solid_array(solid_index)%Iex = &
+      solid_array(solid_index)%iex = &
           as_real_print(value, element, errcode)
       RETURN
     END IF

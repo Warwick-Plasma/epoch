@@ -653,6 +653,22 @@ MODULE shared_data
   INTEGER :: solid_count = 0
   LOGICAL :: made_solid_array = .FALSE.
   INTEGER :: solid_index = 1
+
+  ! Global background arrays
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) ::  resistivity, hy_te
+  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: resistivity_model
+
+  ! Fit variables for the reduced Lee-More model (initial values for Al)
+  REAL(num) :: rlm_1 = 7.0_num
+  REAL(num) :: rlm_2 = 3.5_num
+
+  ! Variables for ionisation routines
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ion_charge, ion_reduced_density
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: hy_ti, ion_z_avg, ion_ni
+  REAL(num), ALLOCATABLE, DIMENSION(:,:) :: ion_cou_log
+  LOGICAL :: use_hy_ionisation = .FALSE., use_hy_cou_log = .FALSE.
+
+  LOGICAL :: use_ion_temp = .FALSE.
 #endif
 
   LOGICAL :: use_hybrid = .FALSE.

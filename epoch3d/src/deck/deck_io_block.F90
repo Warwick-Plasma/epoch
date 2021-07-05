@@ -746,6 +746,21 @@ CONTAINS
     ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
       elementselected = c_dump_total_energy_sum
 
+    ELSE IF (str_cmp(element, 'hy_te') .OR. str_cmp(element, 'hy_Te')) THEN
+      elementselected = c_dump_hy_el_temp
+
+    ELSE IF (str_cmp(element, 'hy_ti') .OR. str_cmp(element, 'hy_Ti')) THEN
+      elementselected = c_dump_hy_ion_temp
+
+    ELSE IF (str_cmp(element, 'hy_ni')) THEN
+      elementselected = c_dump_hy_ion_num_dens
+
+    ELSE IF (str_cmp(element, 'hy_ion_charge')) THEN
+      elementselected = c_dump_hy_ion_charge
+
+    ELSE IF (str_cmp(element, 'hy_resistivity')) THEN
+      elementselected = c_dump_hy_resistivity
+
     ELSE
       got_element = .FALSE.
 

@@ -357,6 +357,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: temp_sum
     REAL(r4), DIMENSION(:,:), ALLOCATABLE :: r4temp_sum
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp, temp2
+    INTEGER, DIMENSION(:), ALLOCATABLE :: temp_int
     TYPE(particle_species_migration), POINTER :: mg
     TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
@@ -374,6 +375,7 @@ CONTAINS
     ! Full domain arrays
 
     ALLOCATE(temp(1-ng:nx_new+ng))
+    ALLOCATE(temp_int(1-ng:nx_new+ng))
 
     ! Current will be recalculated during the particle push, so there
     ! is no need to copy the contents of the old arrays.
@@ -446,6 +448,51 @@ CONTAINS
 #ifdef HYBRID
     ! Remap arrays for hybrid mode onto the new processor layout
     IF (use_hybrid) THEN
+      CALL remap_field(resistivity, temp)
+      DEALLOCATE(resistivity)
+      ALLOCATE(resistivity(1-ng:nx_new+ng))
+      resistivity = temp
+
+      CALL remap_field_int(resistivity_model, temp_int)
+      DEALLOCATE(resistivity_model)
+      ALLOCATE(resistivity_model(1-ng:nx_new+ng))
+      resistivity_model = temp_int
+
+      CALL remap_field(hy_te, temp)
+      DEALLOCATE(hy_te)
+      ALLOCATE(hy_te(1-ng:nx_new+ng))
+      hy_te = temp
+
+      IF (use_hy_ionisation) THEN
+        CALL remap_field(ion_charge, temp)
+        DEALLOCATE(ion_charge)
+        ALLOCATE(ion_charge(1-ng:nx_new+ng))
+        ion_charge = temp
+
+        CALL remap_field(ion_z_avg, temp)
+        DEALLOCATE(ion_z_avg)
+        ALLOCATE(ion_z_avg(1-ng:nx_new+ng))
+        ion_z_avg = temp
+
+        CALL remap_field(ion_reduced_density, temp)
+        DEALLOCATE(ion_reduced_density)
+        ALLOCATE(ion_reduced_density(1-ng:nx_new+ng))
+        ion_reduced_density = temp
+      END IF
+
+      IF (use_hy_cou_log) THEN
+        CALL remap_field(ion_cou_log, temp)
+        DEALLOCATE(ion_cou_log)
+        ALLOCATE(ion_cou_log(1-ng:nx_new+ng))
+        ion_cou_log = temp
+      END IF
+
+      IF (use_ion_temp .OR. use_hy_ionisation) THEN
+        CALL remap_field(ion_ni, temp)
+        DEALLOCATE(ion_ni)
+        ALLOCATE(ion_ni(1-ng:nx_new+ng))
+        ion_ni = temp
+      END IF
 
       DO isolid = 1, solid_count
         CALL remap_field(solid_array(isolid)%ion_density, temp)
@@ -662,6 +709,29 @@ CONTAINS
     CALL do_field_mpi_with_lengths_r4(field_out, ng, n_new(1))
 
   END SUBROUTINE remap_field_r4
+
+
+
+  SUBROUTINE remap_field_int(field_in, field_out)
+
+    ! This is a wrapper for the field redistribution routine
+    INTEGER, DIMENSION(:), INTENT(IN) :: field_in
+    INTEGER, DIMENSION(:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(c_ndims) :: n_new, cdim
+    INTEGER :: i
+
+    n_new = SHAPE(field_out) - 2 * ng
+
+    DO i = 1, c_ndims
+      cdim(i) = c_ndims + 1 - i
+    END DO
+
+    CALL redistribute_field_1d_int(field_in, field_out, cdim, &
+        cell_x_min, cell_x_max, new_cell_x_min, new_cell_x_max)
+
+    CALL do_field_mpi_with_lengths_int(field_out, ng, n_new(1))
+
+  END SUBROUTINE remap_field_int
 
 
 
@@ -994,6 +1064,172 @@ CONTAINS
     DEALLOCATE(recvtypes)
 
   END SUBROUTINE redistribute_field_1d_r4
+
+
+
+  SUBROUTINE redistribute_field_1d_int(field_in, field_out, cdim, &
+      old_cell_min1, old_cell_max1, new_cell_min1, new_cell_max1)
+
+    ! This subroutine redistributes the fields over the new processor layout
+    INTEGER, PARAMETER :: nd = 1
+    INTEGER, DIMENSION(1-ng:), INTENT(IN) :: field_in
+    INTEGER, DIMENSION(1-ng:), INTENT(OUT) :: field_out
+    INTEGER, DIMENSION(nd), INTENT(IN) :: cdim
+    INTEGER, DIMENSION(:), INTENT(IN) :: old_cell_min1, old_cell_max1
+    INTEGER, DIMENSION(:), INTENT(IN) :: new_cell_min1, new_cell_max1
+    INTEGER :: irank, basetype, n, ng0, ng1
+    INTEGER :: i, iproc, inew
+    INTEGER, DIMENSION(nd) :: type_min, type_max, old_0, old_1, new_0
+    INTEGER, DIMENSION(nd) :: n_global, n_local, start, nprocs
+    INTEGER, DIMENSION(nd) :: old_min, old_max, new_min, new_max
+    INTEGER, DIMENSION(c_ndims) :: coord
+    INTEGER, DIMENSION(nd) :: old_coords, new_coords, nmin, nmax
+    INTEGER, DIMENSION(:), ALLOCATABLE :: sendtypes, recvtypes
+
+    basetype = MPI_INTEGER
+
+    ALLOCATE(sendtypes(0:nproc-1))
+    ALLOCATE(recvtypes(0:nproc-1))
+
+    DO i = 1, nd
+      old_coords(i) = old_coordinates(cdim(i))
+      new_coords(i) = coordinates(cdim(i))
+    END DO
+
+    old_min(1) = old_cell_min1(old_coords(1)+1)
+    old_max(1) = old_cell_max1(old_coords(1)+1)
+    new_min(1) = new_cell_min1(new_coords(1)+1)
+    new_max(1) = new_cell_max1(new_coords(1)+1)
+
+    tag = 0
+    sendtypes = 0
+    recvtypes = 0
+
+    nprocs(1) = SIZE(new_cell_min1)
+
+    nmin(1) = new_cell_min1(1)
+    nmax(1) = new_cell_max1(nprocs(1))
+
+    ! Create array of sendtypes
+
+    DO i = 1, nd
+      n_global(i) = old_max(i) - old_min(i) + 2 * ng + 1
+    END DO
+
+    coord = coordinates
+
+    n = 1
+    type_min(n) = old_min(n)
+    type_max(n) = old_min(n)
+
+    ! Find the new processor on which the old x_min resides
+    ! This could be sped up by using bisection.
+    DO iproc = 1, nprocs(n) - 1
+      IF (new_cell_min1(iproc) <= old_min(n) &
+          .AND. new_cell_max1(iproc) >= old_min(n)) EXIT
+    END DO
+
+    DO WHILE(type_max(n) <= old_max(n))
+      coord(cdim(n)) = iproc - 1
+      type_max(n) = new_cell_max1(iproc)
+      IF (type_max(n) > old_max(n)) type_max(n) = old_max(n)
+
+      ng0 = 0
+      ng1 = 0
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
+
+      n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
+      start(n) = type_min(n) - old_min(n) + ng - ng0 + 1
+
+      CALL MPI_CART_RANK(comm, coord, irank, errcode)
+
+      IF (rank /= irank) THEN
+        sendtypes(irank) = create_1d_array_subtype(basetype, n_local, &
+            n_global, start)
+      ELSE
+        ! New domain is on the same processor as the old domain.
+        ! Just copy the region rather than using MPI.
+        DO i = 1, nd
+          old_0(i) = start(i) - ng
+          old_1(i) = old_0(i) + n_local(i) - 1
+        END DO
+      END IF
+
+      n = 1
+      IF (type_max(n) == old_max(n)) EXIT
+      iproc = iproc + 1
+      type_min(n) = new_cell_min1(iproc)
+    END DO
+
+    nprocs(1) = SIZE(old_cell_min1)
+
+    ! Create array of recvtypes
+
+    DO i = 1, nd
+      n_global(i) = new_max(i) - new_min(i) + 2 * ng + 1
+    END DO
+
+    coord = old_coordinates
+
+    n = 1
+    type_min(n) = new_min(n)
+    type_max(n) = new_min(n)
+
+    ! Find the old processor on which the new x_min resides
+    ! This could be sped up by using bisection.
+    DO iproc = 1, nprocs(n) - 1
+      IF (old_cell_min1(iproc) <= new_min(n) &
+          .AND. old_cell_max1(iproc) >= new_min(n)) EXIT
+    END DO
+
+    DO WHILE(type_max(n) <= new_max(n))
+      coord(cdim(n)) = iproc - 1
+      type_max(n) = old_cell_max1(iproc)
+      IF (type_max(n) > new_max(n)) type_max(n) = new_max(n)
+
+      ng0 = 0
+      ng1 = 0
+      IF (type_min(n) == nmin(n)) ng0 = ng
+      IF (type_max(n) == nmax(n)) ng1 = ng
+
+      n_local(n) = type_max(n) - type_min(n) + ng0 + ng1 + 1
+      start(n) = type_min(n) - new_min(n) + ng - ng0 + 1
+
+      CALL MPI_CART_RANK(old_comm, coord, irank, errcode)
+
+      IF (rank /= irank) THEN
+        recvtypes(irank) = create_1d_array_subtype(basetype, n_local, &
+            n_global, start)
+      ELSE
+        ! New domain is on the same processor as the old domain.
+        ! Just copy the region rather than using MPI.
+        DO i = 1, nd
+          new_0(i) = start(i) - ng
+        END DO
+        DO i = old_0(1), old_1(1)
+          inew = new_0(1) + i - old_0(1)
+          field_out(inew) = field_in(i)
+        END DO
+      END IF
+
+      n = 1
+      IF (type_max(n) == new_max(n)) EXIT
+      iproc = iproc + 1
+      type_min(n) = old_cell_min1(iproc)
+    END DO
+
+    CALL redblack(field_in, field_out, sendtypes, recvtypes)
+
+    DO i = 0, nproc - 1
+      IF (sendtypes(i) /= 0) CALL MPI_TYPE_FREE(sendtypes(i), errcode)
+      IF (recvtypes(i) /= 0) CALL MPI_TYPE_FREE(recvtypes(i), errcode)
+    END DO
+
+    DEALLOCATE(sendtypes)
+    DEALLOCATE(recvtypes)
+
+  END SUBROUTINE redistribute_field_1d_int
 
 
 

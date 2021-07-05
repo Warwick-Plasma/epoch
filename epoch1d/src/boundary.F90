@@ -233,6 +233,46 @@ CONTAINS
 
 
 
+  SUBROUTINE do_field_mpi_with_lengths_int(field, ng, nx_local)
+
+    INTEGER, INTENT(IN) :: ng
+    INTEGER, DIMENSION(1-ng:), INTENT(INOUT) :: field
+    INTEGER, INTENT(IN) :: nx_local
+    INTEGER :: basetype, i, n
+    INTEGER, ALLOCATABLE :: temp(:)
+
+    basetype = MPI_INTEGER
+
+    ALLOCATE(temp(ng))
+
+    CALL MPI_SENDRECV(field(1), ng, basetype, proc_x_min, &
+        tag, temp, ng, basetype, proc_x_max, tag, comm, status, errcode)
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max) == c_bc_periodic) THEN
+      n = 1
+      DO i = nx_local+1, nx_local+ng
+        field(i) = temp(n)
+        n = n + 1
+      END DO
+    END IF
+
+    CALL MPI_SENDRECV(field(nx_local+1-ng), ng, basetype, proc_x_max, &
+        tag, temp, ng, basetype, proc_x_min, tag, comm, status, errcode)
+
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min) == c_bc_periodic) THEN
+      n = 1
+      DO i = 1-ng, 0
+        field(i) = temp(n)
+        n = n + 1
+      END DO
+    END IF
+
+    DEALLOCATE(temp)
+
+  END SUBROUTINE do_field_mpi_with_lengths_int
+
+
+
   SUBROUTINE field_zero_gradient(field, stagger_type, boundary)
 
     REAL(num), DIMENSION(1-ng:), INTENT(INOUT) :: field

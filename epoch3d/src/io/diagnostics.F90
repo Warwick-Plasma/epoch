@@ -516,6 +516,23 @@ CONTAINS
             'CPML/By_z', 'A/m^2', c_stagger_cell_centre, cpml_psi_byz)
       END IF
 
+#ifdef HYBRID
+      IF (use_hybrid) THEN
+        CALL write_field(c_dump_hy_el_temp, code, 'Electron temperature', &
+            'Hybrid/Electron_temperature', 'K', c_stagger_cell_centre, hy_te)
+        CALL write_field(c_dump_hy_ion_charge, code, 'Ion charge', &
+            'Hybrid/Ionisation_state', '', c_stagger_cell_centre, ion_charge)
+        CALL write_field(c_dump_hy_ion_num_dens, code, 'Ion number density', &
+            'Hybrid/Ion_number_density', '1/m^3', c_stagger_cell_centre, ion_ni)
+        CALL write_field(c_dump_hy_resistivity, code, 'Resistivity', &
+            'Hybrid/Resistivity', 'Ohm.m', c_stagger_cell_centre, resistivity)
+        ! hy_Ti is a restart variable, but only if it has been allocated
+        IF (ALLOCATED(hy_ti)) &
+            CALL write_field(c_dump_hy_ion_temp, code, 'Ion temperature', &
+            'Hybrid/Ion_temperature', 'K', c_stagger_cell_centre, hy_ti)
+      END IF
+#endif
+
       IF (n_subsets > 0) THEN
         DO i = 1, n_species
           CALL create_empty_partlist(io_list_data(i)%attached_list)
@@ -1637,6 +1654,24 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+#ifdef HYBRID
+      CASE(c_dump_hy_el_temp)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(hy_te * dt, r4)
+      CASE(c_dump_hy_ion_temp)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(hy_ti * dt, r4)
+      CASE(c_dump_hy_ion_num_dens)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(ion_ni * dt, r4)
+      CASE(c_dump_hy_ion_charge)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(ion_charge * dt, r4)
+      CASE(c_dump_hy_resistivity)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(resistivity * dt, r4)
+
+#endif
       END SELECT
     ELSE
       SELECT CASE(ioutput)
@@ -1770,6 +1805,20 @@ CONTAINS
           avg%array(:,:,:,ispecies) = avg%array(:,:,:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
+#ifdef HYBRID
+      CASE(c_dump_hy_el_temp)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + hy_te * dt
+      CASE(c_dump_hy_ion_temp)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + hy_ti * dt
+      CASE(c_dump_hy_ion_num_dens)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + ion_ni * dt
+      CASE(c_dump_hy_ion_charge)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + ion_charge * dt
+      CASE(c_dump_hy_resistivity)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) &
+            + resistivity * dt
+#endif
       END SELECT
     END IF
 

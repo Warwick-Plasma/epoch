@@ -111,6 +111,10 @@ PROGRAM pic
   CALL read_deck(deck_file, .TRUE., c_ds_last)
   CALL after_deck_last
 
+#ifdef HYBRID
+  IF (use_hybrid) CALL initialise_hybrid
+#endif
+
   ! restart flag is set
   IF (ic_from_restart) THEN
     CALL restart_data(step)
