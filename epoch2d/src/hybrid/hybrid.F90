@@ -40,7 +40,8 @@ MODULE hybrid
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
-  use hy_resistivity
+  USE hy_resistivity
+  USE hy_fields
 #endif
 
   IMPLICIT NONE
@@ -168,6 +169,27 @@ CONTAINS
 
 
   SUBROUTINE deallocate_hybrid
+
+    ! Deallocates all hybrid global arrays, and solid arrays
+
+    INTEGER :: i_sol
+
+    ! Solids
+    DO i_sol = 1, solid_count
+      DEALLOCATE(solid_array(i_sol)%ion_density, solid_array(i_sol)% el_density)
+    END DO
+    DEALLOCATE(solid_array)
+
+    ! Global arrays
+    DEALLOCATE(hy_te, resistivity, resistivity_model)
+    DEALLOCATE(jbx, jby, jbz)
+
+    ! Ionisation/resistivity optional arrays
+    IF (use_hy_cou_log) DEALLOCATE(ion_cou_log)
+    IF (use_ion_temp .OR. use_hy_ionisation) DEALLOCATE(ion_ni)
+    IF (ALLOCATED(hy_ti)) DEALLOCATE(hy_ti)
+    IF (use_hy_ionisation) &
+        DEALLOCATE(ion_charge, ion_z_avg, ion_reduced_density)
 
   END SUBROUTINE deallocate_hybrid
 

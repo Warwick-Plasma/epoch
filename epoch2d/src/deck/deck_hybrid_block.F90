@@ -60,6 +60,23 @@ CONTAINS
 
   SUBROUTINE hybrid_block_start
 
+#ifdef HYBRID
+    IF (.NOT. deck_state == c_ds_first) THEN
+      IF (.NOT. ALLOCATED(hy_te)) THEN
+        ALLOCATE(hy_te(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+      IF (.NOT. ALLOCATED(jbx)) THEN
+        ALLOCATE(jbx(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+      IF (.NOT. ALLOCATED(jby)) THEN
+        ALLOCATE(jby(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+      IF (.NOT. ALLOCATED(jbz)) THEN
+        ALLOCATE(jbz(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+    END IF
+#endif
+
   END SUBROUTINE hybrid_block_start
 
 
@@ -85,6 +102,54 @@ CONTAINS
       RETURN
     END IF
 
+#ifdef HYBRID
+    IF (str_cmp(element, 'use_hybrid_fields') &
+        .OR. str_cmp(element, 'use_fields')) THEN
+      use_hybrid_fields = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_background_ionisation') &
+        .OR. str_cmp(element, 'use_thomas_fermi')) THEN
+      run_hy_ionisation = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_ion_temp')) THEN
+      use_ion_temp = as_logical_print(value, element, errcode)
+      IF (use_ion_temp .AND. .NOT. ALLOCATED(hy_ti)) THEN
+        ALLOCATE(hy_ti(1-ng:nx+ng,1-ng:ny+ng))
+        hy_ti = 0.0_num
+      END IF
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'electron_temperature') &
+        .OR. str_cmp(element, 'te')) THEN
+      CALL fill_array(hy_te, value)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'ion_temperature') &
+        .OR. str_cmp(element, 'ti')) THEN
+      use_ion_temp = .TRUE.
+      IF (.NOT. ALLOCATED(hy_ti)) &
+          ALLOCATE(hy_ti(1-ng:nx+ng,1-ng:ny+ng))
+      CALL fill_array(hy_ti, value)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'rlm_1')) THEN
+      rlm_1 = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'rlm_2')) THEN
+      rlm_2 = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+#endif
+
     errcode = c_err_unknown_element
 
   END FUNCTION hybrid_block_handle_element
@@ -101,5 +166,46 @@ CONTAINS
     errcode = c_err_none
 
   END FUNCTION hybrid_block_check
+
+
+
+  SUBROUTINE fill_array(array, value)
+
+    ! A simplified version of the script in deck_species_block. It evaluates the
+    ! equation string stored in 'value' (for the maths parser to interpret), and
+    ! writes the elements to 'array'.
+
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: array
+    CHARACTER(LEN=*), INTENT(IN) :: value
+    TYPE(stack_element) :: iblock
+    TYPE(primitive_stack) :: stack
+    INTEGER :: io, iu, ix, iy
+    TYPE(parameter_pack) :: parameters
+
+    CALL initialise_stack(stack)
+    CALL tokenize(value, stack, errcode)
+
+    ! Sanity check
+    array(1,1) = evaluate(stack, errcode)
+    IF (errcode /= c_err_none) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Unable to parse input deck.'
+        END DO
+      END IF
+      CALL abort_code(errcode)
+    END IF
+
+    DO iy = 1-ng, ny+ng
+      parameters%pack_iy = iy
+      DO ix = 1-ng, nx+ng
+        parameters%pack_ix = ix
+        array(ix,iy) = evaluate_with_parameters(stack, parameters, errcode)
+      END DO
+    END DO
+
+  END SUBROUTINE fill_array
 
 END MODULE deck_hybrid_block

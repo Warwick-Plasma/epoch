@@ -632,6 +632,7 @@ MODULE shared_data
 
   ! Global background arrays
   REAL(num), ALLOCATABLE, DIMENSION(:) ::  resistivity, hy_te
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: jbx, jby, jbz
   INTEGER, ALLOCATABLE, DIMENSION(:) :: resistivity_model
 
   ! Fit variables for the reduced Lee-More model (initial values for Al)
@@ -644,7 +645,9 @@ MODULE shared_data
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_cou_log
   LOGICAL :: use_hy_ionisation = .FALSE., use_hy_cou_log = .FALSE.
 
-  LOGICAL :: use_ion_temp = .FALSE.
+  ! Deck variables
+  LOGICAL :: use_hybrid_fields = .FALSE.
+  LOGICAL :: use_ion_temp = .FALSE., run_hy_ionisation = .FALSE.
 #endif
 
   LOGICAL :: use_hybrid = .FALSE.

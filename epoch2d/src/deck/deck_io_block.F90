@@ -749,6 +749,15 @@ CONTAINS
     ELSE IF (str_cmp(element, 'hy_resistivity')) THEN
       elementselected = c_dump_hy_resistivity
 
+    ELSE IF (str_cmp(element, 'jbx') .OR. str_cmp(element, 'hy_jbx')) THEN
+      elementselected = c_dump_jbx
+
+    ELSE IF (str_cmp(element, 'jby') .OR. str_cmp(element, 'hy_jby')) THEN
+      elementselected = c_dump_jby
+
+    ELSE IF (str_cmp(element, 'jbz') .OR. str_cmp(element, 'hy_jbz')) THEN
+      elementselected = c_dump_jbz
+
     ELSE
       got_element = .FALSE.
 
@@ -927,6 +936,9 @@ CONTAINS
           IF (mask_element == c_dump_hy_ion_charge) bad = .FALSE.
           IF (mask_element == c_dump_hy_ion_num_dens) bad = .FALSE.
           IF (mask_element == c_dump_hy_resistivity) bad = .FALSE.
+          IF (mask_element == c_dump_jbx) bad = .FALSE.
+          IF (mask_element == c_dump_jby) bad = .FALSE.
+          IF (mask_element == c_dump_jbz) bad = .FALSE.
         END IF
 #endif
         IF (bad) THEN
@@ -1172,6 +1184,17 @@ CONTAINS
         IOR(io_block%dumpmask(c_dump_cpml_psi_bxy), c_io_restartable)
     io_block%dumpmask(c_dump_cpml_psi_bzy) = &
         IOR(io_block%dumpmask(c_dump_cpml_psi_bzy), c_io_restartable)
+
+    ! These variables will only be dumped if the code is running in hybrid mode
+    ! Ion temperature will only be dumped if it is allocated (see hybrid.F90)
+    io_block%dumpmask(c_dump_hy_el_temp) = &
+        IOR(io_block%dumpmask(c_dump_hy_el_temp), c_io_restartable)
+    io_block%dumpmask(c_dump_jbx) = &
+        IOR(io_block%dumpmask(c_dump_jbx), c_io_restartable)
+    io_block%dumpmask(c_dump_jby) = &
+        IOR(io_block%dumpmask(c_dump_jby), c_io_restartable)
+    io_block%dumpmask(c_dump_jbz) = &
+        IOR(io_block%dumpmask(c_dump_jbz), c_io_restartable)
 
   END SUBROUTINE set_restart_dumpmasks
 

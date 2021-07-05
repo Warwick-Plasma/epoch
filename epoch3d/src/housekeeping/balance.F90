@@ -600,6 +600,21 @@ CONTAINS
       ALLOCATE(hy_te(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
       hy_te = temp
 
+      CALL remap_field(jbx, temp)
+      DEALLOCATE(jbx)
+      ALLOCATE(jbx(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+      jbx = temp
+
+      CALL remap_field(jby, temp)
+      DEALLOCATE(jby)
+      ALLOCATE(jby(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+      jby = temp
+
+      CALL remap_field(jbz, temp)
+      DEALLOCATE(jbz)
+      ALLOCATE(jbz(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
+      jbz = temp
+
       IF (use_hy_ionisation) THEN
         CALL remap_field(ion_charge, temp)
         DEALLOCATE(ion_charge)

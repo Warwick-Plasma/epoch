@@ -526,6 +526,12 @@ CONTAINS
             'Hybrid/Ion_number_density', '1/m^3', c_stagger_cell_centre, ion_ni)
         CALL write_field(c_dump_hy_resistivity, code, 'Resistivity', &
             'Hybrid/Resistivity', 'Ohm.m', c_stagger_cell_centre, resistivity)
+        CALL write_field(c_dump_jbx, code, 'jbx', &
+            'Hybrid/Jx_background', 'A/m^2', c_stagger_jx, jbx)
+        CALL write_field(c_dump_jby, code, 'jby', &
+            'Hybrid/Jy_background', 'A/m^2', c_stagger_jy, jby)
+        CALL write_field(c_dump_jbz, code, 'jbz', &
+            'Hybrid/Jz_background', 'A/m^2', c_stagger_jz, jbz)
         ! hy_Ti is a restart variable, but only if it has been allocated
         IF (ALLOCATED(hy_ti)) &
             CALL write_field(c_dump_hy_ion_temp, code, 'Ion temperature', &
@@ -1670,6 +1676,15 @@ CONTAINS
       CASE(c_dump_hy_resistivity)
         IF (use_hybrid) avg%r4array(:,:,:,1) = &
             avg%r4array(:,:,:,1) + REAL(resistivity * dt, r4)
+      CASE(c_dump_jbx)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jbx * dt, r4)
+      CASE(c_dump_jby)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jby * dt, r4)
+      CASE(c_dump_jbz)
+        IF (use_hybrid) avg%r4array(:,:,:,1) = &
+            avg%r4array(:,:,:,1) + REAL(jbz * dt, r4)
 
 #endif
       END SELECT
@@ -1818,6 +1833,12 @@ CONTAINS
       CASE(c_dump_hy_resistivity)
         IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) &
             + resistivity * dt
+      CASE(c_dump_jbx)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jbx * dt
+      CASE(c_dump_jby)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jby * dt
+      CASE(c_dump_jbz)
+        IF (use_hybrid) avg%array(:,:,:,1) = avg%array(:,:,:,1) + jbz * dt
 #endif
       END SELECT
     END IF

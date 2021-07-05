@@ -1374,6 +1374,30 @@ CONTAINS
           CALL sdf_read_plain_variable(sdf_handle, cpml_psi_byz, &
               subtype_field, subarray_field)
 
+#ifdef HYBRID
+        ELSE IF (str_cmp(block_id, 'Jx_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jbx, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Jy_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jby, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Jz_background')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, jbz, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Electron temperature')) THEN
+          CALL sdf_read_plain_variable(sdf_handle, hy_te, subtype_field, &
+              subarray_field)
+
+        ELSE IF (str_cmp(block_id, 'Ion temperature')) THEN
+          IF (.NOT. ALLOCATED(hy_ti)) ALLOCATE(hy_ti(1-ng:nx+ng, 1-ng:ny+ng, &
+              1-ng:nz+ng))
+          CALL sdf_read_plain_variable(sdf_handle, hy_ti, subtype_field, &
+              subarray_field)
+#endif
+
         END IF
 
       CASE(c_blocktype_point_variable)
