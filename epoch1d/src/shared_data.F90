@@ -646,7 +646,7 @@ MODULE shared_data
   ! Variables for ionisation routines
   REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_charge, ion_reduced_density
   REAL(num), ALLOCATABLE, DIMENSION(:) :: hy_ti, ion_z_avg, ion_ni
-  REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_cou_log
+  REAL(num), ALLOCATABLE, DIMENSION(:) :: ion_cou_log, ion_a
   LOGICAL :: use_hy_ionisation = .FALSE., use_hy_cou_log = .FALSE.
 
   ! Deck variables

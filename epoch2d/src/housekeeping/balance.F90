@@ -594,6 +594,18 @@ CONTAINS
         ion_cou_log = temp
       END IF
 
+      IF (use_ion_temp) THEN
+        CALL remap_field(ion_a, temp)
+        DEALLOCATE(ion_a)
+        ALLOCATE(ion_a(1-ng:nx_new+ng, 1-ng:ny_new+ng))
+        ion_a = temp
+
+        CALL remap_field(hy_ti, temp)
+        DEALLOCATE(hy_ti)
+        ALLOCATE(hy_ti(1-ng:nx_new+ng, 1-ng:ny_new+ng))
+        hy_ti = temp
+      END IF
+
       IF (use_ion_temp .OR. use_hy_ionisation) THEN
         CALL remap_field(ion_ni, temp)
         DEALLOCATE(ion_ni)

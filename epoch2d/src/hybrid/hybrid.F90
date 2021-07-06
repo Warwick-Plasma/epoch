@@ -110,6 +110,7 @@ CONTAINS
         ! Now that temperature has been fully updated, re-evaluate resistivity
         IF (use_hy_ionisation) CALL update_ionisation
         IF (use_hy_cou_log) CALL update_coulomb_logarithm
+        IF (use_ion_temp) CALL thermal_equilibration
         CALL update_resistivity
 
         ! Migrate particle species if they pass the migration criteria
@@ -215,6 +216,10 @@ CONTAINS
       IF (use_hy_cou_log) THEN
         ALLOCATE(ion_cou_log(1-ng:nx+ng,1-ng:ny+ng))
       END IF
+      IF (use_ion_temp) THEN
+        ALLOCATE(ion_A(1-ng:nx+ng,1-ng:ny+ng))
+        ion_A = 0.0_num
+      END IF
       IF (use_ion_temp .OR. use_hy_ionisation) THEN
         ALLOCATE(ion_ni(1-ng:nx+ng,1-ng:ny+ng))
         ion_ni = 0.0_num
@@ -226,11 +231,14 @@ CONTAINS
         IF (ALLOCATED(ion_ni)) ion_ni = ion_ni + solid_array(i_sol)%ion_density
         IF (ALLOCATED(ion_z_avg)) ion_z_avg = ion_z_avg + solid_array(i_sol)%z &
             * solid_array(i_sol)%ion_density
+        IF (ALLOCATED(ion_a)) ion_a = ion_a + solid_array(i_sol)%mass_no &
+            * solid_array(i_sol)%ion_density
         IF (ALLOCATED(ion_reduced_density)) ion_reduced_density = &
             ion_reduced_density + 0.001_num * amu &
             * solid_array(i_sol)%ion_density / solid_array(i_sol)%z
       END DO
       IF (ALLOCATED(ion_z_avg)) ion_z_avg = ion_z_avg / ion_ni
+      IF (ALLOCATED(ion_a)) ion_a = ion_a / ion_ni
 
       ! Initialise resistivity
       IF (use_hy_ionisation) CALL update_ionisation
@@ -275,6 +283,7 @@ CONTAINS
 
     ! Ionisation/resistivity optional arrays
     IF (use_hy_cou_log) DEALLOCATE(ion_cou_log)
+    IF (use_ion_temp) DEALLOCATE(ion_a)
     IF (use_ion_temp .OR. use_hy_ionisation) DEALLOCATE(ion_ni)
     IF (ALLOCATED(hy_ti)) DEALLOCATE(hy_ti)
     IF (use_hy_ionisation) &

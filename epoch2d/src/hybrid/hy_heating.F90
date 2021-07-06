@@ -32,6 +32,9 @@ MODULE hy_heating
 
   REAL(num), PRIVATE, ALLOCATABLE :: eff_heat_capacity(:,:)
 
+  REAL(num), PRIVATE, PARAMETER :: c_hy_equil = &
+      2.0_num/3.0_num*(2.0_num*pi*kb)**(-1.5_num) * q0**4 * SQRT(m0)/epsilon0**2
+
 CONTAINS
 
   SUBROUTINE get_heat_capacity
@@ -149,6 +152,62 @@ CONTAINS
     CALL field_bc(hy_te, ng)
 
   END SUBROUTINE clear_heat_capacity
+
+
+
+  SUBROUTINE thermal_equilibration
+
+    ! Calculates transfer of thermal energy between electrons and ions using the
+    ! thermal equilibration rate, from Spitzer (1962) - "Physics of Fully
+    ! Ionized Gases", Second Edition, number 3, Interscience Tracts on Physics &
+    ! Astronomy. Available for free on
+    ! https://openlibrary.org/books/OL5856372M/Physics_of_fully_ionized_gases
+    ! (last accessed 05/July/2020)
+    !
+    ! The thermal rate of change is taken to be the ratio of e-ion temperature
+    ! difference to equilibration time (eq. 5-30), where equilibration time is
+    ! also given (eq. 5-31). Note that these equations have been converted to SI
+    ! for use in EPOCH
+    !
+    ! For reference:
+    ! c_hy_equil = 2/3 * (2*pi*kb)**-3/2 * q0**4 * SQRT(m0)/eps0**2
+
+    INTEGER :: ix, iy
+    REAL(num) :: eq_zst, eq_cou_log, eq_a, eq_te, eq_ti, eq_ni, eq_mi
+    REAL(num) :: temp_diff, eq_term, dte_fac, dti_fac
+
+    DO iy = 1,ny
+      DO ix = 1,nx
+
+        ! Copy out grid variables for clarity
+        eq_zst = ion_charge(ix,iy)
+        eq_cou_log = ion_cou_log(ix,iy)
+        eq_a = ion_a(ix,iy)
+        eq_te = hy_te(ix,iy)
+        eq_ti = hy_ti(ix,iy)
+        eq_ni = ion_ni(ix,iy)
+        eq_mi = eq_a * amu
+
+        temp_diff = eq_ti - eq_te
+        eq_term = c_hy_equil * eq_ni * eq_cou_log &
+            * SQRT(eq_mi/(eq_te*eq_mi + eq_ti*m0)**3)
+
+        ! To prevent over-shooting, cap the temperature change at half the
+        ! temperature difference
+        dte_fac = MIN(dt * eq_term * eq_zst**2, 0.5_num)
+        dti_fac = MIN(dt * eq_term * eq_zst**3, 0.5_num)
+
+        ! Apply temperature change
+        hy_te(ix,iy) = eq_te + dte_fac * temp_diff
+        hy_ti(ix,iy) = eq_ti - dti_fac * temp_diff
+
+      END DO
+    END DO
+
+    CALL field_bc(hy_te, ng)
+    CALL field_bc(hy_ti, ng)
+
+  END SUBROUTINE thermal_equilibration
 
 #endif
 END MODULE hy_heating
