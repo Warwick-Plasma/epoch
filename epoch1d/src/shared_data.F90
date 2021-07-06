@@ -621,6 +621,10 @@ MODULE shared_data
     INTEGER :: res_model = 1
     REAL(num), ALLOCATABLE :: ion_density(:), el_density(:)
 
+    ! Derived variables
+    REAL(num) :: z_prime
+    REAL(num), ALLOCATABLE :: heat_capacity(:)
+
   END TYPE solid
 
   TYPE(solid), ALLOCATABLE :: solid_array(:)

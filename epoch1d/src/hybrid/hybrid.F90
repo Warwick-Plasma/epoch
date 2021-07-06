@@ -40,8 +40,9 @@ MODULE hybrid
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
-  USE hy_resistivity
   USE hy_fields
+  USE hy_heating
+  USE hy_resistivity
 #endif
 
   IMPLICIT NONE
@@ -98,6 +99,12 @@ CONTAINS
         CALL field_bc(jy, ng)
         CALL field_bc(jz, ng)
 
+        ! Obtain heat capacity to calculate the temperature change in
+        ! hybrid_collisions and ohmic_heating
+        CALL get_heat_capacity
+
+        CALL clear_heat_capacity
+
         ! Now that temperature has been fully updated, re-evaluate resistivity
         IF (use_hy_ionisation) CALL update_ionisation
         IF (use_hy_cou_log) CALL update_coulomb_logarithm
@@ -136,7 +143,7 @@ CONTAINS
     ! This subroutine initialises the hybrid arrays, and sets the values of some
     ! constants, to speed up the code
 
-    REAL(num) :: resistivity_init, max_ne
+    REAL(num) :: resistivity_init, max_ne, z_real
     INTEGER :: ix, i_sol
     INTEGER :: max_id
     INTEGER :: io, iu
@@ -147,6 +154,13 @@ CONTAINS
 
       ! Ensure solids have been called with all necessary variables specified
       CALL check_solids
+
+      ! Preset useful constants for solids
+      DO i_sol = 1, solid_count
+        z_real = REAL(solid_array(i_sol)%z, num)
+        solid_array(i_sol)%el_density = z_real * solid_array(i_sol)%ion_density
+        solid_array(i_sol)%z_prime = z_real**(-4.0_num/3.0_num) *  kelvin_to_ev
+      END DO
 
       ! Allocate additional arrays for running in hybrid mode. These require
       ! extra remapping scripts in balance.F90 (for domain change in
