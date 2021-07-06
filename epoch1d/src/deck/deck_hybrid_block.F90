@@ -109,6 +109,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_ohmic_heating') &
+        .OR. str_cmp(element, 'use_Ohmic_heating')) THEN
+      use_ohmic = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'use_background_ionisation') &
         .OR. str_cmp(element, 'use_thomas_fermi')) THEN
       run_hy_ionisation = as_logical_print(value, element, errcode)

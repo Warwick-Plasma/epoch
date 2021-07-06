@@ -676,6 +676,7 @@ MODULE shared_data
   ! Deck variables
   LOGICAL :: use_hybrid_fields = .FALSE.
   LOGICAL :: use_ion_temp = .FALSE., run_hy_ionisation = .FALSE.
+  LOGICAL :: use_ohmic = .FALSE.
 #endif
 
   LOGICAL :: use_hybrid = .FALSE.

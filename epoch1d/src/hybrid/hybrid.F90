@@ -103,6 +103,8 @@ CONTAINS
         ! hybrid_collisions and ohmic_heating
         CALL get_heat_capacity
 
+        ! Updates grid temperature due to Ohmic heating
+        IF (use_ohmic) CALL ohmic_heating
         CALL clear_heat_capacity
 
         ! Now that temperature has been fully updated, re-evaluate resistivity

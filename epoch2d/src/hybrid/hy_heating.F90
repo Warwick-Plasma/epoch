@@ -28,6 +28,8 @@ MODULE hy_heating
 
   IMPLICIT NONE
 
+  REAL(num), PRIVATE, ALLOCATABLE :: ohmic_heat_const(:,:)
+
   REAL(num), PRIVATE, ALLOCATABLE :: eff_heat_capacity(:,:)
 
 CONTAINS
@@ -47,7 +49,7 @@ CONTAINS
     ! Finally, this routine pre-calculates heating constants for different
     ! heating processes
 
-    REAL(num), ALLOCATABLE :: t_prime(:,:)
+    REAL(num), ALLOCATABLE :: t_prime(:,:), i_kb_sumne2(:,:)
     INTEGER :: i_sol
 
     ! Temporary varible to store T' array values
@@ -72,7 +74,61 @@ CONTAINS
           + solid_array(i_sol)%el_density / solid_array(i_sol)%heat_capacity
     END DO
 
+    ! Get 1/kb/Sum(ne)**2 values
+    ALLOCATE(i_kb_sumne2(1-ng:nx+ng,1-ng:ny+ng))
+    i_kb_sumne2 = 0.0_num
+    DO i_sol = 1, solid_count
+      i_kb_sumne2 = i_kb_sumne2 + solid_array(i_sol)%el_density
+    END DO
+    i_kb_sumne2 = 1.0_num/(kb*i_kb_sumne2**2)
+
+    ! Precalculate the ohmic_heat_const array if Ohmic heating is running
+    IF (use_ohmic) THEN
+      ALLOCATE(ohmic_heat_const(1-ng:nx+ng,1-ng:ny+ng))
+      ohmic_heat_const = dt * i_kb_sumne2
+    END IF
+
+    DEALLOCATE(i_kb_sumne2)
+
   END SUBROUTINE get_heat_capacity
+
+
+
+  SUBROUTINE ohmic_heating
+
+    ! Calculates the Ohmic heating of the simulation grid, as described by
+    ! Davies, et al, (2002). Phys. Rev. E, 65(2), 026407. At this point in the
+    ! simulation, we are at the end of a timestep, with E evaluated in the
+    ! middle of this timestep. Assuming this is the average electric field over
+    ! the timestep, we have a power disspiation of R*I**2, which is equivalent
+    ! to a power density of J**2.(resistivity)
+    !
+    !  dT = (Power density) * dt  * Sum(ne/C) / [Sum(ne)]**2 / kB
+    !
+    ! ohmic_heat_const = dt / kB / Sum(ne)**2
+    ! eff_heat_capacity = sum(ne/C)
+
+    REAL(num) :: j2
+    INTEGER :: ix, iy, i_sol
+
+    ! Loop over all grid points to find temperature change
+    DO iy = 1, ny
+      DO ix = 1, nx
+
+        ! Tb is a cell-centred variable, but J has stagger - need to average
+        j2 = 0.25_num * ((jbx(ix,iy) + jbx(ix-1,iy))**2 &
+            + (jby(ix,iy) + jby(ix,iy-1))**2) + jbz(ix,iy)**2
+
+        ! Calculate Ohmic heating, avoiding the 0/0 NaN
+        IF (eff_heat_capacity(ix,iy) > 0.0_num) THEN
+          hy_te(ix,iy) = hy_te(ix,iy) &
+              + j2*resistivity(ix,iy)*ohmic_heat_const(ix,iy) &
+              * eff_heat_capacity(ix,iy)
+        END IF
+      END DO
+    END DO
+
+  END SUBROUTINE ohmic_heating
 
 
 
