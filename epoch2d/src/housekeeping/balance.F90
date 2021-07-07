@@ -448,6 +448,7 @@ CONTAINS
     REAL(num), DIMENSION(:), ALLOCATABLE :: temp_slice
     TYPE(laser_block), POINTER :: laser, laser_next
     TYPE(injector_block), POINTER :: injector, injector_next
+    TYPE(hy_laser_block), POINTER :: hy_laser, hy_laser_next
     TYPE(particle_species_migration), POINTER :: mg
     TYPE(particle_species), POINTER :: sp
     TYPE(initial_condition_block), POINTER :: ic
@@ -858,6 +859,26 @@ CONTAINS
       END IF
     END DO
 
+    hy_laser_next => hy_lasers
+    DO WHILE(ASSOCIATED(hy_laser_next))
+      hy_laser => hy_laser_next
+      hy_laser_next => hy_laser%next
+
+      IF (hy_laser%boundary == c_bd_x_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (hy_laser%boundary == c_bd_x_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
+      END IF
+
+      CALL remap_field_slice(c_dir_x, hy_laser%profile, temp_slice)
+      DEALLOCATE(hy_laser%profile)
+      ALLOCATE(hy_laser%profile(1-ng:ny_new+ng))
+      hy_laser%profile = temp_slice
+
+    END DO
+
     max_boundary = .FALSE.
 
     CALL remap_field_slice(c_dir_x, ex_x_min, temp_slice)
@@ -971,6 +992,25 @@ CONTAINS
         ALLOCATE(injector%depth(1-ng:nx_new+ng))
         injector%depth = temp_slice
       END IF
+    END DO
+
+    hy_laser_next => hy_lasers
+    DO WHILE(ASSOCIATED(hy_laser_next))
+      hy_laser => hy_laser_next
+      hy_laser_next => hy_laser%next
+
+      IF (hy_laser%boundary == c_bd_y_min) THEN
+        max_boundary = .FALSE.
+      ELSE IF (hy_laser%boundary == c_bd_y_max) THEN
+        max_boundary = .TRUE.
+      ELSE
+        CYCLE
+      END IF
+
+      CALL remap_field_slice(c_dir_y, hy_laser%profile, temp_slice)
+      DEALLOCATE(hy_laser%profile)
+      ALLOCATE(hy_laser%profile(1-ng:nx_new+ng))
+      hy_laser%profile = temp_slice
     END DO
 
     max_boundary = .FALSE.

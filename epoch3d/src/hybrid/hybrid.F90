@@ -44,6 +44,7 @@ MODULE hybrid
   USE hy_fields
   USE hy_heating
   USE hy_ionisation_loss
+  USE hy_laser
   USE hy_resistivity
 #endif
 
@@ -87,6 +88,7 @@ CONTAINS
 
         ! Inject particles into the simulation
         CALL run_injectors
+        CALL run_hybrid_lasers
 
         ! .FALSE. this time to use load balancing threshold
         IF (use_balance) CALL balance_workload(.FALSE.)

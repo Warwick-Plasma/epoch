@@ -42,6 +42,7 @@ MODULE deck
 #endif
   USE deck_qed_block
   USE deck_bremsstrahlung_block
+  USE deck_hy_laser_block
   USE deck_hybrid_block
   USE deck_solid_block
   ! Initial Condition Blocks
@@ -108,6 +109,7 @@ CONTAINS
 #endif
     CALL qed_deck_initialise
     CALL bremsstrahlung_deck_initialise
+    CALL hy_laser_deck_initialise
     CALL hybrid_deck_initialise
     CALL solid_deck_initialise
     CALL species_deck_initialise
@@ -140,6 +142,7 @@ CONTAINS
 #endif
     CALL qed_deck_finalise
     CALL bremsstrahlung_deck_finalise
+    CALL hy_laser_deck_finalise
     CALL hybrid_deck_finalise
     CALL solid_deck_finalise
     CALL species_deck_finalise
@@ -189,6 +192,8 @@ CONTAINS
       CALL qed_block_start
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_start
+    ELSE IF (str_cmp(block_name, 'hy_laser')) THEN
+      CALL hy_laser_block_start
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       CALL hybrid_block_start
     ELSE IF (str_cmp(block_name, 'solid')) THEN
@@ -244,6 +249,8 @@ CONTAINS
       CALL qed_block_end
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_end
+    ELSE IF (str_cmp(block_name, 'hy_laser')) THEN
+      CALL hy_laser_block_end
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       CALL hybrid_block_end
     ELSE IF (str_cmp(block_name, 'solid')) THEN
@@ -335,6 +342,9 @@ CONTAINS
       handle_block = bremsstrahlung_block_handle_element(block_element, &
           block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'hy_laser')) THEN
+      handle_block = hy_laser_block_handle_element(block_element, block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       handle_block = hybrid_block_handle_element(block_element, block_value)
       RETURN
@@ -389,6 +399,7 @@ CONTAINS
 #endif
       errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
     END IF
+    errcode_deck = IOR(errcode_deck, hy_laser_block_check())
     IF (use_hybrid) THEN
 #ifdef HYBRID
       IF (use_hybrid_collisions) THEN

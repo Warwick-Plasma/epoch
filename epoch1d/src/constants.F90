@@ -230,6 +230,24 @@ MODULE constants
   INTEGER, PARAMETER :: c_resist_rlm = 4
 #endif
 
+  ! Hybrid electron injector: mean e- energy models
+  INTEGER, PARAMETER :: c_mean_wilks = 1
+  INTEGER, PARAMETER :: c_mean_a0 = 2
+  INTEGER, PARAMETER :: c_mean_E_val = 3
+
+  ! Hybrid electron injector: energy distribution models
+  INTEGER, PARAMETER :: e_dist_exp = 1
+  INTEGER, PARAMETER :: e_dist_mono = 2
+  INTEGER, PARAMETER :: e_dist_tophat = 3
+  INTEGER, PARAMETER :: e_dist_exp_weight = 4
+  INTEGER, PARAMETER :: e_dist_mono_weight = 5
+  INTEGER, PARAMETER :: e_dist_mono_las_weight = 6
+
+  ! Hybrid electron injector: angular distribution models
+  INTEGER, PARAMETER :: c_ang_uniform = 1
+  INTEGER, PARAMETER :: c_ang_cos = 2
+  INTEGER, PARAMETER :: c_ang_beam = 3
+
   ! define special particle IDs
   INTEGER, PARAMETER :: c_species_id_generic = 0
   INTEGER, PARAMETER :: c_species_id_photon = 1

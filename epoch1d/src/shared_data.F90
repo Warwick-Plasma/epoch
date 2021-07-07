@@ -668,6 +668,45 @@ MODULE shared_data
   LOGICAL :: use_hybrid = .FALSE.
 
   !----------------------------------------------------------------------------
+  ! Hybrid laser boundaries - Written by S. J. Morris
+  ! Electron injector based on laser parameters for hybrid mode (PIC works too)
+  !----------------------------------------------------------------------------
+
+  TYPE hy_laser_block
+
+    ! Similar syntax to the laser_block type, but without a phase function
+    INTEGER :: boundary
+    INTEGER :: ppc
+
+    LOGICAL :: use_time_function, use_omega_function
+    TYPE(primitive_stack) :: time_function, omega_function
+
+    REAL(num) :: intensity, omega, t_start, t_end, efficiency
+    INTEGER :: omega_func_type, species
+    LOGICAL :: has_t_end
+
+    INTEGER :: mean, e_dist, ang_dist
+
+    ! User specified energy/weight values
+    REAL(num) :: user_mean_KE, user_weight
+    REAL(num) :: las_weight_KE
+    LOGICAL :: ignore_las
+
+    ! Angular distribution variables
+    REAL(num) :: user_theta_max, cos_n_power, top_hat_L, sheng_angle, mean_mult
+    REAL(num) :: theta_mean, phi_mean
+    LOGICAL :: use_moore_max
+    LOGICAL :: use_sheng_dir
+
+    TYPE(hy_laser_block), POINTER :: next
+
+  END TYPE hy_laser_block
+
+  TYPE(hy_laser_block), POINTER :: hy_lasers
+  INTEGER, DIMENSION(2*c_ndims) :: n_hy_lasers
+  LOGICAL, DIMENSION(2*c_ndims) :: add_hy_laser = .FALSE.
+
+  !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------
   INTEGER :: coordinates(c_ndims), neighbour(-1:1)
