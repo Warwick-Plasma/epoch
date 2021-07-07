@@ -600,6 +600,12 @@ CONTAINS
       ALLOCATE(hy_te(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))
       hy_te = temp
 
+      CALL remap_field(hy_sum_ne, temp)
+      DEALLOCATE(hy_sum_ne)
+      ALLOCATE(hy_sum_ne(1-ng:nx_new+ng, 1-ng:ny_new+ng, &
+          1-ng:nz_new+ng))
+      hy_sum_ne = temp
+
       CALL remap_field(jbx, temp)
       DEALLOCATE(jbx)
       ALLOCATE(jbx(1-ng:nx_new+ng, 1-ng:ny_new+ng, 1-ng:nz_new+ng))

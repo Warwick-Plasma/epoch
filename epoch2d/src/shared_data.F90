@@ -649,7 +649,7 @@ MODULE shared_data
     REAL(num), ALLOCATABLE :: ion_density(:,:), el_density(:,:)
 
     ! Derived variables
-    REAL(num) :: z_prime
+    REAL(num) :: theta_fac, ln_s, z_prime
     REAL(num) :: iex_term, dedx_c
     REAL(num), ALLOCATABLE :: heat_capacity(:,:)
 
@@ -682,7 +682,7 @@ MODULE shared_data
 
   ! Deck variables
   LOGICAL :: use_hybrid_fields = .FALSE., use_hybrid_collisions = .FALSE.
-  LOGICAL :: produce_delta_rays = .FALSE.
+  LOGICAL :: use_hybrid_scatter = .FALSE., produce_delta_rays = .FALSE.
   LOGICAL :: use_ion_temp = .FALSE., run_hy_ionisation = .FALSE.
   LOGICAL :: use_ohmic = .FALSE.
   REAL(num) :: min_delta_energy = 0.0_num

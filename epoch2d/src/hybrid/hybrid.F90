@@ -40,6 +40,7 @@ MODULE hybrid
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+  USE hy_elastic
   USE hy_fields
   USE hy_heating
   USE hy_ionisation_loss
@@ -99,6 +100,9 @@ CONTAINS
         CALL field_bc(jx, ng)
         CALL field_bc(jy, ng)
         CALL field_bc(jz, ng)
+
+        ! Calculate scattering from elastic collisions
+        IF (use_hybrid_scatter) CALL elastic_scatter
 
         ! Obtain heat capacity to calculate the temperature change in
         ! hybrid_collisions and ohmic_heating
@@ -179,6 +183,10 @@ CONTAINS
         solid_array(i_sol)%iex_term = 2.0_num  / (iex / m0c2)**2
         solid_array(i_sol)%dedx_c = 1.0_num + 2.0_num &
             * LOG(iex / (h_bar * q0) * SQRT(epsilon0 * m0))
+        solid_array(i_sol)%theta_fac = z_real * q0**4  / (2.0_num * pi &
+            * epsilon0**2)
+        solid_array(i_sol)%ln_s = 4.0_num * epsilon0 * h_planck &
+            / (z_real**(1.0_num/3.0_num) * m0 * q0**2)
       END DO
 
       ! Allocate additional arrays for running in hybrid mode. These require

@@ -39,7 +39,7 @@ CONTAINS
     INTEGER :: io, iu
 #ifdef HYBRID
     IF (deck_state == c_ds_first) RETURN
-    IF (use_hybrid .AND. use_hybrid_collisions) &
+    IF (use_hybrid .AND. (use_hybrid_collisions .OR. use_hybrid_scatter)) &
         need_random_state = .TRUE.
 #else
     IF (use_hybrid) THEN
@@ -114,6 +114,12 @@ CONTAINS
     IF (str_cmp(element, 'use_hybrid_collisions') &
         .OR. str_cmp(element, 'use_collisions')) THEN
       use_hybrid_collisions = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_hybrid_scatter') &
+        .OR. str_cmp(element, 'use_scatter')) THEN
+      use_hybrid_scatter = as_logical_print(value, element, errcode)
       RETURN
     END IF
 
