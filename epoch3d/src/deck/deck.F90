@@ -37,6 +37,9 @@ MODULE deck
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+#ifdef HYBRID
+  USE hy_ionisation_loss
+#endif
   USE deck_qed_block
   USE deck_bremsstrahlung_block
   USE deck_hybrid_block
@@ -387,6 +390,11 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
     END IF
     IF (use_hybrid) THEN
+#ifdef HYBRID
+      IF (use_hybrid_collisions) THEN
+        errcode_deck = IOR(errcode_deck, check_ionisation_loss_variables())
+      END IF
+#endif
       errcode_deck = IOR(errcode_deck, hybrid_block_check())
     END IF
     errcode_deck = IOR(errcode_deck, solid_block_check())

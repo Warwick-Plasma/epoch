@@ -42,6 +42,7 @@ MODULE hybrid
 #endif
   USE hy_fields
   USE hy_heating
+  USE hy_ionisation_loss
   USE hy_resistivity
 #endif
 
@@ -103,6 +104,9 @@ CONTAINS
         ! hybrid_collisions and ohmic_heating
         CALL get_heat_capacity
 
+        ! Calculates ionisational energy loss, and updates grid temperature
+        IF (use_hybrid_collisions) CALL run_ionisation_loss
+
         ! Updates grid temperature due to Ohmic heating
         IF (use_ohmic) CALL ohmic_heating
         CALL clear_heat_capacity
@@ -146,7 +150,7 @@ CONTAINS
     ! This subroutine initialises the hybrid arrays, and sets the values of some
     ! constants, to speed up the code
 
-    REAL(num) :: resistivity_init, max_ne, z_real
+    REAL(num) :: resistivity_init, max_ne, z_real, iex
     INTEGER :: ix, i_sol
     INTEGER :: max_id
     INTEGER :: io, iu
@@ -158,11 +162,23 @@ CONTAINS
       ! Ensure solids have been called with all necessary variables specified
       CALL check_solids
 
+      ! Initialise variables for extra physics
+      IF (use_hybrid_collisions) CALL setup_hy_ionisation_loss
+      IF (use_ohmic .OR. use_hybrid_collisions) CALL setup_heating
+
       ! Preset useful constants for solids
+      ALLOCATE(hy_sum_ne(1-ng:nx+ng))
+      hy_sum_ne = 0
       DO i_sol = 1, solid_count
         z_real = REAL(solid_array(i_sol)%z, num)
+        iex = solid_array(i_sol)%iex
+        hy_sum_ne = hy_sum_ne + solid_array(i_sol)%el_density
+
         solid_array(i_sol)%el_density = z_real * solid_array(i_sol)%ion_density
         solid_array(i_sol)%z_prime = z_real**(-4.0_num/3.0_num) *  kelvin_to_ev
+        solid_array(i_sol)%iex_term = 2.0_num  / (iex / m0c2)**2
+        solid_array(i_sol)%dedx_c = 1.0_num + 2.0_num &
+            * LOG(iex / (h_bar * q0) * SQRT(epsilon0 * m0))
       END DO
 
       ! Allocate additional arrays for running in hybrid mode. These require
@@ -336,6 +352,22 @@ CONTAINS
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Please set all solid atomic numbers to positive ', &
                 'values greater than 0.'
+            WRITE(io,*) 'Code will terminate.'
+          END DO
+        END IF
+        errcode = c_err_bad_value + c_err_terminate
+      END IF
+
+      ! Check the mean excitation energy is positive (only used in collisions)
+      IF (solid_array(i_sol)%iex < 0.0_num &
+          .AND. use_hybrid_collisions) THEN
+        IF (rank == 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*)
+            WRITE(io,*) '*** ERROR ***'
+            WRITE(io,*) 'Please set all solid mean excitation energies to ', &
+                'positive values for hybrid collisions'
             WRITE(io,*) 'Code will terminate.'
           END DO
         END IF

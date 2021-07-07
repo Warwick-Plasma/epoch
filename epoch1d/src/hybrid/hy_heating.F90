@@ -29,13 +29,25 @@ MODULE hy_heating
   IMPLICIT NONE
 
   REAL(num), PRIVATE, ALLOCATABLE :: ohmic_heat_const(:)
-
+  REAL(num), PRIVATE, ALLOCATABLE :: ion_heat_const(:)
   REAL(num), PRIVATE, ALLOCATABLE :: eff_heat_capacity(:)
 
   REAL(num), PRIVATE, PARAMETER :: c_hy_equil = &
       2.0_num/3.0_num*(2.0_num*pi*kb)**(-1.5_num) * q0**4 * SQRT(m0)/epsilon0**2
 
+  REAL(num), PRIVATE :: idx
+
 CONTAINS
+
+  SUBROUTINE setup_heating
+
+    ! Precalculate useful variables for speed
+
+    idx = 1.0_num/dx
+
+  END SUBROUTINE setup_heating
+
+
 
   SUBROUTINE get_heat_capacity
 
@@ -85,6 +97,12 @@ CONTAINS
     END DO
     i_kb_sumne2 = 1.0_num/(kb*i_kb_sumne2**2)
 
+    ! Precalculate the ion_heat_const array if ionisation loss is running
+    IF (use_hybrid_collisions) THEN
+      ALLOCATE(ion_heat_const(1-ng:nx+ng))
+      ion_heat_const = i_kb_sumne2 * idx
+    END IF
+
     ! Precalculate the ohmic_heat_const array if Ohmic heating is running
     IF (use_ohmic) THEN
       ALLOCATE(ohmic_heat_const(1-ng:nx+ng))
@@ -94,6 +112,42 @@ CONTAINS
     DEALLOCATE(i_kb_sumne2)
 
   END SUBROUTINE get_heat_capacity
+
+
+
+  SUBROUTINE ionisation_heating(de, part_x)
+
+    ! The current particle has deposited energy dE into the solid, at position
+    ! part_x, due to ionisation energy loss. By finding the heat capacity at
+    ! that point, this is converted to a temperature increase.
+    !
+    ! The temperature rise of a compound solid will be approximated to:
+    !
+    ! dT = (Energy change per unit vol.) * Sum(ne/C) / [Sum(ne)]**2 / kB
+    !
+    ! ion_heat_const = 1 / kB / sum(ne**2) / (cell vol.)
+    ! eff_heat_capacity = sum(ne/C)
+
+    REAL(num), INTENT(IN) :: de, part_x
+    INTEGER :: ix
+    REAL(num) :: part_c_eff, part_heat_const, delta_te
+
+    CALL hy_grid_centred_var_at_particle(part_x, part_heat_const, &
+        ion_heat_const)
+    CALL hy_grid_centred_var_at_particle(part_x, part_c_eff, eff_heat_capacity)
+
+    ! Calculate the temperature increase, and add this to Te
+    delta_te = de * part_c_eff * part_heat_const
+
+    ! Write temperature change to the grid (to current cell only, ignores shape)
+#ifdef PARTICLE_SHAPE_TOPHAT
+    ix = FLOOR(part_x * idx) + 1
+#else
+    ix = FLOOR(part_x * idx + 0.5_num) + 1
+#endif
+    hy_te(ix) = hy_te(ix) + delta_te
+
+  END SUBROUTINE ionisation_heating
 
 
 

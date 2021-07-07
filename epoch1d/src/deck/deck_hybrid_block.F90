@@ -39,6 +39,8 @@ CONTAINS
     INTEGER :: io, iu
 #ifdef HYBRID
     IF (deck_state == c_ds_first) RETURN
+    IF (use_hybrid .AND. use_hybrid_collisions) &
+        need_random_state = .TRUE.
 #else
     IF (use_hybrid) THEN
       IF (rank == 0) THEN
@@ -109,6 +111,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_hybrid_collisions') &
+        .OR. str_cmp(element, 'use_collisions')) THEN
+      use_hybrid_collisions = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'use_ohmic_heating') &
         .OR. str_cmp(element, 'use_Ohmic_heating')) THEN
       use_ohmic = as_logical_print(value, element, errcode)
@@ -130,18 +138,44 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'produce_delta_rays') &
+        .OR. str_cmp(element, 'produce_delta')) THEN
+      produce_delta_rays = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'electron_temperature') &
-        .OR. str_cmp(element, 'te')) THEN
+        .OR. str_cmp(element, 'Te')) THEN
       CALL fill_array(hy_te, value)
       RETURN
     END IF
 
     IF (str_cmp(element, 'ion_temperature') &
-        .OR. str_cmp(element, 'ti')) THEN
+        .OR. str_cmp(element, 'Ti')) THEN
       use_ion_temp = .TRUE.
       IF (.NOT. ALLOCATED(hy_ti)) &
           ALLOCATE(hy_ti(1-ng:nx+ng))
       CALL fill_array(hy_ti, value)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'min_delta_energy')) THEN
+      min_delta_energy = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'min_delta_KE')) THEN
+      min_delta_energy = as_real_print(value, element, errcode) + m0c2
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'min_hybrid_energy')) THEN
+      min_hybrid_energy = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'min_hybrid_KE')) THEN
+      min_hybrid_energy = as_real_print(value, element, errcode) + m0c2
       RETURN
     END IF
 
@@ -170,6 +204,25 @@ CONTAINS
 #endif
 
     errcode = c_err_none
+
+#ifdef HYBRID
+    ! Delta-ray emission with kinetic energy below 1 keV is treated as
+    ! continuous energy loss
+    IF (produce_delta_rays .AND. min_delta_energy < 1.0e3_num * q0 + m0c2 ) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'Delta-rays with under 1 keV kinetic energy are ', &
+              'treated as a continuous energy loss.'
+          WRITE(io,*) 'This code will not add delta rays below 1 keV ', &
+              'kinetic energy to the simulation.'
+        END DO
+      END IF
+      min_delta_energy = 1.0e3*q0 + m0c2
+    END IF
+#endif
 
   END FUNCTION hybrid_block_check
 

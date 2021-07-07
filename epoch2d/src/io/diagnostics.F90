@@ -666,7 +666,7 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_opdepth, code, &
             'Optical depth', '', it_output_real)
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
         CALL write_particle_variable(c_dump_part_qed_energy, code, &
             'QED energy', 'J', it_output_real)
 #endif
@@ -677,6 +677,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
         CALL write_particle_variable(c_dump_part_opdepth_brem, code, &
             'Bremsstrahlung Depth', '', it_output_real)
+#endif
+#ifdef HYBRID
+        CALL write_particle_variable(c_dump_part_opdepth_delt, code, &
+            'Delta Ray Depth', '', it_output_real)
 #endif
 #ifdef WORK_DONE_INTEGRATED
         CALL write_particle_variable(c_dump_part_work_x, code, &

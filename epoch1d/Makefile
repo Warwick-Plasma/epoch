@@ -318,9 +318,9 @@ SRCFILES = balance.F90 boundary.F90 bremsstrahlung.F90 calc_df.F90 \
 	deck_stencil_block.f90 deck_subset_block.F90 deck_window_block.f90 \
 	deltaf_loader.F90 diagnostics.F90 dist_fn.F90 epoch1d.F90 evaluate.F90 \
 	evaluator_blocks.F90 fields.f90 finish.f90 helper.F90 hy_fields.F90 \
-	hy_heating.F90 hy_resistivity.F90 hy_shared.F90 hybrid.F90 ic_module.f90 \
-	injectors.F90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
-	mpi_subtype_control.f90 numerics.f90 particle_id_hash.F90 \
+	hy_heating.F90 hy_ionisation_loss.F90 hy_resistivity.F90 hy_shared.F90 \
+	hybrid.F90 ic_module.f90 injectors.F90 ionise.F90 iterators.F90 laser.f90 \
+	mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 particle_id_hash.F90 \
 	particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
 	particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
 	random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
@@ -466,7 +466,8 @@ deck.o: deck.F90 bremsstrahlung.o custom_deck.o deck_boundaries_block.o \
 	deck_io_global_block.o deck_laser_block.o deck_part_from_file_block.o \
 	deck_particle_probe_block.o deck_qed_block.o deck_solid_block.o \
 	deck_species_block.o deck_stencil_block.o deck_subset_block.o \
-	deck_window_block.o photons.o strings.o utilities.o version_data.o $(SDFMOD)
+	deck_window_block.o hy_ionisation_loss.o photons.o strings.o utilities.o \
+	version_data.o $(SDFMOD)
 deck_boundaries_block.o: deck_boundaries_block.f90 strings_advanced.o \
   utilities.o
 deck_bremsstrahlung_block.o: deck_bremsstrahlung_block.F90 strings_advanced.o \
@@ -515,11 +516,13 @@ finish.o: finish.f90 collisions.o constants.o deck.o diagnostics.o dist_fn.o \
 helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
 hy_fields.o: hy_fields.F90 hy_shared.o
 hy_heating.o: hy_heating.F90 hy_shared.o
+hy_ionisation_loss.o: hy_ionisation_loss.F90 hy_heating.o hy_shared.o \
+	particles.o partlist.o calc_df.o
 hy_resistivity.o: hy_resistivity.F90 hy_shared.o
 hy_shared.o: hy_shared.F90 boundary.o shared_data.o
 hybrid.o: hybrid.F90 balance.o bremsstrahlung.o boundary.o current_smooth.o \
-	diagnostics.o hy_fields.o hy_heating.o hy_resistivity.o injectors.o \
-	particles.o particle_migration.o photons.o random_generator.o
+	diagnostics.o hy_fields.o hy_heating.o hy_ionisation_loss.o hy_resistivity.o \
+	injectors.o particles.o particle_migration.o photons.o random_generator.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
   random_generator.o utilities.o

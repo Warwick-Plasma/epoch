@@ -576,7 +576,7 @@ CONTAINS
       elementselected = c_dump_part_opdepth
 #endif
 
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     ELSE IF (str_cmp(element, 'qed_energy')) THEN
       elementselected = c_dump_part_qed_energy
 #endif
@@ -589,6 +589,11 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     ELSE IF (str_cmp(element, 'bremsstrahlung_optical_depth')) THEN
       elementselected = c_dump_part_opdepth_brem
+#endif
+
+#ifdef HYBRID
+    ELSE IF (str_cmp(element, 'delta_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_delt
 #endif
 
 #ifdef WORK_DONE_INTEGRATED
@@ -1114,7 +1119,7 @@ CONTAINS
     io_block%dumpmask(c_dump_part_opdepth) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth), c_io_restartable)
 #endif
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
     io_block%dumpmask(c_dump_part_qed_energy) = &
         IOR(io_block%dumpmask(c_dump_part_qed_energy), c_io_restartable)
 #endif
@@ -1125,6 +1130,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     io_block%dumpmask(c_dump_part_opdepth_brem) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
+#endif
+#ifdef HYBRID
+    io_block%dumpmask(c_dump_part_opdepth_delt) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_delt), c_io_restartable)
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     io_block%dumpmask(c_dump_part_id) = &
