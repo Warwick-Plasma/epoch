@@ -50,6 +50,8 @@ MODULE hybrid
 
   IMPLICIT NONE
 
+  REAL(num), PARAMETER :: p_small = 1.0e-10_num*mc0
+
 CONTAINS
 
 #ifdef HYBRID
@@ -312,7 +314,7 @@ CONTAINS
     DEALLOCATE(solid_array)
 
     ! Global arrays
-    DEALLOCATE(hy_te, resistivity, resistivity_model)
+    DEALLOCATE(hy_te, resistivity, resistivity_model, hy_sum_ne)
     DEALLOCATE(jbx, jby, jbz)
 
     ! Ionisation/resistivity optional arrays
@@ -327,6 +329,46 @@ CONTAINS
 
 
 
+  SUBROUTINE remove_slow_particles
+
+    ! Removes particles from the simulation if their energy drops below
+    ! min_hybrid_energy. Ionisation energy loss will reduce the KE of particles
+    ! to zero if their total energy is below min_hybrid_energy, dumping the KE
+    ! locally as a temperature increase. These particles will have zero KE when
+    ! this subroutine is called, so remove all particles with zero KE
+
+    INTEGER :: ispecies
+    TYPE(particle), POINTER :: current, next
+
+    ! Check each electron species
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%species_type /= c_species_id_electron) CYCLE
+
+      ! Cycle through all electrons in this species
+      current => species_list(ispecies)%attached_list%head
+      DO WHILE(ASSOCIATED(current))
+        next=>current%next
+
+        ! If the particle has lost all its KE, remove it from the simulation
+        IF (SUM(ABS(current%part_p(:))) < p_small) THEN
+          CALL remove_particle_from_partlist(&
+              species_list(ispecies)%attached_list, current)
+          IF (track_ejected_particles) THEN
+            CALL add_particle_to_partlist(&
+                ejected_list(ispecies)%attached_list, current)
+          ELSE
+            DEALLOCATE(current)
+          END IF
+        END IF
+
+        current=>next
+      END DO
+    END DO
+
+  END SUBROUTINE remove_slow_particles
+
+
+  
   SUBROUTINE check_solids
 
     INTEGER :: i_sol, io, iu
