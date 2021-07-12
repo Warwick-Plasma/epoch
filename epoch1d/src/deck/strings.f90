@@ -239,6 +239,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'tnsa')) THEN
+      as_bc = c_bc_tnsa
+      RETURN
+    END IF
+
     err = IOR(err, c_err_bad_value)
 
   END FUNCTION as_bc

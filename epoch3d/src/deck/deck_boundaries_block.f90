@@ -162,6 +162,20 @@ CONTAINS
     ELSE IF (str_cmp(element, 'cpml_sigma_max')) THEN
       cpml_sigma_max = as_real_print(value, element, errcode)
 
+    ! Extra parameters for TNSA boundaries
+
+    ELSE IF (str_cmp(element, 'tnsa_escape_KE')) THEN
+      tnsa_escape_ke = as_real_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'tnsa_p_loss')) THEN
+      tnsa_p_loss = as_real_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'tnsa_scatter_angle')) THEN
+      tnsa_scatter_angle = as_real_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'tnsa_scatter_deg')) THEN
+      tnsa_scatter_angle = as_real_print(value, element, errcode) * pi/180.0_num
+
     ELSE
       errcode = c_err_unknown_element
 

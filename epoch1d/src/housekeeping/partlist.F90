@@ -994,4 +994,59 @@ CONTAINS
 
   END SUBROUTINE update_particle_count
 
+
+
+  SUBROUTINE rotate_p(part, cos_theta, phi, part_p)
+
+    ! Let the polar axis be defined as the initial momentum direction of the
+    ! particle, part. This subroutine rotates that momentum direction by the
+    ! polar angle theta (we read in cos(theta)), and the azimuthal angle phi,
+    ! without changing the magnitude.
+    !
+    ! If we have already calculated the magnitude of the particle's momentum,
+    ! part_p, this can also be fed into the subroutine to speed up the
+    ! calculation
+
+    TYPE(particle), POINTER :: part
+    REAL(num), INTENT(IN) :: cos_theta, phi
+    REAL(num), OPTIONAL :: part_p
+    REAL(num) :: p, frac_p, pcos_theta, sin_theta, psin_theta
+    REAL(num) :: ux, uy, uz, pfrac_uz, cos_phi, term_1, term_2
+
+    ! Extract particle momentum
+    IF (PRESENT(part_p)) THEN
+      p = part_p
+    ELSE
+      p = SQRT(part%part_p(1)**2 + part%part_p(2)**2 + part%part_p(3)**2)
+    END IF
+    frac_p = 1.0_num / p
+
+    ! Precalculate repeated terms
+    sin_theta = SQRT(1.0_num - cos_theta**2)
+    pcos_theta = p * cos_theta
+    psin_theta = p * sin_theta
+    uz = part%part_p(3) * frac_p
+
+    IF (ABS(1.0_num - uz) < 1.0e-10_num) THEN
+      ! Special case if the polar direction points along z
+      part%part_p(1) = psin_theta * COS(phi)
+      part%part_p(2) = psin_theta * SIN(phi)
+      part%part_p(3) = pcos_theta * SIGN(1.0_num, uz)
+    ELSE
+      ! Precalculate repeated terms
+      ux = part%part_p(1) * frac_p
+      uy = part%part_p(2) * frac_p
+      pfrac_uz = p / SQRT(1.0_num - uz**2)
+      cos_phi = COS(phi)
+      term_1 = sin_theta * cos_phi * uz * pfrac_uz + pcos_theta
+      term_2 = sin_theta * SIN(phi) * pfrac_uz
+
+      part%part_p(1) = ux * term_1 - uy * term_2
+      part%part_p(2) = uy * term_1 + ux * term_2
+      part%part_p(3) = uz * pcos_theta &
+          + cos_phi * sin_theta * (uz**2 - 1.0_num) * pfrac_uz
+    END IF
+
+  END SUBROUTINE rotate_p
+
 END MODULE partlist

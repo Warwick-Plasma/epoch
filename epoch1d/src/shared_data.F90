@@ -614,6 +614,9 @@ MODULE shared_data
   ! Based on J. R. Davies, et al, 1997. Phys. Rev. E, 56(6), p.7193.
   !----------------------------------------------------------------------------
 
+  ! Empirical parameters to approximate the effects of electron refluxing
+  REAL(num) :: tnsa_escape_ke, tnsa_p_loss, tnsa_scatter_angle
+
 #ifdef HYBRID
   TYPE solid
 

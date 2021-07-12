@@ -127,7 +127,8 @@ CONTAINS
         .OR. boundary == c_bc_reflect &
         .OR. boundary == c_bc_thermal &
         .OR. boundary == c_bc_heat_bath &
-        .OR. boundary == c_bc_open) RETURN
+        .OR. boundary == c_bc_open &
+        .OR. boundary == c_bc_tnsa) RETURN
 
     IF (rank == 0) THEN
       WRITE(*,*)
@@ -754,11 +755,17 @@ CONTAINS
           IF (part_pos < x_min_local) THEN
             xbd = sgn
             bc = bc_species(c_bd_x_min)
-            IF (bc == c_bc_reflect) THEN
+            IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
               IF (x_min_boundary) THEN
                 xbd = 0
                 cur%part_pos = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               END IF
             ELSE IF (bc == c_bc_periodic) THEN
               IF (x_min_boundary) THEN
@@ -824,11 +831,17 @@ CONTAINS
           IF (part_pos >= x_max_local) THEN
             xbd = sgn
             bc = bc_species(c_bd_x_max)
-            IF (bc == c_bc_reflect) THEN
+            IF (bc == c_bc_reflect .OR. bc == c_bc_tnsa) THEN
               IF (x_max_boundary) THEN
                 xbd = 0
                 cur%part_pos = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
+                IF (bc == c_bc_tnsa) THEN
+                  CALL tnsa_part_escape(cur, out_of_bounds, ispecies)
+                  IF (.NOT. out_of_bounds) THEN
+                    CALL tnsa_part_reflect(cur)
+                  END IF
+                END IF
               END IF
             ELSE IF (bc == c_bc_periodic) THEN
               IF (x_max_boundary) THEN
@@ -1220,5 +1233,74 @@ CONTAINS
     END IF
 
   END SUBROUTINE cpml_advance_b_currents
+
+
+
+  SUBROUTINE tnsa_part_escape(cur, out_of_bounds, ispecies)
+
+    ! In a laser-solid interaction, electrons can escape the solid when the
+    ! sheath field is not strong enough to contain them. We cannot model the
+    ! sheath field when running in hybrid mode, so we approximate its effect by
+    ! removing particles over a user-defined cut-off energy
+
+    TYPE(particle), POINTER :: cur
+    LOGICAL :: out_of_bounds
+    INTEGER :: ispecies
+    REAL(num) :: part_p2, part_m, part_mc2
+
+    ! Particle KE
+    part_p2 = cur%part_p(1)**2 + cur%part_p(2)**2 + cur%part_p(3)**2
+#ifdef PER_PARTICLE_CHARGE_MASS
+    part_m = cur%mass
+#else
+    part_m = species_list(ispecies)%mass
+#endif
+    part_mc2 = part_m * c**2
+
+    ! Is particle energy over escape threshold?
+    IF (part_p2*c**2 + part_mc2**2 > (tnsa_escape_ke + part_mc2)**2) THEN
+      out_of_bounds = .TRUE.
+    END IF
+
+  END SUBROUTINE tnsa_part_escape
+
+
+
+  SUBROUTINE tnsa_part_reflect(cur)
+
+    ! In a laser-solid interaction, electrons can lose energy while refluxing in
+    ! the sheath field. We cannot model the sheath field when running in hybrid
+    ! mode, so we approximate its effect by reducing the momentum of particles
+    ! as they reflux, which can be characterised in regular PIC
+    !
+    ! Characterisation reduces by a set amount of momentum in each reflux event
+    ! Also applies a random scatter
+
+    TYPE(particle), POINTER :: cur
+    INTEGER :: boundary
+    REAL(num) :: p_mag, p_dir(3)
+    REAL(num) :: theta, phi
+
+    ! Create momentum-loss 3 vector
+    p_mag = SQRT(SUM(cur%part_p**2))
+    p_dir = cur%part_p / p_mag
+
+    ! Don't take away more momentum than is present
+    IF (tnsa_p_loss >= p_mag) THEN
+      cur%part_p = 0.0_num * cur%part_p
+      RETURN
+    END IF
+
+    ! Apply momentum loss
+    cur%part_p = cur%part_p - (tnsa_p_loss * p_dir)
+
+    ! Apply scatter
+    IF (tnsa_scatter_angle > 0.0_num) THEN
+      theta = (random() - 0.5_num) * tnsa_scatter_angle
+      phi = 2.0_num * pi * random()
+      CALL rotate_p(cur, COS(theta), phi, p_mag - tnsa_p_loss)
+    END IF
+
+  END SUBROUTINE tnsa_part_reflect
 
 END MODULE boundary
