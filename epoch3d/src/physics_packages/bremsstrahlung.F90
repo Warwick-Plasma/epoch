@@ -185,6 +185,29 @@ CONTAINS
         END IF
       END DO
 
+#ifdef HYBRID
+      ! In hybrid PIC, electrons radiate bremsstrahlung photons when moving
+      ! through solids
+      IF (use_hybrid) THEN
+        DO i_sol = 1, solid_count
+
+          z_temp = solid_array(i_sol)%z
+          IF (z_temp > 0 .AND. z_temp < 101) THEN
+            z_flags(z_temp) = 1
+
+          ! We only have tables up to z=100
+          ELSE IF (z_temp > 100) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) '*** WARNING ***'
+              WRITE(io,*) 'Species with atomic numbers over 100 cannot be ', &
+                  'modelled using bremsstrahlung libraries, and will be ignored'
+            END DO
+          END IF
+        END DO
+      END IF
+#endif
+
       ! Create brem_array to store tables for each atomic number, z. The value
       ! of z_to_index(z) is the brem_array index for tables of atomic number z.
       ! z_values contains the z values present.
@@ -581,6 +604,121 @@ CONTAINS
     END IF
 
   END SUBROUTINE bremsstrahlung_update_optical_depth
+
+
+
+  ! Analogous to bremsstrahlung_update_optical_depth, but tracks the passage of
+  ! electrons through the hybrid solid type instead of ion macroparticles. This
+  ! subroutine serves as the main interface to the bremsstrahlung module for
+  ! the hybrid PIC loop in hybrid.F90
+
+#ifdef HYBRID
+  SUBROUTINE hy_bremsstrahlung_update_optical_depth
+
+    INTEGER :: isol, ispecies, iz, z_temp, part_type
+    TYPE(particle), POINTER :: current
+    REAL(num), ALLOCATABLE :: grid_root_temp_over_num(:,:,:)
+    REAL(num) :: part_ux, part_uy, part_uz, gamma_rel
+    REAL(num) :: part_x, part_y, part_z, part_e, part_ni, part_v
+    REAL(num) :: part_root_te_over_ne, part_zstar_avg, part_z_avg, plasma_factor
+
+    ! Precalculate the square root of the electron temperature divided by the
+    ! free electron number density (taken to be ion_charge * ion_ni). In hybrid
+    ! mode, these are already global variables
+    IF (use_plasma_screening) THEN
+      ALLOCATE(grid_root_temp_over_num(1-ng:nx+ng,1-ng:ny+ng,1-ng:nz+ng))
+      grid_root_temp_over_num = hy_Te/(ion_ni*ion_charge)
+      CALL field_bc(grid_root_temp_over_num, ng)
+
+    ELSE
+      ! This will neglect thermal contributions to the bremsstrahlung cross
+      ! section
+      plasma_factor = 1.0_num
+    END IF
+
+    ! Consider the optical depth change due to each solid separately
+    DO isol = 1, solid_count
+      ! Identify if the charge is greater than 1
+      z_temp = solid_array(isol)%z
+
+      IF (z_temp < 1 .OR. z_temp > 100) CYCLE
+
+      ! Update the optical depth for each species
+      DO ispecies = 1, n_species
+        ! Only update optical_depth_bremsstrahlung for the electron species
+        part_type = species_list(ispecies)%species_type
+        IF (part_type == c_species_id_electron) THEN
+          ! Cycle through all particles in this species
+          current => species_list(ispecies)%attached_list%head
+          DO WHILE(ASSOCIATED(current))
+            ! Get electron energy
+            part_ux = current%part_p(1) / mc0
+            part_uy = current%part_p(2) / mc0
+            part_uz = current%part_p(3) / mc0
+            gamma_rel = SQRT(part_ux**2 + part_uy**2 + part_uz**2 + 1.0_num)
+            part_e = gamma_rel * m0 * c**2
+            current%particle_energy = part_e
+
+            ! Don't update the optical depth if the particle hasn't moved
+            IF (gamma_rel - 1.0_num < 1.0e-15_num) THEN
+              current => current%next
+              CYCLE
+            END IF
+
+            ! Get electron speed
+            part_v = SQRT(current%part_p(1)**2 + current%part_p(2)**2 &
+                + current%part_p(3)**2) * c**2 / part_e
+
+            ! Get number density at electron
+            part_x = current%part_pos(1) - x_grid_min_local
+            part_y = current%part_pos(2) - y_grid_min_local
+            part_z = current%part_pos(3) - z_grid_min_local
+
+            CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni, &
+                solid_array(isol)%ion_density)
+
+            ! Update the optical depth for the screening option chosen
+            IF (use_plasma_screening) THEN
+              ! Obtain extra parameters needed for plasma screening model
+              ! sqrt(Te/ne) at particle position
+              CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
+                  part_root_te_over_ne, grid_root_temp_over_num)
+              ! Average atomic number at particle position
+              CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
+                  part_z_avg, ion_z_avg)
+              ! Average ion charge state at particle position
+              CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
+                  part_zstar_avg, ion_charge)
+
+              plasma_factor = get_plasma_factor(part_zstar_avg, part_z_avg, &
+                  part_root_te_over_ne)
+            END IF
+
+            current%optical_depth_bremsstrahlung = &
+                current%optical_depth_bremsstrahlung &
+                - delta_optical_depth(z_temp, part_e, part_v, part_ni, &
+                plasma_factor, part_type)
+
+            ! If optical depth dropped below zero generate photon and reset
+            ! optical depth
+            IF (current%optical_depth_bremsstrahlung <= 0.0_num) THEN
+              CALL generate_photon(current, z_temp, &
+                  bremsstrahlung_photon_species)
+              current%optical_depth_bremsstrahlung = reset_optical_depth()
+            END IF
+
+            current => current%next
+          END DO
+        END IF
+      END DO
+    END DO
+
+    IF (use_plasma_screening) THEN
+      DEALLOCATE(grid_root_temp_over_num)
+    END IF
+
+  END SUBROUTINE hy_bremsstrahlung_update_optical_depth
+#endif
 
 
 

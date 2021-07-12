@@ -77,6 +77,14 @@ CONTAINS
       END IF
 #endif
 
+#ifdef BREMSSTRAHLUNG
+      ! Bremsstrahlung radiation calculation (photons can be generated)
+      IF (use_bremsstrahlung .AND. time > bremsstrahlung_start_time &
+          .AND. push) THEN
+        CALL hy_bremsstrahlung_update_optical_depth()
+      END IF
+#endif
+
       ! Evaluate fields a half timestep ahead of the particles
       IF (use_hybrid_fields) CALL run_hybrid_fields
 
