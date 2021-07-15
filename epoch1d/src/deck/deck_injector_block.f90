@@ -99,6 +99,7 @@ CONTAINS
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'Cannot set injector properties before boundary is set'
         END DO
         CALL abort_code(c_err_required_element_not_set)

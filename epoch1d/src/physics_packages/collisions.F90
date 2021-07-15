@@ -950,7 +950,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: user_factor
     REAL(num), INTENT(IN) :: dens, log_lambda
     TYPE(particle), POINTER :: current, impact
-    REAL(num) :: factor, np
+    REAL(num) :: factor
     INTEGER(i8) :: icount, k, pcount
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
     REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
@@ -967,7 +967,6 @@ CONTAINS
     REAL(num), PARAMETER :: pi_fac = &
                                 (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
     factor = 0.0_num
-    np = 0.0_num
 
     ! Intra-species collisions
     icount = p_list%count
@@ -979,7 +978,6 @@ CONTAINS
     pcount = icount / 2 + MOD(icount, 2_i8)
 
 #ifdef PER_SPECIES_WEIGHT
-    np = icount * weight
     ! Factor of 2 due to intra species collisions
     ! See Section 4.1 of Nanbu
     factor = user_factor / (pcount * weight * 2.0_num)
@@ -990,7 +988,6 @@ CONTAINS
     current => p_list%head
     impact => current%next
     DO k = 1, pcount
-      np = np + current%weight + impact%weight
       factor = factor + MIN(current%weight, impact%weight)
       current => impact%next
       impact => current%next
@@ -1410,9 +1407,9 @@ CONTAINS
     REAL(num), INTENT(IN) :: log_lambda
     REAL(num), INTENT(IN) :: user_factor
     TYPE(particle), POINTER :: current, impact
-    REAL(num) :: factor, np
+    REAL(num) :: factor
     INTEGER(i8) :: icount, jcount, pcount, k
-    REAL(num) :: m1, m2, q1, q2
+    REAL(num) :: m1, m2, q1, q2, w1, w2
     REAL(num) :: ran1, ran2, s12, cosp, sinp, s_fac, v_rel
     REAL(num) :: sinp_cos, sinp_sin, s_prime, s_fac_prime
     REAL(num) :: a, a_inv, p_perp, p_tot, v_sq, gamma_rel_inv
@@ -1420,7 +1417,7 @@ CONTAINS
     REAL(num), DIMENSION(3) :: p1, p2, p3, p4, vc, v1, v2, p5, p6
     REAL(num), DIMENSION(3) :: p1_norm, p2_norm
     REAL(num), DIMENSION(3,3) :: mat
-    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq, wr
+    REAL(num) :: p_mag, p_mag2, fac, gc, vc_sq
     REAL(num) :: gm1, gm2, gm3, gm4, gm, gc_m1_vc
     REAL(num), PARAMETER :: pi4_eps2_c4 = 4.0_num * pi * epsilon0**2 * c**4
     REAL(num), PARAMETER :: two_thirds = 2.0_num / 3.0_num
@@ -1428,7 +1425,6 @@ CONTAINS
                                 (4.0_num * pi / 3.0_num)**(1.0_num / 3.0_num)
 
     factor = 0.0_num
-    np = 0.0_num
 
     ! Inter-species collisions
     icount = p_list1%count
@@ -1441,24 +1437,8 @@ CONTAINS
       p_list2%tail%next => p_list2%head
 
 #ifdef PER_SPECIES_WEIGHT
-      np = icount * weight1
       factor = pcount * MIN(weight1, weight2)
 #else
-      current => p_list1%head
-      impact => p_list2%head
-
-      IF (icount >= jcount) THEN
-        DO k = 1, icount
-          np = np + current%weight
-          current => current%next
-        END DO
-      ELSE
-        DO k = 1, jcount
-          np = np + impact%weight
-          impact => impact%next
-        END DO
-      END IF
-
       current => p_list1%head
       impact => p_list2%head
 
@@ -1479,6 +1459,8 @@ CONTAINS
       m2 = mass2
       q1 = charge1
       q2 = charge2
+      w1 = weight1
+      w2 = weight2
 
       current => p_list1%head
       impact => p_list2%head
@@ -1494,6 +1476,10 @@ CONTAINS
         m2 = impact%mass
         q1 = current%charge
         q2 = impact%charge
+#endif
+#ifndef PER_SPECIES_WEIGHT
+        w1 = current%weight
+        w2 = impact%weight
 #endif
 
         p1 = current%part_p / c
@@ -1600,12 +1586,16 @@ CONTAINS
 
         p4 = -p3
 
-        p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
-        p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
-
-        ! Update particle properties
-        current%part_p = p5
-        impact%part_p = p6
+        ran1 = random()
+        IF (ran1 < w2 / w1) THEN
+          p5 = (p3 + (gc_m1_vc * DOT_PRODUCT(vc, p3) + gm3 * gc) * vc) * c
+          current%part_p = p5
+        END IF
+        IF (ran1 < w1 / w2) THEN
+          p6 = (p4 + (gc_m1_vc * DOT_PRODUCT(vc, p4) + gm4 * gc) * vc) * c
+          ! Update particle properties
+          impact%part_p = p6
+        END IF
 
         current => current%next
         impact => impact%next

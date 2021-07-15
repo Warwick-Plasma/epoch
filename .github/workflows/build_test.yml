@@ -1,0 +1,72 @@
+name: CI
+
+# Controls when the action will run.
+on:
+  push:
+    branches: [ main, '*-devel' ]
+  pull_request:
+    branches: [ main, '*-devel' ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_and_test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        include:
+        - mode: debug
+          flag: -b
+          define:
+        - mode: debug
+          flag: -b
+          define: >-
+            -DPER_SPECIES_WEIGHT -DZERO_CURRENT_PARTICLES -DNO_PARTICLE_PROBES
+            -DPARTICLE_SHAPE_TOPHAT -DPARTICLE_ID -DPHOTONS -DTRIDENT_PHOTONS
+            -DBREMSSTRAHLUNG -DPARSER_DEBUG -DNO_IO -DCOLLISIONS_TEST
+            -DPER_PARTICLE_CHARGE_MASS -DPARSER_CHECKING -DNO_USE_ISATTY
+            -DWORK_DONE_INTEGRATED -DHC_PUSH -DNO_MPI3 -DDECK_DEBUG
+        - mode:
+          flag:
+          define:
+
+    env:
+      COMPILER: gfortran
+      MPIPROCS: 2
+      MODE: ${{ matrix.mode }}
+      DEFINE: ${{ matrix.define }}
+
+    steps:
+      - name: Install dependencies
+        run: sudo apt update &&
+             sudo apt install -y
+                 python3-dev
+                 python3-numpy
+                 python3-nose
+                 python3-matplotlib
+                 libpython3-dev
+                 mpich
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Merge branch
+        if: github.event_name == 'pull_request'
+        run: git config user.email "test@example.com" &&
+             git config user.name "test" &&
+             git checkout -b $GITHUB_HEAD_REF $GITHUB_SHA &&
+             git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF &&
+             git merge --no-ff $GITHUB_HEAD_REF
+
+      - name: Cleanup
+        run: cd epoch1d && make cleanall &&
+             cd ../epoch2d && make cleanall &&
+             cd ../epoch3d && make cleanall
+
+      - name: Compile and run tests
+        run: ./scripts/run-tests-epoch-all.sh ${{ matrix.flag }}

@@ -227,7 +227,7 @@ CONTAINS
     CALL initialise_stack(output)
     CALL tokenize(str_in, output, err)
     IF (err == c_err_none) &
-        CALL evaluate_as_list(output, array, n_elements, err)
+        CALL evaluate_as_list(output, array, n_elements)
     CALL deallocate_stack(output)
 
   END SUBROUTINE as_list

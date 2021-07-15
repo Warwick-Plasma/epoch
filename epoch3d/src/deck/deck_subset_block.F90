@@ -92,23 +92,19 @@ CONTAINS
         END IF
 
         IF (sub%persistent) THEN
-          IF (sub%persist_start_time <= time &
-              .AND. sub%persist_start_step <= step) THEN
-            current_hash => id_registry%get_hash(sub%name)
-            IF (ASSOCIATED(current_hash)) THEN
-              CALL current_hash%init(1000)
-              got_persistent_subset = .TRUE.
-            ELSE
-              DO iu = 1, nio_units ! Print to stdout and to file
-                io = io_units(iu)
-                WRITE(io,*)
-                WRITE(io,*) '*** ERROR ***'
-                WRITE(io,*) 'Can only have 64 persistent subsets'
-              END DO
-              CALL abort_code(c_err_bad_value)
-            END IF
+          current_hash => id_registry%get_hash(sub%name)
+          IF (ASSOCIATED(current_hash)) THEN
+            CALL current_hash%init(1000)
+            got_persistent_subset = .TRUE.
+            any_persistent_subset = .TRUE.
           ELSE
-            sub%persistent = .FALSE.
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*)
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Can only have 64 persistent subsets'
+            END DO
+            CALL abort_code(c_err_bad_value)
           END IF
         END IF
       END DO
@@ -321,6 +317,7 @@ CONTAINS
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
               WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
               WRITE(io,*) 'Unable to apply subset to non existant ', &
                   'species ', ispecies
             END DO
@@ -335,6 +332,8 @@ CONTAINS
         .OR. str_cmp(element, 'persist_after_time')) THEN
       sub%persistent = .TRUE.
       sub%persist_start_time = as_real_print(value, element, errcode)
+      IF (sub%persist_start_step < 0) &
+          sub%persist_start_step = HUGE(1)
       RETURN
     END IF
 
@@ -342,6 +341,8 @@ CONTAINS
         .OR. str_cmp(element, 'persist_after_step')) THEN
       sub%persistent = .TRUE.
       sub%persist_start_step = as_integer_print(value, element, errcode)
+      IF (sub%persist_start_time < 0.0_num) &
+          sub%persist_start_time = HUGE(1.0_num)
       RETURN
     END IF
 
