@@ -49,9 +49,7 @@ MODULE deck_species_block
   INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
   REAL(num) :: species_mass, species_charge
   INTEGER :: species_dumpmask
-#ifdef BREMSSTRAHLUNG
   INTEGER :: species_atomic_number
-#endif
   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
 
 CONTAINS
@@ -330,14 +328,19 @@ CONTAINS
       IF (use_ionise .AND. .NOT. manual_energies) THEN
 
         ! Number of possible ionisation states
-        species_ionisation_state = NINT(species_charge/qe)
-        max_ionisation = species_atomic_no - species_ionisation_state
+        species_ionisation_state = NINT(species_charge / q0)
+        max_ionisation = species_atomic_number - species_ionisation_state
 
         ! User can ignore species above a certain ionisation-state
         n_secondary_species_in_block = MIN(max_ionisation, n_secondary_limit)
 
         ! Populate the species_ionisation_energies array
-        CALL read_ionisation_states()
+        IF (n_secondary_species_in_block > 0) THEN
+          ALLOCATE(species_ionisation_energies(n_secondary_species_in_block))
+          CALL read_ionisation_energies(species_atomic_number, &
+              species_ionisation_state, n_secondary_species_in_block, &
+              species_ionisation_energies)
+        END IF
       END IF
 
       block_species_id = n_species
@@ -1285,9 +1288,59 @@ CONTAINS
 
 
 
-  SUBROUTINE read_ionisation_states()
+  SUBROUTINE read_ionisation_energies(atomic_no, ion_state, ionise_num, &
+        ionise_energy)
 
-  END SUBROUTINE read_ionisation_states
+    ! Populates the array ionise_energy with energies taken from the file
+    ! "ionisation_energies.table". The table lists ionisation energies [eV],
+    ! with each line referring to an element of the corresponding atomic number
+    ! (line 1 for H, line 2 for He, etc). Energies are listed in ascending
+    ! order, and the ionise_energy array is filled starting from the ionisation
+    ! state of the parent species ("ion_state"), and holds the next "ionise_num"
+    ! energies
+
+    INTEGER, INTENT(IN) :: atomic_no, ion_state, ionise_num
+    REAL(num), INTENT(OUT) :: ionise_energy(:)
+    REAL(num), ALLOCATABLE :: full_line(:)
+    INTEGER :: i_file, io, iu
+    LOGICAL :: exists
+
+    ! Check if the table can be seen, issue warning if not
+    INQUIRE(FILE='src/physics_packages/TABLES/ionisation_energies.table', &
+        EXIST=exists)
+    IF (.NOT.exists) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'Unable to find the file:'
+        WRITE(io,*) 'src/physics_packages/TABLES/ionisation_energies.table'
+      END DO
+      CALL abort_code(c_err_io_error)
+    END IF
+
+    OPEN(UNIT = lu, &
+        FILE = 'src/physics_packages/TABLES/ionisation_energies.table', &
+        STATUS = 'OLD')
+
+    ! Keep reading until the correct line is reached
+    IF (atomic_no > 1) THEN
+      DO i_file = 1, atomic_no-1
+        READ(lu,*)
+      END DO
+    END IF
+
+    ! Read the full line matching the current atomic number
+    ALLOCATE(full_line(atomic_no))
+    READ(lu,*) full_line(1:atomic_no)
+    CLOSE(lu)
+
+    ! Only consider energies for ions starting at the current ion_state, and up
+    ! to ion_state + ionise_num. Note ion_state=0 corresponds to energy index 1.
+    ! Also convert to [J]
+    ionise_energy = full_line(ion_state+1:ion_state+ionise_num)*q0
+    DEALLOCATE(full_line)
+
+  END SUBROUTINE read_ionisation_energies
 
 
 
