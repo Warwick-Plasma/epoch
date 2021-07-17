@@ -216,10 +216,8 @@ MODULE shared_data
     LOGICAL :: zero_current
 #endif
 
-#ifdef BREMSSTRAHLUNG
     INTEGER :: atomic_no
     LOGICAL :: atomic_no_set = .FALSE.
-#endif
 
     ! Specify if species is background species or not
     LOGICAL :: background_species = .FALSE.

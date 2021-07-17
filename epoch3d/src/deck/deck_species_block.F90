@@ -37,7 +37,8 @@ MODULE deck_species_block
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
   LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
-  INTEGER :: n_secondary_species_in_block
+  LOGICAL :: use_ionise, manual_energies
+  INTEGER :: n_secondary_species_in_block, n_secondary_limit
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
   REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
@@ -285,7 +286,10 @@ CONTAINS
 
   SUBROUTINE species_block_start
 
+    use_ionise = .FALSE.
+    manual_energies = .FALSE.
     n_secondary_species_in_block = 0
+    n_secondary_limit = 200  ! 200 allows all ionisations from any table element
     current_block = current_block + 1
     got_name = .FALSE.
     species_dumpmask = c_io_always
@@ -302,6 +306,7 @@ CONTAINS
 
     CHARACTER(LEN=8) :: id_string
     CHARACTER(LEN=string_length) :: name
+    INTEGER :: max_ionisation, species_ionisation_state
     INTEGER :: i, io, iu, block_species_id
 
     IF (.NOT.got_name) THEN
@@ -319,6 +324,22 @@ CONTAINS
     END IF
 
     IF (deck_state == c_ds_first) THEN
+
+      ! On first pass, if ionisation is to be used but the user hasn't specified
+      ! ionisaton energies, then these will be read from table
+      IF (use_ionise .AND. .NOT. manual_energies) THEN
+
+        ! Number of possible ionisation states
+        species_ionisation_state = NINT(species_charge/qe)
+        max_ionisation = species_atomic_no - species_ionisation_state
+
+        ! User can ignore species above a certain ionisation-state
+        n_secondary_species_in_block = MIN(max_ionisation, n_secondary_limit)
+
+        ! Populate the species_ionisation_energies array
+        CALL read_ionisation_states()
+      END IF
+
       block_species_id = n_species
       charge(n_species) = species_charge
       mass(n_species) = species_mass
@@ -371,7 +392,23 @@ CONTAINS
       RETURN
     END IF
 
-    ! Collect ionisation energies for the species
+    ! If set to T, then atomic number and charge state is used to deduce how
+    ! many secondary particles there are
+    IF (str_cmp(element, 'ionise') &
+        .OR. str_cmp(element, 'ionize')) THEN
+      use_ionise = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    ! If using ionise, this can restrict the number of secondary particles to
+    ! consider
+    IF (str_cmp(element, 'ionise_limit') &
+        .OR. str_cmp(element, 'ionize_limit')) THEN
+      n_secondary_limit = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+    ! Manually collect ionisation energies for the species
     IF (str_cmp(element, 'ionisation_energies') &
         .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
@@ -381,6 +418,7 @@ CONTAINS
         CALL evaluate_and_return_all(stack, &
             n_secondary_species_in_block, species_ionisation_energies, errcode)
         CALL deallocate_stack(stack)
+        manual_energies = .TRUE.
       END IF
       RETURN
     END IF
@@ -401,12 +439,10 @@ CONTAINS
       species_charge = as_real_print(value, element, errcode) * q0
     END IF
 
-#ifdef BREMSSTRAHLUNG
     IF (str_cmp(element, 'atomic_no') &
         .OR. str_cmp(element, 'atomic_number')) THEN
       species_atomic_number = as_integer_print(value, element, errcode)
     END IF
-#endif
 
     IF (str_cmp(element, 'dump')) THEN
       dump = as_logical_print(value, element, errcode)
@@ -640,7 +676,7 @@ CONTAINS
     ! *************************************************************
     IF (str_cmp(element, 'atomic_no') &
         .OR. str_cmp(element, 'atomic_number')) THEN
-#ifdef BREMSSTRAHLUNG
+
       species_list(species_id)%atomic_no = species_atomic_number
       species_list(species_id)%atomic_no_set = .TRUE.
 
@@ -651,10 +687,6 @@ CONTAINS
         species_list(j)%atomic_no_set = .TRUE.
         j = species_list(j)%ionise_to_species
       END DO
-#else
-      errcode = c_err_pp_options_wrong
-      extended_error_string = '-DBREMSSTRAHLUNG'
-#endif
       RETURN
     END IF
 
@@ -1154,7 +1186,7 @@ CONTAINS
       END IF
     END DO
 
-#ifdef BREMSSTRAHLUNG
+    ! Atomic numbers are only mandatory if running with bremsstrahlung
     IF (.NOT.use_bremsstrahlung) RETURN
 
     ! Have all species been assigned an atomic number?
@@ -1185,7 +1217,6 @@ CONTAINS
         END IF
       END IF
     END DO
-#endif
 
   END FUNCTION species_block_check
 
@@ -1251,6 +1282,12 @@ CONTAINS
     RETURN
 
   END FUNCTION create_species_number_from_name
+
+
+
+  SUBROUTINE read_ionisation_states()
+
+  END SUBROUTINE read_ionisation_states
 
 
 
@@ -1405,10 +1442,8 @@ CONTAINS
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_electron
       species_list(species_id)%electron = .TRUE.
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1417,10 +1452,8 @@ CONTAINS
       species_list(species_id)%mass = m0 * 1836.2_num
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_proton
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 1
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1429,10 +1462,8 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_positron
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1462,10 +1493,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1482,10 +1511,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1498,10 +1525,8 @@ CONTAINS
 #ifdef PHOTONS
       breit_wheeler_positron_species = species_id
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1516,10 +1541,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1533,10 +1556,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1549,11 +1570,11 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
       IF (bremsstrahlung_photon_species == -1) &
           bremsstrahlung_photon_species = species_id
-      species_list(species_id)%atomic_no = 0
-      species_list(species_id)%atomic_no_set = .TRUE.
 #else
       IF (use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
       RETURN
     END IF
 
