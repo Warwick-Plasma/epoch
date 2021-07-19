@@ -37,6 +37,7 @@ MODULE deck_species_block
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
   LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
+  INTEGER, DIMENSION(:), ALLOCATABLE :: species_n, species_l
   LOGICAL :: use_ionise, manual_energies
   INTEGER :: n_secondary_species_in_block, n_secondary_limit
   CHARACTER(LEN=string_length) :: release_species_list
@@ -337,9 +338,11 @@ CONTAINS
         ! Populate the species_ionisation_energies array
         IF (n_secondary_species_in_block > 0) THEN
           ALLOCATE(species_ionisation_energies(n_secondary_species_in_block))
-          CALL read_ionisation_energies(species_atomic_number, &
+          ALLOCATE(species_n(n_secondary_species_in_block))
+          ALLOCATE(species_l(n_secondary_species_in_block))
+          CALL read_ionisation_data(species_atomic_number, &
               species_ionisation_state, n_secondary_species_in_block, &
-              species_ionisation_energies)
+              species_ionisation_energies, species_l, species_n)
         END IF
       END IF
 
@@ -354,12 +357,26 @@ CONTAINS
         DO i = 1, n_secondary_species_in_block
           CALL integer_as_string(i, id_string)
           name = TRIM(TRIM(species_names(block_species_id))//id_string)
-          CALL create_ionisation_species_from_name(name, &
-              species_ionisation_energies(i), &
-              n_secondary_species_in_block + 1 - i)
+          IF (manual_energies) THEN
+            ! Auto-generate n and l
+            CALL create_ionisation_species_from_name(name, &
+                species_ionisation_energies(i), &
+                n_secondary_species_in_block + 1 - i)
+          ELSE
+            ! Use table n and l
+            CALL create_ionisation_species_from_name(name, &
+                species_ionisation_energies(i), &
+                n_secondary_species_in_block + 1 - i, &
+                n_in=species_n(i), l_in=species_l(i))
+          END IF
         END DO
         DEALLOCATE(species_ionisation_energies)
       END IF
+
+      IF (use_ionise .AND. .NOT. manual_energies) THEN
+        DEALLOCATE(species_n, species_l)
+      END IF
+
     END IF
 
   END SUBROUTINE species_block_end
@@ -1276,8 +1293,8 @@ CONTAINS
 
 
 
-  SUBROUTINE read_ionisation_energies(atomic_no, ion_state, ionise_num, &
-        ionise_energy)
+  SUBROUTINE read_ionisation_data(atomic_no, ion_state, ionise_num, &
+        ionise_energy, ion_l, ion_n)
 
     ! Populates the array ionise_energy with energies taken from the file
     ! "ionisation_energies.table". The table lists ionisation energies [eV],
@@ -1285,15 +1302,26 @@ CONTAINS
     ! (line 1 for H, line 2 for He, etc). Energies are listed in ascending
     ! order, and the ionise_energy array is filled starting from the ionisation
     ! state of the parent species ("ion_state"), and holds the next "ionise_num"
-    ! energies
+    ! energies.
+    !
+    ! A set of n and l quantum numbers are also read for the release electron,
+    ! based on the ground-state configuration of element ions (taken from NIST).
+    ! The release electron is assumed to be the electron missing when comparing
+    ! the ground state electron energy configurations of subsequent ions. In
+    ! some cases, two electrons will change position between subsequent ion
+    ! ground-states - one removed and one changing orbitals. Here, we still use
+    ! (n,l) of the vanishing electron. The format of "ion_l.table" and
+    ! "ion_n.table" matches "ionisation_energies.table"
 
     INTEGER, INTENT(IN) :: atomic_no, ion_state, ionise_num
     REAL(num), INTENT(OUT) :: ionise_energy(:)
-    REAL(num), ALLOCATABLE :: full_line(:)
+    INTEGER, INTENT(OUT) :: ion_l(:), ion_n(:)
+    REAL(num), ALLOCATABLE :: full_line_energy(:)
+    INTEGER, ALLOCATABLE :: full_line_l(:), full_line_n(:)
     INTEGER :: i_file, io, iu
     LOGICAL :: exists
 
-    ! Check if the table can be seen, issue warning if not
+    ! Check if the tables can be seen, issue warning if not
     INQUIRE(FILE='src/physics_packages/TABLES/ionisation_energies.table', &
         EXIST=exists)
     IF (.NOT.exists) THEN
@@ -1306,59 +1334,120 @@ CONTAINS
       CALL abort_code(c_err_io_error)
     END IF
 
+    INQUIRE(FILE='src/physics_packages/TABLES/ion_l.table', &
+        EXIST=exists)
+    IF (.NOT.exists) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'Unable to find the file:'
+        WRITE(io,*) 'src/physics_packages/TABLES/ion_l.table'
+      END DO
+      CALL abort_code(c_err_io_error)
+    END IF
+
+    INQUIRE(FILE='src/physics_packages/TABLES/ion_n.table', &
+        EXIST=exists)
+    IF (.NOT.exists) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'Unable to find the file:'
+        WRITE(io,*) 'src/physics_packages/TABLES/ion_n.table'
+      END DO
+      CALL abort_code(c_err_io_error)
+    END IF
+
     OPEN(UNIT = lu, &
         FILE = 'src/physics_packages/TABLES/ionisation_energies.table', &
         STATUS = 'OLD')
+    OPEN(UNIT = lu + 1, &
+        FILE = 'src/physics_packages/TABLES/ion_l.table', &
+        STATUS = 'OLD')
+    OPEN(UNIT = lu + 2, &
+        FILE = 'src/physics_packages/TABLES/ion_n.table', &
+        STATUS = 'OLD')
 
-    ! Keep reading until the correct line is reached
+    ! Keep reading each file until the correct line is reached
     IF (atomic_no > 1) THEN
       DO i_file = 1, atomic_no-1
         READ(lu,*)
+        READ(lu+1,*)
+        READ(lu+2,*)
       END DO
     END IF
 
     ! Read the full line matching the current atomic number
-    ALLOCATE(full_line(atomic_no))
-    READ(lu,*) full_line(1:atomic_no)
+    ALLOCATE(full_line_energy(atomic_no))
+    ALLOCATE(full_line_l(atomic_no))
+    ALLOCATE(full_line_n(atomic_no))
+    READ(lu,*) full_line_energy(1:atomic_no)
+    READ(lu+1,*) full_line_l(1:atomic_no)
+    READ(lu+2,*) full_line_n(1:atomic_no)
     CLOSE(lu)
+    CLOSE(lu+1)
+    CLOSE(lu+2)
 
-    ! Only consider energies for ions starting at the current ion_state, and up
-    ! to ion_state + ionise_num. Note ion_state=0 corresponds to energy index 1.
-    ! Also convert to [J]
-    ionise_energy = full_line(ion_state+1:ion_state+ionise_num)*q0
-    DEALLOCATE(full_line)
+    ! Only consider data for ions starting at the current ion_state, and up
+    ! to ion_state + ionise_num. Note ion_state=0 corresponds to table index 1.
+    ! Also convert to [J] for ionise_energy
+    ionise_energy = full_line_energy(ion_state+1:ion_state+ionise_num)*q0
+    ion_l = full_line_l(ion_state+1:ion_state+ionise_num)
+    ion_n = full_line_n(ion_state+1:ion_state+ionise_num)
+    DEALLOCATE(full_line_energy, full_line_l, full_line_n)
 
-  END SUBROUTINE read_ionisation_energies
+  END SUBROUTINE read_ionisation_data
 
 
 
   SUBROUTINE create_ionisation_species_from_name(name, ionisation_energy, &
-      n_electrons)
+      n_electrons, n_in, l_in)
+
+    ! The subroutine saves the variables of the current species to the temporary
+    ! species arrays. Note that "name" refers to the next ionised state, but
+    ! "n_species" refers to the current state until the line
+    ! n_species = n_species + 1
+    !
+    ! E.g. if we have species like Carbon, Carbon1, Carbon2, Carbon3 ...
+    ! Then if "name" is Carbon2, "species_names(n_species)" would initially be
+    ! Carbon1
 
     CHARACTER(*), INTENT(IN) :: name
     REAL(num), INTENT(IN) :: ionisation_energy
     INTEGER, INTENT(IN) :: n_electrons
+    INTEGER, OPTIONAL, INTENT(IN) :: n_in, l_in
     INTEGER :: i, n, l
 
     DO i = 1, n_species
       IF (str_cmp(name, species_names(i))) RETURN
     END DO
-    ! This calculates the principle and angular quantum number based on the
-    ! assumption that shells are filled as they would be in the ground state
-    ! e.g. 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, etc
-    n = 0
-    l = 0
-    i = 0
-    DO WHILE(n_electrons > i)
-      n = n + 1
-      DO l = (n - 1) / 2, 0, -1
-        i = i + 4 * l + 2
-        IF (n_electrons <= i) THEN
-          n = n - l
-          EXIT
-        END IF
+
+    ! If user provides ionisation energy, set it here and automatically generate
+    ! a pair of (n,l) values
+    IF (manual_energies) THEN
+      ! This calculates the principle and angular quantum number based on the
+      ! assumption that shells are filled as they would be in the ground state
+      ! e.g. 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, etc
+      n = 0
+      l = 0
+      i = 0
+      DO WHILE(n_electrons > i)
+        n = n + 1
+        DO l = (n - 1) / 2, 0, -1
+          i = i + 4 * l + 2
+          IF (n_electrons <= i) THEN
+            n = n - l
+            EXIT
+          END IF
+        END DO
       END DO
-    END DO
+    ELSE
+      ! Use quantum numbers of the electron which vanishes between subsequent
+      ! ion groundstate electron configurations (from NIST)
+      n = n_in
+      l = l_in
+    END IF
+
     principle(n_species) = n
     angular(n_species) = l
     ionisation_energies(n_species) = ionisation_energy
