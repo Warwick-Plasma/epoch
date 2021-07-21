@@ -3,9 +3,13 @@ name: CI
 # Controls when the action will run.
 on:
   push:
-    branches: [ main, '*-devel' ]
+    branches:
+    - main
+    - '*-devel'
   pull_request:
-    branches: [ main, '*-devel' ]
+    branches:
+    - main
+    - '*-devel'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -37,36 +41,39 @@ jobs:
       MPIPROCS: 2
       MODE: ${{ matrix.mode }}
       DEFINE: ${{ matrix.define }}
+      GH_BASE: ${{ github.event.pull_request.base.ref }}
+      GH_HEAD: ${{ github.event.pull_request.head.ref }}
+      GH_SHA: ${{ github.event.pull_request.head.sha }}
 
     steps:
-      - name: Install dependencies
-        run: sudo apt update &&
-             sudo apt install -y
-                 python3-dev
-                 python3-numpy
-                 python3-nose
-                 python3-matplotlib
-                 libpython3-dev
-                 mpich
+    - name: Install dependencies
+      run: sudo apt update &&
+           sudo apt install -y
+               python3-dev
+               python3-numpy
+               python3-nose
+               python3-matplotlib
+               libpython3-dev
+               mpich
 
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          fetch-depth: 0
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+        fetch-depth: 0
 
-      - name: Merge branch
-        if: github.event_name == 'pull_request'
-        run: git config user.email "test@example.com" &&
-             git config user.name "test" &&
-             git checkout -b $GITHUB_HEAD_REF $GITHUB_SHA &&
-             git checkout -b $GITHUB_BASE_REF origin/$GITHUB_BASE_REF &&
-             git merge --no-ff $GITHUB_HEAD_REF
+    - name: Merge branch
+      if: github.event_name == 'pull_request'
+      run: git config user.email "test@example.com" &&
+           git config user.name "test" &&
+           git checkout -b $GH_HEAD $GH_SHA &&
+           git checkout -b $GH_BASE origin/$GH_BASE &&
+           git merge --no-ff $GH_HEAD
 
-      - name: Cleanup
-        run: cd epoch1d && make cleanall &&
-             cd ../epoch2d && make cleanall &&
-             cd ../epoch3d && make cleanall
+    - name: Cleanup
+      run: cd epoch1d && make cleanall &&
+           cd ../epoch2d && make cleanall &&
+           cd ../epoch3d && make cleanall
 
-      - name: Compile and run tests
-        run: ./scripts/run-tests-epoch-all.sh ${{ matrix.flag }}
+    - name: Compile and run tests
+      run: ./scripts/run-tests-epoch-all.sh ${{ matrix.flag }}
