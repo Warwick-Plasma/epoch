@@ -2,11 +2,11 @@ name: CI
 
 # Controls when the action will run.
 on:
-  push:
+  pull_request:
     branches:
     - main
     - '*-devel'
-  pull_request:
+  pull_request_review:
     branches:
     - main
     - '*-devel'
@@ -16,6 +16,8 @@ on:
 
 jobs:
   build_and_test:
+    if: github.event_name != 'pull_request_review' ||
+        contains(github.event.pull_request.labels.*.name, 'auto-pr')
     # The type of runner that the job will run on
     runs-on: ubuntu-20.04
     strategy:
@@ -63,7 +65,6 @@ jobs:
         fetch-depth: 0
 
     - name: Merge branch
-      if: github.event_name == 'pull_request'
       run: git config user.email "test@example.com" &&
            git config user.name "test" &&
            git checkout -b $GH_HEAD $GH_SHA &&
