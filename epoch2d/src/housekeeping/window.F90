@@ -92,6 +92,7 @@ CONTAINS
   END SUBROUTINE shift_window
 
 
+
   SUBROUTINE shift_fields(window_shift_cells)
 
     INTEGER :: j
@@ -183,6 +184,7 @@ CONTAINS
   END SUBROUTINE shift_fields
 
 
+
   SUBROUTINE shift_field(field, ng, window_shift_cells)
 
     INTEGER, INTENT(IN) :: ng, window_shift_cells
@@ -192,12 +194,13 @@ CONTAINS
     ! Shift field to the left by window_shift_cells
     DO j = 1-ng, ny+ng
     DO i = 1-ng, nx+ng-window_shift_cells
-      field(i,j) = field(i+window_shift_cells, j)
+      field(i,j) = field(i+window_shift_cells,j)
     END DO
     END DO
     !CALL field_bc(field, ng)
 
   END SUBROUTINE shift_field
+
 
 
   SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
@@ -436,8 +439,9 @@ CONTAINS
   END SUBROUTINE remove_particles
 #endif
 
+
+
   SUBROUTINE mw_io_test(step, dump)
-!    USE diagnostics
     USE deck_io_block
 
     INTEGER, INTENT(IN) :: step
@@ -495,8 +499,8 @@ CONTAINS
   END SUBROUTINE mw_io_test
 
 
+
   SUBROUTINE moving_window(step)
-!     USE diagnostics
      USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT
