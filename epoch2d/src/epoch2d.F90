@@ -13,10 +13,6 @@
 ! You should have received a copy of the GNU General Public License
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifdef SCOREP_USER_ENABLE
-#include "scorep/SCOREP_User.inc"
-#endif
-
 PROGRAM pic
 
   ! EPOCH2D is a Birdsall and Langdon type PIC code derived from the PSC
@@ -70,13 +66,6 @@ PROGRAM pic
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
   REAL(num) :: runtime, dt_store
-
-#ifdef SCOREP_USER_ENABLE
-  SCOREP_USER_REGION_DEFINE( main_loop )
-  INTEGER, PARAMETER :: reg_type = SCOREP_USER_REGION_TYPE_LOOP + &
-                                 SCOREP_USER_REGION_TYPE_DYNAMIC
-#endif
-
 
   step = 0
   time = 0.0_num
@@ -197,10 +186,6 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-#ifdef SCOREP_USER_ENABLE
-SCOREP_USER_REGION_BEGIN( main_loop, "main_loop", reg_type )
-#endif #SCOREP_USER_ENABLE
-
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -270,11 +255,6 @@ SCOREP_USER_REGION_BEGIN( main_loop, "main_loop", reg_type )
     CALL update_eb_fields_final
 
     CALL moving_window(step)
-    !CALL output_routines(step)
-
-#ifdef SCOREP_USER_ENABLE
-SCOREP_USER_REGION_END(main_loop)
-#endif #SCOREP_USER_ENABLE
 
   END DO
 
