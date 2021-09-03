@@ -224,6 +224,8 @@ CONTAINS
 
   END SUBROUTINE shift_field
 
+
+
   SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
         ny_local, nz_local)
 
@@ -488,8 +490,9 @@ CONTAINS
   END SUBROUTINE remove_particles
 #endif
 
+
+
   SUBROUTINE mw_io_test(step, dump)
-!    USE diagnostics
     USE deck_io_block
 
     INTEGER, INTENT(IN) :: step
@@ -548,9 +551,7 @@ CONTAINS
 
 
 
-
   SUBROUTINE moving_window(step)
-!    USE diagnostics
     USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT
