@@ -38,7 +38,7 @@ MODULE deck_species_block
   INTEGER :: check_block = c_err_none
   LOGICAL, DIMENSION(:), ALLOCATABLE :: species_charge_set
   INTEGER, DIMENSION(:), ALLOCATABLE :: species_n, species_l
-  LOGICAL :: use_ionise, manual_energies
+  LOGICAL :: use_ionise
   INTEGER :: n_secondary_species_in_block, n_secondary_limit
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
@@ -179,10 +179,12 @@ CONTAINS
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
               io = io_units(iu)
+              WRITE(io,*) ''
               WRITE(io,*) '*** WARNING ***'
               WRITE(io,*) 'Incorrect number of release species specified ', &
                   'for ', TRIM(species_names(i)), '. Using only first ', &
                   'specified.'
+              WRITE(io,*) ''
             END DO
           END IF
         END IF
@@ -223,6 +225,7 @@ CONTAINS
               WRITE(io,*) '*** ERROR ***'
               WRITE(io,*) 'Periodic boundaries must be specified on both', &
                   ' sides of the domain.'
+              WRITE(io,*) ''
             END DO
           END IF
           CALL abort_code(c_err_bad_value)
@@ -257,9 +260,11 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
                 // '" must have a positive mass.'
+            WRITE(io,*) ''
           END DO
         END IF
         CALL abort_code(c_err_bad_value)
@@ -286,7 +291,6 @@ CONTAINS
   SUBROUTINE species_block_start
 
     use_ionise = .FALSE.
-    manual_energies = .FALSE.
     n_secondary_species_in_block = 0
     n_secondary_limit = 200  ! 200 allows all ionisations from any table element
     current_block = current_block + 1
@@ -313,9 +317,11 @@ CONTAINS
         CALL integer_as_string(current_block, id_string)
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
+          WRITE(io,*) ''
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Species block number ', TRIM(id_string), &
               ' has no "name" element.'
+          WRITE(io,*) ''
         END DO
       END IF
 
@@ -324,9 +330,23 @@ CONTAINS
 
     IF (deck_state == c_ds_first) THEN
 
-      ! On first pass, if ionisation is to be used but the user hasn't specified
-      ! ionisaton energies, then these will be read from table
-      IF (use_ionise .AND. .NOT. manual_energies) THEN
+      ! On first pass, read ionisation tables if using ionisation
+      IF (use_ionise) THEN
+
+        ! Ensure the user has entered an atomic number for this species
+        IF (species_atomic_number < 1 .OR. species_atomic_number > 100) THEN
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) ''
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Ionising species must specify an atomic number'
+              WRITE(io,*) ''
+            END DO
+          END IF
+          check_block = c_err_missing_elements
+          RETURN
+        END IF
 
         ! Number of possible ionisation states
         species_ionisation_state = NINT(species_charge / q0)
@@ -357,23 +377,14 @@ CONTAINS
         DO i = 1, n_secondary_species_in_block
           CALL integer_as_string(i, id_string)
           name = TRIM(TRIM(species_names(block_species_id))//id_string)
-          IF (manual_energies) THEN
-            ! Auto-generate n and l
-            CALL create_ionisation_species_from_name(name, &
-                species_ionisation_energies(i), &
-                n_secondary_species_in_block + 1 - i)
-          ELSE
-            ! Use table n and l
-            CALL create_ionisation_species_from_name(name, &
-                species_ionisation_energies(i), &
-                n_secondary_species_in_block + 1 - i, &
-                n_in=species_n(i), l_in=species_l(i))
-          END IF
+          CALL create_ionisation_species_from_name(name, &
+              species_ionisation_energies(i), &
+              n_secondary_species_in_block + 1 - i, species_n(i), species_l(i))
         END DO
         DEALLOCATE(species_ionisation_energies)
       END IF
 
-      IF (use_ionise .AND. .NOT. manual_energies) THEN
+      IF (use_ionise) THEN
         DEALLOCATE(species_n, species_l)
       END IF
 
@@ -428,17 +439,26 @@ CONTAINS
       RETURN
     END IF
 
-    ! Manually collect ionisation energies for the species
+    ! Support for manual writing of ionisation energies has been dropped. Issue
+    ! warning
     IF (str_cmp(element, 'ionisation_energies') &
         .OR. str_cmp(element, 'ionization_energies')) THEN
       IF (deck_state == c_ds_first) THEN
-        NULLIFY(species_ionisation_energies)
-        CALL initialise_stack(stack)
-        CALL tokenize(value, stack, errcode)
-        CALL evaluate_and_return_all(stack, &
-            n_secondary_species_in_block, species_ionisation_energies, errcode)
-        CALL deallocate_stack(stack)
-        manual_energies = .TRUE.
+        IF (rank == 0) THEN
+          DO iu = 1, nio_units ! Print to stdout and to file
+            io = io_units(iu)
+            WRITE(io,*) ''
+            WRITE(io,*) '*** WARNING ***'
+            WRITE(io,*) 'Ionisation energies are now known up to Z=100'
+            WRITE(io,*) 'EPOCH no longer supports manual entry of energies'
+            WRITE(io,*) 'Ionisation of a species with atomic number Z is ', &
+                'now activated by adding these'
+            WRITE(io,*) 'lines to the species block:'
+            WRITE(io,*) 'ionise = T'
+            WRITE(io,*) 'atomic_no = Z # Replace Z with atomic number'
+            WRITE(io,*) ''
+          END DO
+        END IF
       END IF
       RETURN
     END IF
@@ -572,9 +592,11 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
             WRITE(io,*) 'Particle species cannot have negative mass.'
+            WRITE(io,*) ''
           END DO
         END IF
         errcode = c_err_bad_value
@@ -721,6 +743,7 @@ CONTAINS
         warn_tracer = .FALSE.
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
+          WRITE(io,*) ''
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
           WRITE(io,*) 'The "tracer" species do not behave in the way that ', &
@@ -1168,9 +1191,11 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No mass specified for particle species "', &
                 TRIM(species_list(i)%name), '"'
+            WRITE(io,*) ''
           END DO
         END IF
         errcode = c_err_missing_elements
@@ -1179,9 +1204,11 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'No charge specified for particle species "', &
                 TRIM(species_list(i)%name), '"'
+            WRITE(io,*) ''
           END DO
         END IF
         errcode = c_err_missing_elements
@@ -1190,10 +1217,12 @@ CONTAINS
         IF (species_list(i)%count >= 0 .AND. rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'Two forms of nparticles used for particle species "', &
                 TRIM(species_list(i)%name), '"'
             WRITE(io,*) 'Just using "nparticles_per_cell".'
+            WRITE(io,*) ''
           END DO
         END IF
         species_list(i)%count = INT(species_list(i)%npart_per_cell, i8)
@@ -1213,8 +1242,10 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) TRIM(species_list(i)%name), ' missing atomic number'
+            WRITE(io,*) ''
           END DO
         END IF
         errcode = c_err_missing_elements
@@ -1223,10 +1254,12 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** WARNING ***'
             WRITE(io,*) 'No atomic number has been specified for species: ', &
                 TRIM(species_list(i)%name)
             WRITE(io,*) 'Atomic number has been set to species particle charge'
+            WRITE(io,*) ''
           END DO
         END IF
       END IF
@@ -1258,9 +1291,11 @@ CONTAINS
       IF (rank == 0) THEN
         DO iu = 1, nio_units ! Print to stdout and to file
           io = io_units(iu)
+          WRITE(io,*) ''
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'The species name "' // TRIM(name) // '" is not valid.'
           WRITE(io,*) 'Please choose a different name and try again.'
+          WRITE(io,*) ''
         END DO
       END IF
       CALL abort_code(c_err_bad_value)
@@ -1327,15 +1362,29 @@ CONTAINS
     INTEGER :: i_file, io, iu
     LOGICAL :: exists
 
+    IF (atomic_no < 1 .OR. atomic_no > 100) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) ''
+        WRITE(io,*) '*** ERROR ***'
+        WRITE(io,*) 'Ionising species must have an atomic number between'
+        WRITE(io,*) '1 and 100'
+        WRITE(io,*) ''
+      END DO
+      CALL abort_code(c_err_bad_value)
+    END IF
+
     ! Check if the tables can be seen, issue warning if not
     INQUIRE(FILE='src/physics_packages/TABLES/ionisation_energies.table', &
         EXIST=exists)
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
+        WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
         WRITE(io,*) 'src/physics_packages/TABLES/ionisation_energies.table'
+        WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
@@ -1345,9 +1394,11 @@ CONTAINS
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
+        WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
         WRITE(io,*) 'src/physics_packages/TABLES/ion_l.table'
+        WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
@@ -1357,9 +1408,11 @@ CONTAINS
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
+        WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
         WRITE(io,*) 'src/physics_packages/TABLES/ion_n.table'
+        WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
@@ -1375,13 +1428,11 @@ CONTAINS
         STATUS = 'OLD')
 
     ! Keep reading each file until the correct line is reached
-    IF (atomic_no > 1) THEN
-      DO i_file = 1, atomic_no-1
-        READ(lu,*)
-        READ(lu+1,*)
-        READ(lu+2,*)
-      END DO
-    END IF
+    DO i_file = 1, atomic_no-1
+      READ(lu,*)
+      READ(lu+1,*)
+      READ(lu+2,*)
+    END DO
 
     ! Read the full line matching the current atomic number
     ALLOCATE(full_line_energy(atomic_no))
@@ -1421,44 +1472,28 @@ CONTAINS
     CHARACTER(*), INTENT(IN) :: name
     REAL(num), INTENT(IN) :: ionisation_energy
     INTEGER, INTENT(IN) :: n_electrons
-    INTEGER, OPTIONAL, INTENT(IN) :: n_in, l_in
-    INTEGER :: i, n, l
+    INTEGER, INTENT(IN) :: n_in, l_in
+    INTEGER :: i
 
     DO i = 1, n_species
       IF (str_cmp(name, species_names(i))) RETURN
     END DO
 
-    ! If user provides ionisation energy, set it here and automatically generate
-    ! a pair of (n,l) values
-    IF (manual_energies) THEN
-      ! This calculates the principle and angular quantum number based on the
-      ! assumption that shells are filled as they would be in the ground state
-      ! e.g. 1s, 2s, 2p, 3s, 3p, 4s, 3d, 4p, 5s, 4d, 5p, 6s, 4f, 5d, 6p, 7s, etc
-      n = 0
-      l = 0
-      i = 0
-      DO WHILE(n_electrons > i)
-        n = n + 1
-        DO l = (n - 1) / 2, 0, -1
-          i = i + 4 * l + 2
-          IF (n_electrons <= i) THEN
-            n = n - l
-            EXIT
-          END IF
-        END DO
-      END DO
-    ELSE
-      ! Use quantum numbers of the electron which vanishes between subsequent
-      ! ion groundstate electron configurations (from NIST)
-      n = n_in
-      l = l_in
-    END IF
+    ! Use quantum numbers of the electron which vanishes between subsequent
+    ! ion groundstate electron configurations (from NIST)
+    principle(n_species) = n_in
+    angular(n_species) = l_in
 
-    principle(n_species) = n
-    angular(n_species) = l
+    ! Set ionisation energy of the current species
     ionisation_energies(n_species) = ionisation_energy
+
+    ! Append a new species to the species list, for the current species to
+    ! ionise to
     ionise_to_species(n_species) = n_species + 1
     n_species = n_species + 1
+
+    ! Ensure the temporary arrays for species information are large enough to
+    ! contain values for the new species using "grow array". Initialise values
     CALL grow_array(species_names, n_species)
     species_names(n_species) = TRIM(name)
     CALL grow_array(ionise_to_species, n_species)
@@ -1525,8 +1560,10 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Cannot load from file whilst using a moving window.'
+            WRITE(io,*) ''
           END DO
         END IF
         errcode = c_err_bad_value
@@ -1551,8 +1588,10 @@ CONTAINS
         IF (rank == 0) THEN
           DO iu = 1, nio_units ! Print to stdout and to file
             io = io_units(iu)
+            WRITE(io,*) ''
             WRITE(io,*) '*** ERROR ***'
             WRITE(io,*) 'Unable to parse input deck.'
+            WRITE(io,*) ''
           END DO
         END IF
         CALL abort_code(errcode)
