@@ -40,11 +40,13 @@ MODULE deck_species_block
   INTEGER, DIMENSION(:), ALLOCATABLE :: species_n, species_l
   LOGICAL :: use_ionise
   INTEGER :: n_secondary_species_in_block, n_secondary_limit
+  LOGICAL :: unique_electrons
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
   REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
   REAL(num), DIMENSION(:), POINTER :: ionisation_energies
   REAL(num), DIMENSION(:), POINTER :: mass, charge
+  LOGICAL, DIMENSION(:), POINTER :: auto_electrons
   INTEGER, DIMENSION(:), POINTER :: principle, angular, part_count
   INTEGER, DIMENSION(:), POINTER :: ionise_to_species, dumpmask_array
   INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
@@ -74,6 +76,7 @@ CONTAINS
       ALLOCATE(part_count(4))
       ALLOCATE(dumpmask_array(4))
       ALLOCATE(bc_particle_array(2*c_ndims,4))
+      ALLOCATE(auto_electrons(4))
       release_species = ''
       release_species_list = ''
     END IF
@@ -84,7 +87,7 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i, j, idx, io, iu, nlevels, nrelease
+    INTEGER :: i, j, idx, io, iu, nlevels, nrelease, n_species_chain
     CHARACTER(LEN=8) :: string
     INTEGER :: errcode, bc
     TYPE(primitive_stack) :: stack
@@ -118,6 +121,26 @@ CONTAINS
             species_list(i)%ionise = .TRUE.
       END DO
 
+      ! Scan for ionising species with automatically generated electron
+      ! populations
+      DO i = 1, n_species
+        IF (auto_electrons(i)) THEN
+          ! Deduce number of ionisation states attributed to the base state
+          j = i
+          DO WHILE(species_list(j)%ionise_to_species > 0)
+            j = j + 1
+          END DO
+          n_species_chain = j - i + 1
+
+          ! Set release species for all ions. If auto-generation is used for a
+          ! list of N species, then (N+1) to (2N-1) are the species ID for the
+          ! release electrons (final ion in chain has no release)
+          DO j = i, n_species_chain-1
+            species_list(j)%release_species = j + n_species_chain
+          END DO
+        END IF
+      END DO
+
       DEALLOCATE(bc_particle_array)
       DEALLOCATE(dumpmask_array)
       DEALLOCATE(part_count)
@@ -125,8 +148,11 @@ CONTAINS
       DEALLOCATE(angular)
       DEALLOCATE(charge)
       DEALLOCATE(mass)
+      DEALLOCATE(auto_electrons)
       DEALLOCATE(ionisation_energies)
 
+      ! Set release species of species_list elements which have been
+      ! user-defined
       DO i = 1, n_species
         IF (TRIM(release_species(i)) == '') CYCLE
 
@@ -291,6 +317,7 @@ CONTAINS
   SUBROUTINE species_block_start
 
     use_ionise = .FALSE.
+    unique_electrons = .FALSE.
     n_secondary_species_in_block = 0
     n_secondary_limit = 200  ! 200 allows all ionisations from any table element
     current_block = current_block + 1
@@ -311,6 +338,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: name
     INTEGER :: max_ionisation, species_ionisation_state
     INTEGER :: i, io, iu, block_species_id
+    INTEGER :: i_el, i_ion
 
     IF (.NOT.got_name) THEN
       IF (rank == 0) THEN
@@ -371,8 +399,7 @@ CONTAINS
       mass(n_species) = species_mass
       bc_particle_array(:, n_species) = species_bc_particle
       IF (n_secondary_species_in_block > 0) THEN
-        ! Create an empty species for each ionisation energy listed in species
-        ! block
+        ! Create an empty species for each ionisation level considered
         release_species(n_species) = release_species_list
         DO i = 1, n_secondary_species_in_block
           CALL integer_as_string(i, id_string)
@@ -382,10 +409,57 @@ CONTAINS
               n_secondary_species_in_block + 1 - i, species_n(i), species_l(i))
         END DO
         DEALLOCATE(species_ionisation_energies)
+
+        ! Auto-generate unique electron release species if requested
+        IF (unique_electrons) THEN
+          auto_electrons(block_species_id) = .TRUE.
+          DO i = 0, n_secondary_species_in_block-1
+            ! Name of electron species, e.g., for a Carbon species, these are
+            ! electron_from_Carbon
+            ! electron_from_Carbon1
+            IF (i == 0) THEN
+              name = TRIM(TRIM('electron_from_' &
+                  //species_names(block_species_id)))
+            ELSE
+              CALL integer_as_string(i, id_string)
+              name = TRIM(TRIM('electron_from_' &
+                  // species_names(block_species_id)) // id_string)
+            END IF
+
+            ! Create this species
+            CALL create_electron_species_from_name(name, block_species_id, i)
+          END DO
+        END IF
+
+        release_species(block_species_id) = release_species_list
       END IF
 
       IF (use_ionise) THEN
         DEALLOCATE(species_n, species_l)
+      END IF
+
+    ELSE
+      ! On second pass, species have been defined - but auto-generated electrons
+      ! do not appear in the input deck, so we must set their properties
+      ! manually
+      IF (unique_electrons) THEN
+        i = species_id
+        ! Loop over all ionising species in this chain
+        DO WHILE(species_list(i)%ionise_to_species > 0)
+          ! Electron charge was defined on creation
+          i_el = species_list(i)%release_species
+          species_charge_set(i_el) = .TRUE.
+
+          ! Set properties of ionised species
+          i_ion = species_list(i)%ionise_to_species
+          species_list(i_ion)%charge = species_list(i)%charge - &
+              species_list(i_el)%charge
+          species_charge_set(i_ion) = .TRUE.
+          species_list(i_ion)%mass = species_list(i)%mass - &
+              species_list(i_el)%mass
+
+          i = i_ion
+        END DO
       END IF
 
     END IF
@@ -436,6 +510,13 @@ CONTAINS
     IF (str_cmp(element, 'ionise_limit') &
         .OR. str_cmp(element, 'ionize_limit')) THEN
       n_secondary_limit = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+    ! If using ionise, this can restrict the number of secondary particles to
+    ! consider
+    IF (str_cmp(element, 'unique_electron_species')) THEN
+      unique_electrons = .TRUE.
       RETURN
     END IF
 
@@ -1320,6 +1401,7 @@ CONTAINS
     CALL grow_array(angular, n_species)
     CALL grow_array(part_count, n_species)
     CALL grow_array(dumpmask_array, n_species)
+    CALL grow_array(auto_electrons, n_species)
     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
 
     species_names(n_species) = TRIM(name)
@@ -1332,6 +1414,7 @@ CONTAINS
     angular(n_species) = -1
     part_count(n_species) = -1
     dumpmask_array(n_species) = species_dumpmask
+    auto_electrons(n_species) = .FALSE.
     bc_particle_array(:,n_species) = species_bc_particle
 
     RETURN
@@ -1520,11 +1603,63 @@ CONTAINS
     part_count(n_species) = 0
     CALL grow_array(dumpmask_array, n_species)
     dumpmask_array(n_species) = species_dumpmask
+    CALL grow_array(auto_electrons, n_species)
+    auto_electrons(n_species) = .FALSE.
     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
     bc_particle_array(:,n_species) = species_bc_particle
     RETURN
 
   END SUBROUTINE create_ionisation_species_from_name
+
+
+
+  SUBROUTINE create_electron_species_from_name(name, block_species_id, i_el)
+
+    ! The subroutine creates a release electron species with the name "name".
+    ! The electron species is also set as the release species of the relevant
+    ! ion, where the species ID is calculated using block_species_id and i_el
+
+    CHARACTER(*), INTENT(IN) :: name
+    INTEGER, INTENT(IN) :: block_species_id, i_el
+    INTEGER :: i
+
+    ! Check the species doesn't already exist
+    DO i = 1, n_species
+      IF (str_cmp(name, species_names(i))) RETURN
+    END DO
+
+    ! Append to number of species
+    n_species = n_species + 1
+
+    ! Ensure the temporary arrays for species information are large enough to
+    ! contain values for the new species using "grow array". Initialise values
+    CALL grow_array(species_names, n_species)
+    species_names(n_species) = TRIM(name)
+    CALL grow_array(ionise_to_species, n_species)
+    ionise_to_species(n_species) = -1
+    CALL grow_array(release_species, n_species)
+    release_species(n_species) = ''
+    CALL grow_array(mass, n_species)
+    mass(n_species) = m0
+    CALL grow_array(charge, n_species)
+    charge(n_species) = -q0
+    CALL grow_array(ionisation_energies, n_species)
+    ionisation_energies(n_species) = HUGE(0.0_num)
+    CALL grow_array(principle, n_species)
+    principle(n_species) = -1
+    CALL grow_array(angular, n_species)
+    angular(n_species) = -1
+    CALL grow_array(part_count, n_species)
+    part_count(n_species) = 0
+    CALL grow_array(dumpmask_array, n_species)
+    dumpmask_array(n_species) = species_dumpmask
+    CALL grow_array(auto_electrons, n_species)
+    auto_electrons(n_species) = .FALSE.
+    CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
+    bc_particle_array(:,n_species) = species_bc_particle
+    RETURN
+
+  END SUBROUTINE create_electron_species_from_name
 
 
 
