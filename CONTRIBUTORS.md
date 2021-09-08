@@ -5,6 +5,7 @@ Alistair Lawrence-Douglas <a.a.lawrence-douglas@warwick.ac.uk>
 Ben McMillan <B.F.McMillan@warwick.ac.uk>
 Chris Brady <C.S.Brady@warwick.ac.uk>
 David Schinkel <david.schinkel@uni-jena.de>
+Dirk Brömmel <d.broemmel@fz-juelich.de>
 Heather Ratcliffe <H.Ratcliffe@warwick.ac.uk>
 Holger Schmitz <holger.schmitz@stfc.ac.uk>
 Jiří Vyskočil <jiri@vysko.cz>
@@ -14,3 +15,4 @@ Phil Tooley <phil.tooley@gmail.com>
 Stephan Kuschel <stephan.kuschel@gmail.com>
 Stuart Morris <sjm630@york.ac.uk>
 Tom Goffrey <t.goffrey@warwick.ac.uk>
+Ujjwal Sinha <u.sinha@fz-juelich.de>
