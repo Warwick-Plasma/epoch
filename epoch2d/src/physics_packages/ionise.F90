@@ -412,11 +412,31 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+    ! Factors for WT scheme
+#ifdef WT_INTERPOLATION
+    REAL(num) :: wt_dtx, wt_dty, wt_facx, wt_facy
+    REAL(num) :: wt_var1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: wt_dtx2, wt_dty2
+    REAL(num) :: wt_var2, wt_var3, wt_var4, wt_var5
+#endif
+#endif
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
 
     dfac = fac**2 / dt / dx / dy
+
+#ifdef WT_INTERPOLATION
+    wt_dtx = c * dt / dx
+    wt_dty = c * dt / dy
+    wt_facx = 0.25_num / wt_dtx
+    wt_facy = 0.25_num / wt_dty
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    wt_dtx2 = wt_dtx**2
+    wt_dty2 = wt_dty**2
+#endif
+#endif
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -465,12 +485,22 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
         ! NOTE: These weights require an additional multiplication factor!
+#ifndef WT_INTERPOLATION
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
 #else
 #include "triangle/gx.inc"
+#endif
+#else
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx_wt.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx_wt.inc"
+#else
+#include "triangle/gx_wt.inc"
+#endif
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -694,11 +724,31 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+    ! Factors for WT scheme
+#ifdef WT_INTERPOLATION
+    REAL(num) :: wt_dtx, wt_dty, wt_facx, wt_facy
+    REAL(num) :: wt_var1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: wt_dtx2, wt_dty2
+    REAL(num) :: wt_var2, wt_var3, wt_var4, wt_var5
+#endif
+#endif
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
 
     dfac = fac**2 / dt / dx / dy
+
+#ifdef WT_INTERPOLATION
+    wt_dtx = c * dt / dx
+    wt_dty = c * dt / dy
+    wt_facx = 0.25_num / wt_dtx
+    wt_facy = 0.25_num / wt_dty
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    wt_dtx2 = wt_dtx**2
+    wt_dty2 = wt_dty**2
+#endif
+#endif
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -747,12 +797,22 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
         ! NOTE: These weights require an additional multiplication factor!
+#ifndef WT_INTERPOLATION
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
 #else
 #include "triangle/gx.inc"
+#endif
+#else
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx_wt.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx_wt.inc"
+#else
+#include "triangle/gx_wt.inc"
+#endif
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -962,11 +1022,31 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+    ! Factors for WT scheme
+#ifdef WT_INTERPOLATION
+    REAL(num) :: wt_dtx, wt_dty, wt_facx, wt_facy
+    REAL(num) :: wt_var1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: wt_dtx2, wt_dty2
+    REAL(num) :: wt_var2, wt_var3, wt_var4, wt_var5
+#endif
+#endif
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
 
     dfac = fac**2 / dt / dx / dy
+
+#ifdef WT_INTERPOLATION
+    wt_dtx = c * dt / dx
+    wt_dty = c * dt / dy
+    wt_facx = 0.25_num / wt_dtx
+    wt_facy = 0.25_num / wt_dty
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    wt_dtx2 = wt_dtx**2
+    wt_dty2 = wt_dty**2
+#endif
+#endif
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -1037,12 +1117,22 @@ CONTAINS
         dcellx = 0
         dcelly = 0
         ! NOTE: These weights require an additional multiplication factor!
+#ifndef WT_INTERPOLATION
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/hx_dcell.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/hx_dcell.inc"
 #else
 #include "triangle/hx_dcell.inc"
+#endif
+#else
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx_wt.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx_wt.inc"
+#else
+#include "triangle/gx_wt.inc"
+#endif
 #endif
 
         ! These are the electric and magnetic fields interpolated to the
@@ -1220,11 +1310,31 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+    ! Factors for WT scheme
+#ifdef WT_INTERPOLATION
+    REAL(num) :: wt_dtx, wt_dty, wt_facx, wt_facy
+    REAL(num) :: wt_var1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: wt_dtx2, wt_dty2
+    REAL(num) :: wt_var2, wt_var3, wt_var4, wt_var5
+#endif
+#endif
 
     idx = 1.0_num / dx
     idy = 1.0_num / dy
 
     dfac = fac**2 / dt / dx / dy
+
+#ifdef WT_INTERPOLATION
+    wt_dtx = c * dt / dx
+    wt_dty = c * dt / dy
+    wt_facx = 0.25_num / wt_dtx
+    wt_facy = 0.25_num / wt_dty
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    wt_dtx2 = wt_dtx**2
+    wt_dty2 = wt_dty**2
+#endif
+#endif
 
     ! Stores ionised species until close of ionisation run. Main purpose of this
     ! method is to ensure proper statistics (i.e. prevent ionisation rate being
@@ -1273,12 +1383,22 @@ CONTAINS
         ! Also used to weight particle properties onto grid, used later
         ! to calculate J
         ! NOTE: These weights require an additional multiplication factor!
+#ifndef WT_INTERPOLATION
 #ifdef PARTICLE_SHAPE_BSPLINE3
 #include "bspline3/gx.inc"
 #elif  PARTICLE_SHAPE_TOPHAT
 #include "tophat/gx.inc"
 #else
 #include "triangle/gx.inc"
+#endif
+#else
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx_wt.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx_wt.inc"
+#else
+#include "triangle/gx_wt.inc"
+#endif
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
