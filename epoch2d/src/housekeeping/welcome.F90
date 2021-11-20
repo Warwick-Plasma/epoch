@@ -99,6 +99,9 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     found = .TRUE.
 #endif
+#ifdef WT_INTERPOLATION
+    found = .TRUE.
+#endif
 #ifdef PER_SPECIES_WEIGHT
     found = .TRUE.
 #endif
@@ -185,6 +188,10 @@ CONTAINS
 #ifdef PARTICLE_SHAPE_TOPHAT
     defines = IOR(defines, c_def_particle_shape_tophat)
     WRITE(*,*) 'Top-hat particle shape -DPARTICLE_SHAPE_TOPHAT'
+#endif
+#ifdef WT_INTERPOLATION
+    defines = IOR(defines, c_def_wt_interpolation)
+    WRITE(*,*) 'WT interpolation scheme -DWT_INTERPOLATION'
 #endif
 #ifdef PER_SPECIES_WEIGHT
     defines = IOR(defines, c_def_per_particle_weight)

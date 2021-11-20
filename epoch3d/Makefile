@@ -206,6 +206,9 @@ DEFINES := $(DEFINE)
 # Use fifth order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_BSPLINE3
 
+# Use WT scheme for field interpolation
+#DEFINES += $(D)WT_INTERPOLATION
+
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
 #DEFINES += $(D)PARTICLE_ID
