@@ -151,6 +151,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 4
   INTEGER, PARAMETER :: c_maxwell_solver_cowan = 5
   INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 6
+  INTEGER, PARAMETER :: c_maxwell_solver_m4 = 7
 
   ! Particle distribution type codes
   INTEGER, PARAMETER :: c_ic_df_thermal = 1
@@ -449,11 +450,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
   INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
   INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
-  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
+  INTEGER, PARAMETER :: c_const_maxwell_solver_m4 = 107
+  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 108
 
-  INTEGER, PARAMETER :: c_const_px = 108
-  INTEGER, PARAMETER :: c_const_py = 109
-  INTEGER, PARAMETER :: c_const_pz = 110
+  INTEGER, PARAMETER :: c_const_px = 109
+  INTEGER, PARAMETER :: c_const_py = 110
+  INTEGER, PARAMETER :: c_const_pz = 111
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096
