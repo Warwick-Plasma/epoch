@@ -162,6 +162,30 @@ CONTAINS
       alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz
       alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz
       alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_m4) THEN
+      ! Y. Lu et al., J. Comput. Phys 413, 109388 (2020)
+      c1 = (c * dt / dx)**2
+      c2 = (c * dt / dy)**2
+      c3 = (c * dt / dz)**2
+      betayx = c1 / 12.0_num
+      betaxy = c2 / 12.0_num
+      betaxz = c3 / 12.0_num
+      betazx = betayx
+      betazy = betaxy
+      betayz = betaxz
+      deltax = (c1 - 1.0) / 12.0_num
+      deltay = (c2 - 1.0) / 12.0_num
+      deltaz = (c3 - 1.0) / 12.0_num
+      gammax = 0.0_num
+      gammay = 0.0_num
+      gammaz = 0.0_num
+      alphax = 1.0_num - 2.0_num * betaxy - 2.0_num * betaxz &
+                       - 4.0_num * gammax - 3.0_num * deltax
+      alphay = 1.0_num - 2.0_num * betayx - 2.0_num * betayz &
+                       - 4.0_num * gammay - 3.0_num * deltay
+      alphaz = 1.0_num - 2.0_num * betazx - 2.0_num * betazy &
+                       - 4.0_num * gammaz - 3.0_num * deltaz
     END IF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN

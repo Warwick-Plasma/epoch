@@ -582,6 +582,8 @@ CONTAINS
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
 
+    ELSE IF (maxwell_solver == c_maxwell_solver_m4) THEN
+      dt = dx / c
     END IF
 
     IF (any_open) THEN

@@ -721,6 +721,7 @@ CONTAINS
       dt = MIN(dz, dx * dy / SQRT(dx**2 + dy**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
+        .OR. maxwell_solver == c_maxwell_solver_m4 &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
