@@ -341,6 +341,7 @@ CONTAINS
 
         ! For WT scheme, use hx0 to store the weight factors used to weigh
         ! particle properties onto grid at Xi0*. And calculate gx for WT.
+        ! Y. Lu et al., J. Comput. Phys 413, 109388 (2020)
         ! NOTE: These weights require an additional multiplication factor!
 #ifdef WT_INTERPOLATION
         hx0 = gx
