@@ -1,7 +1,6 @@
 begin:control
   # Global number of gridpoints
   nx = 400 # in x
-  ny = 400 # in y
 
   # Maximum number of iterations
   # Set to -1 to run until finished
@@ -13,8 +12,6 @@ begin:control
   # Size of domain
   x_min = -10e-6
   x_max = -x_min
-  y_min =  x_min
-  y_max =  x_max
 
   field_ionisation = T                  # This key switches on field ionisation
 end:control
@@ -43,8 +40,6 @@ end:constant
 begin:boundaries
   bc_x_min = simple_laser
   bc_x_max = simple_outflow
-  bc_y_min = periodic
-  bc_y_max = periodic
 end:boundaries
 
 
@@ -52,7 +47,7 @@ begin:species
   name = Electron
   charge = -1.0
   mass = 1.0
-  nparticles = nx * ny * 5
+  nparticles = nx * 5
 end:species
 
 
@@ -68,7 +63,7 @@ begin:species
   ionise = T                                          # This species can ionise
   ionisation_electron_species = Electron        # Species for ejected electrons
 
-  nparticles = nx * ny * 5
+  nparticles = nx * 5
 end:species
 
 
@@ -110,6 +105,5 @@ begin:laser
   boundary = x_min
   amp = 1e13
   lambda = lambda
-  profile = y / (2.5e-6) * gauss(y, 0.0, 2.5e-6)
 end:laser
 

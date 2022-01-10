@@ -254,7 +254,7 @@ MODULE shared_data
     REAL(num) :: ionisation_energy
     REAL(num), ALLOCATABLE :: coll_ion_incident_ke(:)
     REAL(num), ALLOCATABLE :: coll_ion_cross_sec(:)
-    REAL(num), ALLOCATABLE :: coll_ion_mean_bind(:)
+    REAL(num), ALLOCATABLE :: coll_ion_mean_bind(:,:)
     REAL(num), ALLOCATABLE :: coll_ion_secondary_ke(:,:)
     REAL(num), ALLOCATABLE :: coll_ion_secondary_cdf(:,:)
 

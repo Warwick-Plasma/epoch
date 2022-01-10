@@ -27,7 +27,7 @@ MODULE collision_ionise
   IMPLICIT NONE
 
   ! Variables for deriving cross sections
-  REAL(num), ALLOCATABLE :: binding_energy(:)
+  REAL(num), ALLOCATABLE :: binding_energy(:), cross_sec_parts(:,:)
   REAL(num), PARAMETER :: rbeb_const = 2.0_num * pi * a0**2 * alpha**4
   REAL(num) :: mbell_a(3,0:1), mbell_b(3,0:1,7), mbell_m, mbell_lambda(0:1)
   INTEGER :: el_num
@@ -52,9 +52,9 @@ CONTAINS
     !
     ! coll_ion_incident_ke: Log-scale range of incident e- kinetic energies
     ! coll_ion_cross_sec: Total collisional ionisation cross sections for e- KE
-    ! coll_ion_mean_bind: Weighted mean of shell binding energy at each e- KE
     ! coll_ion_secondary_ke: Log range of ejected e- KE, for each incident e- KE
     ! coll_ion_secondary_cdf: CDF for each incident and ejected KE pair
+    ! coll_ion_mean_bind: Weighted mean of shell binding energy at each KE pair
 
     INTEGER :: ispecies, i_el, current_n, current_l, el_remain
 
@@ -91,6 +91,11 @@ CONTAINS
         CALL get_electron_data_from_file(species_list(ispecies)%atomic_no, &
             NINT(species_list(ispecies)%charge/q0), binding_energy, el_n, el_l)
 
+        ! Temporary array for cross section contributions of each bound e-, at
+        ! each incident e- KE (used for mean binding energy calculation)
+        ALLOCATE(cross_sec_parts(sample_el_in, el_num))
+        cross_sec_parts = 0.0_num
+
         ! Calculate collisional ionisation cross section in each species.
         ! Different models are used for low and high atomic numbers
         IF (species_list(ispecies)%atomic_no <= 18) THEN
@@ -102,7 +107,10 @@ CONTAINS
         ! Create tables for sampling secondary electron kinetic energies
         CALL calculate_secondary_e_ke_tables(ispecies)
 
-        DEALLOCATE(binding_energy)
+        ! Calculate mean binding energy for each incident KE, ejected KE pair
+        CALL calculate_mean_binding_energy(ispecies)
+
+        DEALLOCATE(binding_energy, cross_sec_parts)
 
       END IF
     END DO
@@ -160,8 +168,7 @@ CONTAINS
     ! numbers up to 18. Table saved to species_list(ispecies)%coll_ion_cross_sec
     ! at electron energies stored in species_list(ispecies)%coll_ion_incident_ke
     ! Method described in Haque et al, "Electron impact ionization of M-shell
-    ! atoms" Physica Scripta 74.3 (2006). The script also calculates a shell
-    ! averaged binding energy table, species_list(ispecies)%coll_ion_mean_bind
+    ! atoms" Physica Scripta 74.3 (2006).
 
     INTEGER, INTENT(IN) :: ispecies
     INTEGER :: isamp
@@ -170,7 +177,7 @@ CONTAINS
     REAL(num) :: min_ke_ev, max_ke_ev, el_ke
     REAL(num) :: mbell_u, mbell_j, sig_beli_b, sig_beli, f_ion
     REAL(num) :: one_j, one_2j, one_u, u_j, u_2j, gryzinski
-    REAL(num) :: sig_add, sig_mbell, sig_binding
+    REAL(num) :: sig_add, sig_mbell
 
     ! Kinetic energy range of table. In Haque (2006), agreement between MBELL
     ! and experiment is verified for some elements between ~10 eV to >100 MeV
@@ -182,9 +189,6 @@ CONTAINS
 
     ! Cross sections corresponding to electron energies [m**2]
     ALLOCATE(species_list(ispecies)%coll_ion_cross_sec(sample_el_in))
-
-    ! Mean binding energy seen at different electron energies [J]
-    ALLOCATE(species_list(ispecies)%coll_ion_mean_bind(sample_el_in))
 
     ! Calculate electron energy and cross section at each table sample point
     DO isamp = 1, sample_el_in
@@ -252,22 +256,12 @@ CONTAINS
         sig_add = f_ion * gryzinski * sig_beli
         sig_mbell = sig_mbell + sig_add
 
-        ! Save (sigma * binding_energy) for shell-averaged binding energy
-        sig_binding = sig_binding + sig_add * binding_energy(i_el)
+        ! Save cross section contribution from this bound electron
+        cross_sec_parts(isamp, i_el) = sig_add
       END DO
 
       ! Set cross section after summing contributions from all electrons
       species_list(ispecies)%coll_ion_cross_sec(isamp) = sig_mbell
-
-      ! Calculate shell-averaged binding energy
-      IF (isamp == 1) THEN
-        ! Special case, as cross section is 0 here
-        species_list(ispecies)%coll_ion_mean_bind(isamp) = &
-            MINVAL(binding_energy)
-      ELSE
-        species_list(ispecies)%coll_ion_mean_bind(isamp) = &
-            sig_binding / sig_mbell
-      END IF
     END DO
 
   END SUBROUTINE calculate_cross_sections_mbell
@@ -280,9 +274,7 @@ CONTAINS
     ! sections for the spcies with ID "ispecies". Called for species with atomic
     ! numbers over 18. Incident electron energies and corresponding cross
     ! sections saved to species_list(ispecies)%coll_ion_incident_ke and
-    ! species_list(ispecies)%coll_ion_cross_sec respectively. The script also
-    ! calculates a shell-averaged binding energy at each ke, saved in
-    ! species_list(ispecies)%coll_ion_mean_bind
+    ! species_list(ispecies)%coll_ion_cross_sec respectively.
     !
     ! Method described in Kim et al, "Extension of the binary-encounter-dipole
     ! model to relativistic incident electrons" Phys. Rev. A 62(5) (2000).
@@ -299,7 +291,7 @@ CONTAINS
     REAL(num) :: beta_t2, beta_b2, beta_u2, beta2
     REAL(num) :: rbeb_pre, rbeb_fac, log_2bp, rbeb_1_middle, rbeb_1
     REAL(num) :: one_2tp, tp2_frac, ln_t_term, rbeb_2, rbeb_3
-    REAL(num) :: sig_add, sig_rbeb, sig_binding
+    REAL(num) :: sig_add, sig_rbeb
 
     ! Range of table and number of sample points. In Kim (2000), agreement
     ! between RBEB and experiment is verified for some elements between ~10 eV
@@ -313,9 +305,6 @@ CONTAINS
     ! Cross sections corresponding to electron energies [m**2]
     ALLOCATE(species_list(ispecies)%coll_ion_cross_sec(sample_el_in))
 
-    ! Mean binding energy seen at different electron energies [J]
-    ALLOCATE(species_list(ispecies)%coll_ion_mean_bind(sample_el_in))
-
     ! Calculate electron energy and cross section at each table sample point
     DO isamp = 1, sample_el_in
 
@@ -328,7 +317,6 @@ CONTAINS
       ! are filled in the order:
       ! 1s,2s,2p,3s,3p,4s,3d,4s,3d,4p,5s,4d,5p,6s,4f,5d,6p,7s,5f,6d
       sig_rbeb = 0.0_num
-      sig_binding = 0.0_num
       DO i_el = 1, el_num
 
         ! Only consider shells with binding energy less than the incident
@@ -371,22 +359,12 @@ CONTAINS
         sig_add = rbeb_pre * rbeb_fac * (rbeb_1 + rbeb_2 + rbeb_3)
         sig_rbeb = sig_rbeb + sig_add
 
-        ! Save (sigma * binding_energy) for shell-averaged binding energy
-        sig_binding = sig_binding + sig_add * binding_energy(i_el)
+        ! Save cross section contribution from this bound electron
+        cross_sec_parts(isamp, i_el) = sig_add
       END DO
 
       ! Set cross section after summing contributions from all electrons
       species_list(ispecies)%coll_ion_cross_sec(isamp) = sig_rbeb
-
-      ! Calculate shell-averaged binding electron binding energy at this el_ke
-      IF (isamp == 1) THEN
-        ! Special case, as cross section is 0 here
-        species_list(ispecies)%coll_ion_mean_bind(isamp) = &
-            MINVAL(binding_energy)
-      ELSE
-        species_list(ispecies)%coll_ion_mean_bind(isamp) = &
-            sig_binding / sig_rbeb
-      END IF
     END DO
 
   END SUBROUTINE calculate_cross_sections_rbeb
@@ -425,8 +403,11 @@ CONTAINS
         sample_el_out))
     ALLOCATE(species_list(ispecies)%coll_ion_secondary_cdf(sample_el_in, &
         sample_el_out))
-
     ALLOCATE(cdf_unnorm(sample_el_out-1))
+
+    ! Initialise values as first row has in_ke = minval(binding_energy)
+    species_list(ispecies)%coll_ion_secondary_ke = 0.0_num
+    species_list(ispecies)%coll_ion_secondary_cdf = 1.0_num
 
     ! Loop over sampled incident electron kinetic energies
     DO i_in = 1, sample_el_in
@@ -435,7 +416,7 @@ CONTAINS
       in_ke = species_list(ispecies)%coll_ion_incident_ke(i_in)
 
       ! Ignore incident electron energies below the minimum binding energy
-      IF (in_ke < MINVAL(binding_energy)) CYCLE
+      IF (in_ke <= MINVAL(binding_energy)) CYCLE
 
       ! Calculate range of allowed secondary energies. Minimum value is chosen
       ! to allow the CDF to be well-sampled
@@ -523,6 +504,61 @@ CONTAINS
     DEALLOCATE(cdf_unnorm)
 
   END SUBROUTINE calculate_secondary_e_ke_tables
+
+
+
+  SUBROUTINE calculate_mean_binding_energy(ispecies)
+
+    ! Populates a 2D array coll_ion_mean_bind, which gives the mean binding
+    ! energy seen by an incident electron during an ionisation event. This value
+    ! is calculated for each incident and ejected KE pair, and the average is
+    ! performed over all shells which are capable ejecting an e- at this KE.
+    !
+    ! This ensures the sum of (ejected KE) + (binding energy) never exceeds half
+    ! the incident KE, which is required for energy conservation.
+
+    INTEGER, INTENT(IN) :: ispecies
+    INTEGER :: i_in, i_out, i_bnd
+    REAL(num) :: in_ke, out_ke, max_bind, sum_parts, sum_bind
+
+    ALLOCATE(species_list(ispecies)%coll_ion_mean_bind(sample_el_in, &
+        sample_el_out))
+
+    DO i_out = 1, sample_el_out
+      DO i_in = 1, sample_el_in
+
+        ! Extract incident and ejected KE values for this i_in, i_out pair
+        in_ke = species_list(ispecies)%coll_ion_incident_ke(i_in)
+        out_ke = species_list(ispecies)%coll_ion_secondary_ke(i_in, i_out)
+
+        ! A shell cannot produce an ejected electron with KE out_ke if it
+        ! exceeds this binding energ, as max(out_ke) = 0.5 * (in_ke - bind)
+        max_bind = in_ke - 2.0_num * out_ke
+
+        ! Calculate average binding energy, weighted by cross section
+        ! contributions of allowed shells
+        sum_parts = 0.0_num
+        sum_bind = 0.0_num
+        DO i_bnd = 1, el_num
+          IF (binding_energy(i_bnd) <= max_bind) THEN
+            sum_parts = sum_parts + cross_sec_parts(i_in, i_bnd)
+            sum_bind = sum_bind &
+                + cross_sec_parts(i_in, i_bnd) * binding_energy(i_bnd)
+          END IF
+        END DO
+        IF (sum_parts > 0.0_num) THEN
+          ! Calculate mean binding energy
+          species_list(ispecies)%coll_ion_mean_bind(i_in, i_out) = &
+              sum_bind / sum_parts
+        ELSE
+          ! For i_in = 1, in_ke = minval(binding_energy), sum_parts = 0
+          species_list(ispecies)%coll_ion_mean_bind(i_in, i_out) = &
+              MINVAL(binding_energy)
+        END IF
+      END DO
+    END DO
+
+  END SUBROUTINE calculate_mean_binding_energy
 
 
 
@@ -663,14 +699,14 @@ CONTAINS
     TYPE(particle), POINTER :: electron, ion, ejected_electron
     TYPE(particle), POINTER :: next_ion, next_electron
     INTEGER :: e_count, ion_count, i_ion, i_el, remaining_el, ionised_count
-    LOGICAL, ALLOCATABLE :: e_ionised(:), i_ionised(:), e_collide_again(:)
+    LOGICAL, ALLOCATABLE :: e_ionised(:), i_ionised(:)
     REAL(num), ALLOCATABLE :: unionised_frac(:)
     LOGICAL :: first_pass, ion_at_rest
-    LOGICAL :: create_secondary, electron_recoil
-    REAL(num) :: sum_wi, n_i, cell_volume, ion_mass, el_weight, ion_weight
+    LOGICAL :: create_secondary, electron_recoil, e_collide_again
+    REAL(num) :: sum_wi, n_i, inv_cell_volume, ion_mass, el_weight, ion_weight
     REAL(num) :: el_p2_i, el_p_mag_i, el_e_i, el_ke_i, el_v_i, p_mag_new
-    REAL(num) :: el_p_i(3), el_dir(3), sec_ke_i
-    REAL(num) :: eiics, ionise_prob, sec_no, sec_frac, rand_cdf, mean_bind
+    REAL(num) :: el_p_i(3), el_dir(3), sec_ke_i, eiics, unionised_frac
+    REAL(num) :: ionise_prob, sec_no, sec_frac, rand_cdf, mean_bind
 
     ! Ignore collisions from empty species
     e_count = list_e_in%count
@@ -689,17 +725,7 @@ CONTAINS
     ion_weight = species_list(ion_species)%weight
 #endif
 
-    ! Some macro-electrons need multiple macro-ion targets to create the correct
-    ! number of secondary e-
-    ALLOCATE(e_collide_again(e_count))
-    e_collide_again = .FALSE.
-
-    ! This array tracks the fraction of "expected secondary e-" which remains to
-    ! be produced by the macro-electron
-    ALLOCATE(unionised_frac(e_count))
-    unionised_frac = 1.0_num
-
-    ! Calculate ion number density
+    ! Calculate initial ion number density
     ion => list_i_in%head
     sum_wi = 0
     DO i_ion = 1, ion_count
@@ -709,8 +735,8 @@ CONTAINS
       sum_wi = sum_wi + ion_weight
       ion => ion%next
     END DO
-    cell_volume = dx * dy * dz
-    n_i = sum_wi / cell_volume
+    inv_cell_volume = 1.0_num / (dx * dy * dz)
+    n_i = sum_wi * inv_cell_volume
 
     ! Each macro-e collision must pair to a macro-ion. To ensure there is always
     ! a macro-ion available, temporarily make the ion list circular
@@ -718,23 +744,17 @@ CONTAINS
     ion => list_i_in%head
     i_ion = 1
 
-    ! Some macro-electrons must collide with many macro-ions to create the right
-    ! number of secondary e-, this loop allows for multiple collisions
+    ! Loop over all macro-electrons
     ionised_count = 0
-    remaining_el = e_count
-    first_pass = .TRUE.
-    DO WHILE (remaining_el > 0)
+    electron => list_e_in%head
+    DO i_el = 1, e_count
 
-      ! Loop over all macro-electrons, test for ionisation condition
-      electron => list_e_in%head
-      DO i_el = 1, e_count
-
-        ! Check if this macro-electron has finished producing secondaries
-        IF (.NOT. e_collide_again(i_el) .AND. .NOT. first_pass) THEN
-          ! We don't need to consider this electron again
-          electron => electron%next
-          CYCLE
-        END IF
+      ! Some macro-electrons must collide with many macro-ions to create the
+      ! right number of secondary e-, this loop allows for multiple collisions
+      unionised_frac = 1.0_num
+      e_collide_again = .TRUE.
+      first_pass = .TRUE.
+      DO WHILE (e_collide_again)
 
 #ifndef PER_SPECIES_WEIGHT
         el_weight = electron%weight
@@ -744,7 +764,7 @@ CONTAINS
         ! Check if ion is moving or at rest
         ion_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
         ion_at_rest = ion_p2 < 1.0e-100_num
-                                                                    
+
         ! If the ion is moving, then perform a Lorentz transform to the ion
         ! rest-frame (cross sections are evaluted in rest-frame)
         IF (.NOT. ion_at_rest) THEN
@@ -766,6 +786,20 @@ CONTAINS
         el_ke_i = el_e_i - m0*c**2
         el_v_i = el_p_mag_i * c**2 / el_e_i
 
+        ! Is electron energy higher than the lowest binding energy of the ion?
+        IF (el_ke_i < species_list(ion_species)%coll_ion_incident_ke(1)) THEN
+          ! Ensure the next ion is a valid target (not previously ionised)
+          ion => ion%next
+          i_ion = MOD(i_ion, ion_count) + 1
+          DO WHILE (i_ionised(i_ion))
+            ion => ion%next
+            i_ion = MOD(i_ion, ion_count) + 1
+          END DO
+
+          ! Consider next electron
+          EXIT
+        END IF
+
         ! Find electron impact ionisation cross section (eiics)
         eiics = find_value_from_table_1d_coll(el_ke_i, sample_el_in, &
             species_list(ion_species)%coll_ion_incident_ke, &
@@ -775,26 +809,24 @@ CONTAINS
         ionise_prob = 1.0_num - EXP(- n_i * eiics * el_v_i * dt)
 
         ! Expected number of secondary electrons created by this macro-electron
-        sec_no = el_weight * unionised_frac(i_el) * ionise_prob
+        sec_no = el_weight * unionised_frac * ionise_prob
 
         ! Check if we add a macro-electron to represent ejected electrons
         IF (sec_no > ion_weight) THEN
           ! Weight of macro-ion less than expected number of secondary e-
           ! Ionise macro-ion but find a new target for macro-electron
           create_secondary = .TRUE.
-          e_collide_again(i_el) = .TRUE.
 
           ! Save fraction of secondary electrons left to make
           sec_frac = ion_weight / sec_no
-          unionised_frac(i_el) = unionised_frac(i_el) * (1.0_num - sec_frac)
+          unionised_frac(i_el) = unionised_frac * (1.0_num - sec_frac)
         ELSE
           ! Weight of macro-ion >= expected number of secondary e-
           ! Sample the probability of ionisation for the macro-ion
           create_secondary = (random() <= sec_no / ion_weight)
 
           ! Electron has created all the secondary e- it will, do not re-collide
-          IF (e_collide_again(i_el)) e_collide_again(i_el) = .FALSE.
-          remaining_el = remaining_el - 1
+          e_collide_again = .FALSE.
         END IF
 
         ! Separately sample energy loss for macro-electron. This separation is
@@ -812,13 +844,6 @@ CONTAINS
           electron_recoil = .FALSE.
         END IF
 
-        ! Sample the mean binding energy seen by an incident e- of this energy
-        IF (electron_recoil) THEN
-          mean_bind = find_value_from_table_1d_coll(el_ke_i, sample_el_in, &
-              species_list(ion_species)%coll_ion_incident_ke, &
-              species_list(ion_species)%coll_ion_mean_bind, last_state)
-        END IF
-
         ! Compute additional emission variables
         IF (create_secondary .OR. electron_recoil) THEN
           ! Sample energy of secondary macro-electron
@@ -833,12 +858,26 @@ CONTAINS
           el_dir = el_p_i / el_p_mag_i
         END IF
 
+        ! Sample the mean binding energy seen by an incident e- of this energy,
+        ! averaged over shells which can eject an e- with KE sec_ke_i
+        IF (electron_recoil) THEN
+          mean_bind = find_value_from_table_2d_coll(el_ke_i, sec_ke_i, &
+              sample_el_in, sample_el_out, &
+              species_list(ion_species)%coll_ion_incident_ke, &
+              species_list(ion_species)%coll_ion_mean_bind, &
+              species_list(ion_species)%coll_ion_secondary_ke, last_state)
+
+          ! Interpolation issue when ejected KE is very high, mean_bind can
+          ! exceed the maximum binding energy. Replace with maximum
+          IF (mean_bind > el_ke_i - 2.0_num*sec_ke_i) THEN
+            mean_bind = el_ke_i - 2.0_num*sec_ke_i
+          END IF
+        END IF
+
         ! Reduce incident e- energy by (mean binding energy + secondary KE)
         ! Ignore recoil of nucleus
         IF (electron_recoil) THEN
-          ! If (secondary KE + mean binding energy) exceeds el_e_i, then binding
-          ! energy must have been lower than the mean - remove all electron KE
-          el_e_i = MAX(el_e_i - sec_ke_i - mean_bind, m0*c**2)
+          el_e_i = el_e_i - sec_ke_i - mean_bind
 
           ! Calculate new electron energy in ion rest frame
           p_mag_new = SQRT((el_e_i/c)**2 - (m0*c)**2)
@@ -858,16 +897,17 @@ CONTAINS
           i_ionised(i_ion) = .TRUE.
           ionised_count = ionised_count + 1
           CALL generate_secondary_electron(sec_ke_i, el_dir, ejected_electron, &
-                ion, ion_at_rest)
+              ion, ion_at_rest)
 
           ! Assign macro-electron to ejected particle list
           CALL add_particle_to_partlist(list_e_ejected, ejected_electron)
           NULLIFY(ejected_electron)
+
+          ! Reduce background ion number density
+          n_i = n_i - ion_weight * inv_cell_volume
         END IF
 
-        electron => electron%next
-
-        ! Check if any ions remain for ionisation
+        ! Check if any ions remain for ionisation by the current electron
         IF (ionised_count == ion_count) EXIT
 
         ! Ensure the next ion is a valid target (not previously ionised)
@@ -877,15 +917,15 @@ CONTAINS
           ion => ion%next
           i_ion = MOD(i_ion, ion_count) + 1
         END DO
+
+        ! Only remove incident electron energy once
+        IF (first_pass) first_pass = .FALSE.
       END DO
 
-      ! Only remove incident electron energy once
-      IF (first_pass) first_pass = .FALSE.
-
-      ! Collisional ionisation ends when all electrons have created their
-      ! secondary electrons, or when all ion targets run out
+      ! Check if any ions remain for ionisation of the next electrons
       IF (ionised_count == ion_count) EXIT
 
+      electron => electron%next
     END DO
 
     ! Restore the tail of the ion list
@@ -914,8 +954,6 @@ CONTAINS
     END DO
 
     DEALLOCATE(e_ionised, i_ionised)
-    DEALLOCATE(e_collide_again)
-    DEALLOCATE(unionised_frac)
 
   END SUBROUTINE collision_ionisation_ei
 
@@ -1151,11 +1189,12 @@ CONTAINS
       state)
 
     ! For each element of x, we have a 1D array of y values and a 1D array of P
-    ! values, such that the 1D array x has a corresponding 2D array of y and P.
-    ! The P values represent the cumulative probability of finding a y value for
-    ! a given x. This function returns a y value for a given probability
-    ! p_value, at a particular x value x_in, and is used in the code to obtain
-    ! secondary electron energies (y) for a given incident electron energy (x)
+    ! values, such that the 1D array x has corresponding 2D arrays y and
+    ! p_table. The 2D arrays y and p_table are of equal size (nx,ny). This
+    ! function interpolates in x_in first, creating an interpolated 1D array of
+    ! y and p_table values. The second interpolation finds p_value in p_table,
+    ! and the function returns the corresponding value in the interpolated 1D y
+    ! array. Used for CDF and mean binding energy look-ups.
 
     REAL(num) :: find_value_from_table_2d_coll
     REAL(num), INTENT(IN) :: x_in, p_value
@@ -1228,6 +1267,7 @@ CONTAINS
         PRINT*,'*** WARNING ***'
         PRINT*,'Argument to "find_value_from_table_2d_coll" outside the ', &
             'range of the table.'
+        PRINT*,'An incident electron kinetic energy exceeds tabulated values'
         PRINT*,'Using truncated value. No more warnings will be issued.'
         warning = .FALSE.
       END IF
@@ -1301,13 +1341,6 @@ CONTAINS
       state%iy1 = i1
       state%iy2 = i2
     ELSE
-      IF (warning .AND. rank == 0) THEN
-        PRINT*,'*** WARNING ***'
-        PRINT*,'Argument to "find_value_from_table_2d_coll" outside the ', &
-            'range of the table.'
-        PRINT*,'Using truncated value. No more warnings will be issued.'
-        warning = .FALSE.
-      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
@@ -1377,13 +1410,6 @@ CONTAINS
       state%iy1 = i1
       state%iy2 = i2
     ELSE
-      IF (warning .AND. rank == 0) THEN
-        PRINT*,'*** WARNING ***'
-        PRINT*,'Argument to "find_value_from_table_2d_coll" outside the ', &
-            'range of the table.'
-        PRINT*,'Using truncated value. No more warnings will be issued.'
-        warning = .FALSE.
-      END IF
       IF (xdif1 >= 0) THEN
         fp = 0.0_num
       ELSE
