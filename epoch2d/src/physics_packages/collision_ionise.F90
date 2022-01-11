@@ -698,7 +698,7 @@ CONTAINS
     TYPE(particle_list), INTENT(INOUT) :: list_e_ionising, list_e_ejected
     TYPE(particle), POINTER :: electron, ion, ejected_electron
     TYPE(particle), POINTER :: next_ion, next_electron
-    INTEGER :: e_count, ion_count, i_ion, i_el, remaining_el, ionised_count
+    INTEGER(i8) :: e_count, ion_count, i_ion, i_el, ionised_count
     LOGICAL, ALLOCATABLE :: e_ionised(:), i_ionised(:)
     LOGICAL :: first_pass, ion_at_rest
     LOGICAL :: create_secondary, electron_recoil, e_collide_again
