@@ -700,7 +700,6 @@ CONTAINS
     TYPE(particle), POINTER :: next_ion, next_electron
     INTEGER :: e_count, ion_count, i_ion, i_el, remaining_el, ionised_count
     LOGICAL, ALLOCATABLE :: e_ionised(:), i_ionised(:)
-    REAL(num), ALLOCATABLE :: unionised_frac(:)
     LOGICAL :: first_pass, ion_at_rest
     LOGICAL :: create_secondary, electron_recoil, e_collide_again
     REAL(num) :: sum_wi, n_i, inv_cell_volume, ion_mass, el_weight, ion_weight
@@ -819,7 +818,7 @@ CONTAINS
 
           ! Save fraction of secondary electrons left to make
           sec_frac = ion_weight / sec_no
-          unionised_frac(i_el) = unionised_frac * (1.0_num - sec_frac)
+          unionised_frac = unionised_frac * (1.0_num - sec_frac)
         ELSE
           ! Weight of macro-ion >= expected number of secondary e-
           ! Sample the probability of ionisation for the macro-ion
