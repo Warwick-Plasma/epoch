@@ -1636,7 +1636,6 @@ CONTAINS
     REAL(num), INTENT(IN) :: dens2
     INTEGER, INTENT(IN) :: species1, species2
     REAL(num) :: temp2_j, bmax, q1, q2, b0, mean_p1, mean_ke1, de_brog, bmin
-    TYPE(particle), POINTER :: current
 
     CALL single_cell_mean_p_and_ke(mean_p1, mean_ke1, list1, species1)
     CALL single_cell_temp(temp2_j, list2, species2)
