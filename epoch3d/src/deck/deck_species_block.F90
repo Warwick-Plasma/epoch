@@ -472,7 +472,6 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    TYPE(primitive_stack) :: stack
     REAL(num) :: dmin, mult
     REAL(num), TARGET :: dummy(1,1,1)
     REAL(num), POINTER :: array(:,:,:)

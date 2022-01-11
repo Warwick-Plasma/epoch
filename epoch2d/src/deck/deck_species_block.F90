@@ -400,6 +400,7 @@ CONTAINS
       bc_particle_array(:, n_species) = species_bc_particle
       IF (n_secondary_species_in_block > 0) THEN
         ! Create an empty species for each ionisation level considered
+        release_species(n_species) = release_species_list
         DO i = 1, n_secondary_species_in_block
           CALL integer_as_string(i, id_string)
           name = TRIM(TRIM(species_names(block_species_id))//id_string)
@@ -471,7 +472,6 @@ CONTAINS
 
     CHARACTER(*), INTENT(IN) :: element, value
     INTEGER :: errcode
-    TYPE(primitive_stack) :: stack
     REAL(num) :: dmin, mult
     REAL(num), TARGET :: dummy(1,1)
     REAL(num), POINTER :: array(:,:)
