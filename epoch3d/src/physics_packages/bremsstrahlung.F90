@@ -866,7 +866,7 @@ CONTAINS
     ! Check fractional difference
     IF (ABS(x_in) > 0.0_num) THEN
       IF (ABS((state%x - x_in)/x_in) < 1e-10_num) THEN
-        find_value_from_table_1d_coll = state%val1d
+        find_value_from_table_1d = state%val1d
         RETURN
       END IF
     END IF
@@ -976,11 +976,11 @@ CONTAINS
     LOGICAL :: found
 
     ! If x_in and p_value match previous values, then return previous value
-    IF (x_in == 0.0_num .AND. p_value == 0.0_num) THEN
+    IF (ABS(x_in) > 0.0_num .AND. ABS(p_value) > 0.0_num) THEN
       ! Calculate fractional differences
       IF (ABS((state%x - x_in)/x_in) < 1e-10_num &
           .AND. ABS((state%y - p_value)/p_value) < 1e-10_num) THEN
-        find_value_from_table_2d_coll = state%val2d
+        find_value_from_table_alt = state%val2d
         RETURN
       END IF
     END IF
