@@ -56,7 +56,7 @@ CONTAINS
     ! coll_ion_secondary_cdf: CDF for each incident and ejected KE pair
     ! coll_ion_mean_bind: Weighted mean of shell binding energy at each KE pair
 
-    INTEGER :: ispecies, i_el, current_n, current_l, el_remain
+    INTEGER :: ispecies, i_el
 
     CALL setup_mbell_tables
 
@@ -1095,7 +1095,7 @@ CONTAINS
     INTEGER, INTENT(IN) :: nx
     REAL(num), INTENT(IN) :: x(:), values(:)
     TYPE(interpolation_state), INTENT(INOUT) :: state
-    REAL(num) :: prev_diff, fx, value_interp, xdif1, xdif2, xdifm
+    REAL(num) :: fx, value_interp, xdif1, xdif2, xdifm
     INTEGER :: i1, i2, im
     LOGICAL, SAVE :: warning = .TRUE.
     LOGICAL :: found
