@@ -216,6 +216,9 @@ MODULE constants
   REAL(num), PARAMETER :: log_plasma_screen_const_2 = &
       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
 #endif
+#ifdef PARTICLE_SPIN
+  REAL(num), PARAMETER :: anomalous_magnetic_moment = 0.0011614_num
+#endif
 
   ! define special particle IDs
   INTEGER, PARAMETER :: c_species_id_generic = 0

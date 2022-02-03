@@ -136,6 +136,11 @@ CONTAINS
 #ifdef DELTAF_METHOD
     REAL(num) :: weight_back
 #endif
+#ifdef PARTICLE_SPIN
+    REAL(num) :: vx_avg, vy_avg, vz_avg
+    REAL(num) :: v_avg_dot_B, spin_f1, spin_f2
+    REAL(num), DIMENSION(3) :: spin_rotation_x, spin_rotation_y, spin_rotation_z    
+#endif
 
     TYPE(particle), POINTER :: current, next
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
@@ -434,6 +439,50 @@ CONTAINS
         part_x = part_x + delta_x
         part_y = part_y + delta_y
 
+#ifdef PARTICLE_SPIN
+        ! repeating the Boris rotation on the velocity with half the timestep
+        ! to get the time staggered velocity
+        taux = 0.5_num * bx_part * root
+        tauy = 0.5_num * by_part * root
+        tauz = 0.5_num * bz_part * root
+
+        taux2 = taux**2
+        tauy2 = tauy**2
+        tauz2 = tauz**2
+
+        tau = 1.0_num / (1.0_num + taux2 + tauy2 + tauz2)
+
+        vx_avg = (((1.0_num + taux2 - tauy2 - tauz2) * uxm &
+            + 2.0_num * ((taux * tauy + tauz) * uym &
+            + (taux * tauz - tauy) * uzm)) * tau) / (c*gamma_rel)
+        vy_avg = (((1.0_num - taux2 + tauy2 - tauz2) * uym &
+            + 2.0_num * ((tauy * tauz + taux) * uzm &
+            + (tauy * taux - tauz) * uxm)) * tau) / (c*gamma_rel)
+        vz_avg = (((1.0_num - taux2 - tauy2 + tauz2) * uzm &
+            + 2.0_num * ((tauz * taux + tauy) * uxm &
+            + (tauz * tauy - taux) * uym)) * tau) / (c*gamma_rel)
+
+        ! ds/dt = s x spin_rotation
+        ! with
+        ! spin_rotation = e/m [(a + 1/gamma)(B - (v/c)x(E/c)) 
+        !    - (v/c) (a gamma/(gamma + 1)) (v/c) . B]
+        v_avg_dot_B = vx_avg * bx_part + vy_avg * by_part + vz_avg * bz_part
+        
+        spin_f1 = anomalous_magnetic_moment + 1 / gamma_rel
+        spin_f2 = anomalous_magnetic_moment * gamma_rel / (1.0_num + gamma_rel)
+
+        spin_rotation_x = spin_f1 * ( bx_part &
+            - (vy_avg * ez_part - vz_avg * ey_part) / c) &
+            - spin_f2 * vx_avg * v_avg_dot_B
+
+        spin_rotation_y = spin_f1 * ( by_part &
+            - (vz_avg * ex_part - vx_avg * ez_part) / c) &
+            - spin_f2 * vy_avg * v_avg_dot_B
+
+        spin_rotation_z = spin_f1 * ( bz_part &
+            - (vx_avg * ey_part - vy_avg * ex_part) / c) &
+            - spin_f2 * vz_avg * v_avg_dot_B
+#endif
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
         current%part_pos = (/ part_x + x_grid_min_local, &
