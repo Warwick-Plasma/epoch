@@ -608,7 +608,10 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_part_work_y_total = 69
   INTEGER, PARAMETER :: c_dump_part_work_z_total = 70
   INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 71
-  INTEGER, PARAMETER :: num_vars_to_dump         = 71
+  INTEGER, PARAMETER :: c_dump_part_spin_x       = 72
+  INTEGER, PARAMETER :: c_dump_part_spin_y       = 73
+  INTEGER, PARAMETER :: c_dump_part_spin_z       = 74
+  INTEGER, PARAMETER :: num_vars_to_dump         = 74
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2
