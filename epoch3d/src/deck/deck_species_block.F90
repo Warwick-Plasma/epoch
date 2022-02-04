@@ -92,6 +92,7 @@ CONTAINS
     INTEGER :: errcode, bc
     TYPE(primitive_stack) :: stack
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
+    LOGICAL, ALLOCATABLE :: release_species_set(:)
     LOGICAL :: error
 
     IF (deck_state == c_ds_first) THEN
@@ -121,6 +122,9 @@ CONTAINS
             species_list(i)%ionise = .TRUE.
       END DO
 
+      ALLOCATE(release_species_set(n_species))
+      release_species_set = .FALSE.
+
       ! Scan for ionising species with automatically generated electron
       ! populations
       DO i = 1, n_species
@@ -130,13 +134,15 @@ CONTAINS
           DO WHILE(species_list(j)%ionise_to_species > 0)
             j = j + 1
           END DO
+          ! Number of ionisation states, including the base state itself
           n_species_chain = j - i + 1
 
           ! Set release species for all ions. If auto-generation is used for a
           ! list of N species, then (N+1) to (2N-1) are the species ID for the
           ! release electrons (final ion in chain has no release)
-          DO j = i, n_species_chain-1
+          DO j = i, i + n_species_chain-2
             species_list(j)%release_species = j + n_species_chain
+            release_species_set(j) = .TRUE.
           END DO
         END IF
       END DO
@@ -148,13 +154,30 @@ CONTAINS
       DEALLOCATE(angular)
       DEALLOCATE(charge)
       DEALLOCATE(mass)
-      DEALLOCATE(auto_electrons)
       DEALLOCATE(ionisation_energies)
 
       ! Set release species of species_list elements which have been
       ! user-defined
       DO i = 1, n_species
-        IF (TRIM(release_species(i)) == '') CYCLE
+        ! Release species is already present
+        IF (release_species_set(i)) CYCLE
+
+        ! No release species needed for a non-ionising species
+        IF (.NOT. species_list(i)%ionise) CYCLE
+
+        ! Error if no release species has been provided
+        IF (TRIM(release_species(i)) == '') THEN
+          IF (rank == 0) THEN
+            DO iu = 1, nio_units ! Print to stdout and to file
+              io = io_units(iu)
+              WRITE(io,*) ''
+              WRITE(io,*) '*** ERROR ***'
+              WRITE(io,*) 'Missing release species for ', TRIM(species_names(i))
+              WRITE(io,*) ''
+            END DO
+            CALL abort_code(c_err_missing_elements)
+          END IF
+        END IF
 
         CALL initialise_stack(stack)
         CALL tokenize(release_species(i), stack, errcode)
@@ -181,6 +204,7 @@ CONTAINS
           species_list(stack%entries(1)%value)%electron = .TRUE.
           DO WHILE(species_list(j)%ionise)
             species_list(j)%release_species = stack%entries(1)%value
+            release_species_set(j) = .TRUE.
             j = species_list(j)%ionise_to_species
           END DO
         ! If there's a list of release species use it
@@ -189,6 +213,7 @@ CONTAINS
           j = i
           DO WHILE(species_list(j)%ionise)
             species_list(j)%release_species = stack%entries(nlevels)%value
+            release_species_set(j) = .TRUE.
             species_list(stack%entries(nlevels)%value)%electron = .TRUE.
             nlevels = nlevels + 1
             j = species_list(j)%ionise_to_species
@@ -200,6 +225,7 @@ CONTAINS
           species_list(stack%entries(1)%value)%electron = .TRUE.
           DO WHILE(species_list(j)%ionise)
             species_list(j)%release_species = stack%entries(1)%value
+            release_species_set(j) = .TRUE.
             j = species_list(j)%ionise_to_species
           END DO
           IF (rank == 0) THEN
@@ -217,9 +243,11 @@ CONTAINS
 
         CALL deallocate_stack(stack)
       END DO
+      DEALLOCATE(auto_electrons)
       DEALLOCATE(release_species)
       DEALLOCATE(ionise_to_species)
       DEALLOCATE(species_names)
+      DEALLOCATE(release_species_set)
 
       ! Sanity check on periodic boundaries
       DO i = 1, n_species
