@@ -137,9 +137,11 @@ CONTAINS
     REAL(num) :: weight_back
 #endif
 #ifdef PARTICLE_SPIN
+    REAL(num) :: part_sx, part_sy, part_sz
     REAL(num) :: vx_avg, vy_avg, vz_avg
-    REAL(num) :: v_avg_dot_B, spin_f1, spin_f2
-    REAL(num), DIMENSION(3) :: spin_rotation_x, spin_rotation_y, spin_rotation_z    
+    REAL(num) :: v_avg_dot_B, spin_f1, spin_f2, spin_f3
+    REAL(num) :: spin_rotation_x, spin_rotation_y, spin_rotation_z  
+    REAL(num) :: spin_spx, spin_spy, spin_spz  
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -440,6 +442,10 @@ CONTAINS
         part_y = part_y + delta_y
 
 #ifdef PARTICLE_SPIN
+        part_sx = current%spin(1)
+        part_sy = current%spin(2)
+        part_sz = current%spin(3)
+
         ! repeating the Boris rotation on the velocity with half the timestep
         ! to get the time staggered velocity
         taux = 0.5_num * bx_part * root
@@ -464,24 +470,51 @@ CONTAINS
 
         ! ds/dt = s x spin_rotation
         ! with
-        ! spin_rotation = e/m [(a + 1/gamma)(B - (v/c)x(E/c)) 
+        ! spin_rotation = dt/2 e/m [(a + 1/gamma)(B - (v/c)x(E/c)) 
         !    - (v/c) (a gamma/(gamma + 1)) (v/c) . B]
         v_avg_dot_B = vx_avg * bx_part + vy_avg * by_part + vz_avg * bz_part
         
         spin_f1 = anomalous_magnetic_moment + 1 / gamma_rel
         spin_f2 = anomalous_magnetic_moment * gamma_rel / (1.0_num + gamma_rel)
 
-        spin_rotation_x = spin_f1 * ( bx_part &
+        spin_rotation_x = dto2 * (spin_f1 * ( bx_part &
             - (vy_avg * ez_part - vz_avg * ey_part) / c) &
-            - spin_f2 * vx_avg * v_avg_dot_B
+            - spin_f2 * vx_avg * v_avg_dot_B)
 
-        spin_rotation_y = spin_f1 * ( by_part &
+        spin_rotation_y = dto2 * (spin_f1 * ( by_part &
             - (vz_avg * ex_part - vx_avg * ez_part) / c) &
-            - spin_f2 * vy_avg * v_avg_dot_B
+            - spin_f2 * vy_avg * v_avg_dot_B)
 
-        spin_rotation_z = spin_f1 * ( bz_part &
+        spin_rotation_z = dto2 * (spin_f1 * ( bz_part &
             - (vx_avg * ey_part - vy_avg * ex_part) / c) &
-            - spin_f2 * vz_avg * v_avg_dot_B
+            - spin_f2 * vz_avg * v_avg_dot_B)
+
+        ! now perform a Boris-style rotation on the spin vector
+        ! spin_sp = spin_old + spin_old x spin_rotation
+        ! spin_new = spin_old 
+        !     + 2 spin_sp x spin_rotation / ( 1 + |spin_rotation|^2 )
+
+        spin_f3 = 2.0_num / (1 + spin_rotation_x*spin_rotation_x &
+            + spin_rotation_y * spin_rotation_y &
+            + spin_rotation_z * spin_rotation_z)
+
+        spin_spx = part_sx + part_sy * spin_rotation_z &
+          - part_sz * spin_rotation_y
+
+        spin_spy = part_sy + part_sz * spin_rotation_x &
+          - part_sx * spin_rotation_z
+
+        spin_spz = part_sz + part_sx * spin_rotation_y &
+          - part_sy * spin_rotation_x
+
+        current%spin(1) = part_sx + spin_f3 * (spin_spy * spin_rotation_z &
+            - spin_spz * spin_rotation_y)
+
+        current%spin(2) = part_sy + spin_f3 * (spin_spz * spin_rotation_x &
+            - spin_spx * spin_rotation_z)
+
+        current%spin(3) = part_sz + spin_f3 * (spin_spx * spin_rotation_y &
+            - spin_spy * spin_rotation_x)
 #endif
         ! particle has now finished move to end of timestep, so copy back
         ! into particle array
