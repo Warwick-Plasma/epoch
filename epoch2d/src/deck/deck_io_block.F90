@@ -617,10 +617,10 @@ CONTAINS
       elementselected = c_dump_part_spin_x
 
     ELSE IF (str_cmp(element, 'spin_y')) THEN
-      elementselected = c_dump_part_work_y
+      elementselected = c_dump_part_spin_y
 
     ELSE IF (str_cmp(element, 'spin_z')) THEN
-      elementselected = c_dump_part_work_z
+      elementselected = c_dump_part_spin_z
 #endif
 
     ELSE IF (str_cmp(element, 'ex')) THEN

@@ -671,11 +671,11 @@ CONTAINS
 #endif
 #ifdef PARTICLE_SPIN
         CALL write_particle_variable(c_dump_part_spin_x, code, &
-            'Spin_x_direction', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_spin_x, code, &
-            'Spin_x_direction', '', it_output_real)
-        CALL write_particle_variable(c_dump_part_spin_x, code, &
-            'Spin_x_direction', '', it_output_real)
+            'Spin_x', '', it_output_real)
+        CALL write_particle_variable(c_dump_part_spin_y, code, &
+            'Spin_y', '', it_output_real)
+        CALL write_particle_variable(c_dump_part_spin_z, code, &
+            'Spin_z', '', it_output_real)
 #endif
         CALL write_particle_grid(code)
 

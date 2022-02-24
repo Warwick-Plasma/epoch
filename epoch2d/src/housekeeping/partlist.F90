@@ -603,7 +603,7 @@ CONTAINS
         LOG(1.0_num / (1.0_num - random()))
 #endif
 #ifdef PARTICLE_SPIN
-    new_particle%spin = (/1.0, 0.0, 0.0/)
+    new_particle%spin = (/0.0, 0.0, 1.0/)
 #endif
   END SUBROUTINE init_particle
 
