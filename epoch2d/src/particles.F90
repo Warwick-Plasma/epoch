@@ -470,7 +470,7 @@ CONTAINS
 
         ! ds/dt = s x spin_rotation
         ! with
-        ! spin_rotation = dt/2 e/m [(a + 1/gamma)(B - (v/c)x(E/c)) 
+        ! spin_rotation = - dt/2 e/m [(a + 1/gamma)(B - (v/c)x(E/c)) 
         !    - (v/c) (a gamma/(gamma + 1)) (v/c) . B]
         v_avg_dot_B = vx_avg * bx_part + vy_avg * by_part + vz_avg*bz_part
         
@@ -478,15 +478,15 @@ CONTAINS
         spin_f2 = part_q * anomalous_magnetic_moment * gamma_rel &
             / ((1.0_num + gamma_rel) * part_m * c**2)
         ! PRINT*, 'SPIN', dto2, gamma_rel, spin_f1, by_part, spin_f1 * by_part
-        spin_rotation_x = dtfac * (spin_f1 * ( bx_part &
+        spin_rotation_x = - dtfac * (spin_f1 * ( bx_part &
             - (vy_avg * ez_part - vz_avg * ey_part) / c**2) &
             - spin_f2 * vx_avg * v_avg_dot_B)
 
-        spin_rotation_y = dtfac * (spin_f1 * ( by_part &
+        spin_rotation_y = - dtfac * (spin_f1 * ( by_part &
             - (vz_avg * ex_part - vx_avg * ez_part) / c**2) &
             - spin_f2 * vy_avg * v_avg_dot_B)
 
-        spin_rotation_z = dtfac * (spin_f1 * ( bz_part &
+        spin_rotation_z = - dtfac * (spin_f1 * ( bz_part &
             - (vx_avg * ey_part - vy_avg * ex_part) / c**2) &
             - spin_f2 * vz_avg * v_avg_dot_B)
 
