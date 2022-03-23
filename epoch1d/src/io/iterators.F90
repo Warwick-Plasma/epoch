@@ -341,6 +341,32 @@ CONTAINS
           cur => cur%next
         END DO
 #endif
+
+#ifdef PARTICLE_SPIN
+      CASE (c_dump_part_spin_x)
+        ndim = 1
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%spin(ndim)
+          cur => cur%next
+        END DO
+
+      CASE (c_dump_part_spin_y)
+        ndim = 2
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%spin(ndim)
+          cur => cur%next
+        END DO
+
+      CASE (c_dump_part_spin_z)
+        ndim = 3
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%spin(ndim)
+          cur => cur%next
+        END DO
+#endif
       END SELECT
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)
