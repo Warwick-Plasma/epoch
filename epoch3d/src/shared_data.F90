@@ -136,6 +136,9 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#ifdef PARTICLE_SPIN
+    REAL(num), DIMENSION(3) :: spin
+#endif
   END TYPE particle
 
   ! Data for migration between species

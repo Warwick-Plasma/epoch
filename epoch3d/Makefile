@@ -214,6 +214,9 @@ DEFINES := $(DEFINE)
 # Include QED routines
 #DEFINES += $(D)PHOTONS
 
+# Include the particle spin. Spin precession is calculated via the T-BMT equations
+DEFINES += $(D)PARTICLE_SPIN
+
 # Use the Trident process for pair production
 #DEFINES += $(D)TRIDENT_PHOTONS
 
