@@ -458,15 +458,16 @@ CONTAINS
 
         tau = 1.0_num / (1.0_num + taux2 + tauy2 + tauz2)
 
+        ! the normalised velocity v/c at the half time step
         vx_avg = (((1.0_num + taux2 - tauy2 - tauz2) * uxm &
             + 2.0_num * ((taux * tauy + tauz) * uym &
-            + (taux * tauz - tauy) * uzm)) * tau) / (c*gamma_rel)
+            + (taux * tauz - tauy) * uzm)) * tau) / gamma_rel
         vy_avg = (((1.0_num - taux2 + tauy2 - tauz2) * uym &
             + 2.0_num * ((tauy * tauz + taux) * uzm &
-            + (tauy * taux - tauz) * uxm)) * tau) / (c*gamma_rel)
+            + (tauy * taux - tauz) * uxm)) * tau) / gamma_rel
         vz_avg = (((1.0_num - taux2 - tauy2 + tauz2) * uzm &
             + 2.0_num * ((tauz * taux + tauy) * uxm &
-            + (tauz * tauy - taux) * uym)) * tau) / (c*gamma_rel)
+            + (tauz * tauy - taux) * uym)) * tau) / gamma_rel
 
         ! ds/dt = s x spin_rotation
         ! with
@@ -476,18 +477,18 @@ CONTAINS
         
         spin_f1 = part_q * (anomalous_magnetic_moment + 1 / gamma_rel) / part_m
         spin_f2 = part_q * anomalous_magnetic_moment * gamma_rel &
-            / ((1.0_num + gamma_rel) * part_m * c**2)
+            / ((1.0_num + gamma_rel) * part_m)
         ! PRINT*, 'SPIN', dto2, gamma_rel, spin_f1, by_part, spin_f1 * by_part
         spin_rotation_x = - dtfac * (spin_f1 * ( bx_part &
-            - (vy_avg * ez_part - vz_avg * ey_part) / c**2) &
+            - (vy_avg * ez_part - vz_avg * ey_part) / c) &
             - spin_f2 * vx_avg * v_avg_dot_B)
 
         spin_rotation_y = - dtfac * (spin_f1 * ( by_part &
-            - (vz_avg * ex_part - vx_avg * ez_part) / c**2) &
+            - (vz_avg * ex_part - vx_avg * ez_part) / c) &
             - spin_f2 * vy_avg * v_avg_dot_B)
 
         spin_rotation_z = - dtfac * (spin_f1 * ( bz_part &
-            - (vx_avg * ey_part - vy_avg * ex_part) / c**2) &
+            - (vx_avg * ey_part - vy_avg * ex_part) / c) &
             - spin_f2 * vz_avg * v_avg_dot_B)
 
         ! now perform a Boris-style rotation on the spin vector
