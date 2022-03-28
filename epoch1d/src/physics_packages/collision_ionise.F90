@@ -597,22 +597,23 @@ CONTAINS
     END IF
 
     ! Check if the tables can be seen, issue warning if not
-    INQUIRE(FILE='src/physics_packages/TABLES/binding_energy/be_'//z_string, &
-        EXIST=exists)
+    INQUIRE(FILE=TRIM(physics_table_location) &
+        //'/binding_energy/be_'//z_string, EXIST=exists)
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
         io = io_units(iu)
         WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
-        WRITE(io,*) 'src/physics_packages/TABLES/binding_energy/be_'//z_string
+        WRITE(io,*) TRIM(physics_table_location) &
+            //'/binding_energy/be_'//z_string
         WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
 
     OPEN(UNIT = lu, &
-        FILE = 'src/physics_packages/TABLES/binding_energy/be_'//z_string, &
+        FILE = TRIM(physics_table_location)//'/binding_energy/be_'//z_string, &
         STATUS = 'OLD')
 
     ! Keep reading the file until the correct line is reached (ignore header)

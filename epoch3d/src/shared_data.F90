@@ -580,6 +580,7 @@ MODULE shared_data
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
+  CHARACTER(LEN=string_length) :: physics_table_location
 
   INTEGER :: maxwell_solver = c_maxwell_solver_yee
   REAL(num) :: dt_custom

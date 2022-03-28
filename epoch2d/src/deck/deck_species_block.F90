@@ -1485,7 +1485,7 @@ CONTAINS
     END IF
 
     ! Check if the tables can be seen, issue warning if not
-    INQUIRE(FILE='src/physics_packages/TABLES/ionisation_energies.table', &
+    INQUIRE(FILE=TRIM(physics_table_location) // '/ionisation_energies.table', &
         EXIST=exists)
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
@@ -1493,13 +1493,13 @@ CONTAINS
         WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
-        WRITE(io,*) 'src/physics_packages/TABLES/ionisation_energies.table'
+        WRITE(io,*) TRIM(physics_table_location) // '/ionisation_energies.table'
         WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
 
-    INQUIRE(FILE='src/physics_packages/TABLES/ion_l.table', &
+    INQUIRE(FILE=TRIM(physics_table_location) // '/ion_l.table', &
         EXIST=exists)
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
@@ -1507,13 +1507,13 @@ CONTAINS
         WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
-        WRITE(io,*) 'src/physics_packages/TABLES/ion_l.table'
+        WRITE(io,*) TRIM(physics_table_location) // '/ion_l.table'
         WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
 
-    INQUIRE(FILE='src/physics_packages/TABLES/ion_n.table', &
+    INQUIRE(FILE=TRIM(physics_table_location) // '/ion_n.table', &
         EXIST=exists)
     IF (.NOT.exists) THEN
       DO iu = 1, nio_units ! Print to stdout and to file
@@ -1521,20 +1521,20 @@ CONTAINS
         WRITE(io,*) ''
         WRITE(io,*) '*** ERROR ***'
         WRITE(io,*) 'Unable to find the file:'
-        WRITE(io,*) 'src/physics_packages/TABLES/ion_n.table'
+        WRITE(io,*) TRIM(physics_table_location) // '/ion_n.table'
         WRITE(io,*) ''
       END DO
       CALL abort_code(c_err_io_error)
     END IF
 
     OPEN(UNIT = lu, &
-        FILE = 'src/physics_packages/TABLES/ionisation_energies.table', &
+        FILE = TRIM(physics_table_location) // '/ionisation_energies.table', &
         STATUS = 'OLD')
     OPEN(UNIT = lu + 1, &
-        FILE = 'src/physics_packages/TABLES/ion_l.table', &
+        FILE = TRIM(physics_table_location) // '/ion_l.table', &
         STATUS = 'OLD')
     OPEN(UNIT = lu + 2, &
-        FILE = 'src/physics_packages/TABLES/ion_n.table', &
+        FILE = TRIM(physics_table_location) // '/ion_n.table', &
         STATUS = 'OLD')
 
     ! Keep reading each file until the correct line is reached
