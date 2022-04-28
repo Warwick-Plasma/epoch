@@ -665,14 +665,26 @@ CONTAINS
       DO i = 1, n_species
         IF (species_id == species_list(i)%release_species) THEN
           j = species_list(i)%ionise_to_species
-          DO WHILE(j > 0)
-            species_list(j)%mass = species_list(j)%mass &
-                - species_list(species_id)%mass
-            species_list(j)%charge = species_list(j)%charge &
-                - species_list(species_id)%charge
-            species_charge_set(j) = .TRUE.
-            j = species_list(j)%ionise_to_species
-          END DO
+          ! Do not remove charge multiple times if the user specifies both
+          ! charge and identify
+          IF (.NOT. species_charge_set(j)) THEN
+            DO WHILE(j > 0)
+              species_list(j)%charge = species_list(j)%charge &
+                  - species_list(species_id)%charge
+              species_charge_set(j) = .TRUE.
+              j = species_list(j)%ionise_to_species
+            END DO
+          END IF
+          ! Do not remove mass multiple times if the user specifies both mass
+          ! and identify
+          IF (ABS((species_list(i)%mass - species_list(j)%mass) &
+              / species_list(i)%mass) < 1.0e-10_num) THEN
+            DO WHILE(j > 0)
+              species_list(j)%mass = species_list(j)%mass &
+                  - species_list(species_id)%mass
+              j = species_list(j)%ionise_to_species
+            END DO
+          END IF
         END IF
       END DO
       RETURN
@@ -687,11 +699,16 @@ CONTAINS
       DO i = 1, n_species
         IF (species_id == species_list(i)%release_species) THEN
           j = species_list(i)%ionise_to_species
-          DO WHILE(j > 0)
-            species_list(j)%mass = species_list(j)%mass &
-                - species_list(species_id)%mass
-            j = species_list(j)%ionise_to_species
-          END DO
+          ! Do not remove mass multiple times if the user specifies both mass
+          ! and identify
+          IF (ABS((species_list(i)%mass - species_list(j)%mass) &
+              / species_list(i)%mass) < 1.0e-10_num) THEN
+            DO WHILE(j > 0)
+              species_list(j)%mass = species_list(j)%mass &
+                  - species_list(species_id)%mass
+              j = species_list(j)%ionise_to_species
+            END DO
+          END IF
         END IF
       END DO
       IF (species_list(species_id)%mass < 0) THEN
@@ -721,12 +738,16 @@ CONTAINS
       DO i = 1, n_species
         IF (species_id == species_list(i)%release_species) THEN
           j = species_list(i)%ionise_to_species
-          DO WHILE(j > 0)
-            species_list(j)%charge = species_list(j)%charge &
-                - species_list(species_id)%charge
-            species_charge_set(j) = .TRUE.
-            j = species_list(j)%ionise_to_species
-          END DO
+          ! Do not remove charge multiple times if the user specifies both
+          ! charge and identify
+          IF (.NOT. species_charge_set(j)) THEN
+            DO WHILE(j > 0)
+              species_list(j)%charge = species_list(j)%charge &
+                  - species_list(species_id)%charge
+              species_charge_set(j) = .TRUE.
+              j = species_list(j)%ionise_to_species
+            END DO
+          END IF
         END IF
       END DO
       RETURN
