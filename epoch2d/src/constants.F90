@@ -78,6 +78,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
 
+#ifdef PARTICLE_SPIN
+  INTEGER, PARAMETER :: c_spin_null = -1
+  INTEGER, PARAMETER :: c_spin_uniform = 1
+  INTEGER, PARAMETER :: c_spin_directed = 2
+#endif
+
   ! Frequency function type codes
   INTEGER, PARAMETER :: c_of_omega = 1
   INTEGER, PARAMETER :: c_of_freq = 2
