@@ -27,7 +27,7 @@ MODULE collision_ionise
   IMPLICIT NONE
 
   ! Variables for deriving cross sections
-  REAL(num), ALLOCATABLE :: binding_energy(:), cross_sec_parts(:,:)
+  REAL(num), ALLOCATABLE :: binding_energy(:), bound_ke(:), cross_sec_parts(:,:)
   REAL(num), PARAMETER :: rbeb_const = 2.0_num * pi * a0**2 * alpha**4
   REAL(num) :: mbell_a(3,0:1), mbell_b(3,0:1,7), mbell_m, mbell_lambda(0:1)
   INTEGER :: el_num
@@ -88,8 +88,10 @@ CONTAINS
         ! Get binding energies and quantum numbers for each electron in current
         ! species
         ALLOCATE(binding_energy(el_num))
+        ALLOCATE(bound_ke(el_num))
         CALL get_electron_data_from_file(species_list(ispecies)%atomic_no, &
-            NINT(species_list(ispecies)%charge/q0), binding_energy, el_n, el_l)
+            NINT(species_list(ispecies)%charge/q0), binding_energy, bound_ke, &
+            el_n, el_l)
 
         ! Temporary array for cross section contributions of each bound e-, at
         ! each incident e- KE (used for mean binding energy calculation)
@@ -110,7 +112,7 @@ CONTAINS
         ! Calculate mean binding energy for each incident KE, ejected KE pair
         CALL calculate_mean_binding_energy(ispecies)
 
-        DEALLOCATE(binding_energy, cross_sec_parts)
+        DEALLOCATE(binding_energy, bound_ke, cross_sec_parts)
 
       END IF
     END DO
@@ -329,7 +331,7 @@ CONTAINS
         ! t', b', u' (with approximation B = U)
         rbeb_tp = el_ke / (m0*c**2)
         rbeb_bp = binding_energy(i_el) / (m0*c**2)
-        rbeb_up = rbeb_bp
+        rbeb_up = bound_ke(i_el) / (m0*c**2)
 
         ! beta_t**2, beta_b**2, beta_u**2
         beta_t2 = 1.0_num - 1.0_num/(1.0_num + rbeb_tp)**2
@@ -457,7 +459,7 @@ CONTAINS
           ! t', b', u' (with approximation B = U)
           rbeb_tp = in_ke / (m0*c**2)
           rbeb_bp = binding_energy(i_bnd) / (m0*c**2)
-          rbeb_up = rbeb_bp
+          rbeb_up = bound_ke(i_bnd) / (m0*c**2)
 
           ! beta_t**2, beta_b**2, beta_u**2
           beta_t2 = 1.0_num - 1.0_num/(1.0_num + rbeb_tp)**2
@@ -563,13 +565,14 @@ CONTAINS
 
 
   SUBROUTINE get_electron_data_from_file(atomic_no, ion_state, binding_energy, &
-        el_n, el_l)
+        bound_ke, el_n, el_l)
 
     ! Populates the array binding_energy with energies taken from the relevant
     ! binding energy table. These files list binding energies [eV] for a given
     ! element, with a line for each ion charge state and a column for each
-    ! shell. The binding_energy array is in [J]. The quantum numbers of the
-    ! electrons are also recorded in el_n and el_l
+    ! shell. The binding_energy array is in [J]. Also creates an equivalent
+    ! array for the mean orbital kinetic energy, bound_ke. The quantum numbers
+    ! of the electrons are also recorded in el_n and el_l
     !
     ! Binding energies for electrons in neutral atoms were taken from Table 2 in
     ! Desclaux (1973) "Relativistic Dirac-Fock expectation values for atoms with
@@ -578,14 +581,18 @@ CONTAINS
     ! Binding energies for electrons in ions were calculated using the method in
     ! Carlson (1970) "Calculated ionization potentials for multiply charged
     ! ions". The formula relied on ionisation energies taken from NIST.
+    !
+    ! Mean orbital kinetic energies are assumed to be the same as the binding
+    ! energies. The user must over-write these tables if they have the data to
+    ! do so.
 
     INTEGER, INTENT(IN) :: atomic_no, ion_state
-    REAL(num), INTENT(OUT) :: binding_energy(:)
+    REAL(num), INTENT(OUT) :: binding_energy(:), bound_ke(:)
     INTEGER, INTENT(OUT) :: el_n(:), el_l(:)
     CHARACTER(LEN=3) :: z_string
     LOGICAL :: exists
     INTEGER :: i_file, io, iu, read_ion, i_shell, el_remain, i_el, el_no
-    REAL(num), ALLOCATABLE :: be_all_shells(:)
+    REAL(num), ALLOCATABLE :: be_all_shells(:), u_all_shells(:)
 
     ! Deduce relevant file
     IF (atomic_no < 10) THEN
@@ -612,26 +619,35 @@ CONTAINS
       CALL abort_code(c_err_io_error)
     END IF
 
+    ! Open binding energy and orbital kinetic energy files
     OPEN(UNIT = lu, &
         FILE = TRIM(physics_table_location)//'/binding_energy/be_'//z_string, &
+        STATUS = 'OLD')
+    OPEN(UNIT = lu+1, &
+        FILE = TRIM(physics_table_location)//'/bound_ke/u_'//z_string, &
         STATUS = 'OLD')
 
     ! Keep reading the file until the correct line is reached (ignore header)
     DO i_file = 1, ion_state+1
       READ(lu,*)
+      READ(lu+1,*)
     END DO
 
-    ! Ignore the charge column and read the binding energies of the 29 energy
-    ! shells from 1s to 6d*
+    ! Ignore the charge column and read the binding energies and mean oribtial
+    ! kinetic energies of the 29 energy shells from 1s to 6d*
     ALLOCATE(be_all_shells(29))
+    ALLOCATE(u_all_shells(29))
     READ(lu,*) read_ion, be_all_shells(1:29)
+    READ(lu+1,*) read_ion, u_all_shells(1:29)
     CLOSE(lu)
+    CLOSE(lu+1)
 
-    ! Convert binding energies to [J]
+    ! Convert energies to [J]
     be_all_shells = be_all_shells * q0
+    u_all_shells = u_all_shells * q0
 
-    ! Loop over the electrons, deduce the shell and save the binding energy and
-    ! quantum numbers
+    ! Loop over the electrons, deduce the shell and save the binding energy,
+    ! bound KE, and quantum numbers
     i_shell = 1
     el_remain = table_count(i_shell)
     el_no = atomic_no - ion_state
@@ -653,6 +669,7 @@ CONTAINS
 
       ! Save shell properties to current electron
       binding_energy(i_el) = be_all_shells(i_shell)
+      bound_ke(i_el) = u_all_shells(i_shell)
       el_n(i_el) = table_n(i_shell)
       el_l(i_el) = table_l(i_shell)
 
