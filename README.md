@@ -1,14 +1,14 @@
 # *** PLEASE READ THIS NOTE ***
 
-If you are obtaining this code from the github server *DO NOT* use the
-"Download zip" buttons. They will only download the EPOCH code and not the SDF
-subdirectory.
+To download this Hybrid-PIC code, perform the following commands from inside a Linux terminal:
 
-The latest version of the code can be found
-[here](https://github.com/Warwick-Plasma/epoch/releases)
+``` 
+  git clone https://github.com/Status-Mirror/epoch.git
+  cd epoch
+  git clone --recursive https://github.com/Warwick-Plasma/SDF.git
+```
 
-For similar reasons, if cloning the repository using git you *MUST* add the
-"--recursive" flag.
+Note, some users will need to delete the SDF directory from the first git clone, before you can perform the second git clone.
 
 ## DOWNLOADING AND BUILDING THE CODE
 

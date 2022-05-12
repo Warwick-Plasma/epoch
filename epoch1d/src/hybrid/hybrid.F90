@@ -51,7 +51,9 @@ MODULE hybrid
 
   IMPLICIT NONE
 
+#ifdef HYBRID
   REAL(num), PARAMETER :: p_small = 1.0e-10_num*mc0
+#endif
 
 CONTAINS
 

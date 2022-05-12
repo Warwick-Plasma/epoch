@@ -545,7 +545,10 @@ CONTAINS
         new%part_p = p_dir * p_mag
 
         ! Rotate mean e- direction
-        new%particle_energy = SQRT((p_mag*c)**2 + mc2**2)
+        particle_energy = SQRT((p_mag*c)**2 + mc2**2)
+#if defined(HYBRID) || defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+        new%particle_energy = particle_energy
+#endif
         CALL sample_rotation(new, laser, p_mag)
 
         ! Randomly position the perpendicular position of the electron to
@@ -557,12 +560,12 @@ CONTAINS
 
         ! Push particle back a random fraction of the distance this particle
         ! would travel in the boundary direction in one timestep
-        v_bdy = new%part_p(dir_index) * c**2 / new%particle_energy
+        v_bdy = new%part_p(dir_index) * c**2 / particle_energy
         new%part_pos(dir_index) = bdy_pos - random() * v_bdy * dt
 
         IF (laser%e_dist == e_dist_exp_weight) THEN
           ! Exponentially distribute the weights
-          new%weight = EXP(-(new%particle_energy-mc2)/mean_energy)
+          new%weight = EXP(-(particle_energy-mc2)/mean_energy)
           sum_weight = sum_weight + new%weight
         ELSE
           ! Uniform weight
