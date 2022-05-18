@@ -70,6 +70,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_bc_mixed = 14
   INTEGER, PARAMETER :: c_bc_heat_bath = 15
 
+  ! Collision types
+  INTEGER, PARAMETER :: c_coll_ignore = 0
+  INTEGER, PARAMETER :: c_coll_collide = 1
+  INTEGER, PARAMETER :: c_coll_background_1st = 2
+  INTEGER, PARAMETER :: c_coll_background_2nd = 3
+
   ! Boundary location codes
   INTEGER, PARAMETER :: c_bd_x_min = 1
   INTEGER, PARAMETER :: c_bd_x_max = 2
@@ -191,6 +197,8 @@ MODULE constants
       atomic_electric_field = 5.142206538736485312185213306837419e11_num
   ! m0 * c
   REAL(num), PARAMETER :: mc0 = 2.73092429345209278e-22_num
+  ! m0 * c**2
+  REAL(num), PARAMETER :: m0c2 = mc0 * c
 
   ! Constants used in pair production
 #ifdef PHOTONS

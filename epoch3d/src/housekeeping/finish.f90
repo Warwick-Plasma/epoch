@@ -22,6 +22,7 @@ MODULE finish
   USE window
   USE laser
   USE collisions
+  USE background_collisions
   USE dist_fn
   USE ionise
   USE injectors
@@ -129,6 +130,7 @@ CONTAINS
     CALL deallocate_window
     CALL deallocate_lasers
     CALL deallocate_collisions
+    CALL deallocate_background_collisions
     CALL deallocate_file_list
     CALL deallocate_dist_fns
     CALL deallocate_ionisation

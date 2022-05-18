@@ -44,6 +44,7 @@ PROGRAM pic
   USE window
   USE split_particle
   USE collisions
+  USE background_collisions
   USE particle_migration
   USE ionise
   USE calc_df
@@ -168,6 +169,7 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
+  CALL setup_background_collisions
 
   IF (rank == 0) THEN
     PRINT*
@@ -211,7 +213,8 @@ PROGRAM pic
       ! .FALSE. this time to use load balancing threshold
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
-      IF (use_particle_lists) THEN
+      IF (use_particle_lists &
+          .AND. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
         CALL reorder_particles_to_grid
@@ -230,6 +233,8 @@ PROGRAM pic
 
         CALL reattach_particles_to_mainlist
       END IF
+
+      IF (use_background_collisions) CALL run_background_collisions
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
       CALL current_finish

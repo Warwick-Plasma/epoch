@@ -69,6 +69,8 @@ MODULE collisions
   PROCEDURE(intra_collisions_proto), POINTER, SAVE :: intra_coll_fn => NULL()
   PROCEDURE(inter_collisions_proto), POINTER, SAVE :: inter_coll_fn => NULL()
 
+  REAL(num) :: dt_coll
+
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
   REAL(num), PARAMETER :: one_m_2eps = 1.0_num - 2.0_num * eps
   REAL(num), PARAMETER :: one_p_2eps = 1.0_num + 2.0_num * eps
@@ -125,6 +127,7 @@ CONTAINS
     REAL(num), DIMENSION(:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
     LOGICAL :: collide_species
+    INTEGER :: collision_type
 
     ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng))
@@ -135,6 +138,8 @@ CONTAINS
     ALLOCATE(meanz(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(part_count(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(iekbar(1-ng:nx+ng,1-ng:ny+ng))
+
+    dt_coll = dt * REAL(coll_n_step, num)
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -147,7 +152,8 @@ CONTAINS
       collide_species = .FALSE.
       DO jspecies = ispecies, n_species
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor > 0) THEN
+        collision_type = coll_pairs_state(ispecies, jspecies)
+        IF (collision_type == c_coll_collide) THEN
           collide_species = .TRUE.
           EXIT
         END IF
@@ -180,7 +186,9 @@ CONTAINS
         IF (ABS(species_list(jspecies)%charge) <= c_tiny) &
             CYCLE
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor <= 0) CYCLE
+        collision_type = coll_pairs_state(ispecies, jspecies)
+
+        IF (.NOT. collision_type == c_coll_collide) CYCLE
 
         IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
@@ -244,6 +252,7 @@ CONTAINS
     REAL(num) :: user_factor, e_user_factor, q1, q2, m1, m2, w1, w2
     REAL(num) :: q_e, m_e, w_e, q_full, ionisation_energy
     LOGICAL :: use_coulomb_log_auto_i, use_coulomb_log_auto
+    INTEGER :: collision_type, e_collision_type
 
     DO iy = 1, ny
     DO ix = 1, nx
@@ -271,6 +280,8 @@ CONTAINS
 
     CALL create_empty_partlist(ionising_e)
     CALL create_empty_partlist(ejected_e)
+
+    dt_coll = dt * REAL(coll_n_step, num)
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -323,7 +334,8 @@ CONTAINS
           use_coulomb_log_auto = .FALSE.
         END IF
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor <= 0) CYCLE
+        collision_type = coll_pairs_state(ispecies, jspecies)
+        IF (.NOT. collision_type == c_coll_collide) CYCLE
 
         CALL calc_coll_number_density(jdens, jspecies)
         CALL calc_coll_temperature_ev(jtemp, jspecies)
@@ -364,12 +376,14 @@ CONTAINS
             e_log_lambda = calc_coulomb_log(iekbar, e_temp, idens, &
                 e_dens, q1, q_e, m1)
             e_user_factor = coll_pairs(ispecies, ion_species)
+            e_collision_type = coll_pairs_state(ispecies, ion_species)
           ELSE IF (species_list(ispecies)%ionise &
               .AND. species_list(jspecies)%electron) THEN
             CALL calc_coll_ekbar(e_ekbar, e_species)
             e_log_lambda = calc_coulomb_log(e_ekbar, jtemp, e_dens, &
                 jdens, q_e, q2, m_e)
             e_user_factor = coll_pairs(ion_species, jspecies)
+            e_collision_type = coll_pairs(ion_species, jspecies)
           END IF
         ELSE
           log_lambda = coulomb_log
@@ -396,7 +410,7 @@ CONTAINS
                 q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor > 0.0_num) THEN
+            IF (e_collision_type == c_coll_collide) THEN
               CALL inter_coll_fn(ejected_e, ionising_e, &
                   m_e, m2, q_e, q2, w_e, w2, &
                   e_dens(ix,iy), jdens(ix,iy), &
@@ -431,7 +445,7 @@ CONTAINS
                 q_full, ionisation_energy, n1, n2, l)
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
-            IF (e_user_factor > 0.0_num) THEN
+            IF (e_collision_type == c_coll_collide) THEN
               CALL inter_coll_fn(ejected_e, ionising_e, &
                   m1, m_e, q1, q_e, w1, w_e, &
                   idens(ix,iy), e_dens(ix,iy), &
@@ -536,7 +550,7 @@ CONTAINS
     red_ion = e_rest_ev * ionisation_energy_inv
     red_ion_inv = 1.0_num / red_ion
     ! Area must be multiplied by 1e-4 to convert from cm^2 to m^2
-    prob_factor = -e_dens * np / factor * dt * 1e-4_num
+    prob_factor = -e_dens * np / factor * dt_coll * 1e-4_num
 
     DO k = 1, pcount
       i_p2 = DOT_PRODUCT(ion%part_p, ion%part_p)
@@ -866,7 +880,7 @@ CONTAINS
 
       ! Calculate number of collisions in the timestep
       ! Limit value according to Sentoku & Kemp
-      nu = MIN(nu * factor * np * dt, 0.02_num)
+      nu = MIN(nu * factor * np * dt_coll, 0.02_num)
 
       ! New coordinate system to simplify scattering.
       CALL new_coords(vr, c1, c2, c3)
@@ -1023,7 +1037,7 @@ CONTAINS
     impact => current%next
 
     ! Per-cell constant factors
-    cell_fac = dens**2 * dt * factor * dx * dy
+    cell_fac = dens**2 * dt_coll * factor * dx * dy
     s_fac = cell_fac * log_lambda / pi4_eps2_c4
     dens_23 = dens**two_thirds
     s_fac_prime = cell_fac * pi_fac / dens_23
@@ -1318,7 +1332,7 @@ CONTAINS
 
         ! Collision frequency
         nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
-        nu = MIN(nu * factor * np * dt, 0.02_num)
+        nu = MIN(nu * factor * np * dt_coll, 0.02_num)
 
         ! NOTE: nu is now the number of collisions per timestep, NOT collision
         ! frequency
@@ -1481,7 +1495,7 @@ CONTAINS
       impact => p_list2%head
 
       ! Per-cell constant factors
-      cell_fac = idens * jdens * dt * factor * dx * dy
+      cell_fac = idens * jdens * dt_coll * factor * dx * dy
       s_fac = cell_fac * log_lambda / pi4_eps2_c4
       s_fac_prime = cell_fac * pi_fac
 
@@ -2092,7 +2106,9 @@ CONTAINS
   SUBROUTINE setup_collisions
 
     ALLOCATE(coll_pairs(n_species, n_species))
+    ALLOCATE(coll_pairs_state(n_species, n_species))
     coll_pairs = 1.0_num
+    coll_pairs_state = c_coll_collide
     coll_sort_array_size = 1
     ALLOCATE(coll_sort_array(coll_sort_array_size))
 
@@ -2112,7 +2128,7 @@ CONTAINS
 
     INTEGER :: stat
 
-    DEALLOCATE(coll_pairs, coll_sort_array, STAT=stat)
+    DEALLOCATE(coll_pairs, coll_pairs_state, coll_sort_array, STAT=stat)
 
   END SUBROUTINE deallocate_collisions
 
