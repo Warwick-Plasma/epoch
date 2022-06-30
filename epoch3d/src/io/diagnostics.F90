@@ -50,6 +50,7 @@ MODULE diagnostics
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   LOGICAL :: dump_field_grid, skipped_any_set
+  LOGICAL :: got_stop_restart = .FALSE.
   LOGICAL :: got_request_dump_name = .FALSE.
   LOGICAL :: got_request_dump_restart = .FALSE.
   LOGICAL :: from_dump_request = .FALSE.
@@ -1443,8 +1444,9 @@ CONTAINS
       END IF
     END DO
 
-    IF (got_request_dump_restart) THEN
+    IF (got_request_dump_restart .OR. got_stop_restart) THEN
       got_request_dump_restart = .FALSE.
+      got_stop_restart = .FALSE.
       restart_flag = .TRUE.
       print_arrays = .TRUE.
       dump_source_code = .TRUE.
@@ -3334,6 +3336,7 @@ CONTAINS
     force_dump = buffer(2)
     got_request_dump_name = buffer(3)
     got_request_dump_restart = buffer(4)
+    got_stop_restart = got_stop_condition
 
     IF (got_request_dump_name) THEN
       CALL MPI_BCAST(request_dump_name, string_length, MPI_CHARACTER, 0, &
