@@ -1120,7 +1120,7 @@ CONTAINS
     INTEGER(i8), INTENT(IN) :: ipart
     LOGICAL, INTENT(IN) :: x_perp_y_ignored_z_para
     REAL(num), DIMENSION(3,3) :: rotation_matrix
-    REAL(num) :: vperp, gyrophase
+    REAL(num) :: p_perp, gyrophase
     REAL(num), PARAMETER :: golden_angle = pi * (3.0_num - SQRT(5.0_num))
     REAL(num), DIMENSION(3) :: aligned_momentum
 
@@ -1129,9 +1129,9 @@ CONTAINS
     ! z is the dummy magnetic field direction
     IF (x_perp_y_ignored_z_para) THEN
       gyrophase = golden_angle * ipart
-      vperp = current%part_p(1)
-      aligned_momentum(1) = vperp * COS(gyrophase)
-      aligned_momentum(2) = vperp * SIN(gyrophase)
+      p_perp = current%part_p(1)
+      aligned_momentum(1) = p_perp * COS(gyrophase)
+      aligned_momentum(2) = p_perp * SIN(gyrophase)
       aligned_momentum(3) = current%part_p(3)
     ELSE
       aligned_momentum(1) = current%part_p(1)
