@@ -1045,6 +1045,7 @@ CONTAINS
 
     ! z is the dummy magnetic field direction
     IF (x_perp_y_ignored_z_para) THEN
+      gyrophase = golden_angle * ipart
       p_perp = current%part_p(1)
       aligned_momentum(1) = p_perp * COS(gyrophase)
       aligned_momentum(2) = p_perp * SIN(gyrophase)
