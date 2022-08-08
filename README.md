@@ -10,6 +10,8 @@ To download this Hybrid-PIC code, perform the following commands from inside a L
 
 Note, some users will need to delete the SDF directory from the first git clone, before you can perform the second git clone.
 
+Information below this point describes the original EPOCH code.
+
 ## DOWNLOADING AND BUILDING THE CODE
 
 The easiest method of downloading the code is to grab a copy of the latest
