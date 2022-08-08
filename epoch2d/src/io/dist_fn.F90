@@ -372,17 +372,13 @@ CONTAINS
         particle_data(1:c_ndims) = current%part_pos
         IF (io_list(species)%species_type == c_species_id_photon) THEN
           particle_data(c_dir_gamma_m1) = 0.0_num
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           particle_data(c_dir_px) = px
           particle_data(c_dir_py) = py
           particle_data(c_dir_pz) = pz
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           particle_data(c_dir_en) = current%particle_energy
-          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
-#else
-          particle_data(c_dir_px:c_dir_pz) = 0.0_num
-          particle_data(c_dir_en) = 0.0_num
-          particle_data(c_dir_mod_p) = 0.0_num
 #endif
+          particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
           ! Can't define gamma for photon so one is as good as anything
           particle_data(c_dir_gamma_m1) = 1.0_num
         ELSE
@@ -508,16 +504,12 @@ CONTAINS
       particle_data(1:c_ndims) = current%part_pos
       IF (io_list(species)%species_type == c_species_id_photon) THEN
         particle_data(c_dir_gamma_m1) = 0.0_num
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+
         particle_data(c_dir_px) = px
         particle_data(c_dir_py) = py
         particle_data(c_dir_pz) = pz
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         particle_data(c_dir_en) = current%particle_energy
-        particle_data(c_dir_mod_p) = SQRT(px**2 + py**2 + pz**2)
-#else
-        particle_data(c_dir_px:c_dir_pz) = 0.0_num
-        particle_data(c_dir_en) = 0.0_num
-        particle_data(c_dir_mod_p) = 0.0_num
 #endif
         ! Can't define gamma for photon so one is as good as anything
         particle_data(c_dir_gamma_m1) = 1.0_num

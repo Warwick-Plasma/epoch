@@ -1,0 +1,142 @@
+begin:control
+
+  nx = 100
+  ny = 8
+  npart = 0
+  nsteps = -1
+  t_end = 500.0e-15
+  x_min = 0
+  x_max = 100e-6
+  y_min = -4.0e-6
+  y_max =  4.0e-6
+  dt_multiplier = 0.8
+  stdout_frequency = 1
+
+end:control
+
+
+begin:hybrid
+
+  use_hybrid = T
+  use_fields = T              # EM field evolution
+  use_collisions = T          # Collisional energy loss
+  use_scatter = T             # Elastic scatter
+  use_ohmic_heating = T       # Ohmic heating
+  use_thomas_fermi = T        # Background ionisation
+  use_ion_temp = F            # Update ion temperature
+  produce_delta_rays = T      # Add delta-rays to the delta_electron species
+  electron_temperature = 300  # Initial background temperature 
+  min_delta_KE = 200.0*kev    # If delta energy is below this, dump KE to cell
+  min_hybrid_KE = 200.0*kev   # Remove particles below this energy        
+
+end:hybrid
+
+
+begin:bremsstrahlung
+ 
+  use_bremsstrahlung = T
+  start_time = 0
+  produce_photons = T    
+  photon_energy_min = 200.0 * kev     
+  photon_dynamics = F   
+  use_plasma_screening = F
+  use_brem_scatter = T
+           
+end:bremsstrahlung
+
+
+begin:k_alpha
+
+  use_k_alpha = T     # Switch on/off
+  produce_photons = T # Add macro-photons to simulation window
+  photon_dynamics = F # Move macro-photons
+
+  photon_weight = 1.0 # Lowers the macroparticle weight of produced photons to
+                      # improve sampling. Must be  set in the range:
+                      # 0.0 < photon_weight <= 1.0
+
+end:k_alpha
+
+
+begin:boundaries
+
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+
+end:boundaries
+
+
+begin:hy_laser
+
+  boundary = x_min                                            # Injection boundary
+  ppc = 5000/ny                                               # Parts per cell per timestep
+  profile = gauss(y, 0, 5.0e-6)                               # Gaussian
+  t_profile = gauss(time, 40.0e-15. 20.0e-15)                 # Gaussian
+  t_end = 80.0e-15
+
+  intensity = 1.0e20 * 1.0 e4                                 # Laser intensity
+  lambda = 1.0e−6                                             # Laser wavelength
+  efficiency = 0.30                                           # Laser  energy to electron KE
+
+  mean_energy = a0                                            # Ponderomotive
+  energy_dist = exp                                           # Exponential distribution
+  angular_dist = uniform                                      # Cone injection
+  theta_max = 20.0/180.0 * pi                                 # 20deg cone half-angle
+
+  species = Electron                                          # Injection species
+
+end:hy_laser
+
+
+begin:species
+
+  name = Electron
+  frac = 1.0
+  dump = F
+  identify:electron
+
+end:species
+
+
+begin:solid
+
+  # Copper
+  ni = 8.50e28                         # Ion number density
+  atomic_no = 29                       # Atomic number of solid species
+  I_ex = 322 * ev                      # Mean excitation energy
+  res_model = rlm                      # Determines resistivity behaviour
+
+end:solid
+
+
+begin:species
+
+  name = Brem_Photon  
+  npart = 0
+  dump = T 
+  identify:brem_photon
+ 
+end:species
+
+
+begin:species
+
+  name = Ka_Photon  
+  npart = 0
+  dump = T 
+  identify:k_alpha_photon
+ 
+end:species
+
+
+begin:output
+
+  dt_snapshot = t_end
+  px = always
+  py = always
+  pz = always
+  particle_weight = always
+
+end:output

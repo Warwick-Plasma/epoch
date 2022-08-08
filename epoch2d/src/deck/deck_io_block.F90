@@ -582,6 +582,11 @@ CONTAINS
       elementselected = c_dump_part_opdepth_brem
 #endif
 
+#ifdef K_ALPHA
+    ELSE IF (str_cmp(element, 'k_alpha_optical_depth')) THEN
+      elementselected = c_dump_part_opdepth_k_al
+#endif
+
 #ifdef HYBRID
     ELSE IF (str_cmp(element, 'delta_optical_depth')) THEN
       elementselected = c_dump_part_opdepth_delt
@@ -1127,6 +1132,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     io_block%dumpmask(c_dump_part_opdepth_brem) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
+#endif
+#ifdef K_ALPHA
+    io_block%dumpmask(c_dump_part_opdepth_k_al) = &
+        IOR(io_block%dumpmask(c_dump_part_opdepth_k_al), c_io_restartable)
 #endif
 #ifdef HYBRID
     io_block%dumpmask(c_dump_part_opdepth_delt) = &

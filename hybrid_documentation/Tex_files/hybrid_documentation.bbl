@@ -146,6 +146,39 @@ Lyman Spitzer.
 \newblock {\em Physics of fully ionized gases}.
 \newblock Courier Corporation, 2 edition, 1962.
 
+\bibitem{theory:k_alpha}
+AGR Thomas, M~Sherlock, C~Kuranz, CP~Ridgers, and RP~Drake.
+\newblock Hybrid vlasov--fokker--planck--maxwell simulations of fast electron
+  transport and the time dependance of k-shell excitation in a mid-z metallic
+  target.
+\newblock {\em New Journal of Physics}, 15(1):015017, 2013.
+
+\bibitem{theory:rbeb}
+Yong-Ki Kim, Jos{\'e}~Paulo Santos, and Fernando Parente.
+\newblock Extension of the binary-encounter-dipole model to relativistic
+  incident electrons.
+\newblock {\em Physical Review A}, 62(5):052710, 2000.
+
+\bibitem{theory:perez}
+F~P{\'e}rez, L~Gremillet, A~Decoster, M~Drouin, and E~Lefebvre.
+\newblock Improved modeling of relativistic collisions and collisional
+  ionization in particle-in-cell codes.
+\newblock {\em Physics of Plasmas}, 19(8):083104, 2012.
+
+\bibitem{theory:desclaux}
+JP~Desclaux.
+\newblock {\em At. Data Nucl. Data Tables}, 12(4):311--406, 1973.
+
+\bibitem{theory:carlson}
+Thomas~A Carlson, CW~Nestor~Jr, Neil Wasserman, and JD~McDowell.
+\newblock {\em At. Data Nucl. Data Tables}, 2:63--99, 1970.
+
+\bibitem{theory:auger_electron}
+F~P{\'e}rez, L~Gremillet, A~Decoster, M~Drouin, and E~Lefebvre.
+\newblock Improved modeling of relativistic collisions and collisional
+  ionization in particle-in-cell codes.
+\newblock {\em Physics of Plasmas}, 19(8):083104, 2012.
+
 \bibitem{TNSA:rusby}
 DR~Rusby, CD~Armstrong, GG~Scott, M~King, P~McKenna, and D~Neely.
 \newblock Effect of rear surface fields on hot, refluxing and escaping electron
@@ -206,6 +239,17 @@ MJ~Berger, JS~Coursey, and MA~Zucker.
   stopping-power and range tables for electrons, protons and $\alpha$-particles
   (version 1.2. 2).
 \newblock {\em NIST, Gaithersburg}, 2000.
+
+\bibitem{benchmark:Long}
+Xianguan Long, Mantian Liu, Fuqing Ho, and Xiufeng Peng.
+\newblock Cross sections for k-shell ionization by electron impact.
+\newblock {\em Atomic data and nuclear data tables}, 45(2):353--366, 1990.
+
+\bibitem{benchmark:An}
+Z~An, TH~Li, LM~Wang, XY~Xia, and ZM~Luo.
+\newblock Correction of substrate effect in the measurement of 8--25-kev
+  electron-impact k-shell ionization cross sections of cu and co elements.
+\newblock {\em Physical Review A}, 54(4):3067, 1996.
 
 \bibitem{benchmark:Rester}
 DH~Rester, WE~Dance, and JH~Derrickson.

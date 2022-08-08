@@ -48,9 +48,7 @@ MODULE deck_species_block
   INTEGER, DIMENSION(:,:), POINTER :: bc_particle_array
   REAL(num) :: species_mass, species_charge
   INTEGER :: species_dumpmask
-#ifdef BREMSSTRAHLUNG
   INTEGER :: species_atomic_number
-#endif
   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
 
 CONTAINS
@@ -400,12 +398,10 @@ CONTAINS
       species_charge = as_real_print(value, element, errcode) * q0
     END IF
 
-#ifdef BREMSSTRAHLUNG
     IF (str_cmp(element, 'atomic_no') &
         .OR. str_cmp(element, 'atomic_number')) THEN
       species_atomic_number = as_integer_print(value, element, errcode)
     END IF
-#endif
 
     IF (str_cmp(element, 'dump')) THEN
       dump = as_logical_print(value, element, errcode)
@@ -581,6 +577,12 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'attenuate')) THEN
+      species_list(species_id)%attenuate = &
+          as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'meet_injectors') &
         .OR. str_cmp(element, 'load_up_to_injectors')) THEN
       species_list(species_id)%fill_ghosts = &
@@ -628,11 +630,10 @@ CONTAINS
     END IF
 
     ! *************************************************************
-    ! This section sets properties for bremsstrahlung emission
+    ! This section sets the atomic number
     ! *************************************************************
     IF (str_cmp(element, 'atomic_no') &
         .OR. str_cmp(element, 'atomic_number')) THEN
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = species_atomic_number
       species_list(species_id)%atomic_no_set = .TRUE.
 
@@ -643,10 +644,6 @@ CONTAINS
         species_list(j)%atomic_no_set = .TRUE.
         j = species_list(j)%ionise_to_species
       END DO
-#else
-      errcode = c_err_pp_options_wrong
-      extended_error_string = '-DBREMSSTRAHLUNG'
-#endif
       RETURN
     END IF
 
@@ -1394,10 +1391,8 @@ CONTAINS
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_electron
       species_list(species_id)%electron = .TRUE.
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1406,10 +1401,8 @@ CONTAINS
       species_list(species_id)%mass = m0 * 1836.2_num
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_proton
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 1
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1418,10 +1411,8 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%species_type = c_species_id_positron
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1451,10 +1442,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1471,10 +1460,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1487,10 +1474,8 @@ CONTAINS
 #ifdef PHOTONS
       breit_wheeler_positron_species = species_id
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1505,10 +1490,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1522,10 +1505,8 @@ CONTAINS
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
       RETURN
     END IF
 
@@ -1535,13 +1516,30 @@ CONTAINS
       species_list(species_id)%mass = 0.0_num
       species_list(species_id)%species_type = c_species_id_photon
       species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
 #ifdef BREMSSTRAHLUNG
       IF (bremsstrahlung_photon_species == -1) &
           bremsstrahlung_photon_species = species_id
-      species_list(species_id)%atomic_no = 0
-      species_list(species_id)%atomic_no_set = .TRUE.
 #else
       IF (use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    ! K-alpha photon
+    IF (str_cmp(value, 'k_alpha_photon') .OR. str_cmp(value, 'k_alpha')) THEN
+      species_list(species_id)%charge = 0.0_num
+      species_list(species_id)%mass = 0.0_num
+      species_list(species_id)%species_type = c_species_id_photon
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef K_ALPHA
+      IF (k_alpha_photon_species == -1) &
+          k_alpha_photon_species = species_id
+#else
+      IF (use_k_alpha) errcode = c_err_generic_warning
 #endif
       RETURN
     END IF
@@ -1554,10 +1552,10 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_electron
       species_charge_set(species_id) = .TRUE.
       species_list(species_id)%electron = .TRUE.
-#ifdef BREMSSTRAHLUNG
-      bethe_heitler_electron_species = species_id
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_electron_species = species_id
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
@@ -1570,16 +1568,15 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_positron
       species_charge_set(species_id) = .TRUE.
-#ifdef BREMSSTRAHLUNG
-      bethe_heitler_positron_species = species_id
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_positron_species = species_id
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
       RETURN
     END IF
-
 
     ! Delta-ray electron
     IF (str_cmp(value, 'delta_electron')) THEN
@@ -1587,10 +1584,8 @@ CONTAINS
       species_list(species_id)%mass = m0
       species_list(species_id)%species_type = c_species_id_electron
       species_charge_set(species_id) = .TRUE.
-#ifdef BREMSSTRAHLUNG
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
-#endif
 #ifdef HYBRID
       IF (delta_electron_species == -1) delta_electron_species = species_id
 #else

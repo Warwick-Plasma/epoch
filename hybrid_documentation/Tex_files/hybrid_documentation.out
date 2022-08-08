@@ -18,42 +18,50 @@
 \BOOKMARK [3][-]{subsubsection.2.6.1}{Ohmic heating}{subsection.2.6}% 18
 \BOOKMARK [3][-]{subsubsection.2.6.2}{Collisional heating}{subsection.2.6}% 19
 \BOOKMARK [3][-]{subsubsection.2.6.3}{Thermal equilibration of ions and electrons}{subsection.2.6}% 20
-\BOOKMARK [2][-]{subsection.2.7}{Target normal sheath acceleration}{section.2}% 21
-\BOOKMARK [1][-]{section.3}{Code implementation}{}% 22
-\BOOKMARK [2][-]{subsection.3.1}{Hybrid PIC loop}{section.3}% 23
-\BOOKMARK [2][-]{subsection.3.2}{Solid type}{section.3}% 24
-\BOOKMARK [2][-]{subsection.3.3}{Hybrid injectors}{section.3}% 25
-\BOOKMARK [3][-]{subsubsection.3.3.1}{Mean energy}{subsection.3.3}% 26
-\BOOKMARK [3][-]{subsubsection.3.3.2}{Energy distribution}{subsection.3.3}% 27
-\BOOKMARK [3][-]{subsubsection.3.3.3}{Angular distribution}{subsection.3.3}% 28
-\BOOKMARK [2][-]{subsection.3.4}{Ionisation loss and M\370ller scatter}{section.3}% 29
-\BOOKMARK [2][-]{subsection.3.5}{Heating routines}{section.3}% 30
-\BOOKMARK [2][-]{subsection.3.6}{Field solver}{section.3}% 31
-\BOOKMARK [2][-]{subsection.3.7}{Resistivity models}{section.3}% 32
-\BOOKMARK [3][-]{subsubsection.3.7.1}{Reduced Lee-More model}{subsection.3.7}% 33
-\BOOKMARK [3][-]{subsubsection.3.7.2}{Milchberg fit}{subsection.3.7}% 34
-\BOOKMARK [3][-]{subsubsection.3.7.3}{Heuristic plastic model}{subsection.3.7}% 35
-\BOOKMARK [2][-]{subsection.3.8}{TNSA boundaries}{section.3}% 36
-\BOOKMARK [2][-]{subsection.3.9}{Enhanced particle probes}{section.3}% 37
-\BOOKMARK [2][-]{subsection.3.10}{File injectors}{section.3}% 38
-\BOOKMARK [1][-]{section.4}{Benchmarks}{}% 39
-\BOOKMARK [2][-]{subsection.4.1}{Tests}{section.4}% 40
-\BOOKMARK [3][-]{subsubsection.4.1.1}{File injectors and probe times}{subsection.4.1}% 41
-\BOOKMARK [3][-]{subsubsection.4.1.2}{TNSA boundaries}{subsection.4.1}% 42
-\BOOKMARK [3][-]{subsubsection.4.1.3}{Thermal equilibration}{subsection.4.1}% 43
-\BOOKMARK [3][-]{subsubsection.4.1.4}{Geant4 -rays}{subsection.4.1}% 44
-\BOOKMARK [2][-]{subsection.4.2}{Hanson elastic scatter}{section.4}% 45
-\BOOKMARK [2][-]{subsection.4.3}{Lockwood ionisation loss}{section.4}% 46
-\BOOKMARK [2][-]{subsection.4.4}{NIST ionisation and bremsstrahlung}{section.4}% 47
-\BOOKMARK [2][-]{subsection.4.5}{Milchberg resistivity}{section.4}% 48
-\BOOKMARK [2][-]{subsection.4.6}{Rester bremsstrahlung radiation}{section.4}% 49
-\BOOKMARK [2][-]{subsection.4.7}{Evans background heating}{section.4}% 50
-\BOOKMARK [2][-]{subsection.4.8}{Benchmarking summary}{section.4}% 51
-\BOOKMARK [1][-]{section.5}{User manual}{}% 52
-\BOOKMARK [2][-]{subsection.5.1}{Hybrid block}{section.5}% 53
-\BOOKMARK [2][-]{subsection.5.2}{Solid block}{section.5}% 54
-\BOOKMARK [2][-]{subsection.5.3}{Hybrid laser block}{section.5}% 55
-\BOOKMARK [2][-]{subsection.5.4}{Hybrid keys in existing blocks}{section.5}% 56
-\BOOKMARK [3][-]{subsubsection.5.4.1}{TNSA boundary}{subsection.5.4}% 57
-\BOOKMARK [3][-]{subsubsection.5.4.2}{Hybrid output variables}{subsection.5.4}% 58
-\BOOKMARK [3][-]{subsubsection.5.4.3}{File injector}{subsection.5.4}% 59
+\BOOKMARK [2][-]{subsection.2.7}{K-alpha emission}{section.2}% 21
+\BOOKMARK [2][-]{subsection.2.8}{Photo-electric effect}{section.2}% 22
+\BOOKMARK [2][-]{subsection.2.9}{Target normal sheath acceleration}{section.2}% 23
+\BOOKMARK [1][-]{section.3}{Code implementation}{}% 24
+\BOOKMARK [2][-]{subsection.3.1}{Hybrid PIC loop}{section.3}% 25
+\BOOKMARK [2][-]{subsection.3.2}{Solid type}{section.3}% 26
+\BOOKMARK [2][-]{subsection.3.3}{Hybrid injectors}{section.3}% 27
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Mean energy}{subsection.3.3}% 28
+\BOOKMARK [3][-]{subsubsection.3.3.2}{Energy distribution}{subsection.3.3}% 29
+\BOOKMARK [3][-]{subsubsection.3.3.3}{Angular distribution}{subsection.3.3}% 30
+\BOOKMARK [2][-]{subsection.3.4}{Ionisation loss and M\370ller scatter}{section.3}% 31
+\BOOKMARK [2][-]{subsection.3.5}{Heating routines}{section.3}% 32
+\BOOKMARK [2][-]{subsection.3.6}{Field solver}{section.3}% 33
+\BOOKMARK [2][-]{subsection.3.7}{Resistivity models}{section.3}% 34
+\BOOKMARK [3][-]{subsubsection.3.7.1}{Reduced Lee-More model}{subsection.3.7}% 35
+\BOOKMARK [3][-]{subsubsection.3.7.2}{Milchberg fit}{subsection.3.7}% 36
+\BOOKMARK [3][-]{subsubsection.3.7.3}{Heuristic plastic model}{subsection.3.7}% 37
+\BOOKMARK [2][-]{subsection.3.8}{K-alpha implementation}{section.3}% 38
+\BOOKMARK [2][-]{subsection.3.9}{Photo-electric effect}{section.3}% 39
+\BOOKMARK [2][-]{subsection.3.10}{TNSA boundaries}{section.3}% 40
+\BOOKMARK [2][-]{subsection.3.11}{Enhanced particle probes}{section.3}% 41
+\BOOKMARK [2][-]{subsection.3.12}{File injectors}{section.3}% 42
+\BOOKMARK [1][-]{section.4}{Benchmarks}{}% 43
+\BOOKMARK [2][-]{subsection.4.1}{Tests}{section.4}% 44
+\BOOKMARK [3][-]{subsubsection.4.1.1}{File injectors and probe times}{subsection.4.1}% 45
+\BOOKMARK [3][-]{subsubsection.4.1.2}{TNSA boundaries}{subsection.4.1}% 46
+\BOOKMARK [3][-]{subsubsection.4.1.3}{Thermal equilibration}{subsection.4.1}% 47
+\BOOKMARK [3][-]{subsubsection.4.1.4}{Geant4 -rays}{subsection.4.1}% 48
+\BOOKMARK [2][-]{subsection.4.2}{Hanson elastic scatter}{section.4}% 49
+\BOOKMARK [2][-]{subsection.4.3}{Lockwood ionisation loss}{section.4}% 50
+\BOOKMARK [2][-]{subsection.4.4}{NIST ionisation and bremsstrahlung}{section.4}% 51
+\BOOKMARK [2][-]{subsection.4.5}{K-alpha production}{section.4}% 52
+\BOOKMARK [2][-]{subsection.4.6}{Photo-electric attenuation}{section.4}% 53
+\BOOKMARK [2][-]{subsection.4.7}{Milchberg resistivity}{section.4}% 54
+\BOOKMARK [2][-]{subsection.4.8}{Rester bremsstrahlung radiation}{section.4}% 55
+\BOOKMARK [2][-]{subsection.4.9}{Evans background heating}{section.4}% 56
+\BOOKMARK [2][-]{subsection.4.10}{Benchmarking summary}{section.4}% 57
+\BOOKMARK [1][-]{section.5}{User manual}{}% 58
+\BOOKMARK [2][-]{subsection.5.1}{Hybrid block}{section.5}% 59
+\BOOKMARK [2][-]{subsection.5.2}{Solid block}{section.5}% 60
+\BOOKMARK [2][-]{subsection.5.3}{Hybrid laser block}{section.5}% 61
+\BOOKMARK [2][-]{subsection.5.4}{K-alpha block}{section.5}% 62
+\BOOKMARK [2][-]{subsection.5.5}{Hybrid keys in existing blocks}{section.5}% 63
+\BOOKMARK [3][-]{subsubsection.5.5.1}{Photo-electric attenuation}{subsection.5.5}% 64
+\BOOKMARK [3][-]{subsubsection.5.5.2}{TNSA boundary}{subsection.5.5}% 65
+\BOOKMARK [3][-]{subsubsection.5.5.3}{Hybrid output variables}{subsection.5.5}% 66
+\BOOKMARK [3][-]{subsubsection.5.5.4}{File injector}{subsection.5.5}% 67

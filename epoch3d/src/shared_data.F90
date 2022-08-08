@@ -134,6 +134,9 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#ifdef K_ALPHA
+    REAL(num) :: optical_depth_k_alpha
+#endif
 #ifdef HYBRID
     REAL(num) :: optical_depth_delta
 #endif
@@ -201,6 +204,7 @@ MODULE shared_data
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
     LOGICAL :: immobile
+    LOGICAL :: attenuate
     LOGICAL :: fill_ghosts
 
     ! Parameters for relativistic and arbitrary particle loader
@@ -214,10 +218,8 @@ MODULE shared_data
     LOGICAL :: zero_current
 #endif
 
-#ifdef BREMSSTRAHLUNG
     INTEGER :: atomic_no
     LOGICAL :: atomic_no_set = .FALSE.
-#endif
 
     ! Specify if species is background species or not
     LOGICAL :: background_species = .FALSE.
@@ -649,6 +651,45 @@ MODULE shared_data
   LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
+
+#ifdef K_ALPHA
+  !----------------------------------------------------------------------------
+  ! K-alpha emission
+  !----------------------------------------------------------------------------
+
+  ! K-alpha species flags
+  INTEGER :: k_alpha_photon_species = -1
+#ifndef PHOTONS
+#ifndef BREMSSTRAHLUNG
+  INTEGER :: photon_species = -1
+#endif
+#endif
+  ! Deck variables
+  REAL(num) :: photon_energy_min_k_alpha = EPSILON(1.0_NUM)
+  REAL(num) :: k_alpha_start_time = 0.0_num
+  REAL(num) :: k_alpha_weight = 1.0_num
+  REAL(num) :: auger_frac = 0.0_num
+  LOGICAL :: use_k_alpha_recoil = .TRUE.
+  LOGICAL :: produce_k_alpha_photons = .FALSE.
+  LOGICAL :: k_alpha_photon_dynamics = .FALSE.
+  REAL(num) :: sig_ka1_0 = 0.0_num
+  REAL(num) :: sig_ka1_1 = 0.0_num
+  REAL(num) :: sig_ka1_2 = 0.0_num
+  REAL(num) :: sig_ka1_3 = 0.0_num
+  REAL(num) :: sig_ka1_4 = 0.0_num
+  REAL(num) :: sig_ka2_0 = 0.0_num
+  REAL(num) :: sig_ka2_1 = 0.0_num
+  REAL(num) :: sig_ka2_2 = 0.0_num
+  REAL(num) :: sig_ka2_3 = 0.0_num
+  REAL(num) :: sig_ka2_4 = 0.0_num
+#endif
+  LOGICAL :: use_k_alpha = .FALSE.
+
+  !----------------------------------------------------------------------------
+  ! Photo-electric photon attenuation
+  !----------------------------------------------------------------------------
+
+  LOGICAL :: use_photo_electric = .FALSE.
 
   !----------------------------------------------------------------------------
   ! Hybrid mode - Written by S. J. Morris

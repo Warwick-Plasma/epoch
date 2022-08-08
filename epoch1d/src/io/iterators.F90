@@ -130,7 +130,7 @@ CONTAINS
 
       CASE (c_dump_part_vx)
         ndim = 1
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
@@ -142,11 +142,11 @@ CONTAINS
             array(part_count) = cur%part_p(ndim) / gamma_mass
             cur => cur%next
           END DO
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         ELSE
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
-            array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
+            array(part_count) = c
             cur => cur%next
           END DO
         END IF
@@ -154,7 +154,7 @@ CONTAINS
 
       CASE (c_dump_part_vy)
         ndim = 2
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
@@ -166,11 +166,11 @@ CONTAINS
             array(part_count) = cur%part_p(ndim) / gamma_mass
             cur => cur%next
           END DO
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         ELSE
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
-            array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
+            array(part_count) = c
             cur => cur%next
           END DO
         END IF
@@ -178,7 +178,7 @@ CONTAINS
 
       CASE (c_dump_part_vz)
         ndim = 3
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         IF (current_species%species_type /= c_species_id_photon) THEN
 #endif
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
@@ -190,11 +190,11 @@ CONTAINS
             array(part_count) = cur%part_p(ndim) / gamma_mass
             cur => cur%next
           END DO
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
         ELSE
           DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
             part_count = part_count + 1
-            array(part_count) = cur%part_p(ndim) * csqr / cur%particle_energy
+            array(part_count) = c
             cur => cur%next
           END DO
         END IF
@@ -223,27 +223,17 @@ CONTAINS
         END DO
 
       CASE (c_dump_part_ek)
-        IF (current_species%species_type /= c_species_id_photon) THEN
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-            part_count = part_count + 1
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
 #ifdef PER_PARTICLE_CHARGE_MASS
-            part_m   = cur%mass
-            part_mcc = part_m * c**2
-            part_mc2 = (part_m * c)**2
+          part_m   = cur%mass
+          part_mcc = part_m * c**2
+          part_mc2 = (part_m * c)**2
 #endif
-            array(part_count) = &
-                c * SQRT(SUM(cur%part_p**2) + part_mc2) - part_mcc
-            cur => cur%next
-          END DO
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
-        ELSE
-          DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
-            part_count = part_count + 1
-            array(part_count) = cur%particle_energy
-            cur => cur%next
-          END DO
-#endif
-        END IF
+          array(part_count) = &
+              c * SQRT(SUM(cur%part_p**2) + part_mc2) - part_mcc
+          cur => cur%next
+        END DO
 
       CASE (c_dump_part_gamma)
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
@@ -338,6 +328,15 @@ CONTAINS
         DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
           part_count = part_count + 1
           array(part_count) = cur%optical_depth_bremsstrahlung
+          cur => cur%next
+        END DO
+#endif
+
+#ifdef K_ALPHA
+      CASE (c_dump_part_opdepth_k_al)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%optical_depth_k_alpha
           cur => cur%next
         END DO
 #endif

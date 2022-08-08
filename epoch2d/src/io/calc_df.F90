@@ -187,7 +187,11 @@ CONTAINS
 #if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           wdata = current%particle_energy * part_w
 #else
-          wdata = 0.0_num
+          part_ux = current%part_p(1)
+          part_uy = current%part_p(2)
+          part_uz = current%part_p(3)
+          part_u2 = part_ux**2 + part_uy**2 + part_uz**2
+          wdata = SQRT(part_u2) / c
 #endif
         END IF
 
@@ -305,8 +309,13 @@ CONTAINS
           gamma_rel = 1.0_num
           wdata = current%particle_energy * part_w
 #else
+          fac = 1.0_num / SQRT(current%part_p(1)**2 + current%part_p(2)**2 + &
+              current%part_p(3)**2)
+          part_ux = current%part_p(1) * fac
+          part_uy = current%part_p(2) * fac
+          part_uz = current%part_p(3) * fac
           gamma_rel = 1.0_num
-          wdata = 0.0_num
+          wdata = c / fac * part_w
 #endif
         END IF
 
@@ -1184,9 +1193,12 @@ CONTAINS
           gamma_rel_m1 = part_u2 / (gamma_rel + 1.0_num)
 
           part_energy = part_energy + gamma_rel_m1 * fac
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
         ELSE
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
           part_energy = part_energy + current%particle_energy * part_w
+#else
+          part_energy = part_energy + SQRT(current%part_p(1)**2 &
+              + current%part_p(2)**2 + current%part_p(3)**2) * c * part_w
 #endif
         END IF
 

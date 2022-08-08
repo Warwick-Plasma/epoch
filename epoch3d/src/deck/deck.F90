@@ -37,11 +37,15 @@ MODULE deck
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+#ifdef K_ALPHA
+  USE k_alpha
+#endif
 #ifdef HYBRID
   USE hy_ionisation_loss
 #endif
   USE deck_qed_block
   USE deck_bremsstrahlung_block
+  USE deck_k_alpha_block
   USE deck_hybrid_block
   USE deck_hy_laser_block
   USE deck_solid_block
@@ -109,6 +113,7 @@ CONTAINS
 #endif
     CALL qed_deck_initialise
     CALL bremsstrahlung_deck_initialise
+    CALL k_alpha_deck_initialise
     CALL hybrid_deck_initialise
     CALL solid_deck_initialise
     CALL hy_laser_deck_initialise
@@ -142,6 +147,7 @@ CONTAINS
 #endif
     CALL qed_deck_finalise
     CALL bremsstrahlung_deck_finalise
+    CALL k_alpha_deck_finalise
     CALL hybrid_deck_finalise
     CALL solid_deck_finalise
     CALL hy_laser_deck_finalise
@@ -192,6 +198,8 @@ CONTAINS
       CALL qed_block_start
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_start
+    ELSE IF (str_cmp(block_name, 'k_alpha')) THEN
+      CALL k_alpha_block_start
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       CALL hybrid_block_start
     ELSE IF (str_cmp(block_name, 'hy_laser')) THEN
@@ -249,6 +257,8 @@ CONTAINS
       CALL qed_block_end
     ELSE IF (str_cmp(block_name, 'bremsstrahlung')) THEN
       CALL bremsstrahlung_block_end
+    ELSE IF (str_cmp(block_name, 'k_alpha')) THEN
+      CALL k_alpha_block_end
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       CALL hybrid_block_end
     ELSE IF (str_cmp(block_name, 'hy_laser')) THEN
@@ -342,6 +352,10 @@ CONTAINS
       handle_block = bremsstrahlung_block_handle_element(block_element, &
           block_value)
       RETURN
+    ELSE IF (str_cmp(block_name, 'k_alpha')) THEN
+      handle_block = k_alpha_block_handle_element(block_element, &
+          block_value)
+      RETURN
     ELSE IF (str_cmp(block_name, 'hybrid')) THEN
       handle_block = hybrid_block_handle_element(block_element, block_value)
       RETURN
@@ -398,6 +412,12 @@ CONTAINS
       errcode_deck = IOR(errcode_deck, check_bremsstrahlung_variables())
 #endif
       errcode_deck = IOR(errcode_deck, bremsstrahlung_block_check())
+    END IF
+    IF (use_k_alpha) THEN
+#ifdef K_ALPHA
+      errcode_deck = IOR(errcode_deck, check_k_alpha_variables())
+#endif
+      errcode_deck = IOR(errcode_deck, k_alpha_block_check())
     END IF
     IF (use_hybrid) THEN
 #ifdef HYBRID

@@ -55,6 +55,9 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+#ifdef K_ALPHA
+  USE k_alpha
+#endif
   USE hybrid
 
   IMPLICIT NONE
@@ -184,6 +187,9 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
+#ifdef K_ALPHA
+  IF (use_k_alpha) CALL setup_k_alpha_module()
+#endif
 
   IF (rank == 0) THEN
     PRINT*
@@ -228,6 +234,13 @@ PROGRAM pic
       IF (push .AND. use_bremsstrahlung &
           .AND. time > bremsstrahlung_start_time) THEN
         CALL bremsstrahlung_update_optical_depth()
+      END IF
+#endif
+
+#ifdef K_ALPHA
+      IF (push .AND. use_k_alpha &
+          .AND. time > k_alpha_start_time) THEN
+        CALL k_alpha_update_optical_depth()
       END IF
 #endif
 
@@ -286,6 +299,10 @@ PROGRAM pic
 
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL shutdown_bremsstrahlung_module()
+#endif
+
+#ifdef K_ALPHA
+  IF (use_k_alpha) CALL shutdown_k_alpha_module()
 #endif
 
   CALL output_routines(step, force_dump)

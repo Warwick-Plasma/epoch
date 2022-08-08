@@ -40,6 +40,10 @@ MODULE hybrid
 #ifdef BREMSSTRAHLUNG
   USE bremsstrahlung
 #endif
+#ifdef K_ALPHA
+  USE k_alpha
+#endif
+  USE photo_electric
   USE hy_elastic_davies
   USE hy_elastic_urban
   USE hy_fields
@@ -91,6 +95,17 @@ CONTAINS
         CALL hy_bremsstrahlung_update_optical_depth()
       END IF
 #endif
+
+#ifdef K_ALPHA
+      ! K-alpha radiation calculation (photons can be generated)
+      IF (use_k_alpha .AND. time > k_alpha_start_time &
+          .AND. push) THEN
+        CALL hy_k_alpha_update_optical_depth()
+      END IF
+#endif
+
+      ! Apply photo-electric attenuation (currently only for photons in copper)
+      IF (use_photo_electric) CALL run_photo_electric_Cu
 
       ! Evaluate fields a half timestep ahead of the particles
       IF (use_hybrid_fields) CALL run_hybrid_fields

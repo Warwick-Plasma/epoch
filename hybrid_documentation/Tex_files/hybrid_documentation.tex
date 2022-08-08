@@ -758,7 +758,71 @@ where we consider the rate of temperature change in species 1 through collisions
     T^{n+1}_i &= T_e^{n} + \Delta t \frac{2}{3(2\pi k_B)^{3/2}}\frac{(Z^*)^3e^4n_i\sqrt{m_em_i}\ln\Lambda}{\epsilon_0^2(T_e^nm_i + T_i^nm_e)^{3/2}}(T_e^{n} - T_i^{n})
 \end{align}
 %
-where we have written the electron number density as $Z^*n_i$, and the Coulomb logarithm $\ln\Lambda$ is evaulated using the same method as in Section \ref{sec:theory:resistivity:coulog} for the reduced Lee-More model.
+where we have written the electron number density as $Z^*n_i$, and the Coulomb logarithm $\ln\Lambda$ is evaluated using the same method as in Section \ref{sec:theory:resistivity:coulog} for the reduced Lee-More model.
+
+\subsection{K-alpha emission} \label{sec:theory:kalpha}
+
+As hot electrons traverse through solid density targets, they may trigger the production of K$\alpha$ photons. In K$\alpha$ emission, a hot electron ionises a bound electron from the 1s shell of a target atom (principle quantum number $n=1$), and a photon is produced as bound electrons from higher energy shells de-excite to fill the vacancy \cite{theory:k_alpha}.
+
+The electron-impact ionisation cross section of a bound shell can be described by the relativistic binary-encounter Bethe (RBEB) model derived by Kim \textit{et al} \cite{theory:rbeb}. Through combining the general RBEB cross section (22 \cite{theory:rbeb}) with an inner shell correction factor (37 \cite{theory:rbeb}), the resultant cross section may be written as
+%
+\begin{align} 
+  a_{nl} &= \frac{1}{2} \left( 1 + \frac{\beta_t^2 + \beta_u^2 + \beta_b^2}{\beta_t^2}\right) \\
+  b_{nl} &= \frac{2 \pi a_B^2 \alpha^4}{(\beta_t^2 + \beta_u^2 + \beta_b^2)b'} \\
+  c_{nl} &= \frac{1}{2} \left(\ln\left(\frac{\beta_t^2}{1 - \beta_t^2}\right) - \beta_t^2 - \ln(2b')\right) \\
+  d_{nl} &= 1 - \frac{1}{t} -\frac{\ln(t)}{t + 1} \frac{1+2t'}{(1+0.5 t')^2} + \frac{b'^2(t-1)}{2(1 + 0.5t')^2} \\
+  \sigma_{\text{rbeb},nl} &= a_{nl} b_{nl}\left(c_{nl}\left(1 - \frac{1}{t^2} \right)  + d_{nl}\right) \label{eq:rbeb}
+\end{align}
+%
+where the $\beta$ terms represent $v/c$ for electrons with different speeds, $v$. Specifically, $\beta_t$, $\beta_u$ and $\beta_b$ are calculated for electrons with kinetic energy $\epsilon_k$, $U_{nl}$, and $B_{nl}$ respectively, where $U_{nl}$ is the average kinetic energy of bound electrons in the orbital $nl$, and $B_{nl}$ is the corresponding binding energy. The $\epsilon_k$ energy refers to the kinetic energy of the incident hot electron which triggers the ionisation, and $t$ is the ratio $\epsilon_k / B_{nl}$. The primed terms $t'$ and $b'$ denote dimensionless numbers $\epsilon_k/m_e c^2$ and $B_{nl}/m_e c^2$ respectively, $\alpha$ is the fine structure constant and $a_B$ is the Bohr radius. In most cases, $U_{nl}$ is not known, although it is common to use the assumption that $U_{nl} = B_{nl}$  \cite{theory:perez}. The binding energies of bound electrons in the 1s shell can be found in the tables of Desclaux \cite{theory:desclaux} for atoms, and the ion equivalents may be deduced using a method presented by Carlson \textit{et al} \cite{theory:perez, theory:carlson}. 
+
+Once a 1s vacancy has been produced through collisional ionisation, this may be resolved through either radiative or non-radiative transitions. In the case of Auger electrons \cite{theory:auger_electron}, the vacancy is filled without emission of a photon, and so not all ionisation events lead to K$\alpha$ production.
+
+The K$\alpha$ energy spectrum is composed of two line emissions at different energies, K$\alpha_1$ and K$\alpha_2$, with some line-width applied to each. In a given K$\alpha$ emission, the probability of creating a photon with the K$\alpha_1$ energy is 2/3, and 1/3 for K$\alpha_2$. In general, the central photon energy and line-broadening of the K$\alpha_1$ and K$\alpha_2$ lines change with the background temperature. The energies for these two lines, $E_{k\alpha 1}$ and $E_{k\alpha 2}$ in the case of copper have been provided by Suxing at the University of Rochester, and take the form
+%
+\begin{align}
+E_{k\alpha 1} = &(8047.8 + 9.304\times 10^{-3} - 0.2596T_e' + 8.725\times 10^{-3} T_e'^2 \nonumber
+\\ &- 8.444\times 10^{-5} T_e'^3 + 3.908\times 10^{-7} T_e'^4 - 6.785\times 10^{-10} T_e'^5)e  \label{eq:Eka1}\\
+E_{k\alpha 2} = &(8027.3 - 8.486\times 10^{-3} - 0.2648T_e' + 8.837\times 10^{-3} T_e'^2 \nonumber \\
+&- 8.336\times 10^{-5} T_e'^3 + 3.684\times 10^{-7} T_e'^4 - 6.042\times 10^{-10} T_e'^5)e  \label{eq:Eka2}
+\end{align}
+%
+where energies have been given in SI units, but $T_e'$ is the background electron temperature in eV. At present, copper is the only solid which can produce K$\alpha$ photons in the code.
+
+\subsection{Photo-electric effect} \label{sec:theory:attenuation}
+
+As photons traverse a medium, they may undergo photo-electric attenuation. This causes photons to be absorbed, and so the number of photons escaping the solid may be less than the number originally created. In general, the rate of absorption depends on the absorbing material properties, and the photon energy.
+
+For the specific case of K$\alpha$ photons in solid-density heated copper targets, Suxing at the University of Rochester has provided us with a fit to describe the attenuation rate. According to this model, the number of photons $N_\gamma$ remaining after traversing a distance $x$ is given by
+%
+\begin{align}
+  N_\gamma = N_{\gamma,0} e^{-\kappa x} \label{eq:attenuation:N}
+\end{align}
+%
+where $N_{\gamma, 0}$ is the original number of photons, and $\kappa$ is an attenuation coefficient which scales with the background electron temperature in eV, $T_e'$. For K$\alpha$ photons in copper, $\kappa$ takes the form
+%
+\begin{align}
+  \kappa = a_0 + a_1 T_e' + a_2\left(T_e'\right)^2 + a_3\left(T_e'\right)^3 + a_4\left(T_e'\right)^4 \label{eq:attenuation:kappa}
+\end{align}
+%
+where the fit parameters $a_n$ are given in Table \ref{table:attenuation_fit}. 
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{c l l}
+\toprule
+$a_n$ & $T_e' < 500$ & $T_e' > 500$ \\
+\midrule
+$a_0$ & 154.633275098830                   & 475.299874660280 \\
+$a_1$ & 0.684356560314504                  & -0.781298994640132 \\
+$a_2$ & -1.129249310157342$\times 10^{-3}$ & 4.530821133169535$\times 10^{-4}$ \\
+$a_3$ & -9.808822131732512$\times 10^{-7}$ & -8.910063459566747$\times 10^{-8}$ \\
+$a_4$ & 1.505648924357310$\times 10^{-9}$  & 0.0 \\
+\bottomrule
+\end{tabular}
+\caption{Parameter fits for the $\kappa$ absorption co-efficient in the photo-electric attenuation of K$\alpha$ photons in a heated copper target, from (\ref{eq:attenuation:kappa}). When using these $a_n$ with $T_e'$ (background copper electron temperature in eV), equation (\ref{eq:attenuation:kappa}) gives $\kappa$ in units of $\text{cm}^{-1}$.}
+\label{table:attenuation_fit} 
+\end{table}
 
 \subsection{Target normal sheath acceleration} \label{sec:theory:TNSA}
 
@@ -1309,6 +1373,36 @@ where $T_{e,eV}$ is the electron temperature evaluated in eV. For plastic, Davie
 %
 which tends towards the saturation resistivity at low temperature, and the Spitzer resistivity at high temperature.
 
+\subsection{K-alpha implementation} \label{sec:code:kalpha}
+
+K$\alpha$ radiation in the code is implemented as a secondary-particle emission process, much like NCS, pair-production, bremsstrahlung and M\"{o}ller scatter already present in the code (see Section \ref{sec:code:ionisation}). At present, this package allows the production of K-alpha photons \textbf{in copper only}. The code identifies a copper solid by reading the atomic number of the solid material. 
+
+In practice, hot electrons are assigned an optical depth of ionisation, and an ionisation event is triggered once the electron reaches this distance. Upon triggering a 1s ionisation, the incident electron kinetic energy is reduced by the binding energy of the 1s state. The momentum direction of the incident electron remains the same after the energy loss, and the previously bound electron is not added to the simulation window. At this point, a new optical depth for ionisation is sampled for the hot electron.
+
+By performing this energy reduction on the hot electron, the code may end up over-sampling the energy loss for the hot electrons. Ionisation energy loss from all bound electron shells is already considered by the ionisation loss routines (Section \ref{sec:code:ionisation}), while the K$\alpha$ subroutines only consider energy loss due to interactions with the 1s shell of copper. Provided this energy loss is significantly less than the full ionisation energy loss, this will not be a problem - otherwise, the user should disable the K$\alpha$ electron recoil to prevent over-sampling if running with ionisation energy loss.
+
+Only a fraction of ionisation events lead to radiative K$\alpha$ emission, as some vacancies are filled using Auger electrons. Currently the fraction of non-radiative transitions is a user-defined variable, and a random number is generated to determine whether a given ionisation leads to K$\alpha$ emission or not. If a photon emission occurs, a second random number determines whether a K$\alpha_1$ or K$\alpha_2$ photon is created, which is sampled to produce a 2:1 ratio between the two line emissions. Upon emission, the K$\alpha$ photon is assigned a random direction, sampled from an isotropic distribution.
+
+While equations (\ref{eq:Eka1}) and (\ref{eq:Eka2}) give the central energies of the K$\alpha_1$ and K$\alpha_2$ emission lines, the line-widths are not given. The code calculates the central energies for a given temperature, and then shifts these using a number drawn from a Gaussian distribution, to spread the line emissions into Gaussian curves. The standard deviation, $\sigma$ for these Gaussian curves are user-defined, and take the form
+%
+\begin{align}
+  \sigma = \sigma_0 + \sigma_1 (T_e') + \sigma_2 (T_e')^2 + \sigma_3 (T_e')^3 + \sigma_4 (T_e')^4
+\end{align}
+%
+where the fit parameters $\sigma_n$ are set by the user in the input deck for both K$\alpha$ lines.
+
+\subsection{Photo-electric effect} \label{sec:code:attenuation}
+
+To imitate the photon absorption from the photo-electric effect, a new \texttt{attenuate} key has been added to the species block. When switched on, and if the species has been identified as a photon species, then particles within the species have an additional step in the hybrid-PIC loop. This is achieved through a call to the subroutine: \texttt{run\_photo\_electric\_Cu}. Here the code loops over all solid objects present in the code, and if one of them is copper (identified by atomic number $Z=29$), the code then loops over all particles in attenuating photon species. The background number density and electron temperature are interpolated to the particle position, and the $\kappa$ co-efficient is calculated from (\ref{eq:attenuation:kappa}). Over a simulation time-step $dt$, photons are expected to travel a distance $x=cdt$, and so the attenuated fraction can be calculated from (\ref{eq:attenuation:N}). This is applied as a reduction in the macro-photon weight, to represent absorbed photons.
+
+However, in the hybrid-PIC code, it is possible for the user to represent the solid density copper target as many overlapping solid copper objects of lower density. In this case, the attenuation would be over-estimated if the same attenuation is applied to each copper solid. Instead, this is scaled by the background number density of copper ions, such that the macro-photon weight after attenuation from a copper solid $W$ is
+%
+\begin{align}
+  W = W_0 \frac{n_i}{n_{i,0}} e^{-\kappa c dt}
+\end{align} 
+%
+where $W_0$ is the weight before attenuation from the current solid, and $n_i$ and $n_{i,0}$ represent the ion densities of the current copper solid, and solid density copper ($8.4912\times 10^{28} \text{ m}^{-3}$) respectively. Thus, the attenuation from multiple overlapping low-density copper solids would be the same as the attenuation from the equivalent single copper solid set-up.
+
 \subsection{TNSA boundaries} \label{sec:code:TNSA}
 
 We have implemented simple algorithms to roughly approximate refluxing behaviour, guided by observations in Section \ref{sec:theory:TNSA}. These algorithms can be accessed using a new \textcolor{blue}{\texttt{tnsa}} boundary type in the boundaries block. Our parametrisation takes the form of three key parameters:
@@ -1499,6 +1593,37 @@ In order to test the ionisation and bremsstrahlung energy loss mechanisms for el
 
 Figure \ref{fig:bench:nist} shows excellent agreement between \texttt{EPOCH} and NIST, recreating both the ionisation-driven peak at low electron energies, and the high energy bremsstrahlung-driven regime.
 
+\subsection{K-alpha production} \label{sec:bench:kalpha} 
+
+K-alpha emission consists of two phases - an ionisation phase, and a photon production phase. To test the validity of the electron impact ionisation part, we may first check the accuracy of the RBEB model in reproducing the experimental copper 1s cross section. This comparison has been made in Figure \ref{fig:bench:rbeb_cu}. Here it can be seen that the RBEB model provides a good fit to experimental data, although there is ambiguity in the peak. In the Long \cite{benchmark:Long} data, there is an overlap between low data-points and high data-points at around 100 keV incident electron energy, and the RBEB curve follows the low set. The curve also follows the more recent results of An \cite{benchmark:An}, and so it may be assumed that RBEB is a good model for the ionisation cross section.
+
+\begin{figure}
+\centering
+  \includegraphics[width=0.6\linewidth]{Figures/bench_rbeb_cu.png}
+\caption{Electron impact ionisation cross section for bound electrons in the 1s shell of copper, as a function of incident electron kinetic energy. The theoretical RBEB model is compared against the experimental data of Long \cite{benchmark:Long} and An \cite{benchmark:An}.}
+\label{fig:bench:rbeb_cu}
+\end{figure}
+
+A numerical experiment was performed to ensure the correct number of ionisation events were achieved. A 100 keV electron bunch, consisting of $10^6$ electrons ($N_e$) was injected into the simulation window through the $x_\text{min}$ boundary. The simulation spanned 100 microns in $x$, $L_x$, and had a background of solid density copper ($n_i = 8.5\times 10^{28}\text{ m}^{-3}$). At 100 keV incident electron kinetic energy, the RBEB model predicts a cross section of $\sigma = 3.006200\times 10^{-26} \text{ m}^2$, and assuming all ionisation events lead to K$\alpha$ photons, we would expect the incident electrons to produce a number of photons
+%
+\begin{align}
+  N_\gamma = N_e \sigma L_x n_i = \text{255,527 photons}
+\end{align}
+%
+as they passed the full length of the simulation window. All other physics packages were switched off. In practice, 259,277 photons were created, within 1.5\% of the expected value. Hence, the K$\alpha$ sampling was behaving as expected.
+
+\subsection{Photo-electric attenuation}
+
+In photo-electric attenuation, photons are absorbed as they traverse a target. Currently, only copper targets are supported for photon attenuation, and the attenuation is only accurate for photons around K$\alpha$ energies (around 8 keV). For this benchmark, 500 macro-photons representing $10^5$ real photons of energy 8 keV were initialised at the $x_{min}$ boundary. The copper background electron temperature was set to 1 keV. The number of real photons remaining as the photon bunch traversed the copper target was tracked, and this has been plotted in Figure \ref{fig:bench:attenuation}. Here it can be seen that the attenuation matches the expected attenuation from the Suxing model, and so this form of photon attenuation has been implemented successfully.
+
+\begin{figure}
+\centering
+  \includegraphics[width=0.6\linewidth]{Figures/bench_attenuation.png}
+\caption{The number of K$\alpha$ photons remaining after traversing different depths of a solid-density copper target, heated to a background electron temperature of 1 keV. A theoretical curve using the Suxing model has been provided for comparison.}
+\label{fig:bench:attenuation}
+\end{figure}
+
+
 \subsection{Milchberg resistivity} \label{sec:bench:Milchberg}
 
 We can test the \texttt{EPOCH} resistivity models by comparing our resistivities against the experimental values found by Milchberg \textit{et al} \cite{eta:Al:Milchberg}. The input deck used for this benchmark set up an aluminium target with no injected electrons, and an initial electron temperature which rose linearly with the $x$ direction. This benchmark tested the reduced Lee-More resistivity model in two simulations, one without any model parameter modification, and other where $\lambda_1$ and $\lambda_2$ have been changed to show better agreement with the data. The resistivity output in each cell was paired with the temperature of that cell to create the curves of Figure \ref{fig:bench:Milchberg}.
@@ -1570,7 +1695,7 @@ This section aims to provide a general overview of the previous sections, along 
 
 \texttt{EPOCH} now has the capability of running as an electron-transport code for laser-solid simulations. Previously, users interested in simulating laser-solid interactions would have to specify a laser boundary, and represent the solid as a cold, dense collection of macro-particles. This approach is computationally expensive, and prone to unphysical behaviour like numerical self-heating. Electron-transport codes treat the solid as a background static fluid, which a small number of high energy macro-particles move through instead.
 
-To start running these hybrid-PIC simulations, the user must become familiar with three new blocks for the input deck: the \textcolor{blue}{\texttt{hybrid}} block for switching on and off individual subroutines, the \textcolor{blue}{\texttt{solid}} block for defining solid geometries, and the \textcolor{blue}{\texttt{hy\_laser}} block for electron injection. Explanations of these blocks will be provided in the following sections, along with extensions to existing blocks.
+To start running these hybrid-PIC simulations, the user must become familiar with three new blocks for the input deck: the \textcolor{blue}{\texttt{hybrid}} block for switching on and off individual subroutines, the \textcolor{blue}{\texttt{solid}} block for defining solid geometries, and the \textcolor{blue}{\texttt{hy\_laser}} block for electron injection. Explanations of these blocks will be provided in the following sections, along with extensions to existing blocks. An additional K$\alpha$ radiation block has also been added to the code, which has been written to run in hybrid-PIC mode.
 
 \subsection{Hybrid block} \label{sec:user:hybrid}
 
@@ -1750,11 +1875,98 @@ end:hy_laser
 
 \bigskip {\large\textcolor{blue}{theta}} - Global $\theta$ rotation of the injected particles after all angular distribution models have been applied.
 
-\bigskip {\large\textcolor{blue}{phi}} - Global $\phi$ rotation of the injected particles after all angular distribution models have been applied. The meaning of $\phi=0$ and the direction of increasing $\phi$ has different meanings on different boundaries. On boundaries \{$x_\text{min}$, $x_\text{max}$, $y_\text{min}$, $y_\text{max}$, $z_\text{min}$, $z_\text{max}$\}, the $\phi=0$ line points to \{$z_\text{min}$, $z_\text{min}$, $z_\text{min}$, $z_\text{min}$, $x_\text{max}$, $x_\text{max}$\}, and the direction of increasing $\phi$ makes $\phi=\pi/2$ point towards \{$y_\text{max}$, $y_\text{min}$, $x_\text{min}$, $x_\text{max}$, $y_\text{max}$, $y_\text{max}$\}.      
+\bigskip {\large\textcolor{blue}{phi}} - Global $\phi$ rotation of the injected particles after all angular distribution models have been applied. The meaning of $\phi=0$ and the direction of increasing $\phi$ has different meanings on different boundaries. On boundaries \{$x_\text{min}$, $x_\text{max}$, $y_\text{min}$, $y_\text{max}$, $z_\text{min}$, $z_\text{max}$\}, the $\phi=0$ line points to \{$z_\text{min}$, $z_\text{min}$, $z_\text{min}$, $z_\text{min}$, $x_\text{max}$, $x_\text{max}$\}, and the direction of increasing $\phi$ makes $\phi=\pi/2$ point towards \{$y_\text{max}$, $y_\text{min}$, $x_\text{min}$, $x_\text{max}$, $y_\text{max}$, $y_\text{max}$\}.
+
+\subsection{K-alpha block} \label{sec:user:kalpha}
+
+The K$\alpha$ radiation block follows a similar syntax to other radiation blocks like bremsstrahlung and non-linear Compton scatter. At present, only K$\alpha$ emission from hot electrons traversing \textbf{copper} is supported by the code. To identify a solid as copper, set its atomic number to 29. A photon species must also be specified to populate with K$\alpha$ macro-particles. An example is provided below, including both the K$\alpha$ block, and a species block to assign generated K$\alpha$ photons to. The line \texttt{identify:k\_alpha\_photon} identifies this species as the one to populate with K$\alpha$ macro-particles.
+
+\begin{lstlisting}[style=myInputDeck]
+begin:k_alpha
+
+  use_k_alpha = T     
+  produce_photons = T 
+  photon_dynamics = F 
+  start_time = 0.0
+  use_k_alpha_recoil = T
+  min_photon_energy = 0.0
+  auger_frac = 0.2
+  photon_weight = 1.0
+  sig_ka1_0 = 3.0
+  sig_ka2_0 = 3.0 
+
+end:k_alpha
+
+
+begin:species
+
+  name = Ka_Photon  
+  npart = 0
+  dump = T
+  identify:k_alpha_photon
+ 
+end:species
+\end{lstlisting}
+
+\bigskip {\large\textcolor{blue}{use\_k\_alpha}} - Determines whether to run K$\alpha$ scripts or not. Default is F.
+
+\bigskip {\large\textcolor{blue}{produce\_photons}} - Logical flag to determine whether macro-photons are added to the K$\alpha$ photon species. If this is F while \textcolor{blue}{use\_k\_alpha} is T, then electrons will still recoil when triggering ionisation, but no K$\alpha$ macro-photons will be created. The default is F.
+
+\bigskip {\large\textcolor{blue}{photon\_dynamics}} - Logical flag to determine whether K$\alpha$ macro-photons move when they are created. If F, they will remain at the creation position. Note that this flag overrides the \textcolor{blue}{immobile} flag in the species block. The default is F.
+
+\bigskip {\large\textcolor{blue}{start\_time}} - The user may specify a delay before the K$\alpha$ routines switch on. This may speed up the code if electrons traverse a large gap before reaching a copper solid. The default is 0.
+
+\bigskip {\large\textcolor{blue}{use\_k\_alpha\_recoil}} - If T, this reduces the energy of incident hot electrons when they ionise a bound 1s electron in copper. The user may wish to disable this if running with ionisation energy loss, as this package already considers energy loss due to collisions with all bound electrons, including copper 1s. The default is T.
+
+\bigskip {\large\textcolor{blue}{min\_photon\_energy}} - Determines the minimum photon energy which will be added to the K$\alpha$ photon species. Photons with energy below this threshold can still cause hot electron recoil, but they will not be tracked by the code. The default is 0.
+
+\bigskip {\large\textcolor{blue}{auger\_frac}} - The fraction of copper 1s ionisation events which do \textbf{not} lead to K$\alpha$ emission. The default is 0.
+
+\bigskip {\large\textcolor{blue}{photon\_weight}} - If this is not specified, K$\alpha$ macro-photons will have the same weight as the incident electron. This key may be used to improve statistics by sampling more K$\alpha$ macro-photons of reduced weight, through increasing the cross section of emission. For example, setting this to 0.1 would increase the number of macro-photons by a factor of 10, while decreasing the macro-photon weight by the same factor to conserve real particle number. Note there are limitations to this key, as a macro-electron may only trigger one ionisation event per time-step - setting this too high will numerically saturate the emission, causing an underestimate of K$\alpha$ yield. The default is 1 (no weight correction).
+
+\bigskip {\large\textcolor{blue}{sig\_ka$i$\_$n$}} - K$\alpha$ emissions can be made to emit photons from a Gaussian distribution, centred on the K$\alpha$ energies at the current cell temperature. The standard deviation for this Gaussian must be set by the user. Here, $i$ refers to the K$\alpha$ line, and can be either 1 or 2. It is assumed the standard deviation can be described by a polynomial fit $\sigma = \sum \sigma_n (T_e')^n$, where $n$ may range from 0 to 4. The $T_e'$ terms refer to the background copper temperature in eV, and this key sets the $\sigma_n$ variables, assuming they are defined such that $\sigma$ is also in eV. All these $\sigma_n$ terms are set to 0 by default, so the code would have K$\alpha$ line emissions.
 
 \subsection{Hybrid keys in existing blocks} \label{sec:user:extra}
 
 Finally, some new hybrid functionality is present in existing input deck blocks. The remainder of this section will cover these new extensions.
+
+\subsubsection{Photo-electric attenuation}
+
+For the attenuation of photons in a copper target due to the photo-electric effect, the user must activate a key in the control block, and identify photon species which are to be attenuated. This only applies the correct attenuation to copper K$\alpha$ photon energies (around 8 keV energy). An example is provided below:
+
+\begin{lstlisting}[style=myInputDeck] 
+begin:control
+
+  nx = 100
+  ny = 8
+  nz = 8
+  t_end = 300e-15
+  x_min = 0
+  x_max = 100e-6
+  y_min = -4.0e-6
+  y_max =  4.0e-6
+  z_min = -4.0e-6
+  z_max =  4.0e-6
+
+  use_photo_electric = T
+
+end:control
+
+
+begin:species
+
+  name = Ka_Photon  
+  npart = 0
+  dump = T
+  attenuate = T
+  identify:k_alpha_photon
+ 
+end:species
+\end{lstlisting}
+
+\bigskip {\large\textcolor{blue}{use\_photo\_electric}} - Control block variable. This is a logical switch to run photo-electric attenuation of photons. The default is F.
+
+\bigskip {\large\textcolor{blue}{attenuate}} - Species block variable. This is a logical switch to identify a species as a photon which will undergo photo-electric attenuation when traversing copper. The default is F.
 
 \subsubsection{TNSA boundary}
 

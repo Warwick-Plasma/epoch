@@ -334,6 +334,9 @@ CONTAINS
         .OR. str_cmp(element, 'bsi')) THEN
       use_bsi = as_logical_print(value, element, errcode)
 
+    ELSE IF (str_cmp(element, 'use_photo_electric')) THEN
+      use_photo_electric = as_logical_print(value, element, errcode)
+
     ELSE IF (str_cmp(element, 'particle_tstart')) THEN
       particle_push_start_time = as_real_print(value, element, errcode)
 

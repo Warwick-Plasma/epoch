@@ -8,45 +8,47 @@ Warning--empty title in bremPIC:Wu
 Warning--empty title in bremPIC:Wan
 Warning--there's a number but no volume in theory:ionisation:continuous
 Warning--empty institution in code:geant4:Urban
-You've used 38 entries,
+Warning--empty title in theory:desclaux
+Warning--empty title in theory:carlson
+You've used 46 entries,
             1791 wiz_defined-function locations,
-            715 strings with 11315 characters,
-and the built_in function-call counts, 9100 in all, are:
-= -- 709
-> -- 600
+            757 strings with 12564 characters,
+and the built_in function-call counts, 11062 in all, are:
+= -- 867
+> -- 711
 < -- 2
-+ -- 215
-- -- 177
-* -- 764
-:= -- 1576
-add.period$ -- 112
-call.type$ -- 38
-change.case$ -- 37
++ -- 255
+- -- 209
+* -- 944
+:= -- 1902
+add.period$ -- 134
+call.type$ -- 46
+change.case$ -- 43
 chr.to.int$ -- 0
-cite$ -- 43
-duplicate$ -- 342
-empty$ -- 790
-format.name$ -- 177
-if$ -- 1908
+cite$ -- 53
+duplicate$ -- 414
+empty$ -- 972
+format.name$ -- 209
+if$ -- 2321
 int.to.chr$ -- 0
-int.to.str$ -- 38
-missing$ -- 37
-newline$ -- 190
-num.names$ -- 38
-pop$ -- 63
+int.to.str$ -- 46
+missing$ -- 45
+newline$ -- 228
+num.names$ -- 46
+pop$ -- 73
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 0
-skip$ -- 126
+skip$ -- 150
 stack$ -- 0
-substring$ -- 533
-swap$ -- 45
+substring$ -- 686
+swap$ -- 53
 text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
 type$ -- 0
-warning$ -- 5
-while$ -- 79
-width$ -- 40
-write$ -- 413
-(There were 5 warnings)
+warning$ -- 7
+while$ -- 98
+width$ -- 48
+write$ -- 497
+(There were 7 warnings)

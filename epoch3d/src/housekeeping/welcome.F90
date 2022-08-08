@@ -135,6 +135,9 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     found = .TRUE.
 #endif
+#ifdef K_ALPHA
+    found = .TRUE.
+#endif
 #ifdef PREFETCH
     found = .TRUE.
 #endif
@@ -242,6 +245,10 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     defines = IOR(defines, c_def_bremsstrahlung)
     WRITE(*,*) 'Bremsstrahlung radiation -DBREMSSTRAHLUNG'
+#endif
+#ifdef K_ALPHA
+    defines = IOR(defines, c_def_k_alpha)
+    WRITE(*,*) 'K-alpha emissions -DK_ALPHA'
 #endif
 #ifdef PREFETCH
     defines = IOR(defines, c_def_prefetch)

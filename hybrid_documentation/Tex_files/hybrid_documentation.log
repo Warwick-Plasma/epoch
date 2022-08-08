@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.10.15)  28 SEP 2020 21:54
+This is pdfTeX, Version 3.14159265-2.6-1.40.16 (TeX Live 2015/Debian) (preloaded format=pdflatex 2018.10.15)  8 AUG 2022 07:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -665,114 +665,114 @@ Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
 (hyperref)                removing `math shift' on input line 364.
 
-[10] [11] [12] [13] [14] [15] [16] [17] [18] [19]
-<Figures/tnsa_diagram.png, id=658, 602.25pt x 351.3125pt>
+[10] [11] [12] [13] [14] [15] [16] [17] [18] [19] [20] [21]
+<Figures/tnsa_diagram.png, id=744, 602.25pt x 351.3125pt>
 File: Figures/tnsa_diagram.png Graphic file (type png)
 
 <use Figures/tnsa_diagram.png>
-Package pdftex.def Info: Figures/tnsa_diagram.png used on input line 773.
+Package pdftex.def Info: Figures/tnsa_diagram.png used on input line 837.
 (pdftex.def)             Requested size: 281.85587pt x 164.42001pt.
- [20 <./Figures/tnsa_diagram.png>]
-<Figures/C_1e20_t_r.png, id=668, 451.87769pt x 314.94505pt>
+ [22 <./Figures/tnsa_diagram.png>]
+<Figures/C_1e20_t_r.png, id=755, 451.87769pt x 314.94505pt>
 File: Figures/C_1e20_t_r.png Graphic file (type png)
 
 <use Figures/C_1e20_t_r.png>
-Package pdftex.def Info: Figures/C_1e20_t_r.png used on input line 788.
+Package pdftex.def Info: Figures/C_1e20_t_r.png used on input line 852.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
 
-<Figures/C_1e22_t_r.png, id=669, 451.87769pt x 314.94505pt>
+<Figures/C_1e22_t_r.png, id=756, 451.87769pt x 314.94505pt>
 File: Figures/C_1e22_t_r.png Graphic file (type png)
 
 <use Figures/C_1e22_t_r.png>
-Package pdftex.def Info: Figures/C_1e22_t_r.png used on input line 793.
+Package pdftex.def Info: Figures/C_1e22_t_r.png used on input line 857.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
-
-<Figures/C_1e20_p_r.png, id=673, 451.87769pt x 314.94505pt>
+ [23 <./Figures/C_1e20_t_r.png (PNG copy)> <./Figures/C_1e22_t_r.png (PNG copy)
+>]
+<Figures/C_1e20_p_r.png, id=767, 451.87769pt x 314.94505pt>
 File: Figures/C_1e20_p_r.png Graphic file (type png)
 
 <use Figures/C_1e20_p_r.png>
-Package pdftex.def Info: Figures/C_1e20_p_r.png used on input line 808.
+Package pdftex.def Info: Figures/C_1e20_p_r.png used on input line 872.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
 
-<Figures/C_1e22_p_r.png, id=674, 451.87769pt x 314.94505pt>
+<Figures/C_1e22_p_r.png, id=768, 451.87769pt x 314.94505pt>
 File: Figures/C_1e22_p_r.png Graphic file (type png)
 
 <use Figures/C_1e22_p_r.png>
-Package pdftex.def Info: Figures/C_1e22_p_r.png used on input line 813.
+Package pdftex.def Info: Figures/C_1e22_p_r.png used on input line 877.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
- [21 <./Figures/C_1e20_t_r.png (PNG copy)> <./Figures/C_1e22_t_r.png (PNG copy)
->]
-<Figures/tnsa_rear.png, id=686, 429.2838pt x 311.7246pt>
+
+<Figures/tnsa_rear.png, id=772, 429.2838pt x 311.7246pt>
 File: Figures/tnsa_rear.png Graphic file (type png)
 
 <use Figures/tnsa_rear.png>
-Package pdftex.def Info: Figures/tnsa_rear.png used on input line 824.
+Package pdftex.def Info: Figures/tnsa_rear.png used on input line 888.
 (pdftex.def)             Requested size: 281.85587pt x 204.66864pt.
 
-<Figures/C_1e20_pi_loss.png, id=688, 451.87769pt x 314.94505pt>
+<Figures/C_1e20_pi_loss.png, id=774, 451.87769pt x 314.94505pt>
 File: Figures/C_1e20_pi_loss.png Graphic file (type png)
 
 <use Figures/C_1e20_pi_loss.png>
-Package pdftex.def Info: Figures/C_1e20_pi_loss.png used on input line 835.
+Package pdftex.def Info: Figures/C_1e20_pi_loss.png used on input line 899.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
 
-<Figures/C_1e22_pi_loss.png, id=689, 451.87769pt x 314.94505pt>
+<Figures/C_1e22_pi_loss.png, id=775, 451.87769pt x 314.94505pt>
 File: Figures/C_1e22_pi_loss.png Graphic file (type png)
 
 <use Figures/C_1e22_pi_loss.png>
-Package pdftex.def Info: Figures/C_1e22_pi_loss.png used on input line 840.
+Package pdftex.def Info: Figures/C_1e22_pi_loss.png used on input line 904.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
- [22 <./Figures/C_1e20_p_r.png (PNG copy)> <./Figures/C_1e22_p_r.png (PNG copy)
->] [23 <./Figures/tnsa_rear.png (PNG copy)> <./Figures/C_1e20_pi_loss.png (PNG 
+ [24 <./Figures/C_1e20_p_r.png (PNG copy)> <./Figures/C_1e22_p_r.png (PNG copy)
+>] [25 <./Figures/tnsa_rear.png (PNG copy)> <./Figures/C_1e20_pi_loss.png (PNG 
 copy)> <./Figures/C_1e22_pi_loss.png (PNG copy)>] <Figures/C_1e20_ang_spectra_r
-.png, id=709, 451.87769pt x 314.94505pt>
+.png, id=796, 451.87769pt x 314.94505pt>
 File: Figures/C_1e20_ang_spectra_r.png Graphic file (type png)
 
 <use Figures/C_1e20_ang_spectra_r.png>
-Package pdftex.def Info: Figures/C_1e20_ang_spectra_r.png used on input line 87
-4.
+Package pdftex.def Info: Figures/C_1e20_ang_spectra_r.png used on input line 93
+8.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
 
-<Figures/C_1e22_ang_spectra_r.png, id=710, 451.87769pt x 314.94505pt>
+<Figures/C_1e22_ang_spectra_r.png, id=797, 451.87769pt x 314.94505pt>
 File: Figures/C_1e22_ang_spectra_r.png Graphic file (type png)
 
 <use Figures/C_1e22_ang_spectra_r.png>
-Package pdftex.def Info: Figures/C_1e22_ang_spectra_r.png used on input line 87
-9.
+Package pdftex.def Info: Figures/C_1e22_ang_spectra_r.png used on input line 94
+3.
 (pdftex.def)             Requested size: 230.18253pt x 160.42761pt.
 
-<Figures/theta_change.png, id=712, 426.01263pt x 319.50948pt>
+<Figures/theta_change.png, id=799, 426.01263pt x 319.50948pt>
 File: Figures/theta_change.png Graphic file (type png)
 
 <use Figures/theta_change.png>
-Package pdftex.def Info: Figures/theta_change.png used on input line 890.
+Package pdftex.def Info: Figures/theta_change.png used on input line 954.
 (pdftex.def)             Requested size: 281.85587pt x 211.39369pt.
- [24 <./Figures/C_1e20_ang_spectra_r.png (PNG copy)> <./Figures/C_1e22_ang_spec
-tra_r.png (PNG copy)>] [25 <./Figures/theta_change.png (PNG copy)>] [26]
-<Figures/flowchart.png, id=743, 603.25375pt x 607.26875pt>
+ [26 <./Figures/C_1e20_ang_spectra_r.png (PNG copy)> <./Figures/C_1e22_ang_spec
+tra_r.png (PNG copy)>] [27 <./Figures/theta_change.png (PNG copy)>] [28]
+<Figures/flowchart.png, id=830, 603.25375pt x 607.26875pt>
 File: Figures/flowchart.png Graphic file (type png)
 
 <use Figures/flowchart.png>
-Package pdftex.def Info: Figures/flowchart.png used on input line 951.
+Package pdftex.def Info: Figures/flowchart.png used on input line 1015.
 (pdftex.def)             Requested size: 469.75502pt x 472.8801pt.
 
-Overfull \hbox (2.48375pt too wide) in paragraph at lines 973--975
+Overfull \hbox (2.48375pt too wide) in paragraph at lines 1037--1039
 [][][][][][][][][][][][][][][][][][] 
  []
 
-[27] [28 <./Figures/flowchart.png>]
-Overfull \hbox (5.75119pt too wide) in paragraph at lines 1007--1008
+[29] [30 <./Figures/flowchart.png>]
+Overfull \hbox (5.75119pt too wide) in paragraph at lines 1071--1072
 []\T1/cmtt/m/n/12 EPOCH \T1/cmr/m/n/12 stores solids in the []\T1/cmtt/m/n/12 s
 olid_array[]\T1/cmr/m/n/12 , and stores the num-ber of solids in the []\T1/cmtt
 /m/n/12 solid_count[]
  []
 
-[29] [30] [31]
+[31] [32] [33]
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[32]
-Overfull \hbox (4.84735pt too wide) in paragraph at lines 1126--1127
+[34]
+Overfull \hbox (4.84735pt too wide) in paragraph at lines 1190--1191
 \T1/cmr/m/n/12 smaller of the Moore an-gle (if used), or a user-defined cone an
 -gle stored in the []\T1/cmtt/m/n/12 user_theta_max[]
  []
@@ -780,141 +780,157 @@ Overfull \hbox (4.84735pt too wide) in paragraph at lines 1126--1127
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[33] [34] [35] <Figures/Cell_stagger.png, id=885, 552.0625pt x 401.5pt>
+[35] [36] [37] <Figures/Cell_stagger.png, id=973, 552.0625pt x 401.5pt>
 File: Figures/Cell_stagger.png Graphic file (type png)
 
 <use Figures/Cell_stagger.png>
-Package pdftex.def Info: Figures/Cell_stagger.png used on input line 1225.
+Package pdftex.def Info: Figures/Cell_stagger.png used on input line 1289.
 (pdftex.def)             Requested size: 281.85587pt x 204.99509pt.
- [36 <./Figures/Cell_stagger.png>] [37] [38]
-[39] [40] [41]
-<Figures/bench_file_injector.png, id=970, 451.87769pt x 314.94505pt>
+ [38 <./Figures/Cell_stagger.png>] [39] [40]
+[41] [42] [43] [44] [45]
+<Figures/bench_file_injector.png, id=1074, 451.87769pt x 314.94505pt>
 File: Figures/bench_file_injector.png Graphic file (type png)
 
 <use Figures/bench_file_injector.png>
-Package pdftex.def Info: Figures/bench_file_injector.png used on input line 140
-4.
+Package pdftex.def Info: Figures/bench_file_injector.png used on input line 149
+8.
 (pdftex.def)             Requested size: 281.85587pt x 196.4413pt.
- [42]
-<Figures/bench_tnsa.png, id=978, 426.01263pt x 319.50948pt>
+ [46 <./Figures/bench_file_injector.png (PNG copy)>] <Figures/bench_tnsa.png, i
+d=1082, 426.01263pt x 319.50948pt>
 File: Figures/bench_tnsa.png Graphic file (type png)
 
 <use Figures/bench_tnsa.png>
-Package pdftex.def Info: Figures/bench_tnsa.png used on input line 1419.
+Package pdftex.def Info: Figures/bench_tnsa.png used on input line 1513.
 (pdftex.def)             Requested size: 281.85587pt x 211.39369pt.
 
-<Figures/bench_equilibration.png, id=981, 422.96968pt x 314.94505pt>
+<Figures/bench_equilibration.png, id=1085, 422.96968pt x 314.94505pt>
 File: Figures/bench_equilibration.png Graphic file (type png)
 
 <use Figures/bench_equilibration.png>
-Package pdftex.def Info: Figures/bench_equilibration.png used on input line 143
-0.
+Package pdftex.def Info: Figures/bench_equilibration.png used on input line 152
+4.
 (pdftex.def)             Requested size: 281.85587pt x 209.88275pt.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
-(hyperref)                removing `math shift' on input line 1437.
+(hyperref)                removing `math shift' on input line 1531.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
-(hyperref)                removing `\delta' on input line 1437.
+(hyperref)                removing `\delta' on input line 1531.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (PDFDocEncoding):
-(hyperref)                removing `math shift' on input line 1437.
+(hyperref)                removing `math shift' on input line 1531.
 
-[43 <./Figures/bench_file_injector.png (PNG copy)>] [44 <./Figures/bench_tnsa.p
-ng (PNG copy)> <./Figures/bench_equilibration.png (PNG copy)>]
-<Figures/bench_G4delta_E.png, id=996, 426.01263pt x 319.50948pt>
+[47 <./Figures/bench_tnsa.png (PNG copy)>]
+<Figures/bench_G4delta_E.png, id=1095, 426.01263pt x 319.50948pt>
 File: Figures/bench_G4delta_E.png Graphic file (type png)
 
 <use Figures/bench_G4delta_E.png>
-Package pdftex.def Info: Figures/bench_G4delta_E.png used on input line 1449.
+Package pdftex.def Info: Figures/bench_G4delta_E.png used on input line 1543.
 (pdftex.def)             Requested size: 230.18253pt x 172.6398pt.
 
-<Figures/bench_G4delta_ang.png, id=997, 426.01263pt x 319.50948pt>
+<Figures/bench_G4delta_ang.png, id=1096, 426.01263pt x 319.50948pt>
 File: Figures/bench_G4delta_ang.png Graphic file (type png)
 
 <use Figures/bench_G4delta_ang.png>
-Package pdftex.def Info: Figures/bench_G4delta_ang.png used on input line 1454.
+Package pdftex.def Info: Figures/bench_G4delta_ang.png used on input line 1548.
 
 (pdftex.def)             Requested size: 230.18253pt x 172.6398pt.
- [45 <./Figures/bench_G4delta_E.png (PNG copy)> <./Figures/bench_G4delta_ang.pn
-g (PNG copy)>]
-<Figures/bench_Hanson.png, id=1005, 426.01263pt x 319.50948pt>
+ [48 <./Figures/bench_equilibration.png (PNG copy)>] <Figures/bench_Hanson.png,
+ id=1104, 426.01263pt x 319.50948pt>
 File: Figures/bench_Hanson.png Graphic file (type png)
 
 <use Figures/bench_Hanson.png>
-Package pdftex.def Info: Figures/bench_Hanson.png used on input line 1469.
+Package pdftex.def Info: Figures/bench_Hanson.png used on input line 1563.
 (pdftex.def)             Requested size: 281.85587pt x 211.39369pt.
- [46 <./Figures/bench_Hanson.png (PNG copy)>]
-<Figures/bench_Lockwood.png, id=1016, 426.01263pt x 319.50948pt>
+ [49 <./Figures/bench_G4delta_E.png (PNG copy)> <./Figures/bench_G4delta_ang.pn
+g (PNG copy)>]
+<Figures/bench_Lockwood.png, id=1117, 426.01263pt x 319.50948pt>
 File: Figures/bench_Lockwood.png Graphic file (type png)
 
 <use Figures/bench_Lockwood.png>
-Package pdftex.def Info: Figures/bench_Lockwood.png used on input line 1482.
+Package pdftex.def Info: Figures/bench_Lockwood.png used on input line 1576.
 (pdftex.def)             Requested size: 281.85587pt x 211.39369pt.
- [47 <./Figures/bench_Lockwood.png (PNG copy)>] <Figures/bench_NIST.png, id=102
-8, 426.01263pt x 319.50948pt>
+
+<Figures/bench_NIST.png, id=1121, 426.01263pt x 319.50948pt>
 File: Figures/bench_NIST.png Graphic file (type png)
 
 <use Figures/bench_NIST.png>
-Package pdftex.def Info: Figures/bench_NIST.png used on input line 1495.
+Package pdftex.def Info: Figures/bench_NIST.png used on input line 1589.
 (pdftex.def)             Requested size: 281.85587pt x 211.39369pt.
+ [50 <./Figures/bench_Hanson.png (PNG copy)>]
+[51 <./Figures/bench_Lockwood.png (PNG copy)> <./Figures/bench_NIST.png (PNG co
+py)>] <Figures/bench_rbeb_cu.png, id=1138, 456.95718pt x 311.66437pt>
+File: Figures/bench_rbeb_cu.png Graphic file (type png)
 
-<Figures/bench_milchberg.png, id=1032, 423.73042pt x 277.66895pt>
+<use Figures/bench_rbeb_cu.png>
+Package pdftex.def Info: Figures/bench_rbeb_cu.png used on input line 1602.
+(pdftex.def)             Requested size: 281.85587pt x 192.2455pt.
+ [52 <./Figures/bench_rbeb_cu.png (PNG copy)>]
+<Figures/bench_attenuation.png, id=1152, 421.575pt x 316.18124pt>
+File: Figures/bench_attenuation.png Graphic file (type png)
+
+<use Figures/bench_attenuation.png>
+Package pdftex.def Info: Figures/bench_attenuation.png used on input line 1621.
+
+(pdftex.def)             Requested size: 281.85587pt x 211.39647pt.
+
+<Figures/bench_milchberg.png, id=1155, 423.73042pt x 277.66895pt>
 File: Figures/bench_milchberg.png Graphic file (type png)
 
 <use Figures/bench_milchberg.png>
-Package pdftex.def Info: Figures/bench_milchberg.png used on input line 1508.
+Package pdftex.def Info: Figures/bench_milchberg.png used on input line 1633.
 (pdftex.def)             Requested size: 281.85587pt x 184.7026pt.
- [48 <./Figures/bench_NIST.png (PNG copy)>]
-<Figures/bench_Rester.png, id=1045, 426.01263pt x 319.50948pt>
+ [53 <./Figures/bench_attenuation.png (PNG copy)>] <Figures/bench_Rester.png, i
+d=1168, 426.01263pt x 319.50948pt>
 File: Figures/bench_Rester.png Graphic file (type png)
 
 <use Figures/bench_Rester.png>
-Package pdftex.def Info: Figures/bench_Rester.png used on input line 1525.
+Package pdftex.def Info: Figures/bench_Rester.png used on input line 1650.
 (pdftex.def)             Requested size: 230.18253pt x 172.6398pt.
 
-<Figures/bench_Rester_G4.png, id=1046, 426.01263pt x 319.50948pt>
+<Figures/bench_Rester_G4.png, id=1169, 426.01263pt x 319.50948pt>
 File: Figures/bench_Rester_G4.png Graphic file (type png)
 
 <use Figures/bench_Rester_G4.png>
-Package pdftex.def Info: Figures/bench_Rester_G4.png used on input line 1530.
+Package pdftex.def Info: Figures/bench_Rester_G4.png used on input line 1655.
 (pdftex.def)             Requested size: 230.18253pt x 172.6398pt.
- [49 <./Figures/bench_milchberg.png (PNG copy)>] [50 <./Figures/bench_Rester.pn
+ [54 <./Figures/bench_milchberg.png (PNG copy)>] [55 <./Figures/bench_Rester.pn
 g (PNG copy)> <./Figures/bench_Rester_G4.png (PNG copy)>] <Figures/bench_Evans_
-line.png, id=1061, 418.40526pt x 324.0739pt>
+line.png, id=1184, 418.40526pt x 324.0739pt>
 File: Figures/bench_Evans_line.png Graphic file (type png)
 
 <use Figures/bench_Evans_line.png>
-Package pdftex.def Info: Figures/bench_Evans_line.png used on input line 1549.
+Package pdftex.def Info: Figures/bench_Evans_line.png used on input line 1674.
 (pdftex.def)             Requested size: 230.18253pt x 178.29063pt.
 
-<Figures/bench_Evans_heat.png, id=1062, 426.01263pt x 319.50948pt>
+<Figures/bench_Evans_heat.png, id=1185, 426.01263pt x 319.50948pt>
 File: Figures/bench_Evans_heat.png Graphic file (type png)
 
 <use Figures/bench_Evans_heat.png>
-Package pdftex.def Info: Figures/bench_Evans_heat.png used on input line 1554.
+Package pdftex.def Info: Figures/bench_Evans_heat.png used on input line 1679.
 (pdftex.def)             Requested size: 230.18253pt x 172.6398pt.
- [51 <./Figures/bench_Evans_line.png (PNG copy)> <./Figures/bench_Evans_heat.pn
-g (PNG copy)>] [52] [53] [54] [55] [56]
-Overfull \hbox (3.2806pt too wide) in paragraph at lines 1739--1740
+ [56] [57 <./Figures/bench_Evans_line.png (PNG copy)> <./Figures/bench_Evans_he
+at.png (PNG copy)>] [58] [59] [60] [61]
+[62]
+Overfull \hbox (3.2806pt too wide) in paragraph at lines 1864--1865
 [][]\T1/cmr/m/n/14.4 angular_dist[] \T1/cmr/m/n/12 - Model for cal-cu-lat-ing t
 he an-gu-lar dis-tri-bu-tion of in-jected macro-particles.
  []
 
-[57] [58]
-Underfull \hbox (badness 10000) in paragraph at lines 1792--1811
+[63] [64] [65] [66]
+Underfull \hbox (badness 10000) in paragraph at lines 2004--2023
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1792--1811
+Underfull \hbox (badness 10000) in paragraph at lines 2004--2023
 
  []
 
-[59] (./hybrid_documentation.bbl
+[67] (./hybrid_documentation.bbl
 Underfull \hbox (badness 10000) in paragraph at lines 10--15
 []\T1/cmr/m/n/14.4 CP Ridgers, TG Black-burn,
  []
@@ -934,46 +950,57 @@ Underfull \hbox (badness 10000) in paragraph at lines 10--15
 \T1/cmr/m/n/14.4 SPD Man-gles, P McKenna,
  []
 
-[60] [61]
+[68] [69]
 Underfull \hbox (badness 10000) in paragraph at lines 100--103
 []\T1/cmr/m/n/14.4 GEANT Col-lab-o-ra-tion et al.
  []
 
-[62]
-Underfull \hbox (badness 10000) in paragraph at lines 150--154
+[70]
+Underfull \hbox (badness 10000) in paragraph at lines 150--155
+\T1/cmr/m/n/14.4 Hy-brid vlasov--fokker--planck--
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 150--155
+\T1/cmr/m/n/14.4 maxwell sim-u-la-tions of fast
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 173--175
+[]\T1/cmr/m/n/14.4 Thomas A Carl-son,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 183--187
 []\T1/cmr/m/n/14.4 DR Rusby, CD Arm-strong,
  []
 
 
-Underfull \hbox (badness 5189) in paragraph at lines 161--164
+Underfull \hbox (badness 5189) in paragraph at lines 194--197
 []\T1/cmr/m/n/14.4 HM Milch-berg, RR Free-man,
  []
 
-[63])
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1841.
- [64]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 1841.
+[71])
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 2053.
+ [72]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 2053.
  (./hybrid_documentation.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1841.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1841.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 2053.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 2053.
 
 Package rerunfilecheck Info: File `hybrid_documentation.out' has not changed.
-(rerunfilecheck)             Checksum: DA90F44C6C33AEA358FABC8A0C710F97;4212.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1841.
+(rerunfilecheck)             Checksum: FA58561C626D698ED9A58FC65CB5F761;4788.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 2053.
  )
 (\end occurred inside a group at level 1)
 
-### simple group (level 1) entered at line 1836 ({)
+### simple group (level 1) entered at line 2048 ({)
 ### bottom level 
 Here is how much of TeX's memory you used:
- 11525 strings out of 493479
- 175734 string characters out of 6144589
- 277795 words of memory out of 5000000
- 14277 multiletter control sequences out of 15000+600000
+ 11657 strings out of 493479
+ 177851 string characters out of 6144589
+ 279550 words of memory out of 5000000
+ 14315 multiletter control sequences out of 15000+600000
  28395 words of font info for 78 fonts, out of 8000000 for 9000
  891 hyphenation exceptions out of 8191
  36i,17n,39p,1348b,1662s stack positions out of 5000i,500n,10000p,200000b,80000s
@@ -1004,10 +1031,10 @@ sfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts
 /cm/cmsy6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cms
 y8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm1
 0.pfb>
-Output written on hybrid_documentation.pdf (64 pages, 1384800 bytes).
+Output written on hybrid_documentation.pdf (72 pages, 1464589 bytes).
 PDF statistics:
- 1987 PDF objects out of 2073 (max. 8388607)
- 1284 compressed objects within 13 object streams
- 454 named destinations out of 1000 (max. 500000)
- 603 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 2204 PDF objects out of 2487 (max. 8388607)
+ 1475 compressed objects within 15 object streams
+ 546 named destinations out of 1000 (max. 500000)
+ 677 words of extra memory for PDF output out of 10000 (max. 10000000)
 

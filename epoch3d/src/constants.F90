@@ -305,6 +305,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_bremsstrahlung = 2**26
   INTEGER(i8), PARAMETER :: c_def_hybrid = 2**27
   INTEGER(i8), PARAMETER :: c_def_probe_time = 2**28
+  INTEGER(i8), PARAMETER :: c_def_k_alpha = 2**29
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -636,7 +637,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_jbx               = 79
   INTEGER, PARAMETER :: c_dump_jby               = 80
   INTEGER, PARAMETER :: c_dump_jbz               = 81
-  INTEGER, PARAMETER :: num_vars_to_dump         = 81
+  INTEGER, PARAMETER :: c_dump_part_opdepth_k_al = 82
+  INTEGER, PARAMETER :: num_vars_to_dump         = 82
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2

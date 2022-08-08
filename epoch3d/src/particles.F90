@@ -180,6 +180,15 @@ CONTAINS
           END IF
         END IF
 #endif
+#ifdef K_ALPHA
+        IF (ispecies == k_alpha_photon_species) THEN
+          IF (k_alpha_photon_dynamics) THEN
+            CALL push_photons(ispecies)
+          ELSE
+            CYCLE
+          END IF
+        END IF
+#endif
 #ifdef PHOTONS
         IF (photon_dynamics) CALL push_photons(ispecies)
 #endif
@@ -666,7 +675,7 @@ CONTAINS
 
 
 
-#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(K_ALPHA)
   SUBROUTINE push_photons(ispecies)
 
     ! Very simple photon pusher
@@ -700,8 +709,8 @@ CONTAINS
     DO WHILE(ASSOCIATED(current))
       ! Note that this is the energy of a single REAL particle in the
       ! pseudoparticle, NOT the energy of the pseudoparticle
-      current_energy = current%particle_energy
-
+      current_energy = SQRT(current%part_p(1)**2 + current%part_p(2)**2 &
+          + current%part_p(3)**2) * c
       fac = dtfac / current_energy
       delta_x = current%part_p(1) * fac
       delta_y = current%part_p(2) * fac

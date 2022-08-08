@@ -19,6 +19,8 @@ MODULE partlist
   USE particle_id_hash_mod
 #if defined(PHOTONS) || defined(BREMSSTRAHLUNG) || defined(HYBRID)
   USE random_generator
+#elif defined(K_ALPHA)
+  USE random_generator
 #endif
 
   IMPLICIT NONE
@@ -71,6 +73,9 @@ CONTAINS
     nvar = nvar+1
 #endif
 #ifdef BREMSSTRAHLUNG
+    nvar = nvar+1
+#endif
+#ifdef K_ALPHA
     nvar = nvar+1
 #endif
 #ifdef HYBRID
@@ -467,6 +472,10 @@ CONTAINS
     array(cpos) = a_particle%optical_depth_bremsstrahlung
     cpos = cpos+1
 #endif
+#ifdef K_ALPHA
+    array(cpos) = a_particle%optical_depth_k_alpha
+    cpos = cpos+1
+#endif
 #ifdef HYBRID
     array(cpos) = a_particle%optical_depth_delta
     cpos = cpos+1
@@ -550,6 +559,10 @@ CONTAINS
     a_particle%optical_depth_bremsstrahlung = array(cpos)
     cpos = cpos+1
 #endif
+#ifdef K_ALPHA
+    a_particle%optical_depth_k_alpha = array(cpos)
+    cpos = cpos+1
+#endif
 #ifdef HYBRID
     a_particle%optical_depth_delta = array(cpos)
     cpos = cpos+1
@@ -611,6 +624,10 @@ CONTAINS
 #endif
 #ifdef BREMSSTRAHLUNG
     new_particle%optical_depth_bremsstrahlung = &
+        LOG(1.0_num / (1.0_num - random()))
+#endif
+#ifdef K_ALPHA
+    new_particle%optical_depth_k_alpha = &
         LOG(1.0_num / (1.0_num - random()))
 #endif
 #ifdef HYBRID
