@@ -1,3 +1,23 @@
+## v4.17.0 to v4.18.0
+
+ * PIC loop re-organised to ensure output files are dumped at the correct 
+   time-step.
+
+ * Fixed over-flow bug in dist_fn.
+
+ * Input deck can now store logical constants (value T or F).
+
+ * Added new n_coll_steps parameter to collisions block. This sub-cycles the
+   collisions, running them once every n steps. Collisions are run assuming a
+   time-step of n*dt, to retain the same physical behaviour.
+
+ * Added use_bremsstrahlung_scatter parameter to bremsstrahlung block. This
+   samples photon emission angle from the bremsstrahlung angular distribution. 
+   The model comes from the Geant4 Physics Reference Manual, which parametrises 
+   Tsai 1974, DOI: https://doi.org/10.1103/RevModPhys.46.815
+
+ * Fixed bug in non-relativistic bremsstrahlung cross-sections.
+
 ## v4.16.0 to v4.17.0
 
  * Added volume correction sampling Zenitani 2015 DOI 10.1063/1.4919383
