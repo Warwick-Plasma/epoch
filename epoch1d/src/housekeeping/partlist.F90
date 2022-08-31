@@ -76,6 +76,9 @@ CONTAINS
 #ifdef WORK_DONE_INTEGRATED
     nvar = nvar+6
 #endif
+#ifdef PARTICLE_SPIN
+    nvar = nvar+3
+#endif
     ! Persistent IDs
     IF (any_persistent_subset) nvar = nvar+1
 
@@ -470,6 +473,10 @@ CONTAINS
     array(cpos+5) = a_particle%work_z_total
     cpos = cpos+6
 #endif
+#ifdef PARTICLE_SPIN
+    array(cpos:cpos+2) = a_particle%spin
+    cpos = cpos+3
+#endif
     IF (any_persistent_subset) THEN
       temp_i8 = id_registry%map(a_particle)
       array(cpos) = TRANSFER(temp_i8, 1.0_num)
@@ -545,6 +552,10 @@ CONTAINS
     a_particle%work_z_total = array(cpos+5)
     cpos = cpos+6
 #endif
+#ifdef PARTICLE_SPIN
+    a_particle%spin = array(cpos:cpos+2)
+    cpos = cpos+3
+#endif
     IF (any_persistent_subset) THEN
       CALL id_registry%add_with_map(a_particle, TRANSFER(array(cpos), temp_i8))
       cpos = cpos+1
@@ -591,7 +602,9 @@ CONTAINS
     new_particle%optical_depth_bremsstrahlung = &
         LOG(1.0_num / (1.0_num - random()))
 #endif
-
+#ifdef PARTICLE_SPIN
+    new_particle%spin = (/0.0, 0.0, 1.0/)
+#endif
   END SUBROUTINE init_particle
 
 
