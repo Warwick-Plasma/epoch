@@ -596,9 +596,72 @@ CONTAINS
 
 
 
+  SUBROUTINE setup_bc_lists
+
+    INTEGER(i8) :: ispecies, ipart
+    INTEGER, DIMENSION(2*c_ndims) :: bc_species
+    REAL(num) :: bnd_x_min, bnd_x_max
+    TYPE(particle), POINTER :: current
+    TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
+
+    DO ispecies = 1, n_species
+      current => species_list(ispecies)%attached_list%head
+
+      IF (species_list(ispecies)%attached_list%count == 0) CYCLE
+
+      bc_species = species_list(ispecies)%bc_particle
+      IF ((bc_species(c_bd_x_min) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_min) == c_bc_cpml_outflow) &
+          .AND. x_min_boundary) THEN
+        bnd_x_min = x_min_outer
+      ELSE
+        bnd_x_min = x_min_local
+      END IF
+      IF ((bc_species(c_bd_x_max) == c_bc_thermal &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_laser &
+          .OR. bc_field(c_bd_x_max) == c_bc_cpml_outflow) &
+          .AND. x_max_boundary) THEN
+        bnd_x_max = x_max_outer
+      ELSE
+        bnd_x_max = x_max_local
+      END IF
+
+      ALLOCATE(species_list(ispecies)%boundary_particles)
+      NULLIFY(species_list(ispecies)%boundary_particles%particle)
+      NULLIFY(species_list(ispecies)%boundary_particles%next)
+      NULLIFY(bnd_part_next)
+      bnd_part_last => species_list(ispecies)%boundary_particles
+
+      DO ipart = 1, species_list(ispecies)%attached_list%count
+        ! Move particle to boundary candidate list
+        IF (current%part_pos < bnd_x_min &
+            .OR. current%part_pos > bnd_x_max) THEN
+          ALLOCATE(bnd_part_next)
+          bnd_part_next%particle => current
+          bnd_part_last%next => bnd_part_next
+          bnd_part_last => bnd_part_next
+        END IF
+        current => current%next
+      END DO
+
+      ! Boundary list head contains no particle
+      bnd_part_last => species_list(ispecies)%boundary_particles
+      species_list(ispecies)%boundary_particles &
+          => species_list(ispecies)%boundary_particles%next
+      DEALLOCATE(bnd_part_last)
+      ! Final particle should have null 'next' ptr
+      IF (ASSOCIATED(bnd_part_next)) NULLIFY(bnd_part_next%next)
+    END DO
+
+  END SUBROUTINE setup_bc_lists
+
+
+
   SUBROUTINE particle_bcs
 
-    TYPE(particle), POINTER :: cur, next
+    TYPE(particle_pointer_list), POINTER :: bnd_part, bnd_part_last
+    TYPE(particle), POINTER :: cur
     TYPE(particle_list), DIMENSION(-1:1) :: send, recv
     INTEGER :: xbd
     INTEGER(i8) :: ixp
@@ -606,17 +669,14 @@ CONTAINS
     LOGICAL :: out_of_bounds
     INTEGER :: sgn, bc, ispecies, i, ix
     REAL(num) :: temp(3)
-    REAL(num) :: part_pos, boundary_shift
-    REAL(num) :: x_min_outer, x_max_outer
+    REAL(num) :: part_pos
     REAL(num) :: x_shift
 
-    boundary_shift = dx * REAL((1 + png + cpml_thickness) / 2, num)
-    x_min_outer = x_min - boundary_shift
-    x_max_outer = x_max + boundary_shift
     x_shift = length_x + 2.0_num * dx * REAL(cpml_thickness, num)
 
     DO ispecies = 1, n_species
-      cur => species_list(ispecies)%attached_list%head
+      bnd_part => species_list(ispecies)%boundary_particles
+      NULLIFY(bnd_part_last)
 
       bc_species = species_list(ispecies)%bc_particle
 
@@ -625,8 +685,12 @@ CONTAINS
         CALL create_empty_partlist(recv(ix))
       END DO
 
-      DO WHILE (ASSOCIATED(cur))
-        next => cur%next
+      DO WHILE (ASSOCIATED(bnd_part))
+        bnd_part_last => bnd_part
+
+        cur => bnd_part%particle
+        bnd_part => bnd_part%next
+        DEALLOCATE(bnd_part_last)
 
         xbd = 0
         out_of_bounds = .FALSE.
@@ -649,20 +713,20 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos < x_min_local) THEN
             xbd = sgn
-            ! Particle has left the system
-            IF (x_min_boundary) THEN
-              xbd = 0
-              bc = bc_species(c_bd_x_min)
-              IF (bc == c_bc_reflect) THEN
+            bc = bc_species(c_bd_x_min)
+            IF (bc == c_bc_reflect) THEN
+              IF (x_min_boundary) THEN
+                xbd = 0
                 cur%part_pos = 2.0_num * x_min - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc == c_bc_periodic) THEN
-                xbd = sgn
+              END IF
+            ELSE IF (bc == c_bc_periodic) THEN
+              IF (x_min_boundary) THEN
                 cur%part_pos = part_pos - sgn * x_shift
               END IF
-            END IF
-            IF (part_pos < x_min_outer .AND. bc /= c_bc_periodic) THEN
-              IF (bc == c_bc_thermal) THEN
+            ELSE IF (bc == c_bc_thermal) THEN
+              IF (part_pos < x_min_outer) THEN
+                xbd = 0
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_min(i)
                 END DO
@@ -687,9 +751,16 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_min_outer - part_pos
 
-              ELSE
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
+              END IF
+            ELSE
+              IF (part_pos < x_min_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_min_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF
@@ -712,20 +783,20 @@ CONTAINS
           ! Particle has left this processor
           IF (part_pos >= x_max_local) THEN
             xbd = sgn
-            ! Particle has left the system
-            IF (x_max_boundary) THEN
-              xbd = 0
-              bc = bc_species(c_bd_x_max)
-              IF (bc == c_bc_reflect) THEN
+            bc = bc_species(c_bd_x_max)
+            IF (bc == c_bc_reflect) THEN
+              IF (x_max_boundary) THEN
+                xbd = 0
                 cur%part_pos = 2.0_num * x_max - part_pos
                 cur%part_p(1) = -cur%part_p(1)
-              ELSE IF (bc == c_bc_periodic) THEN
-                xbd = sgn
+              END IF
+            ELSE IF (bc == c_bc_periodic) THEN
+              IF (x_max_boundary) THEN
                 cur%part_pos = part_pos - sgn * x_shift
               END IF
-            END IF
-            IF (part_pos >= x_max_outer .AND. bc /= c_bc_periodic) THEN
-              IF (bc == c_bc_thermal) THEN
+            ELSE IF (bc == c_bc_thermal) THEN
+              IF (part_pos >= x_max_outer) THEN
+                xbd = 0
                 DO i = 1, 3
                   temp(i) = species_list(ispecies)%ext_temp_x_max(i)
                 END DO
@@ -750,9 +821,16 @@ CONTAINS
 
                 cur%part_pos = 2.0_num * x_max_outer - part_pos
 
-              ELSE
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
+              END IF
+            ELSE
+              IF (part_pos >= x_max_outer) THEN
                 ! Default to open boundary conditions - remove particle
+                xbd = 0
                 out_of_bounds = .TRUE.
+              ELSE IF (x_max_boundary) THEN
+                xbd = 0
               END IF
             END IF
           END IF
@@ -774,9 +852,6 @@ CONTAINS
               species_list(ispecies)%attached_list, cur)
           CALL add_particle_to_partlist(send(xbd), cur)
         END IF
-
-        ! Move to next particle
-        cur => next
       END DO
 
       ! swap Particles
@@ -793,6 +868,10 @@ CONTAINS
         CALL destroy_partlist(recv(ix))
       END DO
 
+      IF (ASSOCIATED(bnd_part_last)) DEALLOCATE(bnd_part_last)
+      IF (ASSOCIATED(species_list(ispecies)%boundary_particles)) THEN
+        NULLIFY(species_list(ispecies)%boundary_particles)
+      END IF
     END DO
 
   END SUBROUTINE particle_bcs
@@ -959,9 +1038,6 @@ CONTAINS
             nx_global - cpml_thickness - fng + 2 - nx_global_min
       END IF
     END IF
-
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
 
   END SUBROUTINE set_cpml_helpers
 

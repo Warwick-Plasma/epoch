@@ -446,7 +446,7 @@ balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
   redblack_module.o timer.o utilities.o
 boundary.o: boundary.F90 injectors.o laser.o mpi_subtype_control.o \
   particle_id_hash.o particle_temperature.o partlist.o utilities.o
-bremsstrahlung.o: bremsstrahlung.F90 calc_df.o partlist.o setup.o
+bremsstrahlung.o: bremsstrahlung.F90 calc_df.o particles.o partlist.o setup.o
 calc_df.o: calc_df.F90 boundary.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 constants.o: constants.F90 $(SDFMOD)

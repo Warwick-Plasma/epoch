@@ -667,7 +667,8 @@ CONTAINS
     ELSE IF (str_cmp(element, 'average_pz')) THEN
       elementselected = c_dump_average_pz
 
-    ELSE IF (str_cmp(element, 'temperature')) THEN
+    ELSE IF (str_cmp(element, 'temperature') &
+        .OR. str_cmp(element, 'temp')) THEN
       elementselected = c_dump_temperature
 
     ELSE IF (str_cmp(element, 'tx') &

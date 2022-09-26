@@ -36,8 +36,8 @@ CONTAINS
 
   SUBROUTINE window_deck_finalise
 
-    INTEGER :: i, bc(2)
-    LOGICAL :: warn
+    INTEGER :: i, io, iu, bc(2)
+    LOGICAL :: warn, warn_window, warn_no_t_end
 
     IF (.NOT.move_window) RETURN
 
@@ -53,6 +53,8 @@ CONTAINS
         bc_y_min_after_move = bc_field(c_bd_y_min)
     IF (bc_y_max_after_move == c_bc_null) &
         bc_y_max_after_move = bc_field(c_bd_y_max)
+
+    CALL check_injector_boundaries(warn_window, warn_no_t_end)
 
     IF (rank /= 0) RETURN
 
@@ -71,10 +73,17 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'an X boundary after the moving window ', &
-          'begins. These boundary conditions are ', 'not compatible with ', &
-          'moving windows and are unlikely to give correct results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for an X boundary'
+        WRITE(io,*) 'after the moving window begins. These boundary ', &
+                    'conditions are not compatible'
+        WRITE(io,*) 'with moving windows and are unlikely to give correct ', &
+                    'results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     warn = .FALSE.
@@ -87,29 +96,52 @@ CONTAINS
     END DO
 
     IF (warn) THEN
-      PRINT*, 'WARNING: you have specified lasers and/or CPML boundary ', &
-          'conditions for ', 'the Y boundaries. These boundary ', &
-          'conditions are not fully compatible ', 'with moving windows and ', &
-          'might give incorrect results.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified lasers and/or CPML boundary ', &
+                    'conditions for the'
+        WRITE(io,*) 'Y boundaries. These boundary conditions are not fully ', &
+                    'compatible with moving'
+        WRITE(io,*) 'windows and might give incorrect results.'
+        WRITE(io,*)
+      END DO
     END IF
 
     IF (n_custom_loaders > 0) THEN
-      PRINT*, 'WARNING: you have specified particle loading from file in ', &
-          'conjunction with ', 'moving windows. The file contents will be ', &
-          'ignored for new particles entering ', 'the domain once the ', &
-          'window begins to move.'
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified particle loading from file in ', &
+                    'conjunction with moving'
+        WRITE(io,*) 'windows. The file contents will be ignored for new ', &
+                    'particles entering the'
+        WRITE(io,*) 'domain once the window begins to move.'
+        WRITE(io,*)
+      END DO
     END IF
 
-    warn = .FALSE.
-    CALL check_injector_boundary(x_min_boundary, injector_x_min, warn)
-    CALL check_injector_boundary(x_max_boundary, injector_x_max, warn)
-    CALL check_injector_boundary(y_min_boundary, injector_y_min, warn)
-    CALL check_injector_boundary(y_max_boundary, injector_y_max, warn)
-
-    IF (warn) THEN
-      PRINT*, 'WARNING: you have specified injectors in conjunction with ', &
-          'the moving window. ', 'These are not fully compatible with ', &
-          'moving windows and are likely to give ', 'incorrect results.'
+    IF (warn_window .OR. warn_no_t_end) THEN
+      DO iu = 1, nio_units ! Print to stdout and to file
+        io = io_units(iu)
+        WRITE(io,*) '*** WARNING ***'
+        WRITE(io,*) 'You have specified injectors in conjunction with the ', &
+                    'moving window.'
+        IF (warn_window) THEN
+          WRITE(io,*) 'The t_end time of one or more injectors exceeds the ', &
+                      'window_start_time.'
+          WRITE(io,*) 'These injectors will continue to run once the moving ', &
+                      'window starts, but '
+          WRITE(io,*) 'care should be taken when interpreting these results.'
+          WRITE(io,*)
+        END IF
+        IF (warn_no_t_end) THEN
+          WRITE(io,*) 'One or more injectors has no explicit end time.'
+          WRITE(io,*) 'These injectors will be disabled once the moving ', &
+                      'window starts.'
+          WRITE(io,*)
+        END IF
+      END DO
     END IF
 
   END SUBROUTINE window_deck_finalise
@@ -208,24 +240,43 @@ CONTAINS
 
 
 
-  SUBROUTINE check_injector_boundary(bc, injector, warn)
+  SUBROUTINE check_injector_boundaries(warn_window, warn_no_t_end)
 
-    LOGICAL, INTENT(IN) :: bc
-    TYPE(injector_block), POINTER :: injector
-    LOGICAL, INTENT(INOUT) :: warn
+    LOGICAL, INTENT(OUT) :: warn_window, warn_no_t_end
+    LOGICAL, DIMENSION(2) :: warn_loc, warn_glob
+    INTEGER :: ierr
     TYPE(injector_block), POINTER :: current
+    LOGICAL :: got_t_end
+    REAL(num) :: t_end
 
-    IF (.NOT.bc .OR. warn) RETURN
+    warn_loc = .FALSE.
 
-    current => injector_x_min
-    DO WHILE(ASSOCIATED(current))
-      IF (current%has_t_end) THEN
-        warn = .TRUE.
-        RETURN
+    IF (ASSOCIATED(injector_list)) THEN
+      t_end = HUGE(1.0_num)
+      got_t_end = .FALSE.
+      current => injector_list
+      DO WHILE(ASSOCIATED(current))
+        IF (current%has_t_end) THEN
+          got_t_end = .TRUE.
+          IF (current%t_end < t_end) t_end = current%t_end
+        ELSE
+          warn_loc(2) = .TRUE.
+        END IF
+        current => current%next
+      END DO
+
+      IF (got_t_end) THEN
+        IF (t_end > window_start_time) THEN
+          warn_loc(1) = .TRUE.
+        END IF
       END IF
-      current => current%next
-    END DO
+    END IF
 
-  END SUBROUTINE check_injector_boundary
+    CALL MPI_REDUCE(warn_loc, warn_glob, 2, MPI_LOGICAL, MPI_LOR, 0, comm, ierr)
+
+    warn_window = warn_glob(1)
+    warn_no_t_end = warn_glob(2)
+
+  END SUBROUTINE check_injector_boundaries
 
 END MODULE deck_window_block

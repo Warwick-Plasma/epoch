@@ -138,6 +138,7 @@ PROGRAM pic
   IF (npart_global > 0) CALL balance_workload(.TRUE.)
 
   IF (use_current_correction) CALL calc_initial_current
+  CALL setup_bc_lists
   CALL particle_bcs
   CALL efield_bcs
 
@@ -182,9 +183,6 @@ PROGRAM pic
   IF (timer_collect) CALL timer_start(c_timer_step)
 
   DO
-    IF ((step >= nsteps .AND. nsteps >= 0) &
-        .OR. (time >= t_end) .OR. halt) EXIT
-
     IF (timer_collect) THEN
       CALL timer_stop(c_timer_step)
       CALL timer_reset
@@ -214,10 +212,12 @@ PROGRAM pic
       IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
-        CALL reorder_particles_to_grid
+        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+          CALL reorder_particles_to_grid
+        END IF
 
         ! call collision operator
-        IF (use_collisions) THEN
+        IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
           IF (use_collisional_ionisation) THEN
             CALL collisional_ionisation
           ELSE
@@ -228,7 +228,9 @@ PROGRAM pic
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
-        CALL reattach_particles_to_mainlist
+        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+          CALL reattach_particles_to_mainlist
+        END IF
       END IF
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
@@ -236,10 +238,14 @@ PROGRAM pic
       CALL update_particle_count
     END IF
 
-    CALL check_for_stop_condition(halt, force_dump)
-    IF (halt) EXIT
     step = step + 1
     time = time + dt / 2.0_num
+
+    CALL check_for_stop_condition(halt, force_dump)
+
+    IF ((step >= nsteps .AND. nsteps >= 0) &
+        .OR. (time >= t_end) .OR. halt) EXIT
+
     CALL output_routines(step)
     time = time + dt / 2.0_num
 

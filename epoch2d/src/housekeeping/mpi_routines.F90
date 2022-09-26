@@ -248,6 +248,11 @@ CONTAINS
     IF (y_coords == 0) y_min_boundary = .TRUE.
     IF (y_coords == nprocy - 1) y_max_boundary = .TRUE.
 
+    is_boundary(c_bd_x_min) = x_min_boundary
+    is_boundary(c_bd_x_max) = x_max_boundary
+    is_boundary(c_bd_y_min) = y_min_boundary
+    is_boundary(c_bd_y_max) = y_max_boundary
+
     neighbour = MPI_PROC_NULL
     DO iy = -1, 1
       DO ix = -1, 1

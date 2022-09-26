@@ -156,6 +156,9 @@ CONTAINS
     IF (x_coords == 0) x_min_boundary = .TRUE.
     IF (x_coords == nprocx - 1) x_max_boundary = .TRUE.
 
+    is_boundary(c_bd_x_min) = x_min_boundary
+    is_boundary(c_bd_x_max) = x_max_boundary
+
     neighbour = MPI_PROC_NULL
     DO ix = -1, 1
       test_coords = coordinates

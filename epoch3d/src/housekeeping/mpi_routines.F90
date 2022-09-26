@@ -363,6 +363,13 @@ CONTAINS
     IF (z_coords == 0) z_min_boundary = .TRUE.
     IF (z_coords == nprocz - 1) z_max_boundary = .TRUE.
 
+    is_boundary(c_bd_x_min) = x_min_boundary
+    is_boundary(c_bd_x_max) = x_max_boundary
+    is_boundary(c_bd_y_min) = y_min_boundary
+    is_boundary(c_bd_y_max) = y_max_boundary
+    is_boundary(c_bd_z_min) = z_min_boundary
+    is_boundary(c_bd_z_max) = z_max_boundary
+
     neighbour = MPI_PROC_NULL
     DO iz = -1, 1
       DO iy = -1, 1

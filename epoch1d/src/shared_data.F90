@@ -182,6 +182,11 @@ MODULE shared_data
     REAL(num) :: density_back
   END TYPE initial_condition_block
 
+  TYPE particle_pointer_list
+    TYPE(particle), POINTER :: particle
+    TYPE(particle_pointer_list), POINTER :: next
+  END TYPE particle_pointer_list
+
   ! Object representing a particle species
   TYPE particle_species
     ! Core properties
@@ -196,6 +201,7 @@ MODULE shared_data
     REAL(num) :: weight
     INTEGER(i8) :: count
     TYPE(particle_list) :: attached_list
+    TYPE(particle_pointer_list), POINTER :: boundary_particles => NULL()
     LOGICAL :: immobile
     LOGICAL :: fill_ghosts
 
@@ -485,6 +491,7 @@ MODULE shared_data
   ! the location x_min + dx*(1/2-cpml_thickness)
   REAL(num) :: length_x, dx, x_grid_min, x_grid_max, x_min, x_max
   REAL(num) :: x_grid_min_local, x_grid_max_local, x_min_local, x_max_local
+  REAL(num) :: x_min_outer, x_max_outer
   REAL(num), DIMENSION(:), ALLOCATABLE :: x_grid_mins, x_grid_maxs
   REAL(num) :: dir_d(c_ndims), dir_min(c_ndims), dir_max(c_ndims)
   REAL(num) :: dir_grid_min(c_ndims), dir_grid_max(c_ndims)
@@ -515,6 +522,7 @@ MODULE shared_data
   REAL(num) :: coulomb_log
   LOGICAL :: coulomb_log_auto, use_collisions
   LOGICAL :: use_nanbu = .TRUE.
+  INTEGER :: n_coll_steps = 1
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
@@ -593,6 +601,7 @@ MODULE shared_data
   LOGICAL :: produce_bremsstrahlung_photons = .FALSE.
   LOGICAL :: bremsstrahlung_photon_dynamics = .FALSE.
   LOGICAL :: use_plasma_screening = .FALSE.
+  LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
@@ -609,6 +618,7 @@ MODULE shared_data
   INTEGER, ALLOCATABLE, DIMENSION(:) :: nx_each_rank
   INTEGER(i8), ALLOCATABLE, DIMENSION(:) :: npart_each_rank
   LOGICAL :: x_min_boundary, x_max_boundary
+  LOGICAL :: is_boundary(2*c_ndims)
   LOGICAL :: any_open
 
   !----------------------------------------------------------------------------
@@ -654,7 +664,8 @@ MODULE shared_data
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
 
-  TYPE(injector_block), POINTER :: injector_x_min, injector_x_max
+  TYPE(injector_block), POINTER :: injector_list
+  LOGICAL :: injector_boundary(2*c_ndims)
 
   !----------------------------------------------------------------------------
   ! laser boundaries
@@ -680,8 +691,8 @@ MODULE shared_data
     TYPE(laser_block), POINTER :: next
   END TYPE laser_block
 
-  TYPE(laser_block), POINTER :: laser_x_min, laser_x_max
-  INTEGER :: n_laser_x_min = 0, n_laser_x_max = 0
+  TYPE(laser_block), POINTER :: lasers
+  INTEGER, DIMENSION(2*c_ndims) :: n_lasers
   LOGICAL, DIMENSION(2*c_ndims) :: add_laser = .FALSE.
 
   TYPE(jobid_type) :: jobid
