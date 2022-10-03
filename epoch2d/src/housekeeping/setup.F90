@@ -686,6 +686,16 @@ CONTAINS
 
     dt = dt_multiplier * dt
 
+#ifdef WT_INTERPOLATION
+    IF (c * dt / MIN(dx, dy) > 0.5_num) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Cannot use WT beacause c*dt/min(dx,dy)>0.5'
+      END IF
+      CALL abort_code(c_err_bad_setup)
+    END IF
+#endif
+
     IF (.NOT. any_average) RETURN
 
     DO io = 1, n_io_blocks

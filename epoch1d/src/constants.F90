@@ -154,6 +154,7 @@ MODULE constants
   INTEGER, PARAMETER :: c_maxwell_solver_lehe_z = 4
   INTEGER, PARAMETER :: c_maxwell_solver_cowan = 5
   INTEGER, PARAMETER :: c_maxwell_solver_pukhov = 6
+  INTEGER, PARAMETER :: c_maxwell_solver_m4 = 7
 
   ! Particle distribution type codes
   INTEGER, PARAMETER :: c_ic_df_thermal = 1
@@ -271,6 +272,7 @@ MODULE constants
   INTEGER(i8), PARAMETER :: c_def_use_isatty = 2**24
   INTEGER(i8), PARAMETER :: c_def_use_mpi3 = 2**25
   INTEGER(i8), PARAMETER :: c_def_bremsstrahlung = 2**26
+  INTEGER(i8), PARAMETER :: c_def_wt_interpolation = 2**27
 
   ! Stagger types
   INTEGER, PARAMETER :: c_stagger_ex = c_stagger_face_x
@@ -455,11 +457,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_const_maxwell_solver_lehe_z = 104
   INTEGER, PARAMETER :: c_const_maxwell_solver_cowan = 105
   INTEGER, PARAMETER :: c_const_maxwell_solver_pukhov = 106
-  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 107
+  INTEGER, PARAMETER :: c_const_maxwell_solver_m4 = 107
+  INTEGER, PARAMETER :: c_const_maxwell_solver_custom = 108
 
-  INTEGER, PARAMETER :: c_const_px = 108
-  INTEGER, PARAMETER :: c_const_py = 109
-  INTEGER, PARAMETER :: c_const_pz = 110
+  INTEGER, PARAMETER :: c_const_px = 109
+  INTEGER, PARAMETER :: c_const_py = 110
+  INTEGER, PARAMETER :: c_const_pz = 111
 
   ! Custom constants
   INTEGER, PARAMETER :: c_const_deck_lowbound = 4096

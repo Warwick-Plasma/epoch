@@ -580,6 +580,8 @@ CONTAINS
       ! R. Lehe, PhD Thesis (2014)
       dt = dx / c
 
+    ELSE IF (maxwell_solver == c_maxwell_solver_m4) THEN
+      dt = dx / c
     END IF
 
     IF (any_open) THEN
@@ -618,6 +620,16 @@ CONTAINS
     END IF
 
     dt = dt_multiplier * dt
+
+#ifdef WT_INTERPOLATION
+    IF (c * dt / dx > 0.5_num) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Cannot use WT beacause c*dt/dx>0.5'
+      END IF
+      CALL abort_code(c_err_bad_setup)
+    END IF
+#endif
 
     IF (.NOT. any_average) RETURN
 

@@ -85,6 +85,15 @@ CONTAINS
       deltay = 0.0_num
       alphax = 1.0_num - 2.0_num * betaxy
       alphay = 1.0_num - 2.0_num * betayx
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_m4) THEN
+      ! Y. Lu et al., J. Comput. Phys 413, 109388 (2020)
+      betayx = (c * dt / dx)**2 / 12.0_num
+      betaxy = (c * dt / dy)**2 / 12.0_num
+      deltax = ((c * dt / dx)**2 - 1.0) / 12.0_num
+      deltay = ((c * dt / dy)**2 - 1.0) / 12.0_num
+      alphax = 1.0_num - 2.0_num * betaxy - 3.0_num * deltax
+      alphay = 1.0_num - 2.0_num * betayx - 3.0_num * deltay
     END IF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN

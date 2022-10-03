@@ -664,6 +664,11 @@ CONTAINS
       RETURN
     END IF
 
+    IF (opcode == c_const_maxwell_solver_m4) THEN
+      CALL push_on_eval(REAL(c_maxwell_solver_m4, num))
+      RETURN
+    END IF
+
     IF (opcode == c_const_maxwell_solver_custom) THEN
       CALL push_on_eval(REAL(c_maxwell_solver_custom, num))
       RETURN

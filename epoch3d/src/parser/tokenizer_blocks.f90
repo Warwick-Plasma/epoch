@@ -390,6 +390,9 @@ CONTAINS
     ELSE IF (str_cmp(name, 'pukhov')) THEN
       as_constant = c_const_maxwell_solver_pukhov
 
+    ELSE IF (str_cmp(name, 'm4')) THEN
+      as_constant = c_const_maxwell_solver_m4
+
     ELSE IF (str_cmp(name, 'lehe_x')) THEN
       as_constant = c_const_maxwell_solver_lehe_x
 

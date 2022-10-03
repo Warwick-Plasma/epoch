@@ -715,6 +715,7 @@ CONTAINS
       dt = MIN(dz, dx * dy / SQRT(dx**2 + dy**2)) / c
 
     ELSE IF (maxwell_solver == c_maxwell_solver_cowan &
+        .OR. maxwell_solver == c_maxwell_solver_m4 &
         .OR. maxwell_solver == c_maxwell_solver_pukhov) THEN
       ! Cowan et al., Phys. Rev. ST Accel. Beams 16, 041303 (2013)
       ! A. Pukhov, Journal of Plasma Physics 61, 425-433 (1999)
@@ -757,6 +758,16 @@ CONTAINS
     END IF
 
     dt = dt_multiplier * dt
+
+#ifdef WT_INTERPOLATION
+    IF (c * dt / MIN(dx, dy, dx) > 0.5_num) THEN
+      IF (rank == 0) THEN
+        PRINT*, '*** ERROR ***'
+        PRINT*, 'Cannot use WT beacause c*dt/min(dx,dy,dx)>0.5'
+      END IF
+      CALL abort_code(c_err_bad_setup)
+    END IF
+#endif
 
     IF (.NOT. any_average) RETURN
 

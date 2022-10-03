@@ -88,6 +88,14 @@ CONTAINS
     ! This is to deal with the grid stagger
     REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx, hy, hz
 
+    ! For WT scheme, the weight factors used to weight particle properties onto
+    ! grid to calculate J is same as bspline3, triangle or tophat.  But the
+    ! particle weight factors to weight fields onto particles are not bspline3,
+    ! triangle or tophat. We use hx0 to store the former weight factors at Xi0*.
+#ifdef WT_INTERPOLATION
+    REAL(num), DIMENSION(sf_min-1:sf_max+1) :: hx0, hy0, hz0
+#endif
+
     ! Fields at particle location
     REAL(num) :: ex_part, ey_part, ez_part, bx_part, by_part, bz_part
 
@@ -138,6 +146,15 @@ CONTAINS
     REAL(num) :: cf2
     REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
 #endif
+    ! Factors for WT scheme
+#ifdef WT_INTERPOLATION
+    REAL(num) :: wt_dtx, wt_dty, wt_dtz, wt_facx, wt_facy, wt_facz
+    REAL(num) :: wt_var1
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    REAL(num) :: wt_dtx2, wt_dty2, wt_dtz2
+    REAL(num) :: wt_var2, wt_var3, wt_var4, wt_var5
+#endif
+#endif
 #ifdef DELTAF_METHOD
     REAL(num) :: weight_back
 #endif
@@ -156,6 +173,11 @@ CONTAINS
     gx = 0.0_num
     gy = 0.0_num
     gz = 0.0_num
+#ifdef WT_INTERPOLATION
+    hx0 = 0.0_num
+    hy0 = 0.0_num
+    hz0 = 0.0_num
+#endif
 
     ! Unvarying multiplication factors
 
@@ -171,6 +193,20 @@ CONTAINS
     idtyz = idt * idy * idz * fac
     idtxz = idt * idx * idz * fac
     idtxy = idt * idx * idy * fac
+
+#ifdef WT_INTERPOLATION
+    wt_dtx = c * dt / dx
+    wt_dty = c * dt / dy
+    wt_dtz = c * dt / dz
+    wt_facx = 0.25_num / wt_dtx
+    wt_facy = 0.25_num / wt_dty
+    wt_facz = 0.25_num / wt_dtz
+#ifdef PARTICLE_SHAPE_BSPLINE3
+    wt_dtx2 = wt_dtx**2
+    wt_dty2 = wt_dty**2
+    wt_dtz2 = wt_dtz**2
+#endif
+#endif
 
     DO ispecies = 1, n_species
       current => species_list(ispecies)%attached_list%head
@@ -365,6 +401,23 @@ CONTAINS
 #include "tophat/gx.inc"
 #else
 #include "triangle/gx.inc"
+#endif
+
+        ! For WT scheme, use hx0 to store the weight factors used to weigh
+        ! particle properties onto grid at Xi0*. And calculate gx for WT.
+        ! Y. Lu et al., J. Comput. Phys 413, 109388 (2020)
+        ! NOTE: These weights require an additional multiplication factor!
+#ifdef WT_INTERPOLATION
+        hx0 = gx
+        hy0 = gy
+        hz0 = gz
+#ifdef PARTICLE_SHAPE_BSPLINE3
+#include "bspline3/gx_wt.inc"
+#elif  PARTICLE_SHAPE_TOPHAT
+#include "tophat/gx_wt.inc"
+#else
+#include "triangle/gx_wt.inc"
+#endif
 #endif
 
         ! Now redo shifted by half a cell due to grid stagger.
@@ -576,6 +629,11 @@ CONTAINS
 
           ! Now change Xi1* to be Xi1*-Xi0*. This makes the representation of
           ! the current update much simpler
+#ifdef WT_INTERPOLATION
+          gx = hx0
+          gy = hy0
+          gz = hz0
+#endif
           hx = hx - gx
           hy = hy - gy
           hz = hz - gz

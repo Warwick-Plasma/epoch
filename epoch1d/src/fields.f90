@@ -59,6 +59,11 @@ CONTAINS
       dx_cdt = dx / (c * dt)
       deltax = 0.25_num * (1.0_num - dx_cdt**2 * SIN(0.5_num * pi / dx_cdt)**2)
       alphax = 1.0_num - 3.0_num * deltax
+
+    ELSE IF (maxwell_solver == c_maxwell_solver_m4) THEN
+      ! Y. Lu et al., J. Comput. Phys 413, 109388 (2020)
+      deltax = ((c * dt / dx)**2 - 1.0) / 12.0_num
+      alphax = 1.0_num - 3.0_num * deltax
     END IF
 
     IF (rank == 0 .AND. maxwell_solver /= c_maxwell_solver_yee) THEN
