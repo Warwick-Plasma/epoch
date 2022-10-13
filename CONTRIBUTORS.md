@@ -14,3 +14,5 @@ Phil Tooley <phil.tooley@gmail.com>
 Stephan Kuschel <stephan.kuschel@gmail.com>
 Stuart Morris <sjm630@york.ac.uk>
 Tom Goffrey <t.goffrey@warwick.ac.uk>
+Ujjwal Sinha <u.sinha@fz-juelich.de> (Acknowledgement:
+Contributions from Ujjwal Sinha was financially supported by the PRACE project funded in part by the EU’s Horizon 2020 Research and Innovation programme (2014-2020) under grant agreement 823767.)

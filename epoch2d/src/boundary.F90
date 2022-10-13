@@ -316,6 +316,218 @@ CONTAINS
 
 
 
+  SUBROUTINE all_comp_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
+        ny_local)
+
+
+    !            |     field_top      |           
+    !____________|____________________|____________
+    !            |                    |
+    ! field_left |                    | field_right
+    !____________|____________________|____________
+    !            |                    |
+    !            |     field_bottom   |   
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    INTEGER, INTENT(IN) :: nx_local, ny_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes
+    INTEGER :: basetype, sz, szmax, i, j, k, n
+    REAL(num), ALLOCATABLE :: field(:)
+    REAL(num), ALLOCATABLE :: temp(:)
+    INTEGER :: xmin, xmax, ymin, ymax, offset
+
+    basetype = mpireal
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+
+    szmax = 3 * sizes(1) * ng
+    sz = 3 * sizes(2) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+    ALLOCATE(field(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+
+    sz = 3 * subsizes(1) * subsizes(2)
+
+!    offset0 = 0
+!    offset1 = subsizes(1) * subsizes(2)
+!    offset2 = 2 * offset1
+
+    offset = subsizes(1) * subsizes(2)
+
+    xmin = 1
+    xmax = ng
+    ymin = 1-ng
+    ymax = subsizes(2)-ng
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, 0*offset)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, offset)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, 2*offset)
+
+    CALL MPI_SENDRECV(field, sz, basetype, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    xmin = nx_local + 1
+    xmax = subsizes(1) + nx_local
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, 0*offset)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, offset)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+          xmin, xmax, ymin, ymax, 2*offset)
+
+    END IF
+
+    xmin = nx_local - ng + 1
+    xmax = nx_local
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, 0*offset)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, offset)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, 2*offset)
+
+    CALL MPI_SENDRECV(field, sz, basetype, proc_x_max, &
+        tag, temp, sz, basetype, proc_x_min, tag, comm, status, errcode)
+
+    xmin = 1-ng
+    xmax = subsizes(1)-ng
+   
+    IF (.NOT. x_min_boundary .OR. bc_field(c_bd_x_min)==c_bc_periodic) THEN
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, 0*offset)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, offset)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+        xmin, xmax, ymin, ymax, 2*offset)
+
+    END IF
+
+    subsizes(1) = sizes(1)
+    subsizes(2) = ng
+    sz = 3 * subsizes(1) * subsizes(2)
+
+!    offset0 = 0
+!    offset1 = subsizes(1) * subsizes(2)
+!    offset2 = 2 * offset1
+
+    offset = subsizes(1) * subsizes(2)   
+
+    xmin = 1 - ng
+    xmax = subsizes(1) - ng 
+    ymin = ny_local - subsizes(2) + 1
+    ymax = ny_local
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, 0*offset)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, offset)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, 2*offset)
+    
+    CALL MPI_SENDRECV(field, sz, basetype, proc_y_max, &
+        tag, temp, sz, basetype, proc_y_min, tag, comm, status, errcode)
+
+    ymin = 1 - ng
+    ymax = subsizes(2) - ng
+
+    IF (.NOT. y_min_boundary .OR. bc_field(c_bd_y_min)==c_bc_periodic) THEN
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, 0*offset)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, offset)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+          xmin, xmax, ymin, ymax, 2*offset)
+
+    END IF
+
+    ymin = 1
+    ymax = subsizes(2)
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, 0*offset)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, offset)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, 2*offset)
+
+    ymin = ny_local + 1
+    ymax = subsizes(2) + ny_local
+
+    CALL MPI_SENDRECV(field, sz, basetype, proc_y_min, &
+        tag, temp, sz, basetype, proc_y_max, tag, comm, status, errcode)
+
+    IF (.NOT. y_max_boundary .OR. bc_field(c_bd_y_max)==c_bc_periodic) THEN
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, 0*offset)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, offset)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+          xmin, xmax, ymin, ymax, 2*offset)
+
+    END IF
+
+
+    DEALLOCATE(field)
+    DEALLOCATE(temp)
+
+  END SUBROUTINE all_comp_field_bc
+
+
+
+  SUBROUTINE load_field_boundaries_to_buffer(field, buffer, &
+            xmin, xmax, ymin, ymax, offset)
+
+    INTEGER, INTENT(IN) :: xmin, xmax, ymin, ymax, offset
+    REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: field
+    REAL(num), DIMENSION(:), INTENT(INOUT) :: buffer
+    INTEGER :: i, j, n
+
+    n = 1
+    DO j = ymin, ymax
+    DO i = xmin, xmax
+      buffer(n + offset) = field(i,j)
+      n = n + 1
+    END DO
+    END DO
+
+   END SUBROUTINE load_field_boundaries_to_buffer
+
+   SUBROUTINE unload_field_boundaries_from_buffer(field, buffer, &
+            xmin, xmax, ymin, ymax, offset)
+
+     INTEGER, INTENT(IN) :: xmin, xmax, ymin, ymax, offset
+     REAL(num), DIMENSION(1-ng:, 1-ng:), INTENT(INOUT) :: field
+     REAL(num), DIMENSION(:), INTENT(INOUT) :: buffer
+     INTEGER :: i, j, n
+
+     n = 1
+     DO j = ymin, ymax
+     DO i = xmin, xmax
+       field(i,j) = buffer(n + offset)
+       n = n + 1
+     END DO
+     END DO
+
+   END SUBROUTINE unload_field_boundaries_from_buffer
+
+
+
   SUBROUTINE do_field_mpi_with_lengths_r4(field, ng, nx_local, ny_local)
 
     INTEGER, INTENT(IN) :: ng
@@ -810,9 +1022,10 @@ CONTAINS
     INTEGER :: i
 
     ! These are the MPI boundaries
-    CALL field_bc(ex, ng)
-    CALL field_bc(ey, ng)
-    CALL field_bc(ez, ng)
+    !CALL field_bc(ex, ng)
+    !CALL field_bc(ey, ng)
+    !CALL field_bc(ez, ng)
+    CALL all_comp_field_bc(ex, ey, ez, ng, nx, ny)
 
     ! Perfectly conducting boundaries
     DO i = c_bd_x_min, c_bd_x_max, c_bd_x_max - c_bd_x_min
@@ -861,9 +1074,11 @@ CONTAINS
     INTEGER :: i
 
     ! These are the MPI boundaries
-    CALL field_bc(bx, ng)
-    CALL field_bc(by, ng)
-    CALL field_bc(bz, ng)
+    !CALL field_bc(bx, ng)
+    !CALL field_bc(by, ng)
+    !CALL field_bc(bz, ng)
+    CALL all_comp_field_bc(bx, by, bz, ng, nx, ny)
+
 
     IF (mpi_only) RETURN
 

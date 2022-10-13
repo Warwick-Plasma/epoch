@@ -152,7 +152,7 @@ PROGRAM pic
     ELSE
       time = time + dt / 2.0_num
       CALL update_eb_fields_final
-      CALL moving_window
+      CALL moving_window(step)
     END IF
   ELSE
     dt_store = dt
@@ -258,7 +258,8 @@ PROGRAM pic
 
     CALL update_eb_fields_final
 
-    CALL moving_window
+    CALL moving_window(step)
+
   END DO
 
   IF (rank == 0) runtime = MPI_WTIME() - walltime_started

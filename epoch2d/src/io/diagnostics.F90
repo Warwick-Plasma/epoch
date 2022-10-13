@@ -40,6 +40,8 @@ MODULE diagnostics
   PUBLIC :: cleanup_stop_files, check_for_stop_condition
   PUBLIC :: deallocate_file_list, count_n_zeros
   PUBLIC :: build_persistent_subsets
+  ! Needed for window_sub only
+  PUBLIC :: io_test, prefix_first_call
 
   CHARACTER(LEN=*), PARAMETER :: stop_file = 'STOP'
   CHARACTER(LEN=*), PARAMETER :: stop_file_nodump = 'STOP_NODUMP'

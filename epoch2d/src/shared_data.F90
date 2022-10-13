@@ -308,7 +308,7 @@ MODULE shared_data
 
   TYPE io_block_type
     CHARACTER(LEN=string_length) :: name
-    REAL(num) :: dt_snapshot, time_prev, time_first
+    REAL(num) :: dt_snapshot, time_prev, time_first, buffer_time_prev
     REAL(num) :: dt_average, dt_min_average, average_time, average_time_start
     REAL(num) :: time_start, time_stop
     REAL(num) :: walltime_interval, walltime_prev
@@ -316,7 +316,7 @@ MODULE shared_data
     REAL(num), ALLOCATABLE :: dump_at_times(:)
     REAL(num), ALLOCATABLE :: dump_at_walltimes(:)
     INTEGER, ALLOCATABLE :: dump_at_nsteps(:)
-    INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average
+    INTEGER :: nstep_snapshot, nstep_prev, nstep_first, nstep_average, buffer_nstep_prev
     INTEGER :: nstep_start, nstep_stop, dump_cycle, prefix_index
     INTEGER :: dump_cycle_first_index
     LOGICAL :: restart, dump, any_average, dump_first, dump_last
@@ -572,6 +572,7 @@ MODULE shared_data
   INTEGER :: bc_y_min_after_move = c_bc_null
   INTEGER :: bc_y_max_after_move = c_bc_null
   REAL(num) :: window_offset
+!  REAL(num) :: window_shift_fraction
 
 #ifdef PHOTONS
   !----------------------------------------------------------------------------

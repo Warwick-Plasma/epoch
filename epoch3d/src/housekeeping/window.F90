@@ -82,50 +82,81 @@ CONTAINS
       END DO
       x_grid_max = x_global(nx_global)
       x_max = xb_global(nx_global+1) - dx * cpml_thickness
+     END DO
 
       CALL setup_grid_x
 
-      CALL remove_particles
+      !CALL remove_particles
 
       ! Shift fields around
-      CALL shift_fields
-    END DO
+      CALL shift_fields(window_shift_cells)
 
   END SUBROUTINE shift_window
 
 
 
-  SUBROUTINE shift_fields
+  SUBROUTINE shift_fields(window_shift_cells)
 
     INTEGER :: j, k
+    INTEGER, INTENT(IN) :: window_shift_cells
 
-    CALL shift_field(ex, ng)
-    CALL shift_field(ey, ng)
-    CALL shift_field(ez, ng)
+    CALL shift_field(ex, ng, window_shift_cells)
+    CALL shift_field(ey, ng, window_shift_cells)
+    CALL shift_field(ez, ng, window_shift_cells)
 
-    CALL shift_field(bx, ng)
-    CALL shift_field(by, ng)
-    CALL shift_field(bz, ng)
+    CALL moving_window_field_bc(ex, ey, ez, ng, nx, ny, nz)
 
-    CALL shift_field(jx, jng)
-    CALL shift_field(jy, jng)
-    CALL shift_field(jz, jng)
+    CALL shift_field(bx, ng, window_shift_cells)
+    CALL shift_field(by, ng, window_shift_cells)
+    CALL shift_field(bz, ng, window_shift_cells)
+
+    CALL moving_window_field_bc(bx, by, bz, ng ,nx, ny, nz)
+
+    CALL shift_field(jx, jng, window_shift_cells)
+    CALL shift_field(jy, jng, window_shift_cells)
+    CALL shift_field(jz, jng, window_shift_cells)
+
+    CALL moving_window_field_bc(jx, jy, jz, ng, nx, ny, nz)
 
     IF (cpml_boundaries) THEN
-      CALL shift_field(cpml_psi_eyx, ng)
-      CALL shift_field(cpml_psi_ezx, ng)
-      CALL shift_field(cpml_psi_byx, ng)
-      CALL shift_field(cpml_psi_bzx, ng)
+      CALL shift_field(cpml_psi_eyx, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_ezx, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_byx, ng, window_shift_cells)
 
-      CALL shift_field(cpml_psi_exy, ng)
-      CALL shift_field(cpml_psi_ezy, ng)
-      CALL shift_field(cpml_psi_bxy, ng)
-      CALL shift_field(cpml_psi_bzy, ng)
+      CALL moving_window_field_bc(cpml_psi_eyx, &
+              cpml_psi_ezx, cpml_psi_byx, &
+              ng, nx, ny, nz)
 
-      CALL shift_field(cpml_psi_exz, ng)
-      CALL shift_field(cpml_psi_eyz, ng)
-      CALL shift_field(cpml_psi_bxz, ng)
-      CALL shift_field(cpml_psi_byz, ng)
+
+      CALL shift_field(cpml_psi_bzx, ng, window_shift_cells)
+
+      CALL field_bc(cpml_psi_bzx, ng)
+
+      CALL shift_field(cpml_psi_exy, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_ezy, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_bxy, ng, window_shift_cells)
+
+      CALL moving_window_field_bc(cpml_psi_exy, &
+              cpml_psi_ezy, cpml_psi_ezy, &
+              ng, nx, ny, nz)
+
+
+      CALL shift_field(cpml_psi_bzy, ng, window_shift_cells)
+
+      CALL field_bc(cpml_psi_bzy, ng)
+
+
+      CALL shift_field(cpml_psi_exz, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_eyz, ng, window_shift_cells)
+      CALL shift_field(cpml_psi_bxz, ng, window_shift_cells)
+
+      CALL moving_window_field_bc(cpml_psi_exz, &
+              cpml_psi_eyz, cpml_psi_bxz, &
+              ng, nx, ny, nz)
+
+      CALL shift_field(cpml_psi_byz, ng, window_shift_cells)
+      
+      CALL field_bc(cpml_psi_byz, ng)
     END IF
 
     IF (x_max_boundary) THEN
@@ -174,24 +205,100 @@ CONTAINS
 
 
 
-  SUBROUTINE shift_field(field, ng)
+  SUBROUTINE shift_field(field, ng, window_shift_cells)
 
-    INTEGER, INTENT(IN) :: ng
+    INTEGER, INTENT(IN) :: ng, window_shift_cells
     REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: field
     INTEGER :: i, j, k
 
-    ! Shift field to the left by one cell
+    ! Shift field to the left by window_shift_cells cells
     DO k = 1-ng, nz+ng
     DO j = 1-ng, ny+ng
-    DO i = 1-ng, nx+ng-1
-      field(i,j,k) = field(i+1,j,k)
+    DO i = 1-ng, nx+ng-window_shift_cells
+      field(i,j,k) = field(i+ window_shift_cells,j,k)
     END DO
     END DO
     END DO
 
-    CALL field_bc(field, ng)
+    !CALL field_bc(field, ng)
 
   END SUBROUTINE shift_field
+
+
+
+  SUBROUTINE moving_window_field_bc(fieldx, fieldy, fieldz, ng, nx_local, &
+        ny_local, nz_local)
+
+    INTEGER, INTENT(IN) :: ng
+    REAL(num), DIMENSION(1-ng:,1-ng:,1-ng:), INTENT(INOUT) :: fieldx, fieldy, fieldz
+    INTEGER, INTENT(IN) :: nx_local, ny_local, nz_local
+    INTEGER, DIMENSION(c_ndims) :: sizes, subsizes
+    INTEGER :: basetype, sz, szmax, i, j, k, n
+    REAL(num), ALLOCATABLE :: field(:)
+    REAL(num), ALLOCATABLE :: temp(:)
+    INTEGER :: xmin, xmax, ymin, ymax, zmin, zmax, offset0, offset1, offset2
+
+    basetype = mpireal
+
+    sizes(1) = nx_local + 2 * ng
+    sizes(2) = ny_local + 2 * ng
+    sizes(3) = nz_local + 2 * ng
+
+    szmax = 3 * sizes(1) * sizes(2) * ng
+    sz = 3 * sizes(1) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+    sz = 3 * sizes(2) * sizes(3) * ng
+    IF (sz > szmax) szmax = sz
+
+    ALLOCATE(temp(szmax))
+    ALLOCATE(field(szmax))
+
+    subsizes(1) = ng
+    subsizes(2) = sizes(2)
+    subsizes(3) = sizes(3)
+
+    sz = 3 * subsizes(1) * subsizes(2) * subsizes(3)
+
+    offset0 = 0
+    offset1 = subsizes(1) * subsizes(2) * subsizes(3)
+    offset2 = 2 * offset1
+
+    xmin = 1
+    xmax = ng
+    ymin = 1-ng
+    ymax = subsizes(2)-ng
+    zmin = 1-ng
+    zmax = subsizes(3)-ng
+
+    CALL load_field_boundaries_to_buffer(fieldx, field, &
+        xmin, xmax, ymin, ymax, zmin, zmax, offset0)
+    CALL load_field_boundaries_to_buffer(fieldy, field, &
+        xmin, xmax, ymin, ymax, zmin, zmax, offset1)
+    CALL load_field_boundaries_to_buffer(fieldz, field, &
+        xmin, xmax, ymin, ymax, zmin, zmax, offset2)
+
+    CALL MPI_SENDRECV(field, sz, basetype, proc_x_min, &
+        tag, temp, sz, basetype, proc_x_max, tag, comm, status, errcode)
+
+    xmin = nx_local + 1
+    xmax = subsizes(1) + nx_local
+
+    IF (.NOT. x_max_boundary .OR. bc_field(c_bd_x_max)==c_bc_periodic) THEN
+
+      CALL unload_field_boundaries_from_buffer(fieldx, temp, &
+          xmin, xmax, ymin, ymax, zmin, zmax, offset0)
+      CALL unload_field_boundaries_from_buffer(fieldy, temp, &
+          xmin, xmax, ymin, ymax, zmin, zmax, offset1)
+      CALL unload_field_boundaries_from_buffer(fieldz, temp, &
+          xmin, xmax, ymin, ymax, zmin, zmax, offset2)
+
+    END IF
+
+
+    DEALLOCATE(field)
+    DEALLOCATE(temp)
+
+  END SUBROUTINE moving_window_field_bc
 
 
 
@@ -385,11 +492,74 @@ CONTAINS
 
 
 
-  SUBROUTINE moving_window
+  SUBROUTINE mw_io_test(step, dump)
+    USE deck_io_block
+
+    INTEGER, INTENT(IN) :: step
+    LOGICAL, INTENT(OUT) :: dump
+    INTEGER :: io, is, nstep_next = 0
+    REAL(num) :: time0, time1, time_first
+
+    dump = .FALSE.
+    DO io = 1, n_io_blocks
+
+      time0 = io_block_list(io)%walltime_interval
+
+      ! Work out the time that the next dump will occur based on the
+      ! current timestep
+      time0 = HUGE(1.0_num)
+      time1 = HUGE(1.0_num)
+      IF (io_block_list(io)%dt_snapshot >= 0.0_num) &
+          time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+      IF (io_block_list(io)%nstep_snapshot >= 0) THEN
+          nstep_next = io_block_list(io)%buffer_nstep_prev  &
+            + io_block_list(io)%nstep_snapshot
+          time1 = time + dt * (nstep_next - step)
+      END IF
+
+      IF (time0 < time1) THEN
+        ! Next I/O dump based on dt_snapshot
+        time_first = time0
+        IF (io_block_list(io)%dt_snapshot > 0 .AND. (time + dt) >= time0) THEN
+          ! Store the most recent output time that qualifies
+          DO
+            time0 = io_block_list(io)%buffer_time_prev + io_block_list(io)%dt_snapshot
+            IF (time0 > time) EXIT
+            io_block_list(io)%buffer_time_prev = time0
+          END DO
+          dump = .TRUE.
+        END IF
+      ELSE
+        ! Next I/O dump based on nstep_snapshot
+        time_first = time1
+        IF (io_block_list(io)%nstep_snapshot > 0 &
+            .AND. (step + 1) >= nstep_next) THEN
+          ! Store the most recent output step that qualifies
+          DO
+            nstep_next = io_block_list(io)%buffer_nstep_prev &
+                + io_block_list(io)%nstep_snapshot
+            IF (nstep_next > step) EXIT
+            io_block_list(io)%buffer_nstep_prev = nstep_next
+          END DO
+          dump = .TRUE.
+        END IF
+      END IF
+
+    END DO
+
+  END SUBROUTINE mw_io_test
+
+
+
+  SUBROUTINE moving_window(step)
+    USE deck_io_block
 
 #ifndef PER_SPECIES_WEIGHT
     REAL(num) :: window_shift_real
     INTEGER :: window_shift_cells, errcode = 0
+    INTEGER :: i, nremainder
+    INTEGER, INTENT(IN) :: step
+    LOGICAL :: dump
 #endif
 
     IF (.NOT. move_window) RETURN
@@ -416,14 +586,38 @@ CONTAINS
       IF (window_v_x <= 0.0_num) RETURN
       window_shift_fraction = window_shift_fraction + dt * window_v_x / dx
       window_shift_cells = FLOOR(window_shift_fraction)
-      ! Allow for posibility of having jumped two cells at once
-      IF (window_shift_cells > 0) THEN
+
+      CALL mw_io_test(step, dump)
+
+
+      IF (window_shift_cells > 0 .AND. window_shift_cells < ng .AND. dump) THEN
+
         window_shift_real = REAL(window_shift_cells, num)
         window_offset = window_offset + window_shift_real * dx
-        CALL shift_window(window_shift_cells)
+        nremainder = MOD(window_shift_cells, ng)
+!        IF(rank == 0) THEN
+!                print *, "Performing alignment"
+!        END IF
+        CALL shift_window(nremainder)
+        nremainder = 0
         CALL setup_bc_lists
         CALL particle_bcs
-        window_shift_fraction = window_shift_fraction - window_shift_real
+        window_shift_fraction = window_shift_fraction - window_shift_real &
+                                + REAL(nremainder, num)
+      END IF
+
+      ! Allow for posibility of having jumped two cells at once
+      IF (window_shift_cells > ng - 1) THEN
+        window_shift_real = REAL(window_shift_cells, num)
+        window_offset = window_offset + window_shift_real * dx
+        nremainder = MOD(window_shift_cells, ng)
+        DO i = ng, window_shift_cells, ng
+          CALL shift_window(ng)
+        END DO
+        CALL setup_bc_lists
+        CALL particle_bcs
+        window_shift_fraction = window_shift_fraction - window_shift_real &
+                                + REAL(nremainder, num)
       END IF
     END IF
 #else

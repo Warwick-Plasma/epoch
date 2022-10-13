@@ -1060,13 +1060,17 @@ CONTAINS
       END IF
       IF (io_block_list(i)%dt_snapshot > 0.0_num) THEN
         io_block_list(i)%time_prev = time
+        io_block_list(i)%buffer_time_prev = time
       ELSE
         io_block_list(i)%time_prev = 0.0_num
+        io_block_list(i)%buffer_time_prev = 0.0_num
       END IF
       IF (io_block_list(i)%nstep_snapshot > 0) THEN
         io_block_list(i)%nstep_prev = step
+        io_block_list(i)%buffer_nstep_prev = step
       ELSE
         io_block_list(i)%nstep_prev = 0
+        io_block_list(i)%buffer_nstep_prev = 0
       END IF
       io_block_list(i)%walltime_prev = time
       IF (ALLOCATED(io_block_list(i)%dump_at_nsteps)) THEN
