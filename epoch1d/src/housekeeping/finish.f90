@@ -73,6 +73,13 @@ CONTAINS
       DEALLOCATE(species_list(i)%ext_temp_x_max, STAT=stat)
       IF (ASSOCIATED(species_list(i)%background_density)) &
           DEALLOCATE(species_list(i)%background_density, STAT=stat)
+      IF (species_list(i)%ionise) THEN
+        DEALLOCATE(species_list(i)%coll_ion_incident_ke, STAT=stat)
+        DEALLOCATE(species_list(i)%coll_ion_cross_sec, STAT=stat)
+        DEALLOCATE(species_list(i)%coll_ion_secondary_ke, STAT=stat)
+        DEALLOCATE(species_list(i)%coll_ion_secondary_cdf, STAT=stat)
+        DEALLOCATE(species_list(i)%coll_ion_mean_bind, STAT=stat)
+      END IF
     END DO
 
     DEALLOCATE(species_list, STAT=stat)

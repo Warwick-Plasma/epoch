@@ -216,10 +216,8 @@ MODULE shared_data
     LOGICAL :: zero_current
 #endif
 
-#ifdef BREMSSTRAHLUNG
     INTEGER :: atomic_no
     LOGICAL :: atomic_no_set = .FALSE.
-#endif
 
     ! Specify if species is background species or not
     LOGICAL :: background_species = .FALSE.
@@ -252,6 +250,11 @@ MODULE shared_data
     INTEGER :: n
     INTEGER :: l
     REAL(num) :: ionisation_energy
+    REAL(num), ALLOCATABLE :: coll_ion_incident_ke(:)
+    REAL(num), ALLOCATABLE :: coll_ion_cross_sec(:)
+    REAL(num), ALLOCATABLE :: coll_ion_mean_bind(:,:)
+    REAL(num), ALLOCATABLE :: coll_ion_secondary_ke(:,:)
+    REAL(num), ALLOCATABLE :: coll_ion_secondary_cdf(:,:)
 
     ! Attached probes for this species
 #ifndef NO_PARTICLE_PROBES
@@ -286,6 +289,16 @@ MODULE shared_data
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros_control, n_zeros = 4
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+
+  !----------------------------------------------------------------------------
+  ! Look-up tables
+  !----------------------------------------------------------------------------
+
+  TYPE interpolation_state
+    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val2d
+    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
+  END TYPE interpolation_state
+
 
   !----------------------------------------------------------------------------
   ! Time averaged IO
@@ -526,6 +539,7 @@ MODULE shared_data
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
+  CHARACTER(LEN=string_length) :: physics_table_location
 
   INTEGER :: maxwell_solver = c_maxwell_solver_yee
   REAL(num) :: dt_custom
@@ -571,10 +585,6 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Bremsstrahlung
   !----------------------------------------------------------------------------
-  TYPE interpolation_state
-    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val2d
-    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
-  END TYPE interpolation_state
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)

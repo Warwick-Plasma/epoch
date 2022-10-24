@@ -658,7 +658,7 @@ CONTAINS
   ! Photon energy is sampled from bremsstrahlung tables, and momentum is either
   ! parallel to the electron momentum (without brem_scatter), or scattered by
   ! angles drawn from the bremsstrahlung differential cross section (with
-  ! brem_scatter). Electron recoil is applied if requested.
+  ! brem_scatter). Electron recoil is applied if requested
 
   SUBROUTINE generate_photon(electron, z, iphoton)
 
@@ -862,9 +862,13 @@ CONTAINS
     LOGICAL, SAVE :: warning = .TRUE.
     LOGICAL :: found
 
-    IF (ABS(state%x - x_in) < 1e-15_num) THEN
-      find_value_from_table_1d = state%val1d
-      RETURN
+    ! If x_in matches the x_in of the last state, return the last value
+    ! Check fractional difference
+    IF (ABS(x_in) > 0.0_num) THEN
+      IF (ABS((state%x - x_in)/x_in) < 1e-10_num) THEN
+        find_value_from_table_1d = state%val1d
+        RETURN
+      END IF
     END IF
 
     ! Scan through x to find correct row of table
@@ -971,10 +975,14 @@ CONTAINS
     LOGICAL, SAVE :: warning = .TRUE.
     LOGICAL :: found
 
-    IF (ABS(state%x - x_in) < 1e-15_num &
-        .AND. ABS(state%y - p_value) < 1e-15_num) THEN
-      find_value_from_table_alt = state%val2d
-      RETURN
+    ! If x_in and p_value match previous values, then return previous value
+    IF (ABS(x_in) > 0.0_num .AND. ABS(p_value) > 0.0_num) THEN
+      ! Calculate fractional differences
+      IF (ABS((state%x - x_in)/x_in) < 1e-10_num &
+          .AND. ABS((state%y - p_value)/p_value) < 1e-10_num) THEN
+        find_value_from_table_alt = state%val2d
+        RETURN
+      END IF
     END IF
 
     ! Scan through x to find correct row of table

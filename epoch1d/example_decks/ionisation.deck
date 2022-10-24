@@ -1,0 +1,109 @@
+begin:control
+  # Global number of gridpoints
+  nx = 400 # in x
+
+  # Maximum number of iterations
+  # Set to -1 to run until finished
+  nsteps = 0
+
+  # Final time of simulation
+  t_end = 50.0e-15
+
+  # Size of domain
+  x_min = -10e-6
+  x_max = -x_min
+
+  field_ionisation = T                  # This key switches on field ionisation
+end:control
+
+
+# # Uncomment this block to also use collisional ionisation!
+# # Block has been commented out for speed
+#
+# begin:collisions
+#
+#   use_collisions = T       # Collisions must be on for collisional ionisation
+#   collisional_ionisation = T             # Switches on collisional ionisation
+#
+# end:collisions
+
+
+begin:constant
+  lambda = 1.0 * micron
+  omega = 2.0 * pi * c / lambda
+  den_max = 10.0 * critical(omega)
+  den_preplasma = 1.0e18
+  len_scale = 5.0 * micron
+end:constant
+
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = simple_outflow
+end:boundaries
+
+
+begin:species
+  name = Electron
+  charge = -1.0
+  mass = 1.0
+  nparticles = nx * 5
+end:species
+
+
+begin:species
+  name = Palladium
+  charge = 22.0
+  atomic_no = 46
+  mass = 1836.2 * 105.0
+
+  number_density = den_max
+  temperature = 1e6
+
+  ionise = T                                          # This species can ionise
+  ionisation_electron_species = Electron        # Species for ejected electrons
+
+  nparticles = nx * 5
+end:species
+
+
+begin:species
+  name = Electron
+  number_density = number_density(Palladium) * 22.0
+  temperature = 1e6
+end:species
+
+
+begin:output
+
+  # Simulated time between output dumps
+  dt_snapshot = 1.0e-15
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = never
+  average_particle_energy = always
+  mass_density = never + species
+  charge_density = always
+  number_density = always + species
+  temperature = always + species
+
+  # Extended io
+  distribution_functions = always
+end:output
+
+
+begin:laser
+  boundary = x_min
+  amp = 1e13
+  lambda = lambda
+end:laser
+

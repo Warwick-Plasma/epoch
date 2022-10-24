@@ -44,6 +44,7 @@ PROGRAM pic
   USE window
   USE split_particle
   USE collisions
+  USE collision_ionise
   USE particle_migration
   USE ionise
   USE calc_df
@@ -179,6 +180,7 @@ PROGRAM pic
   walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_field_ionisation) CALL initialise_ionisation
+  IF (use_collisional_ionisation) CALL setup_coll_ionise_tables
 
   IF (timer_collect) CALL timer_start(c_timer_step)
 
@@ -218,11 +220,7 @@ PROGRAM pic
 
         ! call collision operator
         IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
-          IF (use_collisional_ionisation) THEN
-            CALL collisional_ionisation
-          ELSE
-            CALL particle_collisions
-          END IF
+          CALL particle_collisions
         END IF
 
         ! Early beta version of particle splitting operator
