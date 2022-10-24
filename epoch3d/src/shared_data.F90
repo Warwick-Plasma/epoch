@@ -224,6 +224,11 @@ MODULE shared_data
     ! Background density
     REAL(num), DIMENSION(:,:,:), POINTER :: background_density
 
+    ! Specifiy if species is background for collisions
+    LOGICAL :: coll_background = .FALSE.
+    LOGICAL :: coll_fast = .FALSE.
+    LOGICAL :: coll_pairwise = .FALSE.
+
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
 
@@ -573,10 +578,17 @@ MODULE shared_data
   INTEGER :: coll_sort_array_size = 0
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
-  REAL(num) :: coulomb_log
+  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_state
+  INTEGER :: coll_n_step = 1
+  INTEGER :: back_n_step = 1
+  REAL(num) :: coulomb_log, rel_cutoff, back_update_dt
   LOGICAL :: coulomb_log_auto, use_collisions
+  LOGICAL :: use_background_collisions
   LOGICAL :: use_nanbu = .TRUE.
-  INTEGER :: n_coll_steps = 1
+  LOGICAL :: use_cold_correction = .TRUE.
+  LOGICAL :: use_rel_cutoff = .FALSE.
+  LOGICAL :: coll_subcycle_back = .FALSE.
+  LOGICAL :: coll_back_recalc
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi

@@ -70,6 +70,8 @@ MODULE collisions
   PROCEDURE(intra_collisions_proto), POINTER, SAVE :: intra_coll_fn => NULL()
   PROCEDURE(inter_collisions_proto), POINTER, SAVE :: inter_coll_fn => NULL()
 
+  REAL(num) :: dt_coll
+
   REAL(num), PARAMETER :: eps = EPSILON(1.0_num)
   REAL(num), PARAMETER :: one_m_2eps = 1.0_num - 2.0_num * eps
   REAL(num), PARAMETER :: one_p_2eps = 1.0_num + 2.0_num * eps
@@ -98,6 +100,7 @@ CONTAINS
     REAL(num) :: w_electron, w_ion, w_ejected, mass_ion, charge_ion
     REAL(num) :: ee_cou_log, ei_cou_log
     LOGICAL :: collide_species, i_is_ion, i_is_electron, run_coll_ionisation
+    INTEGER :: collision_type
 
     ALLOCATE(idens(1-ng:nx+ng,1-ng:ny+ng))
     ALLOCATE(jdens(1-ng:nx+ng,1-ng:ny+ng))
@@ -115,6 +118,9 @@ CONTAINS
       CALL create_empty_partlist(list_i_ionised)
       CALL create_empty_partlist(list_e_ejected)
     END IF
+
+    ! Time-step used by collisions routine, for super-cycle speed-up
+    dt_coll = dt * REAL(coll_n_step, num)
 
     DO ispecies = 1, n_species
       ! Currently no support for photon collisions so just cycle round
@@ -147,7 +153,8 @@ CONTAINS
       collide_species = .FALSE.
       DO jspecies = ispecies, n_species
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor > 0) THEN
+        collision_type = coll_pairs_state(ispecies, jspecies)
+        IF (collision_type == c_coll_collide) THEN
           collide_species = .TRUE.
           EXIT
         END IF
@@ -200,7 +207,9 @@ CONTAINS
 
         ! If collisions between ispecies and jspecies are disabled, then cycle
         user_factor = coll_pairs(ispecies, jspecies)
-        IF (user_factor <= 0) CYCLE
+        collision_type = coll_pairs_state(ispecies, jspecies)
+
+        IF (.NOT. collision_type == c_coll_collide) CYCLE
 
         IF (ispecies /= jspecies) THEN
           CALL calc_coll_number_density(jdens, jspecies)
@@ -465,7 +474,7 @@ CONTAINS
 
       ! Calculate number of collisions in the timestep
       ! Limit value according to Sentoku & Kemp
-      nu = MIN(nu * factor * np * dt * n_coll_steps, 0.02_num)
+      nu = MIN(nu * factor * np * dt_coll, 0.02_num)
 
       ! New coordinate system to simplify scattering.
       CALL new_coords(vr, c1, c2, c3)
@@ -622,7 +631,7 @@ CONTAINS
     impact => current%next
 
     ! Per-cell constant factors
-    cell_fac = dens**2 * dt * n_coll_steps * factor * dx * dy
+    cell_fac = dens**2 * dt_coll * factor * dx * dy
     s_fac = cell_fac * log_lambda / pi4_eps2_c4
     dens_23 = dens**two_thirds
     s_fac_prime = cell_fac * pi_fac / dens_23
@@ -917,7 +926,7 @@ CONTAINS
 
         ! Collision frequency
         nu = coll_freq(vrabs, log_lambda, m1, m2, q1, q2, MIN(idens, jdens))
-        nu = MIN(nu * factor * np * dt * n_coll_steps, 0.02_num)
+        nu = MIN(nu * factor * np * dt_coll, 0.02_num)
 
         ! NOTE: nu is now the number of collisions per timestep, NOT collision
         ! frequency
@@ -1080,7 +1089,7 @@ CONTAINS
       impact => p_list2%head
 
       ! Per-cell constant factors
-      cell_fac = idens * jdens * dt * n_coll_steps * factor * dx * dy
+      cell_fac = idens * jdens * dt_coll * factor * dx * dy
       s_fac = cell_fac * log_lambda / pi4_eps2_c4
       s_fac_prime = cell_fac * pi_fac
 
@@ -1881,7 +1890,9 @@ CONTAINS
   SUBROUTINE setup_collisions
 
     ALLOCATE(coll_pairs(n_species, n_species))
+    ALLOCATE(coll_pairs_state(n_species, n_species))
     coll_pairs = 1.0_num
+    coll_pairs_state = c_coll_collide
     coll_sort_array_size = 1
     ALLOCATE(coll_sort_array(coll_sort_array_size))
 
@@ -1901,7 +1912,7 @@ CONTAINS
 
     INTEGER :: stat
 
-    DEALLOCATE(coll_pairs, coll_sort_array, STAT=stat)
+    DEALLOCATE(coll_pairs, coll_pairs_state, coll_sort_array, STAT=stat)
 
   END SUBROUTINE deallocate_collisions
 
