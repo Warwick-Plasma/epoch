@@ -213,23 +213,23 @@ PROGRAM pic
       ! .FALSE. this time to use load balancing threshold
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
-      IF (use_particle_lists &
-          .AND. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
+      IF (use_particle_lists) THEN
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
-        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+        IF (use_split .OR. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
           CALL reorder_particles_to_grid
         END IF
 
         ! call collision operator
-        IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
+        IF (use_collisions &
+            .AND. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
           CALL particle_collisions
         END IF
 
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
-        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+        IF (use_split .OR. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
           CALL reattach_particles_to_mainlist
         END IF
       END IF
