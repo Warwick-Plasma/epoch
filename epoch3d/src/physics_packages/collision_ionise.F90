@@ -22,6 +22,7 @@
 MODULE collision_ionise
 
   USE calc_df
+  USE collisions
   USE prefetch
 
   IMPLICIT NONE
@@ -41,6 +42,9 @@ MODULE collision_ionise
 
   ! Saved variables for Lorentz transforms
   REAL(num) :: rot_y, cos_y, sin_y, rot_z, cos_z, sin_z, ion_p2, gamma_i, beta_i
+
+  ! Super-cycled time-step
+  REAL(num) :: dt_ci
 
 CONTAINS
 
@@ -683,6 +687,127 @@ CONTAINS
 
 
 
+  SUBROUTINE run_collisional_ionisation
+
+    ! This subroutine is called by the main PIC loop, and triggers the
+    ! collisional ionisation calculation. The species_list is cycled through to
+    ! identify pairs of valid electron and ion species which can ionise, and a
+    ! subroutine is called to sample the ionisation. Ionised ions, ejected
+    ! electrons and ionising incident electrons are moved to the correct species
+    ! lists.
+    !
+    ! Note, this subroutine uses the generic label "ion" to refer to both ions
+    ! and atoms
+
+    INTEGER :: ispecies, jspecies
+    INTEGER :: electron_species, ion_species, ejected_species, ionised_species
+    INTEGER(i8) :: ix, iy, iz
+    TYPE(particle_list), POINTER :: p_list
+    TYPE(particle_list) :: list_e_ionising, list_i_ionised, list_e_ejected
+    LOGICAL :: i_is_ion, i_is_electron, run_coll_ionisation
+
+    dt_ci = dt * REAL(ci_n_step, num)
+
+    CALL create_empty_partlist(list_e_ionising)
+    CALL create_empty_partlist(list_i_ionised)
+    CALL create_empty_partlist(list_e_ejected)
+
+    ! Shuffle ion species lists ahead of calculation
+    DO ispecies = 1, n_species
+      IF (species_list(ispecies)%ionise .AND. .NOT. &
+          species_list(ispecies)%is_shuffled) THEN
+        DO iz = 1, nz
+        DO iy = 1, ny
+        DO ix = 1, nx
+          p_list => species_list(ispecies)%secondary_list(ix,iy,iz)
+          CALL shuffle_particle_list_random(p_list)
+        END DO ! ix
+        END DO ! iy
+        END DO ! iz
+        species_list(ispecies)%is_shuffled = .TRUE.
+      END IF
+    END DO
+
+    ! Loop over all species and extract the electron-ion pairs
+    DO ispecies = 1, n_species
+
+      ! Currently no support for photon-impact ionisation, so just cycle round
+      IF (species_list(ispecies)%species_type == c_species_id_photon) &
+          CYCLE
+
+      ! Variables to track the identity of species ispecies
+      i_is_ion = .FALSE.
+      i_is_electron = .FALSE.
+      IF (species_list(ispecies)%electron) THEN
+        ! Current species is an electron species
+        electron_species = ispecies
+        i_is_electron = .TRUE.
+      ELSE IF (species_list(ispecies)%ionise) THEN
+        ! Current species can be ionised
+        ion_species = ispecies
+        i_is_ion = .TRUE.
+      ELSE
+        ! Skip species which are not involved in ionisation
+        CYCLE
+      END IF
+
+      ! Loop over remaining species for ionisation partners
+      DO jspecies = ispecies, n_species
+
+        ! Determine whether ispecies and jspecies are ionisation partners
+        run_coll_ionisation = .FALSE.
+        IF (species_list(jspecies)%electron .AND. i_is_ion) THEN
+          ! jspecies is an electron species which can ionise ispecies
+          electron_species = jspecies
+          run_coll_ionisation = .TRUE.
+        ELSE IF (species_list(jspecies)%ionise .AND. i_is_electron) THEN
+          ! jspecies can be ionised by ispecies
+          ion_species = jspecies
+          run_coll_ionisation = .TRUE.
+        ELSE
+          ! Skip species which don't form an ionisation pair with ispecies
+          CYCLE
+        END IF
+
+        ! Get corresponding species ID for new lists
+        ejected_species = species_list(ion_species)%release_species
+        ionised_species = species_list(ion_species)%ionise_to_species
+
+        ! Perform collisional ionisation for valid electron-ion pairs
+        DO iz = 1, nz
+        DO iy = 1, ny
+        DO ix = 1, nx
+        IF (run_coll_ionisation) THEN
+            ! Apply collisional ionisation, moving ionising electrons and
+            ! ionised ions from the secondary lists to new particle lists, and
+            ! filling a list with ejected electrons (collision_ionise.F90)
+            CALL collision_ionisation_ei(ion_species, electron_species, &
+                species_list(electron_species)%secondary_list(ix,iy,iz), &
+                species_list(ion_species)%secondary_list(ix,iy,iz), &
+                list_i_ionised, list_e_ionising, list_e_ejected)
+
+            ! Put ions and electrons into respective lists
+            CALL append_partlist( &
+                species_list(electron_species)%secondary_list(ix,iy,iz), &
+                list_e_ionising)
+            CALL append_partlist( &
+                species_list(ionised_species)%secondary_list(ix,iy,iz), &
+                list_i_ionised)
+            CALL append_partlist( &
+                species_list(ejected_species)%secondary_list(ix,iy,iz), &
+                list_e_ejected)
+          END IF
+        END DO ! ix
+        END DO ! iy
+        END DO ! iz
+
+      END DO ! jspecies
+    END DO ! ispecies
+
+  END SUBROUTINE run_collisional_ionisation
+
+
+
   SUBROUTINE collision_ionisation_ei(ion_species, el_species, list_e_in, &
       list_i_in, list_i_ionised, list_e_ionising, list_e_ejected)
 
@@ -823,7 +948,7 @@ CONTAINS
             species_list(ion_species)%coll_ion_cross_sec, last_state)
 
         ! Probability of ionisation from a real electron (not macro-electron)
-        ionise_prob = 1.0_num - EXP(- n_i * eiics * el_v_i * dt)
+        ionise_prob = 1.0_num - EXP(- n_i * eiics * el_v_i * dt_ci)
 
         ! Expected number of secondary electrons created by this macro-electron
         sec_no = el_weight * unionised_frac * ionise_prob

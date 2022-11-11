@@ -334,6 +334,11 @@ CONTAINS
           CALL create_empty_partlist(ejected_list(i)%attached_list)
         END DO
       END IF
+
+      ! Check for split particle species, which need secondary lists
+      DO i = 1, n_species
+        IF (species_list(i)%split) species_list(i)%make_secondary_list = .TRUE.
+      END DO
     END IF
 
     IF (use_field_ionisation) need_random_state = .TRUE.

@@ -223,6 +223,10 @@ MODULE shared_data
     LOGICAL :: background_species = .FALSE.
     ! Background density
     REAL(num), DIMENSION(:,:), POINTER :: background_density
+    ! Do we need to make secondary lists for this species?
+    LOGICAL :: make_secondary_list = .FALSE.
+    ! Has species list been randomised in order?
+    LOGICAL :: is_shuffled
 
     ! Specifiy if species is background for collisions
     LOGICAL :: coll_background = .FALSE.
@@ -561,6 +565,7 @@ MODULE shared_data
   INTEGER, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_state
   INTEGER :: coll_n_step = 1
   INTEGER :: back_n_step = 1
+  INTEGER :: ci_n_step = 1
   REAL(num) :: coulomb_log, rel_cutoff, back_update_dt
   LOGICAL :: coulomb_log_auto, use_collisions
   LOGICAL :: use_background_collisions

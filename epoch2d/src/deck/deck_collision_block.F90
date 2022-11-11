@@ -76,6 +76,8 @@ CONTAINS
           IF (coll_pairs_state(i,j) == c_coll_collide) THEN
             species_list(i)%coll_pairwise = .TRUE.
             species_list(j)%coll_pairwise = .TRUE.
+            species_list(i)%make_secondary_list = .TRUE.
+            species_list(j)%make_secondary_list = .TRUE.
           ELSE IF (coll_pairs_state(i,j) == c_coll_background_1st) THEN
             species_list(i)%coll_background = .TRUE.
             species_list(j)%coll_fast = .TRUE.
@@ -85,6 +87,15 @@ CONTAINS
           END IF
         END DO
       END DO
+
+      ! Identify which species need secondary lists for collisional ionisation
+      IF (use_collisional_ionisation) THEN
+        DO i = 1, n_species
+          IF (species_list(i)%ionise .OR. species_list(i)%electron) THEN
+            species_list(i)%make_secondary_list = .TRUE.
+          END IF
+        END DO
+      END IF
 
       IF (first) THEN
         first = .FALSE.
@@ -106,8 +117,11 @@ CONTAINS
       END IF
 
       coll_n_step = MAX(coll_n_step, 1)
+      ci_n_step = MAX(ci_n_step, 1)
 
     END IF
+
+    IF (use_collisional_ionisation) use_particle_lists = .TRUE.
 
   END SUBROUTINE collision_deck_finalise
 
@@ -166,6 +180,12 @@ CONTAINS
     IF (str_cmp(element, 'coll_n_step') .OR. &
         str_cmp(element, 'n_coll_steps')) THEN
       coll_n_step = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'ci_n_step') .OR. &
+        str_cmp(element, 'n_ci_steps')) THEN
+      ci_n_step = as_integer_print(value, element, errcode)
       RETURN
     END IF
 

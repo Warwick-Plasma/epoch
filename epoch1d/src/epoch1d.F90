@@ -63,6 +63,7 @@ PROGRAM pic
   INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
   LOGICAL :: force_dump = .FALSE.
+  LOGICAL :: collision_step, coll_ion_step
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
@@ -214,22 +215,31 @@ PROGRAM pic
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
       IF (use_particle_lists) THEN
+        ! Check whether this is a step with collisions or collisional ionisation
+        collision_step = (MODULO(step, coll_n_step) == coll_n_step - 1) &
+          .AND. use_collisions
+        coll_ion_step = MODULO(step, ci_n_step) == ci_n_step - 1 &
+          .AND. use_collisional_ionisation
+
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
-        IF (use_split .OR. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
+        IF (use_split .OR. collision_step .OR. coll_ion_step) THEN
           CALL reorder_particles_to_grid
         END IF
 
+        IF (coll_ion_step) THEN
+          CALL run_collisional_ionisation
+        END IF
+
         ! call collision operator
-        IF (use_collisions &
-            .AND. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
+        IF (collision_step) THEN
           CALL particle_collisions
         END IF
 
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
-        IF (use_split .OR. MODULO(step, coll_n_step) == coll_n_step - 1) THEN
+        IF (use_split .OR. collision_step .OR. coll_ion_step) THEN
           CALL reattach_particles_to_mainlist
         END IF
       END IF
