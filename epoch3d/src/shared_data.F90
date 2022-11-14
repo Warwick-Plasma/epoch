@@ -650,7 +650,7 @@ MODULE shared_data
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
-    REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
+    REAL(num), ALLOCATABLE :: cross_section(:), cross_section_pos(:), e_table(:)
     INTEGER :: size_k, size_t
     TYPE(interpolation_state) :: state
   END TYPE brem_tables
@@ -664,6 +664,8 @@ MODULE shared_data
 #ifndef PHOTONS
   INTEGER :: photon_species = -1
 #endif
+  INTEGER :: bethe_heitler_electron_species = -1
+  INTEGER :: bethe_heitler_positron_species = -1
 
   ! Deck variables
   REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
@@ -675,6 +677,8 @@ MODULE shared_data
   LOGICAL :: use_plasma_screening = .FALSE.
   LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+  LOGICAL :: use_bethe_heitler = .FALSE.
+  LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
 

@@ -1935,6 +1935,40 @@ CONTAINS
       RETURN
     END IF
 
+    ! Bethe Heitler pairs
+    IF (str_cmp(value, 'bh_electron') &
+        .OR. str_cmp(value, 'bethe_heitler_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%electron = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_electron_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(value, 'bh_positron') &
+        .OR. str_cmp(value, 'bethe_heitler_positron')) THEN
+      species_list(species_id)%charge = q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_positron
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_positron_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+    
     errcode = IOR(errcode, c_err_bad_value)
 
   END SUBROUTINE identify_species
