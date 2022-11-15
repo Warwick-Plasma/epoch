@@ -707,7 +707,7 @@ CONTAINS
                     TRIM(deck_values(1)%value(1:pos-1))
               END IF
               WRITE(io,*) 'String value too long. Please increase the size ', &
-                  'of "string_length" in ','shared_data.F90 to be at least ', &
+                  'of "string_length" in ','constants.F90 to be at least ', &
                   TRIM(len_string)
             END DO
             CALL abort_code(c_err_io_error)
