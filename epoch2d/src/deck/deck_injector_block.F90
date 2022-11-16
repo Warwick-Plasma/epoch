@@ -18,6 +18,7 @@ MODULE deck_injector_block
   USE strings_advanced
   USE shunt
   USE injectors
+  USE file_injectors
   USE utilities
 
   IMPLICIT NONE
@@ -64,7 +65,21 @@ CONTAINS
 
   SUBROUTINE injector_block_end
 
+    REAL(num) :: first_time
+
     IF (deck_state == c_ds_first) RETURN
+
+    ! Assign injector ID to generate a unique I/O unit if injecting from file
+    IF (working_injector%inject_from_file) THEN
+      custom_injector_count = custom_injector_count + 1
+      working_injector%custom_id = custom_injector_count
+      CALL open_injector_files(working_injector)
+
+      ! File injecting routines require pre-reading of the first injection time
+      CALL read_injector_real(unit_t, first_time, working_injector)
+      IF (.NOT. working_injector%file_finished) &
+          working_injector%next_time = first_time
+    END IF
 
     CALL attach_injector(working_injector)
     boundary_set = .FALSE.
@@ -76,10 +91,12 @@ CONTAINS
   FUNCTION injector_block_handle_element(element, value) RESULT(errcode)
 
     CHARACTER(*), INTENT(IN) :: element, value
-    INTEGER :: errcode, i
+    INTEGER :: errcode, i, filename_error_ignore
     INTEGER :: io, iu
     REAL(num) :: mult
     CHARACTER(LEN=string_length) :: mult_string
+    CHARACTER(LEN=string_length) :: filename
+    LOGICAL :: got_filename
 
     errcode = c_err_none
     IF (deck_state == c_ds_first) RETURN
@@ -252,6 +269,85 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'inject_from_file')) THEN
+      working_injector%inject_from_file = as_logical_print(value, element, &
+          errcode)
+      RETURN
+    END IF
+
+    ! If we are still in this function, the only keys left are for file
+    ! injection, so read the filename
+    CALL get_filename(value, filename, got_filename, filename_error_ignore)
+    IF (got_filename) THEN
+
+      IF (str_cmp(element, 'x_data')) THEN
+        injector_filenames%x_data = TRIM(filename)
+        working_injector%x_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 'y_data')) THEN
+        injector_filenames%y_data = TRIM(filename)
+        working_injector%y_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 'px_data')) THEN
+        injector_filenames%px_data = TRIM(filename)
+        working_injector%px_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 'py_data')) THEN
+        injector_filenames%py_data = TRIM(filename)
+        working_injector%py_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 'pz_data')) THEN
+        injector_filenames%pz_data = TRIM(filename)
+        working_injector%pz_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 't_data')) THEN
+        injector_filenames%t_data = TRIM(filename)
+        working_injector%t_data_given = .TRUE.
+        RETURN
+      END IF
+
+      IF (str_cmp(element, 'w_data')) THEN
+#ifndef PER_SPECIES_WEIGHT
+        injector_filenames%w_data = TRIM(filename)
+        working_injector%w_data_given = .TRUE.
+        RETURN
+#else
+        IF (rank == 0) THEN
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot assign weights from ', filename, ' as compiler ', &
+              'flag -DPER_SPECIES_WEIGHT is used.'
+          PRINT*,'Code will terminate.'
+        END IF
+#endif
+      END IF
+
+      IF (str_cmp(element, 'id_data')) THEN
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+        injector_filenames%id_data = TRIM(filename)
+        working_injector%id_data_given = .TRUE.
+        RETURN
+#else
+        IF (rank == 0) THEN
+          PRINT*,'*** ERROR ***'
+          PRINT*,'Cannot assign weights from ', filename, ' as compiler ', &
+              'flag -DPER_SPECIES_WEIGHT is used.'
+          PRINT*,'Code will terminate.'
+        END IF
+        errcode = c_err_bad_value
+#endif
+      END IF
+    END IF
+
     errcode = c_err_unknown_element
 
   END FUNCTION injector_block_handle_element
@@ -263,16 +359,36 @@ CONTAINS
     INTEGER :: errcode
     TYPE(injector_block), POINTER :: current
     INTEGER :: io, iu
-    LOGICAL :: error
+    LOGICAL :: error, file_error
 
     use_injectors = .FALSE.
     error = .FALSE.
+    file_error = .FALSE.
     errcode = c_err_none
 
     current => injector_list
     DO WHILE(ASSOCIATED(current))
       IF (current%species == -1) error = .TRUE.
       use_injectors = .TRUE.
+
+      ! Additional checks for file injectors
+      IF (current%inject_from_file) THEN
+        ! x injectors need y positions
+        IF (current%boundary == c_bd_x_min &
+            .OR. current%boundary == c_bd_x_max) THEN
+          IF (.NOT. current%y_data_given) file_error = .TRUE.
+        ! y injectors need x positions
+        ELSE IF (current%boundary == c_bd_y_min &
+            .OR. current%boundary == c_bd_y_max) THEN
+          IF (.NOT. current%x_data_given) file_error = .TRUE.
+        END IF
+        ! Injection times are required
+        IF (.NOT. current%t_data_given) file_error = .TRUE.
+#ifndef PER_SPECIES_WEIGHT
+        ! Injection weights are required
+        IF (.NOT. current%w_data_given) file_error = .TRUE.
+#endif
+      END IF
       current => current%next
     END DO
 
@@ -283,6 +399,23 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*) '*** ERROR ***'
           WRITE(io,*) 'Must define a species for every injector'
+        END DO
+      END IF
+      errcode = c_err_missing_elements
+    END IF
+
+    IF (file_error) THEN
+      use_injectors = .FALSE.
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+#ifndef PER_SPECIES_WEIGHT
+          WRITE(io,*) 'File injectors must specify the injection time, ', &
+              'position, and weights of each injected particle'
+#else
+          WRITE(io,*) 'File injectors must specify the injection time and ', &
+              'position of each injected particle'
+#endif
         END DO
       END IF
       errcode = c_err_missing_elements

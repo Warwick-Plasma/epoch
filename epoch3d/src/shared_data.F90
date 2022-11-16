@@ -750,12 +750,60 @@ MODULE shared_data
     LOGICAL :: has_t_end
     REAL(num), DIMENSION(:,:), POINTER :: depth
 
+    ! Additional parameters for file injection
+    LOGICAL :: inject_from_file
+    LOGICAL :: file_finished
+    INTEGER :: custom_id
+    REAL(num) :: next_time
+    ! Position data
+    LOGICAL :: x_data_given
+    LOGICAL :: y_data_given
+    LOGICAL :: z_data_given
+    ! Momentum Data
+    LOGICAL :: px_data_given
+    LOGICAL :: py_data_given
+    LOGICAL :: pz_data_given
+    ! Temporal injection data
+    LOGICAL :: t_data_given
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    LOGICAL :: w_data_given
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    LOGICAL :: id_data_given
+#endif
+
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
+
+  TYPE injector_files
+    ! Position data
+    CHARACTER(LEN=string_length) :: x_data
+    CHARACTER(LEN=string_length) :: y_data
+    CHARACTER(LEN=string_length) :: z_data
+    ! Momentum Data
+    CHARACTER(LEN=string_length) :: px_data
+    CHARACTER(LEN=string_length) :: py_data
+    CHARACTER(LEN=string_length) :: pz_data
+    ! Temporal injection data
+    CHARACTER(LEN=string_length) :: t_data
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    CHARACTER(LEN=string_length) :: w_data
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    CHARACTER(LEN=string_length) :: id_data
+#endif
+  END TYPE injector_files
 
   TYPE(injector_block), POINTER :: injector_list
   LOGICAL :: injector_boundary(2*c_ndims)
 
+  TYPE(injector_files) :: injector_filenames
+  INTEGER :: custom_injector_count
+  
   !----------------------------------------------------------------------------
   ! laser boundaries
   !----------------------------------------------------------------------------

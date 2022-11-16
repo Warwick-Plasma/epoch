@@ -52,6 +52,22 @@ MODULE constants
 #endif
   INTEGER, PARAMETER :: nio_units = SIZE(io_units)
 
+  ! File units for the injectors which read particle info from files
+  ! Each injector can open up to 6 files (in 1D)
+  ! Multiple file injectors can be specified (up to custom_injector_limit)
+  ! File units start at custom_base_unit, then 6 units for injector 1, the next
+  ! 6 for injector 2, etc
+  ! File units 10000000 to 15999999 are reserved for this routine
+  INTEGER, PARAMETER :: custom_injector_limit = 1.0e6
+  INTEGER, PARAMETER :: custom_base_unit = 1.0e7
+  INTEGER, PARAMETER :: unit_px = 0
+  INTEGER, PARAMETER :: unit_py = 1
+  INTEGER, PARAMETER :: unit_pz = 2
+  INTEGER, PARAMETER :: unit_t  = 3
+  INTEGER, PARAMETER :: unit_w  = 4
+  INTEGER, PARAMETER :: unit_id = 5
+  INTEGER, PARAMETER :: custom_var_num = 6
+
   ! Boundary type codes
   INTEGER, PARAMETER :: c_bc_null = -1
   INTEGER, PARAMETER :: c_bc_periodic = 1
