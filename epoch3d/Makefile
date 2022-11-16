@@ -200,6 +200,9 @@ DEFINES := $(DEFINE)
 # cross a plane in the simulation.
 #DEFINES += $(D)NO_PARTICLE_PROBES
 
+# Probes will also output the time particles cross the probe
+#DEFINES += $(D)PROBE_TIME
+
 # Use second order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_TOPHAT
 

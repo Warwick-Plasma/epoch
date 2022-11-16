@@ -141,6 +141,7 @@ CONTAINS
 #ifdef DELTAF_METHOD
     REAL(num) :: weight_back
 #endif
+    REAL(num) :: path_frac
 
     TYPE(particle), POINTER :: current, next
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
@@ -670,6 +671,21 @@ CONTAINS
                   ! with this probe
                   ALLOCATE(particle_copy)
                   particle_copy = current
+                  ! Fraction of step until particle hits probe
+                  path_frac = SUM(current_probe%normal*(current_probe%point - &
+                      (/init_part_x,init_part_y,init_part_z/))) &
+                      /SUM(current_probe%normal * (/final_part_x-init_part_x, &
+                      final_part_y-init_part_y, final_part_z-init_part_z/))
+                  ! Position of particle on probe
+                  particle_copy%part_pos = path_frac * &
+                      (/final_part_x-init_part_x, &
+                      final_part_y-init_part_y, &
+                      final_part_z-init_part_z/) &
+                      + (/init_part_x, init_part_y, init_part_z/)
+#ifdef PROBE_TIME
+                  ! Note: time variable corresponds to (time at x_init)+0.5*dt
+                  particle_copy%probe_time = time + dt * (path_frac - 0.5_num)
+#endif
                   CALL add_particle_to_partlist(&
                       current_probe%sampled_particles, particle_copy)
                   NULLIFY(particle_copy)
@@ -765,6 +781,8 @@ CONTAINS
     REAL(num) :: d_init, d_final
     LOGICAL :: probes_for_species
 #endif
+
+    REAL(num) :: path_frac
 
     IF (species_list(ispecies)%attached_list%count == 0) RETURN
 
@@ -885,6 +903,22 @@ CONTAINS
                 ! with this probe
                 ALLOCATE(particle_copy)
                 particle_copy = current
+                ! Fraction of step until particle hits probe
+                path_frac = SUM(current_probe%normal*(current_probe%point - &
+                    (/init_part_x,init_part_y,init_part_z/))) &
+                    /SUM(current_probe%normal * (/final_part_x-init_part_x, &
+                    final_part_y-init_part_y, &
+                    final_part_z-init_part_z/))
+                ! Position of particle on probe
+                particle_copy%part_pos = path_frac * &
+                    (/final_part_x-init_part_x, &
+                    final_part_y-init_part_y, &
+                    final_part_z-init_part_z/) &
+                    + (/init_part_x,init_part_y,init_part_z/)
+#ifdef PROBE_TIME
+                ! Note: time variable corresponds to (time at x_init)+0.5*dt
+                particle_copy%probe_time = time + dt * (path_frac - 0.5_num)
+#endif
                 CALL add_particle_to_partlist(&
                     current_probe%sampled_particles, particle_copy)
                 NULLIFY(particle_copy)

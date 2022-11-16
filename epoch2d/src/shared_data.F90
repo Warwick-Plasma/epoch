@@ -136,6 +136,9 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#if defined(PROBE_TIME)
+    REAL(num) :: probe_time
+#endif
   END TYPE particle
 
   ! Data for migration between species
