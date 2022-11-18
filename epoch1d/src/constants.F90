@@ -632,7 +632,8 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_part_work_z_total = 70
   INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 71
   INTEGER, PARAMETER :: c_dump_probe_time        = 72
-  INTEGER, PARAMETER :: num_vars_to_dump         = 72
+  INTEGER, PARAMETER :: c_dump_cou_log           = 73
+  INTEGER, PARAMETER :: num_vars_to_dump         = 73
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2
