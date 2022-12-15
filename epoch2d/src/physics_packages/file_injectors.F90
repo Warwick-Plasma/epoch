@@ -29,7 +29,7 @@ CONTAINS
     ! chosen such that each variable for each injector has a unique file unit.
 
     TYPE(injector_block), POINTER :: injector
-    INTEGER :: inj_base_unit, iostat
+    INTEGER :: inj_base_unit
     LOGICAL :: file_exists
 
     inj_base_unit = custom_base_unit + (injector%custom_id-1)*custom_var_num
