@@ -230,9 +230,7 @@ CONTAINS
 
     INTEGER :: i_fast, i_back, j_back, back_count, spec2
     INTEGER :: cell_x, cell_y, cell_z
-    INTEGER, ALLOCATABLE :: spec2back(:)
     TYPE(particle), POINTER :: fast
-    REAL(num), ALLOCATABLE :: num_dens(:,:,:)
     REAL(num) :: q1, q2, m1c2_sq, im1c2
     REAL(num) :: p1_sq, p1_dir(3), energy1
     REAL(num) :: s12, cos_theta, phi, p1_vec_com(3)
