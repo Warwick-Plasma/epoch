@@ -233,7 +233,7 @@ CONTAINS
 #endif
     INTEGER :: boundary
     REAL(num) :: next_time, time_to_bdy
-    REAL(num) :: vx, vy, gamma, inv_gamma_mass, x_start, y_start, z_start
+    REAL(num) :: vx, vy, gamma, inv_gamma_mass, x_start, y_start
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     LOGICAL :: no_particles_added, skip_processor
