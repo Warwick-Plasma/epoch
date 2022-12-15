@@ -114,6 +114,7 @@ CONTAINS
 #ifndef NO_PARTICLE_PROBES
     LOGICAL :: probes_for_species
     REAL(num) :: gamma_rel_m1
+    REAL(num) :: path_frac
 #endif
 #ifndef NO_TRACER_PARTICLES
     LOGICAL :: not_zero_current_species
@@ -131,7 +132,6 @@ CONTAINS
 #ifdef DELTAF_METHOD
     REAL(num) :: weight_back
 #endif
-    REAL(num) :: path_frac
 
     TYPE(particle), POINTER :: current, next
     TYPE(particle_pointer_list), POINTER :: bnd_part_last, bnd_part_next
@@ -631,9 +631,8 @@ CONTAINS
     TYPE(particle), POINTER :: particle_copy
     REAL(num) :: d_init, d_final
     LOGICAL :: probes_for_species
-#endif
-
     REAL(num) :: path_frac
+#endif
 
     IF (species_list(ispecies)%attached_list%count == 0) RETURN
 
