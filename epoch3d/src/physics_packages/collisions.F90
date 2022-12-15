@@ -95,7 +95,6 @@ CONTAINS
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: jtemp, log_lambda
     REAL(num), DIMENSION(:,:,:), ALLOCATABLE :: iekbar
     REAL(num) :: user_factor, q1, q2, m1, m2, w1, w2
-    REAL(num) :: mass_ion, charge_ion
     LOGICAL :: collide_species
     INTEGER :: collision_type
 
