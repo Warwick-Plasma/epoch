@@ -254,7 +254,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: classical_b0(:,:,:), uncertain_dx(:,:,:)
     REAL(num) :: total_charge, total_mass, n_part
     REAL(num) :: part_q, part_m, part_w, b_min, b_max
-    REAL(num) :: current_charge, current_mass, mean_q1q2, p_rel, total_weight
+    REAL(num) :: current_charge, current_mass, mean_q1q2, p_rel
 
     ALLOCATE(num_dens(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
     ALLOCATE(mean_ke(1-ng:nx+ng, 1-ng:ny+ng, 1-ng:nz+ng))
