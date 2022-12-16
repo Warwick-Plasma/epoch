@@ -222,6 +222,196 @@ CONTAINS
 
 
 
+  SUBROUTINE calc_cou_log(data_array, current_species, direction)
+
+    ! Method taken from: "Lee, Y. T., & More, R. M. (1984). The Physics of
+    ! fluids, 27(5), 1273-1286", Section IIIB. The equations present have been
+    ! converted to SI units for the EPOCH implementation.
+    !
+    ! Populates the array: data_array with the Coulomb logarithm values in each
+    ! cell for a species with ID current_species
+    !
+    ! Note that while Debye length, and the uncertainty_dx is calculated cell by
+    ! cell, the other impact parameters involve quantities averaged over the
+    ! whole simulation window.
+
+    REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array
+    INTEGER, INTENT(IN) :: current_species
+    INTEGER, INTENT(IN), OPTIONAL :: direction
+    INTEGER :: ispecies, use_species, ix, iy
+    TYPE(particle), POINTER :: current
+    REAL(num), ALLOCATABLE :: species_charge(:), species_weight(:)
+    REAL(num), ALLOCATABLE :: num_dens(:,:), num_dens_all(:,:)
+    REAL(num), ALLOCATABLE :: mean_ke(:,:), temperature(:,:)
+    REAL(num), ALLOCATABLE :: debye_length(:,:), atomic_spacing(:,:)
+    REAL(num), ALLOCATABLE :: classical_b0(:,:), uncertain_dx(:,:)
+    REAL(num) :: total_charge, total_mass, n_part
+    REAL(num) :: part_q, part_m, part_w, b_min, b_max
+    REAL(num) :: current_charge, current_mass, mean_q1q2, p_rel
+
+    ALLOCATE(num_dens(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(mean_ke(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(temperature(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(num_dens_all(1-ng:nx+ng, 1-ng:ny+ng))
+
+    ALLOCATE(debye_length(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(atomic_spacing(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(classical_b0(1-ng:nx+ng, 1-ng:ny+ng))
+    ALLOCATE(uncertain_dx(1-ng:nx+ng, 1-ng:ny+ng))
+
+    ! Estimate the mean charge and mass of each particle species, along with the
+    ! total weight of each
+    ALLOCATE(species_charge(n_species))
+    ALLOCATE(species_weight(n_species))
+
+    ! If no species ID has been provided, default to the first species
+    IF (current_species <= 0) THEN
+      use_species = 1
+    ELSE
+      use_species = current_species
+    END IF
+
+    ! Loop over all particle species
+    DO ispecies = 1, n_species
+      total_charge = 0.0_num
+      total_mass = 0.0_num
+      n_part = 0.0_num
+      current => species_list(ispecies)%attached_list%head
+
+      ! Loop over all particles in the particle species
+      DO WHILE(ASSOCIATED(current))
+        ! Determine real-particle charge and mass
+#ifdef PER_PARTICLE_CHARGE_MASS
+        part_q = current%charge
+        part_m = current%mass
+#else
+        part_q = species_list(ispecies)%charge
+        part_m = species_list(ispecies)%mass
+#endif
+        ! Determine macro-particle weight
+#ifdef PER_SPECIES_WEIGHT
+        part_w = species_list(ispecies)%weight
+#else
+        part_w = current%weight
+#endif
+        ! Sum weights, and weighted charges and masses
+        n_part = n_part + part_w
+        total_charge = total_charge + part_q * part_w
+        IF (ispecies == use_species) total_mass = total_mass &
+            + part_m * part_w
+        current => current%next
+      END DO
+
+      ! Save average charge and mass
+      species_charge(ispecies) = total_charge / n_part
+      IF (ispecies == use_species) current_mass = total_mass / n_part
+
+      ! Save charge for species of interest
+      IF (ispecies == use_species) THEN
+        current_charge = species_charge(ispecies)
+      END IF
+
+      ! Save total species weight
+      species_weight(ispecies) = n_part
+    END DO
+
+    ! Estimate for the product of charges between the current species, and
+    ! all other species
+    mean_q1q2 = 0.0_num
+    n_part = 0.0_num
+    ! Weighted sum of all q2 (save in mean_q1q2 for now)
+    DO ispecies = 1, n_species
+      mean_q1q2 = mean_q1q2 &
+          + ABS(species_charge(ispecies)) * species_weight(ispecies)
+      n_part = n_part + species_weight(ispecies)
+    END DO
+    ! Mean q1*q2
+    mean_q1q2 = ABS(species_charge(use_species) * mean_q1q2) / n_part
+
+    ! Loop over all species to deduce parameters for b_max, b_min lengths
+    debye_length = 0.0_num
+    num_dens_all = 0.0_num
+    DO ispecies = 1, n_species
+      CALL calc_number_density(num_dens, ispecies)
+      CALL calc_temperature(temperature, ispecies)
+
+      ! Sum(T/nq2) - store in Debye length array to save memory
+      ! Prevent 1/0 error for empty cells
+      DO iy = 1-ng, ny+ng
+      DO ix = 1-ng, nx+ng
+        IF (num_dens(ix,iy) > 1.0e-15_num) THEN
+          debye_length(ix,iy) = debye_length(ix,iy) &
+              + temperature(ix,iy) &
+              / (num_dens(ix,iy) * (species_charge(ispecies))**2)
+        ELSE
+          debye_length(ix,iy) = 0.0_num
+        END IF
+      END DO
+      END DO
+      ! Calculate total number density
+      num_dens_all = num_dens_all + num_dens
+    END DO
+
+    ! KE of current species
+    CALL calc_ekbar(mean_ke, use_species)
+
+    ! Calculate the Coulomb logarithm in each cell
+    DO iy = 1-ng, ny+ng
+    DO ix = 1-ng, nx+ng
+
+      ! Debye-Huckel screening length, Lee-More (18) - ignore Fermi correction
+      ! Initially, Debye length is the sum of T/nq2 for all species
+      IF (debye_length(ix,iy) > 0.0_num) THEN
+        debye_length(ix,iy) = SQRT(debye_length(ix,iy) * epsilon0 * kb)
+      ELSE
+        debye_length(ix,iy) = 0.0_num
+      END IF
+
+      ! Interatomic distance, assuming each particle is a sphere
+      IF (num_dens_all(ix,iy) > 1.0e-15_num) THEN
+        atomic_spacing(ix,iy) = (3.0_num &
+            / (4.0_num * pi * num_dens_all(ix,iy)))**(1.0_num/3.0_num)
+      ELSE
+        atomic_spacing(ix,iy) = 0.0_num
+      END IF
+
+      ! Classical distance of closest approach, Lee-More (20), replacing mv2
+      ! with 0.5*<KE>. Initially, classical_b0 = <KE>
+      IF (mean_ke(ix,iy) > 0.0_num) THEN
+        classical_b0(ix,iy) = mean_q1q2 &
+            / (8.0_num * pi * epsilon0 * mean_ke(ix,iy))
+      ELSE
+        classical_b0(ix,iy) = 0.0_num
+      END IF
+
+      ! Uncertainty principle limit, Lee-More (21)
+      p_rel = SQRT((mean_ke(ix,iy) + current_mass * c**2)**2 &
+          - current_mass**2 * c**4) / c
+      IF (p_rel > 0.0_num) THEN
+        uncertain_dx(ix,iy) = h_planck / (2.0_num * p_rel)
+      ELSE
+        uncertain_dx(ix,iy) = 0.0_num
+      END IF
+
+      ! Coulomb logarithm, Lee-More (17)
+      b_min = MAX(uncertain_dx(ix,iy), classical_b0(ix,iy))
+      b_max = MAX(debye_length(ix,iy), atomic_spacing(ix,iy))
+      IF (b_min > 0.0_num .AND. b_max >= b_min) THEN
+        data_array(ix,iy) = 0.5_num * LOG(1.0_num + (b_max/b_min)**2)
+      ELSE
+        data_array(ix,iy) = 0.0_num
+      END IF
+    END DO
+    END DO
+
+    DEALLOCATE(num_dens, mean_ke, temperature, num_dens_all)
+    DEALLOCATE(debye_length, atomic_spacing, classical_b0, uncertain_dx)
+    DEALLOCATE(species_charge, species_weight)
+
+  END SUBROUTINE calc_cou_log
+
+
+
   SUBROUTINE calc_ekflux(data_array, current_species, direction)
 
     REAL(num), DIMENSION(1-ng:,1-ng:), INTENT(OUT) :: data_array

@@ -136,6 +136,9 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#if defined(PROBE_TIME)
+    REAL(num) :: probe_time
+#endif
   END TYPE particle
 
   ! Data for migration between species
@@ -216,15 +219,22 @@ MODULE shared_data
     LOGICAL :: zero_current
 #endif
 
-#ifdef BREMSSTRAHLUNG
     INTEGER :: atomic_no
     LOGICAL :: atomic_no_set = .FALSE.
-#endif
 
     ! Specify if species is background species or not
     LOGICAL :: background_species = .FALSE.
     ! Background density
     REAL(num), DIMENSION(:,:,:), POINTER :: background_density
+    ! Do we need to make secondary lists for this species?
+    LOGICAL :: make_secondary_list = .FALSE.
+    ! Has species list been randomised in order?
+    LOGICAL :: is_shuffled
+
+    ! Specifiy if species is background for collisions
+    LOGICAL :: coll_background = .FALSE.
+    LOGICAL :: coll_fast = .FALSE.
+    LOGICAL :: coll_pairwise = .FALSE.
 
     ! ID code which identifies if a species is of a special type
     INTEGER :: species_type
@@ -254,6 +264,11 @@ MODULE shared_data
     INTEGER :: n
     INTEGER :: l
     REAL(num) :: ionisation_energy
+    REAL(num), ALLOCATABLE :: coll_ion_incident_ke(:)
+    REAL(num), ALLOCATABLE :: coll_ion_cross_sec(:)
+    REAL(num), ALLOCATABLE :: coll_ion_mean_bind(:,:)
+    REAL(num), ALLOCATABLE :: coll_ion_secondary_ke(:,:)
+    REAL(num), ALLOCATABLE :: coll_ion_secondary_cdf(:,:)
 
     ! Attached probes for this species
 #ifndef NO_PARTICLE_PROBES
@@ -288,6 +303,15 @@ MODULE shared_data
   LOGICAL :: use_offset_grid
   INTEGER :: n_zeros_control, n_zeros = 4
   INTEGER, DIMENSION(num_vars_to_dump) :: dumpmask
+
+  !----------------------------------------------------------------------------
+  ! Look-up tables
+  !----------------------------------------------------------------------------
+
+  TYPE interpolation_state
+    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val2d
+    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
+  END TYPE interpolation_state
 
   !----------------------------------------------------------------------------
   ! Time averaged IO
@@ -561,13 +585,22 @@ MODULE shared_data
   INTEGER :: coll_sort_array_size = 0
 
   REAL(num), ALLOCATABLE, DIMENSION(:,:) :: coll_pairs
-  REAL(num) :: coulomb_log
+  INTEGER, ALLOCATABLE, DIMENSION(:,:) :: coll_pairs_state
+  INTEGER :: coll_n_step = 1
+  INTEGER :: back_n_step = 1
+  INTEGER :: ci_n_step = 1
+  REAL(num) :: coulomb_log, rel_cutoff, back_update_dt
   LOGICAL :: coulomb_log_auto, use_collisions
+  LOGICAL :: use_background_collisions
   LOGICAL :: use_nanbu = .TRUE.
-  INTEGER :: n_coll_steps = 1
+  LOGICAL :: use_cold_correction = .TRUE.
+  LOGICAL :: use_rel_cutoff = .FALSE.
+  LOGICAL :: coll_subcycle_back = .FALSE.
+  LOGICAL :: coll_back_recalc
 
   LOGICAL :: use_field_ionisation, use_collisional_ionisation
   LOGICAL :: use_multiphoton, use_bsi
+  CHARACTER(LEN=string_length) :: physics_table_location
 
   INTEGER :: maxwell_solver = c_maxwell_solver_yee
   REAL(num) :: dt_custom
@@ -617,14 +650,10 @@ MODULE shared_data
   !----------------------------------------------------------------------------
   ! Bremsstrahlung
   !----------------------------------------------------------------------------
-  TYPE interpolation_state
-    REAL(num) :: x = HUGE(1.0_num), y = HUGE(1.0_num), val1d, val2d
-    INTEGER :: ix1 = 1, ix2 = 1, iy1 = 1, iy2 = 1
-  END TYPE interpolation_state
   ! Table declarations
   TYPE brem_tables
     REAL(num), ALLOCATABLE :: cdf_table(:,:), k_table(:,:)
-    REAL(num), ALLOCATABLE :: cross_section(:), e_table(:)
+    REAL(num), ALLOCATABLE :: cross_section(:), cross_section_pos(:), e_table(:)
     INTEGER :: size_k, size_t
     TYPE(interpolation_state) :: state
   END TYPE brem_tables
@@ -638,6 +667,8 @@ MODULE shared_data
 #ifndef PHOTONS
   INTEGER :: photon_species = -1
 #endif
+  INTEGER :: bethe_heitler_electron_species = -1
+  INTEGER :: bethe_heitler_positron_species = -1
 
   ! Deck variables
   REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
@@ -649,6 +680,8 @@ MODULE shared_data
   LOGICAL :: use_plasma_screening = .FALSE.
   LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
+  LOGICAL :: use_bethe_heitler = .FALSE.
+  LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
 
@@ -717,12 +750,60 @@ MODULE shared_data
     LOGICAL :: has_t_end
     REAL(num), DIMENSION(:,:), POINTER :: depth
 
+    ! Additional parameters for file injection
+    LOGICAL :: inject_from_file
+    LOGICAL :: file_finished
+    INTEGER :: custom_id
+    REAL(num) :: next_time
+    ! Position data
+    LOGICAL :: x_data_given
+    LOGICAL :: y_data_given
+    LOGICAL :: z_data_given
+    ! Momentum Data
+    LOGICAL :: px_data_given
+    LOGICAL :: py_data_given
+    LOGICAL :: pz_data_given
+    ! Temporal injection data
+    LOGICAL :: t_data_given
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    LOGICAL :: w_data_given
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    LOGICAL :: id_data_given
+#endif
+
     TYPE(injector_block), POINTER :: next
   END TYPE injector_block
+
+  TYPE injector_files
+    ! Position data
+    CHARACTER(LEN=string_length) :: x_data
+    CHARACTER(LEN=string_length) :: y_data
+    CHARACTER(LEN=string_length) :: z_data
+    ! Momentum Data
+    CHARACTER(LEN=string_length) :: px_data
+    CHARACTER(LEN=string_length) :: py_data
+    CHARACTER(LEN=string_length) :: pz_data
+    ! Temporal injection data
+    CHARACTER(LEN=string_length) :: t_data
+    ! Weight data
+#ifndef PER_SPECIES_WEIGHT
+    CHARACTER(LEN=string_length) :: w_data
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    ! ID data
+    CHARACTER(LEN=string_length) :: id_data
+#endif
+  END TYPE injector_files
 
   TYPE(injector_block), POINTER :: injector_list
   LOGICAL :: injector_boundary(2*c_ndims)
 
+  TYPE(injector_files) :: injector_filenames
+  INTEGER :: custom_injector_count
+  
   !----------------------------------------------------------------------------
   ! laser boundaries
   !----------------------------------------------------------------------------

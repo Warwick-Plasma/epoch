@@ -108,6 +108,9 @@ CONTAINS
 #ifdef NO_PARTICLE_PROBES
     found = .TRUE.
 #endif
+#ifdef PROBE_TIME
+    found = .TRUE.
+#endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     found = .TRUE.
 #endif
@@ -199,6 +202,10 @@ CONTAINS
     WRITE(*,*) 'No particle probe support -DNO_PARTICLE_PROBES'
 #else
     defines = IOR(defines, c_def_particle_probes)
+#endif
+#ifdef PROBE_TIME
+    defines = IOR(defines, c_def_probe_time)
+    WRITE(*,*) 'Probes output the time particles pass them -DPROBE_TIME'
 #endif
 #ifdef PER_PARTICLE_CHARGE_MASS
     defines = IOR(defines, c_def_per_particle_chargemass)

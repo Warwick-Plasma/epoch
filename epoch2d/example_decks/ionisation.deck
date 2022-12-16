@@ -15,7 +15,20 @@ begin:control
   x_max = -x_min
   y_min =  x_min
   y_max =  x_max
+
+  field_ionisation = T                  # This key switches on field ionisation
 end:control
+
+
+# # Uncomment this block to also use collisional ionisation!
+# # Block has been commented out for speed
+#
+# begin:collisions
+#
+#   use_collisions = T       # Collisions must be on for collisional ionisation
+#   collisional_ionisation = T             # Switches on collisional ionisation
+#
+# end:collisions
 
 
 begin:constant
@@ -46,13 +59,15 @@ end:species
 begin:species
   name = Palladium
   charge = 22.0
+  atomic_no = 46
   mass = 1836.2 * 105.0
 
   number_density = den_max
   temperature = 1e6
 
-  ionisation_electron_species = Electron
-  ionisation_energies = (54.4*ev, 24.6*ev)
+  ionise = T                                          # This species can ionise
+  ionisation_electron_species = Electron        # Species for ejected electrons
+
   nparticles = nx * ny * 5
 end:species
 
@@ -64,13 +79,7 @@ begin:species
 end:species
 
 
-begin:output_global
-  force_final_to_be_restartable = T
-end:output_global
-
-
 begin:output
-  name = normal
 
   # Simulated time between output dumps
   dt_snapshot = 1.0e-15
@@ -97,18 +106,6 @@ begin:output
 end:output
 
 
-begin:output
-  name = large
-
-  # Simulated time between output dumps
-  dt_snapshot = 10.0e-15
-
-  # Properties at particle positions
-  particles = full
-  particle_weight = full
-end:output
-
-
 begin:laser
   boundary = x_min
   amp = 1e13
@@ -116,76 +113,3 @@ begin:laser
   profile = y / (2.5e-6) * gauss(y, 0.0, 2.5e-6)
 end:laser
 
-
-begin:dist_fn
-  name = x_energy
-  ndims = 2
-
-  direction1 = dir_x
-  direction2 = dir_energy
-
-  # Range is ignored for spatial coordinates
-  range1 = (1, 1)
-  range2 = (0, 10*kev)
-
-  # Resolution is ignored for spatial coordinates
-  resolution1 = 1
-  resolution2 = 100
-
-  include_species:Electron
-  include_species:Palladium
-end:dist_fn
-
-
-begin:dist_fn
-  name = en
-  ndims = 1
-
-  direction1 = dir_energy
-
-  # Range is ignored for spatial coordinates
-  range1 = (0, 2.0*kev)
-
-  # Resolution is ignored for spatial coordinates
-  resolution1 = 100
-
-  include_species:Electron
-  include_species:Palladium
-end:dist_fn
-
-
-begin:dist_fn
-  name = x_px_py
-  ndims = 3
-  dumpmask = never
-
-  direction1 = dir_x
-  direction2 = dir_px
-  direction3 = dir_py
-
-  # Range is ignored for spatial coordinates
-  range1 = (1, 1)
-  range2 = (-3.0e-20, 3.0e-20)
-  range3 = (-3.0e-20, 3.0e-20)
-
-  # Resolution is ignored for spatial coordinates
-  resolution1 = 1
-  resolution2 = 100
-  resolution3 = 100
-
-  include_species:Electron
-  include_species:Palladium
-end:dist_fn
-
-
-begin:probe
-  name = electron_back_probe
-
-  point = (0.5 * (x_max + x_min), y_min)
-  normal = (1, 0)
-
-  ek_min = 0.0
-  ek_max = -1.0
-
-  include_species:Electron
-end:probe

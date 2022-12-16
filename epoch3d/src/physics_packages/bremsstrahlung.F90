@@ -17,9 +17,9 @@ MODULE bremsstrahlung
 #ifdef BREMSSTRAHLUNG
 
   USE partlist
-  USE particles
   USE calc_df
   USE setup
+  USE bethe_heitler
 
   IMPLICIT NONE
 
@@ -40,6 +40,7 @@ CONTAINS
       ! full check appears in check_bremsstrahlung_variables
       found = .FALSE.
       DO ispecies = 1, n_species
+        IF (species_list(ispecies)%count <= 0) CYCLE
         IF (species_list(ispecies)%species_type == c_species_id_electron &
             .OR. ispecies == bremsstrahlung_photon_species ) THEN
           found = .TRUE.
@@ -55,8 +56,11 @@ CONTAINS
             io = io_units(iu)
             WRITE(io,*)
             WRITE(io,*) '*** WARNING ***'
-            WRITE(io,*) 'Electron and/or photon species are unspecified.'
-            WRITE(io,*) 'particles. Bremsstrahlung routines will do nothing.'
+            WRITE(io,*) 'Electron and photon species are either ', &
+                'unspecified or contain no'
+            WRITE(io,*) 'particles. Bremsstrahlung routines will do nothing ', &
+                'unless electrons are '
+            WRITE(io,*) 'injected'
           END DO
           CALL close_status_file
         END IF
@@ -84,6 +88,7 @@ CONTAINS
     INTEGER :: io, iu
     INTEGER :: ispecies
     INTEGER :: first_electron = -1
+    INTEGER :: first_positron = -1
 
     check_bremsstrahlung_variables = c_err_none
 
@@ -93,16 +98,21 @@ CONTAINS
     ! No special species required if we only do radiation reaction
     IF (.NOT.produce_bremsstrahlung_photons) RETURN
 
-    ! Identify if there exists any electron species
+    ! Identify if there exists any electron or positron species
     DO ispecies = 1, n_species
       IF (species_list(ispecies)%species_type == c_species_id_electron &
           .AND. first_electron == -1) THEN
         first_electron = ispecies
       END IF
+
+      IF (species_list(ispecies)%species_type == c_species_id_positron &
+          .AND. first_positron == -1) THEN
+        first_positron = ispecies
+      END IF
     END DO
 
     ! Print warning if there is no electron species
-    IF (first_electron < 0) THEN
+    IF (first_electron < 0 .AND. (first_positron < 0 .AND. positron_brem)) THEN
       IF (rank == 0) THEN
         DO iu = 1, nio_units
           io = io_units(iu)
@@ -111,6 +121,24 @@ CONTAINS
           WRITE(io,*) 'Specify using "identify:electron".'
           WRITE(io,*) 'Bremsstrahlung routines require at least one ' , &
               'species of electrons.'
+          WRITE(io,*) 'Alternatively, use a positron species with', &
+              'use_positron_brem.'
+        END DO
+      END IF
+      check_bremsstrahlung_variables = c_err_missing_elements
+      RETURN
+    END IF
+
+    ! Print warning if there is no positron species
+    IF (first_positron < 0 .AND. use_bethe_heitler) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'No positron species specified.'
+          WRITE(io,*) 'Specify using "identify:positron".'
+          WRITE(io,*) 'Bethe-Heitler pair production requires at least one ' , &
+              'species of positrons.'
         END DO
       END IF
       check_bremsstrahlung_variables = c_err_missing_elements
@@ -125,6 +153,18 @@ CONTAINS
       bremsstrahlung_photon_species = photon_species
     END IF
 #endif
+
+    ! Any electron may act as a Bethe-Heitler species if no electron is
+    ! specified
+    IF (use_bethe_heitler) THEN
+      IF (bethe_heitler_electron_species == -1) THEN
+        bethe_heitler_electron_species = first_electron
+      END IF
+
+      IF (bethe_heitler_positron_species == -1) THEN
+        bethe_heitler_positron_species = first_positron
+      END IF
+    END IF
 
     ! Check if there exists a species to populate with bremsstrahlung photons
     IF (bremsstrahlung_photon_species < 0) THEN
@@ -159,6 +199,7 @@ CONTAINS
     INTEGER :: size_k, size_t
     INTEGER :: i, j
     INTEGER :: buf_index, buf_size
+    REAL(num) :: ln_e, ln_e2, ln_e3, ln_e4, ln_e5, ln_e6, ln_e7, pos_fac
     INTEGER, ALLOCATABLE :: int_buf(:)
     REAL(num), ALLOCATABLE :: real_buf(:)
 
@@ -236,6 +277,7 @@ CONTAINS
         ! consistency with photons.F90.
         READ(lu,*) size_k, size_t
         ALLOCATE(brem_array(iz)%cross_section(size_t))
+        ALLOCATE(brem_array(iz)%cross_section_pos(size_t))
         ALLOCATE(brem_array(iz)%k_table(size_t,size_k))
         ALLOCATE(brem_array(iz)%cdf_table(size_t,size_k))
         ALLOCATE(brem_array(iz)%e_table(size_t))
@@ -257,6 +299,32 @@ CONTAINS
         END DO
 
         CLOSE(unit = lu)
+
+        ! Apply scaling factor to electron bremsstrahlung cross sections for
+        ! positron bremsstrahlung. This is an analytic approximation to the
+        ! ratio of stopping powers between the two particle types:
+        ! Kim, L., 1986. Phys. Rev. A, 33(5)
+        ! Approximation from the Geant4 Physics Reference Manual
+        IF (positron_brem) THEN
+          DO i = 1, size_t
+            ln_e = LOG(1.0_num + 1.0e6_num * brem_array(iz)%e_table(i) &
+                / (REAL(z_temp,num)**2*m0c2))
+            ln_e2 = ln_e**2
+            ln_e3 = ln_e2*ln_e
+            ln_e4 = ln_e3*ln_e
+            ln_e5 = ln_e4*ln_e
+            ln_e6 = ln_e5*ln_e
+            ln_e7 = ln_e6*ln_e
+            pos_fac = 1.0_num - EXP(-0.12359_num*ln_e + 0.061274_num*ln_e2 &
+                - 0.031516_num*ln_e3 + 7.7446e-3_num*ln_e4 &
+                - 1.0595e-3_num*ln_e5 + 7.0568e-5_num*ln_e6 &
+                - 1.808e-6_num*ln_e7)
+            brem_array(iz)%cross_section_pos(i) = &
+                brem_array(iz)%cross_section(i) * pos_fac
+          END DO
+        ELSE
+          brem_array(iz)%cross_section_pos = 0.0_num
+        END IF
       END DO
 
       ! Pack data for broadcast to other ranks
@@ -287,7 +355,7 @@ CONTAINS
       buf_size = 0
       DO i = 1, size_brem_array
         buf_size = buf_size &
-            + brem_array(i)%size_t * (2 * brem_array(i)%size_k + 2)
+            + brem_array(i)%size_t * (2 * brem_array(i)%size_k + 3)
       END DO
 
       ALLOCATE(real_buf(buf_size))
@@ -300,6 +368,8 @@ CONTAINS
           real_buf(buf_index:buf_index+size_k-1) = brem_array(i)%k_table(j,:)
           buf_index = buf_index + size_k
           real_buf(buf_index) = brem_array(i)%cross_section(j)
+          buf_index = buf_index + 1
+          real_buf(buf_index) = brem_array(i)%cross_section_pos(j)
           buf_index = buf_index + 1
           real_buf(buf_index) = brem_array(i)%e_table(j)
           buf_index = buf_index + 1
@@ -348,6 +418,7 @@ CONTAINS
         ALLOCATE(brem_array(i)%cdf_table(size_t,size_k))
         ALLOCATE(brem_array(i)%k_table(size_t,size_k))
         ALLOCATE(brem_array(i)%cross_section(size_t))
+        ALLOCATE(brem_array(i)%cross_section_pos(size_t))
         ALLOCATE(brem_array(i)%e_table(size_t))
       END DO
 
@@ -355,7 +426,7 @@ CONTAINS
       buf_size = 0
       DO i = 1,size_brem_array
         buf_size = buf_size &
-            + brem_array(i)%size_t * (2 * brem_array(i)%size_k + 2)
+            + brem_array(i)%size_t * (2 * brem_array(i)%size_k + 3)
       END DO
       ALLOCATE(real_buf(buf_size))
       CALL MPI_BCAST(real_buf, buf_size, mpireal, 0, comm, errcode)
@@ -371,11 +442,17 @@ CONTAINS
           buf_index = buf_index + size_k
           brem_array(i)%cross_section(j) = real_buf(buf_index)
           buf_index = buf_index + 1
+          brem_array(i)%cross_section_pos(j) = real_buf(buf_index)
+          buf_index = buf_index + 1
           brem_array(i)%e_table(j) = real_buf(buf_index)
           buf_index = buf_index + 1
         END DO
       END DO
     END IF
+
+    ! Initialise Z-dependent Bethe-Heitler functions using this Z list
+    IF (use_bethe_heitler) &
+        CALL init_bethe_heitler(size_brem_array, z_values, z_to_index)
 
     DEALLOCATE(int_buf)
     DEALLOCATE(real_buf)
@@ -415,6 +492,7 @@ CONTAINS
       DEALLOCATE(brem_array(i)%k_table)
       DEALLOCATE(brem_array(i)%cdf_table)
       DEALLOCATE(brem_array(i)%cross_section)
+      DEALLOCATE(brem_array(i)%cross_section_pos)
       DEALLOCATE(brem_array(i)%e_table)
     END DO
 
@@ -432,7 +510,7 @@ CONTAINS
 
   SUBROUTINE bremsstrahlung_update_optical_depth
 
-    INTEGER :: ispecies, iz, z_temp, q_temp, i, j, k
+    INTEGER :: ispecies, iz, z_temp, i, j, k, part_type
     TYPE(particle), POINTER :: current
     REAL(num), ALLOCATABLE :: grid_num_density_electron_temp(:,:,:)
     REAL(num), ALLOCATABLE :: grid_num_density_electron(:,:,:)
@@ -442,7 +520,7 @@ CONTAINS
     REAL(num), ALLOCATABLE :: grid_num_density_ion(:,:,:)
     REAL(num) :: part_ux, part_uy, part_uz, gamma_rel
     REAL(num) :: part_x, part_y, part_z, part_e, part_ni, part_v
-    REAL(num) :: part_root_te_over_ne, plasma_factor
+    REAL(num) :: q_temp, part_root_te_over_ne, plasma_factor
 
     ! Calculate electron number density and temperature, summed over all
     ! electron species
@@ -511,11 +589,14 @@ CONTAINS
       CALL calc_number_density(grid_num_density_ion, iz)
       CALL field_bc(grid_num_density_ion, ng)
 
-      ! Update the optical depth for each electron species
+      ! Update the optical depth for each species
       DO ispecies = 1, n_species
-        ! Only update optical_depth_bremsstrahlung for the electron species
-        IF (species_list(ispecies)%species_type == c_species_id_electron) THEN
-          ! Cycle through all electrons in this species
+        ! Only update optical_depth_bremsstrahlung for the electron species, or
+        ! positrons if we are using positron bremsstrahlung
+        part_type = species_list(ispecies)%species_type
+        IF (part_type == c_species_id_electron &
+            .OR.(positron_brem .AND. part_type == c_species_id_positron)) THEN
+          ! Cycle through all particles in this species
           current => species_list(ispecies)%attached_list%head
           DO WHILE(ASSOCIATED(current))
             ! Get electron energy
@@ -550,15 +631,15 @@ CONTAINS
               CALL grid_centred_var_at_particle(part_x, part_y, part_z, &
                   part_root_te_over_ne, grid_root_temp_over_num)
 
-              q_temp = NINT(species_list(iz)%charge/q0)
-              plasma_factor = get_plasma_factor(q_temp, z_temp, &
+              q_temp = species_list(iz)%charge/q0
+              plasma_factor = get_plasma_factor(q_temp, REAL(z_temp, num), &
                   part_root_te_over_ne)
             END IF
 
             current%optical_depth_bremsstrahlung = &
                 current%optical_depth_bremsstrahlung &
                 - delta_optical_depth(z_temp, part_e, part_v, part_ni, &
-                plasma_factor)
+                plasma_factor, part_type)
 
             ! If optical depth dropped below zero generate photon and reset
             ! optical depth
@@ -580,6 +661,8 @@ CONTAINS
       DEALLOCATE(grid_root_temp_over_num)
     END IF
 
+    IF (use_bethe_heitler) CALL bethe_heitler_update_depth
+
   END SUBROUTINE bremsstrahlung_update_optical_depth
 
 
@@ -588,9 +671,9 @@ CONTAINS
   ! (ion number density) * (emission cross section) * (distance traversed)
   ! Here, cross sections are determined from Geant4 look-up tables
 
-  FUNCTION delta_optical_depth(z, part_e, part_v, part_ni, plasma_factor)
+  FUNCTION delta_optical_depth(z, part_e, part_v, part_ni, plasma_factor, spec)
 
-    INTEGER, INTENT(IN) :: z
+    INTEGER, INTENT(IN) :: z, spec
     REAL(num), INTENT(IN) :: part_e, part_v, part_ni, plasma_factor
     INTEGER :: brem_index
     REAL(num) :: cross_sec_val
@@ -598,10 +681,18 @@ CONTAINS
 
     brem_index = z_to_index(z)
 
-    cross_sec_val = find_value_from_table_1d(part_e, &
-        brem_array(brem_index)%size_t, brem_array(brem_index)%e_table, &
-        brem_array(brem_index)%cross_section, brem_array(brem_index)%state) &
-        * plasma_factor
+    ! Switch to interpolate cross section value for correct particle type
+    IF (spec == c_species_id_electron) THEN
+      cross_sec_val = find_value_from_table_1d(part_e, &
+          brem_array(brem_index)%size_t, brem_array(brem_index)%e_table, &
+          brem_array(brem_index)%cross_section, brem_array(brem_index)%state) &
+          * plasma_factor
+    ELSE IF (spec == c_species_id_positron) THEN
+      cross_sec_val = find_value_from_table_1d(part_e, &
+          brem_array(brem_index)%size_t, brem_array(brem_index)%e_table, &
+          brem_array(brem_index)%cross_section_pos, &
+          brem_array(brem_index)%state) * plasma_factor
+    END IF
 
     delta_optical_depth = part_ni * cross_sec_val * part_v * dt &
         / photon_weight
@@ -619,19 +710,17 @@ CONTAINS
 
   FUNCTION get_plasma_factor(z, a, part_root_te_over_ne)
 
-    INTEGER, INTENT(IN) :: a, z
+    REAL(num), INTENT(IN) :: a, z
     REAL(num), INTENT(IN) :: part_root_te_over_ne
-    REAL(num) :: term1, term2, ra, rz, log_a_third
+    REAL(num) :: term1, term2, log_a_third
     REAL(num) :: get_plasma_factor
     REAL(num), PARAMETER :: one_third = 1.0_num / 3.0_num
 
-    ra = REAL(a, num)
-    rz = REAL(z, num)
-    log_a_third = one_third * LOG(ra)
+    log_a_third = one_third * LOG(a)
     term1 = log_plasma_screen_const_1 - log_a_third
     term2 = log_plasma_screen_const_2 + log_a_third &
         + LOG(part_root_te_over_ne + c_tiny)
-    get_plasma_factor = 1.0_num + ((rz / ra)**2 * term2 / term1)
+    get_plasma_factor = 1.0_num + ((z / a)**2 * term2 / term1)
     get_plasma_factor = MAX(1.0_num, get_plasma_factor)
 
   END FUNCTION get_plasma_factor
@@ -658,7 +747,7 @@ CONTAINS
   ! Photon energy is sampled from bremsstrahlung tables, and momentum is either
   ! parallel to the electron momentum (without brem_scatter), or scattered by
   ! angles drawn from the bremsstrahlung differential cross section (with
-  ! brem_scatter). Electron recoil is applied if requested.
+  ! brem_scatter). Electron recoil is applied if requested
 
   SUBROUTINE generate_photon(electron, z, iphoton)
 
@@ -721,7 +810,7 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on.
     IF (add_photon) THEN
-      ! Create new photon at the electron position,
+      ! Create new photon at the electron position
       new_photon%part_pos = electron%part_pos
 
 #ifdef PHOTONS
@@ -733,8 +822,9 @@ CONTAINS
       ! Add photon to its species
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
+
+    ! We are not adding this photon to the simulation, so remove the particle
     ELSE
-      ! We are not adding the photon to the simulation
       CALL destroy_particle(new_photon)
     END IF
 
@@ -785,67 +875,6 @@ CONTAINS
 
 
 
-  ! Calculates the value of a grid-centred variable part_var stored in the grid
-  ! grid_var, averaged over the particle shape for a particle at position
-  ! (part_x, part_y, part_z)
-
-  SUBROUTINE grid_centred_var_at_particle(part_x, part_y, part_z, part_var, &
-      grid_var)
-
-    REAL(num), INTENT(IN) :: part_x, part_y, part_z
-    REAL(num), INTENT(IN) :: grid_var(1-ng:,1-ng:,1-ng:)
-    REAL(num), INTENT(OUT) :: part_var
-    INTEGER :: cell_x1, cell_y1, cell_z1
-    REAL(num) :: cell_x_r, cell_y_r, cell_z_r
-    REAL(num) :: cell_frac_x, cell_frac_y, cell_frac_z
-    REAL(num), DIMENSION(sf_min:sf_max) :: gx, gy, gz
-#ifdef PARTICLE_SHAPE_BSPLINE3
-    REAL(num) :: cf2
-    REAL(num), PARAMETER :: fac = (1.0_num / 24.0_num)**c_ndims
-#elif  PARTICLE_SHAPE_TOPHAT
-    REAL(num), PARAMETER :: fac = (1.0_num)**c_ndims
-#else
-    REAL(num) :: cf2
-    REAL(num), PARAMETER :: fac = (0.5_num)**c_ndims
-#endif
-
-    ! The following method is lifted from photons.F90 (field_at_particle), for
-    ! the cell-centered fields, taking into account the various particle shapes
-#ifdef PARTICLE_SHAPE_TOPHAT
-    cell_x_r = part_x / dx - 0.5_num
-    cell_y_r = part_y / dy - 0.5_num
-    cell_z_r = part_z / dz - 0.5_num
-#else
-    cell_x_r = part_x / dx
-    cell_y_r = part_y / dy
-    cell_z_r = part_z / dz
-#endif
-    cell_x1 = FLOOR(cell_x_r + 0.5_num)
-    cell_frac_x = REAL(cell_x1, num) - cell_x_r
-    cell_x1 = cell_x1 + 1
-    cell_y1 = FLOOR(cell_y_r + 0.5_num)
-    cell_frac_y = REAL(cell_y1, num) - cell_y_r
-    cell_y1 = cell_y1 + 1
-    cell_z1 = FLOOR(cell_z_r + 0.5_num)
-    cell_frac_z = REAL(cell_z1, num) - cell_z_r
-    cell_z1 = cell_z1 + 1
-
-#ifdef PARTICLE_SHAPE_BSPLINE3
-#include "bspline3/gx.inc"
-#include "bspline3/part_var.inc"
-#elif  PARTICLE_SHAPE_TOPHAT
-#include "tophat/gx.inc"
-#include "tophat/part_var.inc"
-#else
-#include "triangle/gx.inc"
-#include "triangle/part_var.inc"
-#endif
-    part_var = fac * part_var
-
-  END SUBROUTINE grid_centred_var_at_particle
-
-
-
   ! For a pair of arrays, x and values, of size nx, this function returns the
   ! interpolated value of "values" corresponding to x_in in the x array. This
   ! uses linear interpolation, unlike in photons.F90 which is logarithmic
@@ -862,9 +891,13 @@ CONTAINS
     LOGICAL, SAVE :: warning = .TRUE.
     LOGICAL :: found
 
-    IF (ABS(state%x - x_in) < 1e-15_num) THEN
-      find_value_from_table_1d = state%val1d
-      RETURN
+    ! If x_in matches the x_in of the last state, return the last value
+    ! Check fractional difference
+    IF (ABS(x_in) > 0.0_num) THEN
+      IF (ABS((state%x - x_in)/x_in) < 1e-10_num) THEN
+        find_value_from_table_1d = state%val1d
+        RETURN
+      END IF
     END IF
 
     ! Scan through x to find correct row of table
@@ -971,10 +1004,14 @@ CONTAINS
     LOGICAL, SAVE :: warning = .TRUE.
     LOGICAL :: found
 
-    IF (ABS(state%x - x_in) < 1e-15_num &
-        .AND. ABS(state%y - p_value) < 1e-15_num) THEN
-      find_value_from_table_alt = state%val2d
-      RETURN
+    ! If x_in and p_value match previous values, then return previous value
+    IF (ABS(x_in) > 0.0_num .AND. ABS(p_value) > 0.0_num) THEN
+      ! Calculate fractional differences
+      IF (ABS((state%x - x_in)/x_in) < 1e-10_num &
+          .AND. ABS((state%y - p_value)/p_value) < 1e-10_num) THEN
+        find_value_from_table_alt = state%val2d
+        RETURN
+      END IF
     END IF
 
     ! Scan through x to find correct row of table

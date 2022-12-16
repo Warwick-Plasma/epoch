@@ -56,10 +56,12 @@ CONTAINS
     DEALLOCATE(coll_pairs_touched)
 
     IF (use_collisions) THEN
+
+      ! Switch off collisions if there are no colliding speices
       use_collisions = .FALSE.
       DO j = 1, n_species
         DO i = 1, n_species
-          IF (coll_pairs(i,j) > 0) THEN
+          IF (coll_pairs_state(i,j) == c_coll_collide) THEN
             use_collisions = .TRUE.
             EXIT
           END IF
@@ -67,6 +69,33 @@ CONTAINS
       END DO
       use_particle_lists = use_particle_lists .OR. use_collisions
       need_random_state = .TRUE.
+
+      ! Mark particle species with collision types
+      DO j = 1, n_species
+        DO i = 1, n_species
+          IF (coll_pairs_state(i,j) == c_coll_collide) THEN
+            species_list(i)%coll_pairwise = .TRUE.
+            species_list(j)%coll_pairwise = .TRUE.
+            species_list(i)%make_secondary_list = .TRUE.
+            species_list(j)%make_secondary_list = .TRUE.
+          ELSE IF (coll_pairs_state(i,j) == c_coll_background_1st) THEN
+            species_list(i)%coll_background = .TRUE.
+            species_list(j)%coll_fast = .TRUE.
+          ELSE IF (coll_pairs_state(i,j) == c_coll_background_2nd) THEN
+            species_list(i)%coll_fast = .TRUE.
+            species_list(j)%coll_background = .TRUE.
+          END IF
+        END DO
+      END DO
+
+      ! Identify which species need secondary lists for collisional ionisation
+      IF (use_collisional_ionisation) THEN
+        DO i = 1, n_species
+          IF (species_list(i)%ionise .OR. species_list(i)%electron) THEN
+            species_list(i)%make_secondary_list = .TRUE.
+          END IF
+        END DO
+      END IF
 
       IF (first) THEN
         first = .FALSE.
@@ -87,12 +116,14 @@ CONTAINS
         END IF
       END IF
 
-      n_coll_steps = MAX(n_coll_steps, 1)
+      coll_n_step = MAX(coll_n_step, 1)
+      ci_n_step = MAX(ci_n_step, 1)
 
     END IF
 
-  END SUBROUTINE collision_deck_finalise
+    IF (use_collisional_ionisation) use_particle_lists = .TRUE.
 
+  END SUBROUTINE collision_deck_finalise
 
 
   SUBROUTINE collision_block_start
@@ -134,6 +165,35 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_cold_correction')) THEN
+      use_cold_correction = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'rel_cutoff')) THEN
+      rel_cutoff = as_real_print(value, element, errcode)
+      use_rel_cutoff = .TRUE.
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'coll_n_step') .OR. &
+        str_cmp(element, 'n_coll_steps')) THEN
+      coll_n_step = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'ci_n_step') .OR. &
+        str_cmp(element, 'n_ci_steps')) THEN
+      ci_n_step = as_integer_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'back_update_dt')) THEN
+      back_update_dt = as_real_print(value, element, errcode)
+      coll_subcycle_back = .TRUE.
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'coulomb_log')) THEN
       IF (str_cmp(value, 'auto')) THEN
         coulomb_log_auto = .TRUE.
@@ -158,11 +218,6 @@ CONTAINS
         use_collisional_ionisation = .FALSE.
 #endif
       END IF
-      RETURN
-    END IF
-
-    IF (str_cmp(element, 'n_coll_steps')) THEN
-      n_coll_steps = as_integer_print(value, element, errcode)
       RETURN
     END IF
 
@@ -222,18 +277,20 @@ CONTAINS
     INTEGER, INTENT(INOUT) :: errcode
     CHARACTER(LEN=string_length) :: tstr1, tstr2
     CHARACTER(LEN=string_length) :: species1, species2
-    REAL(num) :: collstate
-    INTEGER :: io, iu, sp1, sp2
+    REAL(num) :: collfreq
+    INTEGER :: io, iu, sp1, sp2, collstate
 
     IF (deck_state /= c_ds_last) RETURN
 
     IF (str_cmp(TRIM(str_in), 'all')) THEN
       coll_pairs = 1.0_num
+      coll_pairs_state = c_coll_collide
       RETURN
     END IF
 
     IF (str_cmp(TRIM(str_in), 'none')) THEN
       coll_pairs = -1.0_num
+      coll_pairs_state = c_coll_ignore
       RETURN
     END IF
 
@@ -249,14 +306,23 @@ CONTAINS
     sp2 = as_integer(species2, errcode)
     IF (errcode /= 0) RETURN
 
-    collstate = 1.0_num
+    ! Collfreq is the collision frequency, which can be artificially modified by
+    ! the user. collstate describes the kind of collisions used
+    collfreq = 1.0_num
+    collstate = c_coll_collide
     IF (str_cmp(TRIM(tstr2), 'on') .OR. str_cmp(TRIM(tstr2), '')) THEN
-      collstate = 1.0_num
+      collfreq = 1.0_num
+      collstate = c_coll_collide
     ELSE IF (str_cmp(TRIM(tstr2), 'off')) THEN
-      collstate = -1.0_num
+      collfreq = -1.0_num
+      collstate = c_coll_ignore
+    ELSE IF (str_cmp(TRIM(tstr2), 'background')) THEN
+      collfreq = -1.0_num
+      collstate = c_coll_background_2nd
     ELSE
-      collstate = as_real(tstr2, errcode)
+      collfreq = as_real(tstr2, errcode)
       IF (errcode /= 0) RETURN
+      IF (collfreq < 0.0_num) collstate = c_coll_ignore
     END IF
 
     IF (coll_pairs_touched(sp1, sp2) .AND. rank == 0) THEN
@@ -273,10 +339,18 @@ CONTAINS
       END DO
     END IF
 
-    coll_pairs(sp1, sp2) = collstate
-    coll_pairs(sp2, sp1) = collstate
+    coll_pairs(sp1, sp2) = collfreq
+    coll_pairs(sp2, sp1) = collfreq
     coll_pairs_touched(sp1, sp2) = .TRUE.
     coll_pairs_touched(sp2, sp1) = .TRUE.
+
+    ! Save type of collision
+    coll_pairs_state(sp1, sp2) = collstate
+    IF (collstate == c_coll_background_2nd) THEN
+      coll_pairs_state(sp2, sp1) = c_coll_background_1st
+    ELSE
+      coll_pairs_state(sp2, sp1) = collstate
+    END IF
 
   END SUBROUTINE set_collision_matrix
 
