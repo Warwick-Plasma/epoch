@@ -605,6 +605,14 @@ CONTAINS
 #ifdef PROBE_TIME
     new_particle%probe_time = 0.0_num
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    new_particle%work_x = 0_num
+    new_particle%work_y = 0_num
+    new_particle%work_z = 0_num
+    new_particle%work_x_total = 0_num
+    new_particle%work_y_total = 0_num
+    new_particle%work_z_total = 0_num
+#endif 
 
   END SUBROUTINE init_particle
 
