@@ -189,7 +189,6 @@ CONTAINS
     ! number densities
 
     INTEGER :: isol, z_temp, ispecies
-    REAL(num), ALLOCATABLE :: grid_num_density_ion(:,:)
     TYPE(particle), POINTER :: photon, next_photon
     REAL(num) :: part_x, part_y
     REAL(num) :: cross_sec, part_ni, delta_opdep
@@ -245,8 +244,6 @@ CONTAINS
         END IF
       END DO
     END DO
-
-    DEALLOCATE(grid_num_density_ion)
 
   END SUBROUTINE hy_bethe_heitler_update_depth
 #endif
