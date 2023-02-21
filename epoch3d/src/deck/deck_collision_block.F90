@@ -88,11 +88,29 @@ CONTAINS
         END DO
       END DO
 
-      ! Identify which species need secondary lists for collisional ionisation
+      ! Identify species to make secondary lists for in collisional ionisation
       IF (use_collisional_ionisation) THEN
+        ! Tag all release species as electrons (required for 
+        ! unique_electron_species)
+        DO i = 1, n_species
+          IF (species_list(i)%ionise) THEN 
+            species_list(species_list(i)%release_species)%electron = .TRUE. 
+          END IF 
+        END DO 
+
+        ! Make secondary lists for ionising particles, and electrons
         DO i = 1, n_species
           IF (species_list(i)%ionise .OR. species_list(i)%electron) THEN
             species_list(i)%make_secondary_list = .TRUE.
+          END IF
+        END DO
+
+        ! Secondary lists also needed for the final ionisation state, which does 
+        ! not ionise, as ionised ions are written to this list
+        DO i = 1, n_species 
+          IF (species_list(i)%ionise) THEN 
+            species_list( &
+                species_list(i)%ionise_to_species)%make_secondary_list = .TRUE.
           END IF
         END DO
       END IF
