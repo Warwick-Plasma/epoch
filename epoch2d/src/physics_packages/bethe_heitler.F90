@@ -215,7 +215,10 @@ CONTAINS
             ! Photon energy is calculated on creation, and this energy never
             ! changes in the current version of the code (11/Feb/2021). Check it
             ! is high enough to pair produce.
-            IF (photon%particle_energy < two_mc2) CYCLE
+            IF (photon%particle_energy < two_mc2) THEN 
+              photon => next_photon 
+              CYCLE 
+            END IF
 
             ! Calculate the cross section at this photon energy
             cross_sec = calc_bh_cross_sec(z_temp, photon%particle_energy)
