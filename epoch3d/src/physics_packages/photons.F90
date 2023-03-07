@@ -944,8 +944,15 @@ CONTAINS
     REAL(num), INTENT(IN) :: rand_seed, eta, generating_gamma
     REAL(num) :: chi_final
 
-    chi_final = find_value_from_table_alt(eta, rand_seed, &
-        n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
+    eta_min = 10.0_num**MINVAL(log_eta)
+    IF (eta < eta_min) THEN ! Extrapolate downwards with chi \propto eta^2
+      chi_tmp = find_value_from_table_alt(eta_min, rand_seed, &
+          n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
+      chi_final = chi_tmp * (eta / eta_min)**2
+    ELSE
+      chi_final = find_value_from_table_alt(eta, rand_seed, &
+          n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
+    ENDIF
 
     calculate_photon_energy = (2.0_num * chi_final / eta) * generating_gamma &
         * m0 * c**2
