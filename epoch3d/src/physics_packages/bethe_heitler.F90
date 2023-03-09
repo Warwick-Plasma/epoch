@@ -156,13 +156,19 @@ CONTAINS
             CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni, &
                 grid_num_density_ion)
 
-            ! Update the photon optical depth
+            ! Calculate optical depth change
             delta_opdep = part_ni * cross_sec * cdt
+
+            ! Artificially increase optical depth change if user requested
+            IF (photon%weight > bh_weight_mult_min) THEN
+              delta_opdep = delta_opdep / bh_pair_weight
+            END IF
+
+            ! Update photon optical depth
             photon%optical_depth_bremsstrahlung = &
                 photon%optical_depth_bremsstrahlung - delta_opdep
 
-            ! If photon optical depth drops below 0, create an e-/e+ pair and
-            ! remove the photon from the simulation
+            ! If photon optical depth drops below 0, create an e-/e+ pair
             IF (photon%optical_depth_bremsstrahlung <= 0.0_num) THEN
               CALL generate_pair(photon, z_temp, &
                   bethe_heitler_electron_species, &
@@ -216,9 +222,9 @@ CONTAINS
             ! Photon energy is calculated on creation, and this energy never
             ! changes in the current version of the code (11/Feb/2021). Check it
             ! is high enough to pair produce.
-            IF (photon%particle_energy < two_mc2) THEN 
-              photon => next_photon 
-              CYCLE 
+            IF (photon%particle_energy < two_mc2) THEN
+              photon => next_photon
+              CYCLE
             END IF
 
             ! Calculate the cross section at this photon energy
@@ -231,13 +237,19 @@ CONTAINS
             CALL grid_centred_var_at_particle(part_x, part_y, part_z, part_ni, &
                 solid_array(isol)%ion_density)
 
-            ! Update the photon optical depth
+            ! Calculate optical depth change
             delta_opdep = part_ni * cross_sec * cdt
+
+            ! Artificially increase optical depth change if user requested
+            IF (photon%weight > bh_weight_mult_min) THEN
+              delta_opdep = delta_opdep / bh_pair_weight
+            END IF
+
+            ! Update photon optical depth
             photon%optical_depth_bremsstrahlung = &
                 photon%optical_depth_bremsstrahlung - delta_opdep
 
-            ! If photon optical depth drops below 0, create an e-/e+ pair and
-            ! remove the photon from the simulation
+            ! If photon optical depth drops below 0, create an e-/e+ pair
             IF (photon%optical_depth_bremsstrahlung <= 0.0_num) THEN
               CALL generate_pair(photon, z_temp, &
                   bethe_heitler_electron_species, &
@@ -255,7 +267,7 @@ CONTAINS
 
 
 
-  function calc_bh_cross_sec(z_int, e_gamma)
+  FUNCTION calc_bh_cross_sec(z_int, e_gamma)
 
     ! Calculates the Bethe-Heitler cross section in the presence of an ion
     ! species with atomic number z_int, for a photon of energy e_gamma.
@@ -341,9 +353,17 @@ CONTAINS
     new_electron%part_pos = photon%part_pos
     new_positron%part_pos = photon%part_pos
 
-    ! e- and e+ have the same weights as generating photon
-    new_electron%weight = photon%weight
-    new_positron%weight = photon%weight
+    ! Check if pair rate has been artificially increased by weight factor
+    ! bh_pair_weight. This occurs if the photon weight is higher than a cut-off
+    IF (photon%weight < bh_weight_mult_min) THEN
+      ! e- and e+ have the same weights as generating photon, photon destroyed
+      new_electron%weight = photon%weight
+      new_positron%weight = photon%weight
+    ELSE
+      ! Pair has lower weight than photon, photon weight is reduced
+      new_electron%weight = photon%weight * bh_pair_weight
+      new_positron%weight = photon%weight * bh_pair_weight
+    END IF
 
     ! Calculate fractional energy split
     e_frac = energy_split(photon, z_int)
@@ -401,10 +421,17 @@ CONTAINS
     CALL add_particle_to_partlist(species_list(ipositron)%attached_list, &
         new_positron)
 
-    ! Remove photon
-    CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
-        photon)
-    CALL destroy_particle(photon)
+    ! Either remove photon, or reduce weight, depending on pair weight
+    IF (photon%weight < bh_weight_mult_min) THEN
+      ! Pair production rate was not changed, remove generating photon
+      CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
+          photon)
+      CALL destroy_particle(photon)
+    ELSE
+      ! Rate was modified, reduce photon weight to reflect this, resample op dep
+      photon%weight = photon%weight * (1.0_num - bh_pair_weight)
+      photon%optical_depth_bremsstrahlung = -LOG(1.0_num - random())
+    END IF
 
   END SUBROUTINE generate_pair
 

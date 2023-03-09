@@ -605,6 +605,7 @@ MODULE shared_data
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
   LOGICAL :: use_bethe_heitler = .FALSE.
   LOGICAL :: positron_brem = .FALSE.
+  REAL(num) :: bh_pair_weight = 1.0_num, bh_weight_mult_min = 1.0e100_num
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
 

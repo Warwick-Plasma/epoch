@@ -184,6 +184,16 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'pair_weight')) THEN
+      bh_pair_weight = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'bh_weight_mult_min')) THEN
+      bh_weight_mult_min = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'use_positron_brem') .OR. &
         str_cmp(element, 'positron_brem')) THEN
       positron_brem = as_logical_print(value, element, errcode)
@@ -230,6 +240,19 @@ CONTAINS
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
           WRITE(io,*) 'You cannot set photon_weight > 1.0. This variable ', &
+              'has been truncated to 1.0.'
+        END DO
+      END IF
+    END IF
+
+    IF (bh_pair_weight > 1.0_num) THEN
+      bh_pair_weight = 1.0_num
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'You cannot set pair_weight > 1.0. This variable ', &
               'has been truncated to 1.0.'
         END DO
       END IF
