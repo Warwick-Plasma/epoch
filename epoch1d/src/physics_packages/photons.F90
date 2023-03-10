@@ -916,7 +916,7 @@ CONTAINS
 
     REAL(num) :: calculate_photon_energy
     REAL(num), INTENT(IN) :: rand_seed, eta, generating_gamma
-    REAL(num) :: eta_min, chi_final
+    REAL(num) :: eta_min, chi_tmp, chi_final
 
     eta_min = 10.0_num**MINVAL(log_eta)
     IF (eta < eta_min) THEN ! Extrapolate downwards with chi \propto eta^2
