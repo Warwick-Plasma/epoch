@@ -37,13 +37,12 @@ MODULE deck_species_block
   LOGICAL :: got_name
   INTEGER :: check_block = c_err_none
   LOGICAL, DIMENSION(:), POINTER :: species_charge_set
-  INTEGER, DIMENSION(:), POINTER :: species_n, species_l, species_ionise_limit 
+  INTEGER, DIMENSION(:), POINTER :: species_ionise_limit 
   LOGICAL, DIMENSION(:), POINTER :: species_can_ionise 
   INTEGER :: n_secondary_species_in_block, n_secondary_limit
-  LOGICAL :: unique_electrons, use_ionise, ionise_limit
+  LOGICAL :: unique_electrons, use_ionise
   CHARACTER(LEN=string_length) :: release_species_list
   CHARACTER(LEN=string_length), DIMENSION(:), POINTER :: release_species
-  REAL(num), DIMENSION(:), POINTER :: species_ionisation_energies
   REAL(num), DIMENSION(:), POINTER :: ionisation_energies
   REAL(num), DIMENSION(:), POINTER :: mass, charge
   LOGICAL, DIMENSION(:), POINTER :: auto_electrons
@@ -55,7 +54,7 @@ MODULE deck_species_block
   INTEGER :: species_dumpmask
   INTEGER :: species_atomic_number
   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
-  INTEGER :: n_species_blocks, previous_species
+  INTEGER :: n_species_blocks
 
 CONTAINS
 
@@ -92,10 +91,9 @@ CONTAINS
 
   SUBROUTINE species_deck_finalise
 
-    INTEGER :: i, j, idx, io, iu, nlevels, nrelease, n_species_chain
+    INTEGER :: i, idx, io, iu
     CHARACTER(LEN=8) :: string
-    INTEGER :: errcode, bc
-    TYPE(primitive_stack) :: stack
+    INTEGER :: bc
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL :: error
 
@@ -262,10 +260,7 @@ CONTAINS
   SUBROUTINE species_block_end
 
     CHARACTER(LEN=8) :: id_string
-    CHARACTER(LEN=string_length) :: name
-    INTEGER :: max_ionisation, species_ionisation_state
-    INTEGER :: i, io, iu, block_species_id
-    INTEGER :: i_el, i_ion
+    INTEGER :: io, iu, block_species_id
 
     IF (.NOT.got_name) THEN
       IF (rank == 0) THEN
@@ -312,7 +307,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
     LOGICAL, SAVE :: warn_tracer = .TRUE.
-    INTEGER :: i, j, j_prev, io, iu, n
+    INTEGER :: i, j, io, iu, n
     TYPE(initial_condition_block), POINTER :: ic
 
     errcode = c_err_none
