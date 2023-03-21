@@ -307,7 +307,7 @@ CONTAINS
     CHARACTER(LEN=string_length) :: filename, mult_string
     LOGICAL :: got_file, dump
     LOGICAL, SAVE :: warn_tracer = .TRUE.
-    INTEGER :: i, j, io, iu, n
+    INTEGER :: i, io, iu, n
     TYPE(initial_condition_block), POINTER :: ic
 
     errcode = c_err_none
