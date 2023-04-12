@@ -14,21 +14,54 @@
 ! along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 MODULE spin
-! #ifdef PARTICLE_SPIN    
 
+#ifdef PARTICLE_SPIN
+
+  USE constants
   USE shared_data
+  USE random_generator
 
   IMPLICIT NONE
 
-  CONTAINS
+CONTAINS
 
   SUBROUTINE init_particle_spin(species, new_particle)
-    TYPE(particle_species), INTENT(INOUT) :: species
-    TYPE(particle), INTENT(INOUT) :: new_particle
+    TYPE(particle_species), INTENT(IN) :: species
+    TYPE(particle), POINTER :: new_particle
 
-    new_particle%spin(1) = 2.0
+    SELECT CASE(species%spin_distribution)
+      CASE(c_spin_uniform)
+        CALL init_particle_spin_uniform(species, new_particle)
+      CASE(c_spin_directed)
+        CALL init_particle_spin_directed(species, new_particle)
+    END SELECT
 
   END SUBROUTINE init_particle_spin
 
-! #endif
+
+  SUBROUTINE init_particle_spin_directed(species, new_particle)
+    TYPE(particle_species), INTENT(IN) :: species
+    TYPE(particle), POINTER :: new_particle
+
+    new_particle%spin = species%spin_orientation
+  END SUBROUTINE init_particle_spin_directed
+
+  SUBROUTINE init_particle_spin_uniform(species, new_particle)
+    TYPE(particle_species), INTENT(IN) :: species
+    TYPE(particle), POINTER :: new_particle
+
+    REAL(num) :: theta, phi
+    REAL(num) :: sx, sy, sz
+
+    phi = 2.0_num * pi * random()
+    theta = acos(1.0_num - 2.0_num * random())
+    sx = sin(theta) * cos(phi)
+    sy = sin(theta) * sin(phi)
+    sz = cos(theta)
+
+    new_particle%spin = (/ sx, sy, sz /)
+  END SUBROUTINE init_particle_spin_uniform
+  
+#endif
+
 END MODULE spin
