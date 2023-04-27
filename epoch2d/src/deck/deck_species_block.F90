@@ -523,10 +523,27 @@ CONTAINS
       RETURN
     END IF
 
+#ifdef PARTICLE_SPIN
     IF (str_cmp(element, 'spin')) THEN
-      species_bc_particle(c_bd_y_max) = as_bc_print(value, element, errcode)
+      species_spin_distribution = as_spin_distribution_print(value, element, errcode)
       RETURN
     END IF
+
+    IF (str_cmp(element, 'spin_x')) THEN
+      species_spin_orientation(1) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'spin_y')) THEN
+      species_spin_orientation(2) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'spin_z')) THEN
+      species_spin_orientation(3) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+#endif
 
     IF (deck_state == c_ds_first) RETURN
 

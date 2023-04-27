@@ -304,6 +304,7 @@ CONTAINS
 
 
 
+#ifdef PARTICLE_SPIN
   FUNCTION as_spin_distribution(str_in, err)
 
     CHARACTER(*), INTENT(IN) :: str_in
@@ -341,7 +342,7 @@ CONTAINS
     WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
 
   END FUNCTION as_spin_distribution_print
-
+#endif
 
 
   FUNCTION lowercase(string_in) RESULT(string_out)
