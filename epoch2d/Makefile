@@ -508,7 +508,8 @@ fields.o: fields.f90 boundary.o
 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
 finish.o: finish.f90 collisions.o constants.o deck.o diagnostics.o dist_fn.o \
   injectors.o ionise.o laser.o probes.o setup.o window.o
-helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
+helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o \
+  spin.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
   random_generator.o spin.o utilities.o

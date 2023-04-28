@@ -25,6 +25,24 @@ MODULE spin
 
 CONTAINS
 
+  SUBROUTINE setup_particle_spin(part_species)
+    TYPE(particle_species), POINTER :: part_species
+    TYPE(particle_list), POINTER :: partlist
+    TYPE(particle), POINTER :: current
+    INTEGER(i8) :: ipart
+
+    partlist => part_species%attached_list
+    current => partlist%head
+    ipart = 0
+
+    DO WHILE(ipart < partlist%count)
+      CALL init_particle_spin(part_species, current)
+      current => current%next
+      ipart = ipart + 1
+    END DO
+
+  END SUBROUTINE setup_particle_spin
+
   SUBROUTINE init_particle_spin(species, new_particle)
     TYPE(particle_species), INTENT(IN) :: species
     TYPE(particle), POINTER :: new_particle
