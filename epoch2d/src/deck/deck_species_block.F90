@@ -133,7 +133,7 @@ CONTAINS
 #ifdef PARTICLE_SPIN
         species_list(i)%spin_distribution = spin_distribution(i)
         species_list(i)%spin_orientation = spin_orientation(:,i)
-        species_list(i)%anomalous_magnetic_moment = anomalous_magnetic_moment(:,i)
+        species_list(i)%anomalous_magnetic_moment = anomalous_magnetic_moment(i)
 #endif
         IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
@@ -1340,7 +1340,7 @@ CONTAINS
 #ifdef PARTICLE_SPIN
     CALL grow_array(spin_distribution, n_species)
     CALL grow_array(spin_orientation, 3, n_species)
-    CALL grow_array(anomalous_magnetic_moment, 3, n_species)
+    CALL grow_array(anomalous_magnetic_moment, n_species)
 #endif
 
     species_names(n_species) = TRIM(name)
@@ -1425,7 +1425,7 @@ CONTAINS
     spin_distribution(n_species) = species_spin_distribution
     CALL grow_array(spin_orientation, 3, n_species)
     spin_orientation(:,n_species) = species_spin_orientation
-    CALL grow_array(anomalous_magnetic_moment, 3, n_species)
+    CALL grow_array(anomalous_magnetic_moment, n_species)
     anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
 #endif    
     RETURN
