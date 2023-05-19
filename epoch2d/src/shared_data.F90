@@ -274,6 +274,7 @@ MODULE shared_data
 #ifdef PARTICLE_SPIN
     INTEGER :: spin_distribution
     REAL(num), DIMENSION(3) :: spin_orientation
+    REAL(num) :: anomalous_magnetic_moment
 #endif
   END TYPE particle_species
 

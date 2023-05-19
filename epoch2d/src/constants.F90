@@ -223,7 +223,8 @@ MODULE constants
       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
 #endif
 #ifdef PARTICLE_SPIN
-  REAL(num), PARAMETER :: anomalous_magnetic_moment = 0.0011614_num
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_electron = 0.0011614_num
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_proton = 1.79_num
 #endif
 
   ! define special particle IDs
