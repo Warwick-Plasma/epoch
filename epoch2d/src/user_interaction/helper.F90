@@ -96,9 +96,11 @@ CONTAINS
 
     INTEGER :: ispecies, n
     TYPE(particle_species), POINTER :: species
-    TYPE(particle), POINTER :: current
     INTEGER :: i0, i1, iu, io
     TYPE(initial_condition_block), POINTER :: ic
+#if defined(PHOTONS) || defined(BREMSSTRAHLUNG)
+    TYPE(particle), POINTER :: current
+#endif
 
     IF (pre_loading .AND. n_species > 0) THEN
       i0 = 1 - ng
