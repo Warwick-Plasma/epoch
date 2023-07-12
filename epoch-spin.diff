@@ -1,7 +1,7 @@
-diff --git a/epoch1d/Makefile b/epoch1d/Makefile
+diff --git a/epoch3d/Makefile b/epoch3d/Makefile
 index 975cf3e7..822a6d27 100644
---- a/epoch1d/Makefile
-+++ b/epoch1d/Makefile
+--- a/epoch3d/Makefile
++++ b/epoch3d/Makefile
 @@ -322,8 +322,8 @@ SRCFILES = balance.F90 boundary.F90 bremsstrahlung.F90 calc_df.F90 \
    particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
    particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
@@ -57,11 +57,11 @@ index 975cf3e7..822a6d27 100644
  welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
 -window.o: window.F90 boundary.o evaluate.o partlist.o
 +window.o: window.F90 boundary.o evaluate.o partlist.o spin.o
-diff --git a/epoch1d/example_decks/spin_precession.deck b/epoch1d/example_decks/spin_precession.deck
+diff --git a/epoch3d/example_decks/spin_precession.deck b/epoch3d/example_decks/spin_precession.deck
 new file mode 100644
 index 00000000..8fcff5a2
 --- /dev/null
-+++ b/epoch1d/example_decks/spin_precession.deck
++++ b/epoch3d/example_decks/spin_precession.deck
 @@ -0,0 +1,315 @@
 +# This input deck contains 3 tests of the classic spin precession using T-BMT
 +#
@@ -378,10 +378,10 @@ index 00000000..8fcff5a2
 +  # Extended io
 +  distribution_functions = never
 +end:output
-diff --git a/epoch1d/src/constants.F90 b/epoch1d/src/constants.F90
+diff --git a/epoch3d/src/constants.F90 b/epoch3d/src/constants.F90
 index d1dffac9..23dc94f6 100644
---- a/epoch1d/src/constants.F90
-+++ b/epoch1d/src/constants.F90
+--- a/epoch3d/src/constants.F90
++++ b/epoch3d/src/constants.F90
 @@ -78,6 +78,12 @@ MODULE constants
    INTEGER, PARAMETER :: c_bd_z_min = 5
    INTEGER, PARAMETER :: c_bd_z_max = 6
@@ -405,10 +405,10 @@ index d1dffac9..23dc94f6 100644
  #endif
 
    ! define special particle IDs
-diff --git a/epoch1d/src/deck/deck_species_block.F90 b/epoch1d/src/deck/deck_species_block.F90
+diff --git a/epoch3d/src/deck/deck_species_block.F90 b/epoch3d/src/deck/deck_species_block.F90
 index a6d9717a..a1ce58cb 100644
---- a/epoch1d/src/deck/deck_species_block.F90
-+++ b/epoch1d/src/deck/deck_species_block.F90
+--- a/epoch3d/src/deck/deck_species_block.F90
++++ b/epoch3d/src/deck/deck_species_block.F90
 @@ -52,6 +52,14 @@ MODULE deck_species_block
    INTEGER :: species_atomic_number
  #endif
@@ -652,13 +652,13 @@ index a6d9717a..a1ce58cb 100644
  #endif
        RETURN
      END IF
-diff --git a/epoch1d/src/deck/strings.f90 b/epoch1d/src/deck/strings.F90
+diff --git a/epoch3d/src/deck/strings.f90 b/epoch3d/src/deck/strings.F90
 similarity index 89%
-rename from epoch1d/src/deck/strings.f90
-rename to epoch1d/src/deck/strings.F90
+rename from epoch3d/src/deck/strings.f90
+rename to epoch3d/src/deck/strings.F90
 index 240f4482..9cd4a45a 100644
---- a/epoch1d/src/deck/strings.f90
-+++ b/epoch1d/src/deck/strings.F90
+--- a/epoch3d/src/deck/strings.f90
++++ b/epoch3d/src/deck/strings.F90
 @@ -304,6 +304,47 @@ CONTAINS
 
 
@@ -707,10 +707,10 @@ index 240f4482..9cd4a45a 100644
    FUNCTION lowercase(string_in) RESULT(string_out)
 
      CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
-diff --git a/epoch1d/src/housekeeping/partlist.F90 b/epoch1d/src/housekeeping/partlist.F90
+diff --git a/epoch3d/src/housekeeping/partlist.F90 b/epoch3d/src/housekeeping/partlist.F90
 index 595e7f6b..8c0f54cf 100644
---- a/epoch1d/src/housekeeping/partlist.F90
-+++ b/epoch1d/src/housekeeping/partlist.F90
+--- a/epoch3d/src/housekeeping/partlist.F90
++++ b/epoch3d/src/housekeeping/partlist.F90
 @@ -39,7 +39,6 @@ MODULE partlist
    REAL(num), DIMENSION(:), ALLOCATABLE :: packed_particle_data
 
@@ -719,10 +719,10 @@ index 595e7f6b..8c0f54cf 100644
    SUBROUTINE set_partlist_size
 
      nvar = 3 + c_ndims
-diff --git a/epoch1d/src/housekeeping/window.F90 b/epoch1d/src/housekeeping/window.F90
+diff --git a/epoch3d/src/housekeeping/window.F90 b/epoch3d/src/housekeeping/window.F90
 index 821d43ff..684b2256 100644
---- a/epoch1d/src/housekeeping/window.F90
-+++ b/epoch1d/src/housekeeping/window.F90
+--- a/epoch3d/src/housekeeping/window.F90
++++ b/epoch3d/src/housekeeping/window.F90
 @@ -18,6 +18,7 @@ MODULE window
    USE boundary
    USE partlist
@@ -731,10 +731,10 @@ index 821d43ff..684b2256 100644
 
    IMPLICIT NONE
 
-diff --git a/epoch1d/src/particles.F90 b/epoch1d/src/particles.F90
+diff --git a/epoch3d/src/particles.F90 b/epoch3d/src/particles.F90
 index 9f72c1f9..8851ba99 100644
---- a/epoch1d/src/particles.F90
-+++ b/epoch1d/src/particles.F90
+--- a/epoch3d/src/particles.F90
++++ b/epoch3d/src/particles.F90
 @@ -141,7 +141,8 @@ CONTAINS
      REAL(num) :: vx_avg, vy_avg, vz_avg
      REAL(num) :: v_avg_dot_B, spin_f1, spin_f2, spin_f3
@@ -757,10 +757,10 @@ index 9f72c1f9..8851ba99 100644
        !DEC$ VECTOR ALWAYS
        DO ipart = 1, species_list(ispecies)%attached_list%count
          next => current%next
-diff --git a/epoch1d/src/physics_packages/collisions.F90 b/epoch1d/src/physics_packages/collisions.F90
+diff --git a/epoch3d/src/physics_packages/collisions.F90 b/epoch3d/src/physics_packages/collisions.F90
 index a94d36e2..c8488bdf 100644
---- a/epoch1d/src/physics_packages/collisions.F90
-+++ b/epoch1d/src/physics_packages/collisions.F90
+--- a/epoch3d/src/physics_packages/collisions.F90
++++ b/epoch3d/src/physics_packages/collisions.F90
 @@ -20,6 +20,7 @@
  MODULE collisions
 
@@ -770,9 +770,9 @@ index a94d36e2..c8488bdf 100644
    USE prefetch
  #endif
 @@ -393,7 +394,8 @@ CONTAINS
-                 species_list(ispecies)%secondary_list(ix), &
-                 species_list(ion_species)%secondary_list(ix), &
-                 ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix), &
+                 species_list(ispecies)%secondary_list(ix,iy,iz), &
+                 species_list(ion_species)%secondary_list(ix,iy,iz), &
+                 ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix,iy,iz), &
 -                q_full, ionisation_energy, n1, n2, l)
 +                q_full, ionisation_energy, n1, n2, l, &
 +                species_list(jspecies))
@@ -780,9 +780,9 @@ index a94d36e2..c8488bdf 100644
              ! unless specified otherwise in input deck
              IF (e_user_factor > 0.0_num) THEN
 @@ -428,7 +430,7 @@ CONTAINS
-                 species_list(jspecies)%secondary_list(ix), &
-                 species_list(ion_species)%secondary_list(ix), &
-                 ionising_e, ejected_e, m1, m2, q1, q2, idens(ix), &
+                 species_list(jspecies)%secondary_list(ix,iy,iz), &
+                 species_list(ion_species)%secondary_list(ix,iy,iz), &
+                 ionising_e, ejected_e, m1, m2, q1, q2, idens(ix,iy,iz), &
 -                q_full, ionisation_energy, n1, n2, l)
 +                q_full, ionisation_energy, n1, n2, l, species_list(ispecies))
              ! Scatter ionising impact electrons off of ejected target electrons
@@ -815,10 +815,10 @@ index a94d36e2..c8488bdf 100644
  #endif
            CALL add_particle_to_partlist(ejected_e, ejected_electron)
            CALL remove_particle_from_partlist(ions, ion)
-diff --git a/epoch1d/src/physics_packages/injectors.F90 b/epoch1d/src/physics_packages/injectors.F90
+diff --git a/epoch3d/src/physics_packages/injectors.F90 b/epoch3d/src/physics_packages/injectors.F90
 index 5a7a9778..6e141e4c 100644
---- a/epoch1d/src/physics_packages/injectors.F90
-+++ b/epoch1d/src/physics_packages/injectors.F90
+--- a/epoch3d/src/physics_packages/injectors.F90
++++ b/epoch3d/src/physics_packages/injectors.F90
 @@ -20,6 +20,7 @@ MODULE injectors
    USE evaluator
    USE random_generator
@@ -827,10 +827,10 @@ index 5a7a9778..6e141e4c 100644
 
    IMPLICIT NONE
 
-diff --git a/epoch1d/src/physics_packages/ionise.F90 b/epoch1d/src/physics_packages/ionise.F90
+diff --git a/epoch3d/src/physics_packages/ionise.F90 b/epoch3d/src/physics_packages/ionise.F90
 index 1fd132b1..d4ab2c4d 100644
---- a/epoch1d/src/physics_packages/ionise.F90
-+++ b/epoch1d/src/physics_packages/ionise.F90
+--- a/epoch3d/src/physics_packages/ionise.F90
++++ b/epoch3d/src/physics_packages/ionise.F90
 @@ -21,6 +21,7 @@ MODULE ionise
    USE mpi
    USE utilities
@@ -883,11 +883,11 @@ index 1fd132b1..d4ab2c4d 100644
  #endif
                ! Put electron into particle lists
                CALL add_particle_to_partlist(species_list(species_list( &
-diff --git a/epoch1d/src/physics_packages/spin.F90 b/epoch1d/src/physics_packages/spin.F90
+diff --git a/epoch3d/src/physics_packages/spin.F90 b/epoch3d/src/physics_packages/spin.F90
 new file mode 100644
 index 00000000..6312d241
 --- /dev/null
-+++ b/epoch1d/src/physics_packages/spin.F90
++++ b/epoch3d/src/physics_packages/spin.F90
 @@ -0,0 +1,85 @@
 +! Copyright (C) 2009-2023 University of Warwick
 +!
@@ -975,10 +975,10 @@ index 00000000..6312d241
 +
 +END MODULE spin
 \ No newline at end of file
-diff --git a/epoch1d/src/user_interaction/helper.F90 b/epoch1d/src/user_interaction/helper.F90
+diff --git a/epoch3d/src/user_interaction/helper.F90 b/epoch3d/src/user_interaction/helper.F90
 index 0ee2b5b3..714798c8 100644
---- a/epoch1d/src/user_interaction/helper.F90
-+++ b/epoch1d/src/user_interaction/helper.F90
+--- a/epoch3d/src/user_interaction/helper.F90
++++ b/epoch3d/src/user_interaction/helper.F90
 @@ -20,6 +20,7 @@ MODULE helper
    USE partlist
    USE simple_io

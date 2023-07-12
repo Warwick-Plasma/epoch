@@ -20,6 +20,7 @@ MODULE helper
   USE partlist
   USE simple_io
   USE deltaf_loader
+  USE spin
 
   IMPLICIT NONE
 
@@ -153,6 +154,11 @@ CONTAINS
       ELSE IF (species%ic_df_type == c_ic_df_arbitrary) THEN
         CALL setup_particle_dist_fn(species, species_drift)
       END IF
+
+#ifdef PARTICLE_SPIN
+      CALL setup_particle_spin(species)
+#endif
+
     END DO
 
     IF (pre_loading) RETURN

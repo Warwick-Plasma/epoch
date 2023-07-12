@@ -20,6 +20,7 @@
 MODULE collisions
 
   USE calc_df
+  USE spin
 #ifdef PREFETCH
   USE prefetch
 #endif
@@ -403,7 +404,8 @@ CONTAINS
                 species_list(ispecies)%secondary_list(ix,iy,iz), &
                 species_list(ion_species)%secondary_list(ix,iy,iz), &
                 ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix,iy,iz), &
-                q_full, ionisation_energy, n1, n2, l)
+                q_full, ionisation_energy, n1, n2, l, &
+                species_list(jspecies))
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
@@ -440,7 +442,7 @@ CONTAINS
                 species_list(jspecies)%secondary_list(ix,iy,iz), &
                 species_list(ion_species)%secondary_list(ix,iy,iz), &
                 ionising_e, ejected_e, m1, m2, q1, q2, idens(ix,iy,iz), &
-                q_full, ionisation_energy, n1, n2, l)
+                q_full, ionisation_energy, n1, n2, l, species_list(ispecies))
             ! Scatter ionising impact electrons off of ejected target electrons
             ! unless specified otherwise in input deck
             IF (e_user_factor > 0.0_num) THEN
@@ -496,7 +498,7 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
-      full_ion_charge, ionisation_energy, n1, n2, l)
+      full_ion_charge, ionisation_energy, n1, n2, l, electron_species)
 
     TYPE(particle_list), INTENT(INOUT) :: electrons, ions, ionised
     TYPE(particle_list), INTENT(INOUT) :: ionising_e, ejected_e
@@ -505,6 +507,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: ionisation_energy, full_ion_charge
 
     INTEGER, INTENT(IN) :: n1, n2, l
+    TYPE(particle_species), INTENT(INOUT) :: electron_species
 
     TYPE(particle), POINTER :: electron, ion, ejected_electron, next_ion, next_e
 
@@ -726,6 +729,9 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
           ejected_electron%processor = rank
           ejected_electron%processor_at_t0 = rank
+#endif
+#ifdef PARTICLE_SPIN
+          CALL init_particle_spin(electron_species, ejected_electron)
 #endif
           CALL add_particle_to_partlist(ejected_e, ejected_electron)
           CALL remove_particle_from_partlist(ions, ion)

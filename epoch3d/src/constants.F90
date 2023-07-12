@@ -78,6 +78,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
 
+#ifdef PARTICLE_SPIN
+  INTEGER, PARAMETER :: c_spin_null = -1
+  INTEGER, PARAMETER :: c_spin_uniform = 1
+  INTEGER, PARAMETER :: c_spin_directed = 2
+#endif
+
   ! Frequency function type codes
   INTEGER, PARAMETER :: c_of_omega = 1
   INTEGER, PARAMETER :: c_of_freq = 2
@@ -217,7 +223,8 @@ MODULE constants
       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
 #endif
 #ifdef PARTICLE_SPIN
-  REAL(num), PARAMETER :: anomalous_magnetic_moment = 0.0011614_num
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_electron = 0.00115965218_num
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_proton = 1.79_num
 #endif
 
   ! define special particle IDs
