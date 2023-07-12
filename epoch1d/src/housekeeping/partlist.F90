@@ -39,7 +39,6 @@ MODULE partlist
   REAL(num), DIMENSION(:), ALLOCATABLE :: packed_particle_data
 
 CONTAINS
-
   SUBROUTINE set_partlist_size
 
     nvar = 3 + c_ndims

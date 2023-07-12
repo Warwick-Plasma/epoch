@@ -137,6 +137,7 @@ CONTAINS
     REAL(num) :: v_avg_dot_B, spin_f1, spin_f2, spin_f3
     REAL(num) :: spin_rotation_x, spin_rotation_y, spin_rotation_z
     REAL(num) :: spin_spx, spin_spy, spin_spz
+    REAL(num) :: spin_anomalous_magnetic_moment
 #endif
 
     TYPE(particle), POINTER :: current, next
@@ -232,6 +233,11 @@ CONTAINS
       part_mc2 = c * part_mc
 #endif
 #endif
+#ifdef PARTICLE_SPIN
+      spin_anomalous_magnetic_moment &
+          = species_list(ispecies)%anomalous_magnetic_moment
+#endif
+
       !DEC$ VECTOR ALWAYS
       DO ipart = 1, species_list(ispecies)%attached_list%count
         next => current%next
@@ -432,8 +438,8 @@ CONTAINS
         !    - (v/c) (a gamma/(gamma + 1)) (v/c) . B]
         v_avg_dot_B = vx_avg * bx_part + vy_avg * by_part + vz_avg*bz_part
         
-        spin_f1 = part_q * (anomalous_magnetic_moment + 1 / gamma_rel) / part_m
-        spin_f2 = part_q * anomalous_magnetic_moment * gamma_rel &
+        spin_f1 = part_q * (spin_anomalous_magnetic_moment + 1 / gamma_rel) / part_m
+        spin_f2 = part_q * spin_anomalous_magnetic_moment * gamma_rel &
             / ((1.0_num + gamma_rel) * part_m)
 
         spin_rotation_x = - dtfac * (spin_f1 * ( bx_part &
