@@ -1,3 +1,82 @@
+## v4.18.0 to v4.19.0
+
+ * Ionisation routines have been upgraded, and now read binding energies from
+   files. Users specify the ion species charge and atomic number, and the code
+   automatically generates release species up to a user-defined cut-off charge
+   state. Unique electron species for ejected electrons may also be 
+   automatically generated. This involves the new species variables:
+     ionise
+     ionise_limit
+     unique_electron_species
+   See the manual for more details
+
+ * Collisional ionisation has been reworked. The electron-impact-ionisation 
+   cross section now includes contributions from all bound electrons. Cross 
+   section models have been changed from MBELL and MRBEB to MBELL and RBEB, for
+   greater accuracy. Secondary electron energies are now sampled using a DCS 
+   derived from the RBEB model. The ionisation sampling algorithm has been
+   adapted to remove a particle weight dependence.
+
+ * A new collisions mode has been added. Particles may now be specified in 
+   particle/background pairs, where evolution of the background species is 
+   ignored. Additional speed-up keys may be specified by the user.
+
+ * Collisional ionisation may now be run separately from collisions, for
+   increased computational performance. The collisional ionisation may be 
+   super-cycled differently to collisions, using the new collision block key:
+     ci_n_step
+   
+ * Secondary lists are only created for particle species which require them in 
+   a given timestep.
+
+ * Bethe-Heitler pair production has been added. The model is configured using 
+   additional keys in the bremsstrahlung block:
+     use_bethe_heitler
+     use_positron_brem
+
+ * Positrons may now emit photons through the bremsstrahlung process. A 
+   separate table of cross sections is calculated for this particle type,
+   scaled from the electron cross sections.
+
+ * The string_length error message now correctly directs users to
+   constants.F90, instead of shared_data.F90.
+
+ * A new pre-compiler flag "PROBE_TIME" has been included, which forces probes 
+   to output the time particles cross them. The position calculation has been 
+   modified to output the position of particles on the probe itself, when they 
+   cross. Probes also output particle ID if a particle ID compilation flag is 
+   used.
+
+ * A new injector mode "file_injector" has been created. Users may now inject 
+   particles of specific momentum, position, weight and ID into the simulation,
+   at a given time. Particle information is read from ASCII text files.
+
+ * An estimate for the Coulomb logarithm in each cell has been included, for 
+   each species type.
+
+ * README has been updated to link to the EPOCH webpage, and a new
+   DOCUMENTATION file also points to this, and the old manuals.
+
+## v4.17.0 to v4.18.0
+
+ * PIC loop re-organised to ensure output files are dumped at the correct 
+   time-step.
+
+ * Fixed over-flow bug in dist_fn.
+
+ * Input deck can now store logical constants (value T or F).
+
+ * Added new n_coll_steps parameter to collisions block. This sub-cycles the
+   collisions, running them once every n steps. Collisions are run assuming a
+   time-step of n*dt, to retain the same physical behaviour.
+
+ * Added use_bremsstrahlung_scatter parameter to bremsstrahlung block. This
+   samples photon emission angle from the bremsstrahlung angular distribution. 
+   The model comes from the Geant4 Physics Reference Manual, which parametrises 
+   Tsai 1974, DOI: https://doi.org/10.1103/RevModPhys.46.815
+
+ * Fixed bug in non-relativistic bremsstrahlung cross-sections.
+
 ## v4.16.0 to v4.17.0
 
  * Added volume correction sampling Zenitani 2015 DOI 10.1063/1.4919383

@@ -1,26 +1,31 @@
-# *** PLEASE READ THIS NOTE ***
+# EPOCH instructions
 
-If you are obtaining this code from the github server *DO NOT* use the
-"Download zip" buttons. They will only download the EPOCH code and not the SDF
+To clone this repository from GitHub, use the command:
+
+```
+  git clone --recursive https://github.com/Warwick-Plasma/epoch.git
+```
+
+The "--recursive" flag is important, as this is required to download the SDF
+subdirectory used for writing the data. 
+
+Do not use the use the "Download zip" buttons, as they will miss the SDF
 subdirectory.
 
-The latest version of the code can be found
+A list of the EPOCH releases may be found 
 [here](https://github.com/Warwick-Plasma/epoch/releases)
 
-For similar reasons, if cloning the repository using git you *MUST* add the
-"--recursive" flag.
+EPOCH documentation is currently hosted on 
+[https://epochpic.github.io/](https://epochpic.github.io/)
 
-## DOWNLOADING AND BUILDING THE CODE
-
-The easiest method of downloading the code is to grab a copy of the latest
-release package, located in the "Releases" section of the GitHub site.
-You can get there by following
-[this link](https://github.com/Warwick-Plasma/epoch/releases)
+Users and developers may also find the original EPOCH manuals useful, which
+are hosted [here](https://github.com/Warwick-Plasma/EPOCH_manuals/releases)
 
 All EPOCH development is carried out using the [git](https://git-scm.com)
 revision control system. The master repository is hosted on a web-based
 collaborative development site
 [here](https://github.com/Warwick-Plasma/epoch)
+
 Further details on this are provided below.
 
 ## Compiling the code

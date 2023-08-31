@@ -757,6 +757,9 @@ CONTAINS
     ELSE IF (str_cmp(element, 'total_energy_sum')) THEN
       elementselected = c_dump_total_energy_sum
 
+    ELSE IF (str_cmp(element, 'coulomb_logarithm')) THEN
+      elementselected = c_dump_cou_log
+
     ELSE
       got_element = .FALSE.
 
@@ -879,6 +882,7 @@ CONTAINS
         IF (mask_element == c_dump_jy) bad = .FALSE.
         IF (mask_element == c_dump_jz) bad = .FALSE.
         IF (mask_element == c_dump_total_energy_sum) bad = .FALSE.
+        IF (mask_element == c_dump_cou_log) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0 .AND. IAND(mask, c_io_species) /= 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file
@@ -928,6 +932,7 @@ CONTAINS
         IF (mask_element == c_dump_temperature_y) bad = .FALSE.
         IF (mask_element == c_dump_temperature_z) bad = .FALSE.
         IF (mask_element == c_dump_ekflux) bad = .FALSE.
+        IF (mask_element == c_dump_cou_log) bad = .FALSE.
         IF (bad) THEN
           IF (rank == 0) THEN
             DO iu = 1, nio_units ! Print to stdout and to file

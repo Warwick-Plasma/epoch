@@ -21,6 +21,7 @@ MODULE injectors
   USE random_generator
   USE utilities
   USE spin
+  USE file_injectors
 
   IMPLICIT NONE
 
@@ -47,6 +48,20 @@ CONTAINS
 
     injector%depth = 1.0_num
     need_random_state = .TRUE.
+
+    ! Additional variables for file injectors
+    injector%inject_from_file = .FALSE.
+    injector%file_finished = .FALSE.
+    injector%px_data_given = .FALSE.
+    injector%py_data_given = .FALSE.
+    injector%pz_data_given = .FALSE.
+    injector%t_data_given = .FALSE.
+#ifndef PER_SPECIES_WEIGHT
+    injector%w_data_given = .FALSE.
+#endif
+#if defined(PARTICLE_ID4) || defined(PARTICLE_ID)
+    injector%id_data_given = .FALSE.
+#endif
 
   END SUBROUTINE init_injector
 
@@ -103,7 +118,11 @@ CONTAINS
 
     current => injector_list
     DO WHILE(ASSOCIATED(current))
-      CALL run_single_injector(current)
+      IF (.NOT. current%inject_from_file) THEN
+        CALL run_single_injector(current)
+      ELSE
+        CALL run_file_injection(current)
+      END IF
       current => current%next
     END DO
 
@@ -355,7 +374,9 @@ CONTAINS
 
     current => injector_list
     DO WHILE(ASSOCIATED(current))
-      CALL finish_single_injector_setup(current)
+      IF (.NOT. current%inject_from_file) THEN
+        CALL finish_single_injector_setup(current)
+      END IF
       current => current%next
     END DO
 

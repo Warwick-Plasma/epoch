@@ -180,6 +180,17 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_bethe_heitler')) THEN
+      use_bethe_heitler = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_positron_brem') .OR. &
+        str_cmp(element, 'positron_brem')) THEN
+      positron_brem = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 #endif
 

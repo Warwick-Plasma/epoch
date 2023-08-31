@@ -50,6 +50,7 @@ MODULE diagnostics
   LOGICAL :: reset_ejected, done_species_offset_init, done_subset_init
   LOGICAL :: restart_flag, dump_source_code, dump_input_decks
   LOGICAL :: dump_field_grid, skipped_any_set
+  LOGICAL :: got_stop_restart = .FALSE.
   LOGICAL :: got_request_dump_name = .FALSE.
   LOGICAL :: got_request_dump_restart = .FALSE.
   LOGICAL :: from_dump_request = .FALSE.
@@ -753,6 +754,10 @@ CONTAINS
             c_stagger_cell_centre, calc_poynt_flux, array, fluxdir(1:3), &
             dim_tags)
 
+        CALL write_nspecies_field(c_dump_cou_log, code, &
+            'cou_log', 'Coulomb Logarithm', 'dimensionless', &
+            c_stagger_cell_centre, calc_cou_log, array)
+
         IF (isubset /= 1) THEN
           DO i = 1, n_species
             CALL append_partlist(species_list(i)%attached_list, &
@@ -1413,8 +1418,9 @@ CONTAINS
       END IF
     END DO
 
-    IF (got_request_dump_restart) THEN
+    IF (got_request_dump_restart .OR. got_stop_restart) THEN
       got_request_dump_restart = .FALSE.
+      got_stop_restart = .FALSE.
       restart_flag = .TRUE.
       print_arrays = .TRUE.
       dump_source_code = .TRUE.
@@ -1607,6 +1613,14 @@ CONTAINS
               + REAL(array * dt, r4)
         END DO
         DEALLOCATE(array)
+      CASE(c_dump_cou_log)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_cou_log(array, ispecies-avg%species_sum)
+          avg%r4array(:,:,ispecies) = avg%r4array(:,:,ispecies) &
+              + REAL(array * dt, r4)
+        END DO
+        DEALLOCATE(array)
       END SELECT
     ELSE
       SELECT CASE(ioutput)
@@ -1734,6 +1748,13 @@ CONTAINS
         ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
         DO ispecies = 1, n_species_local
           CALL calc_poynt_flux(array, 0, ispecies)
+          avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
+        END DO
+        DEALLOCATE(array)
+      CASE(c_dump_cou_log)
+        ALLOCATE(array(1-ng:nx+ng,1-ng:ny+ng))
+        DO ispecies = 1, n_species_local
+          CALL calc_cou_log(array, ispecies-avg%species_sum)
           avg%array(:,:,ispecies) = avg%array(:,:,ispecies) + array * dt
         END DO
         DEALLOCATE(array)
@@ -3274,6 +3295,7 @@ CONTAINS
     force_dump = buffer(2)
     got_request_dump_name = buffer(3)
     got_request_dump_restart = buffer(4)
+    got_stop_restart = got_stop_condition
 
     IF (got_request_dump_name) THEN
       CALL MPI_BCAST(request_dump_name, string_length, MPI_CHARACTER, 0, &

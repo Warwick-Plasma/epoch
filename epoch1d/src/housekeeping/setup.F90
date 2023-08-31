@@ -812,7 +812,7 @@ CONTAINS
         PRINT*, '*** ERROR ***'
         PRINT*, 'SDF file string lengths are too large to read.'
         PRINT*, 'Please increase the size of "c_max_string_length" in ', &
-            'shared_data.F90 to ','be at least ',TRIM(len_string)
+            'constants.F90 to ','be at least ',TRIM(len_string)
       END IF
       CALL abort_code(c_err_io_error)
       STOP
