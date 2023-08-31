@@ -670,6 +670,14 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_work_z_total, code, &
             'Time_Integrated_Work_z', 'J', it_output_real)
 #endif
+#ifdef PARTICLE_SPIN
+        CALL write_particle_variable(c_dump_part_spin_x, code, &
+            'Spin_x', '', it_output_real)
+        CALL write_particle_variable(c_dump_part_spin_y, code, &
+            'Spin_y', '', it_output_real)
+        CALL write_particle_variable(c_dump_part_spin_z, code, &
+            'Spin_z', '', it_output_real)
+#endif
         CALL write_particle_grid(code)
 
         ! These are derived variables from the particles

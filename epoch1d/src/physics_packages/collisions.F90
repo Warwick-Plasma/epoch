@@ -20,6 +20,7 @@
 MODULE collisions
 
   USE calc_df
+  USE spin
 #ifdef PREFETCH
   USE prefetch
 #endif

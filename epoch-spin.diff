@@ -1,0 +1,1001 @@
+diff --git a/epoch3d/Makefile b/epoch3d/Makefile
+index 975cf3e7..822a6d27 100644
+--- a/epoch3d/Makefile
++++ b/epoch3d/Makefile
+@@ -322,8 +322,8 @@ SRCFILES = balance.F90 boundary.F90 bremsstrahlung.F90 calc_df.F90 \
+   particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
+   particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
+   random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
+-  shared_data.F90 shunt.F90 simple_io.F90 split_particle.F90 stack.f90 \
+-  strings.f90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
++  shared_data.F90 shunt.F90 simple_io.F90 spin.F90 split_particle.F90 \
++	stack.f90 strings.F90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
+   tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
+
+ OBJFILES := $(SRCFILES:.f90=.o)
+@@ -451,7 +451,7 @@ boundary.o: boundary.F90 injectors.o laser.o mpi_subtype_control.o \
+   particle_id_hash.o particle_temperature.o partlist.o utilities.o
+ bremsstrahlung.o: bremsstrahlung.F90 calc_df.o particles.o partlist.o setup.o
+ calc_df.o: calc_df.F90 boundary.o
+-collisions.o: collisions.F90 calc_df.o prefetch.o
++collisions.o: collisions.F90 calc_df.o prefetch.o spin.o
+ constants.o: constants.F90 $(SDFMOD)
+ current_smooth.o: current_smooth.F90 boundary.o constants.o shape_functions.o
+ custom_deck.o: custom_deck.f90 constants.o
+@@ -508,12 +508,13 @@ fields.o: fields.f90 boundary.o
+ 	$(FC) -c $(FFLAGS) $(FLTCONS) -o $(OBJDIR)/$@ $(PREPROFLAGS) $<
+ finish.o: finish.f90 collisions.o constants.o deck.o diagnostics.o dist_fn.o \
+   injectors.o ionise.o laser.o probes.o setup.o window.o
+-helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
++helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o \
++  spin.o
+ ic_module.o: ic_module.f90 helper.o shared_data.o
+ injectors.o: injectors.F90 evaluate.o particle_temperature.o partlist.o \
+-  random_generator.o utilities.o
++  random_generator.o spin.o utilities.o
+ ionise.o: ionise.F90 boundary.o numerics.o partlist.o random_generator.o \
+-  utilities.o
++  spin.o utilities.o
+ iterators.o: iterators.F90 particle_id_hash.o particle_pointer_advance.o \
+   partlist.o
+ laser.o: laser.f90 custom_laser.o evaluate.o
+@@ -540,9 +541,10 @@ shape_functions.o: shape_functions.F90 constants.o
+ shared_data.o: shared_data.F90 constants.o $(SDFMOD)
+ shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
+ simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
++spin.o: spin.F90 shared_data.o
+ split_particle.o: split_particle.F90 boundary.o
+ stack.o: stack.f90 constants.o
+-strings.o: strings.f90 shared_data.o
++strings.o: strings.F90 shared_data.o
+ strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
+ terminal_controls.o: terminal_controls.F90
+ timer.o: timer.f90 constants.o
+@@ -550,4 +552,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
+ utilities.o: utilities.f90 constants.o shared_data.o
+ version_data.o: version_data.F90 $(SRCDIR)/COMMIT
+ welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
+-window.o: window.F90 boundary.o evaluate.o partlist.o
++window.o: window.F90 boundary.o evaluate.o partlist.o spin.o
+diff --git a/epoch3d/example_decks/spin_precession.deck b/epoch3d/example_decks/spin_precession.deck
+new file mode 100644
+index 00000000..8fcff5a2
+--- /dev/null
++++ b/epoch3d/example_decks/spin_precession.deck
+@@ -0,0 +1,315 @@
++# This input deck contains 3 tests of the classic spin precession using T-BMT
++#
++# Choices to configure the deck are indicated by comments
++#   # TEST CASES
++# and
++#   # END TEST CASES
++#
++# The spin is written to the .sdf files. To analyse, read the spin data and calculate the
++# average over all particles
++#
++#
++# === Precession due to the magnetic field ===
++#
++# Indicated by the comment
++#   # CASE B
++#
++# The spin should orbit on the unit sphere with the Larmor frequency $eB/ \gamma m$ (period 141fs).
++# The plane of the orbit should be perpendicular to the applied field
++#
++#
++# === Precession due to the electric field ===
++#
++# This is a test of the $v \times B$ term in the T-BMT equation that transforms the electric
++# field in the lab frame to a magnetic field in the particle frame.
++#
++# Indicated by the comment
++#   # CASE vxE
++#
++# The spin should oscillate around its initial direction with an amplitude given by
++# $$
++# s_{\mathrm{max}} = \frac{e v_0 E_0}{\gamma m c \omega}
++# $$
++#
++# The electric field is initialised to
++# $$
++# E_0 = \frac{0.01 m c \omega}{e}
++# $$
++# The magnitude of the normalised four-velocity is
++# $$
++# \frac{p}{m c} = 1
++# $$
++# This leads to an oscillation amplitude of
++# $$
++# s_{\mathrm{max}} = 0.005
++# $$
++#
++#
++# === Precession due to the v . B term ===
++#
++# Indicated by the comment
++#   # CASE v.B
++#
++# Here, the electrons move in a constant external magnetic field $\mathbf{B} = B \mathbf{\hat{z}}$.
++# Since the term scales with the anomalous magnetic moment, the electrons move relativistically in
++# the $z$ direction with $u_z = 1000$.
++#
++# The electrons also have a smaller perpendicular velocity $u_{\perp} = 10 \ldots 100$ which causes
++# them to perform Larmor orbits with a frequency $eB/\gamma m$.
++#
++# Thus, the angular velocity of the spin precession oscillates around its main $\Omega_z$
++# component and drives an oscillation of the spin vector.
++#
++# The amplitude of the oscillation is given by
++# $$
++# s_{\mathrm{max}} = \frac{v_{\perp} v_z}{c^2}\frac{a \gamma^2}{1+\gamma}
++# $$
++# When $a \gamma \approx 1$ the amplitude can be controlled by
++# $u_{\perp} = \gamma v_{\perp} / c$. For $u_{\perp} = 10$ and $u_z = 1000$, we have
++# $$
++# s_{\mathrm{max}} = 0.0116
++# $$
++# The oscillation can be seen in the y--component of the spin
++
++
++begin:constant
++  # Particles per cell
++
++  # TEST CASES
++
++  # CASE B and CASE vxE
++  part = 128
++
++  # CASE v.B
++  # part = 32
++
++  # END TEST CASES
++
++  ne = 1.0
++
++  # drift velocity normalised by the speed of light
++  drift_u = 1.0
++
++  drift_u_fast = 1000.0
++  drift_u_perp = 10.0
++
++  L = 5 * micron
++
++  om0 = 2*pi*c/L
++  E_norm = 0.01
++  E_max = E_norm * me*c*om0/qe
++
++  # B = 2 pi / 100 fs * m/e
++  B_max = 2*pi*me / (qe*100*femto)
++end:constant
++
++
++begin:control
++  nx = 64
++  ny = 64
++
++  # Final time of simulation
++  # TEST CASES
++  # CASE B
++
++  t_end = 0.4 * pico
++
++  # CASE vxE
++
++  # t_end = 0.1 * pico
++
++  # CASE v.B
++
++  # t_end = 2.0 * pico
++
++  # END TEST CASES
++
++  # Size of domain
++  x_min = 0.0
++  x_end = L
++
++  y_min = 0.0
++  y_max = L
++
++  stdout_frequency = 10
++end:control
++
++
++begin:boundaries
++  bc_x_min = periodic
++  bc_x_max = periodic
++  bc_y_min = periodic
++  bc_y_max = periodic
++end:boundaries
++
++
++begin:species
++  # Electron
++  identify:electron
++  name = electron
++
++  nparticles = nx * ny * part
++
++  number_density = ne
++
++  # TEST CASES
++  # CASE B
++
++  drift_px = drift_u*c*me
++
++  spin = directed
++  spin_x = sqrt(0.5)
++  spin_y = 0.0
++  spin_z = sqrt(0.5)
++
++  # CASE vxE
++
++  # drift_pz = drift_u*c*me
++
++  # spin = directed
++  # spin_x = 0.0
++  # spin_y = 0.0
++  # spin_z = 1.0
++
++  # CASE v.B
++
++  # drift_px = drift_u_perp*c*me
++  # drift_pz = drift_u_fast*c*me
++  #
++  # spin = directed
++  # spin_x = 0.0
++  # spin_y = 0.0
++  # spin_z = 1.0
++
++  # END TEST CASES
++  temperature = 0
++
++
++end:species
++
++# The counterflow species is included to cancel out the electric current
++# The simulation time should be short enough to avoid any two-stream instability
++begin:species
++  # Counterflow
++  identify:electron
++  name = counterflow
++
++  nparticles = nx * ny * part
++
++  number_density = ne
++  # TEST CASES
++  # CASE B
++
++  drift_px = -drift_u*c*me
++
++  # CASE vxE
++
++  # drift_pz = -drift_u*c*me
++
++  # CASE v.B
++
++  # drift_px = -drift_u_perp*c*me
++  # drift_pz = -drift_u_fast*c*me
++
++  # END TEST CASES
++
++  temperature = 0
++end:species
++
++# TEST CASES
++# CASE B
++
++begin:fields
++  ex = 0.0
++  ey = 0.0
++  ez = 0.0
++  bx = 0.0
++  by = 0.0
++  bz = B_max
++end:fields
++
++# CASE vxE
++
++# begin:fields
++#   ex = 0.0
++#   ey = E_max * sin(2*pi*x/L)
++#   ez = 0.0
++#   bx = 0.0
++#   by = 0.0
++#   bz = E_max * sin(2*pi*x/L) / c
++# end:fields
++#
++# begin:subset
++#   name = slice
++#   include_species:electron
++#   x_min = 0.25*L - 0.1*micron
++#   x_max = 0.25*L + 0.1*micron
++# end:subset
++
++# CASE v.B
++
++# begin:fields
++#   ex = 0.0
++#   ey = 0.0
++#   ez = 0.0
++#   bx = 0.0
++#   by = 0.0
++#   bz = 1000*B_max
++# end:fields
++
++# END TEST CASES
++
++
++begin:output
++  name = normal
++
++  # Simulated time between output dumps
++  # TEST CASES
++  # CASE B and CASE v.B
++
++  dt_snapshot = 5 * femto
++
++  particles = always
++  px = always
++  py = always
++  pz = always
++  particle_weight = always
++  spin_x = always
++  spin_y = always
++  spin_z = always
++
++  # CASE vxE
++
++  # dt_snapshot = 0.5 * femto
++  #
++  # particles = slice
++  # px = slice
++  # py = slice
++  # pz = slice
++  # particle_weight = slice
++  # spin_x = slice
++  # spin_y = slice
++  # spin_z = slice
++
++  # END TEST CASES
++
++  # Properties on grid
++  grid = always
++  ex = always
++  ey = always
++  ez = always
++  bx = always
++  by = always
++  bz = always
++  jx = always
++  jy = always
++  jz = always
++  average_particle_energy = always + species
++  mass_density = never + species
++  charge_density = always # + average + snapshot
++  number_density = always + species
++  temperature = never + species
++
++  # Extended io
++  distribution_functions = never
++end:output
+diff --git a/epoch3d/src/constants.F90 b/epoch3d/src/constants.F90
+index d1dffac9..23dc94f6 100644
+--- a/epoch3d/src/constants.F90
++++ b/epoch3d/src/constants.F90
+@@ -78,6 +78,12 @@ MODULE constants
+   INTEGER, PARAMETER :: c_bd_z_min = 5
+   INTEGER, PARAMETER :: c_bd_z_max = 6
+
++#ifdef PARTICLE_SPIN
++  INTEGER, PARAMETER :: c_spin_null = -1
++  INTEGER, PARAMETER :: c_spin_uniform = 1
++  INTEGER, PARAMETER :: c_spin_directed = 2
++#endif
++
+   ! Frequency function type codes
+   INTEGER, PARAMETER :: c_of_omega = 1
+   INTEGER, PARAMETER :: c_of_freq = 2
+@@ -217,7 +223,8 @@ MODULE constants
+       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
+ #endif
+ #ifdef PARTICLE_SPIN
+-  REAL(num), PARAMETER :: anomalous_magnetic_moment = 0.0011614_num
++  REAL(num), PARAMETER :: anomalous_magnetic_moment_electron = 0.00115965218_num
++  REAL(num), PARAMETER :: anomalous_magnetic_moment_proton = 1.79_num
+ #endif
+
+   ! define special particle IDs
+diff --git a/epoch3d/src/deck/deck_species_block.F90 b/epoch3d/src/deck/deck_species_block.F90
+index a6d9717a..a1ce58cb 100644
+--- a/epoch3d/src/deck/deck_species_block.F90
++++ b/epoch3d/src/deck/deck_species_block.F90
+@@ -52,6 +52,14 @@ MODULE deck_species_block
+   INTEGER :: species_atomic_number
+ #endif
+   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
++#ifdef PARTICLE_SPIN
++  INTEGER, DIMENSION(:), POINTER :: spin_distribution
++  REAL(num), DIMENSION(:,:), POINTER :: spin_orientation
++  REAL(num), DIMENSION(:), POINTER :: anomalous_magnetic_moment
++  INTEGER :: species_spin_distribution
++  REAL(num), DIMENSION(3) :: species_spin_orientation
++  REAL(num) :: species_anomalous_magnetic_moment
++#endif
+
+ CONTAINS
+
+@@ -74,6 +82,11 @@ CONTAINS
+       ALLOCATE(part_count(4))
+       ALLOCATE(dumpmask_array(4))
+       ALLOCATE(bc_particle_array(2*c_ndims,4))
++#ifdef PARTICLE_SPIN
++      ALLOCATE(spin_distribution(4))
++      ALLOCATE(spin_orientation(3,4))
++      ALLOCATE(anomalous_magnetic_moment(4))
++#endif
+       release_species = ''
+       release_species_list = ''
+     END IF
+@@ -90,6 +103,9 @@ CONTAINS
+     TYPE(primitive_stack) :: stack
+     INTEGER, DIMENSION(2*c_ndims) :: bc_species
+     LOGICAL :: error
++#ifdef PARTICLE_SPIN
++    REAL(num) :: spin_mag
++#endif
+
+     IF (deck_state == c_ds_first) THEN
+       CALL setup_species
+@@ -114,6 +130,11 @@ CONTAINS
+         species_list(i)%count = INT(part_count(i),i8)
+         species_list(i)%dumpmask = dumpmask_array(i)
+         species_list(i)%bc_particle = bc_particle_array(:,i)
++#ifdef PARTICLE_SPIN
++        species_list(i)%spin_distribution = spin_distribution(i)
++        species_list(i)%spin_orientation = spin_orientation(:,i)
++        species_list(i)%anomalous_magnetic_moment = anomalous_magnetic_moment(i)
++#endif
+         IF (species_list(i)%ionise_to_species > 0) &
+             species_list(i)%ionise = .TRUE.
+       END DO
+@@ -126,6 +147,11 @@ CONTAINS
+       DEALLOCATE(charge)
+       DEALLOCATE(mass)
+       DEALLOCATE(ionisation_energies)
++#ifdef PARTICLE_SPIN
++      DEALLOCATE(spin_distribution)
++      DEALLOCATE(spin_orientation)
++      DEALLOCATE(anomalous_magnetic_moment)
++#endif
+
+       DO i = 1, n_species
+         IF (TRIM(release_species(i)) == '') CYCLE
+@@ -275,6 +301,51 @@ CONTAINS
+           CALL create_empty_partlist(ejected_list(i)%attached_list)
+         END DO
+       END IF
++
++
++#ifdef PARTICLE_SPIN
++      DO i = 1, n_species
++        ! sanitise particle spin configuration
++        spin_mag = species_list(i)%spin_orientation(1)**2 &
++          + species_list(i)%spin_orientation(2)**2 &
++          + species_list(i)%spin_orientation(3)**2
++
++        IF (spin_mag > 0.0_num) THEN
++          IF (species_list(i)%spin_distribution == c_spin_uniform) THEN
++            IF (rank == 0) THEN
++              DO iu = 1, nio_units ! Print to stdout and to file
++                io = io_units(iu)
++                WRITE(io,*) '*** ERROR ***'
++                WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
++                    // '" has conflicting spin configuration.'
++              END DO
++            END IF
++            CALL abort_code(c_err_bad_value)
++          ELSE
++            species_list(i)%spin_distribution = c_spin_directed
++            spin_mag = SQRT(spin_mag)
++            species_list(i)%spin_orientation(1) = species_list(i)%spin_orientation(1)/spin_mag
++            species_list(i)%spin_orientation(2) = species_list(i)%spin_orientation(2)/spin_mag
++            species_list(i)%spin_orientation(3) = species_list(i)%spin_orientation(3)/spin_mag
++          END IF
++        ELSE
++          IF (species_list(i)%spin_distribution == c_spin_directed) THEN
++            IF (rank == 0) THEN
++              DO iu = 1, nio_units ! Print to stdout and to file
++                io = io_units(iu)
++                WRITE(io,*) '*** ERROR ***'
++                WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
++                    // '" is missing the spin orientation.'
++              END DO
++            END IF
++            CALL abort_code(c_err_bad_value)
++          ELSE
++            species_list(i)%spin_distribution = c_spin_uniform
++          END IF
++        END IF
++      END DO
++#endif
++
+     END IF
+
+     IF (use_field_ionisation) need_random_state = .TRUE.
+@@ -293,6 +364,11 @@ CONTAINS
+     IF (deck_state == c_ds_first) RETURN
+     species_id = species_blocks(current_block)
+     offset = 0
++#ifdef PARTICLE_SPIN
++    species_spin_distribution = c_spin_null
++    species_spin_orientation = (/0.0_num, 0.0_num, 0.0_num/)
++    species_anomalous_magnetic_moment = -1
++#endif
+
+   END SUBROUTINE species_block_start
+
+@@ -323,6 +399,11 @@ CONTAINS
+       charge(n_species) = species_charge
+       mass(n_species) = species_mass
+       bc_particle_array(:, n_species) = species_bc_particle
++#ifdef PARTICLE_SPIN
++      spin_distribution(n_species) = species_spin_distribution
++      spin_orientation(:, n_species) = species_spin_orientation
++      anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
++#endif
+       IF (n_secondary_species_in_block > 0) THEN
+         ! Create an empty species for each ionisation energy listed in species
+         ! block
+@@ -449,6 +530,33 @@ CONTAINS
+       RETURN
+     END IF
+
++#ifdef PARTICLE_SPIN
++    IF (str_cmp(element, 'spin')) THEN
++      species_spin_distribution = as_spin_distribution_print(value, element, errcode)
++      RETURN
++    END IF
++
++    IF (str_cmp(element, 'spin_x')) THEN
++      species_spin_orientation(1) = as_real_print(value, element, errcode)
++      RETURN
++    END IF
++
++    IF (str_cmp(element, 'spin_y')) THEN
++      species_spin_orientation(2) = as_real_print(value, element, errcode)
++      RETURN
++    END IF
++
++    IF (str_cmp(element, 'spin_z')) THEN
++      species_spin_orientation(3) = as_real_print(value, element, errcode)
++      RETURN
++    END IF
++
++    IF (str_cmp(element, 'anomalous_magnetic_moment')) THEN
++      species_anomalous_magnetic_moment = as_real_print(value, element, errcode)
++      RETURN
++    END IF
++#endif
++
+     IF (deck_state == c_ds_first) RETURN
+
+     ! This sets up whether or not to use the MJ sampler for a species.
+@@ -1229,6 +1337,11 @@ CONTAINS
+     CALL grow_array(part_count, n_species)
+     CALL grow_array(dumpmask_array, n_species)
+     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
++#ifdef PARTICLE_SPIN
++    CALL grow_array(spin_distribution, n_species)
++    CALL grow_array(spin_orientation, 3, n_species)
++    CALL grow_array(anomalous_magnetic_moment, n_species)
++#endif
+
+     species_names(n_species) = TRIM(name)
+     ionise_to_species(n_species) = -1
+@@ -1241,6 +1354,11 @@ CONTAINS
+     part_count(n_species) = -1
+     dumpmask_array(n_species) = species_dumpmask
+     bc_particle_array(:,n_species) = species_bc_particle
++#ifdef PARTICLE_SPIN
++    spin_distribution(n_species) = species_spin_distribution
++    spin_orientation(:,n_species) = species_spin_orientation
++    anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
++#endif
+
+     RETURN
+
+@@ -1302,6 +1420,14 @@ CONTAINS
+     dumpmask_array(n_species) = species_dumpmask
+     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
+     bc_particle_array(:,n_species) = species_bc_particle
++#ifdef PARTICLE_SPIN
++    CALL grow_array(spin_distribution, n_species)
++    spin_distribution(n_species) = species_spin_distribution
++    CALL grow_array(spin_orientation, 3, n_species)
++    spin_orientation(:,n_species) = species_spin_orientation
++    CALL grow_array(anomalous_magnetic_moment, n_species)
++    anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
++#endif
+     RETURN
+
+   END SUBROUTINE create_ionisation_species_from_name
+@@ -1402,6 +1528,10 @@ CONTAINS
+ #ifdef BREMSSTRAHLUNG
+       species_list(species_id)%atomic_no = 0
+       species_list(species_id)%atomic_no_set = .TRUE.
++#endif
++#ifdef PARTICLE_SPIN
++      species_list(species_id)%anomalous_magnetic_moment &
++        = anomalous_magnetic_moment_electron
+ #endif
+       RETURN
+     END IF
+@@ -1414,6 +1544,10 @@ CONTAINS
+ #ifdef BREMSSTRAHLUNG
+       species_list(species_id)%atomic_no = 1
+       species_list(species_id)%atomic_no_set = .TRUE.
++#endif
++#ifdef PARTICLE_SPIN
++      species_list(species_id)%anomalous_magnetic_moment &
++        = anomalous_magnetic_moment_proton
+ #endif
+       RETURN
+     END IF
+@@ -1426,6 +1560,10 @@ CONTAINS
+ #ifdef BREMSSTRAHLUNG
+       species_list(species_id)%atomic_no = 0
+       species_list(species_id)%atomic_no_set = .TRUE.
++#endif
++#ifdef PARTICLE_SPIN
++      species_list(species_id)%anomalous_magnetic_moment &
++        = anomalous_magnetic_moment_electron
+ #endif
+       RETURN
+     END IF
+diff --git a/epoch3d/src/deck/strings.f90 b/epoch3d/src/deck/strings.F90
+similarity index 89%
+rename from epoch3d/src/deck/strings.f90
+rename to epoch3d/src/deck/strings.F90
+index 240f4482..9cd4a45a 100644
+--- a/epoch3d/src/deck/strings.f90
++++ b/epoch3d/src/deck/strings.F90
+@@ -304,6 +304,47 @@ CONTAINS
+
+
+
++#ifdef PARTICLE_SPIN
++  FUNCTION as_spin_distribution(str_in, err)
++
++    CHARACTER(*), INTENT(IN) :: str_in
++    INTEGER, INTENT(INOUT) :: err
++    INTEGER :: as_spin_distribution
++
++    as_spin_distribution = c_spin_uniform
++
++    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'uniform')) THEN
++      as_spin_distribution = c_spin_uniform
++      RETURN
++    END IF
++
++    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'directed')) THEN
++      as_spin_distribution = c_spin_directed
++      RETURN
++    END IF
++
++    err = IOR(err, c_err_bad_value)
++
++  END FUNCTION as_spin_distribution
++
++
++
++  FUNCTION as_spin_distribution_print(str_in, element, err) RESULT(res)
++
++    CHARACTER(*), INTENT(IN) :: str_in, element
++    INTEGER, INTENT(INOUT) :: err
++    INTEGER :: res
++
++    res = as_spin_distribution(str_in, err)
++
++    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
++
++    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
++
++  END FUNCTION as_spin_distribution_print
++#endif
++
++
+   FUNCTION lowercase(string_in) RESULT(string_out)
+
+     CHARACTER(LEN=*), PARAMETER :: lwr = 'abcdefghijklmnopqrstuvwxyz'
+diff --git a/epoch3d/src/housekeeping/partlist.F90 b/epoch3d/src/housekeeping/partlist.F90
+index 595e7f6b..8c0f54cf 100644
+--- a/epoch3d/src/housekeeping/partlist.F90
++++ b/epoch3d/src/housekeeping/partlist.F90
+@@ -39,7 +39,6 @@ MODULE partlist
+   REAL(num), DIMENSION(:), ALLOCATABLE :: packed_particle_data
+
+ CONTAINS
+-
+   SUBROUTINE set_partlist_size
+
+     nvar = 3 + c_ndims
+diff --git a/epoch3d/src/housekeeping/window.F90 b/epoch3d/src/housekeeping/window.F90
+index 821d43ff..684b2256 100644
+--- a/epoch3d/src/housekeeping/window.F90
++++ b/epoch3d/src/housekeeping/window.F90
+@@ -18,6 +18,7 @@ MODULE window
+   USE boundary
+   USE partlist
+   USE evaluator
++  USE spin
+
+   IMPLICIT NONE
+
+diff --git a/epoch3d/src/particles.F90 b/epoch3d/src/particles.F90
+index 9f72c1f9..8851ba99 100644
+--- a/epoch3d/src/particles.F90
++++ b/epoch3d/src/particles.F90
+@@ -141,7 +141,8 @@ CONTAINS
+     REAL(num) :: vx_avg, vy_avg, vz_avg
+     REAL(num) :: v_avg_dot_B, spin_f1, spin_f2, spin_f3
+     REAL(num) :: spin_rotation_x, spin_rotation_y, spin_rotation_z
+-    REAL(num) :: spin_spx, spin_spy, spin_spz
++    REAL(num) :: spin_spx, spin_spy, spin_spz
++    REAL(num) :: spin_anomalous_magnetic_moment
+ #endif
+
+     TYPE(particle), POINTER :: current, next
+@@ -258,6 +259,11 @@ CONTAINS
+       part_mc2 = c * part_mc
+ #endif
+ #endif
++#ifdef PARTICLE_SPIN
++      spin_anomalous_magnetic_moment &
++          = species_list(ispecies)%anomalous_magnetic_moment
++#endif
++
+       !DEC$ VECTOR ALWAYS
+       DO ipart = 1, species_list(ispecies)%attached_list%count
+         next => current%next
+diff --git a/epoch3d/src/physics_packages/collisions.F90 b/epoch3d/src/physics_packages/collisions.F90
+index a94d36e2..c8488bdf 100644
+--- a/epoch3d/src/physics_packages/collisions.F90
++++ b/epoch3d/src/physics_packages/collisions.F90
+@@ -20,6 +20,7 @@
+ MODULE collisions
+
+   USE calc_df
++  USE spin
+ #ifdef PREFETCH
+   USE prefetch
+ #endif
+@@ -393,7 +394,8 @@ CONTAINS
+                 species_list(ispecies)%secondary_list(ix,iy,iz), &
+                 species_list(ion_species)%secondary_list(ix,iy,iz), &
+                 ionising_e, ejected_e, m2, m1, q2, q1, jdens(ix,iy,iz), &
+-                q_full, ionisation_energy, n1, n2, l)
++                q_full, ionisation_energy, n1, n2, l, &
++                species_list(jspecies))
+             ! Scatter ionising impact electrons off of ejected target electrons
+             ! unless specified otherwise in input deck
+             IF (e_user_factor > 0.0_num) THEN
+@@ -428,7 +430,7 @@ CONTAINS
+                 species_list(jspecies)%secondary_list(ix,iy,iz), &
+                 species_list(ion_species)%secondary_list(ix,iy,iz), &
+                 ionising_e, ejected_e, m1, m2, q1, q2, idens(ix,iy,iz), &
+-                q_full, ionisation_energy, n1, n2, l)
++                q_full, ionisation_energy, n1, n2, l, species_list(ispecies))
+             ! Scatter ionising impact electrons off of ejected target electrons
+             ! unless specified otherwise in input deck
+             IF (e_user_factor > 0.0_num) THEN
+@@ -481,7 +483,7 @@ CONTAINS
+ #ifndef PER_SPECIES_WEIGHT
+   SUBROUTINE preionise(electrons, ions, ionised, ionising_e, &
+       ejected_e, e_mass, ion_mass, e_charge, ion_charge, e_dens, &
+-      full_ion_charge, ionisation_energy, n1, n2, l)
++      full_ion_charge, ionisation_energy, n1, n2, l, electron_species)
+
+     TYPE(particle_list), INTENT(INOUT) :: electrons, ions, ionised
+     TYPE(particle_list), INTENT(INOUT) :: ionising_e, ejected_e
+@@ -490,6 +492,7 @@ CONTAINS
+     REAL(num), INTENT(IN) :: ionisation_energy, full_ion_charge
+
+     INTEGER, INTENT(IN) :: n1, n2, l
++    TYPE(particle_species), INTENT(INOUT) :: electron_species
+
+     TYPE(particle), POINTER :: electron, ion, ejected_electron, next_ion, next_e
+
+@@ -711,6 +714,9 @@ CONTAINS
+ #ifdef PARTICLE_DEBUG
+           ejected_electron%processor = rank
+           ejected_electron%processor_at_t0 = rank
++#endif
++#ifdef PARTICLE_SPIN
++          CALL init_particle_spin(electron_species, ejected_electron)
+ #endif
+           CALL add_particle_to_partlist(ejected_e, ejected_electron)
+           CALL remove_particle_from_partlist(ions, ion)
+diff --git a/epoch3d/src/physics_packages/injectors.F90 b/epoch3d/src/physics_packages/injectors.F90
+index 5a7a9778..6e141e4c 100644
+--- a/epoch3d/src/physics_packages/injectors.F90
++++ b/epoch3d/src/physics_packages/injectors.F90
+@@ -20,6 +20,7 @@ MODULE injectors
+   USE evaluator
+   USE random_generator
+   USE utilities
++  USE spin
+
+   IMPLICIT NONE
+
+diff --git a/epoch3d/src/physics_packages/ionise.F90 b/epoch3d/src/physics_packages/ionise.F90
+index 1fd132b1..d4ab2c4d 100644
+--- a/epoch3d/src/physics_packages/ionise.F90
++++ b/epoch3d/src/physics_packages/ionise.F90
+@@ -21,6 +21,7 @@ MODULE ionise
+   USE mpi
+   USE utilities
+   USE boundary
++  USE spin
+
+   IMPLICIT NONE
+
+@@ -550,6 +551,10 @@ CONTAINS
+ #ifdef PARTICLE_DEBUG
+               new%processor = rank
+               new%processor_at_t0 = rank
++#endif
++#ifdef PARTICLE_SPIN
++              CALL init_particle_spin(species_list(species_list( &
++                  current_state)%release_species), new)
+ #endif
+               ! Put electron into particle lists
+               CALL add_particle_to_partlist(species_list(species_list( &
+@@ -819,6 +824,10 @@ CONTAINS
+ #ifdef PARTICLE_DEBUG
+               new%processor = rank
+               new%processor_at_t0 = rank
++#endif
++#ifdef PARTICLE_SPIN
++              CALL init_particle_spin(species_list(species_list( &
++                  current_state)%release_species), new)
+ #endif
+               ! Put electron into particle lists
+               CALL add_particle_to_partlist(species_list(species_list( &
+@@ -1082,6 +1091,10 @@ CONTAINS
+ #ifdef PARTICLE_DEBUG
+               new%processor = rank
+               new%processor_at_t0 = rank
++#endif
++#ifdef PARTICLE_SPIN
++              CALL init_particle_spin(species_list(species_list( &
++                  current_state)%release_species), new)
+ #endif
+               ! Put electron into particle lists
+               CALL add_particle_to_partlist(species_list(species_list( &
+@@ -1326,6 +1339,10 @@ CONTAINS
+ #ifdef PARTICLE_DEBUG
+               new%processor = rank
+               new%processor_at_t0 = rank
++#endif
++#ifdef PARTICLE_SPIN
++              CALL init_particle_spin(species_list(species_list( &
++                  current_state)%release_species), new)
+ #endif
+               ! Put electron into particle lists
+               CALL add_particle_to_partlist(species_list(species_list( &
+diff --git a/epoch3d/src/physics_packages/spin.F90 b/epoch3d/src/physics_packages/spin.F90
+new file mode 100644
+index 00000000..6312d241
+--- /dev/null
++++ b/epoch3d/src/physics_packages/spin.F90
+@@ -0,0 +1,85 @@
++! Copyright (C) 2009-2023 University of Warwick
++!
++! This program is free software: you can redistribute it and/or modify
++! it under the terms of the GNU General Public License as published by
++! the Free Software Foundation, either version 3 of the License, or
++! (at your option) any later version.
++!
++! This program is distributed in the hope that it will be useful,
++! but WITHOUT ANY WARRANTY; without even the implied warranty of
++! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++! GNU General Public License for more details.
++!
++! You should have received a copy of the GNU General Public License
++! along with this program.  If not, see <http://www.gnu.org/licenses/>.
++
++MODULE spin
++
++#ifdef PARTICLE_SPIN
++
++  USE constants
++  USE shared_data
++  USE random_generator
++
++  IMPLICIT NONE
++
++CONTAINS
++
++  SUBROUTINE setup_particle_spin(part_species)
++    TYPE(particle_species), POINTER :: part_species
++    TYPE(particle_list), POINTER :: partlist
++    TYPE(particle), POINTER :: current
++    INTEGER(i8) :: ipart
++
++    partlist => part_species%attached_list
++    current => partlist%head
++    ipart = 0
++
++    DO WHILE(ipart < partlist%count)
++      CALL init_particle_spin(part_species, current)
++      current => current%next
++      ipart = ipart + 1
++    END DO
++
++  END SUBROUTINE setup_particle_spin
++
++  SUBROUTINE init_particle_spin(species, new_particle)
++    TYPE(particle_species), INTENT(IN) :: species
++    TYPE(particle), POINTER :: new_particle
++
++    SELECT CASE(species%spin_distribution)
++      CASE(c_spin_uniform)
++        CALL init_particle_spin_uniform(species, new_particle)
++      CASE(c_spin_directed)
++        CALL init_particle_spin_directed(species, new_particle)
++    END SELECT
++
++  END SUBROUTINE init_particle_spin
++
++
++  SUBROUTINE init_particle_spin_directed(species, new_particle)
++    TYPE(particle_species), INTENT(IN) :: species
++    TYPE(particle), POINTER :: new_particle
++
++    new_particle%spin = species%spin_orientation
++  END SUBROUTINE init_particle_spin_directed
++
++  SUBROUTINE init_particle_spin_uniform(species, new_particle)
++    TYPE(particle_species), INTENT(IN) :: species
++    TYPE(particle), POINTER :: new_particle
++
++    REAL(num) :: theta, phi
++    REAL(num) :: sx, sy, sz
++
++    phi = 2.0_num * pi * random()
++    theta = acos(1.0_num - 2.0_num * random())
++    sx = sin(theta) * cos(phi)
++    sy = sin(theta) * sin(phi)
++    sz = cos(theta)
++
++    new_particle%spin = (/ sx, sy, sz /)
++  END SUBROUTINE init_particle_spin_uniform
++
++#endif
++
++END MODULE spin
+\ No newline at end of file
+diff --git a/epoch3d/src/user_interaction/helper.F90 b/epoch3d/src/user_interaction/helper.F90
+index 0ee2b5b3..714798c8 100644
+--- a/epoch3d/src/user_interaction/helper.F90
++++ b/epoch3d/src/user_interaction/helper.F90
+@@ -20,6 +20,7 @@ MODULE helper
+   USE partlist
+   USE simple_io
+   USE deltaf_loader
++  USE spin
+
+   IMPLICIT NONE
+
+@@ -147,6 +148,11 @@ CONTAINS
+       ELSE IF (species%ic_df_type == c_ic_df_arbitrary) THEN
+         CALL setup_particle_dist_fn(species, species_drift)
+       END IF
++
++#ifdef PARTICLE_SPIN
++      CALL setup_particle_spin(species)
++#endif
++
+     END DO
+
+     IF (pre_loading) RETURN

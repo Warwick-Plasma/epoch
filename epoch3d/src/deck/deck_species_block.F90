@@ -54,6 +54,14 @@ MODULE deck_species_block
   INTEGER :: species_dumpmask
   INTEGER :: species_atomic_number
   INTEGER, DIMENSION(2*c_ndims) :: species_bc_particle
+#ifdef PARTICLE_SPIN
+  INTEGER, DIMENSION(:), POINTER :: spin_distribution
+  REAL(num), DIMENSION(:,:), POINTER :: spin_orientation
+  REAL(num), DIMENSION(:), POINTER :: anomalous_magnetic_moment
+  INTEGER :: species_spin_distribution
+  REAL(num), DIMENSION(3) :: species_spin_orientation
+  REAL(num) :: species_anomalous_magnetic_moment
+#endif
 
 CONTAINS
 
@@ -76,6 +84,11 @@ CONTAINS
       ALLOCATE(part_count(4))
       ALLOCATE(dumpmask_array(4))
       ALLOCATE(bc_particle_array(2*c_ndims,4))
+#ifdef PARTICLE_SPIN
+      ALLOCATE(spin_distribution(4))
+      ALLOCATE(spin_orientation(3,4))
+      ALLOCATE(anomalous_magnetic_moment(4))
+#endif
       ALLOCATE(auto_electrons(4))
       release_species = ''
       release_species_list = ''
@@ -94,6 +107,9 @@ CONTAINS
     INTEGER, DIMENSION(2*c_ndims) :: bc_species
     LOGICAL, ALLOCATABLE :: release_species_set(:)
     LOGICAL :: error
+#ifdef PARTICLE_SPIN
+    REAL(num) :: spin_mag
+#endif
 
     IF (deck_state == c_ds_first) THEN
       CALL setup_species
@@ -118,6 +134,11 @@ CONTAINS
         species_list(i)%count = INT(part_count(i),i8)
         species_list(i)%dumpmask = dumpmask_array(i)
         species_list(i)%bc_particle = bc_particle_array(:,i)
+#ifdef PARTICLE_SPIN
+        species_list(i)%spin_distribution = spin_distribution(i)
+        species_list(i)%spin_orientation = spin_orientation(:,i)
+        species_list(i)%anomalous_magnetic_moment = anomalous_magnetic_moment(i)
+#endif
         IF (species_list(i)%ionise_to_species > 0) &
             species_list(i)%ionise = .TRUE.
       END DO
@@ -155,6 +176,11 @@ CONTAINS
       DEALLOCATE(charge)
       DEALLOCATE(mass)
       DEALLOCATE(ionisation_energies)
+#ifdef PARTICLE_SPIN
+      DEALLOCATE(spin_distribution)
+      DEALLOCATE(spin_orientation)
+      DEALLOCATE(anomalous_magnetic_moment)
+#endif
 
       ! Set release species of species_list elements which have been
       ! user-defined
@@ -335,6 +361,50 @@ CONTAINS
         END DO
       END IF
 
+
+#ifdef PARTICLE_SPIN
+      DO i = 1, n_species
+        ! sanitise particle spin configuration
+        spin_mag = species_list(i)%spin_orientation(1)**2 &
+          + species_list(i)%spin_orientation(2)**2 &
+          + species_list(i)%spin_orientation(3)**2
+
+        IF (spin_mag > 0.0_num) THEN
+          IF (species_list(i)%spin_distribution == c_spin_uniform) THEN
+            IF (rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** ERROR ***'
+                WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
+                    // '" has conflicting spin configuration.'
+              END DO
+            END IF
+            CALL abort_code(c_err_bad_value)
+          ELSE
+            species_list(i)%spin_distribution = c_spin_directed
+            spin_mag = SQRT(spin_mag)
+            species_list(i)%spin_orientation(1) = species_list(i)%spin_orientation(1)/spin_mag
+            species_list(i)%spin_orientation(2) = species_list(i)%spin_orientation(2)/spin_mag
+            species_list(i)%spin_orientation(3) = species_list(i)%spin_orientation(3)/spin_mag
+          END IF
+        ELSE
+          IF (species_list(i)%spin_distribution == c_spin_directed) THEN
+            IF (rank == 0) THEN
+              DO iu = 1, nio_units ! Print to stdout and to file
+                io = io_units(iu)
+                WRITE(io,*) '*** ERROR ***'
+                WRITE(io,*) 'The species named "' // TRIM(species_list(i)%name) &
+                    // '" is missing the spin orientation.'
+              END DO
+            END IF
+            CALL abort_code(c_err_bad_value)
+          ELSE
+            species_list(i)%spin_distribution = c_spin_uniform
+          END IF
+        END IF
+      END DO
+#endif
+
       ! Check for split particle species, which need secondary lists
       DO i = 1, n_species
         IF (species_list(i)%split) species_list(i)%make_secondary_list = .TRUE.
@@ -360,6 +430,11 @@ CONTAINS
     IF (deck_state == c_ds_first) RETURN
     species_id = species_blocks(current_block)
     offset = 0
+#ifdef PARTICLE_SPIN
+    species_spin_distribution = c_spin_null
+    species_spin_orientation = (/0.0_num, 0.0_num, 0.0_num/)
+    species_anomalous_magnetic_moment = -1
+#endif
 
   END SUBROUTINE species_block_start
 
@@ -431,6 +506,11 @@ CONTAINS
       charge(n_species) = species_charge
       mass(n_species) = species_mass
       bc_particle_array(:, n_species) = species_bc_particle
+#ifdef PARTICLE_SPIN
+      spin_distribution(n_species) = species_spin_distribution
+      spin_orientation(:, n_species) = species_spin_orientation
+      anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
+#endif
       IF (n_secondary_species_in_block > 0) THEN
         ! Create an empty species for each ionisation level considered
         release_species(n_species) = release_species_list
@@ -639,6 +719,33 @@ CONTAINS
       species_bc_particle(c_bd_z_max) = as_bc_print(value, element, errcode)
       RETURN
     END IF
+
+#ifdef PARTICLE_SPIN
+    IF (str_cmp(element, 'spin')) THEN
+      species_spin_distribution = as_spin_distribution_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'spin_x')) THEN
+      species_spin_orientation(1) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'spin_y')) THEN
+      species_spin_orientation(2) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'spin_z')) THEN
+      species_spin_orientation(3) = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'anomalous_magnetic_moment')) THEN
+      species_anomalous_magnetic_moment = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+#endif
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -1456,6 +1563,11 @@ CONTAINS
     CALL grow_array(dumpmask_array, n_species)
     CALL grow_array(auto_electrons, n_species)
     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
+#ifdef PARTICLE_SPIN
+    CALL grow_array(spin_distribution, n_species)
+    CALL grow_array(spin_orientation, 3, n_species)
+    CALL grow_array(anomalous_magnetic_moment, n_species)
+#endif
 
     species_names(n_species) = TRIM(name)
     ionise_to_species(n_species) = -1
@@ -1469,6 +1581,11 @@ CONTAINS
     dumpmask_array(n_species) = species_dumpmask
     auto_electrons(n_species) = .FALSE.
     bc_particle_array(:,n_species) = species_bc_particle
+#ifdef PARTICLE_SPIN
+    spin_distribution(n_species) = species_spin_distribution
+    spin_orientation(:,n_species) = species_spin_orientation
+    anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
+#endif
 
     RETURN
 
@@ -1660,6 +1777,14 @@ CONTAINS
     auto_electrons(n_species) = .FALSE.
     CALL grow_array(bc_particle_array, 2*c_ndims, n_species)
     bc_particle_array(:,n_species) = species_bc_particle
+#ifdef PARTICLE_SPIN
+    CALL grow_array(spin_distribution, n_species)
+    spin_distribution(n_species) = species_spin_distribution
+    CALL grow_array(spin_orientation, 3, n_species)
+    spin_orientation(:,n_species) = species_spin_orientation
+    CALL grow_array(anomalous_magnetic_moment, n_species)
+    anomalous_magnetic_moment(n_species) = species_anomalous_magnetic_moment
+#endif
     RETURN
 
   END SUBROUTINE create_ionisation_species_from_name
@@ -1813,6 +1938,10 @@ CONTAINS
       species_list(species_id)%electron = .TRUE.
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef PARTICLE_SPIN
+      species_list(species_id)%anomalous_magnetic_moment &
+        = anomalous_magnetic_moment_electron
+#endif
       RETURN
     END IF
 
@@ -1823,6 +1952,10 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_proton
       species_list(species_id)%atomic_no = 1
       species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef PARTICLE_SPIN
+      species_list(species_id)%anomalous_magnetic_moment &
+        = anomalous_magnetic_moment_proton
+#endif
       RETURN
     END IF
 
@@ -1833,6 +1966,10 @@ CONTAINS
       species_list(species_id)%species_type = c_species_id_positron
       species_list(species_id)%atomic_no = 0
       species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef PARTICLE_SPIN
+      species_list(species_id)%anomalous_magnetic_moment &
+        = anomalous_magnetic_moment_electron
+#endif
       RETURN
     END IF
 

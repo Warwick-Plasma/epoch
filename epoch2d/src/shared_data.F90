@@ -136,6 +136,9 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#ifdef PARTICLE_SPIN
+    REAL(num), DIMENSION(3) :: spin
+#endif
 #if defined(PROBE_TIME)
     REAL(num) :: probe_time
 #endif
@@ -282,6 +285,12 @@ MODULE shared_data
 
     ! Per-species boundary conditions
     INTEGER, DIMENSION(2*c_ndims) :: bc_particle
+
+#ifdef PARTICLE_SPIN
+    INTEGER :: spin_distribution
+    REAL(num), DIMENSION(3) :: spin_orientation
+    REAL(num) :: anomalous_magnetic_moment
+#endif
   END TYPE particle_species
 
   REAL(num), ALLOCATABLE, TARGET :: global_species_density(:,:)

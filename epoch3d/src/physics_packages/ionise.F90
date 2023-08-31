@@ -21,6 +21,7 @@ MODULE ionise
   USE mpi
   USE utilities
   USE boundary
+  USE spin
 
   IMPLICIT NONE
 
@@ -567,6 +568,10 @@ CONTAINS
               new%processor = rank
               new%processor_at_t0 = rank
 #endif
+#ifdef PARTICLE_SPIN
+              CALL init_particle_spin(species_list(species_list( &
+                  current_state)%release_species), new)
+#endif
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
@@ -857,6 +862,10 @@ CONTAINS
               new%processor = rank
               new%processor_at_t0 = rank
 #endif
+#ifdef PARTICLE_SPIN
+              CALL init_particle_spin(species_list(species_list( &
+                  current_state)%release_species), new)
+#endif
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
@@ -1141,6 +1150,10 @@ CONTAINS
               new%processor = rank
               new%processor_at_t0 = rank
 #endif
+#ifdef PARTICLE_SPIN
+              CALL init_particle_spin(species_list(species_list( &
+                  current_state)%release_species), new)
+#endif
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &
                   current_state)%release_species)%attached_list, new)
@@ -1405,6 +1418,10 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
               new%processor = rank
               new%processor_at_t0 = rank
+#endif
+#ifdef PARTICLE_SPIN
+              CALL init_particle_spin(species_list(species_list( &
+                  current_state)%release_species), new)
 #endif
               ! Put electron into particle lists
               CALL add_particle_to_partlist(species_list(species_list( &

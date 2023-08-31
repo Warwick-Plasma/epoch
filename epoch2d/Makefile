@@ -217,6 +217,9 @@ DEFINES := $(DEFINE)
 # Include QED routines
 #DEFINES += $(D)PHOTONS
 
+# Include the particle spin. Spin precession is calculated via the T-BMT equations
+DEFINES += $(D)PARTICLE_SPIN
+
 # Use the Trident process for pair production
 #DEFINES += $(D)TRIDENT_PHOTONS
 
@@ -324,8 +327,8 @@ SRCFILES = background_collisions.F90 balance.F90 bethe_heitler.F90 \
 	particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
 	particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
 	random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
-	shared_data.F90 shunt.F90 simple_io.F90 split_particle.F90 stack.f90 \
-	strings.f90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
+	shared_data.F90 shunt.F90 simple_io.F90 spin.F90 split_particle.F90 \
+  stack.f90 strings.F90 strings_advanced.f90 terminal_controls.F90 timer.f90 \
 	tokenizer_blocks.f90 utilities.f90 version_data.F90 welcome.F90 window.F90
 
 OBJFILES := $(SRCFILES:.f90=.o)
@@ -456,7 +459,7 @@ boundary.o: boundary.F90 injectors.o laser.o mpi_subtype_control.o \
 bremsstrahlung.o: bremsstrahlung.F90 bethe_heitler.o calc_df.o particles.o \
 	partlist.o setup.o
 calc_df.o: calc_df.F90 boundary.o
-collisions.o: collisions.F90 calc_df.o prefetch.o
+collisions.o: collisions.F90 calc_df.o prefetch.o spin.o
 collision_ionise.o: collision_ionise.F90 calc_df.o collisions.o prefetch.o
 constants.o: constants.F90 $(SDFMOD)
 current_smooth.o: current_smooth.F90 boundary.o constants.o shape_functions.o
@@ -516,12 +519,13 @@ fields.o: fields.f90 boundary.o
 file_injectors.o: file_injectors.F90 partlist.o utilities.o
 finish.o: finish.f90 background_collisions.o collisions.o constants.o deck.o \
 	diagnostics.o dist_fn.o injectors.o ionise.o laser.o probes.o setup.o window.o
-helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o
+helper.o: helper.F90 balance.o boundary.o deltaf_loader.o partlist.o simple_io.o \
+  spin.o
 ic_module.o: ic_module.f90 helper.o shared_data.o
 injectors.o: injectors.F90 evaluate.o file_injectors.o particle_temperature.o \
-	partlist.o random_generator.o utilities.o
+	partlist.o random_generator.o spin.o utilities.o
 ionise.o: ionise.F90 boundary.o numerics.o partlist.o random_generator.o \
-  utilities.o
+  spin.o utilities.o
 iterators.o: iterators.F90 particle_id_hash.o particle_pointer_advance.o \
   partlist.o
 laser.o: laser.f90 custom_laser.o evaluate.o
@@ -548,9 +552,10 @@ shape_functions.o: shape_functions.F90 constants.o
 shared_data.o: shared_data.F90 constants.o $(SDFMOD)
 shunt.o: shunt.F90 evaluator_blocks.o tokenizer_blocks.o utilities.o
 simple_io.o: simple_io.F90 boundary.o mpi_subtype_control.o
+spin.o: spin.F90 shared_data.o
 split_particle.o: split_particle.F90 boundary.o
 stack.o: stack.f90 constants.o
-strings.o: strings.f90 shared_data.o
+strings.o: strings.F90 shared_data.o
 strings_advanced.o: strings_advanced.f90 evaluate.o shunt.o
 terminal_controls.o: terminal_controls.F90
 timer.o: timer.f90 constants.o
@@ -558,4 +563,4 @@ tokenizer_blocks.o: tokenizer_blocks.f90 strings.o
 utilities.o: utilities.f90 constants.o shared_data.o
 version_data.o: version_data.F90 $(SRCDIR)/COMMIT
 welcome.o: welcome.F90 shared_data.o terminal_controls.o version_data.o
-window.o: window.F90 boundary.o evaluate.o partlist.o
+window.o: window.F90 boundary.o evaluate.o partlist.o spin.o

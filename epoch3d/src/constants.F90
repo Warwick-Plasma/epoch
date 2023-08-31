@@ -103,6 +103,12 @@ MODULE constants
   INTEGER, PARAMETER :: c_bd_z_min = 5
   INTEGER, PARAMETER :: c_bd_z_max = 6
 
+#ifdef PARTICLE_SPIN
+  INTEGER, PARAMETER :: c_spin_null = -1
+  INTEGER, PARAMETER :: c_spin_uniform = 1
+  INTEGER, PARAMETER :: c_spin_directed = 2
+#endif
+
   ! Frequency function type codes
   INTEGER, PARAMETER :: c_of_omega = 1
   INTEGER, PARAMETER :: c_of_freq = 2
@@ -240,6 +246,10 @@ MODULE constants
   REAL(num), PARAMETER :: log_plasma_screen_const_1 = LOG(1.4_num / alpha)
   REAL(num), PARAMETER :: log_plasma_screen_const_2 = &
       LOG(SQRT(epsilon0 * kb) / q0 * m0 * c * alpha / 1.4_num / h_bar)
+#endif
+#ifdef PARTICLE_SPIN
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_electron = 0.00115965218_num
+  REAL(num), PARAMETER :: anomalous_magnetic_moment_proton = 1.79_num
 #endif
 
   ! define special particle IDs
@@ -636,7 +646,10 @@ MODULE constants
   INTEGER, PARAMETER :: c_dump_part_opdepth_brem = 71
   INTEGER, PARAMETER :: c_dump_probe_time        = 72
   INTEGER, PARAMETER :: c_dump_cou_log           = 73
-  INTEGER, PARAMETER :: num_vars_to_dump         = 73
+  INTEGER, PARAMETER :: c_dump_part_spin_x       = 74
+  INTEGER, PARAMETER :: c_dump_part_spin_y       = 75
+  INTEGER, PARAMETER :: c_dump_part_spin_z       = 76
+  INTEGER, PARAMETER :: num_vars_to_dump         = 76
 
   INTEGER, PARAMETER :: c_subset_random     = 1
   INTEGER, PARAMETER :: c_subset_gamma_min  = 2

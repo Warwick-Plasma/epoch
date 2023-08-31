@@ -1,0 +1,309 @@
+# This input deck contains 3 tests of the classic spin precession using T-BMT
+#
+# Choices to configure the deck are indicated by comments
+#   # TEST CASES
+# and
+#   # END TEST CASES
+#
+# The spin is written to the .sdf files. To analyse, read the spin data and calculate the
+# average over all particles
+#
+#
+# === Precession due to the magnetic field ===
+#
+# Indicated by the comment
+#   # CASE B
+#
+# The spin should orbit on the unit sphere with the Larmor frequency $eB/ \gamma m$ (period 141fs).
+# The plane of the orbit should be perpendicular to the applied field
+#
+#
+# === Precession due to the electric field ===
+#
+# This is a test of the $v \times B$ term in the T-BMT equation that transforms the electric
+# field in the lab frame to a magnetic field in the particle frame.
+#
+# Indicated by the comment
+#   # CASE vxE
+#
+# The spin should oscillate around its initial direction with an amplitude given by
+# $$
+# s_{\mathrm{max}} = \frac{e v_0 E_0}{\gamma m c \omega}
+# $$
+#
+# The electric field is initialised to
+# $$
+# E_0 = \frac{0.01 m c \omega}{e}
+# $$
+# The magnitude of the normalised four-velocity is
+# $$
+# \frac{p}{m c} = 1
+# $$
+# This leads to an oscillation amplitude of
+# $$
+# s_{\mathrm{max}} = 0.005
+# $$
+#
+#
+# === Precession due to the v . B term ===
+#
+# Indicated by the comment
+#   # CASE v.B
+#
+# Here, the electrons move in a constant external magnetic field $\mathbf{B} = B \mathbf{\hat{z}}$.
+# Since the term scales with the anomalous magnetic moment, the electrons move relativistically in
+# the $z$ direction with $u_z = 1000$.
+#
+# The electrons also have a smaller perpendicular velocity $u_{\perp} = 10 \ldots 100$ which causes
+# them to perform Larmor orbits with a frequency $eB/\gamma m$.
+#
+# Thus, the angular velocity of the spin precession oscillates around its main $\Omega_z$
+# component and drives an oscillation of the spin vector.
+#
+# The amplitude of the oscillation is given by
+# $$
+# s_{\mathrm{max}} = \frac{v_{\perp} v_z}{c^2}\frac{a \gamma^2}{1+\gamma}
+# $$
+# When $a \gamma \approx 1$ the amplitude can be controlled by
+# $u_{\perp} = \gamma v_{\perp} / c$. For $u_{\perp} = 10$ and $u_z = 1000$, we have
+# $$
+# s_{\mathrm{max}} = 0.0116
+# $$
+# The oscillation can be seen in the y--component of the spin
+
+
+begin:constant
+  # Particles per cell
+
+  # TEST CASES
+
+  # CASE B and CASE vxE
+  part = 128
+
+  # CASE v.B
+  # part = 32
+
+  # END TEST CASES
+
+  ne = 1.0
+
+  # drift velocity normalised by the speed of light
+  drift_u = 1.0
+
+  drift_u_fast = 1000.0
+  drift_u_perp = 10.0
+
+  L = 5 * micron
+
+  om0 = 2*pi*c/L
+  E_norm = 0.01
+  E_max = E_norm * me*c*om0/qe
+
+  # B = 2 pi / 100 fs * m/e
+  B_max = 2*pi*me / (qe*100*femto)
+end:constant
+
+
+begin:control
+  nx = 64
+
+  # Final time of simulation
+  # TEST CASES
+  # CASE B
+
+  t_end = 0.4 * pico
+
+  # CASE vxE
+
+  # t_end = 0.1 * pico
+
+  # CASE v.B
+
+  # t_end = 2.0 * pico
+
+  # END TEST CASES
+
+  # Size of domain
+  x_min = 0.0
+  x_end = L
+
+  stdout_frequency = 10
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+end:boundaries
+
+
+begin:species
+  # Electron
+  identify:electron
+  name = electron
+
+  nparticles = nx * part
+
+  number_density = ne
+
+  # TEST CASES
+  # CASE B
+
+  drift_px = drift_u*c*me
+
+  spin = directed
+  spin_x = sqrt(0.5)
+  spin_y = 0.0
+  spin_z = sqrt(0.5)
+
+  # CASE vxE
+
+  # drift_pz = drift_u*c*me
+
+  # spin = directed
+  # spin_x = 0.0
+  # spin_y = 0.0
+  # spin_z = 1.0
+
+  # CASE v.B
+
+  # drift_px = drift_u_perp*c*me
+  # drift_pz = drift_u_fast*c*me
+  #
+  # spin = directed
+  # spin_x = 0.0
+  # spin_y = 0.0
+  # spin_z = 1.0
+
+  # END TEST CASES
+  temperature = 0
+
+
+end:species
+
+# The counterflow species is included to cancel out the electric current
+# The simulation time should be short enough to avoid any two-stream instability
+begin:species
+  # Counterflow
+  identify:electron
+  name = counterflow
+
+  nparticles = nx * part
+
+  number_density = ne
+  # TEST CASES
+  # CASE B
+
+  drift_px = -drift_u*c*me
+
+  # CASE vxE
+
+  # drift_pz = -drift_u*c*me
+
+  # CASE v.B
+
+  # drift_px = -drift_u_perp*c*me
+  # drift_pz = -drift_u_fast*c*me
+
+  # END TEST CASES
+
+  temperature = 0
+end:species
+
+# TEST CASES
+# CASE B
+
+begin:fields
+  ex = 0.0
+  ey = 0.0
+  ez = 0.0
+  bx = 0.0
+  by = 0.0
+  bz = B_max
+end:fields
+
+# CASE vxE
+
+# begin:fields
+#   ex = 0.0
+#   ey = E_max * sin(2*pi*x/L)
+#   ez = 0.0
+#   bx = 0.0
+#   by = 0.0
+#   bz = E_max * sin(2*pi*x/L) / c
+# end:fields
+#
+# begin:subset
+#   name = slice
+#   include_species:electron
+#   x_min = 0.25*L - 0.1*micron
+#   x_max = 0.25*L + 0.1*micron
+# end:subset
+
+# CASE v.B
+
+# begin:fields
+#   ex = 0.0
+#   ey = 0.0
+#   ez = 0.0
+#   bx = 0.0
+#   by = 0.0
+#   bz = 1000*B_max
+# end:fields
+
+# END TEST CASES
+
+
+begin:output
+  name = normal
+
+  # Simulated time between output dumps
+  # TEST CASES
+  # CASE B and CASE v.B
+
+  dt_snapshot = 5 * femto
+
+  particles = always
+  px = always
+  py = always
+  pz = always
+  particle_weight = always
+  spin_x = always
+  spin_y = always
+  spin_z = always
+
+  # CASE vxE
+
+  # dt_snapshot = 0.5 * femto
+  #
+  # particles = slice
+  # px = slice
+  # py = slice
+  # pz = slice
+  # particle_weight = slice
+  # spin_x = slice
+  # spin_y = slice
+  # spin_z = slice
+
+  # END TEST CASES
+
+  # Properties on grid
+  grid = always
+  ex = always
+  ey = always
+  ez = always
+  bx = always
+  by = always
+  bz = always
+  jx = always
+  jy = always
+  jz = always
+  average_particle_energy = always + species
+  mass_density = never + species
+  charge_density = always # + average + snapshot
+  number_density = always + species
+  temperature = never + species
+
+  # Extended io
+  distribution_functions = never
+end:output

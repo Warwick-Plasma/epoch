@@ -20,6 +20,7 @@ MODULE injectors
   USE evaluator
   USE random_generator
   USE utilities
+  USE spin
   USE file_injectors
 
   IMPLICIT NONE
@@ -403,6 +404,9 @@ CONTAINS
 #ifndef PER_SPECIES_WEIGHT
           density = MIN(density, injector%density_max)
           new%weight = weight_fac * density
+#endif
+#ifdef PARTICLE_SPIN
+          CALL init_particle_spin(species_list(injector%species), new)
 #endif
           CALL add_particle_to_partlist(plist, new)
         END DO

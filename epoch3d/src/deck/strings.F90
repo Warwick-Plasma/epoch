@@ -173,6 +173,10 @@ CONTAINS
         as_boundary = c_bd_y_min
     IF (str_cmp(str_in, 'y_max') .OR. str_cmp(str_in, 'up')) &
         as_boundary = c_bd_y_max
+    IF (str_cmp(str_in, 'z_min') .OR. str_cmp(str_in, 'back')) &
+        as_boundary = c_bd_z_min
+    IF (str_cmp(str_in, 'z_max') .OR. str_cmp(str_in, 'front')) &
+        as_boundary = c_bd_z_max
 
     IF (as_boundary == -1) err = IOR(err, c_err_bad_value)
 
@@ -302,6 +306,47 @@ CONTAINS
 
   END FUNCTION as_boundary_print
 
+
+
+#ifdef PARTICLE_SPIN
+  FUNCTION as_spin_distribution(str_in, err)
+
+    CHARACTER(*), INTENT(IN) :: str_in
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: as_spin_distribution
+
+    as_spin_distribution = c_spin_uniform
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'uniform')) THEN
+      as_spin_distribution = c_spin_uniform
+      RETURN
+    END IF
+
+    IF (str_cmp(TRIM(ADJUSTL(str_in)), 'directed')) THEN
+      as_spin_distribution = c_spin_directed
+      RETURN
+    END IF
+
+    err = IOR(err, c_err_bad_value)
+
+  END FUNCTION as_spin_distribution
+
+
+
+  FUNCTION as_spin_distribution_print(str_in, element, err) RESULT(res)
+
+    CHARACTER(*), INTENT(IN) :: str_in, element
+    INTEGER, INTENT(INOUT) :: err
+    INTEGER :: res
+
+    res = as_spin_distribution(str_in, err)
+
+    IF (.NOT.print_deck_constants .OR. rank /= 0) RETURN
+
+    WRITE(du,'(A,I9)') TRIM(element) // ' = ', res
+
+  END FUNCTION as_spin_distribution_print
+#endif
 
 
   FUNCTION lowercase(string_in) RESULT(string_out)

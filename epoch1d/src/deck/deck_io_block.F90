@@ -611,6 +611,17 @@ CONTAINS
       elementselected = c_dump_part_work_z_total
 #endif
 
+#ifdef PARTICLE_SPIN
+    ELSE IF (str_cmp(element, 'spin_x')) THEN
+      elementselected = c_dump_part_spin_x
+
+    ELSE IF (str_cmp(element, 'spin_y')) THEN
+      elementselected = c_dump_part_spin_y
+
+    ELSE IF (str_cmp(element, 'spin_z')) THEN
+      elementselected = c_dump_part_spin_z
+#endif
+
     ELSE IF (str_cmp(element, 'ex')) THEN
       elementselected = c_dump_ex
 
@@ -1094,6 +1105,14 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     io_block%dumpmask(c_dump_part_opdepth_brem) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
+#endif
+#ifdef PARTICLE_SPIN
+    io_block%dumpmask(c_dump_part_spin_x) = &
+        IOR(io_block%dumpmask(c_dump_part_spin_x), c_io_restartable)
+    io_block%dumpmask(c_dump_part_spin_y) = &
+        IOR(io_block%dumpmask(c_dump_part_spin_y), c_io_restartable)
+    io_block%dumpmask(c_dump_part_spin_z) = &
+        IOR(io_block%dumpmask(c_dump_part_spin_z), c_io_restartable)
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     io_block%dumpmask(c_dump_part_id) = &

@@ -1031,7 +1031,7 @@ CONTAINS
           i_ionised(i_ion) = .TRUE.
           ionised_count = ionised_count + 1
           CALL generate_secondary_electron(sec_ke_i, el_dir, ejected_electron, &
-              ion, ion_at_rest)
+              ion, ion_at_rest, species_list(el_species))
 
           ! Assign macro-electron to ejected particle list
           CALL add_particle_to_partlist(list_e_ejected, ejected_electron)
@@ -1170,7 +1170,7 @@ CONTAINS
 
 
   SUBROUTINE generate_secondary_electron(sec_ke_i, el_dir, ejected_electron, &
-        ion, ion_at_rest)
+        ion, ion_at_rest, electron_species)
 
     ! Creates a new electron macro-particle "ejected_electron", with a
     ! pre-sampled kinetic energy in the ion-rest-frame, ke_i. The momentum
@@ -1183,6 +1183,7 @@ CONTAINS
     TYPE(particle), POINTER, INTENT(OUT) :: ejected_electron
     TYPE(particle), POINTER, INTENT(IN) :: ion
     LOGICAL, INTENT(IN) :: ion_at_rest
+    TYPE(particle_species), INTENT(INOUT) :: electron_species
     REAL(num) :: sec_e_i, sec_p_mag_i, sec_p_i(3)
 
     CALL create_particle(ejected_electron)
@@ -1213,6 +1214,9 @@ CONTAINS
 #ifdef PARTICLE_DEBUG
     ejected_electron%processor = rank
     ejected_electron%processor_at_t0 = rank
+#endif
+#ifdef PARTICLE_SPIN
+    CALL init_particle_spin(electron_species, ejected_electron)
 #endif
 
   END SUBROUTINE generate_secondary_electron
