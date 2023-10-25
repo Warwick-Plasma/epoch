@@ -918,17 +918,17 @@ CONTAINS
           g_eta = 1d0
         ELSE
           g_eta = (1d0+4.8d0*(1d0+eta)*&
-		                log(1d0+1.7d0*eta)+2.44d0*eta*eta)**(-2d0/3d0)
-        ENDIF
-      	taubar_c = h_bar/m0/c/c
-      	sync_power = 2d0*alpha_f*m0*c*c/3/taubar_c*eta*eta*g_eta
+                log(1d0+1.7d0*eta)+2.44d0*eta*eta)**(-2d0/3d0)
+        END IF
+        taubar_c = h_bar/m0/c/c
+        sync_power = 2d0*alpha_f*m0*c*c/3/taubar_c*eta*eta*g_eta
 
         ! Calculate electron recoil from average synchrotron power
-      	mag_p = mag_p - dt*sync_power/c	
+        mag_p = mag_p - dt*sync_power/c
       ELSE
         ! Calculate electron recoil from photon energy
         mag_p = mag_p - photon_energy / c
-      END
+      END IF
 
 
       generating_electron%part_p(1) = dir_x * mag_p
@@ -958,7 +958,7 @@ CONTAINS
         new_photon%weight = generating_electron%weight * sync_rate
       ELSE
         new_photon%weight = generating_electron%weight
-      ENDIF
+      END IF
 
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
@@ -976,14 +976,14 @@ CONTAINS
 
     eta_min = 10.0_num**MINVAL(log_eta)
     ! In the classical case, always use the spectrum at minimum eta
-    IF (use_classical_emission .OR. (eta < eta_min)) ! Extrapolate downwards with chi \propto eta^2
+    IF (use_classical_emission .OR. (eta < eta_min)) THEN ! Extrapolate downwards with chi \propto eta^2
       chi_tmp = find_value_from_table_alt(eta_min, rand_seed, &
           n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
       chi_final = chi_tmp * (eta / eta_min)**2
     ELSE
       chi_final = find_value_from_table_alt(eta, rand_seed, &
           n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
-    ENDIF
+    END IF
 
     calculate_photon_energy = (2.0_num * chi_final / eta) * generating_gamma &
         * m0 * c**2
