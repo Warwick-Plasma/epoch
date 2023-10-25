@@ -155,6 +155,17 @@ CONTAINS
       RETURN
     END IF
 
+    IF(str_cmp(element, 'semiclassical_photon_emission')) THEN
+       use_continuous_emission = as_logical_print(value, element, errcode)
+       RETURN
+    ENDIF
+
+    IF(str_cmp(element, 'classical_photon_emission')) THEN  
+      use_continuous_emission = as_logical_print(value, element, errcode)
+      use_classical_emission = as_logical_print(value, element, errcode)
+      RETURN
+    ENDIF
+
     errcode = c_err_unknown_element
 #endif
 
