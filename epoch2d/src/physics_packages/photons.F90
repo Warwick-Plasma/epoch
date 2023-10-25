@@ -880,6 +880,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta
     REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
     REAL(num) :: rand_temp, photon_energy
+    REAL(num) :: g_eta, sync_power, sync_rate, taubar_c
     TYPE(particle), POINTER :: new_photon
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
