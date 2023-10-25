@@ -552,8 +552,14 @@ CONTAINS
           eta = calculate_eta(part_x, part_y, part_z, part_ux, part_uy, &
               part_uz, gamma_rel)
 
-          current%optical_depth = &
+          ! If using continuous emission emit a photon macroparticle at every timestep
+          IF (use_continuous_emission) THEN
+            CALL generate_photon(current, photon_species, eta)
+          ELSE
+            current%optical_depth = &
               current%optical_depth - delta_optical_depth(eta, gamma_rel)
+          ENDIF
+
 #ifdef TRIDENT_PHOTONS
           current%optical_depth_tri = current%optical_depth_tri &
               - delta_optical_depth_tri(eta, gamma_rel)
@@ -905,8 +911,24 @@ CONTAINS
     photon_energy = calculate_photon_energy(rand_temp, eta, generating_gamma)
 
     IF (use_radiation_reaction) THEN
-      ! Calculate electron recoil
-      mag_p = mag_p - photon_energy / c
+      IF (use_continuous_emission) THEN
+	      ! Calculate the energy loss from the synchrotron power
+        IF (use_classical_emission) THEN
+          g_eta = 1d0
+        ELSE
+          g_eta = (1d0+4.8d0*(1d0+eta)*&
+		                log(1d0+1.7d0*eta)+2.44d0*eta*eta)**(-2d0/3d0)
+        ENDIF
+      	taubar_c = h_bar/m0/c/c
+      	sync_power = 2d0*alpha_f*m0*c*c/3/taubar_c*eta*eta*g_eta
+
+        ! Calculate electron recoil from average synchrotron power
+      	mag_p = mag_p - dt*sync_power/c	
+      ELSE
+        ! Calculate electron recoil from photon energy
+        mag_p = mag_p - photon_energy / c
+      END
+
 
       generating_electron%part_p(1) = dir_x * mag_p
       generating_electron%part_p(2) = dir_y * mag_p
@@ -928,7 +950,14 @@ CONTAINS
 
       new_photon%optical_depth = reset_optical_depth()
       new_photon%particle_energy = photon_energy
-      new_photon%weight = generating_electron%weight
+
+      IF (use_continuous_emission) THEN
+        ! Calculate photon weight from synchrotron emission rate
+        sync_rate = delta_optical_depth(eta, generating_gamma) ! This already has *dt included
+        new_photon%weight = generating_electron%weight * sync_rate
+      ELSE
+        new_photon%weight = generating_electron%weight
+      ENDIF
 
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
@@ -945,7 +974,8 @@ CONTAINS
     REAL(num) :: eta_min, chi_tmp, chi_final  
 
     eta_min = 10.0_num**MINVAL(log_eta)
-    IF (eta < eta_min) THEN ! Extrapolate downwards with chi \propto eta^2
+    ! In the classical case, always use the spectrum at minimum eta
+    IF (use_classical_emission .OR. (eta < eta_min)) ! Extrapolate downwards with chi \propto eta^2
       chi_tmp = find_value_from_table_alt(eta_min, rand_seed, &
           n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
       chi_final = chi_tmp * (eta / eta_min)**2
