@@ -657,7 +657,7 @@ CONTAINS
     shifthash = hashmap
     DO ihash = 1, sz
       IF (IAND(shifthash, 1_i8) /= 0_i8) &
-          CALL pid_hash_add_hkind(this%list(ihash)%contents, new_id)
+          CALL pid_hash_add_hkind(this%list(sz + 1 - ihash)%contents, new_id)
       shifthash = ISHFT(shifthash, -1_i8)
     END DO
 
