@@ -911,7 +911,7 @@ CONTAINS
         sync_power = 2d0*alpha_f*m0*c*c/3/taubar_c*eta*eta*g_eta
 
         ! Calculate electron recoil from average synchrotron power
-        mag_p = mag_p - dt*sync_power/c	
+        mag_p = mag_p - dt*sync_power/c
       ELSE
         ! Calculate electron recoil from photon energy
         mag_p = mag_p - photon_energy / c
