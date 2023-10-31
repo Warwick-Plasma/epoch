@@ -235,6 +235,7 @@ CONTAINS
     REAL(num) :: next_time, time_to_bdy
     REAL(num) :: vx, vy, gamma, inv_gamma_mass, iabs_p
     REAL(num) :: x_start, y_start
+    REAL(num) :: low_in, high_in
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     LOGICAL :: no_particles_added, skip_processor
@@ -375,13 +376,25 @@ CONTAINS
       ! particle
       IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
         ! Skip all processors which are at the wrong y position
-        IF (y_in <= y_min_local .OR. y_in > y_max_local) THEN
+        low_in = y_grid_mins(y_coords) - 0.5_num * dy
+        IF (y_coords == nprocy-1) THEN 
+          high_in = y_grid_maxs(y_coords) + 0.5_num * dy
+        ELSE 
+          high_in = y_grid_mins(y_coords+1) - 0.5_num * dy
+        END IF
+        IF (y_in <= low_in .OR. y_in > high_in) THEN
           skip_processor = .TRUE.
         END IF
 
       ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
         ! Skip all processors which are at the wrong x position
-        IF (x_in <= x_min_local .OR. x_in > x_max_local) THEN
+        low_in = x_grid_mins(x_coords) - 0.5_num * dx
+        IF (x_coords == nprocx-1) THEN 
+          high_in = x_grid_maxs(x_coords) + 0.5_num * dx
+        ELSE 
+          high_in = x_grid_mins(x_coords+1) - 0.5_num * dx
+        END IF
+        IF (x_in <= low_in .OR. x_in > high_in) THEN
           skip_processor = .TRUE.
         END IF
       END IF
