@@ -656,6 +656,14 @@ CONTAINS
         CALL write_particle_variable(c_dump_part_opdepth_brem, code, &
             'Bremsstrahlung Depth', '', it_output_real)
 #endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+        CALL write_particle_variable(c_dump_part_dep_brem_tri, code, &
+            'Nuclear Trident Depth', '', it_output_real)
+#endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+        CALL write_particle_variable(c_dump_part_opdep_bh_mu, code, &
+            'BH Muon Depth', '', it_output_real)
+#endif
 #ifdef WORK_DONE_INTEGRATED
         CALL write_particle_variable(c_dump_part_work_x, code, &
             'Work_x_direction', 'J', it_output_real)

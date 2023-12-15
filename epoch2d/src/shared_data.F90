@@ -136,6 +136,12 @@ MODULE shared_data
 #ifdef BREMSSTRAHLUNG
     REAL(num) :: optical_depth_bremsstrahlung
 #endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+    REAL(num) :: optical_depth_brem_tri
+#endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+    REAL(num) :: optical_depth_brem_muon
+#endif
 #if defined(PROBE_TIME)
     REAL(num) :: probe_time
 #endif
@@ -647,6 +653,10 @@ MODULE shared_data
 #endif
   INTEGER :: bethe_heitler_electron_species = -1
   INTEGER :: bethe_heitler_positron_species = -1
+  INTEGER :: brem_trident_electron_species = -1
+  INTEGER :: brem_trident_positron_species = -1
+  INTEGER :: bethe_heitler_muon_species = -1
+  INTEGER :: bethe_heitler_antimuon_species = -1
 
   ! Deck variables
   REAL(num) :: photon_energy_min_bremsstrahlung = EPSILON(1.0_NUM)
@@ -659,6 +669,8 @@ MODULE shared_data
   LOGICAL :: use_brem_scatter = .FALSE.
   CHARACTER(LEN=string_length) :: bremsstrahlung_table_location
   LOGICAL :: use_bethe_heitler = .FALSE.
+  LOGICAL :: use_brem_trident = .FALSE.
+  LOGICAL :: use_brem_muon = .FALSE.
   LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.

@@ -1,0 +1,90 @@
+begin:control
+  nx = 512
+  ny = 8
+  npart = nx * 128
+  t_end = 2.0e-11
+  x_min = 0
+  x_max = 5.10e-3
+  y_min = -1.0e-3
+  y_max = 1.0e-3
+  dt_multiplier = 0.8
+  stdout_frequency = 100
+end:control
+
+begin:bremsstrahlung
+  use_bremsstrahlung = T
+  start_time = 0 
+  produce_photons = T 
+  photon_energy_min = 100 * kev
+  photon_weight = 1.0
+  photon_dynamics = T
+  use_bremsstrahlung_recoil = F
+  use_plasma_screening = F
+  use_brem_scatter = T
+  positron_brem = F 
+  use_bethe_heitler = F
+  use_brem_trident = T
+end:bremsstrahlung
+
+begin:boundaries
+  bc_x_min = open
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+# Electrons in the beam
+begin:species
+  name = Electron_Beam
+  frac = 0.4
+  dump = T
+  rho = 1.0e5 / (2*dx * 2*dy)
+  rho = if (x lt 2*dx and abs(y) lt dy, density(Electron_Beam), 0)
+  drift_x = 5.34e-20 # Momentum: 100 MeV/c = 5.34e-20
+  identify:electron
+end:species
+
+begin:species
+  name = Gold
+  atomic_number = 79
+  mass = 359109
+  rho = 5.9e28
+  frac = 0.2
+  charge = 0
+  dump = T
+  immobile = T
+end:species
+
+begin:species
+  # Species for bremsstrahlung photons
+  name = Photon
+  npart = 0
+  dump = T
+  identify:brem_photon
+end:species
+
+begin:species
+  name = Positron
+  npart = 0
+  dump = T
+  immobile = T
+  identify:positron
+end:species
+
+begin:output
+  dt_snapshot = t_end
+  particles = always
+  px = always
+  py = always
+  pz = always
+  weight = always
+  particle_probes = always
+end:output
+
+begin:probe
+  name = electron_probe
+  point = (5.0e-3, 0.0)    # Point on the plane
+  normal = (1.0, 0.0)      # Vector normal to the plane
+  include_species:Electron_Beam
+  dumpmask = always
+end:probe

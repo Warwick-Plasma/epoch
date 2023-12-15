@@ -592,6 +592,16 @@ CONTAINS
       elementselected = c_dump_part_opdepth_brem
 #endif
 
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+    ELSE IF (str_cmp(element, 'brem_trident_optical_depth')) THEN
+      elementselected = c_dump_part_dep_brem_tri
+#endif
+
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+    ELSE IF (str_cmp(element, 'bh_muon_optical_depth')) THEN
+      elementselected = c_dump_part_opdep_bh_mu
+#endif
+
 #ifdef WORK_DONE_INTEGRATED
     ELSE IF (str_cmp(element, 'work_x')) THEN
       elementselected = c_dump_part_work_x
@@ -1107,6 +1117,14 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     io_block%dumpmask(c_dump_part_opdepth_brem) = &
         IOR(io_block%dumpmask(c_dump_part_opdepth_brem), c_io_restartable)
+#endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+    io_block%dumpmask(c_dump_part_dep_brem_tri) = &
+        IOR(io_block%dumpmask(c_dump_part_dep_brem_tri), c_io_restartable)
+#endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+    io_block%dumpmask(c_dump_part_opdep_bh_mu) = &
+        IOR(io_block%dumpmask(c_dump_part_opdep_bh_mu), c_io_restartable)
 #endif
 #if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
     io_block%dumpmask(c_dump_part_id) = &

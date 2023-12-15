@@ -20,6 +20,8 @@ MODULE bremsstrahlung
   USE calc_df
   USE setup
   USE bethe_heitler
+  USE brem_trident
+  USE brem_muon
 
   IMPLICIT NONE
 
@@ -89,6 +91,8 @@ CONTAINS
     INTEGER :: ispecies
     INTEGER :: first_electron = -1
     INTEGER :: first_positron = -1
+    INTEGER :: first_muon = -1
+    INTEGER :: first_antimuon = -1
 
     check_bremsstrahlung_variables = c_err_none
 
@@ -108,6 +112,16 @@ CONTAINS
       IF (species_list(ispecies)%species_type == c_species_id_positron &
           .AND. first_positron == -1) THEN
         first_positron = ispecies
+      END IF
+
+      IF (species_list(ispecies)%species_type == c_species_id_muon &
+          .AND. first_muon == -1) THEN
+        first_muon = ispecies
+      END IF
+
+      IF (species_list(ispecies)%species_type == c_species_id_antimuon &
+        .AND. first_antimuon == -1) THEN
+      first_antimuon = ispecies
       END IF
     END DO
 
@@ -163,6 +177,29 @@ CONTAINS
 
       IF (bethe_heitler_positron_species == -1) THEN
         bethe_heitler_positron_species = first_positron
+      END IF
+    END IF
+
+    ! Any electron may act as a Bethe-Heitler species if no electron is
+    ! specified
+    IF (use_brem_trident) THEN
+      IF (brem_trident_electron_species == -1) THEN
+        brem_trident_electron_species = first_electron
+      END IF
+
+      IF (brem_trident_positron_species == -1) THEN
+        brem_trident_positron_species = first_positron
+      END IF
+    END IF
+
+    ! Any muon may act as a Bethe-Heitler muon species if no muon is specified
+    IF (use_brem_muon) THEN 
+      IF (bethe_heitler_muon_species == -1) THEN 
+        bethe_heitler_muon_species = first_muon 
+      END IF
+
+      IF (bethe_heitler_antimuon_species == -1) THEN 
+        bethe_heitler_antimuon_species = first_antimuon 
       END IF
     END IF
 
@@ -454,6 +491,13 @@ CONTAINS
     IF (use_bethe_heitler) &
         CALL init_bethe_heitler(size_brem_array, z_values, z_to_index)
 
+    ! Initialise Z-dependent muon pair-production functions using this Z list
+    IF (use_brem_muon) &
+        CALL init_brem_muon(size_brem_array, z_values, z_to_index)
+
+    ! Initialise tables for the nuclear trident pair production process
+    IF (use_brem_trident) CALL setup_brem_trident_tables()
+
     DEALLOCATE(int_buf)
     DEALLOCATE(real_buf)
 
@@ -659,6 +703,8 @@ CONTAINS
     END IF
 
     IF (use_bethe_heitler) CALL bethe_heitler_update_depth
+    IF (use_brem_trident) CALL brem_trident_update_depth
+    IF (use_brem_muon) CALL brem_muon_update_depth
 
   END SUBROUTINE bremsstrahlung_update_optical_depth
 

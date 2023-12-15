@@ -1897,6 +1897,39 @@ CONTAINS
       RETURN
     END IF
 
+    ! nuclear trident process electron
+    IF (str_cmp(value, 'brem_trident_electron')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_electron
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%electron = .TRUE.
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+      brem_trident_electron_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+      RETURN
+    END IF
+
+    ! nuclear trident process positron
+    IF (str_cmp(value, 'brem_trident_positron')) THEN
+      species_list(species_id)%charge = q0
+      species_list(species_id)%mass = m0
+      species_list(species_id)%species_type = c_species_id_positron
+      species_charge_set(species_id) = .TRUE.
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+      brem_trident_positron_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+      RETURN
+    END IF
+
     IF (str_cmp(value, 'photon')) THEN
       species_list(species_id)%charge = 0.0_num
       species_list(species_id)%mass = 0.0_num
@@ -1957,6 +1990,63 @@ CONTAINS
       species_list(species_id)%atomic_no_set = .TRUE.
 #ifdef BREMSSTRAHLUNG
       bethe_heitler_positron_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(value, 'muon')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m_mu
+      species_list(species_id)%species_type = c_species_id_muon
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+      IF (bethe_heitler_muon_species == -1) &
+          bethe_heitler_muon_species = species_id
+      RETURN
+    END IF
+
+    IF (str_cmp(value, 'antimuon')) THEN
+      species_list(species_id)%charge = q0
+      species_list(species_id)%mass = m_mu
+      species_list(species_id)%species_type = c_species_id_antimuon
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+      IF (bethe_heitler_antimuon_species == -1) &
+          bethe_heitler_antimuon_species = species_id
+      RETURN
+    END IF
+
+    ! Bethe Heitler muon pairs
+    IF (str_cmp(value, 'bh_muon') &
+        .OR. str_cmp(value, 'bethe_heitler_muon')) THEN
+      species_list(species_id)%charge = -q0
+      species_list(species_id)%mass = m_mu
+      species_list(species_id)%species_type = c_species_id_muon
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_muon_species = species_id
+#else
+      IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
+#endif
+      RETURN
+    END IF
+
+    IF (str_cmp(value, 'bh_antimuon') &
+        .OR. str_cmp(value, 'bethe_heitler_antimuon')) THEN
+      species_list(species_id)%charge = q0
+      species_list(species_id)%mass = m_mu
+      species_list(species_id)%species_type = c_species_id_antimuon
+      species_charge_set(species_id) = .TRUE.
+      species_list(species_id)%atomic_no = 0
+      species_list(species_id)%atomic_no_set = .TRUE.
+#ifdef BREMSSTRAHLUNG
+      bethe_heitler_antimuon_species = species_id
 #else
       IF (use_qed .OR. use_bremsstrahlung) errcode = c_err_generic_warning
 #endif
