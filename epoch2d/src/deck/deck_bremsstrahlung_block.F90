@@ -185,6 +185,16 @@ CONTAINS
       RETURN
     END IF
 
+    IF (str_cmp(element, 'use_brem_trident')) THEN
+      use_brem_trident = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'use_brem_muon')) THEN
+      use_brem_muon = as_logical_print(value, element, errcode)
+      RETURN
+    END IF
+
     IF (str_cmp(element, 'use_positron_brem') .OR. &
         str_cmp(element, 'positron_brem')) THEN
       positron_brem = as_logical_print(value, element, errcode)

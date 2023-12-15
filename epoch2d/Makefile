@@ -221,7 +221,13 @@ DEFINES := $(DEFINE)
 #DEFINES += $(D)TRIDENT_PHOTONS
 
 # Include bremsstrahlung routines
-#DEFINES += $(D)BREMSSTRAHLUNG
+DEFINES += $(D)BREMSSTRAHLUNG
+
+# Include trident pair production in nuclear fields
+DEFINES += $(D)BREM_TRIDENT
+
+# Include muon pair production
+DEFINES += $(D)BREM_MUON
 
 # Use Intel-specific 'mm_prefetch' calls to load next particle in the list
 # into cache ahead of time. Gives ~10% speed-up with Intel 12 compilers.
@@ -308,19 +314,20 @@ FC_INFO := $(shell ${FC} --version 2>/dev/null \
 
 
 SRCFILES = background_collisions.F90 balance.F90 bethe_heitler.F90 \
-  boundary.F90 bremsstrahlung.F90 calc_df.F90 collisions.F90 \
-	collision_ionise.F90 constants.F90 current_smooth.F90 custom_deck.f90 \
-	custom_laser.f90 custom_parser.f90 deck.F90 deck_boundaries_block.f90 \
-	deck_bremsstrahlung_block.F90 deck_collision_block.F90 \
-	deck_constant_block.f90 deck_control_block.F90 deck_dist_fn_block.f90 \
-	deck_fields_block.f90 deck_injector_block.F90 deck_io_block.F90 \
-	deck_io_global_block.F90 deck_laser_block.f90 deck_part_from_file_block.F90 \
-	deck_particle_probe_block.F90 deck_qed_block.F90 deck_species_block.F90 \
-	deck_stencil_block.f90 deck_subset_block.F90 deck_window_block.f90 \
-	deltaf_loader.F90 diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.F90 \
-	evaluator_blocks.F90 fields.f90 file_injectors.F90 finish.f90 helper.F90 \
-	ic_module.f90 injectors.F90 ionise.F90 iterators.F90 laser.f90 \
-	mpi_routines.F90 mpi_subtype_control.f90 numerics.f90 particle_id_hash.F90 \
+  boundary.F90 brem_muon.F90 brem_trident.F90 bremsstrahlung.F90 calc_df.F90 \
+  collisions.F90 collision_ionise.F90 constants.F90 current_smooth.F90 \
+  custom_deck.f90 custom_laser.f90 custom_parser.f90 deck.F90 \
+  deck_boundaries_block.f90 deck_bremsstrahlung_block.F90 \
+  deck_collision_block.F90 deck_constant_block.f90 deck_control_block.F90 \
+  deck_dist_fn_block.f90 deck_fields_block.f90 deck_injector_block.F90 \
+  deck_io_block.F90 deck_io_global_block.F90 deck_laser_block.f90 \
+  deck_part_from_file_block.F90 deck_particle_probe_block.F90 \
+  deck_qed_block.F90 deck_species_block.F90 deck_stencil_block.f90 \
+  deck_subset_block.F90 deck_window_block.f90 deltaf_loader.F90 \
+  diagnostics.F90 dist_fn.F90 epoch2d.F90 evaluate.F90 evaluator_blocks.F90 \
+  fields.f90 file_injectors.F90 finish.f90 helper.F90 ic_module.f90 \
+  injectors.F90 ionise.F90 iterators.F90 laser.f90 mpi_routines.F90 \
+  mpi_subtype_control.f90 numerics.f90 particle_id_hash.F90 \
 	particle_migration.F90 particle_pointer_advance.f90 particle_temperature.F90 \
 	particles.F90 partlist.F90 photons.F90 prefetch.F90 probes.F90 \
 	random_generator.f90 redblack_module.f90 setup.F90 shape_functions.F90 \
@@ -453,8 +460,10 @@ balance.o: balance.F90 boundary.o constants.o mpi_subtype_control.o \
 bethe_heitler.o: bethe_heitler.F90 calc_df.o partlist.o particles.o setup.o
 boundary.o: boundary.F90 injectors.o laser.o mpi_subtype_control.o \
   particle_id_hash.o particle_temperature.o partlist.o utilities.o
-bremsstrahlung.o: bremsstrahlung.F90 bethe_heitler.o calc_df.o particles.o \
-	partlist.o setup.o
+brem_trident.o: brem_trident.F90 calc_df.o partlist.o particles.o setup.o
+brem_muon.o: brem_muon.F90 calc_df.o partlist.o particles.o setup.o
+bremsstrahlung.o: bremsstrahlung.F90 bethe_heitler.o brem_muon.o \
+  brem_trident.o calc_df.o particles.o partlist.o setup.o
 calc_df.o: calc_df.F90 boundary.o
 collisions.o: collisions.F90 calc_df.o prefetch.o
 collision_ionise.o: collision_ionise.F90 calc_df.o collisions.o prefetch.o
