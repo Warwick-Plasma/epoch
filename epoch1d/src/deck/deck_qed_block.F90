@@ -169,6 +169,7 @@ CONTAINS
     IF (str_cmp(element, 'photon_sample_fraction') &
         .OR. str_cmp(element, 'photon_downsampling')) THEN
       photon_sample_fraction = as_real_print(value, element, errcode)
+      IF (photon_sample_fraction > 1.0) photon_sample_fraction = 1.0
       RETURN
     END IF
 

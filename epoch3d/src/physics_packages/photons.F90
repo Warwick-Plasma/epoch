@@ -955,9 +955,9 @@ CONTAINS
       IF (use_continuous_emission) THEN
         ! Calculate photon weight from synchrotron emission rate
         sync_rate = delta_optical_depth(eta, generating_gamma) ! This already has *dt included
-        new_photon%weight = generating_electron%weight * sync_rate
+        new_photon%weight = generating_electron%weight * sync_rate / photon_sample_fraction
       ELSE
-        new_photon%weight = generating_electron%weight
+        new_photon%weight = generating_electron%weight / photon_sample_fraction
       END IF
 
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
