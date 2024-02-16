@@ -930,7 +930,6 @@ CONTAINS
         mag_p = mag_p - photon_energy / c
       END IF
 
-
       generating_electron%part_p(1) = dir_x * mag_p
       generating_electron%part_p(2) = dir_y * mag_p
       generating_electron%part_p(3) = dir_z * mag_p
@@ -939,7 +938,8 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (photon_energy > photon_energy_min .AND. produce_photons) THEN
+    IF (photon_energy > photon_energy_min .AND. produce_photons &
+	.AND. random() < photon_sample_fraction) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       CALL create_particle(new_photon)
