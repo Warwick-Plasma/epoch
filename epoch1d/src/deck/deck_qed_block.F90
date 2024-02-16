@@ -166,6 +166,12 @@ CONTAINS
       RETURN
     ENDIF
 
+    IF (str_cmp(element, 'photon_sample_fraction') &
+        .OR. str_cmp(element, 'photon_downsampling')) THEN
+      photon_sample_fraction = as_real_print(value, element, errcode)
+      RETURN
+    END IF
+
     errcode = c_err_unknown_element
 #endif
 
