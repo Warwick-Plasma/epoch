@@ -922,7 +922,8 @@ CONTAINS
         END IF
         taubar_c = h_bar/m0/c/c
         beta = SQRT(1.0_num - 1.0_num/generating_gamma/generating_gamma)
-        sync_power = 2.0_num*alpha_f*m0*c*c/(3.0_num*taubar_c) * beta*beta*eta*eta*g_eta
+        sync_power = 2.0_num*alpha_f*m0*c*c/(3.0_num*taubar_c) &
+                      * beta*beta*eta*eta*g_eta
 
         ! Calculate electron recoil from average synchrotron power
         mag_p = mag_p - dt*sync_power / (beta*c)
@@ -956,7 +957,8 @@ CONTAINS
       IF (use_continuous_emission) THEN
         ! Calculate photon weight from synchrotron emission rate
         sync_rate = delta_optical_depth(eta, generating_gamma) ! This already has *dt included
-        new_photon%weight = generating_electron%weight * sync_rate / photon_sample_fraction
+        new_photon%weight = generating_electron%weight * sync_rate & 
+                                                       / photon_sample_fraction
       ELSE
         new_photon%weight = generating_electron%weight / photon_sample_fraction
       END IF
