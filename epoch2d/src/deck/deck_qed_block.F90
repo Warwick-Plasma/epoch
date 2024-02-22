@@ -160,8 +160,7 @@ CONTAINS
        RETURN
     ENDIF
 
-    IF(str_cmp(element, 'classical_photon_emission')) THEN  
-      use_continuous_emission = as_logical_print(value, element, errcode)
+    IF(str_cmp(element, 'classical_photon_emission')) THEN
       use_classical_emission = as_logical_print(value, element, errcode)
       RETURN
     ENDIF
@@ -204,6 +203,20 @@ CONTAINS
       END IF
       errcode = c_err_bad_value + c_err_terminate
     END IF
+
+    ! Handling for different combinations of semiclassical and classical emission
+    IF (use_continuous_emission .AND. use_classical_emission) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*)
+          WRITE(io,*) '*** WARNING ***'
+          WRITE(io,*) 'You cannot have both classical_photon_emission=T and ', &
+            'semiclassical_photon_emission=T. Assuming only classical emission=T.'
+        END DO
+      END IF
+    END IF
+    use_continuous_emission = (use_continuous_emission .OR. use_classical_emission)
 #endif
 
   END FUNCTION qed_block_check
