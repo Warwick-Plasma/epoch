@@ -867,7 +867,7 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta
     REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
     REAL(num) :: rand_temp, photon_energy
-    REAL(num) :: g_eta, sync_power, sync_rate, taubar_c
+    REAL(num) :: g_eta, sync_power, sync_rate, taubar_c, beta
     TYPE(particle), POINTER :: new_photon
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
@@ -895,10 +895,11 @@ CONTAINS
                 log(1d0+1.7d0*eta)+2.44d0*eta*eta)**(-2d0/3d0)
         END IF
         taubar_c = h_bar/m0/c/c
-        sync_power = 2d0*alpha_f*m0*c*c/3/taubar_c*eta*eta*g_eta
+        beta = SQRT(1.0_num - 1.0_num/generating_gamma/generating_gamma)
+        sync_power = 2.0_num*alpha_f*m0*c*c/(3.0_num*taubar_c) * beta*beta*eta*eta*g_eta
 
         ! Calculate electron recoil from average synchrotron power
-        mag_p = mag_p - dt*sync_power/c
+        mag_p = mag_p - dt*sync_power / (beta*c)
       ELSE
         ! Calculate electron recoil from photon energy
         mag_p = mag_p - photon_energy / c
@@ -913,7 +914,7 @@ CONTAINS
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
     IF (photon_energy > photon_energy_min .AND. produce_photons &
-	.AND. random() < photon_sample_fraction) THEN
+        .AND. random() < photon_sample_fraction) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       CALL create_particle(new_photon)
