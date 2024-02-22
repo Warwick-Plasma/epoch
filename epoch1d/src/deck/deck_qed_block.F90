@@ -211,12 +211,14 @@ CONTAINS
           io = io_units(iu)
           WRITE(io,*)
           WRITE(io,*) '*** WARNING ***'
-          WRITE(io,*) 'You cannot have both classical_photon_emission=T and ', &
-            'semiclassical_photon_emission=T. Assuming only classical emission=T.'
+          WRITE(io,*) 'You cannot have both classical_photon_emission=T ', &
+            'and semiclassical_photon_emission=T. Assuming only ', &
+            'classical emission=T.'
         END DO
       END IF
     END IF
-    use_continuous_emission = (use_continuous_emission .OR. use_classical_emission)
+    use_continuous_emission = (use_continuous_emission &
+                               .OR. use_classical_emission)
 #endif
 
   END FUNCTION qed_block_check
