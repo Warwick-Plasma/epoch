@@ -867,7 +867,8 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta
     REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
     REAL(num) :: rand_temp, photon_energy
-    REAL(num) :: g_eta, sync_power, sync_rate, taubar_c, beta
+    REAL(num) :: g_eta, sync_force, sync_rate, taubar_c, beta
+    REAL(num) :: rad_limit = 1.0_num
     TYPE(particle), POINTER :: new_photon
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
@@ -887,7 +888,7 @@ CONTAINS
 
     IF (use_radiation_reaction) THEN
       IF (use_continuous_emission) THEN
-	! Calculate the energy loss from the synchrotron power
+	! Calculate the momentum loss from the Landau-Lifshitz force
         IF (use_classical_emission) THEN
           g_eta = 1d0
         ELSE
@@ -896,11 +897,16 @@ CONTAINS
         END IF
         taubar_c = h_bar/m0/c/c
         beta = SQRT(1.0_num - 1.0_num/generating_gamma/generating_gamma)
-        sync_power = 2.0_num*alpha_f*m0*c*c/(3.0_num*taubar_c) &
-                      * beta*beta*eta*eta*g_eta
+        sync_force = 2.0_num*alpha_f*m0*c/(3.0_num*taubar_c) &
+                      * beta*eta*eta*g_eta
 
-        ! Calculate electron recoil from average synchrotron power
-        mag_p = mag_p - dt*sync_power / (beta*c)
+        ! Ensure particle can't give away more momentum than it starts with
+        IF (mag_p > dt*sync_force) THEN
+          mag_p = mag_p - dt*sync_force
+        ELSE
+          rad_limit = mag_p / (dt*sync_force)
+          mag_p = 0.0_num
+        END IF
       ELSE
         ! Calculate electron recoil from photon energy
         mag_p = mag_p - photon_energy / c
@@ -930,7 +936,7 @@ CONTAINS
 
       IF (use_continuous_emission) THEN
         ! Calculate photon weight from synchrotron emission rate
-        sync_rate = delta_optical_depth(eta, generating_gamma) ! This already has *dt included
+        sync_rate = delta_optical_depth(eta, generating_gamma) * rad_limit ! This already has *dt included
         new_photon%weight = generating_electron%weight * sync_rate &
                                                        / photon_sample_fraction
       ELSE
