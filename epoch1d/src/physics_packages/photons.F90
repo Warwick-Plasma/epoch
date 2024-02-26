@@ -926,7 +926,8 @@ CONTAINS
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (photon_energy > photon_energy_min .AND. produce_photons .AND. samp_photon) THEN
+    IF (photon_energy > photon_energy_min .AND. produce_photons &
+        .AND. samp_photon) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       CALL create_particle(new_photon)
