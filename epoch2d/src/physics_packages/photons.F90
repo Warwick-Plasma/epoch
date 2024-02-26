@@ -882,6 +882,7 @@ CONTAINS
     REAL(num) :: rand_temp, photon_energy
     REAL(num) :: g_eta, sync_force, sync_rate, taubar_c, beta
     REAL(num) :: rad_limit = 1.0_num
+    LOGICAL :: samp_photon
     TYPE(particle), POINTER :: new_photon
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
@@ -930,11 +931,15 @@ CONTAINS
       generating_electron%part_p(3) = dir_z * mag_p
     END IF
 
+    samp_photon = .TRUE.
+    IF (photon_sample_fraction < 1.0_num) THEN
+      samp_photon = random() < photon_sample_fraction    
+    END IF
+
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (photon_energy > photon_energy_min .AND. produce_photons &
-        .AND. random() < photon_sample_fraction) THEN
+    IF (photon_energy > photon_energy_min .AND. produce_photons .AND. samp_photon) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       CALL create_particle(new_photon)
