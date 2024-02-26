@@ -915,10 +915,10 @@ CONTAINS
       IF (use_continuous_emission) THEN
 	      ! Calculate the energy loss from the synchrotron power
         IF (use_classical_emission) THEN
-          g_eta = 1d0
+          g_eta = 1.0_num
         ELSE
-          g_eta = (1d0+4.8d0*(1d0+eta)*&
-                log(1d0+1.7d0*eta)+2.44d0*eta*eta)**(-2d0/3d0)
+          g_eta = (1.0_num+4.8_num*(1.0_num+eta)*&
+                log(1.0_num+1.7_num*eta)+2.44_num*eta*eta)**(-2.0_num/3.0_num)
         END IF
         taubar_c = h_bar/m0/c/c
         beta = SQRT(1.0_num - 1.0_num/generating_gamma/generating_gamma)
