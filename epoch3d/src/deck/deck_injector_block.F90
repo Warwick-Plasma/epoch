@@ -59,6 +59,8 @@ CONTAINS
     ! Every new laser uses the internal time function
     ALLOCATE(working_injector)
 
+    CALL init_injector(working_injector)
+
   END SUBROUTINE injector_block_start
 
 
@@ -66,6 +68,7 @@ CONTAINS
   SUBROUTINE injector_block_end
 
     REAL(num) :: first_time
+    INTEGER :: io, iu
 
     IF (deck_state == c_ds_first) RETURN
 
@@ -79,6 +82,21 @@ CONTAINS
       CALL read_injector_real(unit_t, first_time, working_injector)
       IF (.NOT. working_injector%file_finished) &
           working_injector%next_time = first_time
+    END IF
+
+    IF (.NOT. boundary_set .AND. .NOT. working_injector%particle_source) THEN
+      IF (rank == 0) THEN
+        DO iu = 1, nio_units ! Print to stdout and to file
+          io = io_units(iu)
+          WRITE(io,*) '*** ERROR ***'
+          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
+          WRITE(io,*) 'Injector is missing a boundary, or particle_source key'
+        END DO
+        CALL abort_code(c_err_required_element_not_set)
+      END IF
+      extended_error_string = 'boundary'
+      errcode = c_err_required_element_not_set
+      RETURN
     END IF
 
     CALL attach_injector(working_injector)
@@ -107,22 +125,21 @@ CONTAINS
       IF (boundary_set) RETURN
       boundary = as_boundary_print(value, element, errcode)
       boundary_set = .TRUE.
-      CALL init_injector(boundary, working_injector)
-      RETURN
-    END IF
-
-    IF (.NOT. boundary_set) THEN
-      IF (rank == 0) THEN
-        DO iu = 1, nio_units ! Print to stdout and to file
-          io = io_units(iu)
-          WRITE(io,*) '*** ERROR ***'
-          WRITE(io,*) 'Input deck line number ', TRIM(deck_line_number)
-          WRITE(io,*) 'Cannot set injector properties before boundary is set'
-        END DO
-        CALL abort_code(c_err_required_element_not_set)
+      injector_boundary(boundary) = .TRUE.
+      working_injector%boundary = boundary
+      IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+        ALLOCATE(working_injector%depth(1-ng:ny+ng,1-ng:nz+ng))
       END IF
-      extended_error_string = 'boundary'
-      errcode = c_err_required_element_not_set
+  
+      IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+        ALLOCATE(working_injector%depth(1-ng:nx+ng,1-ng:nz+ng))
+      END IF
+
+      IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
+        ALLOCATE(working_injector%depth(1-ng:nx+ng,1-ng:ny+ng))
+      END IF
+
+      working_injector%depth = 1.0_num
       RETURN
     END IF
 
@@ -271,6 +288,12 @@ CONTAINS
 
     IF (str_cmp(element, 'inject_from_file')) THEN
       working_injector%inject_from_file = as_logical_print(value, element, &
+          errcode)
+      RETURN
+    END IF
+
+    IF (str_cmp(element, 'particle_source')) THEN
+      working_injector%particle_source = as_logical_print(value, element, &
           errcode)
       RETURN
     END IF

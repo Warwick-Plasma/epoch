@@ -753,6 +753,7 @@ MODULE shared_data
     ! Additional parameters for file injection
     LOGICAL :: inject_from_file
     LOGICAL :: file_finished
+    LOGICAL :: particle_source
     INTEGER :: custom_id
     REAL(num) :: next_time
     ! Position data

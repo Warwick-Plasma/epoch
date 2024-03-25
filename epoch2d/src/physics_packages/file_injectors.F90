@@ -42,7 +42,7 @@ CONTAINS
           FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%t_data))
       IF (rank == 0) THEN
         PRINT*, ''
-        PRINT*, 'Successfully opened time file: ', TRIM(data_dir) // '/' // &
+        PRINT*, 'Successfully opened time file: ', TRIM(data_dir) // &
             TRIM(injector_filenames%t_data)
       END IF
     ELSE
@@ -63,7 +63,7 @@ CONTAINS
           FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%w_data))
       IF (rank == 0) THEN
         PRINT*, ''
-        PRINT*, 'Successfully opened weight file: ', TRIM(data_dir) // '/' // &
+        PRINT*, 'Successfully opened weight file: ', TRIM(data_dir) // &
             TRIM(injector_filenames%w_data)
       END IF
     ELSE
@@ -85,7 +85,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%x_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened x file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened x file: ', TRIM(data_dir)  // &
               TRIM(injector_filenames%x_data)
         END IF
       ELSE
@@ -106,7 +106,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%y_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened y file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened y file: ', TRIM(data_dir)  // &
               TRIM(injector_filenames%y_data)
         END IF
       ELSE
@@ -128,7 +128,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%px_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened px file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened px file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%px_data)
         END IF
       ELSE
@@ -149,7 +149,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%py_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened py file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened py file: ', TRIM(data_dir)  // &
               TRIM(injector_filenames%py_data)
         END IF
       ELSE
@@ -170,7 +170,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%pz_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened pz file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened pz file: ', TRIM(data_dir)  // &
               TRIM(injector_filenames%pz_data)
         END IF
       ELSE
@@ -193,7 +193,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%id_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened id file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened id file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%id_data)
         END IF
       ELSE
@@ -258,12 +258,17 @@ CONTAINS
       ! timestep ahead of particle time when this is called
       IF (.NOT. injector%next_time < time + 0.5_num*dt ) EXIT
 
-      ! If on x boundary read the y position, and vice versa
-      boundary = injector%boundary
-      IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-        CALL read_injector_real(unit_y, y_start, injector)
-      ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+      IF (injector%particle_source) THEN
         CALL read_injector_real(unit_x, x_start, injector)
+        CALL read_injector_real(unit_y, y_start, injector)
+      ELSE
+        ! If on x boundary read the y position, and vice versa
+        boundary = injector%boundary
+        IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+          CALL read_injector_real(unit_y, y_start, injector)
+        ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+          CALL read_injector_real(unit_x, x_start, injector)
+        END IF
       END IF
 
 #ifndef PER_SPECIES_WEIGHT
@@ -306,16 +311,18 @@ CONTAINS
       IF (injector%file_finished) EXIT
 
       ! Identify processors which aren't adding this particle to the simulation
-      boundary = injector%boundary
       skip_processor = .FALSE.
-      IF (boundary == c_bd_x_min) THEN
-        IF (.NOT. x_min_boundary) skip_processor = .TRUE.
-      ELSE IF (boundary == c_bd_x_max) THEN
-        IF (.NOT. x_max_boundary) skip_processor = .TRUE.
-      ELSE IF (boundary == c_bd_y_min) THEN
-        IF (.NOT. y_min_boundary) skip_processor = .TRUE.
-      ELSE IF (boundary == c_bd_y_max) THEN
-        IF (.NOT. y_max_boundary) skip_processor = .TRUE.
+      IF (.NOT. injector%particle_source) THEN
+        boundary = injector%boundary
+        IF (boundary == c_bd_x_min) THEN
+          IF (.NOT. x_min_boundary) skip_processor = .TRUE.
+        ELSE IF (boundary == c_bd_x_max) THEN
+          IF (.NOT. x_max_boundary) skip_processor = .TRUE.
+        ELSE IF (boundary == c_bd_y_min) THEN
+          IF (.NOT. y_min_boundary) skip_processor = .TRUE.
+        ELSE IF (boundary == c_bd_y_max) THEN
+          IF (.NOT. y_max_boundary) skip_processor = .TRUE.
+        END IF
       END IF
 
       ! Skip the following phases if this rank isn't on the right boundary
@@ -358,23 +365,28 @@ CONTAINS
       ! at next_time. Note that global time is a half timestep ahead of the time
       ! our particles are at
       time_to_bdy = (injector%next_time - (time-0.5_num*dt))
-      IF (boundary == c_bd_x_min) THEN
-        x_in = x_min - time_to_bdy * vx
-        y_in = y_start - time_to_bdy * vy
-      ELSE IF (boundary == c_bd_x_max) THEN
-        x_in = x_max - time_to_bdy * vx
-        y_in = y_start - time_to_bdy * vy
-      ELSE IF (boundary == c_bd_y_min) THEN
+      IF (injector%particle_source) THEN
         x_in = x_start - time_to_bdy * vx
-        y_in = y_min - time_to_bdy * vy
-      ELSE IF (boundary == c_bd_y_max) THEN
-        x_in = x_start - time_to_bdy * vx
-        y_in = y_max - time_to_bdy * vy
+        y_in = y_start - time_to_bdy * vy
+      ELSE
+        IF (boundary == c_bd_x_min) THEN
+          x_in = x_min - time_to_bdy * vx
+          y_in = y_start - time_to_bdy * vy
+        ELSE IF (boundary == c_bd_x_max) THEN
+          x_in = x_max - time_to_bdy * vx
+          y_in = y_start - time_to_bdy * vy
+        ELSE IF (boundary == c_bd_y_min) THEN
+          x_in = x_start - time_to_bdy * vx
+          y_in = y_min - time_to_bdy * vy
+        ELSE IF (boundary == c_bd_y_max) THEN
+          x_in = x_start - time_to_bdy * vx
+          y_in = y_max - time_to_bdy * vy
+        END IF
       END IF
 
       ! Now we have start position, find the processor which will be adding the
       ! particle
-      IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+      IF (injector%particle_source) THEN 
         ! Skip all processors which are at the wrong y position
         low_in = y_grid_mins(y_coords) - 0.5_num * dy
         IF (y_coords == nprocy-1) THEN 
@@ -385,8 +397,7 @@ CONTAINS
         IF (y_in <= low_in .OR. y_in > high_in) THEN
           skip_processor = .TRUE.
         END IF
-
-      ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+  
         ! Skip all processors which are at the wrong x position
         low_in = x_grid_mins(x_coords) - 0.5_num * dx
         IF (x_coords == nprocx-1) THEN 
@@ -396,6 +407,32 @@ CONTAINS
         END IF
         IF (x_in <= low_in .OR. x_in > high_in) THEN
           skip_processor = .TRUE.
+        END IF
+
+      ELSE
+        IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
+          ! Skip all processors which are at the wrong y position
+          low_in = y_grid_mins(y_coords) - 0.5_num * dy
+          IF (y_coords == nprocy-1) THEN 
+            high_in = y_grid_maxs(y_coords) + 0.5_num * dy
+          ELSE 
+            high_in = y_grid_mins(y_coords+1) - 0.5_num * dy
+          END IF
+          IF (y_in <= low_in .OR. y_in > high_in) THEN
+            skip_processor = .TRUE.
+          END IF
+
+        ELSE IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
+          ! Skip all processors which are at the wrong x position
+          low_in = x_grid_mins(x_coords) - 0.5_num * dx
+          IF (x_coords == nprocx-1) THEN 
+            high_in = x_grid_maxs(x_coords) + 0.5_num * dx
+          ELSE 
+            high_in = x_grid_mins(x_coords+1) - 0.5_num * dx
+          END IF
+          IF (x_in <= low_in .OR. x_in > high_in) THEN
+            skip_processor = .TRUE.
+          END IF
         END IF
       END IF
 

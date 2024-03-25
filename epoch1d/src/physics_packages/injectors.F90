@@ -28,24 +28,21 @@ MODULE injectors
 
 CONTAINS
 
-  SUBROUTINE init_injector(boundary, injector)
+  SUBROUTINE init_injector(injector)
 
-    INTEGER, INTENT(IN) :: boundary
     TYPE(injector_block), INTENT(INOUT) :: injector
 
     injector%npart_per_cell = -1.0_num
     injector%species = -1
-    injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%density_max = HUGE(1.0_num)
     injector%use_flux_injector = .TRUE.
-    injector_boundary(boundary) = .TRUE.
+    injector%particle_source = .FALSE.
     NULLIFY(injector%next)
 
-    injector%depth = 1.0_num
     need_random_state = .TRUE.
 
     ! Additional variables for file injectors
@@ -426,7 +423,10 @@ CONTAINS
 
     ALLOCATE(working_injector)
 
-    CALL init_injector(bnd, working_injector)
+    CALL init_injector(working_injector)
+    injector_boundary(bnd) = .TRUE.
+    working_injector%boundary = bnd
+    working_injector%depth = 1.0_num
     working_injector%species = ispecies
 
     CALL attach_injector(working_injector)

@@ -42,7 +42,7 @@ CONTAINS
           FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%t_data))
       IF (rank == 0) THEN
         PRINT*, ''
-        PRINT*, 'Successfully opened time file: ', TRIM(data_dir) // '/' // &
+        PRINT*, 'Successfully opened time file: ', TRIM(data_dir) // &
             TRIM(injector_filenames%t_data)
       END IF
     ELSE
@@ -63,7 +63,7 @@ CONTAINS
           FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%w_data))
       IF (rank == 0) THEN
         PRINT*, ''
-        PRINT*, 'Successfully opened weight file: ', TRIM(data_dir) // '/' // &
+        PRINT*, 'Successfully opened weight file: ', TRIM(data_dir) // &
             TRIM(injector_filenames%w_data)
       END IF
     ELSE
@@ -85,7 +85,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%px_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened px file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened px file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%px_data)
         END IF
       ELSE
@@ -106,7 +106,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%py_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened py file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened py file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%py_data)
         END IF
       ELSE
@@ -127,7 +127,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%pz_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened pz file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened pz file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%pz_data)
         END IF
       ELSE
@@ -136,6 +136,28 @@ CONTAINS
           PRINT*, '*** ERROR ***'
           PRINT*, 'Unable to locate pz file: ', &
               TRIM(data_dir) // '/' // TRIM(injector_filenames%pz_data)
+        END IF
+      END IF
+    END IF
+
+    ! Position (ignored for boundary injectors)
+    IF (injector%x_data_given) THEN
+      INQUIRE(FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%x_data),&
+          EXIST=file_exists)
+      IF (file_exists) THEN
+        OPEN(UNIT=inj_base_unit + unit_x, &
+            FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%x_data))
+        IF (rank == 0) THEN
+          PRINT*, ''
+          PRINT*, 'Successfully opened x file: ', TRIM(data_dir)  // &
+              TRIM(injector_filenames%x_data)
+        END IF
+      ELSE
+        IF (rank == 0) THEN
+          PRINT*, ''
+          PRINT*, '*** ERROR ***'
+          PRINT*, 'Unable to locate x file: ', &
+              TRIM(data_dir) // '/' // TRIM(injector_filenames%x_data)
         END IF
       END IF
     END IF
@@ -150,7 +172,7 @@ CONTAINS
             FILE=TRIM(data_dir) // '/' // TRIM(injector_filenames%id_data))
         IF (rank == 0) THEN
           PRINT*, ''
-          PRINT*, 'Successfully opened id file: ', TRIM(data_dir) // '/' // &
+          PRINT*, 'Successfully opened id file: ', TRIM(data_dir) // &
               TRIM(injector_filenames%id_data)
         END IF
       ELSE
@@ -189,7 +211,7 @@ CONTAINS
     INTEGER(i8) :: id_in
 #endif
     INTEGER :: boundary
-    REAL(num) :: next_time, time_to_bdy
+    REAL(num) :: x_start, next_time, time_to_bdy
     REAL(num) :: vx, gamma, inv_gamma_mass, iabs_p
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
@@ -212,6 +234,10 @@ CONTAINS
       ! We always start with injector%next_time known. Global time is a half
       ! timestep ahead of particle time when this is called
       IF (.NOT. injector%next_time < time + 0.5_num*dt ) EXIT
+
+      IF (injector%particle_source) THEN
+        CALL read_injector_real(unit_x, x_start, injector)
+      END IF
 
 #ifndef PER_SPECIES_WEIGHT
       ! Read weight data
@@ -253,12 +279,14 @@ CONTAINS
       IF (injector%file_finished) EXIT
 
       ! Identify processors which aren't adding this particle to the simulation
-      boundary = injector%boundary
       skip_processor = .FALSE.
-      IF (boundary == c_bd_x_min) THEN
-        IF (.NOT. x_min_boundary) skip_processor = .TRUE.
-      ELSE IF (boundary == c_bd_x_max) THEN
-        IF (.NOT. x_max_boundary) skip_processor = .TRUE.
+      IF (.NOT. injector%particle_source) THEN
+        boundary = injector%boundary
+        IF (boundary == c_bd_x_min) THEN
+          IF (.NOT. x_min_boundary) skip_processor = .TRUE.
+        ELSE IF (boundary == c_bd_x_max) THEN
+          IF (.NOT. x_max_boundary) skip_processor = .TRUE.
+        END IF
       END IF
 
       ! Skip the following phases if this rank isn't on the right boundary
@@ -299,10 +327,14 @@ CONTAINS
       ! at next_time. Note that global time is a half timestep ahead of the time
       ! our particles are at
       time_to_bdy = (injector%next_time - (time-0.5_num*dt))
-      IF (boundary == c_bd_x_min) THEN
-        x_in = x_min - time_to_bdy * vx
-      ELSE IF (boundary == c_bd_x_max) THEN
-        x_in = x_max - time_to_bdy * vx
+      IF (injector%particle_source) THEN
+        x_in = x_start - time_to_bdy * vx
+      ELSE
+        IF (boundary == c_bd_x_min) THEN
+          x_in = x_min - time_to_bdy * vx
+        ELSE IF (boundary == c_bd_x_max) THEN
+          x_in = x_max - time_to_bdy * vx
+        END IF
       END IF
 
       ! Create the particle and assign properties

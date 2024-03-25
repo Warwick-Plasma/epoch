@@ -28,37 +28,22 @@ MODULE injectors
 
 CONTAINS
 
-  SUBROUTINE init_injector(boundary, injector)
+  SUBROUTINE init_injector(injector)
 
-    INTEGER, INTENT(IN) :: boundary
     TYPE(injector_block), INTENT(INOUT) :: injector
 
     injector%npart_per_cell = -1.0_num
     injector%species = -1
-    injector%boundary = boundary
     injector%t_start = 0.0_num
     injector%t_end = t_end
     injector%has_t_end = .FALSE.
     injector%density_min = 0.0_num
     injector%density_max = HUGE(1.0_num)
     injector%use_flux_injector = .TRUE.
-    injector_boundary(boundary) = .TRUE.
+    injector%particle_source = .FALSE.
     NULLIFY(injector%depth)
     NULLIFY(injector%next)
 
-    IF (boundary == c_bd_x_min .OR. boundary == c_bd_x_max) THEN
-      ALLOCATE(injector%depth(1-ng:ny+ng, 1-ng:nz+ng))
-    END IF
-
-    IF (boundary == c_bd_y_min .OR. boundary == c_bd_y_max) THEN
-      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:nz+ng))
-    END IF
-
-    IF (boundary == c_bd_z_min .OR. boundary == c_bd_z_max) THEN
-      ALLOCATE(injector%depth(1-ng:nx+ng, 1-ng:ny+ng))
-    END IF
-
-    injector%depth = 1.0_num
     need_random_state = .TRUE.
 
     ! Additional variables for file injectors
@@ -526,7 +511,21 @@ CONTAINS
 
     ALLOCATE(working_injector)
 
-    CALL init_injector(bnd, working_injector)
+    CALL init_injector(working_injector)
+    injector_boundary(bnd) = .TRUE.
+    working_injector%boundary = bnd
+    IF (bnd == c_bd_x_min .OR. bnd == c_bd_x_max) THEN
+      ALLOCATE(working_injector%depth(1-ng:ny+ng,1-ng:nz+ng))
+    END IF
+
+    IF (bnd == c_bd_y_min .OR. bnd == c_bd_y_max) THEN
+      ALLOCATE(working_injector%depth(1-ng:nx+ng,1-ng:nz+ng))
+    END IF
+
+    IF (bnd == c_bd_z_min .OR. bnd == c_bd_z_max) THEN
+      ALLOCATE(working_injector%depth(1-ng:nx+ng,1-ng:ny+ng))
+    END IF
+    working_injector%depth = 1.0_num
     working_injector%species = ispecies
 
     CALL attach_injector(working_injector)

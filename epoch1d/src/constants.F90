@@ -66,7 +66,8 @@ MODULE constants
   INTEGER, PARAMETER :: unit_t  = 3
   INTEGER, PARAMETER :: unit_w  = 4
   INTEGER, PARAMETER :: unit_id = 5
-  INTEGER, PARAMETER :: custom_var_num = 6
+  INTEGER, PARAMETER :: unit_x = 6
+  INTEGER, PARAMETER :: custom_var_num = 7
 
   ! Boundary type codes
   INTEGER, PARAMETER :: c_bc_null = -1

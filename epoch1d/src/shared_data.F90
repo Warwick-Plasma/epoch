@@ -698,8 +698,11 @@ MODULE shared_data
     ! Additional parameters for file injection
     LOGICAL :: inject_from_file
     LOGICAL :: file_finished
+    LOGICAL :: particle_source
     INTEGER :: custom_id
     REAL(num) :: next_time
+    ! Position data
+    LOGICAL :: x_data_given
     ! Momentum Data
     LOGICAL :: px_data_given
     LOGICAL :: py_data_given
@@ -719,6 +722,8 @@ MODULE shared_data
   END TYPE injector_block
 
   TYPE injector_files
+    ! Position data
+    CHARACTER(LEN=string_length) :: x_data
     ! Momentum Data
     CHARACTER(LEN=string_length) :: px_data
     CHARACTER(LEN=string_length) :: py_data
