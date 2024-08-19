@@ -676,6 +676,7 @@ MODULE shared_data
   LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
+  LOGICAL :: ignore_dt_corrections = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data
