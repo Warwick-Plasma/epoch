@@ -301,7 +301,7 @@ CONTAINS
       IF (parameters%use_grid_position) THEN
         CALL push_on_eval(&
             SQRT(x(parameters%pack_ix)**2 + y(parameters%pack_iy)**2 &
-               + z(parameters%pack_iy)**2))
+               + z(parameters%pack_iz)**2))
       ELSE
         CALL push_on_eval(&
             SQRT(parameters%pack_pos(1)**2 + parameters%pack_pos(2)**2 &
