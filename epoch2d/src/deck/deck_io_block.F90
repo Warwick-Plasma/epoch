@@ -1106,6 +1106,14 @@ CONTAINS
     io_block%dumpmask(c_dump_part_id) = &
         IOR(io_block%dumpmask(c_dump_part_id), c_io_restartable)
 #endif
+#ifdef WORK_DONE_INTEGRATED
+    io_block%dumpmask(c_dump_part_work_x_total) = &
+         IOR(io_block%dumpmask(c_dump_part_work_x_total), c_io_restartable)
+    io_block%dumpmask(c_dump_part_work_y_total) = &
+         IOR(io_block%dumpmask(c_dump_part_work_y_total), c_io_restartable)
+    io_block%dumpmask(c_dump_part_work_z_total) = &
+         IOR(io_block%dumpmask(c_dump_part_work_z_total), c_io_restartable)
+#endif   
     ! Persistent IDs
     io_block%dumpmask(c_dump_persistent_ids) = &
         IOR(io_block%dumpmask(c_dump_persistent_ids), c_io_restartable)

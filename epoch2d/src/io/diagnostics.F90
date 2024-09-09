@@ -2470,6 +2470,13 @@ CONTAINS
     IF (done_subset_init) RETURN
     done_subset_init = .TRUE.
 
+    ! Update particle ID values if using
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4)
+    DO i = 1, n_species 
+      CALL generate_particle_ids(species_list(i)%attached_list)
+    END DO
+#endif
+
     IF (isubset == 1) THEN
       io_list => species_list
       RETURN

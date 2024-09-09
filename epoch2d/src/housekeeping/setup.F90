@@ -1506,6 +1506,46 @@ CONTAINS
           CALL abort_code(c_err_pp_options_missing)
           STOP
 #endif
+        
+        ELSE IF (block_id(1:23) == 'time_integrated_work_x/') THEN
+#ifdef WORK_DONE_INTEGRATED
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_work_x_total)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with time integrated work.'
+            PRINT*, 'Please recompile with the -DWORK_DONE_INTEGRATED option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+          ELSE IF (block_id(1:23) == 'time_integrated_work_y/') THEN
+#ifdef WORK_DONE_INTEGRATED
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_work_y_total)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with time integrated work.'
+            PRINT*, 'Please recompile with the -DWORK_DONE_INTEGRATED option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+          ELSE IF (block_id(1:23) == 'time_integrated_work_z/') THEN
+#ifdef WORK_DONE_INTEGRATED
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_work_z_total)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with time integrated work.'
+            PRINT*, 'Please recompile with the -DWORK_DONE_INTEGRATED option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
         END IF
       END SELECT
     END DO
@@ -2057,6 +2097,68 @@ CONTAINS
     it_optical_depth_bremsstrahlung = 0
 
   END FUNCTION it_optical_depth_bremsstrahlung
+#endif
+
+
+
+#ifdef WORK_DONE_INTEGRATED
+  FUNCTION it_work_x_total(array, npart_this_it, start, param)
+
+    REAL(num) :: it_work_x_total
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%work_x_total = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_work_x_total = 0
+
+  END FUNCTION it_work_x_total
+
+
+
+  FUNCTION it_work_y_total(array, npart_this_it, start, param)
+
+    REAL(num) :: it_work_y_total
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%work_y_total = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_work_y_total = 0
+
+  END FUNCTION it_work_y_total
+
+
+  
+  FUNCTION it_work_z_total(array, npart_this_it, start, param)
+
+    REAL(num) :: it_work_z_total
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%work_z_total = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_work_z_total = 0
+
+  END FUNCTION it_work_z_total  
 #endif
 
 
