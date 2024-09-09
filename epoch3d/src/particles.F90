@@ -219,6 +219,12 @@ CONTAINS
 #ifndef NO_PARTICLE_PROBES
       current_probe => species_list(ispecies)%attached_probes
       probes_for_species = ASSOCIATED(current_probe)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4) 
+      IF (probes_for_species) THEN 
+        CALL generate_particle_ids(species_list(ispecies)%attached_list)
+        current => species_list(ispecies)%attached_list%head
+      END IF
+#endif
 #endif
 #ifdef ZERO_CURRENT_PARTICLES
       not_zero_current_species = .NOT. species_list(ispecies)%zero_current
@@ -729,6 +735,11 @@ CONTAINS
 #ifndef NO_PARTICLE_PROBES
     current_probe => species_list(ispecies)%attached_probes
     probes_for_species = ASSOCIATED(current_probe)
+#if defined(PARTICLE_ID) || defined(PARTICLE_ID4) 
+    IF (probes_for_species) THEN 
+      CALL generate_particle_ids(species_list(ispecies)%attached_list)
+    END IF
+#endif
 #endif
     dtfac = dt * c**2
 

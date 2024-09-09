@@ -210,6 +210,8 @@ CONTAINS
       END IF
     END IF
 
+    IF (use_field_ionisation) need_random_state = .TRUE.
+
   END SUBROUTINE control_deck_finalise
 
 

@@ -190,7 +190,7 @@ CONTAINS
 #endif
     INTEGER :: boundary
     REAL(num) :: next_time, time_to_bdy
-    REAL(num) :: vx, gamma, inv_gamma_mass
+    REAL(num) :: vx, gamma, inv_gamma_mass, iabs_p
     TYPE(particle), POINTER :: new
     TYPE(particle_list) :: plist
     LOGICAL :: no_particles_added, skip_processor
@@ -199,7 +199,10 @@ CONTAINS
     IF (injector%file_finished) RETURN
 
     mass = species_list(injector%species)%mass
-    inv_m2c2 = 1.0_num/(mass*c)**2
+    IF (mass > c_tiny) THEN
+      inv_m2c2 = 1.0_num/(mass*c)**2
+    END IF
+
     no_particles_added = .TRUE.
 
     ! Add particles until we reach an injection time greater than the next
@@ -283,9 +286,14 @@ CONTAINS
 
       ! Only ranks on the same boundary as the particle can reach here
       ! Calculate particle velocity
-      gamma = SQRT(1.0_num + (px_in**2 + py_in**2 + pz_in**2)*inv_m2c2)
-      inv_gamma_mass = 1.0_num/(gamma*mass)
-      vx = px_in*inv_gamma_mass
+      IF (mass > c_tiny) THEN
+        gamma = SQRT(1.0_num + (px_in**2 + py_in**2 + pz_in**2)*inv_m2c2)
+        inv_gamma_mass = 1.0_num/(gamma*mass)
+        vx = px_in*inv_gamma_mass
+      ELSE 
+        iabs_p = 1.0_num / SQRT(px_in**2 + py_in**2 + pz_in**2)
+        vx = px_in * iabs_p * c 
+      END IF
 
       ! Calculate position of injection such that paritlces reach the boundary
       ! at next_time. Note that global time is a half timestep ahead of the time
