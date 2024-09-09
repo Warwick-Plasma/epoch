@@ -39,6 +39,12 @@ CONTAINS
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
+
+      ! Skip species which are not involved in collisions or collisional
+      ! ionisation
+      IF (.NOT. species_list(ispecies)%make_secondary_list) CYCLE
+      species_list(ispecies)%is_shuffled = .FALSE.
+
       local_count = species_list(ispecies)%attached_list%count
       CALL MPI_ALLREDUCE(local_count, species_list(ispecies)%global_count, &
           1, MPI_INTEGER8, MPI_SUM, comm, errcode)
@@ -78,6 +84,9 @@ CONTAINS
     i1 = 1 - i0
 
     DO ispecies = 1, n_species
+      ! Skip species which did not make a secondary list
+      IF (.NOT. species_list(ispecies)%make_secondary_list) CYCLE
+
       DO ix = i0, nx + i1
         CALL append_partlist(species_list(ispecies)%attached_list, &
             species_list(ispecies)%secondary_list(ix))

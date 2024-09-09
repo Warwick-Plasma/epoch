@@ -99,7 +99,7 @@ CONTAINS
 
   SUBROUTINE grow_logical_array(array, idx)
 
-    LOGICAL, DIMENSION(:), POINTER :: array
+    LOGICAL, DIMENSION(:), ALLOCATABLE :: array
     INTEGER, INTENT(IN) :: idx
     LOGICAL, DIMENSION(:), ALLOCATABLE :: tmp_array
     INTEGER :: old_size, new_size, i

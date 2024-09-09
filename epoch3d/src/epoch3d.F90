@@ -45,6 +45,8 @@ PROGRAM pic
   USE window
   USE split_particle
   USE collisions
+  USE collision_ionise
+  USE background_collisions
   USE particle_migration
   USE ionise
   USE calc_df
@@ -62,6 +64,7 @@ PROGRAM pic
   INTEGER :: ispecies, ierr
   LOGICAL :: halt = .FALSE., push = .TRUE.
   LOGICAL :: force_dump = .FALSE.
+  LOGICAL :: collision_step, coll_ion_step
   CHARACTER(LEN=64) :: deck_file = 'input.deck'
   CHARACTER(LEN=*), PARAMETER :: data_dir_file = 'USE_DATA_DIRECTORY'
   CHARACTER(LEN=64) :: timestring
@@ -172,6 +175,7 @@ PROGRAM pic
 #ifdef BREMSSTRAHLUNG
   IF (use_bremsstrahlung) CALL setup_bremsstrahlung_module()
 #endif
+  CALL setup_background_collisions
 
   IF (rank == 0) THEN
     PRINT*
@@ -182,6 +186,7 @@ PROGRAM pic
   walltime_started = MPI_WTIME()
   IF (.NOT.ic_from_restart) CALL output_routines(step) ! diagnostics.f90
   IF (use_field_ionisation) CALL initialise_ionisation
+  IF (use_collisional_ionisation) CALL setup_coll_ionise_tables
 
   IF (timer_collect) CALL timer_start(c_timer_step)
 
@@ -213,28 +218,36 @@ PROGRAM pic
       IF (use_balance) CALL balance_workload(.FALSE.)
       CALL push_particles
       IF (use_particle_lists) THEN
+        ! Check whether this is a step with collisions or collisional ionisation
+        collision_step = (MODULO(step, coll_n_step) == coll_n_step - 1) &
+          .AND. use_collisions
+        coll_ion_step = MODULO(step, ci_n_step) == ci_n_step - 1 &
+          .AND. use_collisional_ionisation
+
         ! After this line, the particles can be accessed on a cell by cell basis
         ! Using the particle_species%secondary_list property
-        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+        IF (use_split .OR. collision_step .OR. coll_ion_step) THEN
           CALL reorder_particles_to_grid
         END IF
 
+        IF (coll_ion_step) THEN
+          CALL run_collisional_ionisation
+        END IF
+
         ! call collision operator
-        IF (use_collisions .AND. MOD(step, n_coll_steps) == 0) THEN
-          IF (use_collisional_ionisation) THEN
-            CALL collisional_ionisation
-          ELSE
-            CALL particle_collisions
-          END IF
+        IF (collision_step) THEN
+          CALL particle_collisions
         END IF
 
         ! Early beta version of particle splitting operator
         IF (use_split) CALL split_particles
 
-        IF (use_split .OR. MOD(step, n_coll_steps) == 0) THEN
+        IF (use_split .OR. collision_step .OR. coll_ion_step) THEN
           CALL reattach_particles_to_mainlist
         END IF
       END IF
+
+      IF (use_background_collisions) CALL run_background_collisions
       IF (use_particle_migration) CALL migrate_particles(step)
       IF (use_field_ionisation) CALL ionise_particles
       CALL current_finish
