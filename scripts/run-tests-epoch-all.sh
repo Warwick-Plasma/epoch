@@ -52,7 +52,7 @@ fi
 
 # Build SDF/C and install python sdf reader
 (cd SDF/C; make)
-SDF/utilities/build $FLG
+SDF/utilities/build.sh $FLG
 
 # show system info
 scripts/system_info.sh
