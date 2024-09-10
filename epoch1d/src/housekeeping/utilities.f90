@@ -343,7 +343,7 @@ CONTAINS
   SUBROUTINE setup_grid_x
 
     INTEGER :: iproc
-    REAL(num) :: boundary_shift
+    REAL(num) :: boundary_shift, hdx
 
     ! Setup local grid
     x(1-ng:nx+ng) = x_global(nx_global_min-ng:nx_global_max+ng)
@@ -357,8 +357,12 @@ CONTAINS
     x_grid_min_local = x_grid_mins(x_coords)
     x_grid_max_local = x_grid_maxs(x_coords)
 
-    x_min_local = x_grid_min_local + (cpml_x_min_offset - 0.5_num) * dx
-    x_max_local = x_grid_max_local - (cpml_x_max_offset - 0.5_num) * dx
+    hdx = 0.5_num * dx
+    x_min_local = x_grid_min_local - hdx
+    x_max_local = x_global(cell_x_max(x_coords+1)+1) - hdx
+
+    x_min_local = x_min_local + cpml_x_min_offset * dx
+    x_max_local = x_max_local - cpml_x_max_offset * dx
 
     boundary_shift = REAL((1 + png + cpml_thickness) / 2, num)
     x_min_outer = x_min - boundary_shift * dx

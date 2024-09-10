@@ -550,8 +550,14 @@ CONTAINS
           eta = calculate_eta(part_x, part_ux, part_uy, &
               part_uz, gamma_rel)
 
-          current%optical_depth = &
+          ! If using continuous emission emit a photon macroparticle at every timestep
+          IF (use_continuous_emission) THEN
+            CALL generate_photon(current, photon_species, eta)
+          ELSE
+            current%optical_depth = &
               current%optical_depth - delta_optical_depth(eta, gamma_rel)
+          ENDIF
+      
 #ifdef TRIDENT_PHOTONS
           current%optical_depth_tri = current%optical_depth_tri &
               - delta_optical_depth_tri(eta, gamma_rel)
@@ -773,6 +779,9 @@ CONTAINS
     REAL(num), INTENT(IN) :: eta
     REAL(num) :: dir_x, dir_y, dir_z, mag_p, generating_gamma
     REAL(num) :: rand_temp, photon_energy
+    REAL(num) :: g_eta, sync_force, sync_rate, taubar_c, beta
+    REAL(num) :: rad_limit = 1.0_num
+    LOGICAL :: samp_photon
     TYPE(particle), POINTER :: new_photon
 
     mag_p = MAX(SQRT(generating_electron%part_p(1)**2 &
@@ -791,18 +800,46 @@ CONTAINS
     photon_energy = calculate_photon_energy(rand_temp, eta, generating_gamma)
 
     IF (use_radiation_reaction) THEN
-      ! Calculate electron recoil
-      mag_p = mag_p - photon_energy / c
+      IF (use_continuous_emission) THEN
+	! Calculate the momentum loss from the Landau-Lifshitz force
+        IF (use_classical_emission) THEN
+          g_eta = 1.0_num
+        ELSE
+          g_eta = (1.0_num+4.8_num*(1.0_num+eta)*&
+                log(1.0_num+1.7_num*eta)+2.44_num*eta*eta)**(-2.0_num/3.0_num)
+        END IF
+        taubar_c = h_bar/m0/c/c
+        beta = SQRT(1.0_num - 1.0_num/generating_gamma/generating_gamma)
+        sync_force = 2.0_num*alpha_f*m0*c/(3.0_num*taubar_c) &
+                      * beta*eta*eta*g_eta
+
+        ! Ensure particle can't give away more momentum than it starts with
+        IF (mag_p > dt*sync_force) THEN
+          mag_p = mag_p - dt*sync_force
+        ELSE
+          rad_limit = mag_p / (dt*sync_force)
+          mag_p = 0.0_num
+        END IF
+      ELSE
+        ! Calculate electron recoil from photon energy
+        mag_p = mag_p - photon_energy / c
+      END IF
 
       generating_electron%part_p(1) = dir_x * mag_p
       generating_electron%part_p(2) = dir_y * mag_p
       generating_electron%part_p(3) = dir_z * mag_p
     END IF
 
+    samp_photon = .TRUE.
+    IF (photon_sample_fraction < 1.0_num) THEN
+      samp_photon = random() < photon_sample_fraction    
+    END IF
+
     ! This will only create photons that have energies above a user specified
     ! cutoff and if photon generation is turned on. E+/- recoil is always
     ! considered
-    IF (photon_energy > photon_energy_min .AND. produce_photons) THEN
+    IF (photon_energy > photon_energy_min .AND. produce_photons &
+        .AND. samp_photon) THEN
       IF (photon_energy < c_tiny) photon_energy = c_tiny
 
       CALL create_particle(new_photon)
@@ -814,7 +851,15 @@ CONTAINS
 
       new_photon%optical_depth = reset_optical_depth()
       new_photon%particle_energy = photon_energy
-      new_photon%weight = generating_electron%weight
+
+      IF (use_continuous_emission) THEN
+        ! Calculate photon weight from synchrotron emission rate
+        sync_rate = delta_optical_depth(eta, generating_gamma) * rad_limit ! This already has *dt included
+        new_photon%weight = generating_electron%weight * sync_rate &
+                                                       / photon_sample_fraction
+      ELSE
+        new_photon%weight = generating_electron%weight / photon_sample_fraction
+      ENDIF
 
       CALL add_particle_to_partlist(species_list(iphoton)%attached_list, &
           new_photon)
@@ -831,7 +876,8 @@ CONTAINS
     REAL(num) :: eta_min, chi_tmp, chi_final
 
     eta_min = 10.0_num**MINVAL(log_eta)
-    IF (eta < eta_min) THEN ! Extrapolate downwards with chi \propto eta^2
+    ! In the classical case, always use the spectrum at minimum eta
+    IF (use_classical_emission .OR. (eta < eta_min)) THEN ! Extrapolate downwards with chi \propto eta^2
       chi_tmp = find_value_from_table_alt(eta_min, rand_seed, &
           n_sample_eta, n_sample_chi, log_eta, log_chi, p_photon_energy)
       chi_final = chi_tmp * (eta / eta_min)**2

@@ -421,11 +421,11 @@ visitclean:
 
 sdfutils:
 	@cd $(SDF)/../C; make
-	@cd $(SDF)/../utilities; ./build
+	@cd $(SDF)/../utilities; ./build.sh
 
 sdfutilsclean:
 	@cd $(SDF)/../C; make clean
-	@cd $(SDF)/../utilities; ./build -c
+	@cd $(SDF)/../utilities; ./build.sh -c
 
 sdf_reader_example: $(BINDIR)/sdf_reader_example
 
