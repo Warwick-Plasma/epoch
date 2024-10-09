@@ -627,6 +627,8 @@ MODULE shared_data
   LOGICAL :: produce_pairs = .FALSE., use_radiation_reaction = .TRUE.
   LOGICAL :: produce_photons = .FALSE., photon_dynamics = .FALSE.
   CHARACTER(LEN=string_length) :: qed_table_location
+  LOGICAL :: use_continuous_emission = .FALSE., use_classical_emission=.FALSE.
+  REAL(num) :: photon_sample_fraction = 1.0_num
 #endif
   LOGICAL :: use_qed = .FALSE.
 
@@ -674,6 +676,7 @@ MODULE shared_data
   LOGICAL :: positron_brem = .FALSE.
 #endif
   LOGICAL :: use_bremsstrahlung = .FALSE.
+  LOGICAL :: ignore_dt_corrections = .FALSE.
 
   !----------------------------------------------------------------------------
   ! MPI data

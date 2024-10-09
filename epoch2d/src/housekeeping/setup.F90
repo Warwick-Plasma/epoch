@@ -670,8 +670,7 @@ CONTAINS
 
     dt_solver = dt
 
-    ! Deactivate dt correction if running with muons (large domains needed) 
-    IF (.NOT. use_brem_muon) THEN
+    IF (.NOT. ignore_dt_corrections) THEN
       IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
       IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
     END IF

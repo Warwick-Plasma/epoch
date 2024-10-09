@@ -10,6 +10,10 @@ begin:control
   dt_multiplier = 0.8
   stdout_frequency = 100
   nprocx = 1
+  ignore_dt_corrections = T # Code will automatically adjust dt using target
+                            # plasma frequency, or laser period. We don't want
+                            # this correction here, as the domain is too big.
+                            # Hence, this key was added to skip the adjustment
 end:control
 
 begin:bremsstrahlung
