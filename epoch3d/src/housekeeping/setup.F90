@@ -742,8 +742,10 @@ CONTAINS
 
     dt_solver = dt
 
-    IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
-    IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
+    IF (.NOT. ignore_dt_corrections) THEN
+      IF (dt_plasma_frequency > c_tiny) dt = MIN(dt, dt_plasma_frequency)
+      IF (dt_laser > c_tiny) dt = MIN(dt, dt_laser)
+    END IF
 
     IF (maxwell_solver /= c_maxwell_solver_yee .AND. dt < dt_solver) THEN
       IF (rank == 0) THEN
@@ -1507,6 +1509,34 @@ CONTAINS
           STOP
 #endif
 
+        ELSE IF (block_id(1:22) == 'nuclear trident depth/') THEN
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_brem_trident)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with nuclear trident optical depths.'
+            PRINT*, 'Please recompile with the -DBREM_TRIDENT option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+
+        ELSE IF (block_id(1:14) == 'bh muon depth/') THEN
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+          CALL sdf_read_point_variable(sdf_handle, npart_local, &
+              species_subtypes(ispecies), it_optical_depth_brem_muon)
+#else
+          IF (rank == 0) THEN
+            PRINT*, '*** ERROR ***'
+            PRINT*, 'Cannot load dump file with Bethe-Heitler muon pair depths.'
+            PRINT*, 'Please recompile with the -DBREM_MUON option.'
+          END IF
+          CALL abort_code(c_err_pp_options_missing)
+          STOP
+#endif
+
         ELSE IF (block_id(1:23) == 'time_integrated_work_x/') THEN
 #ifdef WORK_DONE_INTEGRATED
           CALL sdf_read_point_variable(sdf_handle, npart_local, &
@@ -2040,6 +2070,50 @@ CONTAINS
     it_optical_depth_bremsstrahlung = 0
 
   END FUNCTION it_optical_depth_bremsstrahlung
+
+
+
+#ifdef BREM_TRIDENT
+  FUNCTION it_optical_depth_brem_trident(array, npart_this_it, start, param)
+
+    REAL(num) :: it_optical_depth_brem_trident
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_brem_tri = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_optical_depth_brem_trident = 0
+
+  END FUNCTION it_optical_depth_brem_trident
+#endif
+
+
+
+#ifdef BREM_MUON
+  FUNCTION it_optical_depth_brem_muon(array, npart_this_it, start, param)
+
+    REAL(num) :: it_optical_depth_brem_muon
+    REAL(num), DIMENSION(:), INTENT(IN) :: array
+    INTEGER, INTENT(INOUT) :: npart_this_it
+    LOGICAL, INTENT(IN) :: start
+    INTEGER, INTENT(IN), OPTIONAL :: param
+    INTEGER :: ipart
+
+    DO ipart = 1, npart_this_it
+      iterator_list%optical_depth_brem_muon = array(ipart)
+      iterator_list => iterator_list%next
+    END DO
+
+    it_optical_depth_brem_muon = 0
+
+  END FUNCTION it_optical_depth_brem_muon
+#endif
 #endif
 
 

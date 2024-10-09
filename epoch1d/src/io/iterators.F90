@@ -341,6 +341,24 @@ CONTAINS
           cur => cur%next
         END DO
 #endif
+
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+      CASE (c_dump_part_dep_brem_tri)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%optical_depth_brem_tri
+          cur => cur%next
+        END DO
+#endif
+
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+      CASE (c_dump_part_opdep_bh_mu)
+        DO WHILE (ASSOCIATED(cur) .AND. (part_count < npoint_it))
+          part_count = part_count + 1
+          array(part_count) = cur%optical_depth_brem_muon
+          cur => cur%next
+        END DO
+#endif
       END SELECT
       ! If the current partlist is exhausted, switch to the next one
       IF (.NOT. ASSOCIATED(cur)) CALL advance_particle_list(current_list, cur)

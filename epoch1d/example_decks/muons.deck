@@ -1,0 +1,98 @@
+begin:control
+  nx = 512
+  ny = 8
+  npart = nx * 1280
+  t_end = 2.0e-8
+  x_min = 0
+  x_max = 5.1
+  y_min = -1
+  y_max = 1
+  dt_multiplier = 0.8
+  stdout_frequency = 100
+  nprocx = 1
+  ignore_dt_corrections = T # Code will automatically adjust dt using target
+                            # plasma frequency, or laser period. We don't want
+                            # this correction here, as the domain is too big.
+                            # Hence, this key was added to skip the adjustment
+end:control
+
+begin:bremsstrahlung
+  use_bremsstrahlung = T
+  start_time = 0 
+  produce_photons = T 
+  photon_energy_min = 100 * kev
+  photon_weight = 1.0
+  photon_dynamics = T
+  use_bremsstrahlung_recoil = F
+  use_plasma_screening = F
+  use_brem_scatter = T
+  positron_brem = F 
+  use_bethe_heitler = F
+  use_brem_trident = F
+  use_brem_muon = T
+end:bremsstrahlung
+
+begin:boundaries
+  bc_x_min = open
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+begin:species
+  # Photon beam
+  name = Photon
+  frac = 0.8
+  rho = 1.0e5 / (2*dx * 8*dy)
+  rho = if (x gt 2*dx, 0, density(Photon))
+  drift_x = 5.34e-18
+  identify:brem_photon
+end:species
+
+begin:species
+  name = Au
+  atomic_number = 79
+  mass = 359109
+  rho = 6.0e28
+  frac = 0.2
+  charge = 0
+  dump = T
+  immobile = T
+end:species
+
+begin:species
+  name = Muon
+  npart = 0
+  immobile = T
+  identify:muon
+end:species
+
+begin:species
+  name = Antimuon
+  npart = 0
+  immobile = T
+  identify:antimuon
+end:species
+
+begin:output
+  dt_snapshot = t_end
+  particles = always
+  px = always
+  py = always
+  pz = always
+  weight = always
+  particle_probes = always
+  number_density = always + species
+  temperature = always + species
+  ex = always
+  ey = always
+  ez = always
+end:output
+
+begin:probe
+  name = photon_probe
+  point = 5.0
+  normal = 1.0
+  include_species:Photon
+  dumpmask = always
+end:probe

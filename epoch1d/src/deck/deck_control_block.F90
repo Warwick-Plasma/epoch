@@ -424,6 +424,9 @@ CONTAINS
       use_optimal_layout = as_logical_print(value, element, errcode)
       got_optimal_layout = use_optimal_layout
 
+    ELSE IF (str_cmp(element, 'ignore_dt_corrections')) THEN
+      ignore_dt_corrections = as_logical_print(value, element, errcode)
+
     ELSE IF (str_cmp(element, 'smooth_iterations')) THEN
       smooth_its = as_integer_print(value, element, errcode)
 

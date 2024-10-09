@@ -73,6 +73,12 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     nvar = nvar+1
 #endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_TRIDENT)
+    nvar = nvar+1
+#endif
+#if defined(BREMSSTRAHLUNG) && defined(BREM_MUON)
+    nvar = nvar+1
+#endif
 #ifdef PROBE_TIME
     nvar = nvar+1
 #endif
@@ -463,6 +469,14 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     array(cpos) = a_particle%optical_depth_bremsstrahlung
     cpos = cpos+1
+#ifdef BREM_TRIDENT 
+    array(cpos) = a_particle%optical_depth_brem_tri
+    cpos = cpos+1
+#endif
+#ifdef BREM_MUON
+    array(cpos) = a_particle%optical_depth_brem_muon
+    cpos = cpos+1
+#endif
 #endif
 #ifdef PROBE_TIME
     array(cpos) = a_particle%probe_time
@@ -542,6 +556,14 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     a_particle%optical_depth_bremsstrahlung = array(cpos)
     cpos = cpos+1
+#ifdef BREM_TRIDENT
+    a_particle%optical_depth_brem_tri = array(cpos)
+    cpos = cpos+1
+#endif 
+#ifdef BREM_MUON
+    a_particle%optical_depth_brem_muon = array(cpos)
+    cpos = cpos+1
+#endif
 #endif
 #ifdef PROBE_TIME
     a_particle%probe_time = array(cpos)
@@ -601,6 +623,12 @@ CONTAINS
 #ifdef BREMSSTRAHLUNG
     new_particle%optical_depth_bremsstrahlung = &
         LOG(1.0_num / (1.0_num - random()))
+#ifdef BREM_TRIDENT
+    new_particle%optical_depth_brem_tri = LOG(1.0_num / (1.0_num - random()))
+#endif
+#ifdef BREM_MUON
+    new_particle%optical_depth_brem_muon = LOG(1.0_num / (1.0_num - random()))
+#endif
 #endif
 #ifdef PROBE_TIME
     new_particle%probe_time = 0.0_num
