@@ -6,6 +6,8 @@ begin:control
   x_max = 5.10e-3
   dt_multiplier = 0.8
   stdout_frequency = 100
+  
+  boost_pairs = 1
 end:control
 
 begin:bremsstrahlung

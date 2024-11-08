@@ -14,6 +14,8 @@ begin:control
                             # plasma frequency, or laser period. We don't want
                             # this correction here, as the domain is too big.
                             # Hence, this key was added to skip the adjustment
+                            
+  boost_muons = 10
 end:control
 
 begin:bremsstrahlung

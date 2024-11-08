@@ -201,13 +201,13 @@ DEFINES := $(DEFINE)
 #DEFINES += $(D)NO_PARTICLE_PROBES
 
 # Probes will also output the time particles cross the probe
-#DEFINES += $(D)PROBE_TIME
+DEFINES += $(D)PROBE_TIME
 
 # Use second order particle weighting (default is third order).
 #DEFINES += $(D)PARTICLE_SHAPE_TOPHAT
 
 # Use fifth order particle weighting (default is third order).
-#DEFINES += $(D)PARTICLE_SHAPE_BSPLINE3
+DEFINES += $(D)PARTICLE_SHAPE_BSPLINE3
 
 # Include a unique global particle ID. The first flag defines the ID using
 # an 8-byte integer, the second uses 4-bytes.
@@ -215,7 +215,7 @@ DEFINES := $(DEFINE)
 #DEFINES += $(D)PARTICLE_ID4
 
 # Include QED routines
-#DEFINES += $(D)PHOTONS
+DEFINES += $(D)PHOTONS
 
 # Use the Trident process for pair production
 #DEFINES += $(D)TRIDENT_PHOTONS

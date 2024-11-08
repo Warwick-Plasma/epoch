@@ -156,7 +156,7 @@ MODULE brem_muon
                 part_ni, grid_num_density_ion)
 
             ! Update the photon optical depth
-            delta_opdep = part_ni * cross_sec * c * dt
+            delta_opdep = part_ni * cross_sec * c * dt * boost_muons
             photon%optical_depth_brem_muon = &
                 photon%optical_depth_brem_muon - delta_opdep
 
@@ -242,8 +242,8 @@ MODULE brem_muon
     muon%part_pos = photon%part_pos
 
     ! e- and e+ have the same weights as generating photon
-    antimuon%weight = photon%weight
-    muon%weight = photon%weight
+    antimuon%weight = photon%weight / boost_muons
+    muon%weight = photon%weight / boost_muons
 
     ! Calculate momentum magnitude going to each particle
     energy_mu_p = g4_gamma_plus * m_mu * c**2
@@ -276,9 +276,13 @@ MODULE brem_muon
     CALL add_particle_to_partlist(species_list(imuon)%attached_list, muon)
 
     ! Remove photon
-    CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
-        photon)
-    CALL destroy_particle(photon)
+    IF (random() < 1.0_num / boost_muons) THEN
+      CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
+          photon)
+      CALL destroy_particle(photon)
+    ELSE
+      photon%optical_depth_brem_muon = -LOG(random())
+    END IF
 
   END SUBROUTINE generate_pair
 

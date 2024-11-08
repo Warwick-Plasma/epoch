@@ -642,7 +642,7 @@ CONTAINS
         log_omegahat(:,2))
 
     delta_optical_depth_tri = dt * eta * alpha_f**2 * 0.64_num * omegahat &
-        / (2.0_num * pi * tau_c * gamma_rel)
+        / (2.0_num * pi * tau_c * gamma_rel) * boost_pairs
 
   END FUNCTION delta_optical_depth_tri
 
@@ -658,7 +658,8 @@ CONTAINS
     tpair = find_value_from_table_1d(chi_val, n_sample_t, log_tpair(:,1), &
         log_tpair(:,2))
 
-    delta_optical_depth_photon = dt / tau_c * alpha_f / part_e * chi_val * tpair
+    delta_optical_depth_photon = dt / tau_c * alpha_f / part_e * chi_val &
+        * tpair * boost_pairs
 
   END FUNCTION delta_optical_depth_photon
 
@@ -1042,8 +1043,8 @@ CONTAINS
     new_positron%optical_depth_tri = reset_optical_depth()
 #endif
 
-    new_electron%weight = generating_photon%weight
-    new_positron%weight = generating_photon%weight
+    new_electron%weight = generating_photon%weight / boost_pairs
+    new_positron%weight = generating_photon%weight / boost_pairs
 
     CALL add_particle_to_partlist(species_list(ielectron)%attached_list, &
         new_electron)
@@ -1051,8 +1052,12 @@ CONTAINS
         new_positron)
 
     ! Remove photon
-    CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
-        generating_photon)
+    IF (random() < 1.0_num / boost_pairs) THEN
+      CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
+          generating_photon)
+    ELSE 
+      generating_photon%optical_depth = reset_optical_depth()
+    END IF
 
     DEALLOCATE(generating_photon)
 
@@ -1084,8 +1089,8 @@ CONTAINS
     new_positron%optical_depth_tri = reset_optical_depth()
 #endif
 
-    new_electron%weight = generating_electron%weight
-    new_positron%weight = generating_electron%weight
+    new_electron%weight = generating_electron%weight / boost_pairs
+    new_positron%weight = generating_electron%weight / boost_pairs
 
     CALL add_particle_to_partlist(species_list(ielectron)%attached_list, &
         new_electron)

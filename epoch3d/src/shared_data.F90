@@ -700,6 +700,9 @@ MODULE shared_data
   LOGICAL :: use_bremsstrahlung = .FALSE.
   LOGICAL :: ignore_dt_corrections = .FALSE.
 
+  REAL(num) :: boost_muons = 1.0_num
+  REAL(num) :: boost_pairs = 1.0_num
+
   !----------------------------------------------------------------------------
   ! MPI data
   !----------------------------------------------------------------------------

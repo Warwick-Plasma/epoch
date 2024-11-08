@@ -377,6 +377,12 @@ CONTAINS
         .OR. str_cmp(element, 'bsi')) THEN
       use_bsi = as_logical_print(value, element, errcode)
 
+    ELSE IF (str_cmp(element, 'boost_pairs')) THEN
+      boost_pairs = as_real_print(value, element, errcode)
+
+    ELSE IF (str_cmp(element, 'boost_muons')) THEN
+      boost_muons = as_real_print(value, element, errcode)
+      
     ELSE IF (str_cmp(element, 'particle_tstart')) THEN
       particle_push_start_time = as_real_print(value, element, errcode)
 

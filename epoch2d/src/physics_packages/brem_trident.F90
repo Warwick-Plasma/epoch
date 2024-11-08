@@ -277,8 +277,7 @@ CONTAINS
                 grid_num_density_ion)
 
             ! Update the incident electron optical depth
-        !        print*, part_ni, cross_sec, el_v, dt
-            delta_opdep = part_ni * cross_sec * el_v * dt
+            delta_opdep = part_ni * cross_sec * el_v * dt * boost_pairs
             electron%optical_depth_brem_tri = electron%optical_depth_brem_tri &
                 - delta_opdep
 
@@ -327,8 +326,8 @@ CONTAINS
     new_positron%part_pos = incident%part_pos
 
     ! e- and e+ have the same weights as generating incident e-
-    new_electron%weight = incident%weight
-    new_positron%weight = incident%weight
+    new_electron%weight = incident%weight / boost_pairs
+    new_positron%weight = incident%weight / boost_pairs
 
     ! Calculate the total energy of the pair
     rand_cdf = random()
@@ -367,8 +366,10 @@ CONTAINS
         new_positron)
 
     ! Recoil incident electron
-    incident_p = el_in_p - (electron_p + positron_p)
-    incident%part_p(1:3) = incident_p * (/ dir_x, dir_y, dir_z /)
+    IF (random() < 1.0_num / boost_pairs) THEN
+      incident_p = el_in_p - (electron_p + positron_p)
+      incident%part_p(1:3) = incident_p * (/ dir_x, dir_y, dir_z /)
+    END IF
 
   END SUBROUTINE generate_pair
 

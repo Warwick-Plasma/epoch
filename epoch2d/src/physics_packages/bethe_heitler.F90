@@ -157,7 +157,7 @@ CONTAINS
                 grid_num_density_ion)
 
             ! Update the photon optical depth
-            delta_opdep = part_ni * cross_sec * cdt
+            delta_opdep = part_ni * cross_sec * cdt * boost_pairs
             photon%optical_depth_bremsstrahlung = &
                 photon%optical_depth_bremsstrahlung - delta_opdep
 
@@ -268,8 +268,8 @@ CONTAINS
     new_positron%part_pos = photon%part_pos
 
     ! e- and e+ have the same weights as generating photon
-    new_electron%weight = photon%weight
-    new_positron%weight = photon%weight
+    new_electron%weight = photon%weight / boost_pairs
+    new_positron%weight = photon%weight / boost_pairs
 
     ! Calculate fractional energy split
     e_frac = energy_split(photon, z_int)
@@ -328,9 +328,13 @@ CONTAINS
         new_positron)
 
     ! Remove photon
-    CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
-        photon)
-    CALL destroy_particle(photon)
+    IF (random() < 1.0_num / boost_pairs) THEN
+      CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
+          photon)
+      CALL destroy_particle(photon)
+    ELSE 
+      photon%optical_depth_bremsstrahlung = -LOG(random())
+    END IF
 
   END SUBROUTINE generate_pair
 
