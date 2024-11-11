@@ -1042,11 +1042,10 @@ CONTAINS
     IF (random() < 1.0_num / boost_pairs) THEN
       CALL remove_particle_from_partlist(species_list(iphoton)%attached_list, &
           generating_photon)
+      DEALLOCATE(generating_photon)
     ELSE 
       generating_photon%optical_depth = reset_optical_depth()
     END IF
-
-    DEALLOCATE(generating_photon)
 
   END SUBROUTINE generate_pair
 
