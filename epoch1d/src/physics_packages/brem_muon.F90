@@ -427,6 +427,15 @@ MODULE brem_muon
       ! Sample kinematic variables
       g4_gamma_plus = g4_x_plus * gamma_tot
       g4_gamma_minus = g4_x_minus * gamma_tot
+
+      ! Temporary fix for sampling issue - can rarely get gamma < 1
+      ! Should probably re-sample to do it correctly? 
+      ! Is our sampling even right if a gamma < 1 for 464 MeV photon is allowed?
+      IF (g4_gamma_plus < 1.0_num .OR. g4_gamma_minus < 1.0_num) THEN 
+        g4_gamma_plus = 0.5_num * gamma_tot 
+        g4_gamma_minus = 0.5_num * gamma_tot 
+      END IF
+
       g4_u = SQRT(1.0_num / g4_t - 1.0_num)
       psi_fac = 0.5_num * g4_rho * COS(g4_psi)
       g4_theta_plus = (g4_u + psi_fac) / g4_gamma_plus 
