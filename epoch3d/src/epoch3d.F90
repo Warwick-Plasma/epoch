@@ -138,7 +138,7 @@ PROGRAM pic
   END DO
 
   ! .TRUE. to over_ride balance fraction check
-  IF (npart_global > 0) CALL balance_workload(.TRUE.)
+  IF (npart_global > 0 .AND. use_pre_balance) CALL balance_workload(.TRUE.)
 
   IF (use_current_correction) CALL calc_initial_current
   CALL setup_bc_lists
