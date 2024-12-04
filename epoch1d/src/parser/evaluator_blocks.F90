@@ -195,7 +195,7 @@ CONTAINS
 
     IF (opcode == c_const_xb) THEN
       IF (parameters%use_grid_position) THEN
-        CALL push_on_eval(xb(parameters%pack_ix))
+        CALL push_on_eval(xb(parameters%pack_ix) + dx)
       ELSE
         CALL push_on_eval(parameters%pack_pos)
       END IF

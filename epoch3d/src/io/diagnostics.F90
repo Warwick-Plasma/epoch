@@ -946,7 +946,7 @@ CONTAINS
       END IF
 
 #ifndef NO_PARTICLE_PROBES
-      IF (IAND(iomask(c_dump_probes), code) /= 0) THEN
+      IF (IAND(iomask(c_dump_probes), code) /= 0 .OR. restart_flag) THEN
         CALL write_probes(sdf_handle, code, iomask(c_dump_probes))
       END IF
 #endif
